@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
+### Added
+
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+
 ### Changed
 
 - **CUMULUS-2434**
@@ -271,10 +277,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2468** - Added `@cumulus/aws-client/DynamoDb.parallelScan` helper to perform [parallel scanning on DynamoDb tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
   - **CUMULUS-2507**
     - Updated granule record write logic to set granule status to `failed` in both Postgres and DynamoDB if any/all of its files fail to write to the database.
-
-- **CUMULUS-2474**
-  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
-  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Deprecated
 
