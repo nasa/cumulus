@@ -15,6 +15,9 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
 } = require('@cumulus/db');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
@@ -27,6 +30,7 @@ const {
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
+const EsCollection = require('../../../es/collections');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/collections');
@@ -42,9 +46,6 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-
-const esIndex = randomString();
-let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -69,7 +70,15 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  t.context.esIndex = randomString();
+  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, esAlias);
+  t.context.esClient = await Search.es('fakehost');
+
+  t.context.esCollectionClient = new EsCollection(
+    {},
+    undefined,
+    process.env.ES_INDEX
+  );
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -86,7 +95,6 @@ test.before(async (t) => {
   await rulesModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await Search.es('fakehost');
 
   process.env.collection_sns_topic_arn = randomString();
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
@@ -99,7 +107,7 @@ test.after.always(async (t) => {
   await collectionModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await t.context.esClient.indices.delete({ index: t.context.esIndex });
   publishStub.restore();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -142,7 +150,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
-test('POST creates a new collection', async (t) => {
+test('POST creates a new collection in all data stores', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)
@@ -159,6 +167,11 @@ test('POST creates a new collection', async (t) => {
 
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
+
+  const esRecord = await t.context.esCollectionClient.get(
+    constructCollectionId(newCollection.name, newCollection.version)
+  );
+  t.like(esRecord, fetchedDynamoRecord);
 
   t.true(await t.context.collectionPgModel.exists(
     t.context.testKnex,
@@ -192,12 +205,18 @@ test('POST creates a new collection in Dynamo and PG with correct timestamps', a
     }
   );
 
+  const esRecord = await t.context.esCollectionClient.get(
+    constructCollectionId(newCollection.name, newCollection.version)
+  );
+
   t.true(fetchedDynamoRecord.createdAt > newCollection.createdAt);
   t.true(fetchedDynamoRecord.updatedAt > newCollection.updatedAt);
 
-  // PG and Dynamo records have the same timestamps
+  // Records have the same timestamps
   t.is(collectionPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(collectionPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  t.is(collectionPgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(collectionPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {

@@ -17,7 +17,10 @@ const {
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
-const { addToLocalES, indexCollection } = require('../es/indexer');
+const {
+  addToLocalES,
+  indexCollection,
+} = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -109,6 +112,7 @@ async function post(req, res) {
     collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -134,11 +138,10 @@ async function post(req, res) {
       dynamoRecord = await collectionsModel.create(
         omit(collection, 'dataType')
       );
+      // TODO: process.env.ES_INDEX is only used in unit testing, but not
+      // actual deployments, which is a bit confusing
+      await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
     });
-
-    if (inTestMode()) {
-      await addToLocalES(collection, indexCollection);
-    }
 
     return res.send({
       message: 'Record saved',
