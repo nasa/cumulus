@@ -68,16 +68,16 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
   t.context.esIndex = randomString();
-  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, esAlias);
+  t.context.esAlias = randomString();
+  process.env.ES_INDEX = t.context.esIndex;
+  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
   t.context.esClient = await Search.es('fakehost');
 
   t.context.esCollectionClient = new EsCollection(
     {},
     undefined,
-    process.env.ES_INDEX
+    t.context.esIndex
   );
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();

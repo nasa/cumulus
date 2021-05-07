@@ -139,8 +139,8 @@ async function post(req, res) {
         dynamoRecord = await collectionsModel.create(
           omit(collection, 'dataType')
         );
-        // TODO: process.env.ES_INDEX is only used in unit testing, but not
-        // actual deployments, which is a bit confusing
+        // process.env.ES_INDEX is only used to isolate the index for
+        // each unit test suite
         await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
       });
     } catch (innerError) {
