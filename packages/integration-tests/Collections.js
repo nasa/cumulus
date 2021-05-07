@@ -80,7 +80,6 @@ const buildCollection = (params = {}) => {
 const buildRandomizedCollection = (overrides = {}) => ({
   name: randomId('collection-name-'),
   version: randomId('collection-version-'),
-  reportToEms: false,
   granuleId: '^[^.]+$',
   granuleIdExtraction: '^([^.]+)\..+$',
   sampleFileName: 'asdf.jpg',
@@ -158,7 +157,6 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
  *
  * - **name**: random string starting with `collection-name-`
  * - **version**: random string starting with `collection-version-`
- * - **reportToEms**: `false`
  * - **granuleId**: `'^[^.]+$'`
  * - **granuleIdExtraction**: `'^([^.]+)\..+$'`
  * - **sampleFileName**: `'asdf.jpg'`

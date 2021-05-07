@@ -103,10 +103,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   An ECS instance run via a Step Function.
 
-### EMS
-
-  [ESDIS Metrics System](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/esdis-metrics-system-ems)
-
 ### Execution (Cumulus)
 
   A Cumulus execution refers to a single execution of a (Cumulus) Workflow.
