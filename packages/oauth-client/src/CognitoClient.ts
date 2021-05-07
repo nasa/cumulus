@@ -9,7 +9,7 @@ type CognitoErrorResponse = Response<{
 }>;
 
 /**
- * A client for the Cognito API
+ * A client for the Cognito API. Extents OAuthClient.
  */
 export class CognitoClient extends OAuthClient {
   /**
@@ -45,6 +45,23 @@ export class CognitoClient extends OAuthClient {
     );
   };
 
+  /**
+   * Query the Cognito API for the user object associated with an access token.
+   *
+   * @param {string} accessToken - The Cognito access token for Authorization header
+   * @returns {Promise<Object>} The user object (see example)
+   *
+   * @example
+   *
+   * {
+   *  "username": "Jane Doe",
+   *  "given_name": "Jane",
+   *  "family_name": "Doe",
+   *  "study_area": "Atmospheric Composition",
+   *  "organization": "NASA",
+   *  "email": "janedoe@example.com"
+   * }
+   */
   async getUserInfo(accessToken: string) {
     if (!accessToken) throw new TypeError('accessToken is required');
 

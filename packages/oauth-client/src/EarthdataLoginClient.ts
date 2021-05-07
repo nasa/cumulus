@@ -11,7 +11,7 @@ const isHttpBadRequestError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 400;
 
 /**
- * A client for the Earthdata Login API
+ * A client for the Earthdata Login API. Extents OAuthClient.
  */
 export class EarthdataLoginClient extends OAuthClient {
   /**
