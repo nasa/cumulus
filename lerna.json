@@ -1,9 +1,10 @@
 {
   "lerna": "3.20.2",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "packages": [
     "example",
     "example/lambdas/*",
+    "example/scripts/*",
     "lambdas/*",
     "packages/*",
     "packages/api/ecs/async-operation",
