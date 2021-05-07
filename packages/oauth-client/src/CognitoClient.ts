@@ -49,12 +49,7 @@ export class CognitoClient extends OAuthClient {
       redirectUri: string
     }
   ) {
-    super({
-      clientId: params.clientId,
-      clientPassword: params.clientPassword,
-      loginUrl: params.loginUrl,
-      redirectUri: params.redirectUri,
-    });
+    super(params);
 
     this.clientId = params.clientId;
     this.clientPassword = params.clientPassword;
