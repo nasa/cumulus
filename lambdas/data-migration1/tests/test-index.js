@@ -111,6 +111,7 @@ test('handler migrates async operations, collections, providers, rules', async (
     sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
     files: [{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }],
     meta: { foo: 'bar', key: { value: 'test' } },
+    reportToEms: false,
     ignoreFilesConfigForDiscovery: false,
     process: 'modis',
     url_path: 'path',

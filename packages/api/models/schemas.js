@@ -112,8 +112,9 @@ module.exports.collection = {
     },
     reportToEms: {
       title: 'Report to EMS',
-      description: 'This field is deprecated',
+      description: 'Indicates whether the collection will be reported to EMS',
       type: 'boolean',
+      default: true,
     },
     sampleFileName: {
       title: 'Sample Filename',
