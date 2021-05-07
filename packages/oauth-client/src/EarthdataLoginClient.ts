@@ -10,11 +10,6 @@ type EarthdataLoginErrorResponse = Response<{error: string}>;
 const isHttpBadRequestError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 400;
 
-const validateUrl = (urlString: string) => {
-  // eslint-disable-next-line no-new
-  new URL(urlString);
-};
-
 /**
  * A client for the Earthdata Login API
  */
@@ -58,9 +53,7 @@ export class EarthdataLoginClient extends OAuthClient {
 
     this.clientId = params.clientId;
     this.clientPassword = params.clientPassword;
-    validateUrl(params.earthdataLoginUrl);
     this.earthdataLoginUrl = params.earthdataLoginUrl;
-    validateUrl(params.redirectUri);
     this.redirectUri = params.redirectUri;
   }
 

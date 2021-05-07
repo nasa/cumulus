@@ -1,7 +1,5 @@
 import got, { HTTPError, Response } from 'got';
 
-import { URL } from 'url';
-
 import { OAuthClient } from './OAuthClient';
 import { CognitoError } from './CognitoError';
 
@@ -9,11 +7,6 @@ type CognitoErrorResponse = Response<{
   error: string,
   error_description: string,
 }>;
-
-const validateUrl = (urlString: string) => {
-  // eslint-disable-next-line no-new
-  new URL(urlString);
-};
 
 /**
  * A client for the Cognito API
@@ -51,12 +44,17 @@ export class CognitoClient extends OAuthClient {
   ) {
     super(params);
 
-    this.clientId = params.clientId;
-    this.clientPassword = params.clientPassword;
-    validateUrl(params.loginUrl);
-    this.loginUrl = params.loginUrl;
-    validateUrl(params.redirectUri);
-    this.redirectUri = params.redirectUri;
+    const {
+      clientId,
+      clientPassword,
+      loginUrl,
+      redirectUri,
+    } = params;
+
+    this.clientId = clientId;
+    this.clientPassword = clientPassword;
+    this.loginUrl = loginUrl;
+    this.redirectUri = redirectUri;
   }
 
   httpErrorToAuthError = (httpError: HTTPError) => {
