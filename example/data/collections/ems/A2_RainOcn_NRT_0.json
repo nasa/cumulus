@@ -4,7 +4,6 @@
   "dataType": "A2_RainOcn_NRT",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
-  "reportToEms": false,
   "sampleFileName": "A2_RainOcn_NRT_product_0001-of-4154.h5",
   "files": [
     {

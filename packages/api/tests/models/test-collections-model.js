@@ -185,7 +185,6 @@ test.serial('Collection.exists() returns true when a record exists', async (t) =
       bucket: 'protectedbucket',
       regex: '^.*\\.hdf$',
       sampleFileName: 'samplefile.hdf',
-      reportToEms: true,
     },
     {
       bucket: 'protectedbucket',
@@ -196,11 +195,10 @@ test.serial('Collection.exists() returns true when a record exists', async (t) =
       bucket: 'publicbucket',
       regex: '^.*\\.jpg$',
       sampleFileName: 'samplefile.jpg',
-      reportToEms: false,
     },
   ];
 
-  await collectionsModel.create(fakeCollectionFactory({ name, version, reportToEms: true, files }));
+  await collectionsModel.create(fakeCollectionFactory({ name, version, files }));
 
   t.true(await collectionsModel.exists(name, version));
 });

@@ -68,7 +68,6 @@ The configuration below will store hdf files in the protected bucket and jpg fil
   "version": "001",
   "granuleId": "^GRANULE\\.A[\\d]{7}$",
   "granuleIdExtraction": "(GRANULE\\..*)(\\.hdf|\\.jpg)",
-  "reportToEms": false,
   "sampleFileName": "GRANULE.A2017025.hdf",
   "files": [
     {
