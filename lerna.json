@@ -4,6 +4,7 @@
   "packages": [
     "example",
     "example/lambdas/*",
+    "example/scripts/*",
     "lambdas/*",
     "packages/*",
     "packages/api/ecs/async-operation",
