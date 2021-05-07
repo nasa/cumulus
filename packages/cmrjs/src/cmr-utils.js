@@ -64,7 +64,8 @@ function getFileDescription(file, urlType = 'distribution') {
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
+const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename) || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
@@ -978,7 +979,7 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile.length === 0) return {};
 
   const cmrFilename = cmrFile[0].filename;
-  if (isECHO10File(cmrFilename)) {
+  if (isECHO10File(cmrFilename) || isISOFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
     const endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');

@@ -110,56 +110,35 @@ test.after.always(async (t) => {
   t.context.launchpadStub.restore();
 });
 
-test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.xml',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid xml name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.xml',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid json name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.json',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid json name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.json',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid xml filenamename', (t) => {
+test('isCMRFile returns truthy if fileobject has valid xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.xml',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid xml filenamename', (t) => {
+test('isCMRFile returns falsy if fileobject does not valid xml filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.xml',
   };
   t.falsy(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns truthy if fileobject has valid json filenamename', (t) => {
+test('isCMRFile returns truthy if fileobject has a valid cmr_iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.cmr_iso.xml',
+  };
+  t.truthy(isCMRFile(fileObj));
+});
+
+test('isCMRFile returns truthy if fileobject has valid json filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.json',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid json filenamename', (t) => {
+test('isCMRFile returns falsy if fileobject does not valid json filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.json',
   };
