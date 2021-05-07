@@ -21,6 +21,14 @@ to automatically update to new patch versions.
 $ npm install @cumulus/oauth-client
 ```
 
+## Class Structure
+
+This package contains a generic, parent class called `OAuthClient`. This class has a few common methods
+like `oAuthClient.getAuthorizationUrl()` which are used by all classes that inherit from `OAuthClient`.
+
+The examples below document these common methods as well as methods specific to the child classes, e.g.
+`cognitoClient.getUserInfo(accessToken)`.
+
 ## Earthdata Login Usage Example
 
 ```js
