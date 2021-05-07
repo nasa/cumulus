@@ -144,6 +144,7 @@ async function post(req, res) {
         await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
       });
     } catch (innerError) {
+      // Clean up DynamoDB collection record in case of any failure
       await collectionsModel.delete(collection);
       throw innerError;
     }
