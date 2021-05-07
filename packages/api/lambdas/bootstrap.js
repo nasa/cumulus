@@ -107,7 +107,6 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   } else {
     try {
       await createIndex(esClient, index);
-      log.info(`Created index ${index}`);
     } catch (error) {
       if (!(error instanceof IndexExistsError)) {
         throw error;
