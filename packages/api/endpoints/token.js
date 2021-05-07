@@ -228,7 +228,7 @@ function buildEarthdataLoginProviderFromEnv() {
   return new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT,
   });
 }

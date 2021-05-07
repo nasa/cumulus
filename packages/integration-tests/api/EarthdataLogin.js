@@ -37,7 +37,7 @@ async function getEarthdataAccessToken({
   const earthdataLoginClient = new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri,
   });
 

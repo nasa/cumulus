@@ -44,7 +44,7 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: 'https://uat.urs.earthdata.nasa.gov',
+    loginUrl: 'https://uat.urs.earthdata.nasa.gov',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 

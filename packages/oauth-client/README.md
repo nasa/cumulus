@@ -29,7 +29,7 @@ const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const client = new EarthdataLogin({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
-  earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+  loginUrl: 'https://earthdata.login.nasa.gov',
   redirectUri: 'http://my-api.com'
 });
 ```
@@ -85,7 +85,7 @@ A client for the Earthdata Login API
 | params | <code>Object</code> |  |
 | params.clientId | <code>string</code> | see example |
 | params.clientPassword | <code>string</code> | see example |
-| params.earthdataLoginUrl | <code>string</code> | see example |
+| params.loginUrl | <code>string</code> | see example |
 | params.redirectUri | <code>string</code> | see example |
 
 **Example**
@@ -93,7 +93,7 @@ A client for the Earthdata Login API
 const oAuth2Provider = new EarthdataLogin({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
-  earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+  loginUrl: 'https://earthdata.login.nasa.gov',
   redirectUri: 'http://my-api.com'
 });
 ```

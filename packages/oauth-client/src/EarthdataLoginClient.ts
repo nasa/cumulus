@@ -14,16 +14,11 @@ const isHttpBadRequestError = (error: unknown) =>
  * A client for the Earthdata Login API
  */
 export class EarthdataLoginClient extends OAuthClient {
-  readonly clientId: string;
-  readonly clientPassword: string;
-  readonly earthdataLoginUrl: string;
-  readonly redirectUri: string;
-
   /**
    * @param {Object} params
    * @param {string} params.clientId - see example
    * @param {string} params.clientPassword - see example
-   * @param {string} params.earthdataLoginUrl - see example
+   * @param {string} params.loginUrl - see example
    * @param {string} params.redirectUri - see example
    *
    * @example
@@ -31,31 +26,10 @@ export class EarthdataLoginClient extends OAuthClient {
    * const oAuth2Provider = new EarthdataLoginClient({
    *   clientId: 'my-client-id',
    *   clientPassword: 'my-client-password',
-   *   earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+   *   loginUrl: 'https://earthdata.login.nasa.gov',
    *   redirectUri: 'http://my-api.com'
    * });
    */
-
-  constructor(
-    params: {
-      clientId: string,
-      clientPassword: string,
-      earthdataLoginUrl: string,
-      redirectUri: string
-    }
-  ) {
-    super({
-      clientId: params.clientId,
-      clientPassword: params.clientPassword,
-      loginUrl: params.earthdataLoginUrl,
-      redirectUri: params.redirectUri,
-    });
-
-    this.clientId = params.clientId;
-    this.clientPassword = params.clientPassword;
-    this.earthdataLoginUrl = params.earthdataLoginUrl;
-    this.redirectUri = params.redirectUri;
-  }
 
   httpErrorToAuthError = (httpError: HTTPError) => {
     if (isHttpBadRequestError(httpError)) {

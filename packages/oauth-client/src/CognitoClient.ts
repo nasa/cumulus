@@ -12,11 +12,6 @@ type CognitoErrorResponse = Response<{
  * A client for the Cognito API
  */
 export class CognitoClient extends OAuthClient {
-  readonly clientId: string;
-  readonly clientPassword: string;
-  readonly loginUrl: string;
-  readonly redirectUri: string;
-
   /**
    * @param {Object} params
    * @param {string} params.clientId - see example
@@ -33,29 +28,6 @@ export class CognitoClient extends OAuthClient {
    *   redirectUri: 'http://my-api.com'
    * });
    */
-
-  constructor(
-    params: {
-      clientId: string,
-      clientPassword: string,
-      loginUrl: string,
-      redirectUri: string
-    }
-  ) {
-    super(params);
-
-    const {
-      clientId,
-      clientPassword,
-      loginUrl,
-      redirectUri,
-    } = params;
-
-    this.clientId = clientId;
-    this.clientPassword = clientPassword;
-    this.loginUrl = loginUrl;
-    this.redirectUri = redirectUri;
-  }
 
   httpErrorToAuthError = (httpError: HTTPError) => {
     const response = <CognitoErrorResponse>httpError.response;

@@ -325,7 +325,7 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns an unex
 test('CognitoClient.getAccessToken() throws a CognitoError with the correct code and message', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const authorizationCode = randomString();
 
   nockAuthPost({
     cognitoClient,
@@ -338,7 +338,7 @@ test('CognitoClient.getAccessToken() throws a CognitoError with the correct code
   });
 
   await t.throwsAsync(
-    cognitoClient.getAccessToken(accessToken),
+    cognitoClient.getAccessToken(authorizationCode),
     {
       instanceOf: CognitoError,
       code: 'UnauthorizedException',

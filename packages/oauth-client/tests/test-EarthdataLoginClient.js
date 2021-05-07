@@ -15,7 +15,7 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
-    earthdataLoginUrl: randomUrl(),
+    loginUrl: randomUrl(),
     redirectUri: randomUrl(),
   });
 
@@ -30,7 +30,7 @@ const nockEarthdataLoginCall = (params) => {
   } = params;
 
   return nock(
-    earthdataLoginClient.earthdataLoginUrl,
+    earthdataLoginClient.loginUrl,
     { reqheaders: requestHeaders }
   )
     .post(path, requestBody)
@@ -50,7 +50,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
     () => {
       new EarthdataLoginClient({
         clientPassword: 'client-password',
-        earthdataLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -66,7 +66,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
     () => {
       new EarthdataLoginClient({
         clientId: 'client-id',
-        earthdataLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -77,7 +77,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
   );
 });
 
-test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
+test('The EarthdataLogin constructor throws a TypeError if loginUrl is not specified', (t) => {
   t.throws(
     () => {
       new EarthdataLoginClient({
@@ -93,13 +93,13 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
   );
 });
 
-test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
+test('The EarthdataLogin constructor throws a TypeError if loginUrl is not a valid URL', (t) => {
   t.throws(
     () => {
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        earthdataLoginUrl: 'asdf',
+        loginUrl: 'asdf',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -113,7 +113,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        earthdataLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
       });
     },
     {
@@ -129,7 +129,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a 
       new EarthdataLoginClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        earthdataLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'asdf',
       });
     },
