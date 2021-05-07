@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v9.0.1] 2021-05-07
+
+### Migration Steps
+
+Please review the migration steps for 9.0.0 as this release is only a patch to
+correct a failure in our build script and push out corrected release artifacts. The previous migration steps still apply.
+
+### Changed
+
+- Corrected `@cumulus/db` configuration to correctly build package.
+
 ## [v9.0.0] 2021-05-03
 
 ### Migration steps
