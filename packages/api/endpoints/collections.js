@@ -133,15 +133,20 @@ async function post(req, res) {
     let dynamoRecord;
     const dbRecord = dynamoRecordToDbRecord(collection);
 
-    await knex.transaction(async (trx) => {
-      await collectionPgModel.create(trx, dbRecord);
-      dynamoRecord = await collectionsModel.create(
-        omit(collection, 'dataType')
-      );
-      // TODO: process.env.ES_INDEX is only used in unit testing, but not
-      // actual deployments, which is a bit confusing
-      await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-    });
+    try {
+      await knex.transaction(async (trx) => {
+        await collectionPgModel.create(trx, dbRecord);
+        dynamoRecord = await collectionsModel.create(
+          omit(collection, 'dataType')
+        );
+        // TODO: process.env.ES_INDEX is only used in unit testing, but not
+        // actual deployments, which is a bit confusing
+        await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      await collectionsModel.delete(collection);
+      throw innerError;
+    }
 
     return res.send({
       message: 'Record saved',

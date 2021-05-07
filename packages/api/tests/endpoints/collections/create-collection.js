@@ -391,7 +391,7 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
 });
 
-test('post() does not write to PostgreSQL if writing to Dynamo fails', async (t) => {
+test('post() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
 
   const collection = fakeCollectionFactory();
@@ -401,6 +401,7 @@ test('post() does not write to PostgreSQL if writing to Dynamo fails', async (t)
     create: () => {
       throw new Error('something bad');
     },
+    delete: () => true,
   };
 
   const expressRequest = {
@@ -417,6 +418,9 @@ test('post() does not write to PostgreSQL if writing to Dynamo fails', async (t)
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
+  t.false(await t.context.esCollectionClient.exists(
+    constructCollectionId(collection.name, collection.version)
+  ));
   t.false(
     await t.context.collectionPgModel.exists(t.context.testKnex, {
       name: collection.name,
@@ -425,7 +429,7 @@ test('post() does not write to PostgreSQL if writing to Dynamo fails', async (t)
   );
 });
 
-test('post() does not write to Dynamo if writing to PostgreSQL fails', async (t) => {
+test('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const collection = fakeCollectionFactory();
 
   const fakeCollectionPgModel = {
@@ -445,5 +449,37 @@ test('post() does not write to Dynamo if writing to PostgreSQL fails', async (t)
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
+  t.false(await t.context.esCollectionClient.exists(
+    constructCollectionId(collection.name, collection.version)
+  ));
+  t.false(await collectionModel.exists(collection.name, collection.version));
+});
+
+test('post() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const expressRequest = {
+    body: collection,
+    testContext: {
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: collection.name,
+      version: collection.version,
+    })
+  );
   t.false(await collectionModel.exists(collection.name, collection.version));
 });
