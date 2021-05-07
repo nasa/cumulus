@@ -41,7 +41,7 @@ const { CognitoClient } = require('@cumulus/oauth-client');
 const client = new CognitoClient({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
-  cognitoLoginUrl: 'https://earthdata.login.nasa.gov',
+  cognitoLoginUrl: 'https://auth.csdap.sit.earthdatacloud.nasa.gov/',
   redirectUri: 'http://my-api.com'
 });
 ```
@@ -187,7 +187,7 @@ A client for the AWS Cognito API
 const oAuth2Provider = new CognitoClient({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
-  cognitoLoginUrl: 'https://cognito.login.nasa.gov',
+  cognitoLoginUrl: 'https://auth.csdap.sit.earthdatacloud.nasa.gov/',
   redirectUri: 'http://my-api.com'
 });
 ```

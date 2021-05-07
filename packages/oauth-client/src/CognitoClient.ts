@@ -36,7 +36,7 @@ export class CognitoClient extends OAuthClient {
    * const oAuth2Provider = new CognitoClient({
    *   clientId: 'my-client-id',
    *   clientPassword: 'my-client-password',
-   *   loginUrl: 'https://earthdata.login.nasa.gov',
+   *   loginUrl: 'https://auth.csdap.sit.earthdatacloud.nasa.gov/',
    *   redirectUri: 'http://my-api.com'
    * });
    */
