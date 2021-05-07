@@ -126,11 +126,12 @@ async function post(req, res) {
   collection.createdAt = Date.now();
 
   try {
+    let dynamoRecord;
     const dbRecord = dynamoRecordToDbRecord(collection);
 
     await knex.transaction(async (trx) => {
       await collectionPgModel.create(trx, dbRecord);
-      await collectionsModel.create(
+      dynamoRecord = await collectionsModel.create(
         omit(collection, 'dataType')
       );
     });
@@ -141,7 +142,7 @@ async function post(req, res) {
 
     return res.send({
       message: 'Record saved',
-      record: collection,
+      record: dynamoRecord,
     });
   } catch (error) {
     if (
