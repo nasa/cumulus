@@ -15,7 +15,7 @@ const buildCognitoClient = () =>
   new CognitoClient({
     clientId: randomId('client-id'),
     clientPassword: randomId('client-password'),
-    cognitoLoginUrl: randomUrl(),
+    loginUrl: randomUrl(),
     redirectUri: randomUrl(),
   });
 
@@ -29,7 +29,7 @@ const nockCognitoGet = (params) => {
   } = params;
 
   return nock(
-    cognitoClient.cognitoLoginUrl,
+    cognitoClient.loginUrl,
     { reqheaders: requestHeaders }
   )
     .get(path)
@@ -47,7 +47,7 @@ const nockAuthPost = (params) => {
   } = params;
 
   return nock(
-    cognitoClient.cognitoLoginUrl,
+    cognitoClient.loginUrl,
     { reqheaders: requestHeaders }
   )
     .post(path, requestBody)
@@ -67,7 +67,7 @@ test('The CognitoClient constructor throws a TypeError if clientId is not specif
     () => {
       new CognitoClient({
         clientPassword: 'client-password',
-        cognitoLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -83,7 +83,7 @@ test('The CognitoClient constructor throws a TypeError if clientPassword is not 
     () => {
       new CognitoClient({
         clientId: 'client-id',
-        cognitoLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -94,7 +94,7 @@ test('The CognitoClient constructor throws a TypeError if clientPassword is not 
   );
 });
 
-test('The CognitoClient constructor throws a TypeError if cognitoLoginUrl is not specified', (t) => {
+test('The CognitoClient constructor throws a TypeError if loginUrl is not specified', (t) => {
   t.throws(
     () => {
       new CognitoClient({
@@ -105,18 +105,18 @@ test('The CognitoClient constructor throws a TypeError if cognitoLoginUrl is not
     },
     {
       instanceOf: TypeError,
-      message: 'cognitoLoginUrl is required',
+      message: 'loginUrl is required',
     }
   );
 });
 
-test('The CognitoClient constructor throws a TypeError if cognitoLoginUrl is not a valid URL', (t) => {
+test('The CognitoClient constructor throws a TypeError if loginUrl is not a valid URL', (t) => {
   t.throws(
     () => {
       new CognitoClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        cognitoLoginUrl: 'asdf',
+        loginUrl: 'asdf',
         redirectUri: 'http://www.example.com/cb',
       });
     },
@@ -130,7 +130,7 @@ test('The CognitoClient constructor throws a TypeError if redirectUri is not spe
       new CognitoClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        cognitoLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
       });
     },
     {
@@ -146,7 +146,7 @@ test('The CognitoClient constructor throws a TypeError if redirectUri is not a v
       new CognitoClient({
         clientId: 'client-id',
         clientPassword: 'client-password',
-        cognitoLoginUrl: 'http://www.example.com',
+        loginUrl: 'http://www.example.com',
         redirectUri: 'asdf',
       });
     },

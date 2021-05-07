@@ -1,5 +1,7 @@
-import got, { CancelableRequest, Response } from 'got';
+import got, { CancelableRequest, HTTPError, Response } from 'got';
 import { URL } from 'url';
+
+import { OAuthError } from './OAuthError';
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
@@ -11,6 +13,11 @@ type AccessTokenResponse = Response<{
   refresh_token: string,
   endpoint: string,
   expires_in: number
+}>;
+
+type OAuthErrorResponse = Response<{
+  error: string,
+  error_description: string,
 }>;
 
 const encodeCredentials = (username: string, password: string) =>
@@ -102,6 +109,22 @@ export class OAuthClient {
     }));
   }
 
+  httpErrorToAuthError = (httpError: HTTPError) => {
+    const response = <OAuthErrorResponse>httpError.response;
+
+    if (response.body && response.body.error) {
+      return new OAuthError(
+        response.body.error,
+        response.body.error_description
+      );
+    }
+
+    return new OAuthError(
+      'UnexpectedResponse',
+      `Unexpected response: ${httpError.response.body}`
+    );
+  };
+
   /**
    * Given an authorization code, request an access token and associated
    * information from the login service.
@@ -118,15 +141,20 @@ export class OAuthClient {
    */
   async getAccessToken(authorizationCode: string): Promise<Object> {
     if (!authorizationCode) throw new TypeError('authorizationCode is required');
-    const response = await this.requestAccessToken(authorizationCode);
 
-    return {
-      accessToken: response.body.access_token,
-      refreshToken: response.body.refresh_token,
-      username: response.body.endpoint.split('/').pop(),
-      // expires_in value is in seconds
-      expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-    };
+    try {
+      const response = await this.requestAccessToken(authorizationCode);
+
+      return {
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
+        // expires_in value is in seconds
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
+      };
+    } catch (error) {
+      throw this.httpErrorToAuthError(error);
+    }
   }
 
   /**
@@ -216,13 +244,17 @@ export class OAuthClient {
   async refreshAccessToken(refreshToken: string): Promise<Object> {
     if (!refreshToken) throw new TypeError('refreshToken is required');
 
-    const response = await this.requestRefreshAccessToken(refreshToken);
+    try {
+      const response = await this.requestRefreshAccessToken(refreshToken);
 
-    return {
-      accessToken: response.body.access_token,
-      refreshToken: response.body.refresh_token,
-      username: response.body.endpoint.split('/').pop(),
-      expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
-    };
+      return {
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
+        expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
+      };
+    } catch (error) {
+      throw this.httpErrorToAuthError(error);
+    }
   }
 }

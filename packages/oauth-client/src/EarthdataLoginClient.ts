@@ -7,27 +7,8 @@ type VerifyTokenResponse = Response<{uid: string}>;
 
 type EarthdataLoginErrorResponse = Response<{error: string}>;
 
-const isHttpForbiddenError = (error: unknown) =>
-  error instanceof HTTPError && error.response.statusCode === 403;
-
 const isHttpBadRequestError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 400;
-
-const httpErrorToEarthdataLoginError = (httpError: HTTPError) => {
-  const response = <EarthdataLoginErrorResponse>httpError.response;
-
-  switch (response.body.error) {
-    case 'invalid_token':
-      return new EarthdataLoginError('InvalidToken', 'Invalid token');
-    case 'token_expired':
-      return new EarthdataLoginError('TokenExpired', 'The token has expired');
-    default:
-      return new EarthdataLoginError(
-        'UnexpectedResponse',
-        `Unexpected response: ${httpError.response.body}`
-      );
-  }
-};
 
 const validateUrl = (urlString: string) => {
   // eslint-disable-next-line no-new
@@ -68,11 +49,6 @@ export class EarthdataLoginClient extends OAuthClient {
       redirectUri: string
     }
   ) {
-    if (!params.clientId) throw new TypeError('clientId is required');
-    if (!params.clientPassword) throw new TypeError('clientPassword is required');
-    if (!params.earthdataLoginUrl) throw new TypeError('earthdataLoginUrl is required');
-    if (!params.redirectUri) throw new TypeError('redirectUri is required');
-
     super({
       clientId: params.clientId,
       clientPassword: params.clientPassword,
@@ -87,6 +63,26 @@ export class EarthdataLoginClient extends OAuthClient {
     validateUrl(params.redirectUri);
     this.redirectUri = params.redirectUri;
   }
+
+  httpErrorToAuthError = (httpError: HTTPError) => {
+    if (isHttpBadRequestError(httpError)) {
+      throw new EarthdataLoginError('BadRequest', httpError.message);
+    }
+
+    const response = <EarthdataLoginErrorResponse>httpError.response;
+
+    switch (response.body.error) {
+      case 'invalid_token':
+        return new EarthdataLoginError('InvalidToken', 'Invalid token');
+      case 'token_expired':
+        return new EarthdataLoginError('TokenExpired', 'The token has expired');
+      default:
+        return new EarthdataLoginError(
+          'UnexpectedResponse',
+          `Unexpected response: ${httpError.response.body}`
+        );
+    }
+  };
 
   /**
    * Query the Earthdata Login API for the UID associated with a token
@@ -128,53 +124,7 @@ export class EarthdataLoginClient extends OAuthClient {
         );
       }
 
-      if (isHttpForbiddenError(error)) {
-        throw httpErrorToEarthdataLoginError(error);
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Given an authorization code, request an access token and associated
-   * information from the EarthdataLogin service. This overrides the
-   * base class for better, EarthdataLogin-specific errors.
-   *
-   * See OAuthClient.getAccessToken(authorizationCode).
-   *
-   * @param {string} authorizationCode - an OAuth2 authorization code
-   * @returns {Promise<Object>} access token information
-   */
-  async getAccessToken(authorizationCode: string): Promise<Object> {
-    try {
-      return await super.getAccessToken(authorizationCode);
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new EarthdataLoginError('BadRequest', error.message);
-      }
-      throw new EarthdataLoginError('Unknown', error.message);
-    }
-  }
-
-  /**
-   * Given a refresh token, request an access token and associated information
-   * from the login service. This overrides the base class for better,
-   * EarthdataLogin-specific errors.
-   *
-   * See OAuthClient.refreshAccessToken(authorizationCode).
-   *
-   * @param {string} refreshToken - an OAuth2 refresh token
-   * @returns {Promise<Object>} access token information
-   */
-  async refreshAccessToken(refreshToken: string): Promise<Object> {
-    try {
-      return await super.refreshAccessToken(refreshToken);
-    } catch (error) {
-      if (isHttpBadRequestError(error)) {
-        throw new EarthdataLoginError('BadRequest', error.message);
-      }
-      throw new EarthdataLoginError('Unknown', error.message);
+      throw this.httpErrorToAuthError(error);
     }
   }
 }

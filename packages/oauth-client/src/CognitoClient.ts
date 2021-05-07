@@ -15,36 +15,20 @@ const validateUrl = (urlString: string) => {
   new URL(urlString);
 };
 
-const httpErrorToCognitoError = (httpError: HTTPError) => {
-  const response = <CognitoErrorResponse>httpError.response;
-
-  if (response.body && response.body.error) {
-    return new CognitoError(
-      response.body.error,
-      response.body.error_description
-    );
-  }
-
-  return new CognitoError(
-    'UnexpectedResponse',
-    `Unexpected response: ${httpError.response.body}`
-  );
-};
-
 /**
  * A client for the Cognito API
  */
 export class CognitoClient extends OAuthClient {
   readonly clientId: string;
   readonly clientPassword: string;
-  readonly cognitoLoginUrl: string;
+  readonly loginUrl: string;
   readonly redirectUri: string;
 
   /**
    * @param {Object} params
    * @param {string} params.clientId - see example
    * @param {string} params.clientPassword - see example
-   * @param {string} params.cognitoLoginUrl - see example
+   * @param {string} params.loginUrl - see example
    * @param {string} params.redirectUri - see example
    *
    * @example
@@ -52,7 +36,7 @@ export class CognitoClient extends OAuthClient {
    * const oAuth2Provider = new CognitoClient({
    *   clientId: 'my-client-id',
    *   clientPassword: 'my-client-password',
-   *   cognitoLoginUrl: 'https://earthdata.login.nasa.gov',
+   *   loginUrl: 'https://earthdata.login.nasa.gov',
    *   redirectUri: 'http://my-api.com'
    * });
    */
@@ -61,29 +45,40 @@ export class CognitoClient extends OAuthClient {
     params: {
       clientId: string,
       clientPassword: string,
-      cognitoLoginUrl: string,
+      loginUrl: string,
       redirectUri: string
     }
   ) {
-    if (!params.clientId) throw new TypeError('clientId is required');
-    if (!params.clientPassword) throw new TypeError('clientPassword is required');
-    if (!params.cognitoLoginUrl) throw new TypeError('cognitoLoginUrl is required');
-    if (!params.redirectUri) throw new TypeError('redirectUri is required');
-
     super({
       clientId: params.clientId,
       clientPassword: params.clientPassword,
-      loginUrl: params.cognitoLoginUrl,
+      loginUrl: params.loginUrl,
       redirectUri: params.redirectUri,
     });
 
     this.clientId = params.clientId;
     this.clientPassword = params.clientPassword;
-    validateUrl(params.cognitoLoginUrl);
-    this.cognitoLoginUrl = params.cognitoLoginUrl;
+    validateUrl(params.loginUrl);
+    this.loginUrl = params.loginUrl;
     validateUrl(params.redirectUri);
     this.redirectUri = params.redirectUri;
   }
+
+  httpErrorToAuthError = (httpError: HTTPError) => {
+    const response = <CognitoErrorResponse>httpError.response;
+
+    if (response.body && response.body.error) {
+      return new CognitoError(
+        response.body.error,
+        response.body.error_description
+      );
+    }
+
+    return new CognitoError(
+      'UnexpectedResponse',
+      `Unexpected response: ${httpError.response.body}`
+    );
+  };
 
   async getUserInfo(accessToken: string) {
     if (!accessToken) throw new TypeError('accessToken is required');
@@ -103,43 +98,7 @@ export class CognitoClient extends OAuthClient {
         );
       }
 
-      throw httpErrorToCognitoError(error);
-    }
-  }
-
-  /**
-   * Given an authorization code, request an access token and associated
-   * information from the Cognito login service. This overrides the
-   * base class for better, Cognito-specific errors.
-   *
-   * See OAuthClient.getAccessToken(authorizationCode).
-   *
-   * @param {string} authorizationCode - an OAuth2 authorization code
-   * @returns {Promise<Object>} access token information
-   */
-  async getAccessToken(authorizationCode: string): Promise<Object> {
-    try {
-      return await super.getAccessToken(authorizationCode);
-    } catch (error) {
-      throw httpErrorToCognitoError(error);
-    }
-  }
-
-  /**
-   * Given a refresh token, request an access token and associated information
-   * from the login service. This overrides the base class for better,
-   * Cognito-specific errors.
-   *
-   * See OAuthClient.refreshAccessToken(authorizationCode).
-   *
-   * @param {string} refreshToken - an OAuth2 refresh token
-   * @returns {Promise<Object>} access token information
-   */
-  async refreshAccessToken(refreshToken: string): Promise<Object> {
-    try {
-      return await super.refreshAccessToken(refreshToken);
-    } catch (error) {
-      throw httpErrorToCognitoError(error);
+      throw this.httpErrorToAuthError(error);
     }
   }
 }

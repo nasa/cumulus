@@ -88,7 +88,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
     },
     {
       instanceOf: TypeError,
-      message: 'earthdataLoginUrl is required',
+      message: 'loginUrl is required',
     }
   );
 });
@@ -392,7 +392,7 @@ test('EarthdataLogin.getAccessToken() throws an EarthdataLoginError for a 401 re
     earthdataLoginClient.getAccessToken(accessToken),
     {
       instanceOf: EarthdataLoginError,
-      code: 'Unknown',
+      code: 'UnexpectedResponse',
     }
   );
 });
@@ -440,7 +440,7 @@ test('EarthdataLogin.refreshAccessToken() throws an EarthdataLoginError for a 40
     earthdataLoginClient.refreshAccessToken(accessToken),
     {
       instanceOf: EarthdataLoginError,
-      code: 'Unknown',
+      code: 'UnexpectedResponse',
     }
   );
 });
