@@ -400,26 +400,3 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
     await cleanupRulesAndQueues(rules, queues);
   });
 });
-
-test.serial('archiveMessage archives all SQS messages', async (t) => {
-  const { rules, queues } = await createRulesAndQueues();
-  const body = { testdata: randomString() };
-  const message = await SQS.sendSQSMessage(
-    queues[0].queueUrl,
-    body
-  );
-  const key = `${process.env.stackName}/archived-incoming-messages/${message.MessageId}`;
-
-  await handler(event);
-
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  }).promise();
-  const messageBody = JSON.parse(JSON.parse(item.Body.toString()));
-  t.deepEqual(messageBody, body);
-
-  t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
-  });
-});

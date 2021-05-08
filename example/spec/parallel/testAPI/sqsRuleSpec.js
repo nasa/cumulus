@@ -7,6 +7,7 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
   receiveSQSMessages,
@@ -185,6 +186,8 @@ describe('The SQS rule', () => {
     });
 
     afterAll(async () => {
+      const key = `${process.env.stackName}/archived-incoming-messages/${messageId}`;
+      await deleteS3Object(config.bucket, key);
       await deleteGranule({ prefix: config.stackName, granuleId });
     });
 

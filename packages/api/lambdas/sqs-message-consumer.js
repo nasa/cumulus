@@ -1,38 +1,14 @@
 'use strict';
 
 const get = require('lodash/get');
-const { envUtils, log } = require('@cumulus/common');
+const { log } = require('@cumulus/common');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { archiveSqsMessageToS3 } = require('@cumulus/ingest/sqs');
 
 const rulesHelpers = require('../lib/rulesHelpers');
 const Rule = require('../models/rules');
-
-/**
- * Archives incoming SQS Message into S3
- *
- * @param {Object} message - SQS message
- * @returns {void}
- */
-async function archiveMessage(message) {
-  const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
-  const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
-  const key = `${stackName}/archived-incoming-messages/${message.MessageId}`;
-  const body = JSON.stringify(message.Body);
-  try {
-    await s3PutObject({
-      Bucket: bucket,
-      Key: key,
-      Body: body,
-    });
-    log.debug(`Archived ${message.MessageId} from queue`);
-  } catch (error) {
-    log.error(`Could not write to bucket. ${error}`);
-    throw error;
-  }
-}
 
 /**
  * Looks up enabled 'sqs'-type rules, and processes the messages from
@@ -89,7 +65,7 @@ async function processQueues(event, dispatchFn) {
     });
 
     log.info(`Processing queue ${queueUrl}`);
-    const messageConsumerFn = dispatchFn.bind({ queueUrl, rulesForQueue });
+    const messageConsumerFn = dispatchFn.bind({ rulesForQueue });
 
     return consumer.consume(messageConsumerFn);
   }));
@@ -106,7 +82,7 @@ async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
   log.info(`Archiving messages from queue ${queueUrl}`);
-  await archiveMessage(message);
+  await archiveSqsMessageToS3(message);
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);

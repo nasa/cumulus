@@ -4,7 +4,7 @@ const get = require('lodash/get');
 
 const { sqs } = require('@cumulus/aws-client/services');
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { deleteArchivedMessageFromS3 } = require('@cumulus/ingest/sqs');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -12,31 +12,10 @@ const {
   isSfExecutionEvent,
   isTerminalSfStatus,
 } = require('@cumulus/common/cloudwatch-event');
-const { envUtils } = require('@cumulus/common');
+
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
-
-/**
- * Deletes archived SQS Message from S3
- *
- * @param {Object} messageId - SQS message ID
- * @returns {void}
- */
-async function deleteArchivedMessage(messageId) {
-  const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
-  const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
-  const key = `${stackName}/archived-incoming-messages/${messageId}`;
-  if (bucket && key) {
-    try {
-      await deleteS3Object(bucket, key);
-      logger.info(`Deleted archived message ${messageId} from S3 at ${bucket}/${key}`);
-    } catch (error) {
-      logger.error(`Could not delete message from bucket. ${error}`);
-      throw error;
-    }
-  }
-}
 
 /**
  * Determine if the SQS queue update is needed for the event
@@ -100,7 +79,7 @@ async function updateSqsQueue(event) {
     logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
     await Promise.all([
       deleteSQSMessage(queueUrl, receiptHandle),
-      deleteArchivedMessage(messageId),
+      deleteArchivedMessageFromS3(messageId),
     ]);
   }
 
