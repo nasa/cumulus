@@ -481,6 +481,32 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
+test.serial.skip('getGranuleTemporalInfo returns temporal information from granule CMR ISO xml file', async (t) => {
+  const cmrXml = await fs.readFile('./tests/fixtures/ATL03_20190101000418_00540208_004_01.cmr_iso.xml', 'utf8');
+  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.xml', granuleId: 'testGranuleId' }]));
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '',
+    endingDateTime: '',
+    productionDateTime: '',
+    lastUpdateDateTime: '',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertCmrFileObject();
+    revertMetaObject();
+  }
+});
+
 test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', async (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
