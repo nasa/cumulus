@@ -16,7 +16,7 @@ function getS3KeyForArchivedMessages(stackName: string, messageId?: string) {
  * Archives incoming SQS Message into S3
  *
  * @param {Object} message - SQS message
- * @returns {void}
+ * @returns {undefined}
  */
 export async function archiveSqsMessageToS3(message: SQSMessage) {
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
@@ -40,7 +40,7 @@ export async function archiveSqsMessageToS3(message: SQSMessage) {
  * Deletes archived SQS Message from S3
  *
  * @param {Object} messageId - SQS message ID
- * @returns {void}
+ * @returns {undefined}
  */
 export async function deleteArchivedMessageFromS3(messageId: string) {
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
