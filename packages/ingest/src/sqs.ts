@@ -46,13 +46,11 @@ export async function deleteArchivedMessageFromS3(messageId: string) {
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
   const key = getS3KeyForArchivedMessages(stackName, messageId);
-  if (bucket && key) {
-    try {
-      await deleteS3Object(bucket, key);
-      logger.info(`Deleted archived message ${messageId} from S3 at ${bucket}/${key}`);
-    } catch (error) {
-      logger.error(`Could not delete message from bucket. ${error}`);
-      throw error;
-    }
+  try {
+    await deleteS3Object(bucket, key);
+    logger.info(`Deleted archived message ${messageId} from S3 at ${bucket}/${key}`);
+  } catch (error) {
+    logger.error(`Could not delete message from bucket. ${error}`);
+    throw error;
   }
 }
