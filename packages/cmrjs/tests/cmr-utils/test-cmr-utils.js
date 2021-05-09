@@ -50,6 +50,8 @@ const {
   },
 });
 
+const sortByURL = (a, b) => (a.URL < b.URL ? -1 : 1);
+
 const launchpadSecret = randomId('launchpad-secret');
 const launchpadPassphrase = randomId('launchpad-passphrase');
 const cmrPasswordSecret = randomId('cmr-password-secret');
@@ -216,16 +218,6 @@ test('constructCmrConceptLink returns umm_json link', (t) => {
   );
 });
 
-test('mapACNMTypeToCMRType returns a mapping', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('EXTENDED METADATA', mapCNMTypeToCMRType('qa'));
-});
-
-test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
-});
-
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
     bucket: 'Echo10FileBucket',
@@ -316,6 +308,10 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf`,
       URLDescription: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+    },
   ];
   const onlineResourcesExpected = [
     {
@@ -328,11 +324,20 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json',
+      Type: 'EXTENDED METADATA',
+      Description: 'This link provides direct download access via S3 to the granule',
+    },
   ];
   const AssociatedBrowseExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg`,
       Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
     },
   ];
 
@@ -346,13 +351,13 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL,
-      onlineAccessURLsExpected);
-    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource,
-      onlineResourcesExpected);
+    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL.sort(sortByURL),
+      onlineAccessURLsExpected.sort(sortByURL));
+    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource.sort(sortByURL),
+      onlineResourcesExpected.sort(sortByURL));
     t.deepEqual(
-      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl,
-      AssociatedBrowseExpected
+      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
+      AssociatedBrowseExpected.sort(sortByURL)
     );
     t.truthy(uploadEchoSpy.calledWith('testXmlString',
       { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
@@ -411,6 +416,21 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA VIA DIRECT ACCESS',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
   ];
 
   try {
@@ -423,7 +443,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.RelatedUrls, expectedRelatedURLs);
+    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
   } finally {
     revertMetaObject();
     revertMockUpload();
@@ -492,10 +512,10 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -512,10 +532,10 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -531,10 +551,10 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -551,10 +571,10 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'none',
+    urlType: 'none',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -571,11 +591,11 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
@@ -592,11 +612,11 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     key: 'folder/key.txt',
   };
 
-  await t.throwsAsync(generateFileUrl({
+  t.throws(() => generateFileUrl({
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   }), { instanceOf: errors.MissingBucketMap });
 });

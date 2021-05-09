@@ -6,6 +6,7 @@ const got = require('got');
 const jwt = require('jsonwebtoken');
 
 const CloudFormation = require('@cumulus/aws-client/CloudFormation');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const SecretsManager = require('@cumulus/aws-client/SecretsManager');
 
 const { getEarthdataAccessToken } = require('./EarthdataLogin');
@@ -106,6 +107,7 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
  * @param {string} params.distributionEndpoint - Distribution API endpoint
  * @param {string} params.bucket - S3 bucket
  * @param {string} params.key - S3 object key
+ * @param {string} params.urlType - url type, distribution or s3
  *
  * @returns {string} - Distribution API file URL
  */
@@ -113,9 +115,12 @@ function getDistributionFileUrl({
   distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT,
   bucket,
   key,
+  urlType = 'distribution',
 }) {
-  const theUrl = new URL(`${bucket}/${key}`, distributionEndpoint);
-  return theUrl.href;
+  if (urlType === 's3') {
+    return buildS3Uri(bucket, key);
+  }
+  return new URL(`${bucket}/${key}`, distributionEndpoint).href;
 }
 
 /**

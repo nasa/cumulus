@@ -94,16 +94,6 @@ module "cumulus" {
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
-
   es_request_concurrency = var.es_request_concurrency
 
   metrics_es_host     = var.metrics_es_host
@@ -188,8 +178,6 @@ module "cumulus" {
   cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
-
-  ems_deploy = var.ems_deploy
 
   tags = local.tags
 }

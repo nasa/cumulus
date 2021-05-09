@@ -196,7 +196,7 @@ test.serial('Collection.exists() returns true when a record exists', async (t) =
       bucket: 'publicbucket',
       regex: '^.*\\.jpg$',
       sampleFileName: 'samplefile.jpg',
-      reportToEms: false,
+      reportToEms: true,
     },
   ];
 
