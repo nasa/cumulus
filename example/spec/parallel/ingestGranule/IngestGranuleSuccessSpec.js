@@ -488,6 +488,12 @@ describe('The S3 Ingest Granules workflow', () => {
     let beforeAllError;
     let teaRequestHeaders;
 
+    let scienceFileUrl;
+    let s3ScienceFileUrl;
+    let browseImageUrl;
+    let s3BrowseImageUrl;
+    let s3CredsUrl;
+
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
@@ -501,7 +507,7 @@ describe('The S3 Ingest Granules workflow', () => {
         granule = postToCmrOutput.payload.granules[0];
         files = granule.files;
 
-        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v5' };
+        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
         const result = await Promise.all([
           getOnlineResources(granule),
           getOnlineResources(ummGranule),
@@ -512,6 +518,12 @@ describe('The S3 Ingest Granules workflow', () => {
         ummCmrResource = result[1];
         resourceURLs = cmrResource.map((resource) => resource.href);
         teaRequestHeaders = result[2];
+
+        scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+        s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
+        browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+        s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
+        s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       } catch (error) {
         beforeAllError = error;
       }
@@ -529,14 +541,12 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-
       console.log('parallel resourceURLs:', resourceURLs);
       console.log('s3CredsUrl:', s3CredsUrl);
 
       expect(resourceURLs).toContain(scienceFileUrl);
+      expect(resourceURLs).toContain(s3ScienceFileUrl);
+      expect(resourceURLs).toContain(browseImageUrl);
       expect(resourceURLs).toContain(s3BrowseImageUrl);
       expect(resourceURLs).toContain(s3CredsUrl);
       expect(resourceURLs).toContain(opendapFilePath);
@@ -544,26 +554,25 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       const resource = ummCmrResource;
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath,
-      });
-      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       const expectedTypes = [
         'GET DATA',
+        'GET DATA VIA DIRECT ACCESS',
         'VIEW RELATED INFORMATION',
+        'VIEW RELATED INFORMATION',
+        'GET RELATED VISUALIZATION',
+        'GET RELATED VISUALIZATION',
         'VIEW RELATED INFORMATION',
         'USE SERVICE API',
-        'GET RELATED VISUALIZATION',
       ];
       const cmrUrls = resource.map((r) => r.URL);
 
-      expect(cmrUrls).toContain(distributionUrl);
+      expect(cmrUrls).toContain(scienceFileUrl);
+      expect(cmrUrls).toContain(s3ScienceFileUrl);
+      expect(cmrUrls).toContain(browseImageUrl);
       expect(cmrUrls).toContain(s3BrowseImageUrl);
       expect(cmrUrls).toContain(s3CredsUrl);
       expect(cmrUrls).toContain(opendapFilePath);
-      expect(expectedTypes.sort()).toEqual(resource.map((r) => r.Type).sort());
+      expect(resource.map((r) => r.Type).sort()).toEqual(expectedTypes.sort());
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {

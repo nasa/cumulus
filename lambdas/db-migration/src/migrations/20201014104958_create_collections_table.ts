@@ -41,7 +41,7 @@ export const up = async (knex: Knex): Promise<void> =>
       );
     table
       .boolean('report_to_ems')
-      .comment('Flag to set if this granule should be reported to EMS');
+      .comment('Flag to set if this collection should be reported to EMS');
     table
       .boolean('ignore_files_config_for_discovery')
       .comment('When true, ignore the collection files config list for determining which files to ingest for a granule. When false, ingest only files that match a regex in the colletion files config list');
