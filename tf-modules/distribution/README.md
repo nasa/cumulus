@@ -62,7 +62,7 @@ module "distribution" {
 
   deploy_s3_credentials_endpoint = true
   cmr_provider                   = "CUMULUS"
-  cmr_acl_based_credentials           = true
+  cmr_acl_based_credentials      = true
 
   vpc_id     = "vpc-123"
   subnet_ids = ["subnet-123", "subnet-456"]
