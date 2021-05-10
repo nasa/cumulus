@@ -13,7 +13,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
-  tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
@@ -230,13 +229,18 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const { name, version } = req.params;
-  const collectionsModel = new models.Collection();
+  const {
+    collectionsModel = new models.Collection(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    // esClient = await Search.es(),
+  } = req.testContext || {};
 
-  const knex = await getKnexClient({ env: process.env });
+  const { name, version } = req.params;
+
   try {
     await knex.transaction(async (trx) => {
-      await trx(tableNames.collections).where({ name, version }).del();
+      await collectionPgModel.delete(trx, { name, version });
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
         const collectionId = constructCollectionId(name, version);

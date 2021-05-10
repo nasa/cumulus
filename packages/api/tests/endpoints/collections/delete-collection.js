@@ -17,13 +17,16 @@ const {
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   fakeCollectionFactory,
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
@@ -36,9 +39,6 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-
-const esIndex = randomString();
-let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -60,9 +60,9 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -76,8 +76,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  esClient = await Search.es('fakehost');
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();
@@ -99,7 +97,7 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
   await ruleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
