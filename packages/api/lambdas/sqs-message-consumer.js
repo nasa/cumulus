@@ -81,8 +81,7 @@ async function processQueues(event, dispatchFn) {
 async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
-  log.info(`Archiving messages from queue ${queueUrl}`);
-  await archiveSqsMessageToS3(message);
+  await archiveSqsMessageToS3(queueUrl, message);
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);

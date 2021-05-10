@@ -27,8 +27,9 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.serial('archiveSqsMessageToS3 archives all SQS messages', async (t) => {
+test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   const queues = await createSqsQueues(randomString());
+  const queueUrl = 'fakeQueueUrl';
   await Promise.all(
     range(4).map(() =>
       SQS.sendSQSMessage(
@@ -43,7 +44,7 @@ test.serial('archiveSqsMessageToS3 archives all SQS messages', async (t) => {
   const deriveKey = (m) => `${process.env.stackName}/archived-incoming-messages/${m.MessageId}`;
   const keys = messages.map((m) => deriveKey(m));
 
-  await Promise.all(messages.map(async (m) => archiveSqsMessageToS3(m)));
+  await Promise.all(messages.map(async (m) => archiveSqsMessageToS3(queueUrl, m)));
 
   const items = await Promise.all(keys.map(async (k) =>
     (s3().getObject({
@@ -56,7 +57,7 @@ test.serial('archiveSqsMessageToS3 archives all SQS messages', async (t) => {
   items.every(msgBody);
 });
 
-test.serial('deleteArchivedMessages deletes archived message in S3', async (t) => {
+test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
 

@@ -7,7 +7,7 @@ import { s3PutObject, deleteS3Object } from '@cumulus/aws-client/S3';
 
 const logger = new Logger({ sender: '@cumulus/ingest/sqs' });
 
-function getS3KeyForArchivedMessage(stackName: string, messageId: string) {
+export function getS3KeyForArchivedMessage(stackName: string, messageId: string) {
   const key = `${stackName}/archived-incoming-messages/${messageId}`;
   return key;
 }
@@ -15,21 +15,23 @@ function getS3KeyForArchivedMessage(stackName: string, messageId: string) {
 /**
  * Archives incoming SQS Message into S3
  *
+ * @param {string} queueUrl - Queue URL
  * @param {Object} message - SQS message
  * @returns {undefined}
  */
-export async function archiveSqsMessageToS3(message: SQSMessage) {
+export async function archiveSqsMessageToS3(queueUrl:string, message: SQSMessage) {
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
 
   if (!message.MessageId) {
-    const error = new Error(`MessageId on message ${message} required but not found.`)
+    const error = new Error(`MessageId on message ${message} required but not found.`);
     logger.error(error.message);
     throw error;
   }
 
   const key = getS3KeyForArchivedMessage(stackName, message.MessageId);
   const body = JSON.stringify(message.Body);
+  logger.info(`Archiving messages from queue ${queueUrl}`);
   try {
     await s3PutObject({
       Bucket: bucket,
