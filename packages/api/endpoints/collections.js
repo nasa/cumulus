@@ -131,6 +131,9 @@ async function post(req, res) {
 
     const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
+    console.log('Used Knex Konnections::::', dbClient.client.pool.numUsed());
+    console.log('Free Knex Konnections::::', dbClient.client.pool.numFree());
+
     try {
       await dbClient('collections').insert(dbRecord, 'cumulus_id');
     } catch (error) {

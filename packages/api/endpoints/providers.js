@@ -104,6 +104,9 @@ async function post(req, res) {
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
+    console.log('Used Knex Konnections::::', knex.client.pool.numUsed());
+    console.log('Free Knex Konnections::::', knex.client.pool.numFree());
+
     await knex.transaction(async (trx) => {
       await providerPgModel.create(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
