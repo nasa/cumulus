@@ -14,6 +14,7 @@ const {
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
+
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const {
@@ -23,6 +24,9 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { put } = require('../../../endpoints/collections');
+
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -48,6 +52,22 @@ process.env = {
 };
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
+
+const createRecordsInDynamoAndPg = async (context, collectionParams) => {
+  const { testKnex, collectionPgModel } = context;
+  const originalCollection = fakeCollectionFactory(collectionParams);
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await collectionPgModel.get(
+    testKnex, { cumulus_id: collectionCumulusId }
+  );
+  return {
+    originalCollection,
+    originalPgRecord,
+  };
+};
 
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
@@ -108,19 +128,14 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-  const knex = t.context.testKnex;
-  const originalCollection = fakeCollectionFactory({
-    duplicateHandling: 'replace',
-    process: randomString(),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-
-  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
-  await collectionModel.create(originalCollection);
-  const pgId = await t.context.collectionPgModel.create(t.context.testKnex, insertPgRecord);
-  const originalPgRecord = await t.context.collectionPgModel.get(
-    knex, { cumulus_id: pgId[0] }
+  const { originalCollection, originalPgRecord } = await createRecordsInDynamoAndPg(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: randomString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
   );
 
   const updatedCollection = {
@@ -143,7 +158,7 @@ test('PUT replaces an existing collection', async (t) => {
     version: originalCollection.version,
   });
 
-  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+  const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
   });
@@ -166,15 +181,15 @@ test('PUT replaces an existing collection', async (t) => {
 });
 
 test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
-  const knex = t.context.testKnex;
-  const originalCollection = fakeCollectionFactory({
-    duplicateHandling: 'replace',
-    process: randomString(),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-
-  await collectionModel.create(originalCollection);
+  const { originalCollection } = await createRecordsInDynamoAndPg(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: randomString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+  );
 
   const updatedCollection = {
     ...originalCollection,
@@ -195,7 +210,7 @@ test('PUT replaces an existing collection in Dynamo and PG with correct timestam
     version: originalCollection.version,
   });
 
-  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+  const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
   });
@@ -298,3 +313,61 @@ test('PUT returns 400 for version mismatch between params and payload',
     t.truthy(message);
     t.falsy(record);
   });
+
+test('put() does not write to PostgreSQL if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+  const { originalCollection, originalPgRecord } = await createRecordsInDynamoAndPg(
+    t.context,
+    {
+      duplicateHandling: 'error',
+    }
+  );
+
+  const fakeCollectionsModel = {
+    get: async () => originalCollection,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const updatedCollection = {
+    ...originalCollection,
+    duplicateHandling: 'replace',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: updatedCollection,
+    testContext: {
+      knex: testKnex,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  // t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.deepEqual(
+    await collectionModel.get({
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalCollection
+  );
+  t.deepEqual(
+    await t.context.collectionPgModel.get(t.context.testKnex, {
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalPgRecord
+  );
+});

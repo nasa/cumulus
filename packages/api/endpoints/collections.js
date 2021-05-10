@@ -174,6 +174,13 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
+  const {
+    collectionsModel = new models.Collection(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    // esClient = await Search.es(),
+  } = req.testContext || {};
+
   const { name, version } = req.params;
   const collection = req.body;
   let dynamoRecord;
@@ -184,8 +191,6 @@ async function put(req, res) {
       + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
       + ` and '${collection.version}' in payload`);
   }
-  const collectionsModel = new models.Collection();
-  const collectionPgModel = new CollectionPgModel();
 
   try {
     oldCollection = await collectionsModel.get({ name, version });
@@ -201,8 +206,7 @@ async function put(req, res) {
 
   const postgresCollection = dynamoRecordToDbRecord(collection);
 
-  const dbClient = await getKnexClient();
-  await dbClient.transaction(async (trx) => {
+  await knex.transaction(async (trx) => {
     await collectionPgModel.upsert(trx, postgresCollection);
     dynamoRecord = await collectionsModel.create(collection);
   });
