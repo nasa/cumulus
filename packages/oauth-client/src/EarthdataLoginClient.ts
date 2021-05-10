@@ -38,6 +38,13 @@ export class EarthdataLoginClient extends OAuthClient {
 
     const response = <EarthdataLoginErrorResponse>httpError.response;
 
+    if (!response) {
+      throw new EarthdataLoginError(
+        'UnexpectedResponse',
+        `Unexpected response: ${httpError}`
+      );
+    }
+
     switch (response.body.error) {
       case 'invalid_token':
         return new EarthdataLoginError('InvalidToken', 'Invalid token');
