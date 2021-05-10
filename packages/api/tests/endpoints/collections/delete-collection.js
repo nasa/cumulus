@@ -32,6 +32,7 @@ const {
 } = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { del } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -41,6 +42,9 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+
+const { buildFakeExpressResponse } = require('../utils');
+
 const { createTestRecords } = require('./utils');
 
 let jwtAuthToken;
@@ -261,4 +265,162 @@ test('Attempting to delete a collection with an associated rule does not delete 
     .expect(409);
 
   t.true(await t.context.collectionModel.exists(testCollection.name, testCollection.version));
+});
+
+test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+  const {
+    originalCollection,
+  } = await createTestRecords(
+    t.context
+  );
+
+  const fakeCollectionsModel = {
+    get: async () => originalCollection,
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: async () => true,
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: originalCollection,
+    testContext: {
+      knex: t.context.testKnex,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.collectionModel.get({
+      name: originalCollection.name,
+      version: originalCollection.version,
+    }),
+    originalCollection
+  );
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    })
+  );
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalCollection,
+  } = await createTestRecords(
+    t.context
+  );
+
+  const fakeCollectionPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: originalCollection,
+    testContext: {
+      knex: t.context.testKnex,
+      collectionPgModel: fakeCollectionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.collectionModel.get({
+      name: originalCollection.name,
+      version: originalCollection.version,
+    }),
+    originalCollection
+  );
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    })
+  );
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalCollection,
+  } = await createTestRecords(
+    t.context
+  );
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: originalCollection,
+    testContext: {
+      knex: t.context.testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.collectionModel.get({
+      name: originalCollection.name,
+      version: originalCollection.version,
+    }),
+    originalCollection
+  );
+  t.true(
+    await t.context.collectionPgModel.exists(t.context.testKnex, {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    })
+  );
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    )
+  );
 });
