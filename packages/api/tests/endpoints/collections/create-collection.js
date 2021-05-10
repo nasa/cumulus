@@ -182,7 +182,7 @@ test('POST creates a new collection in all data stores', async (t) => {
   ));
 });
 
-test('POST creates a new collection in Dynamo and PG with correct timestamps', async (t) => {
+test('POST creates a new collection in all data stores with correct timestamps', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)

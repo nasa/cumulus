@@ -14,6 +14,9 @@ const {
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -22,7 +25,9 @@ const {
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
+const EsCollection = require('../../../es/collections');
 const { Search } = require('../../../es/search');
+const { indexCollection } = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
 
@@ -37,9 +42,6 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
@@ -53,8 +55,13 @@ process.env = {
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
-const createRecordsInDynamoAndPg = async (context, collectionParams) => {
-  const { testKnex, collectionPgModel } = context;
+const createTestRecords = async (context, collectionParams) => {
+  const {
+    testKnex,
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+  } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
@@ -63,9 +70,14 @@ const createRecordsInDynamoAndPg = async (context, collectionParams) => {
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: collectionCumulusId }
   );
+  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
+  const originalEsRecord = await esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
   return {
     originalCollection,
     originalPgRecord,
+    originalEsRecord,
   };
 };
 
@@ -75,9 +87,16 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.collectionPgModel = new CollectionPgModel();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  t.context.esIndex = randomString();
+  t.context.esAlias = randomString();
+  process.env.ES_INDEX = t.context.esIndex;
+  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  t.context.esClient = await Search.es('fakehost');
+  t.context.esCollectionClient = new EsCollection(
+    {},
+    undefined,
+    t.context.esIndex
+  );
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -91,14 +110,13 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await Search.es('fakehost');
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await t.context.esClient.indices.delete({ index: t.context.esIndex });
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -128,7 +146,11 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
-  const { originalCollection, originalPgRecord } = await createRecordsInDynamoAndPg(
+  const {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createTestRecords(
     t.context,
     {
       duplicateHandling: 'replace',
@@ -171,6 +193,21 @@ test('PUT replaces an existing collection', async (t) => {
     updatedAt: actualCollection.updatedAt,
   });
 
+  const updatedEsRecord = await t.context.esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+  t.like(
+    updatedEsRecord,
+    {
+      ...originalEsRecord,
+      duplicateHandling: 'error',
+      process: undefined,
+      createdAt: originalCollection.createdAt,
+      updatedAt: actualCollection.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
   t.deepEqual(actualPgCollection, {
     ...originalPgRecord,
     duplicate_handling: 'error',
@@ -180,8 +217,8 @@ test('PUT replaces an existing collection', async (t) => {
   });
 });
 
-test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
-  const { originalCollection } = await createRecordsInDynamoAndPg(
+test('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
+  const { originalCollection } = await createTestRecords(
     t.context,
     {
       duplicateHandling: 'replace',
@@ -215,6 +252,10 @@ test('PUT replaces an existing collection in Dynamo and PG with correct timestam
     version: originalCollection.version,
   });
 
+  const updatedEsRecord = await t.context.esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+
   // Endpoint logic will set an updated timestamp and ignore the value from the request
   // body, so value on actual records should be different (greater) than the value
   // sent in the request body
@@ -224,6 +265,8 @@ test('PUT replaces an existing collection in Dynamo and PG with correct timestam
   // PG and Dynamo records have the same timestamps
   t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
   t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
+  t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
 test('PUT creates a new record in RDS if one does not exist', async (t) => {
@@ -316,7 +359,7 @@ test('PUT returns 400 for version mismatch between params and payload',
 
 test('put() does not write to PostgreSQL if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
-  const { originalCollection, originalPgRecord } = await createRecordsInDynamoAndPg(
+  const { originalCollection, originalPgRecord } = await createTestRecords(
     t.context,
     {
       duplicateHandling: 'error',
@@ -353,8 +396,6 @@ test('put() does not write to PostgreSQL if writing to Dynamo fails', async (t) 
     put(expressRequest, response),
     { message: 'something bad' }
   );
-
-  // t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   t.deepEqual(
     await collectionModel.get({
