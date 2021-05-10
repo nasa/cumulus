@@ -13,6 +13,9 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
 } = require('@cumulus/db');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
@@ -22,13 +25,13 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
+const EsCollection = require('../../../es/collections');
 const {
   createTestIndex,
   cleanupTestIndex,
 } = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
-const { dynamoRecordToDbRecord } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -38,6 +41,7 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+const { createTestRecords } = require('./utils');
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -61,6 +65,11 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  t.context.esCollectionClient = new EsCollection(
+    {},
+    undefined,
+    t.context.esIndex
+  );
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -133,59 +142,71 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it from all data stores', async (t) => {
-  const collection = fakeCollectionFactory();
-  const createdCollectionRecord = await t.context.collectionModel.create(collection);
+  const { originalCollection } = await createTestRecords(t.context);
 
-  const dbRecord = dynamoRecordToDbRecord(createdCollectionRecord);
-  await t.context.collectionPgModel.create(t.context.testKnex, dbRecord);
+  t.true(
+    await t.context.collectionModel.exists(
+      originalCollection.name,
+      originalCollection.version
+    )
+  );
+  t.true(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  }));
+  t.true(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    )
+  );
 
   await request(app)
-    .delete(`/collections/${collection.name}/${collection.version}`)
+    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const response = await request(app)
-    .get(`/collections/${collection.name}/${collection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
-
+  t.false(
+    await t.context.collectionModel.exists(
+      originalCollection.name,
+      originalCollection.version
+    )
+  );
   t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
-    name: collection.name,
-    version: collection.version,
+    name: originalCollection.name,
+    version: originalCollection.version,
   }));
+  t.false(
+    await t.context.esCollectionClient.exists(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    )
+  );
 });
 
 test('Deleting a collection without a record in RDS succeeds', async (t) => {
-  const collection = fakeCollectionFactory();
-  await t.context.collectionModel.create(collection);
+  const { testCollection } = t.context;
 
   await request(app)
-    .delete(`/collections/${collection.name}/${collection.version}`)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const response = await request(app)
-    .get(`/collections/${collection.name}/${collection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
+  t.false(
+    await t.context.collectionModel.exists(
+      testCollection.name,
+      testCollection.version
+    )
+  );
 });
 
 test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
-  const collection = fakeCollectionFactory();
-  await t.context.collectionModel.create(collection);
+  const { testCollection } = t.context;
 
   const rule = fakeRuleFactoryV2({
     collection: {
-      name: collection.name,
-      version: collection.version,
+      name: testCollection.name,
+      version: testCollection.version,
     },
     rule: {
       type: 'onetime',
@@ -202,7 +223,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   await ruleModel.create(rule);
 
   const response = await request(app)
-    .delete(`/collections/${collection.name}/${collection.version}`)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
@@ -212,13 +233,12 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
 });
 
 test('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
-  const collection = fakeCollectionFactory();
-  await t.context.collectionModel.create(collection);
+  const { testCollection } = t.context;
 
   const rule = fakeRuleFactoryV2({
     collection: {
-      name: collection.name,
-      version: collection.version,
+      name: testCollection.name,
+      version: testCollection.version,
     },
     rule: {
       type: 'onetime',
@@ -235,10 +255,10 @@ test('Attempting to delete a collection with an associated rule does not delete 
   await ruleModel.create(rule);
 
   await request(app)
-    .delete(`/collections/${collection.name}/${collection.version}`)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
 
-  t.true(await t.context.collectionModel.exists(collection.name, collection.version));
+  t.true(await t.context.collectionModel.exists(testCollection.name, testCollection.version));
 });
