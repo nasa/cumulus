@@ -233,7 +233,7 @@ async function del(req, res) {
     collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    // esClient = await Search.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -242,15 +242,13 @@ async function del(req, res) {
     await knex.transaction(async (trx) => {
       await collectionPgModel.delete(trx, { name, version });
       await collectionsModel.delete({ name, version });
-      if (inTestMode()) {
-        const collectionId = constructCollectionId(name, version);
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: collectionId,
-          index: process.env.ES_INDEX,
-          type: 'collection',
-        }, { ignore: [404] });
-      }
+      const collectionId = constructCollectionId(name, version);
+      await esClient.delete({
+        id: collectionId,
+        index: process.env.ES_INDEX,
+        type: 'collection',
+        refresh: inTestMode(),
+      }, { ignore: [404] });
     });
     return res.send({ message: 'Record deleted' });
   } catch (error) {
