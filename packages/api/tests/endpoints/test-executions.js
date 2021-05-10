@@ -2,11 +2,21 @@
 
 const test = require('ava');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
+
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  localStackConnectionEnv,
+  fakeExecutionRecordFactory,
+} = require('@cumulus/db');
+
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
@@ -17,6 +27,7 @@ const {
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
+const { migrationDir } = require('../../../../lambdas/db-migration');
 
 // create all the variables needed across this test
 let esClient;
@@ -30,12 +41,13 @@ process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
+const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
 let jwtAuthToken;
 let accessTokenModel;
 let executionModel;
 
-test.before(async () => {
+test.before(async (t) => {
   esIndex = randomString();
   // create esClient
   esClient = await Search.es('fakehost');
@@ -66,13 +78,26 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName };
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -146,17 +171,25 @@ test('executions can be filtered by workflow', async (t) => {
 });
 
 test('GET returns an existing execution', async (t) => {
+  const executionRecord = await fakeExecutionRecordFactory();
+  const executionPgModel = new ExecutionPgModel();
+
+  await executionPgModel.create(
+    t.context.knex,
+    executionRecord
+  );
+  t.teardown(() => executionPgModel.delete(t.context.knex, executionRecord));
+
   const response = await request(app)
-    .get(`/executions/${fakeExecutions[0].arn}`)
+    .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const executionResult = response.body;
-  t.is(executionResult.arn, fakeExecutions[0].arn);
-  t.is(executionResult.name, fakeExecutions[0].name);
-  t.truthy(executionResult.duration);
-  t.is(executionResult.status, 'completed');
+  t.is(executionResult.arn, executionRecord.arn);
+  t.is(executionResult.name, executionRecord.name);
+  t.is(executionResult.status, 'running');
 });
 
 test('GET fails if execution is not found', async (t) => {

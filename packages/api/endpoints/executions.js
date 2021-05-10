@@ -2,8 +2,12 @@
 
 const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const {
+  getKnexClient,
+  ExecutionPgModel,
+} = require('@cumulus/db');
+
 const Search = require('../es/search').Search;
-const models = require('../models');
 
 /**
  * List and search executions
@@ -32,10 +36,10 @@ async function list(req, res) {
 async function get(req, res) {
   const arn = req.params.arn;
 
-  const e = new models.Execution();
-
+  const knex = await getKnexClient({ env: process.env });
+  const executionPgModel = new ExecutionPgModel();
   try {
-    const response = await e.get({ arn });
+    const response = await executionPgModel.get(knex, { arn });
     return res.send(response);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
