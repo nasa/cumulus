@@ -71,7 +71,7 @@ test('getKnexConfig returns an expected default configuration object', async (t)
     debug: false,
     pool: {
       min: 0,
-      max: 2,
+      max: 20,
       idleTimeoutMillis: 1000,
       createTimeoutMillis: 60000,
     },
