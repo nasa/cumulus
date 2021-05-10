@@ -205,13 +205,19 @@ async function put(req, res) {
 
   const postgresCollection = dynamoRecordToDbRecord(collection);
 
-  await knex.transaction(async (trx) => {
-    await collectionPgModel.upsert(trx, postgresCollection);
-    dynamoRecord = await collectionsModel.create(collection);
-    // process.env.ES_INDEX is only used to isolate the index for
-    // each unit test suite
-    await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-  });
+  try {
+    await knex.transaction(async (trx) => {
+      await collectionPgModel.upsert(trx, postgresCollection);
+      dynamoRecord = await collectionsModel.create(collection);
+      // process.env.ES_INDEX is only used to isolate the index for
+      // each unit test suite
+      await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+    });
+  } catch (error) {
+    // Revert Dynamo record update if any write fails
+    await collectionsModel.create(oldCollection);
+    throw error;
+  }
 
   return res.send(dynamoRecord);
 }

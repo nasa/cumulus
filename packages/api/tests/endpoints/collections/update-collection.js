@@ -357,9 +357,13 @@ test('PUT returns 400 for version mismatch between params and payload',
     t.falsy(record);
   });
 
-test('put() does not write to PostgreSQL if writing to Dynamo fails', async (t) => {
+test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
-  const { originalCollection, originalPgRecord } = await createTestRecords(
+  const {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createTestRecords(
     t.context,
     {
       duplicateHandling: 'error',
@@ -410,5 +414,137 @@ test('put() does not write to PostgreSQL if writing to Dynamo fails', async (t) 
       version: updatedCollection.version,
     }),
     originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esCollectionClient.get(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'error',
+    }
+  );
+
+  const fakeCollectionPgModel = {
+    upsert: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedCollection = {
+    ...originalCollection,
+    duplicateHandling: 'replace',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: updatedCollection,
+    testContext: {
+      knex: testKnex,
+      collectionPgModel: fakeCollectionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await collectionModel.get({
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalCollection
+  );
+  t.deepEqual(
+    await t.context.collectionPgModel.get(t.context.testKnex, {
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esCollectionClient.get(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'error',
+    }
+  );
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedCollection = {
+    ...originalCollection,
+    duplicateHandling: 'replace',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: updatedCollection,
+    testContext: {
+      knex: testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await collectionModel.get({
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalCollection
+  );
+  t.deepEqual(
+    await t.context.collectionPgModel.get(t.context.testKnex, {
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esCollectionClient.get(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    ),
+    originalEsRecord
   );
 });
