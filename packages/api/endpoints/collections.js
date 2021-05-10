@@ -18,7 +18,6 @@ const {
 } = require('@cumulus/db');
 const { Search } = require('../es/search');
 const {
-  addToLocalES,
   indexCollection,
 } = require('../es/indexer');
 const models = require('../models');
@@ -178,7 +177,7 @@ async function put(req, res) {
     collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    // esClient = await Search.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -209,11 +208,10 @@ async function put(req, res) {
   await knex.transaction(async (trx) => {
     await collectionPgModel.upsert(trx, postgresCollection);
     dynamoRecord = await collectionsModel.create(collection);
+    // process.env.ES_INDEX is only used to isolate the index for
+    // each unit test suite
+    await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
   });
-
-  if (inTestMode()) {
-    await addToLocalES(dynamoRecord, indexCollection);
-  }
 
   return res.send(dynamoRecord);
 }
