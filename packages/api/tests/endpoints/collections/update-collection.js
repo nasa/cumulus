@@ -19,14 +19,16 @@ const {
 } = require('@cumulus/message/Collections');
 
 const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
-const { Search } = require('../../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../../es/testUtils');
 const { indexCollection } = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
@@ -87,11 +89,9 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.collectionPgModel = new CollectionPgModel();
 
-  t.context.esIndex = randomString();
-  t.context.esAlias = randomString();
-  process.env.ES_INDEX = t.context.esIndex;
-  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
-  t.context.esClient = await Search.es('fakehost');
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
   t.context.esCollectionClient = new EsCollection(
     {},
     undefined,
@@ -116,7 +116,7 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await t.context.esClient.indices.delete({ index: t.context.esIndex });
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
