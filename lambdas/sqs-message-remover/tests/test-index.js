@@ -12,6 +12,7 @@ const {
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
+const { getObject } = require('@cumulus/aws-client/S3');
 
 const { updateSqsQueue } = require('..');
 
@@ -271,8 +272,8 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
   });
 
   await updateSqsQueue(eventMessage);
-  await t.throwsAsync(s3().getObject({
+  await t.throwsAsync(getObject(s3(), {
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise(), { code: 'NoSuchKey' });
+  }), { code: 'NoSuchKey' });
 });
