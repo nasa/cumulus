@@ -12,7 +12,6 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   localStackConnectionEnv,
-  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -29,11 +28,12 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('../../../es/testUtils');
-const { indexCollection } = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
 
 const { buildFakeExpressResponse } = require('../utils');
+
+const { createTestRecords } = require('./utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -46,7 +46,6 @@ const { app } = require('../../../app');
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
 
 const testDbName = randomString(12);
 process.env = {
@@ -56,32 +55,6 @@ process.env = {
 };
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
-
-const createTestRecords = async (context, collectionParams) => {
-  const {
-    testKnex,
-    collectionPgModel,
-    esClient,
-    esCollectionClient,
-  } = context;
-  const originalCollection = fakeCollectionFactory(collectionParams);
-
-  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
-  await collectionModel.create(originalCollection);
-  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
-  const originalPgRecord = await collectionPgModel.get(
-    testKnex, { cumulus_id: collectionCumulusId }
-  );
-  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
-  const originalEsRecord = await esCollectionClient.get(
-    constructCollectionId(originalCollection.name, originalCollection.version)
-  );
-  return {
-    originalCollection,
-    originalPgRecord,
-    originalEsRecord,
-  };
-};
 
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
@@ -100,8 +73,8 @@ test.before(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await collectionModel.createTable();
+  t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
+  await t.context.collectionModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -114,7 +87,7 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await collectionModel.deleteTable();
+  await t.context.collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
@@ -175,7 +148,7 @@ test('PUT replaces an existing collection', async (t) => {
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await collectionModel.get({
+  const actualCollection = await t.context.collectionModel.get({
     name: originalCollection.name,
     version: originalCollection.version,
   });
@@ -242,7 +215,7 @@ test('PUT replaces an existing collection in all data stores with correct timest
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await collectionModel.get({
+  const actualCollection = await t.context.collectionModel.get({
     name: originalCollection.name,
     version: originalCollection.version,
   });
@@ -276,7 +249,7 @@ test('PUT creates a new record in RDS if one does not exist', async (t) => {
     process: randomString(),
   });
 
-  await collectionModel.create(originalCollection);
+  await t.context.collectionModel.create(originalCollection);
 
   const updatedCollection = {
     ...originalCollection,
@@ -292,7 +265,7 @@ test('PUT creates a new record in RDS if one does not exist', async (t) => {
     .send(updatedCollection)
     .expect(200);
 
-  const fetchedDynamoRecord = await collectionModel.get({
+  const fetchedDynamoRecord = await t.context.collectionModel.get({
     name: updatedCollection.name,
     version: updatedCollection.version,
   });
@@ -402,7 +375,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
   );
 
   t.deepEqual(
-    await collectionModel.get({
+    await t.context.collectionModel.get({
       name: updatedCollection.name,
       version: updatedCollection.version,
     }),
@@ -465,7 +438,7 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
   );
 
   t.deepEqual(
-    await collectionModel.get({
+    await t.context.collectionModel.get({
       name: updatedCollection.name,
       version: updatedCollection.version,
     }),
@@ -528,7 +501,7 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
   );
 
   t.deepEqual(
-    await collectionModel.get({
+    await t.context.collectionModel.get({
       name: updatedCollection.name,
       version: updatedCollection.version,
     }),

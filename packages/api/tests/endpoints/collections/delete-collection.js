@@ -22,7 +22,6 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -42,7 +41,6 @@ const { app } = require('../../../app');
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
 let ruleModel;
 
 const testDbName = randomString(12);
@@ -66,8 +64,8 @@ test.before(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await collectionModel.createTable();
+  t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
+  await t.context.collectionModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -90,12 +88,12 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
+  await t.context.collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await collectionModel.deleteTable();
+  await t.context.collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
   await ruleModel.deleteTable();
@@ -115,7 +113,7 @@ test('Attempting to delete a collection without an Authorization header returns 
 
   t.is(response.status, 401);
   t.true(
-    await collectionModel.exists(
+    await t.context.collectionModel.exists(
       testCollection.name,
       testCollection.version
     )
@@ -134,9 +132,9 @@ test('Attempting to delete a collection with an invalid access token returns an 
 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
-test('Deleting a collection removes it', async (t) => {
+test('Deleting a collection removes it from all data stores', async (t) => {
   const collection = fakeCollectionFactory();
-  const createdCollectionRecord = await collectionModel.create(collection);
+  const createdCollectionRecord = await t.context.collectionModel.create(collection);
 
   const dbRecord = dynamoRecordToDbRecord(createdCollectionRecord);
   await t.context.collectionPgModel.create(t.context.testKnex, dbRecord);
@@ -163,7 +161,7 @@ test('Deleting a collection removes it', async (t) => {
 
 test('Deleting a collection without a record in RDS succeeds', async (t) => {
   const collection = fakeCollectionFactory();
-  await collectionModel.create(collection);
+  await t.context.collectionModel.create(collection);
 
   await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)
@@ -182,7 +180,7 @@ test('Deleting a collection without a record in RDS succeeds', async (t) => {
 
 test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
   const collection = fakeCollectionFactory();
-  await collectionModel.create(collection);
+  await t.context.collectionModel.create(collection);
 
   const rule = fakeRuleFactoryV2({
     collection: {
@@ -215,7 +213,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
 
 test('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
   const collection = fakeCollectionFactory();
-  await collectionModel.create(collection);
+  await t.context.collectionModel.create(collection);
 
   const rule = fakeRuleFactoryV2({
     collection: {
@@ -242,5 +240,5 @@ test('Attempting to delete a collection with an associated rule does not delete 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
 
-  t.true(await collectionModel.exists(collection.name, collection.version));
+  t.true(await t.context.collectionModel.exists(collection.name, collection.version));
 });
