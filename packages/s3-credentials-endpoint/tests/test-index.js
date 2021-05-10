@@ -40,6 +40,7 @@ const displayS3CredentialInstructions = index.__get__('displayS3CredentialInstru
 const parseBucketKey = index.__get__('parseBucketKey');
 const formatAllowedBucketKeys = index.__get__('formatAllowedBucketKeys');
 const fetchPolicyForUser = index.__get__('fetchPolicyForUser');
+const configuredForACLCredentials = index.__get__('configuredForACLCredentials');
 
 const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
@@ -361,6 +362,35 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
   });
 });
 
+test('configuredForACLCredentials is true if environment variable is true', (t) => {
+  process.env.CMR_ACL_BASED_CREDENTIALS = 'true';
+  t.true(configuredForACLCredentials());
+  t.teardown(() => delete process.env.CMR_ACL_BASED_CREDENTIALS);
+});
+
+test('configuredForACLCredentials is true if environment variable is TRUE', (t) => {
+  process.env.CMR_ACL_BASED_CREDENTIALS = 'TRUE';
+  t.true(configuredForACLCredentials());
+  t.teardown(() => delete process.env.CMR_ACL_BASED_CREDENTIALS);
+});
+
+test('configuredForACLCredentials is false if environment variable is empty', (t) => {
+  process.env.CMR_ACL_BASED_CREDENTIALS = '';
+  t.false(configuredForACLCredentials());
+  t.teardown(() => delete process.env.CMR_ACL_BASED_CREDENTIALS);
+});
+
+test('configuredForACLCredentials is false if environment variable is false', (t) => {
+  process.env.CMR_ACL_BASED_CREDENTIALS = 'false';
+  t.false(configuredForACLCredentials());
+  t.teardown(() => delete process.env.CMR_ACL_BASED_CREDENTIALS);
+});
+
+test('configuredForACLCredentials is false if environment variable is undefined', (t) => {
+  delete process.env.CMR_ACL_BASED_CREDENTIALS;
+  t.false(configuredForACLCredentials());
+});
+
 test('parseBucketKey returns an array of bucket and keypath with standard input', (t) => {
   const bucketKeyPath = 'abucket/and/apath/after/it';
   const expected = { bucket: 'abucket', keypath: '/and/apath/after/it' };
@@ -404,14 +434,13 @@ test('allowedBucketKeys formats a list of buckets and bucket/keypaths into expec
 });
 
 test.serial('fetchPolicyForUser returned undefined if endpoint not configured for ACL Credentials', async (t) => {
-  const inputENV = process.env.CMR_ACL_BASED_CREDENTIALS;
   process.env.CMR_ACL_BASED_CREDENTIALS = 'false';
 
   const expected = undefined;
   const actual = await fetchPolicyForUser('anyUser', 'anyProvider', 'anyLambda');
   t.is(expected, actual);
 
-  process.env.CMR_ACL_BASED_CREDENTIALS = inputENV;
+  t.teardown(() => delete process.env.CMR_ACL_BASED_CREDENTIALS);
 });
 
 test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the correct payload when configured for ACL credentials', async (t) => {
