@@ -249,8 +249,7 @@ async function deleteRecord({
     doc.timestamp = Date.now();
     doc.deletedAt = Date.now();
 
-    // When a 'granule' record is deleted, the record is added to 'deletedgranule'
-    // type for EMS report purpose.
+    // When a 'granule' record is deleted, the record is added to 'deletedgranule' type
     await genericRecordUpdate(
       actualEsClient,
       doc.granuleId,

@@ -352,7 +352,6 @@ class Granule extends Manager {
       createdAt: workflowStartTime,
       timestamp: now,
       updatedAt: updatedAt || now,
-      // Duration is also used as timeToXfer for the EMS report
       duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: getGranuleTimeToPreprocess(granule),

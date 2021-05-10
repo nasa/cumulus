@@ -6,7 +6,6 @@ export * as granules from './granules';
 export { invokeApi } from './cumulusApiClient';
 export * as rules from './rules';
 export * as collections from './collections';
-export * as ems from './ems';
 export * as executions from './executions';
 export * as pdrs from './pdrs';
 export * as providers from './providers';
