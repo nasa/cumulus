@@ -18,16 +18,6 @@ module "archive" {
   elasticsearch_hostname          = var.elasticsearch_hostname
   elasticsearch_security_group_id = var.elasticsearch_security_group_id
 
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
-
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 
@@ -98,8 +88,6 @@ module "archive" {
   rds_connection_heartbeat = var.rds_connection_heartbeat
   postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
   postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
-
-  ems_deploy = var.ems_deploy
 
   tags = var.tags
 }
