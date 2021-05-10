@@ -13,9 +13,33 @@ const {
   s3PutObject,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { createSqsQueues } = require('@cumulus/api/lib/testUtils');
 
 const { archiveSqsMessageToS3, deleteArchivedMessageFromS3 } = require('../sqs');
+// Copied from @cumulus/api/lib/testUtils to avoid circular dependency
+
+/**
+ * create a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {string} visibilityTimeout - visibility timeout for queue messages
+ * @returns {Object} - {queueUrl: <url>} queue created
+ */
+async function createSqsQueues(
+  queueNamePrefix,
+  visibilityTimeout = '300'
+) {
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      VisibilityTimeout: visibilityTimeout,
+    },
+  };
+
+  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
+  return { queueUrl };
+}
 
 test.before(async () => {
   process.env.system_bucket = randomString();
