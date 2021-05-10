@@ -525,8 +525,9 @@ describe('When there are granule differences and granule reconciliation is run',
       const urls = report.filesInCumulusCmr.onlyInCmr;
       expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
       expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
+      // CMR has https URL and S3 URL for the same file
       expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranuleId).length)
-        .toBe(1);
+        .toBe(2);
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {

@@ -103,7 +103,6 @@ const generateGranuleRecord = async ({
     created_at: new Date(workflowStartTime),
     updated_at: new Date(updatedAt),
     timestamp: new Date(timestamp),
-    // Duration is also used as timeToXfer for the EMS report
     duration: getWorkflowDuration(workflowStartTime, timestamp),
     product_volume: getGranuleProductVolume(files),
     time_to_process: getGranuleTimeToPreprocess(granule),
