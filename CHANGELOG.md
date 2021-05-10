@@ -65,8 +65,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2371**
   - Added `sqs.ts` to `ingest` package and created `archiveSqsMessageToS3` which
     archives all incoming SQS messages to S3.
-  - Created `deleteArchivedMessageFromS3` in `sqs.ts` which deletes all processed
-    SQS messages from S3.
+  - Created `deleteArchivedMessageFromS3` in `sqs.ts` which deletes all
+    processed SQS messages from S3.
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
