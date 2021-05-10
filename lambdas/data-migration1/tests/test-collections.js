@@ -105,7 +105,7 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
         granule_id_validation_regex: fakeCollection.granuleId,
         granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
         duplicate_handling: fakeCollection.duplicateHandling,
-        report_to_ems: null,
+        report_to_ems: fakeCollection.reportToEms,
         ignore_files_config_for_discovery: fakeCollection.ignoreFilesConfigForDiscovery,
         created_at: new Date(fakeCollection.createdAt),
         updated_at: new Date(fakeCollection.updatedAt),

@@ -26,6 +26,7 @@
       ],
       "updatedAt": 1599000190054,
       "url_path": "ICK99NO___001",
+      "reportToEms": false,
       "granuleId": "^ICK99NO\\.A[\\d]{7}\\.[\\S]{6}\\.001\\.[\\d]{13}$",
       "sampleFileName": "ICK99NO.A2017025.h21v00.001.2017034065104.hdf",
       "timestamp": 1607978348281
@@ -44,6 +45,7 @@
       "updatedAt": 1602706954172,
       "url_path": "CMR44JK___001",
       "createdAt": 1602706954172,
+      "reportToEms": false,
       "granuleId": "^CMR44JK\\.A[\\d]{7}\\.[\\S]{6}\\.001\\.[\\d]{13}$",
       "sampleFileName": "CMR44JK.A2020325.h01v00.001.2020124065104.hdf",
       "name": "CMR44JK"
@@ -54,6 +56,7 @@
       "name": "ThisCollectionDoesNotExistInCMR",
       "files": [],
       "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+      "reportToEms": false,
       "version": "0.0.0",
       "duplicateHandling": "replace",
       "updatedAt": 1614118406355,

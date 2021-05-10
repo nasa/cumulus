@@ -15,6 +15,7 @@ export const translateApiCollectionToPostgresCollection = (
     granule_id_extraction_regex: record.granuleIdExtraction,
     // have to stringify on an array of values
     files: (JSON.stringify(record.files)),
+    report_to_ems: record.reportToEms,
     sample_file_name: record.sampleFileName,
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
     meta: (record.meta ? JSON.stringify(record.meta) : undefined),
