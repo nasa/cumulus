@@ -46,7 +46,6 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
   sts policy helper lambda, to generate the permissions attatched to the
   returned credentials.
 
-
 ## Output variables
 
 - **distribution_bucket_map** (object) - the contents of the distribution bucket map
