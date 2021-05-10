@@ -363,21 +363,21 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
 
 test('parseBucketKey returns an array of bucket and keypath with standard input', (t) => {
   const bucketKeyPath = 'abucket/and/apath/after/it';
-  const expected = ['abucket', '/and/apath/after/it'];
+  const expected = { bucket: 'abucket', keypath: '/and/apath/after/it' };
   const actual = parseBucketKey(bucketKeyPath);
   t.deepEqual(expected, actual);
 });
 
 test('parseBucketKey returns an array of bucket and default keypath input is bucket only', (t) => {
   const bucketKeyPath = 'justabucket';
-  const expected = ['justabucket', '/'];
+  const expected = { bucket: 'justabucket', keypath: '/' };
   const actual = parseBucketKey(bucketKeyPath);
   t.deepEqual(expected, actual);
 });
 
 test('parseBucketKey returns an array of undefined with bad input.', (t) => {
   const bucketKeyPath = { expecting: 'a string', not: 'an object' };
-  const expected = [undefined, undefined];
+  const expected = {};
   const actual = parseBucketKey(bucketKeyPath);
   t.deepEqual(expected, actual);
 });

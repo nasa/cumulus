@@ -134,9 +134,9 @@ function parseBucketKey(bucketKeyPath) {
     const parts = bucketKeyPath.split('/');
     const bucket = parts.shift();
     const keypath = parts.join('/');
-    return [bucket, `/${keypath}`];
+    return { bucket, keypath: `/${keypath}` };
   } catch (error) {
-    return [undefined, undefined];
+    return {};
   }
 }
 
@@ -166,8 +166,8 @@ function formatAllowedBucketKeys(cmrAllowedBucketKeyList) {
   const pathlist = [];
 
   bucketKeyPairList.forEach((bucketKeyPair) => {
-    bucketlist.push(bucketKeyPair[0]);
-    pathlist.push(bucketKeyPair[1]);
+    bucketlist.push(bucketKeyPair.bucket);
+    pathlist.push(bucketKeyPair.keypath);
   });
 
   return JSON.stringify({
