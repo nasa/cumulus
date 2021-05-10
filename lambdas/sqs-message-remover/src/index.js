@@ -103,7 +103,6 @@ function handler(event) {
 }
 
 module.exports = {
-  deleteArchivedMessage,
   updateSqsQueue,
   handler,
 };

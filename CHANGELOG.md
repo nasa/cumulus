@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-  
+
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
   reporting is now handled through Cloud Metrics
@@ -63,8 +63,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2371**
-  - Added `archiveMessage` to `sqs-message-consumer` which archives all incoming SQS messages to S3.
-  - Added `deleteArchivedMessage` to `sqs-message-remover` which deletes archived SQS message from S3 once it has been processed.
+  - Added `sqs.ts` to `ingest` package and created `archiveSqsMessageToS3` which
+    archives all incoming SQS messages to S3.
+  - Created `deleteArchivedMessageFromS3` in `sqs.ts` which deletes all processed
+    SQS messages from S3.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
