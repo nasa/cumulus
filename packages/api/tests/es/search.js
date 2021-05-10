@@ -11,6 +11,7 @@ const esSearch = rewire('../../es/search');
 const { Search } = esSearch;
 
 const localEsHost = process.env.LOCAL_ES_HOST;
+
 test.before(async (t) => {
   t.context.esIndex = randomString();
   t.context.esAlias = randomString();
@@ -27,18 +28,13 @@ test.before(async (t) => {
     },
   };
   esSearch.__set__('aws', awsMock);
-
-  delete process.env.LOCAL_ES_HOST;
-});
-
-test.after.always(() => {
-  process.env.LOCAL_ES_HOST = localEsHost;
 });
 
 test.serial('Configured with Metrics host when metrics propety is set', async (t) => {
   process.env.METRICS_ES_HOST = 'example.com';
   process.env.METRICS_ES_USER = 'test';
   process.env.METRICS_ES_PASS = 'password';
+  delete process.env.LOCAL_ES_HOST;
 
   const revertTestModeStub = esSearch.__set__('inTestMode', () => false);
 
@@ -46,6 +42,7 @@ test.serial('Configured with Metrics host when metrics propety is set', async (t
     delete process.env.METRICS_ES_HOST;
     delete process.env.METRICS_ES_USER;
     delete process.env.METRICS_ES_PASS;
+    process.env.LOCAL_ES_HOST = localEsHost;
     revertTestModeStub();
   });
 
@@ -59,10 +56,13 @@ test.serial('Configured with Metrics host when metrics propety is set', async (t
 
 test.serial('Configured with default host when no metrics property is set', async (t) => {
   process.env.ES_HOST = 'example.com';
+  delete process.env.LOCAL_ES_HOST;
+
   const revertTestModeStub = esSearch.__set__('inTestMode', () => false);
 
   t.teardown(() => {
     delete process.env.ES_HOST;
+    process.env.LOCAL_ES_HOST = localEsHost;
     revertTestModeStub();
   });
 
@@ -72,7 +72,7 @@ test.serial('Configured with default host when no metrics property is set', asyn
   t.is(connection.connections.get('https://example.com/').url.origin, 'https://example.com');
 });
 
-test.only('Search.get() returns record', async (t) => {
+test('Search.get() returns record', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const type = 'record';
@@ -90,4 +90,34 @@ test.only('Search.get() returns record', async (t) => {
   );
   const result = await searchClient.get(id);
   t.like(result, record);
+});
+
+test('Search.exists() returns true if record exists', async (t) => {
+  const record = { foo: 'bar' };
+  const id = randomString();
+  const type = 'record';
+  await t.context.esClient.index({
+    body: record,
+    id,
+    index: t.context.esIndex,
+    type,
+    refresh: true,
+  });
+  const searchClient = new Search(
+    {},
+    type,
+    t.context.esIndex
+  );
+  t.true(await searchClient.exists(id));
+});
+
+test('Search.exists() returns false if record does not exist', async (t) => {
+  const id = randomString();
+  const type = 'record';
+  const searchClient = new Search(
+    {},
+    type,
+    t.context.esIndex
+  );
+  t.false(await searchClient.exists(id));
 });
