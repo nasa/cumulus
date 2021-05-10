@@ -6,6 +6,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
+  RecordDoesNotExist,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -238,18 +239,36 @@ async function del(req, res) {
 
   const { name, version } = req.params;
 
+  let existingCollection;
   try {
-    await knex.transaction(async (trx) => {
-      await collectionPgModel.delete(trx, { name, version });
-      await collectionsModel.delete({ name, version });
-      const collectionId = constructCollectionId(name, version);
-      await esClient.delete({
-        id: collectionId,
-        index: process.env.ES_INDEX,
-        type: 'collection',
-        refresh: inTestMode(),
-      }, { ignore: [404] });
-    });
+    existingCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  try {
+    try {
+      await knex.transaction(async (trx) => {
+        await collectionPgModel.delete(trx, { name, version });
+        await collectionsModel.delete({ name, version });
+        const collectionId = constructCollectionId(name, version);
+        await esClient.delete({
+          id: collectionId,
+          index: process.env.ES_INDEX,
+          type: 'collection',
+          refresh: inTestMode(),
+        }, { ignore: [404] });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingCollection) {
+        await collectionsModel.create(existingCollection);
+      }
+      throw innerError;
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {
