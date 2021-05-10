@@ -13,8 +13,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-// const { getS3KeyForArchivedMessage, archiveSqsMessageToS3 } = require('@cumulus/ingest/sqs');
-const ingestSqsHelper = require('@cumulus/ingest/sqs');
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Rule = require('../../models/rules');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
@@ -382,8 +381,8 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
     queues[1].queueUrl,
     { testdata: randomString() }
   );
-  const keyOne = ingestSqsHelper.getS3KeyForArchivedMessage(stackName, firstMessage.MessageId);
-  const keyTwo = ingestSqsHelper.getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
+  const keyOne = getS3KeyForArchivedMessage(stackName, firstMessage.MessageId);
+  const keyTwo = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
 
   await handler(event);
 
