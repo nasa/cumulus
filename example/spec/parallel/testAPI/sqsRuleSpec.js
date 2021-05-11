@@ -252,7 +252,7 @@ describe('The SQS rule', () => {
         Bucket: config.bucket,
         Key: key,
       }).promise();
-      expect(message.Body).toBe(invalidMessage);
+      expect(message.Body.toString()).toBe(invalidMessage);
     });
   });
 });
