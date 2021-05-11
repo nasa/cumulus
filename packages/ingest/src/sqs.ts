@@ -25,13 +25,13 @@ export async function archiveSqsMessageToS3(queueUrl:string, message: SQSMessage
 
   if (!message.MessageId) {
     const error = new Error(`MessageId on message ${message} required but not found.`);
-    logger.error(error.message);
+    logger.error(error);
     throw error;
   }
 
   const key = getS3KeyForArchivedMessage(stackName, message.MessageId);
   const body = JSON.stringify(message.Body);
-  logger.info(`Archiving messages from queue ${queueUrl}`);
+  logger.info(`Archiving message ${message.MessageId} from queue ${queueUrl}`);
   try {
     await s3PutObject({
       Bucket: bucket,

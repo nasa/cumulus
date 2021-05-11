@@ -9,10 +9,10 @@ const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createBucket,
+  getObject,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getObject } = require('@cumulus/aws-client/S3');
 
 const { updateSqsQueue } = require('..');
 
