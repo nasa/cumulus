@@ -394,7 +394,7 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
 
   t.deepEqual(message, JSON.parse(JSON.parse(item.Body.toString())));
 
-  t.false(s3ObjectExists({
+  t.false(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: deadLetterKey,
   }));
@@ -419,29 +419,17 @@ test.serial('processQueues archives multiple messages', async (t) => {
   const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId);
   const keys = messages.map((m) => deriveKey(m));
 
-  // Send message to DISABLED queue
-  const secondMessage = await SQS.sendSQSMessage(
-    queues[1].queueUrl,
-    { testdata: randomString() }
-  );
-  const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
-
   await handler(event);
 
   const items = await Promise.all(keys.map(async (k) =>
-    (s3().getObject({
+    (s3ObjectExists({
       Bucket: process.env.system_bucket,
       Key: k,
-    })).promise()));
+    }))));
 
-  const msgBody = (m) => t.truthy(JSON.parse(JSON.parse(m.Body.toString())));
+  const itemExists = (i) => t.true(i);
 
-  items.every(msgBody);
-
-  t.false(s3ObjectExists({
-    Bucket: process.env.system_bucket,
-    Key: deadLetterKey,
-  }));
+  items.every(itemExists);
 
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, queues);
