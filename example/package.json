@@ -57,6 +57,7 @@
     "@cumulus/discover-pdrs": "8.1.0",
     "@cumulus/files-to-granules": "8.1.0",
     "@cumulus/hello-world": "8.1.0",
+    "@cumulus/ingest": "8.1.0",
     "@cumulus/integration-tests": "8.1.0",
     "@cumulus/message": "8.1.0",
     "@cumulus/move-granules": "8.1.0",
