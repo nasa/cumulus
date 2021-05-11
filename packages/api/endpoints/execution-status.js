@@ -7,6 +7,11 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const models = require('../models');
 
+const {
+  getKnexClient,
+  ExecutionPgModel,
+} = require('@cumulus/db');
+
 /**
  * fetchRemote fetches remote message from S3
  *
@@ -77,14 +82,15 @@ async function get(req, res) {
       updatedEvents.push(getEventDetails(sfEvent));
     }
     status.executionHistory.events = await Promise.all(updatedEvents);
-    return res.send(status);
+    return res.send(status);3
   }
 
   // get the execution information from database
   let response;
-  const e = new models.Execution();
+  const knex = await getKnexClient({ env: process.env });
+  const executionPgModel = new ExecutionPgModel();
   try {
-    response = await e.get({ arn });
+    response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Execution not found in API or database');
@@ -97,10 +103,10 @@ async function get(req, res) {
     stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
-    startDate: new Date(response.createdAt),
-    stopDate: new Date(response.createdAt + response.duration * 1000),
-    ...{ input: JSON.stringify(response.originalPayload) },
-    ...{ output: JSON.stringify(response.finalPayload) },
+    startDate: new Date(response.created_at),
+    stopDate: new Date(response.created_at + response.duration * 1000),
+    ...{ input: JSON.stringify(response.original_payload) },
+    ...{ output: JSON.stringify(response.final_payload) },
   };
   return res.send({ warning, execution });
 }
