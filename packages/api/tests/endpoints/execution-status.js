@@ -9,7 +9,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { randomString } = require('@cumulus/common/test-utils'); // TODO remove
 const cryptoRandomString = require('crypto-random-string');
 
 const {
@@ -28,9 +27,9 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-process.env.AccessTokensTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = cryptoRandomString({ length: 10 });
+process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+process.env.TOKEN_SECRET = cryptoRandomString({ length: 10 });
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
@@ -170,7 +169,7 @@ let mockedSF;
 let mockedSFExecution;
 
 test.before(async (t) => {
-  process.env.system_bucket = randomString();
+  process.env.system_bucket = cryptoRandomString({ length: 10 });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await putJsonS3Object(
@@ -190,7 +189,7 @@ test.before(async (t) => {
     .stub(awsServices.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);
 
-  const username = randomString();
+  const username = cryptoRandomString({ length: 10 });
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
