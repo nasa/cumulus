@@ -9,10 +9,10 @@ const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createBucket,
-  getObject,
+  s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 
 const { updateSqsQueue } = require('..');
 
@@ -263,7 +263,7 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
     status: 'SUCCEEDED',
     eventSource,
   });
-  const key = `${process.env.stackName}/archived-incoming-messages/${eventSource.messageId}`;
+  const key = getS3KeyForArchivedMessage(process.env.stackName, eventSource.messageId);
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
@@ -272,8 +272,10 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
   });
 
   await updateSqsQueue(eventMessage);
-  await t.throwsAsync(getObject(s3(), {
+
+  // Check that item no longer exists
+  t.false(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: key,
-  }), { code: 'NoSuchKey' });
+  }));
 });

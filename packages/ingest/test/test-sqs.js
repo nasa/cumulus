@@ -9,8 +9,9 @@ const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
-  s3PutObject,
   recursivelyDeleteS3Bucket,
+  s3ObjectExists,
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
 const { archiveSqsMessageToS3, deleteArchivedMessageFromS3 } = require('../sqs');
@@ -92,16 +93,16 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
   });
 
   // Check that item exists in S3
-  const item = await s3().getObject({
+  t.true(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise();
-  t.truthy(item);
+  }));
 
   await deleteArchivedMessageFromS3(messageId);
-  // Check that item does not exist in S3 and therefore throws an error
-  await t.throwsAsync(s3().getObject({
+
+  // Check that item no longer exists
+  t.false(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise(), { code: 'NoSuchKey' });
+  }));
 });
