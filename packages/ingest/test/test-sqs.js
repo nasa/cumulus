@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
 const SQS = require('@cumulus/aws-client/SQS');

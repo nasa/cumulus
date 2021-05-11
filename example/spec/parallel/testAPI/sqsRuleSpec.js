@@ -28,7 +28,6 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 
-const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -187,7 +186,7 @@ describe('The SQS rule', () => {
     });
 
     afterAll(async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
+      const key = `${config.stackName}/archived-incoming-messages/${messageId}`;
       await deleteS3Object(config.bucket, key);
       await deleteGranule({ prefix: config.stackName, granuleId });
     });
@@ -247,7 +246,7 @@ describe('The SQS rule', () => {
     });
 
     it('stores incoming messages on S3', async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
+      const key = `${config.stackName}/archived-incoming-messages/${messageId}`;
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: key,
