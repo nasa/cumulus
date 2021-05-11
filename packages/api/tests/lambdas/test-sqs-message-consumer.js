@@ -11,6 +11,7 @@ const {
   createBucket,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -393,10 +394,10 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
 
   t.deepEqual(message, JSON.parse(JSON.parse(item.Body.toString())));
 
-  await t.throwsAsync(s3().getObject({
+  t.false(s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: deadLetterKey,
-  }).promise(), { code: 'NoSuchKey' });
+  }));
 
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, queues);
@@ -437,10 +438,10 @@ test.serial('processQueues archives multiple messages', async (t) => {
 
   items.every(msgBody);
 
-  await t.throwsAsync(s3().getObject({
+  t.false(s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: deadLetterKey,
-  }).promise(), { code: 'NoSuchKey' });
+  }));
 
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, queues);
