@@ -72,7 +72,7 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
     Key: key,
   }).promise();
 
-  t.deepEqual(body, JSON.parse(JSON.parse(item.Body.toString())));
+  t.deepEqual(body, JSON.parse(item.Body));
 });
 
 test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
@@ -89,7 +89,7 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: key,
-    Body: JSON.stringify(sqsMessage.Body),
+    Body: sqsMessage.Body,
   });
 
   // Check that item exists in S3

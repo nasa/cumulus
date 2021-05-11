@@ -30,7 +30,7 @@ export async function archiveSqsMessageToS3(queueUrl:string, message: SQSMessage
   }
 
   const key = getS3KeyForArchivedMessage(stackName, message.MessageId);
-  const body = JSON.stringify(message.Body);
+  const body = message.Body;
   logger.info(`Archiving message ${message.MessageId} from queue ${queueUrl}`);
   try {
     await s3PutObject({

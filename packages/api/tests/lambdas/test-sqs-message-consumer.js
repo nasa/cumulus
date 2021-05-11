@@ -392,7 +392,7 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
     Key: enabledQueueKey,
   }).promise();
 
-  t.deepEqual(message, JSON.parse(JSON.parse(item.Body)));
+  t.deepEqual(message, JSON.parse(item.Body));
 
   t.false(await s3ObjectExists({
     Bucket: process.env.system_bucket,
