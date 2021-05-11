@@ -54,31 +54,25 @@ test.after.always(async () => {
 test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   const queues = await createSqsQueues(randomString());
   const queueUrl = 'fakeQueueUrl';
-  await Promise.all(
-    range(4).map(() =>
-      SQS.sendSQSMessage(
-        queues.queueUrl,
-        { testdata: randomString() }
-      ))
+  const body = { testdata: randomString() };
+  const message = await SQS.sendSQSMessage(
+    queues.queueUrl,
+    body
   );
   const messages = await receiveSQSMessages(
     queues.queueUrl,
-    { numOfMessages: 4, visibilityTimeout: 5 }
+    { numOfMessages: 1, visibilityTimeout: 5 }
   );
-  const deriveKey = (m) => `${process.env.stackName}/archived-incoming-messages/${m.MessageId}`;
-  const keys = messages.map((m) => deriveKey(m));
+  const key = `${process.env.stackName}/archived-incoming-messages/${message.MessageId}`;
 
   await Promise.all(messages.map(async (m) => archiveSqsMessageToS3(queueUrl, m)));
 
-  const items = await Promise.all(keys.map(async (k) =>
-    (s3().getObject({
-      Bucket: process.env.system_bucket,
-      Key: k,
-    })).promise()));
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }).promise();
 
-  const msgBody = (m) => t.truthy(JSON.parse(JSON.parse(m.Body.toString())));
-
-  items.every(msgBody);
+  t.deepEqual(body, JSON.parse(JSON.parse(item.Body.toString())));
 });
 
 test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {

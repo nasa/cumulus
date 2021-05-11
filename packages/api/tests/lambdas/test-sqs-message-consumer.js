@@ -368,34 +368,40 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
-  const message = { testdata: randomString() };
 
   // Send message to ENABLED queue
-  const firstMessage = await SQS.sendSQSMessage(
-    queues[0].queueUrl,
-    message
+  const messages = await Promise.all(
+    range(4).map(() =>
+      SQS.sendSQSMessage(
+        queues[0].queueUrl,
+        { testdata: randomString() }
+      ))
   );
+  const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId);
+  const keys = messages.map((m) => deriveKey(m));
 
   // Send message to DISABLED queue
   const secondMessage = await SQS.sendSQSMessage(
     queues[1].queueUrl,
     { testdata: randomString() }
   );
-  const keyOne = getS3KeyForArchivedMessage(stackName, firstMessage.MessageId);
-  const keyTwo = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
+  const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
 
   await handler(event);
 
-  const firstItem = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: keyOne,
-  }).promise();
-  const messageBody = JSON.parse(JSON.parse(firstItem.Body.toString()));
-  t.deepEqual(messageBody, message);
+  const items = await Promise.all(keys.map(async (k) =>
+    (s3().getObject({
+      Bucket: process.env.system_bucket,
+      Key: k,
+    })).promise()));
+
+  const msgBody = (m) => t.truthy(JSON.parse(JSON.parse(m.Body.toString())));
+
+  items.every(msgBody);
 
   await t.throwsAsync(s3().getObject({
     Bucket: process.env.system_bucket,
-    Key: keyTwo,
+    Key: deadLetterKey,
   }).promise(), { code: 'NoSuchKey' });
 
   t.teardown(async () => {
