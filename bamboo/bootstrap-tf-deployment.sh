@@ -67,7 +67,7 @@ echo "terraform {
   }
 }" >> ci_backend.tf
 
-../terraform 0.13upgrade
+../terraform 0.13upgrade -yes
 
 # Initialize deployment
 ../terraform init \
