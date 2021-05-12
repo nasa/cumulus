@@ -702,5 +702,5 @@ test.serial('writeGranules() stores error on granule if any file fails', async (
 
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
   t.is(pgGranule.error.Error, 'Failed writing files to Postgres.');
-  t.is(pgGranule.error.Cause.name, 'AggregateError');
+  t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
