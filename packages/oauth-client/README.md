@@ -34,7 +34,7 @@ The examples below document these common methods as well as methods specific to 
 ```js
 const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 
-const client = new EarthdataLogin({
+const client = new EarthdataLoginClient({
   clientId: 'my-client-id',
   clientPassword: 'my-client-password',
   loginUrl: 'https://earthdata.login.nasa.gov',
