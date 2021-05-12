@@ -18,7 +18,6 @@ const errors = require('@cumulus/errors');
 const set = require('lodash/set');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
-const crypto = require('crypto');
 
 const {
   randomString,
@@ -477,7 +476,7 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   config.syncChecksumFiles = true;
   config.downloadBucket = t.context.internalBucketName;
   config.buckets.internal.name = t.context.internalBucketName;
-config.buckets.private.name = t.context.privateBucketName;z
+  config.buckets.private.name = t.context.privateBucketName;
   config.buckets.protected.name = t.context.protectedBucketName;
   config.provider = {
     id: 'MODAPS',

@@ -68,7 +68,7 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   const localPath = './tmp.json';
   t.teardown(() => fs.unlinkSync(localPath));
 
-  await s3ProviderClient.download(t.context.sourceKey, localPath);
+  await s3ProviderClient.download({ remotePath: t.context.sourceKey, localPath });
   t.true(fs.existsSync(localPath));
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });

@@ -46,8 +46,6 @@ const fetchTextFile = async ({ providerClient, remotePath, remoteAltBucket }) =>
   try {
     await providerClient.download({ remotePath, localPath, remoteAltBucket });
     return await fs.readFile(localPath, 'utf8');
-  } catch(error) {
-    throw error;
   } finally {
     // eslint-disable-next-line lodash/prefer-noop
     await fs.unlink(localPath).catch(() => {});

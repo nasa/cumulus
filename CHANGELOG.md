@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be paramterize and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
 ## [v8.1.0] 2021-04-29
 
 ### Added
