@@ -14,7 +14,7 @@ const {
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
-const { archiveSqsMessageToS3, deleteArchivedMessageFromS3 } = require('../sqs');
+const { archiveSqsMessageToS3, deleteArchivedMessageFromS3, getS3KeyForArchivedMessage } = require('../sqs');
 // Copied from @cumulus/api/lib/testUtils to avoid circular dependency
 
 /**
@@ -63,7 +63,7 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
     queues.queueUrl,
     { numOfMessages: 1, visibilityTimeout: 5 }
   );
-  const key = `${process.env.stackName}/archived-incoming-messages/${message.MessageId}`;
+  const key = getS3KeyForArchivedMessage(process.env.stackName, message.MessageId);
 
   await Promise.all(messages.map(async (m) => archiveSqsMessageToS3(queueUrl, m)));
 
@@ -84,7 +84,7 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
   }).promise();
   const messageId = sqsMessage.MessageId;
-  const key = `${process.env.stackName}/archived-incoming-messages/${messageId}`;
+  const key = getS3KeyForArchivedMessage(process.env.stackName, messageId);
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
