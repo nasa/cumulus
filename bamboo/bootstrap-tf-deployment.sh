@@ -67,6 +67,8 @@ echo "terraform {
   }
 }" >> ci_backend.tf
 
+../terraform 0.13upgrade
+
 # Initialize deployment
 ../terraform init \
   -input=false
