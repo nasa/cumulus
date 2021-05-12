@@ -82,7 +82,7 @@ test.serial('S3ProviderClient.download downloads a file with source_bucket set t
   await s3ProviderClient.download({
     remotePath: t.context.sourceKey,
     localPath,
-    remoteAltBucket: 't.context.sourceBucket',
+    remoteAltBucket: t.context.sourceBucket,
   });
   t.true(fs.existsSync(localPath));
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
