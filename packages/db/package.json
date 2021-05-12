@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/db",
-  "version": "8.1.0-alpha.1",
+  "version": "9.0.1",
   "description": "Utilities for working with the Cumulus DB",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "scripts": {
     "clean": "rm -rf dist",
@@ -29,14 +29,14 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
-    "@cumulus/aws-client": "8.1.0",
-    "@cumulus/common": "8.1.0",
-    "@cumulus/errors": "8.1.0",
-    "@cumulus/logger": "8.1.0",
-    "@cumulus/types": "8.1.0",
+    "@cumulus/aws-client": "9.0.1",
+    "@cumulus/common": "9.0.1",
+    "@cumulus/errors": "9.0.1",
+    "@cumulus/logger": "9.0.1",
+    "@cumulus/types": "9.0.1",
     "is-valid-hostname": "0.0.1",
-    "lodash": "^4.17.20",
     "knex": "0.21.13",
+    "lodash": "^4.17.20",
     "pg": "^8.3.0",
     "snake-camel": "^1.0.6",
     "uuid": "8.3.1"

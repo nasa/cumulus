@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-integration-tests",
-  "version": "8.1.0",
+  "version": "9.0.1",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
@@ -71,6 +71,6 @@
     "@cumulus/test-processing": "8.1.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "8.1.0"
+    "@cumulus/test-data": "9.0.1"
   }
 }
