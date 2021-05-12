@@ -200,7 +200,7 @@ describe('The Ingest Granule failure workflow', () => {
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
 
-    it('fails the granule with the error message', async () => {
+    it('fails the granule with an error object', async () => {
       await waitForModelStatus(
         granuleModel,
         { granuleId: inputPayload.granules[0].granuleId },
@@ -214,8 +214,8 @@ describe('The Ingest Granule failure workflow', () => {
       const granule = JSON.parse(granuleResponse.body);
 
       expect(granule.status).toBe('failed');
-      expect(granule.error.Error).toBe(syncGranFailedDetail.error);
-      expect(JSON.parse(granule.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
+      expect(granule.error.Error).toBeDefined();
+      expect(granule.error.Cause).toBeDefined();
     });
   });
 });
