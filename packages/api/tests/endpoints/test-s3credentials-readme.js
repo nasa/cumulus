@@ -12,7 +12,7 @@ const randomId = (prefix, separator = '-') =>
 
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 
-const endpoint = rewire('../../endpoints/s3credentials-readme.js');
+const endpoint = rewire('../../endpoints/s3credentials-readme/s3credentials-readme.js');
 const displayS3CredentialInstructions = endpoint.__get__('displayS3CredentialInstructions');
 
 test('displayS3Credentials fills template with correct distribution endpoint.', async (t) => {
