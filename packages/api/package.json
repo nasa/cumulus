@@ -93,6 +93,7 @@
     "moment": "2.24.0",
     "morgan": "^1.9.1",
     "nodeify": "^1.0.1",
+    "nunjucks": "^3.2.3",
     "p-each-series": "^2.1.0",
     "p-limit": "^1.2.0",
     "p-map": "^4.0.0",
@@ -108,6 +109,7 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "9.0.1"
+    "@cumulus/test-data": "9.0.1",
+    "node-loader": "^1.0.3"
   }
 }

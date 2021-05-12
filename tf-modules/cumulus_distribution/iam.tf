@@ -28,13 +28,20 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     resources = ["arn:aws:logs:*:*:*"]
   }
 
-    statement {
+  statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "ec2:DeleteNetworkInterface",
     ]
     resources = ["*"]
+  }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.api_oauth_client_password.arn
+    ]
   }
 }
 

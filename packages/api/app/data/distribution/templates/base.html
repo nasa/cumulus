@@ -1,0 +1,41 @@
+<html>
+   <head>
+        <title>Egress | {% block pagetitle %}{% endblock %}</title>
+        <style type="text/css">
+            body {
+                font-family: sans-serif;
+                padding: 25px
+            }
+            #logincontrols {
+                position: fixed;
+                right: 25px;
+                top: 25px;
+            }
+            #status_code {
+                font-size: 400px;
+                font-weight: bold;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                margin-top: -200px;
+                margin-left: -300px;
+            }
+            #requestidcontainer {
+                position: fixed;
+                margin-bottom: 3px;
+                bottom: 0;
+                right: 10px;
+                font-size: 85%;
+            }
+        </style>
+   </head>
+
+   <body>
+   {% block content %}{% endblock %}
+   {% if requestid %}
+        <div id="requestidcontainer">Request ID: <span id="requestid">{{ requestid }}</span></div>
+    {% endif %}
+   </body>
+</html>
+
+

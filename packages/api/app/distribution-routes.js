@@ -1,7 +1,11 @@
+const { resolve: pathresolve } = require('path');
 const router = require('express-promise-router')();
-
+const { render } = require('nunjucks');
+const urljoin = require('url-join');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
+const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const {
   getConfigurations,
@@ -90,12 +94,54 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   return next();
 }
 
-// TODO implement each method with CSDAP authentication
-const root = (req, res) => res.status(501).send('Welcome');
+const buildOAuthClient = async () => {
+  const clientPassword = await getSecretString(
+    process.env.oauthClientPasswordSecretName
+  );
+  const oauthClientConnfig = {
+    clientId: process.env.oauthClientId,
+    clientPassword,
+    earthdataLoginUrl: process.env.oauthHostUrl,
+    redirectUri: urljoin(process.env.apiBaseUrl, 'login'),
+  };
+  if (process.env.oauthProvider === 'earthdata') {
+    return new EarthdataLoginClient(oauthClientConnfig);
+  }
+  // TODO update
+  // return new CognitoClient(oauthClientConnfig);
+  return new EarthdataLoginClient(oauthClientConnfig);
+};
+
+/**
+ * Sends a welcome page
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ */
+const root = async (req, res) => {
+  const oauthClient = await buildOAuthClient();
+  const authorizeUrl = oauthClient.getAuthorizationUrl();
+  console.log(authorizeUrl);
+  const templateVars = { URS_URL: authorizeUrl };
+  const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
+  console.log(rendered);
+  return res.send(rendered);
+};
 
 const locate = (req, res) => res.status(501).end();
 
-const login = (req, res) => res.status(501).end();
+const login = async (req, res) => {
+  console.log(req);
+  console.log(req.cookies);
+  console.log(req.query);
+  console.log(req.url);
+
+  //TODO
+  // from code->accessToken
+  // accessToken->userinfo
+  // cookie?
+
+  return res.send({ url: req.url });
+};
 
 const logout = (req, res) => res.status(501).end();
 

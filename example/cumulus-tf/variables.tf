@@ -35,6 +35,21 @@ variable "cmr_oauth_provider" {
   default = "earthdata"
 }
 
+variable "csdap_client_id" {
+  type        = string
+  description = "csdap_client_id"
+}
+
+variable "csdap_client_password" {
+  type        = string
+  description = "csdap_client_password"
+}
+
+variable "csdap_host_url" {
+  type        = string
+  description = "csdap_host_url"
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -152,6 +167,12 @@ variable "api_gateway_stage" {
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
+}
+
+variable "cumulus_distribution_url" {
+  type        = string
+  default     = null
+  description = "The url of cumulus distribution API Gateway endpoint"
 }
 
 variable "distribution_url" {

@@ -1,0 +1,32 @@
+{% extends "./base.html" %}
+
+{% block pagetitle %}
+      {% if title %}
+      {{ title }}
+      {% else %}
+          Cumulus Distribution
+      {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="logincontrols">
+{% if URS_URL %}
+   <a href="{{ URS_URL }}">Log In</a>
+{% else %}
+   {% if STAGE %}    
+       <a href="/{{ STAGE }}/logout">Log Out</a>
+   {% else %}
+       <a href="/logout">Log Out</a>
+   {% endif %}
+{% endif %}
+
+</div>
+
+{% if profile %}
+    <p>Welcome URS user {{ profile.first_name }} {{ profile.last_name }}.</p>
+{% endif %}
+{% if contentstring %}
+    <div id="contentstring">{{ contentstring }}</div>
+{% endif %}
+
+{% endblock %}

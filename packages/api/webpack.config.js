@@ -64,6 +64,10 @@ module.exports = {
         {
           from: 'node_modules/xml-encryption/lib/templates',
           to: 'app/templates'
+        },
+        {
+          from: 'app/data/distribution/templates',
+          to: 'distribution/templates'
         }
       ]
     }),
@@ -96,6 +100,10 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /.node$/,
+        loader: 'node-loader',
+      }
     ],
   },
   target: 'node',

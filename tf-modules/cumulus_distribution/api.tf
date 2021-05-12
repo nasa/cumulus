@@ -3,10 +3,26 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
-      API_BASE_URL          = local.api_uri
-      stackName             = var.prefix
+      apiBaseUrl           = local.api_uri
+      oauthClientId        = var.oauth_client_id
+      oauthClientPasswordSecretName  = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      oauthHostUrl         = var.oauth_host_url
+      oauthProvider        = var.oauth_provider
+      stackName            = var.prefix
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
+}
+
+resource "aws_secretsmanager_secret" "api_oauth_client_password" {
+  name_prefix = "${var.prefix}-distribution-api-oauth-client-password"
+  description = "OAuth client password for the Cumulus Distribution API's ${var.prefix} deployment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
+  count         = length(var.oauth_client_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_oauth_client_password.id
+  secret_string = var.oauth_client_password
 }
 
 resource "aws_cloudwatch_log_group" "api" {
@@ -111,9 +127,24 @@ resource "aws_api_gateway_integration" "any_proxy" {
   uri                     = aws_lambda_function.api.invoke_arn
 }
 
-resource "aws_api_gateway_deployment" "api" {
-  depends_on = [aws_api_gateway_integration.any_proxy]
+resource "aws_api_gateway_method" "root_proxy" {
+  rest_api_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  resource_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
+  http_method   = "GET"
+  authorization = "NONE"
+}
 
+resource "aws_api_gateway_integration" "root_proxy" {
+  rest_api_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  resource_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
+  http_method             = aws_api_gateway_method.root_proxy.http_method
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.api.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "api" {
+  depends_on = [aws_api_gateway_integration.root_proxy, aws_api_gateway_integration.any_proxy]
   rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   stage_name  = var.api_gateway_stage
 }

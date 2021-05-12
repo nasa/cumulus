@@ -1,0 +1,21 @@
+{% extends "./base.html" %}
+
+{% block pagetitle %}
+   {% if status_code %}
+      {{ status_code }}
+   {% endif %}
+   {% if title %}
+   {{ title }}
+   {% else %}
+   Error
+   {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div id="status_code">{{ status_code }}</div>
+
+{% if contentstring %}
+    <div id="contentstring">{{ contentstring }}</div>
+{% endif %}
+{% endblock %}
