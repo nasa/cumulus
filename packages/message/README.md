@@ -16,16 +16,9 @@ Utilities for building and parsing Cumulus workflow messages.
 <dt><a href="#module_Build">Build</a></dt>
 <dd><p>Utility functions for building Cumulus messages</p>
 </dd>
-<dt><a href="#module_Collections">Collections</a></dt>
-<dd><p>Utility functions for generating collection information or parsing collection information
-from a Cumulus message</p>
-</dd>
 <dt><a href="#module_Executions">Executions</a></dt>
 <dd><p>Utility functions for generating execution information or parsing execution information
 from a Cumulus message</p>
-</dd>
-<dt><a href="#module_Granules">Granules</a></dt>
-<dd><p>Utility functions for parsing granule information from a Cumulus message</p>
 </dd>
 <dt><a href="#module_Queue">Queue</a></dt>
 <dd><p>Utility functions for parsing queue information from a Cumulus message</p>
@@ -38,8 +31,80 @@ from a Cumulus message</p>
 ### Functions
 
 <dl>
+<dt><a href="#exp_module_AsyncOperations--exports.getMessageAsyncOperationId">exports.getMessageAsyncOperationId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the async operation ID from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_Collections--exports.constructCollectionId">exports.constructCollectionId(name, version)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Returns the collection ID.</p>
+</dd>
+<dt><a href="#exp_module_Collections--exports.getCollectionNameAndVersionFromMessage">exports.getCollectionNameAndVersionFromMessage(message)</a> ⇒ <code>CollectionInfo</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get collection name and version from execution message.</p>
+</dd>
+<dt><a href="#exp_module_Collections--exports.getCollectionIdFromMessage">exports.getCollectionIdFromMessage(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get collection ID from execution message.</p>
+</dd>
+<dt><a href="#exp_module_Granules--exports.getMessageGranules">exports.getMessageGranules(message)</a> ⇒ <code>Array.&lt;Object&gt;</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get granules from payload?.granules of a workflow message.</p>
+</dd>
+<dt><a href="#exp_module_Granules--exports.getGranuleStatus">exports.getGranuleStatus(workflowStatus, granule)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Determine the status of a granule.</p>
+</dd>
+<dt><a href="#exp_module_Granules--exports.getGranuleQueryFields">exports.getGranuleQueryFields(message)</a> ⇒ <code>unknown</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the query fields of a granule, if any</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdr">exports.getMessagePdr(message)</a> ⇒ <code>undefined</code> | <code>Object</code> ⏏</dt>
+<dd><p>Get the PDR object from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.messageHasPdr">exports.messageHasPdr(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Determine if message has a PDR.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrPANSent">exports.getMessagePdrPANSent(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Get the PAN sent status from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrPANMessage">exports.getMessagePdrPANMessage(message)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Get the PAN message status from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrName">exports.getMessagePdrName(message)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Get the PDR name from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrRunningExecutions">exports.getMessagePdrRunningExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of running executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrCompletedExecutions">exports.getMessagePdrCompletedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of completed executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrFailedExecutions">exports.getMessagePdrFailedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of failed executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getMessagePdrStats">exports.getMessagePdrStats(message)</a> ⇒ <code>PdrStats</code> ⏏</dt>
+<dd><p>Get the PDR stats from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--exports.getPdrPercentCompletion">exports.getPdrPercentCompletion(stats)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the percent completion of PDR executions</p>
+</dd>
+<dt><a href="#exp_module_Providers--exports.getMessageProvider">exports.getMessageProvider(message)</a> ⇒ <code>MessageProvider</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the provider from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_Providers--exports.getMessageProviderId">exports.getMessageProviderId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the provider ID from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--exports.getMetaStatus">exports.getMetaStatus(message)</a> ⇒ <code>Message.WorkflowStatus</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the status of a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--exports.getMessageWorkflowTasks">exports.getMessageWorkflowTasks(message)</a> ⇒ <code>Object</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow tasks in a workflow message, if any.</p>
+</dd>
 <dt><a href="#exp_module_workflows--exports.getMessageWorkflowStartTime">exports.getMessageWorkflowStartTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get the workflow start time, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--exports.getMessageWorkflowStopTime">exports.getMessageWorkflowStopTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow stop time, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--exports.getMessageWorkflowName">exports.getMessageWorkflowName(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow name, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--exports.getWorkflowDuration">exports.getWorkflowDuration(startTime, [stopTime])</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the workflow duration.</p>
 </dd>
 </dl>
 
@@ -69,53 +134,10 @@ Build an SQS message from a workflow template for queueing executions.
 | params.messageTemplate | <code>Object</code> | Message template for the workflow |
 | params.payload | <code>Object</code> | Payload for the workflow |
 | params.workflow | <code>Object</code> | workflow name & arn object |
-| [params.queueUrl] | <code>string</code> | SQS queue URL |
 | [params.asyncOperationId] | <code>string</code> | Async operation ID |
 | [params.customCumulusMeta] | <code>Object</code> | Custom data for message.cumulus_meta |
 | [params.customMeta] | <code>Object</code> | Custom data for message.meta |
 | [params.executionNamePrefix] | <code>string</code> | Prefix to apply to the name   of the enqueued execution |
-
-<a name="module_Collections"></a>
-
-### Collections
-Utility functions for generating collection information or parsing collection information
-from a Cumulus message
-
-**Example**  
-```js
-const Collections = require('@cumulus/message/Collections');
-```
-
-* [Collections](#module_Collections)
-    * [exports.constructCollectionId(name, version)](#exp_module_Collections--exports.constructCollectionId) ⇒ <code>string</code> ⏏
-    * [exports.getCollectionIdFromMessage(message)](#exp_module_Collections--exports.getCollectionIdFromMessage) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-
-<a name="exp_module_Collections--exports.constructCollectionId"></a>
-
-#### exports.constructCollectionId(name, version) ⇒ <code>string</code> ⏏
-Returns the collection ID.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - collectionId  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | <code>string</code> | collection name |
-| version | <code>string</code> | collection version |
-
-<a name="exp_module_Collections--exports.getCollectionIdFromMessage"></a>
-
-#### exports.getCollectionIdFromMessage(message) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-Get collection ID from execution message.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> \| <code>undefined</code> - - A collection ID or undefined if
-                                message.meta.collection isn't
-                                present  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | An execution message |
 
 <a name="module_Executions"></a>
 
@@ -135,6 +157,10 @@ const Executions = require('@cumulus/message/Executions');
     * [exports.getMessageExecutionName(message)](#exp_module_Executions--exports.getMessageExecutionName) ⇒ <code>string</code> ⏏
     * [exports.getMessageStateMachineArn(message)](#exp_module_Executions--exports.getMessageStateMachineArn) ⇒ <code>string</code> ⏏
     * [exports.getMessageExecutionArn(message)](#exp_module_Executions--exports.getMessageExecutionArn) ⇒ <code>null</code> \| <code>string</code> ⏏
+    * [exports.getMessageExecutionParentArn(message)](#exp_module_Executions--exports.getMessageExecutionParentArn) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+    * [exports.getMessageCumulusVersion(message)](#exp_module_Executions--exports.getMessageCumulusVersion) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+    * [exports.getMessageExecutionOriginalPayload(message)](#exp_module_Executions--exports.getMessageExecutionOriginalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+    * [exports.getMessageExecutionFinalPayload(message)](#exp_module_Executions--exports.getMessageExecutionFinalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
 
 <a name="exp_module_Executions--exports.buildExecutionArn"></a>
 
@@ -217,27 +243,53 @@ Get the execution ARN from a workflow message.
 | --- | --- | --- |
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="module_Granules"></a>
+<a name="exp_module_Executions--exports.getMessageExecutionParentArn"></a>
 
-### Granules
-Utility functions for parsing granule information from a Cumulus message
-
-**Example**  
-```js
-const Granules = require('@cumulus/message/Granules');
-```
-<a name="exp_module_Granules--exports.getMessageGranules"></a>
-
-#### exports.getMessageGranules(message) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
-Get granules from execution message.
+#### exports.getMessageExecutionParentArn(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+Get the parent execution ARN from a workflow message, if any.
 
 **Kind**: Exported function  
-**Returns**: <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> - An array of granule objects, or
-  undefined if `message.payload.granules` is not set  
+**Returns**: <code>undefined</code> \| <code>string</code> - A state machine execution ARN  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | An execution message |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--exports.getMessageCumulusVersion"></a>
+
+#### exports.getMessageCumulusVersion(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+Get the Cumulus version from a workflow message, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>undefined</code> \| <code>string</code> - The cumulus version  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--exports.getMessageExecutionOriginalPayload"></a>
+
+#### exports.getMessageExecutionOriginalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+Get the workflow original payload, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow original payload  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--exports.getMessageExecutionFinalPayload"></a>
+
+#### exports.getMessageExecutionFinalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+Get the workflow final payload, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow final payload  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
 <a name="module_Queue"></a>
 
