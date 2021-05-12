@@ -1,5 +1,12 @@
 'use strict';
 
+const cryptoRandomString = require('crypto-random-string');
+const test = require('ava');
+const randomString = () => cryptoRandomString({ length: 6 });
+
+const randomId = (prefix, separator = '-') =>
+  [prefix, randomString()].filter((x) => x).join(separator);
+
 process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
 process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
@@ -10,14 +17,14 @@ process.env.TOKEN_SECRET = randomId('tokenSecret');
 const {
   s3credentials,
   buildRoleSessionName,
-  requestTemporaryCredentialsFromNgap
+  requestTemporaryCredentialsFromNgap,
 } = require('../../endpoints/s3credentials');
 
 test('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
   let lambdaInvocationCount = 0;
 
   const fakeLambda = {
-      invoke: ({ Payload }) => {
+    invoke: ({ Payload }) => {
       lambdaInvocationCount += 1;
 
       const parsedPayload = JSON.parse(Payload);
@@ -26,23 +33,23 @@ test('s3credentials() with just a username sends the correct request to the Lamb
       t.is(parsedPayload.rolesession, 'my-user-name');
 
       return {
-          promise: async () => ({
+        promise: async () => ({
           Payload: JSON.stringify({}),
-          }),
+        }),
       };
-      },
+    },
   };
 
   const req = {
-      authorizedMetadata: {
+    authorizedMetadata: {
       userName: 'my-user-name',
-      },
-      lambda: fakeLambda,
+    },
+    lambda: fakeLambda,
   };
 
   const res = {
-      // eslint-disable-next-line lodash/prefer-noop
-      send() {},
+    // eslint-disable-next-line lodash/prefer-noop
+    send() {},
   };
 
   await s3credentials(req, res);
@@ -54,7 +61,7 @@ test('s3credentials() with a username and a client name sends the correct reques
   let lambdaInvocationCount = 0;
 
   const fakeLambda = {
-      invoke: ({ Payload }) => {
+    invoke: ({ Payload }) => {
       lambdaInvocationCount += 1;
 
       const parsedPayload = JSON.parse(Payload);
@@ -63,24 +70,24 @@ test('s3credentials() with a username and a client name sends the correct reques
       t.is(parsedPayload.rolesession, 'my-user-name@my-client-name');
 
       return {
-          promise: async () => ({
+        promise: async () => ({
           Payload: JSON.stringify({}),
-          }),
+        }),
       };
-      },
+    },
   };
 
   const req = {
-      authorizedMetadata: {
+    authorizedMetadata: {
       userName: 'my-user-name',
       clientName: 'my-client-name',
-      },
-      lambda: fakeLambda,
+    },
+    lambda: fakeLambda,
   };
 
   const res = {
-      // eslint-disable-next-line lodash/prefer-noop
-      send() {},
+    // eslint-disable-next-line lodash/prefer-noop
+    send() {},
   };
 
   await s3credentials(req, res);
@@ -94,7 +101,7 @@ test('buildRoleSessionName() returns the username if a client name is not provid
     'username'
   );
 });
-  
+
 test('buildRoleSessionName() returns the username and client name if a client name is provided', (t) => {
   t.is(
     buildRoleSessionName('username', 'clientname'),

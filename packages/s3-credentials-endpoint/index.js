@@ -17,7 +17,6 @@ const {
 const express = require('express');
 const hsts = require('hsts');
 const { join: pathjoin } = require('path');
-const Logger = require('@cumulus/logger');
 const morgan = require('morgan');
 const urljoin = require('url-join');
 
@@ -285,5 +284,5 @@ const handler = async (event, context) =>
 module.exports = {
   distributionApp,
   handler,
-  handleTokenAuthRequest
+  handleTokenAuthRequest,
 };

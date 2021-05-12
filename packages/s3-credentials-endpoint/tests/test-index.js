@@ -31,7 +31,7 @@ let accessTokenModel;
 
 const {
   distributionApp,
-  handleTokenAuthRequest
+  handleTokenAuthRequest,
 } = require('..');
 
 const index = rewire('../index.js');

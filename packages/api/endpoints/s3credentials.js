@@ -1,5 +1,7 @@
 'use strict';
+
 const awsServices = require('@cumulus/aws-client/services');
+const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: 's3credentials' });
 
 const buildRoleSessionName = (username, clientName) => {
@@ -51,27 +53,27 @@ async function s3credentials(req, res) {
   const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
 
   if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
-      return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
+    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
   }
 
   const roleSessionName = buildRoleSessionName(
-      req.authorizedMetadata.userName,
-      req.authorizedMetadata.clientName
+    req.authorizedMetadata.userName,
+    req.authorizedMetadata.clientName
   );
 
   const credentials = await requestTemporaryCredentialsFromNgap({
-      lambda: req.lambda,
-      lambdaFunctionName: process.env.STSCredentialsLambda,
-      userId: req.authorizedMetadata.userName,
-      roleSessionName,
+    lambda: req.lambda,
+    lambdaFunctionName: process.env.STSCredentialsLambda,
+    userId: req.authorizedMetadata.userName,
+    roleSessionName,
   });
 
   const creds = JSON.parse(credentials.Payload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
-      log.error(credentials.Payload);
-      return res.boom.failedDependency(
+    log.error(credentials.Payload);
+    return res.boom.failedDependency(
       `Unable to retrieve credentials from Server: ${credentials.Payload}`
-      );
+    );
   }
   return res.send(creds);
 }
@@ -85,13 +87,13 @@ async function s3credentials(req, res) {
  * temporary credentials
  */
 async function handleCredentialRequest(req, res) {
-    req.lambda = awsServices.lambda();
-    return s3credentials(req, res);
-  }
+  req.lambda = awsServices.lambda();
+  return s3credentials(req, res);
+}
 
 module.exports = {
   handleCredentialRequest,
   s3credentials,
   buildRoleSessionName,
-  requestTemporaryCredentialsFromNgap
+  requestTemporaryCredentialsFromNgap,
 };
