@@ -18,6 +18,7 @@ const errors = require('@cumulus/errors');
 const set = require('lodash/set');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
+const crypto = require('crypto');
 
 const {
   randomString,
@@ -294,6 +295,84 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   );
 });
 
+test.only('download granule from S3 provider with checksum and data file in an alternate bucket', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
+  const alternateDataBucket = randomString();
+  const alternateBucket = randomString();
+  const checksumFile = granuleFileName.replace('hdf', 'cksum');
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString(),
+  };
+
+  t.context.event.input.granules[0].files[0] = {
+    path: granuleFilePath,
+    name: granuleFileName,
+    type: 'data',
+    source_bucket: alternateDataBucket,
+  };
+  t.context.event.input.granules[0].files[1] = {
+    path: granuleFilePath,
+    name: checksumFile,
+    source_bucket: alternateBucket,
+  };
+  t.context.event.config.collection.files.push({
+    regex: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cksum$',
+    bucket: 'protected',
+    sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.cksum',
+    url_path: 'file-example/',
+    checksumFor: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$',
+  });
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  await s3().createBucket({ Bucket: alternateDataBucket }).promise();
+  t.teardown(async () => {
+    await recursivelyDeleteS3Bucket(alternateDataBucket);
+  });
+  await s3().createBucket({ Bucket: alternateBucket }).promise();
+  t.teardown(async () => {
+    await recursivelyDeleteS3Bucket(alternateBucket);
+  });
+
+  // Stage the file that's going to be downloaded
+  await s3PutObject({
+    Bucket: alternateDataBucket,
+    Key: `${granuleFilePath}/${granuleFileName}`,
+    Body: streamTestData(`granules/${granuleFileName}`),
+  });
+
+  await s3PutObject({
+    Bucket: alternateBucket,
+    Key: `${granuleFilePath}/${checksumFile}`,
+    Body: '1435712144',
+  });
+
+  const output = await syncGranule(t.context.event);
+
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+  );
+  t.is(
+    true,
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${granuleFileName}`,
+    })
+  );
+});
+
 test.serial('download granule from S3 provider', async (t) => {
   const granuleFilePath = randomString();
   const granuleFileName = t.context.event.input.granules[0].files[0].name;
@@ -398,7 +477,7 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   config.syncChecksumFiles = true;
   config.downloadBucket = t.context.internalBucketName;
   config.buckets.internal.name = t.context.internalBucketName;
-  config.buckets.private.name = t.context.privateBucketName;
+config.buckets.private.name = t.context.privateBucketName;z
   config.buckets.protected.name = t.context.protectedBucketName;
   config.provider = {
     id: 'MODAPS',

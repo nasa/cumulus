@@ -116,7 +116,12 @@ class FtpProviderClient implements ProviderClient {
    * @param {string} localPath - the full local destination file path
    * @returns {Promise.<string>} - the path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<string> {
+  async download(params: {
+    remotePath: string,
+    localPath: string,
+  }): Promise<string> {
+    const { remotePath, localPath } = params;
+
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
     logger.info(`Downloading ${remoteUrl} to ${localPath}`);
 
