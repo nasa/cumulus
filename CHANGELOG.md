@@ -22,6 +22,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
+## [v9.0.1] 2021-05-07
+
+### Migration Steps
+
+Please review the migration steps for 9.0.0 as this release is only a patch to
+correct a failure in our build script and push out corrected release artifacts. The previous migration steps still apply.
+
+### Changed
+
+- Corrected `@cumulus/db` configuration to correctly build package.
+
 ## [v9.0.0] 2021-05-03
 
 ### Migration steps
@@ -4308,7 +4319,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.1...HEAD
+[v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
+[v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
