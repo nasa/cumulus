@@ -294,7 +294,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   );
 });
 
-test.only('download granule from S3 provider with checksum and data file in an alternate bucket', async (t) => {
+test.serial('download granule from S3 provider with checksum and data file in an alternate bucket', async (t) => {
   const granuleFilePath = randomString();
   const granuleFileName = t.context.event.input.granules[0].files[0].name;
   const alternateDataBucket = randomString();

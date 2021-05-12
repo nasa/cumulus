@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated @cumulus/ingest.fetchTextFile's signature to be parameterize and
     added `remoteAltBucket`to allow for an override of the passed in provider
     bucket for the source file
+
+### Changed
+
+- Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
+  per https://github.com/nasa/cumulus/pull/2216
+
 ## [v8.1.0] 2021-04-29
 
 ### Added
@@ -25,7 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 - **CUMULUS-2469**
-  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton
+    distribution api
 
 ## [v8.0.0] 2021-04-08
 
