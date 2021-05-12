@@ -33,14 +33,6 @@ const roleSessionNameRegex = /^[\w+,.=@-]{2,64}$/;
 
 const isValidRoleSessionNameString = (x) => roleSessionNameRegex.test(x);
 
-const buildRoleSessionName = (username, clientName) => {
-  if (clientName) {
-    return `${username}@${clientName}`;
-  }
-
-  return username;
-};
-
 const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
@@ -48,35 +40,6 @@ const buildEarthdataLoginClient = () =>
     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
-
-/**
- * Use NGAP's time-based, temporary credential dispensing lambda.
- *
- * @param {string} username - earthdata login username
- * @returns {Promise<Object>} Payload containing AWS STS credential object valid for 1
- *                   hour.  The credential object contains keys: AccessKeyId,
- *                   SecretAccessKey, SessionToken, Expiration and can be use
- *                   for same-region s3 direct access.
- */
-async function requestTemporaryCredentialsFromNgap({
-  lambda,
-  lambdaFunctionName,
-  userId,
-  roleSessionName,
-}) {
-  const Payload = JSON.stringify({
-    accesstype: 'sameregion',
-    returntype: 'lowerCamel',
-    duration: '3600', // one hour max allowed by AWS.
-    rolesession: roleSessionName, // <- shows up in S3 server access logs
-    userid: userId, // <- used by NGAP
-  });
-
-  return lambda.invoke({
-    FunctionName: lambdaFunctionName,
-    Payload,
-  }).promise();
-}
 
 /**
  * Sends a sample webpage describing how to use s3Credentials endpoint
@@ -320,9 +283,7 @@ const handler = async (event, context) =>
   ).promise;
 
 module.exports = {
-  buildRoleSessionName,
   distributionApp,
   handler,
-  handleTokenAuthRequest,
-  requestTemporaryCredentialsFromNgap
+  handleTokenAuthRequest
 };

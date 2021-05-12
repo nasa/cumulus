@@ -30,11 +30,8 @@ process.env.TOKEN_SECRET = randomId('tokenSecret');
 let accessTokenModel;
 
 const {
-  buildRoleSessionName,
   distributionApp,
-  handleTokenAuthRequest,
-  requestTemporaryCredentialsFromNgap,
-  s3credentials,
+  handleTokenAuthRequest
 } = require('..');
 
 const index = rewire('../index.js');
@@ -150,60 +147,6 @@ test('A redirect request returns a response with an unexpired cookie ', async (t
     stubbedAccessToken.expirationTime * 1000
   );
   t.true(accessToken.expires.valueOf() > Date.now());
-});
-
-test('buildRoleSessionName() returns the username if a client name is not provided', (t) => {
-  t.is(
-    buildRoleSessionName('username'),
-    'username'
-  );
-});
-
-test('buildRoleSessionName() returns the username and client name if a client name is provided', (t) => {
-  t.is(
-    buildRoleSessionName('username', 'clientname'),
-    'username@clientname'
-  );
-});
-
-test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with the correct payload', async (t) => {
-  let invocationCount = 0;
-
-  const lambdaFunctionName = 'my-lambda-function-name';
-  const roleSessionName = 'my-role-session-name';
-  const userId = 'my-user-id';
-
-  const fakeLambda = {
-    invoke: (params) => {
-      invocationCount += 1;
-
-      t.is(params.FunctionName, lambdaFunctionName);
-
-      t.deepEqual(
-        JSON.parse(params.Payload),
-        {
-          accesstype: 'sameregion',
-          returntype: 'lowerCamel',
-          duration: '3600',
-          rolesession: roleSessionName,
-          userid: userId,
-        }
-      );
-
-      return {
-        promise: async () => undefined,
-      };
-    },
-  };
-
-  await requestTemporaryCredentialsFromNgap({
-    lambda: fakeLambda,
-    lambdaFunctionName,
-    userId,
-    roleSessionName,
-  });
-
-  t.is(invocationCount, 1);
 });
 
 test('handleTokenAuthRequest() saves the client name in the request, if provided', async (t) => {

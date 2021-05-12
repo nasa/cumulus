@@ -2,6 +2,43 @@
 const awsServices = require('@cumulus/aws-client/services');
 const log = new Logger({ sender: 's3credentials' });
 
+const buildRoleSessionName = (username, clientName) => {
+  if (clientName) {
+    return `${username}@${clientName}`;
+  }
+
+  return username;
+};
+
+/**
+ * Use NGAP's time-based, temporary credential dispensing lambda.
+ *
+ * @param {string} username - earthdata login username
+ * @returns {Promise<Object>} Payload containing AWS STS credential object valid for 1
+ *                   hour.  The credential object contains keys: AccessKeyId,
+ *                   SecretAccessKey, SessionToken, Expiration and can be use
+ *                   for same-region s3 direct access.
+ */
+async function requestTemporaryCredentialsFromNgap({
+  lambda,
+  lambdaFunctionName,
+  userId,
+  roleSessionName,
+}) {
+  const Payload = JSON.stringify({
+    accesstype: 'sameregion',
+    returntype: 'lowerCamel',
+    duration: '3600', // one hour max allowed by AWS.
+    rolesession: roleSessionName, // <- shows up in S3 server access logs
+    userid: userId, // <- used by NGAP
+  });
+
+  return lambda.invoke({
+    FunctionName: lambdaFunctionName,
+    Payload,
+  }).promise();
+}
+
 /**
  * Dispenses time-based temporary credentials for same-region direct s3 access.
  *
@@ -53,5 +90,8 @@ async function handleCredentialRequest(req, res) {
   }
 
 module.exports = {
-  handleCredentialRequest
+  handleCredentialRequest,
+  s3credentials,
+  buildRoleSessionName,
+  requestTemporaryCredentialsFromNgap
 };
