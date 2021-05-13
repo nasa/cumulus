@@ -10,6 +10,7 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -427,6 +428,33 @@ const createCollectionTestRecords = async (context, collectionParams) => {
   };
 };
 
+const createProviderTestRecords = async (context, providerParams) => {
+  const {
+    testKnex,
+    providerModel,
+    providerPgModel,
+    esClient,
+    esProviderClient,
+  } = context;
+  const originalProvider = fakeProviderFactory(providerParams);
+
+  const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
+  await providerModel.create(originalProvider);
+  const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await providerPgModel.get(
+    testKnex, { cumulus_id: providerCumulusId }
+  );
+  await indexCollection(esClient, originalProvider, process.env.ES_INDEX);
+  const originalEsRecord = await esProviderClient.get(
+    originalProvider.id
+  );
+  return {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -451,4 +479,5 @@ module.exports = {
   testEndpoint,
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
+  createProviderTestRecords,
 };

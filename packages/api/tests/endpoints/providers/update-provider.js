@@ -177,17 +177,14 @@ test('PUT updates existing provider', async (t) => {
   t.like(
     updatedEsRecord,
     {
-      ...originalEsRecord,
-      duplicateHandling: 'error',
-      process: undefined,
-      createdAt: originalCollection.createdAt,
-      updatedAt: actualCollection.updatedAt,
+      ...expectedProvider,
+      updatedAt: actualProvider.updatedAt,
       timestamp: updatedEsRecord.timestamp,
     }
   );
 });
 
-test('PUT updates existing provider in Dynamo and PG with correct timestamps', async (t) => {
+test('PUT updates existing provider in all data stores with correct timestamps', async (t) => {
   const { testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,
     ['globalConnectionLimit', 'protocol', 'cmKeyId']);
@@ -210,6 +207,9 @@ test('PUT updates existing provider in Dynamo and PG with correct timestamps', a
     t.context.testKnex,
     { name: id }
   );
+  const updatedEsRecord = await t.context.esProviderClient.get(
+    testProvider.id
+  );
 
   t.true(actualProvider.updatedAt > updatedProvider.updatedAt);
   // createdAt timestamp from original record should have been preserved
@@ -217,6 +217,8 @@ test('PUT updates existing provider in Dynamo and PG with correct timestamps', a
   // PG and Dynamo records have the same timestamps
   t.is(actualPostgresProvider.created_at.getTime(), actualProvider.createdAt);
   t.is(actualPostgresProvider.updated_at.getTime(), actualProvider.updatedAt);
+  t.is(actualPostgresProvider.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPostgresProvider.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
 test('PUT returns 404 for non-existent provider', async (t) => {
