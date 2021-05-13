@@ -1,4 +1,4 @@
-import { NewCollectionRecord } from '@cumulus/types/api/collections';
+import { NewCollectionRecord, PartialCollectionRecord } from '@cumulus/types/api/collections';
 import { PostgresCollection } from '../types/collection';
 
 export const translateApiCollectionToPostgresCollection = (
@@ -27,6 +27,34 @@ export const translateApiCollectionToPostgresCollection = (
   }
   if (record.updatedAt !== undefined) {
     translatedRecord.updated_at = new Date(record.updatedAt);
+  }
+  return translatedRecord;
+};
+
+export const translatePostgresCollectionToApiCollection = (
+  record: PostgresCollection
+) => {
+  // Map old record to new schema.
+  const translatedRecord: PartialCollectionRecord = {
+    name: record.name,
+    version: record.version,
+    process: record.process,
+    url_path: record.url_path,
+    duplicateHandling: record.duplicate_handling,
+    granuleId: record.granule_id_validation_regex,
+    granuleIdExtraction: record.granule_id_extraction_regex,
+    files: JSON.parse(record.files),
+    reportToEms: record.report_to_ems,
+    sampleFileName: record.sample_file_name,
+    ignoreFilesConfigForDiscovery: record.ignore_files_config_for_discovery,
+    meta: record.meta ? JSON.parse(record.meta) : undefined,
+    tags: record.tags ? JSON.parse(record.tags) : undefined,
+  };
+  if (record.created_at !== undefined) {
+    translatedRecord.createdAt = record.created_at.getTime();
+  }
+  if (record.updated_at !== undefined) {
+    translatedRecord.updatedAt = record.updated_at.getTime();
   }
   return translatedRecord;
 };
