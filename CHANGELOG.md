@@ -7,9 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-
-- **CUMULUS-2434**
-  - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
   
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
@@ -20,7 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add both HTTPS URLS and S3 URIs to CMR metadata.
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
-  - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+  - With the updated `update-granules-cmr-metadata-file-links` task, only the granule UMM-G metadata with version 1.6.2 or later will have the s3 link with type 'GET DATA VIA DIRECT ACCESS' for its science file. Since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
 ## [v9.0.1] 2021-05-07
 
