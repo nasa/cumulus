@@ -8,8 +8,8 @@ echo Running parallel integration tests
 (while true; do sleep 60; echo .; done) &
 DOT_PID="$!"
 
-TEST=$(find spec/parallel -type f -name 'ingestPdrWithNodeNameSpec.js')
-TESTS=$(for i in {1..50}; do echo "$TEST"; done;)
+TEST=$(find spec/parallel -type f -name 'IngestGranuleSuccessSpec.js')
+TESTS=$(for i in {1..75}; do echo "$TEST"; done;)
 # echo $TESTS
 testOutputDir=scripts/test_output
 
