@@ -27,10 +27,6 @@ const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
-const dynamoRecordToDbRecord = (
-  dynamoRecord
-) => translateApiCollectionToPostgresCollection(dynamoRecord);
-
 /**
  * List all collections.
  *
@@ -130,7 +126,7 @@ async function post(req, res) {
 
   try {
     let dynamoRecord;
-    const dbRecord = dynamoRecordToDbRecord(collection);
+    const dbRecord = translateApiCollectionToPostgresCollection(collection);
 
     try {
       await knex.transaction(async (trx) => {
@@ -203,7 +199,7 @@ async function put(req, res) {
   collection.updatedAt = Date.now();
   collection.createdAt = oldCollection.createdAt;
 
-  const postgresCollection = dynamoRecordToDbRecord(collection);
+  const postgresCollection = translateApiCollectionToPostgresCollection(collection);
 
   try {
     await knex.transaction(async (trx) => {
@@ -289,7 +285,6 @@ router.get('/active', activeList);
 
 module.exports = {
   del,
-  dynamoRecordToDbRecord,
   post,
   put,
   router,
