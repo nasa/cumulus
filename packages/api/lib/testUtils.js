@@ -18,7 +18,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
-const { indexCollection } = require('../es/indexer');
+const { indexCollection, indexProvider } = require('../es/indexer');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -444,7 +444,7 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: providerCumulusId }
   );
-  await indexCollection(esClient, originalProvider, process.env.ES_INDEX);
+  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
   const originalEsRecord = await esProviderClient.get(
     originalProvider.id
   );
