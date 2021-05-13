@@ -67,29 +67,36 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    model = new models.Rule(),
-    dbClient = await getKnexClient(),
+    rulesModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   let record;
   const apiRule = req.body || {};
   const name = apiRule.name;
-  const rulePgModel = new RulePgModel();
 
-  if (await model.exists(name)) {
+  if (await rulesModel.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.create(trx, postgresRule);
-      record = await model.create(apiRule);
-    });
-    if (inTestMode()) await addToLocalES(record, indexRule);
+    try {
+      await knex.transaction(async (trx) => {
+        await rulePgModel.create(trx, postgresRule);
+        record = await rulesModel.create(apiRule);
+        await indexRule(esClient, record, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB record in case of any failure
+      await rulesModel.delete(apiRule);
+      throw innerError;
+    }
     return res.send({ message: 'Record saved', record });
   } catch (error) {
     if (isBadRequestError(error)) {
