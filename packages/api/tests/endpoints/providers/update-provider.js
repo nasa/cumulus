@@ -17,7 +17,6 @@ const {
   ProviderPgModel,
 } = require('@cumulus/db');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
@@ -26,6 +25,10 @@ const {
 } = require('../../../lib/testUtils');
 
 const { Search } = require('../../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const testDbName = randomString(12);
 
@@ -44,9 +47,6 @@ const { app } = require('../../../app');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
-const esIndex = randomString();
-let esClient;
-
 let accessTokenModel;
 let jwtAuthToken;
 
@@ -58,9 +58,14 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esProviderClient = new Search(
+    {},
+    'provider',
+    t.context.esIndex
+  );
 
   providerModel = new models.Provider();
   await providerModel.createTable();
@@ -73,7 +78,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await Search.es('fakehost');
 });
 
 test.beforeEach(async (t) => {
@@ -92,7 +96,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -165,6 +169,21 @@ test('PUT updates existing provider', async (t) => {
       }),
       postgresOmitList
     )
+  );
+
+  const updatedEsRecord = await t.context.esProviderClient.get(
+    testProvider.id
+  );
+  t.like(
+    updatedEsRecord,
+    {
+      ...originalEsRecord,
+      duplicateHandling: 'error',
+      process: undefined,
+      createdAt: originalCollection.createdAt,
+      updatedAt: actualCollection.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
   );
 });
 
