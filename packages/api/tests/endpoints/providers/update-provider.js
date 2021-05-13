@@ -22,6 +22,7 @@ const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
+  createProviderTestRecords,
 } = require('../../../lib/testUtils');
 
 const { Search } = require('../../../es/search');
@@ -30,6 +31,9 @@ const {
   cleanupTestIndex,
 } = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
+const { put } = require('../../../endpoints/providers');
+const { buildFakeExpressResponse } = require('../utils');
+
 const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
@@ -68,6 +72,7 @@ test.before(async (t) => {
   );
 
   providerModel = new models.Provider();
+  t.context.providerModel = providerModel;
   await providerModel.createTable();
 
   const username = randomString();
@@ -279,4 +284,187 @@ test('PUT without an Authorization header returns an Authorization Missing respo
     id: t.context.testProvider.id,
   });
   t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
+});
+
+test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createProviderTestRecords(
+    t.context,
+    {
+      host: 'first-host',
+    }
+  );
+
+  const fakeProvidersModel = {
+    get: async () => originalProvider,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const updatedProvider = {
+    ...originalProvider,
+    host: 'second-host',
+  };
+
+  const expressRequest = {
+    params: {
+      id: updatedProvider.id,
+    },
+    body: updatedProvider,
+    testContext: {
+      knex: testKnex,
+      providerModel: fakeProvidersModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await providerModel.get({
+      id: updatedProvider.id,
+    }),
+    originalProvider
+  );
+  t.deepEqual(
+    await t.context.providerPgModel.get(t.context.testKnex, {
+      name: updatedProvider.id,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esProviderClient.get(
+      originalProvider.id
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createProviderTestRecords(
+    t.context,
+    {
+      host: 'first-host',
+    }
+  );
+
+  const fakeproviderPgModel = {
+    upsert: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedProvider = {
+    ...originalProvider,
+    host: 'second-host',
+  };
+
+  const expressRequest = {
+    params: {
+      id: updatedProvider.id,
+    },
+    body: updatedProvider,
+    testContext: {
+      knex: testKnex,
+      providerPgModel: fakeproviderPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await providerModel.get({
+      id: updatedProvider.id,
+    }),
+    originalProvider
+  );
+  t.deepEqual(
+    await t.context.providerPgModel.get(t.context.testKnex, {
+      name: updatedProvider.id,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esProviderClient.get(
+      originalProvider.id
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createProviderTestRecords(
+    t.context,
+    {
+      host: 'first-host',
+    }
+  );
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedProvider = {
+    ...originalProvider,
+    host: 'second-host',
+  };
+
+  const expressRequest = {
+    params: {
+      id: updatedProvider.id,
+    },
+    body: updatedProvider,
+    testContext: {
+      knex: testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await providerModel.get({
+      id: updatedProvider.id,
+    }),
+    originalProvider
+  );
+  t.deepEqual(
+    await t.context.providerPgModel.get(t.context.testKnex, {
+      name: updatedProvider.id,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esProviderClient.get(
+      originalProvider.id
+    ),
+    originalEsRecord
+  );
 });
