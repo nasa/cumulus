@@ -141,6 +141,7 @@ Create a CloudWatch Events rule
 * [DynamoDb](#module_DynamoDb)
     * [.get](#module_DynamoDb.get) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.scan](#module_DynamoDb.scan) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.parallelScan(params)](#module_DynamoDb.parallelScan) ⇒ <code>Promise</code>
     * [.createAndWaitForDynamoDbTable(params)](#module_DynamoDb.createAndWaitForDynamoDbTable) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteAndWaitForDynamoDbTableNotExists(params)](#module_DynamoDb.deleteAndWaitForDynamoDbTableNotExists) ⇒ <code>Promise</code>
 
@@ -179,6 +180,25 @@ for descriptions of `params` and the return data.
 | Param | Type |
 | --- | --- |
 | params | <code>Object</code> | 
+
+<a name="module_DynamoDb.parallelScan"></a>
+
+### DynamoDb.parallelScan(params) ⇒ <code>Promise</code>
+Do a parallel scan of DynamoDB table using a document client.
+
+See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
+See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+
+**Kind**: static method of [<code>DynamoDb</code>](#module_DynamoDb)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.totalSegments | <code>number</code> | Total number of segments to divide table into for parallel scanning |
+| params.scanParams | <code>DocumentClient.ScanInput</code> | Params for the DynamoDB client scan operation   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html |
+| params.processItemsFunc | <code>function</code> | Function used to process returned items by scan |
+| [params.dynamoDbClient] | <code>DocumentClient</code> | Instance of Dynamo DB document client |
+| [params.retryOptions] | <code>pRetry.Options</code> | Retry options for scan operations |
 
 <a name="module_DynamoDb.createAndWaitForDynamoDbTable"></a>
 
@@ -314,6 +334,7 @@ Invoke a Lambda function
     * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
     * [.fileExists(bucket, key)](#module_S3.fileExists) ⇒ <code>Promise</code>
     * [.deleteS3Files(s3Objs)](#module_S3.deleteS3Files) ⇒ <code>Promise</code>
+    * [.deleteS3Buckets(buckets)](#module_S3.deleteS3Buckets) ⇒ <code>Promise</code>
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
     * [.listS3Objects(bucket, prefix, skipFolders)](#module_S3.listS3Objects) ⇒ <code>Promise</code>
     * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
@@ -321,6 +342,7 @@ Invoke a Lambda function
     * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
+    * [.createS3Buckets(buckets)](#module_S3.createS3Buckets) ⇒ <code>Promise</code>
     * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
     * [.moveObject(params)](#module_S3.moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
@@ -660,6 +682,18 @@ Delete files from S3
 | --- | --- | --- |
 | s3Objs | <code>Array</code> | An array of objects containing keys 'Bucket' and 'Key' |
 
+<a name="module_S3.deleteS3Buckets"></a>
+
+### S3.deleteS3Buckets(buckets) ⇒ <code>Promise</code>
+Delete a list of buckets and all of their objects from S3
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise</code> - the promised result of `S3.deleteBucket`  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buckets | <code>Array</code> | list of bucket names |
+
 <a name="module_S3.uploadS3FileStream"></a>
 
 ### S3.uploadS3FileStream(fileStream, bucket, key, s3opts) ⇒ <code>Promise</code>
@@ -769,6 +803,17 @@ Create an S3 bucket
 | Param | Type | Description |
 | --- | --- | --- |
 | Bucket | <code>string</code> | the name of the S3 bucket to create |
+
+<a name="module_S3.createS3Buckets"></a>
+
+### S3.createS3Buckets(buckets) ⇒ <code>Promise</code>
+Create multiple S3 buckets
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buckets | <code>Array.&lt;string&gt;</code> | the names of the S3 buckets to create |
 
 <a name="module_S3.multipartCopyObject"></a>
 
