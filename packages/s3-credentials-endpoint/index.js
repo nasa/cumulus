@@ -21,7 +21,7 @@ const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { displayS3CredentialInstructions } = require('@cumulus/api/endpoints/s3credentials-readme');
+const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3credentials-readme');
 
 const log = new Logger({ sender: 's3credentials' });
 
