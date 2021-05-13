@@ -67,6 +67,15 @@ module.exports = {
         }
       ]
     }),
+    // templates to include html for readme
+    new CopyPlugin({
+      patterns: [
+        {
+          from: 'endpoints/s3credentials-readme/instructions',
+          to: 'distribution/instructions',
+        },
+      ],
+    }),
     new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
   ],
   output: {
