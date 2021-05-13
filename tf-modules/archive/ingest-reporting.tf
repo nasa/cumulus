@@ -449,6 +449,10 @@ resource "aws_sns_topic" "report_collections_topic" {
   tags = var.tags
 }
 
+data "aws_dynamodb_table" "collections" {
+  name = var.dynamo_tables.collections.name
+}
+
 resource "aws_lambda_event_source_mapping" "publish_collections" {
   event_source_arn  = data.aws_dynamodb_table.collections.stream_arn
   function_name     = aws_lambda_function.publish_collections.arn
