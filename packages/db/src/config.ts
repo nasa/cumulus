@@ -131,7 +131,7 @@ export const getKnexConfig = async ({
     asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
     pool: {
       min: 0,
-      max: Number.parseInt(env.dbMaxPool ?? '20', 10),
+      max: Number.parseInt(env.dbMaxPool ?? '200', 10),
       idleTimeoutMillis: Number.parseInt(env.idleTimeoutMillis ?? '1000', 10),
       // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
       // is improperly typed.
