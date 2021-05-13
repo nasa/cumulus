@@ -24,6 +24,7 @@ const {
   fakeCollectionFactory,
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
+  createCollectionTestRecords,
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
 const {
@@ -44,8 +45,6 @@ process.env.TOKEN_SECRET = randomString();
 const { app } = require('../../../app');
 
 const { buildFakeExpressResponse } = require('../utils');
-
-const { createTestRecords } = require('./utils');
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -146,7 +145,7 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it from all data stores', async (t) => {
-  const { originalCollection } = await createTestRecords(t.context);
+  const { originalCollection } = await createCollectionTestRecords(t.context);
 
   t.true(
     await t.context.collectionModel.exists(
@@ -270,7 +269,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
 test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
   const {
     originalCollection,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context
   );
 
@@ -324,7 +323,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalCollection,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context
   );
 
@@ -376,7 +375,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
 test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
     originalCollection,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context
   );
 

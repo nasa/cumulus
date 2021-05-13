@@ -22,6 +22,7 @@ const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
+  createCollectionTestRecords,
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
 const {
@@ -32,8 +33,6 @@ const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
 
 const { buildFakeExpressResponse } = require('../utils');
-
-const { createTestRecords } = require('./utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -123,7 +122,7 @@ test('PUT replaces an existing collection', async (t) => {
     originalCollection,
     originalPgRecord,
     originalEsRecord,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context,
     {
       duplicateHandling: 'replace',
@@ -191,7 +190,7 @@ test('PUT replaces an existing collection', async (t) => {
 });
 
 test('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
-  const { originalCollection } = await createTestRecords(
+  const { originalCollection } = await createCollectionTestRecords(
     t.context,
     {
       duplicateHandling: 'replace',
@@ -336,7 +335,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
     originalCollection,
     originalPgRecord,
     originalEsRecord,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context,
     {
       duplicateHandling: 'error',
@@ -402,7 +401,7 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
     originalCollection,
     originalPgRecord,
     originalEsRecord,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context,
     {
       duplicateHandling: 'error',
@@ -465,7 +464,7 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
     originalCollection,
     originalPgRecord,
     originalEsRecord,
-  } = await createTestRecords(
+  } = await createCollectionTestRecords(
     t.context,
     {
       duplicateHandling: 'error',

@@ -8,9 +8,16 @@ const merge = require('lodash/merge');
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const {
+  translateApiCollectionToPostgresCollection,
+} = require('@cumulus/db');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
+const { indexCollection } = require('../es/indexer');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -393,6 +400,33 @@ async function getSqsQueueMessageCounts(queueUrl) {
   };
 }
 
+const createCollectionTestRecords = async (context, collectionParams) => {
+  const {
+    testKnex,
+    collectionModel,
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+  } = context;
+  const originalCollection = fakeCollectionFactory(collectionParams);
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await collectionPgModel.get(
+    testKnex, { cumulus_id: collectionCumulusId }
+  );
+  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
+  const originalEsRecord = await esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+  return {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -416,4 +450,5 @@ module.exports = {
   isLocalApi,
   testEndpoint,
   setAuthorizedOAuthUsers,
+  createCollectionTestRecords,
 };
