@@ -20,7 +20,7 @@ const Logger = require('@cumulus/logger');
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
-const { addToLocalES, indexProvider } = require('../es/indexer');
+const { indexProvider } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -142,7 +142,16 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put({ params: { id }, body }, res) {
+async function put(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { id }, body } = req;
+
   const apiProvider = body;
 
   if (id !== apiProvider.id) {
@@ -150,10 +159,6 @@ async function put({ params: { id }, body }, res) {
       `Expected provider ID to be '${id}', but found '${body.id}' in payload`
     );
   }
-
-  const knex = await getKnexClient();
-  const providerModel = new Provider();
-  const providerPgModel = new ProviderPgModel();
 
   let oldProvider;
   try {
@@ -172,13 +177,16 @@ async function put({ params: { id }, body }, res) {
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  await knex.transaction(async (trx) => {
-    await providerPgModel.upsert(trx, postgresProvider);
-    record = await providerModel.create(apiProvider);
-  });
-
-  if (inTestMode()) {
-    await addToLocalES(record, indexProvider);
+  try {
+    await knex.transaction(async (trx) => {
+      await providerPgModel.upsert(trx, postgresProvider);
+      record = await providerModel.create(apiProvider);
+      await indexProvider(esClient, record, process.env.ES_INDEX);
+    });
+  } catch (innerError) {
+    // Revert Dynamo record update if any write fails
+    await providerModel.create(oldProvider);
+    throw innerError;
   }
 
   return res.send(record);
