@@ -20,20 +20,28 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const AccessToken = require('../../../models/access-tokens');
 const Provider = require('../../../models/providers');
+const Rule = require('../../../models/rules');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
+const { post } = require('../../../endpoints/providers');
+
+const { buildFakeExpressResponse } = require('../utils');
 
 const testDbName = randomString(12);
 process.env.AccessTokensTable = randomString();
 process.env.ProvidersTable = randomString();
+process.env.RulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -48,9 +56,6 @@ const { app } = require('../../../app');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
-const esIndex = randomString();
-let esClient;
-
 let jwtAuthToken;
 let accessTokenModel;
 
@@ -67,16 +72,22 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.providerPgModel = new ProviderPgModel();
 
-  t.context.providerPgModel = new ProviderPgModel();
-
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esProviderClient = new Search(
+    {},
+    'provider',
+    t.context.esIndex
+  );
 
   providerModel = new Provider();
   await providerModel.createTable();
+
+  t.context.rulesModel = new Rule();
+  await t.context.rulesModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -85,15 +96,14 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  esClient = await Search.es('fakehost');
 });
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await providerModel.deleteTable();
+  await t.context.rulesModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -143,7 +153,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
   await providerDoesNotExist(t, newProvider.id);
 });
 
-test('POST creates a new provider', async (t) => {
+test('POST creates a new provider in all data stores', async (t) => {
   const { providerPgModel } = t.context;
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
@@ -179,6 +189,11 @@ test('POST creates a new provider', async (t) => {
       postgresOmitList
     )
   );
+
+  const esRecord = await t.context.esProviderClient.get(
+    newProvider.id
+  );
+  t.like(esRecord, record);
 });
 
 test('POST creates a new provider in Dynamo and PG with correct timestamps', async (t) => {
@@ -206,9 +221,15 @@ test('POST creates a new provider in Dynamo and PG with correct timestamps', asy
   t.true(record.createdAt > newProvider.createdAt);
   t.true(record.updatedAt > newProvider.updatedAt);
 
+  const esRecord = await t.context.esProviderClient.get(
+    newProvider.id
+  );
+
   // PG and Dynamo records have the same timestamps
   t.is(providerPgRecord.created_at.getTime(), record.createdAt);
   t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
+  t.is(providerPgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(providerPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test('POST returns a 409 error if the provider already exists', async (t) => {
@@ -317,4 +338,97 @@ test('CUMULUS-176 POST returns a 400 response if invalid JSON provided', async (
     /Unexpected.*JSON/.test(response.text),
     `response.text: ${response.text}`
   );
+});
+
+test('post() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+
+  const provider = fakeProviderFactory();
+
+  const fakeProviderModel = {
+    get: () => {
+      throw new RecordDoesNotExist();
+    },
+    create: () => {
+      throw new Error('something bad');
+    },
+    delete: async () => true,
+  };
+
+  const expressRequest = {
+    body: provider,
+    testContext: {
+      knex: testKnex,
+      providerModel: fakeProviderModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await t.context.esProviderClient.exists(
+    provider.id
+  ));
+  t.false(
+    await t.context.providerPgModel.exists(t.context.testKnex, {
+      name: provider.id,
+    })
+  );
+});
+
+test('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+  const provider = fakeProviderFactory();
+
+  const fakeProviderPgModel = {
+    create: () => Promise.reject(new Error('something bad')),
+  };
+
+  const expressRequest = {
+    body: provider,
+    testContext: {
+      providerPgModel: fakeProviderPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await t.context.esProviderClient.exists(
+    provider.id
+  ));
+  t.false(await providerModel.exists(provider.id));
+});
+
+test('post() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const provider = fakeProviderFactory();
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const expressRequest = {
+    body: provider,
+    testContext: {
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(
+    await t.context.providerPgModel.exists(t.context.testKnex, {
+      name: provider.id,
+    })
+  );
+  t.false(await providerModel.exists(provider.id));
 });
