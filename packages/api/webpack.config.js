@@ -1,5 +1,6 @@
 'use strict';
 
+const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
