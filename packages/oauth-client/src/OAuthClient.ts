@@ -133,7 +133,7 @@ export class OAuthClient {
    *
    * - accessToken
    * - refreshToken
-   * - username
+   * - username (optional, if "endpoint" is provided by client API response)
    * - expirationTime (in seconds)
    *
    * @param {string} authorizationCode - an OAuth2 authorization code
@@ -148,7 +148,7 @@ export class OAuthClient {
       return {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
+        username: response.body.endpoint ? response.body.endpoint.split('/').pop() : undefined,
         // expires_in value is in seconds
         expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
       };
@@ -235,7 +235,7 @@ export class OAuthClient {
    *
    * - accessToken
    * - refreshToken
-   * - username
+   * - username (optional, if "endpoint" is provided by client API response)
    * - expirationTime (in seconds)
    *
    * @param {string} refreshToken - an OAuth2 refresh token
@@ -250,7 +250,7 @@ export class OAuthClient {
       return {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
-        username: response.body.endpoint.split('/').pop(),
+        username: response.body.endpoint ? response.body.endpoint.split('/').pop() : undefined,
         expirationTime: Math.floor(Date.now() / 1000) + response.body.expires_in,
       };
     } catch (error) {

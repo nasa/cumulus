@@ -250,6 +250,38 @@ test('OAuthClient.getAccessToken() returns token information for a valid authori
   t.is(username, 'sidney');
 });
 
+test('OAuthClient.getAccessToken() returns token information if client API does not return a valid endpoint', async (t) => {
+  const authClient = buildAuthClient();
+
+  nockAuthCall({
+    authClient,
+    path: '/oauth/token',
+    responseStatus: 200,
+    responseBody: {
+      access_token: 'access-token',
+      token_type: 'bearer',
+      expires_in: 100,
+      refresh_token: 'refresh-token',
+    },
+  });
+
+  const requestStartTime = Math.floor(Date.now() / 1000);
+  const {
+    accessToken,
+    refreshToken,
+    expirationTime,
+    username,
+  } = await authClient.getAccessToken('authorization-code');
+  const requestEndTime = Math.floor(Date.now() / 1000);
+
+  t.is(accessToken, 'access-token');
+  t.is(refreshToken, 'refresh-token');
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
+  // username is derived from "endpoint", which is not present in this response
+  t.is(username, undefined);
+});
+
 test('OAuthClient.refreshAccessToken() throws a TypeError if refreshToken is not set', async (t) => {
   const authClient = buildAuthClient();
 
@@ -332,4 +364,35 @@ test('OAuthClient.refreshAccessToken() returns token information for a valid ref
   t.true(expirationTime >= requestStartTime + 100);
   t.true(expirationTime <= requestEndTime + 100);
   t.is(username, 'sidney');
+});
+
+test('OAuthClient.refreshAccessToken() returns token information if client API does not return a valid endpoint', async (t) => {
+  const authClient = buildAuthClient();
+
+  nockAuthCall({
+    authClient,
+    path: '/oauth/token',
+    responseStatus: 200,
+    responseBody: {
+      access_token: 'access-token',
+      token_type: 'bearer',
+      expires_in: 100,
+      refresh_token: 'refresh-token',
+    },
+  });
+
+  const requestStartTime = Math.floor(Date.now() / 1000);
+  const {
+    accessToken,
+    refreshToken,
+    expirationTime,
+    username,
+  } = await authClient.refreshAccessToken('refresh-token');
+  const requestEndTime = Math.floor(Date.now() / 1000);
+
+  t.is(accessToken, 'access-token');
+  t.is(refreshToken, 'refresh-token');
+  t.true(expirationTime >= requestStartTime + 100);
+  t.true(expirationTime <= requestEndTime + 100);
+  t.is(username, undefined);
 });
