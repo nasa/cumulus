@@ -1,6 +1,5 @@
 'use strict';
 
-const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
@@ -66,15 +65,6 @@ module.exports = {
           to: 'app/templates'
         }
       ]
-    }),
-    // templates to include html for readme
-    new CopyPlugin({
-      patterns: [
-        {
-          from: 'endpoints/s3credentials-readme/instructions',
-          to: 'distribution/instructions',
-        },
-      ],
     }),
     new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
   ],
