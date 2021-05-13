@@ -979,7 +979,27 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile.length === 0) return {};
 
   const cmrFilename = cmrFile[0].filename;
-  if (isECHO10File(cmrFilename) || isISOFile(cmrFilename)) {
+  if (isISOFile(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
+    const miMetadata = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
+
+    // Get beginning and ending date time from beginPosition and endPosition
+    const identificationInfo = miMetadata['gmd:identificationInfo'];
+    const dataIdentification = (identificationInfo.find((o) => Object.keys(o).filter((k) => Object.keys(o[k]).includes('gmd:extent'))));
+    const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
+    const beginningDateTime = temporalInfo['gml:beginPosition'];
+    const endingDateTime = temporalInfo['gml:endPosition'];
+
+    // Get production date time from LE_ProcessStep
+    const productionDateTime = miMetadata['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
+
+    // Get last update date time from CI_Citation with UpdateTime
+    const citation = identificationInfo.find((o) => o['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
+    const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
+
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
+  if (isECHO10File(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
     const endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
