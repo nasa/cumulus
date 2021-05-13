@@ -86,15 +86,20 @@ async function throwIfDynamoRecordExists(providerModel, id) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const apiProvider = req.body;
 
   apiProvider.updatedAt = Date.now();
   apiProvider.createdAt = Date.now();
 
   const id = apiProvider.id;
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
-  const providerPgModel = new ProviderPgModel();
+
   try {
     let record;
     if (!apiProvider.id) {
@@ -104,14 +109,18 @@ async function post(req, res) {
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    await knex.transaction(async (trx) => {
-      await providerPgModel.create(trx, postgresProvider);
-      record = await providerModel.create(apiProvider);
-    });
-
-    if (inTestMode()) {
-      await addToLocalES(record, indexProvider);
+    try {
+      await knex.transaction(async (trx) => {
+        await providerPgModel.create(trx, postgresProvider);
+        record = await providerModel.create(apiProvider);
+        await indexProvider(esClient, record, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB record in case of any failure
+      await providerModel.delete(apiProvider);
+      throw innerError;
     }
+
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
@@ -217,4 +226,9 @@ router.delete('/:id', del);
 router.post('/', post);
 router.get('/', list);
 
-module.exports = router;
+module.exports = {
+  del,
+  post,
+  put,
+  router,
+};
