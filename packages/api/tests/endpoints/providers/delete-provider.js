@@ -18,16 +18,24 @@ const {
   ProviderPgModel,
 } = require('@cumulus/db');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
+  createProviderTestRecords,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { del } = require('../../../endpoints/providers');
+
+const { buildFakeExpressResponse } = require('../utils');
+
 const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
@@ -44,10 +52,7 @@ process.env = {
 const { app } = require('../../../app');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
-const esIndex = randomString();
-let esClient;
 let providerModel;
-
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
@@ -66,11 +71,17 @@ test.before(async (t) => {
   process.env.system_bucket = randomString();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esProviderClient = new Search(
+    {},
+    'provider',
+    t.context.esIndex
+  );
 
   providerModel = new models.Provider();
+  t.context.providerModel = providerModel;
   await providerModel.createTable();
 
   const username = randomString();
@@ -81,8 +92,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  esClient = await Search.es('fakehost');
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();
@@ -109,7 +118,7 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
@@ -143,7 +152,7 @@ test('Attempting to delete a provider with an invalid access token returns an un
 
 test.todo('Attempting to delete a provider with an unauthorized user returns an unauthorized response');
 
-test('Deleting a provider removes the provider', async (t) => {
+test('Deleting a provider removes the provider from all data stores', async (t) => {
   const { testProvider } = t.context;
   const id = testProvider.id;
   await request(app)
@@ -154,6 +163,11 @@ test('Deleting a provider removes the provider', async (t) => {
 
   t.false(await providerModel.exists(testProvider.id));
   t.false(await t.context.providerPgModel.exists(t.context.testKnex, { name: id }));
+  t.false(
+    await t.context.esProviderClient.exists(
+      testProvider.id
+    )
+  );
 });
 
 test('Deleting a provider that does not exist succeeds', async (t) => {
@@ -270,4 +284,153 @@ test('Attempting to delete a provider with an associated rule does not delete th
     .expect(409);
 
   t.true(await providerModel.exists(testProvider.id));
+});
+
+test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+  const {
+    originalProvider,
+  } = await createProviderTestRecords(
+    t.context
+  );
+
+  const fakeProvidersModel = {
+    get: async () => originalProvider,
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: async () => true,
+  };
+
+  const expressRequest = {
+    params: {
+      id: originalProvider.id,
+    },
+    body: originalProvider,
+    testContext: {
+      knex: t.context.testKnex,
+      providerModel: fakeProvidersModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.providerModel.get({
+      id: originalProvider.id,
+    }),
+    originalProvider
+  );
+  t.true(
+    await t.context.providerPgModel.exists(t.context.testKnex, {
+      name: originalProvider.id,
+    })
+  );
+  t.true(
+    await t.context.esProviderClient.exists(
+      originalProvider.id
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalProvider,
+  } = await createProviderTestRecords(
+    t.context
+  );
+
+  const fakeproviderPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id: originalProvider.id,
+    },
+    body: originalProvider,
+    testContext: {
+      knex: t.context.testKnex,
+      providerPgModel: fakeproviderPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.providerModel.get({
+      id: originalProvider.id,
+    }),
+    originalProvider
+  );
+  t.true(
+    await t.context.providerPgModel.exists(t.context.testKnex, {
+      name: originalProvider.id,
+    })
+  );
+  t.true(
+    await t.context.esProviderClient.exists(
+      originalProvider.id
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalProvider,
+  } = await createProviderTestRecords(
+    t.context
+  );
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id: originalProvider.id,
+    },
+    body: originalProvider,
+    testContext: {
+      knex: t.context.testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.providerModel.get({
+      id: originalProvider.id,
+    }),
+    originalProvider
+  );
+  t.true(
+    await t.context.providerPgModel.exists(t.context.testKnex, {
+      name: originalProvider.id,
+    })
+  );
+  t.true(
+    await t.context.esProviderClient.exists(
+      originalProvider.id
+    )
+  );
 });

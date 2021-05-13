@@ -5,7 +5,6 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
-  tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
 } = require('@cumulus/db');
@@ -200,22 +199,44 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { id } = req.params;
+
+  let existingProvider;
+  try {
+    existingProvider = await providerModel.get({ id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
-      await providerModel.delete({ id: req.params.id });
-      if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
+    try {
+      await knex.transaction(async (trx) => {
+        await providerPgModel.delete(trx, { name: id });
+        await providerModel.delete({ id });
         await esClient.delete({
-          id: req.params.id,
+          id,
           type: 'provider',
           index: process.env.ES_INDEX,
+          refresh: inTestMode(),
         }, { ignore: [404] });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingProvider) {
+        await providerModel.create(existingProvider);
       }
-    });
+      throw innerError;
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
