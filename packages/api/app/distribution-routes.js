@@ -8,7 +8,7 @@ const {
   handleRedirectRequest,
   handleFileRequest,
 } = require('../endpoints/distribution');
-const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme/s3credentials-readme');
+const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
 const { isAccessTokenExpired } = require('../lib/token');
 
 /**
