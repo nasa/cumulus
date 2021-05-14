@@ -42,6 +42,9 @@ export function invokeApi(
         );
       }
 
+      if (parsedPayload.statusCode !== 200) {
+        logger.warn(`Payload returned !200 with ${JSON.stringify(parsedPayload)}`);
+      }
       return parsedPayload;
     },
     {
