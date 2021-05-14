@@ -85,7 +85,7 @@ const discoverPdrs = async ({ config }) => {
  * @returns {Promise<Object>}   - Returns output from task.
  *                                See schemas/output.json for detailed output schema
  */
-const handler = async (event, context) => runCumulusTask(discoverPdrs, event, context);
+const handler = async (event, context) => await runCumulusTask(discoverPdrs, event, context);
 
 module.exports = {
   discoverPdrs,

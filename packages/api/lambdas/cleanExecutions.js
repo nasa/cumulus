@@ -34,14 +34,14 @@ async function cleanExecutionPayloads(ExecutionModel) {
   });
 
   const execution = new ExecutionModel();
-  return execution.removeOldPayloadRecords(completeTimeout,
+  return await execution.removeOldPayloadRecords(completeTimeout,
     nonCompleteTimeout,
     completeDisable,
     nonCompleteDisable);
 }
 
 async function handler(_event) {
-  return cleanExecutionPayloads(Execution);
+  return await cleanExecutionPayloads(Execution);
 }
 
 exports.handler = handler;

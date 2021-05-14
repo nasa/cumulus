@@ -75,7 +75,7 @@ async function processQueues(event, dispatchFn) {
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
  */
-function dispatch(queueUrl, message) {
+async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
 
@@ -84,7 +84,7 @@ function dispatch(queueUrl, message) {
 
   const rulesToSchedule = rulesHelpers.filterRulesbyCollection(rulesForQueue, eventCollection);
 
-  return Promise.all(rulesToSchedule.map((rule) => {
+  return await Promise.all(rulesToSchedule.map((rule) => {
     if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {
       log.debug(`message ${message.MessageId} from queue ${queueUrl} has been processed ${messageReceiveCount - 1} times, no more retries`);
       // update visibilityTimeout to 5s
@@ -126,7 +126,7 @@ function dispatch(queueUrl, message) {
  * @throws {Error}
  */
 async function handler(event) {
-  return processQueues(event, dispatch);
+  return await processQueues(event, dispatch);
 }
 
 module.exports = {

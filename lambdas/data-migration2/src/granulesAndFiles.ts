@@ -201,8 +201,8 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   try {
     await knex.transaction(async (trx) => {
       const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);
-      return Promise.all(files.map(
-        async (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)
+      return await Promise.all(files.map(
+        async (file : ApiFile) => await migrateFileRecord(file, granuleCumulusId, trx)
       ));
     });
     granulesResult.migrated += 1;

@@ -197,10 +197,10 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
 
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
@@ -214,14 +214,14 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  * @param {string|undefined} [etag] - entity tag of the desired object (optional)
  * @returns {Promise} result of `AWS.S3.getObject()` as a Promise
  */
-function getObjectByFilename(filename, etag) {
+async function getObjectByFilename(filename, etag) {
   const { Bucket, Key } = parseS3Uri(filename);
 
   const params = etag
     ? { Bucket, Key, IfMatch: etag }
     : { Bucket, Key };
 
-  return waitForObject(s3(), params, { retries: 5 });
+  return await waitForObject(s3(), params, { retries: 5 });
 }
 
 /**
@@ -247,7 +247,7 @@ async function getXMLMetadataAsString(xmlFilePath, etag) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return promisify(xml2js.parseString)(xml, xmlParseOptions);
+  return await promisify(xml2js.parseString)(xml, xmlParseOptions);
 }
 
 /**
@@ -392,7 +392,7 @@ function generateFileUrl({
  *                                                               for all distribution bucketss
  * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
-async function constructOnlineAccessUrl({
+function constructOnlineAccessUrl({
   file,
   distEndpoint,
   bucketTypes,
@@ -429,7 +429,7 @@ async function constructOnlineAccessUrl({
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
  *    online access url objects
  */
-async function constructOnlineAccessUrls({
+function constructOnlineAccessUrls({
   files,
   distEndpoint,
   bucketTypes,
@@ -440,10 +440,10 @@ async function constructOnlineAccessUrls({
     throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
   }
 
-  const urlListPromises = files.map(async (file) => {
+  const urlListCalls = files.map((file) => {
     const urls = [];
     if (['both', 'distribution'].includes(cmrGranuleUrlType)) {
-      const url = await constructOnlineAccessUrl({
+      const url = constructOnlineAccessUrl({
         file,
         distEndpoint,
         bucketTypes,
@@ -453,7 +453,7 @@ async function constructOnlineAccessUrls({
       urls.push(url);
     }
     if (['both', 's3'].includes(cmrGranuleUrlType)) {
-      const url = await constructOnlineAccessUrl({
+      const url = constructOnlineAccessUrl({
         file,
         distEndpoint,
         bucketTypes,
@@ -464,7 +464,7 @@ async function constructOnlineAccessUrls({
     }
     return urls;
   });
-  const urlList = flatten(await Promise.all(urlListPromises));
+  const urlList = flatten(urlListCalls);
   return urlList.filter((urlObj) => urlObj);
 }
 
@@ -482,7 +482,7 @@ async function constructOnlineAccessUrls({
  * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
  *   an array of online access url objects
  */
-async function constructRelatedUrls({
+function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
@@ -492,7 +492,7 @@ async function constructRelatedUrls({
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
-  const cmrUrlObjects = await constructOnlineAccessUrls({
+  const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -620,7 +620,7 @@ async function updateUMMGMetadata({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  const newURLs = await constructRelatedUrls({
+  const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -900,7 +900,7 @@ async function reconcileCMRMetadata({
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
-    return updateCMRMetadata({
+    return await updateCMRMetadata({
       granuleId,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,

@@ -48,12 +48,12 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     }
   });
 
-  it('updates the status field to "SUCCEEDED"', async () => {
+  it('updates the status field to "SUCCEEDED"', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
-  it('posts a parsable report to s3', async () => {
+  it('posts a parsable report to s3', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);

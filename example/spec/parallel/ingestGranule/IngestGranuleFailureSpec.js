@@ -147,7 +147,7 @@ describe('The Ingest Granule failure workflow', () => {
       });
     });
 
-    it('branches appropriately according to the CMA output', async () => {
+    it('branches appropriately according to the CMA output', () => {
       expect(executionStatus.executionHistory).toBeTruthy();
       const { events } = executionStatus.executionHistory;
 
@@ -188,14 +188,14 @@ describe('The Ingest Granule failure workflow', () => {
       expect(choiceVerified).toBeTrue();
     });
 
-    it('propagates the error message to CMA output for next step', async () => {
+    it('propagates the error message to CMA output for next step', () => {
       const syncGranExceptionCause = JSON.parse(syncGranStepOutput.exception.Cause);
       const syncGranFailedCause = JSON.parse(syncGranFailedDetail.cause);
       expect(syncGranStepOutput.exception.Error).toBe(syncGranFailedDetail.error);
       expect(syncGranExceptionCause).toEqual(syncGranFailedCause);
     });
 
-    it('logs the execution with the error message', async () => {
+    it('logs the execution with the error message', () => {
       expect(execution.error.Error).toBe(syncGranFailedDetail.error);
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });

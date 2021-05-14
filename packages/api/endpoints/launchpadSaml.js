@@ -255,7 +255,7 @@ const getIncomingUrlFromRequest = (apiBaseUrl, requestPath) => {
  * @returns {Object} - Either JWToken presented as a query string in the
  * request or a redirect back to saml/login endpoing to receive the token.
  */
-const samlToken = async (req, res) => {
+const samlToken = (req, res) => {
   const { token } = req.query;
   if (token) return res.send({ message: { token } });
 
@@ -264,12 +264,12 @@ const samlToken = async (req, res) => {
   try {
     apiBaseUrl = process.env.API_BASE_URL;
     if (!apiBaseUrl) {
-      throw new Error('API_BASE_URL environment variable is required');
+      return Promise.reject(new Error('API_BASE_URL environment variable is required'));
     }
 
     RelayState = getIncomingUrlFromRequest(apiBaseUrl, req.path);
     if (!RelayState) {
-      throw new Error('Could not determine RelayState from incoming URL');
+      return Promise.reject(new Error('Could not determine RelayState from incoming URL'));
     }
   } catch (error) {
     return res.boom.badImplementation(error.message);
@@ -283,7 +283,7 @@ const samlToken = async (req, res) => {
   return res.redirect(redirectUrl.toString());
 };
 
-const notImplemented = async (req, res) =>
+const notImplemented = (req, res) =>
   res.boom.notImplemented(
     `endpoint: "${req.path}" not implemented. Login with launchpad.`
   );

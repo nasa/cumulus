@@ -20,13 +20,13 @@ const log = mmt.__get__('log');
  * @param {Array<Object>} list - parsed list of collection results
  * @returns {Object} Fake CMR responses
  */
-const cmrReturnsWithIds = async (list) => {
+const cmrReturnsWithIds = (list) => {
   const entry = list.map((l) => ({
     id: `${l.short_name}-${l.version}`,
     short_name: l.short_name,
     version_id: l.version,
   }));
-  return { feed: { entry } };
+  return Promise.resolve({ feed: { entry } });
 };
 
 /**
@@ -34,16 +34,16 @@ const cmrReturnsWithIds = async (list) => {
  * @param {Array<Object>} list - parsed list of collection results
  * @returns {Object} Fake CMR responses
  */
-const cmrMissingCollection = async (list) => {
+const cmrMissingCollection = (list) => {
   const entry = list.map(() => ({ }));
-  return { feed: { entry } };
+  return Promise.resolve({ feed: { entry } });
 };
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.env = process.env.CMR_ENVIRONMENT;
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always((t) => {
   process.env.CMR_ENVIRONMENT = t.context.env;
 });
 
@@ -152,9 +152,7 @@ test.serial(
   'insertMMTLinks returns the input unchanged if an error occurs with CMR.',
   async (t) => {
     const cmrError = new Error('CMR is Down today!');
-    const cmrIsDown = async () => {
-      throw cmrError;
-    };
+    const cmrIsDown = () => Promise.reject(cmrError);
     const restoreCmr = mmt.__set__('getCollectionsByShortNameAndVersion', cmrIsDown);
     const fakeESResponse = {
       meta: {

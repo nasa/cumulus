@@ -13,7 +13,7 @@ const schemas = require('../models/schemas');
 async function get(req, res) {
   const schemaName = req.params.name;
 
-  return res.send(schemas[schemaName]);
+  return await res.send(schemas[schemaName]);
 }
 
 router.get('/:name', get);

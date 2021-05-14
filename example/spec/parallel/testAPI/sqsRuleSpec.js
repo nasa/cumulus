@@ -162,7 +162,7 @@ describe('The SQS rule', () => {
     await cleanUp();
   });
 
-  it('SQS rules are added', async () => {
+  it('SQS rules are added', () => {
     expect(ruleList.length).toBe(1);
     expect(ruleList[0].rule.value).toBe(queues.sourceQueueUrl);
     expect(ruleList[0].meta.visibilityTimeout).toBe(300);
@@ -198,7 +198,7 @@ describe('The SQS rule', () => {
         );
       });
 
-      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
+      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });

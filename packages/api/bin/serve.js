@@ -242,7 +242,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
 
     // create tables if not already created
     await pRetry(
-      async () => checkOrCreateTables(stackName),
+      async () => await checkOrCreateTables(stackName),
       {
         onFailedAttempt: (error) => console.log(
           `Failed to Create Tables. Localstack may not be ready, will retry ${error.attemptsLeft} more times.`

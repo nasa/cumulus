@@ -114,11 +114,11 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
 });
 
@@ -132,7 +132,7 @@ test.serial('processQueues does nothing when there is no message', async (t) => 
 test.serial('processQueues does nothing when queue does not exist', async (t) => {
   const { queueMessageStub } = t.context;
   const validateSqsRuleStub = sinon.stub(Rule.prototype, 'validateAndUpdateSqsRule')
-    .callsFake(async (item) => item);
+    .callsFake((item) => Promise.resolve(item));
   await rulesModel.create(fakeRuleFactoryV2({
     workflow,
     rule: {

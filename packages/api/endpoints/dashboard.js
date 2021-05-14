@@ -16,7 +16,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 async function get(req, res) {
   const [Bucket, Key] = getFileBucketAndKey(req.params[0]);
 
-  return s3().getObject({ Bucket, Key })
+  return await s3().getObject({ Bucket, Key })
     .on('httpHeaders', (code, headers) => {
       res.set('Content-Type', headers['content-type']);
     })
