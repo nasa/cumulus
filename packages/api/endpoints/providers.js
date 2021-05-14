@@ -55,7 +55,6 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const id = req.params.id;
-
   const providerModel = new Provider();
   let result;
   try {
@@ -86,6 +85,8 @@ async function throwIfDynamoRecordExists(providerModel, id) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  log.info('starting POST');
+
   const apiProvider = req.body;
 
   apiProvider.updatedAt = Date.now();
@@ -100,25 +101,36 @@ async function post(req, res) {
     if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
+    log.info('starting throwIfDynamoRecordExists');
     await throwIfDynamoRecordExists(providerModel, id);
+    log.info('throwIfDynamoRecordExists finished');
+    log.info('starting translation');
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
+    log.info('translation finished');
 
     await knex.transaction(async (trx) => {
+      log.info('starting transaction - Pg model creating');
       await providerPgModel.create(trx, postgresProvider);
+      log.info('starting transaction - Dynamo model creating');
       record = await providerModel.create(apiProvider);
+      log.info('finished');
     });
 
     if (inTestMode()) {
+      log.info('test mode -- BAD ');
       await addToLocalES(record, indexProvider);
     }
+    log.info('POST finished ');
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
+      log.info('Collision BOOM ');
       return res.boom.conflict(`A record already exists for ${id}`);
     }
 
     if (isBadRequestError(error)) {
+      log.info('Bad Request BOOM ');
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
@@ -134,6 +146,7 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put({ params: { id }, body }, res) {
+  log.info('Starting PUT');
   const apiProvider = body;
 
   if (id !== apiProvider.id) {
@@ -148,6 +161,7 @@ async function put({ params: { id }, body }, res) {
 
   let oldProvider;
   try {
+    log.info('Dynamo providerModel.get');
     oldProvider = await providerModel.get({ id });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
@@ -161,17 +175,25 @@ async function put({ params: { id }, body }, res) {
   apiProvider.createdAt = oldProvider.createdAt;
 
   let record;
+  log.info('translate start');
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
+  log.info('translate end');
 
   await knex.transaction(async (trx) => {
+    log.info('transaction start -- PgModel upsert');
     await providerPgModel.upsert(trx, postgresProvider);
+    log.info('transaction start -- PgModel end');
+    log.info('transaction start -- Dynamo Create');
     record = await providerModel.create(apiProvider);
+    log.info('transaction start -- Dynamo Create end');
   });
 
   if (inTestMode()) {
+    log.info('test -- bad');
     await addToLocalES(record, indexProvider);
   }
 
+  log.info('PUT done');
   return res.send(record);
 }
 

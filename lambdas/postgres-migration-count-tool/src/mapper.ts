@@ -3,6 +3,8 @@ import { getExecutions } from '@cumulus/api-client/executions';
 import { getPdrs } from '@cumulus/api-client/pdrs';
 import { listGranules } from '@cumulus/api-client/granules';
 
+import Logger from '@cumulus/logger';
+
 import {
   GranulePgModel,
   PdrPgModel,
@@ -12,6 +14,10 @@ import {
 
 import { getEsCutoffQuery, getDbCount, countPostgresRecords } from './utils';
 import { StatsObject, CollectionMapping } from './types';
+
+const logger = new Logger({
+  sender: '@cumulus/lambdas/postgres-migration-count-tool',
+});
 
 const postgresGranuleModel = new GranulePgModel();
 const postgresExecutionModel = new ExecutionPgModel();
@@ -63,6 +69,7 @@ export const mapper = async (params: {
   } = { ...params };
   const { collection, postgresCollectionId } = collectionMap;
   const collectionId = constructCollectionId(collection.name, collection.version);
+  logger.debug(`Running mapper for collection ${collectionId}`);
   return {
     collectionId,
     counts: await Promise.all([

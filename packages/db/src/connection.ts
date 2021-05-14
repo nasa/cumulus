@@ -23,7 +23,7 @@ export const queryHeartbeat = async ({
       if (error.name !== 'KnexTimeoutError') {
         throw error;
       }
-      log.warn(`Failed intial attempt at RDS DB connection due to ${error.name}`);
+      log.warn(`Failed initial attempt at RDS DB connection due to ${error.name}`);
     },
     retries: 1,
   }
@@ -65,7 +65,7 @@ export const queryHeartbeat = async ({
  *                                          causes the method to test the connection
  *                                          before returning a knex object.  Will retry
  *                                          on KnexTimeOutError due possible RDS serverless
- *                                          deployment architechtures
+ *                                          deployment architecture
  * @returns {Promise<Knex>} a Knex configuration object that has returned at least one query
  */
 export const getKnexClient = async ({

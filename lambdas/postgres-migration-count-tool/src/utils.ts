@@ -4,6 +4,8 @@ import {
   Knex,
   translateApiCollectionToPostgresCollection,
 } from '@cumulus/db';
+import Logger from '@cumulus/logger';
+
 import { NewCollectionRecord } from '@cumulus/types/api/collections';
 import { ApiGatewayLambdaHttpProxyResponse } from '@cumulus/api-client/types';
 import {
@@ -13,6 +15,11 @@ import {
   EsCutoffQueryString,
   StatsObject,
 } from './types';
+
+
+const logger = new Logger({
+  sender: '@cumulus/lambdas/postgres-migration-count-tool',
+});
 
 /**
 * Given a pending API query promise, parses the object count out of the response
@@ -25,11 +32,12 @@ export const getDbCount = async (
   resultPromise: Promise<ApiGatewayLambdaHttpProxyResponse>
 ): Promise<number> => {
   const result = await resultPromise;
+  logger.debug(`Result is ${JSON.stringify(result)}`);
   return JSON.parse(result.body).meta.count;
 };
 
 /**
-* Generates a CollectionReportObjectect
+* Generates a CollectionReportObject
 * @summary Generates a report containing the total Dynamo counts as well as the
 * delta relative to postgres for use in the user output
 * @param {StatsObject[]} stats - Array of stats objects to convert to user form

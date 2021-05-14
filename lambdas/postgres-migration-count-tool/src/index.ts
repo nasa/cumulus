@@ -118,28 +118,35 @@ export const handler = async (
   const dynamoRuleCount = dynamoRules.length;
 
   // Get postgres table counts
+  logger.info(`Running 1`);
   const postgresProviderCount = await countPostgresRecordsFunction({
     model: postgresProviderModel,
     knexClient,
     cutoffIsoString,
   });
+
+  logger.info(`Running 2`);
   const postgresRulesCount = await countPostgresRecordsFunction({
     model: postgresRulesModel,
     knexClient,
     cutoffIsoString,
   });
+
+  logger.info(`Running 3`);
   const postgresAsyncOperationsCount = await countPostgresRecordsFunction({
     model: postgresAsyncOperationModel,
     knexClient,
     cutoffIsoString,
   });
 
+  logger.info(`Running 4`);
   const postgresCollectionCount = await countPostgresRecordsFunction({
     model: postgresCollectionModel,
     knexClient,
     cutoffIsoString,
   });
 
+  logger.info(`Running 5`);
   const {
     collectionValues,
     collectionFailures,
@@ -152,6 +159,7 @@ export const handler = async (
     logger.warn(`Warning - failed to map ${collectionFailures.length} / ${dynamoCollectionsCount}: ${JSON.stringify(collectionFailures)}`);
   }
 
+  logger.info(`Running 6`);
   // Generate report of pdr/executions/granules count differences for each collection.  Return
   // mapping of collections with differences
   const collectionReportResults = await pMap(
@@ -160,6 +168,7 @@ export const handler = async (
     { concurrency: dbConcurrency }
   );
 
+  logger.info(`Running 7`);
   // Reformat stats objects to user-readable data
   const CollectionReportObject = await generateCollectionReportObject(collectionReportResults);
   const aggregateReportObj = generateAggregateReportObj({

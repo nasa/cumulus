@@ -157,6 +157,7 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  log.info('delete start');
   const granuleId = req.params.granuleName;
   log.info(`granules.del ${granuleId}`);
 
@@ -171,6 +172,7 @@ async function del(req, res) {
 
   // If the granule does not exist in Dynamo, throw an error
   try {
+    log.info('getting dynamo record');
     dynamoGranule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -185,15 +187,18 @@ async function del(req, res) {
   try {
     if (dynamoGranule.collectionId) {
       const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
+      log.info('getting cumulus ID');
       const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
         knex,
         { name, version }
       );
       // Need granule_id + collection_cumulus_id to get truly unique record.
+      log.info('getting granulePgModel ID');
       pgGranule = await granulePgModel.get(knex, {
         granule_id: granuleId,
         collection_cumulus_id: collectionCumulusId,
       });
+      log.info('getting granulePgModel ID done');
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -207,11 +212,13 @@ async function del(req, res) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
 
+  log.info('calling deleteGranuleAndFiles');
   await deleteGranuleAndFiles({
     knex,
     dynamoGranule,
     pgGranule,
   });
+  log.info('end deleteGranuleAndFiles');
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
@@ -225,6 +232,7 @@ async function del(req, res) {
     });
   }
 
+  log.info('delete done');
   return res.send({ detail: 'Record deleted' });
 }
 
@@ -236,6 +244,7 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
   let result;

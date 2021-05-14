@@ -110,6 +110,8 @@ async function post(req, res) {
     dbClient = await getKnexClient(),
   } = req.testContext || {};
 
+  log.info('Starting collection POST');
+
   const collection = req.body || {};
   const { name, version } = collection;
 
@@ -125,6 +127,7 @@ async function post(req, res) {
   collection.createdAt = Date.now();
 
   try {
+    log.info('Attempting collection model create');
     const dynamoRecord = await collectionsModel.create(
       omit(collection, 'dataType')
     );
@@ -132,17 +135,21 @@ async function post(req, res) {
     const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
 
     try {
+      log.info('Attempting collection model postgres insert');
       await dbClient('collections').insert(dbRecord, 'cumulus_id');
     } catch (error) {
+      log.info('Error attempting collection model delete');
       await collectionsModel.delete({ name, version });
 
       throw error;
     }
 
     if (inTestMode()) {
+      log.info('Inserting into ES -- BAD BAD BAD');
       await addToLocalES(collection, indexCollection);
     }
 
+    log.info('Sending Result');
     return res.send({
       message: 'Record saved',
       record: collection,
@@ -168,6 +175,7 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
+  log.info('Starting collection PUT');
   const { name, version } = req.params;
   const collection = req.body;
   let dynamoRecord;
@@ -182,6 +190,7 @@ async function put(req, res) {
   const collectionPgModel = new CollectionPgModel();
 
   try {
+    log.info('CollectionsModel.get');
     oldCollection = await collectionsModel.get({ name, version });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
@@ -193,12 +202,19 @@ async function put(req, res) {
   collection.updatedAt = Date.now();
   collection.createdAt = oldCollection.createdAt;
 
+  log.info('starting translation');
   const postgresCollection = dynamoRecordToDbRecord(collection);
+  log.info('ending translation');
 
+  log.info('Getting knex client');
   const dbClient = await getKnexClient();
+  log.info('Start transaction');
   await dbClient.transaction(async (trx) => {
+    log.info('Start upsert');
     await collectionPgModel.upsert(trx, postgresCollection);
+    log.info('Finish upsert start dynamo create');
     dynamoRecord = await collectionsModel.create(collection);
+    log.info('Finish dynamo create');
   });
 
   if (inTestMode()) {
@@ -219,12 +235,17 @@ async function del(req, res) {
   const { name, version } = req.params;
   const collectionsModel = new models.Collection();
 
+  log.info('Getting Knex client');
   const knex = await getKnexClient({ env: process.env });
   try {
+    log.info('Starting Knex Transaction');
     await knex.transaction(async (trx) => {
+      log.info('deleting record');
       await trx(tableNames.collections).where({ name, version }).del();
+      log.info('deleting record complete awaiting dynamo delete');
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
+        log.info('TEST MODE -BAD');
         const collectionId = constructCollectionId(name, version);
         const esClient = await Search.es(process.env.ES_HOST);
         await esClient.delete({
@@ -234,6 +255,7 @@ async function del(req, res) {
         }, { ignore: [404] });
       }
     });
+    log.info('Record deleted!');
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError) {

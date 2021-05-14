@@ -182,6 +182,7 @@ const handler = async (event) => {
   const sqsMessages = get(event, 'Records', []);
 
   return Promise.all(sqsMessages.map(async (message) => {
+    log.info(`Debug: message is ${JSON.stringify(message)}`);
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
