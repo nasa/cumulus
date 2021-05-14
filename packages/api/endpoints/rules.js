@@ -67,7 +67,7 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    rulesModel = new models.Rule(),
+    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -77,7 +77,7 @@ async function post(req, res) {
   const apiRule = req.body || {};
   const name = apiRule.name;
 
-  if (await rulesModel.exists(name)) {
+  if (await ruleModel.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
@@ -89,12 +89,12 @@ async function post(req, res) {
     try {
       await knex.transaction(async (trx) => {
         await rulePgModel.create(trx, postgresRule);
-        record = await rulesModel.create(apiRule);
+        record = await ruleModel.create(apiRule);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
       // Clean up DynamoDB record in case of any failure
-      await rulesModel.delete(apiRule);
+      await ruleModel.delete(apiRule);
       throw innerError;
     }
     return res.send({ message: 'Record saved', record });

@@ -15,7 +15,6 @@ const {
   ProviderPgModel,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 
@@ -26,6 +25,7 @@ const {
   fakeRuleFactoryV2,
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
+  createRuleTestRecords,
 } = require('../../lib/testUtils');
 const { post } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
@@ -109,6 +109,7 @@ test.before(async (t) => {
 
   ruleModel = new Rule();
   await ruleModel.createTable();
+  t.context.ruleModel = ruleModel;
 
   const ruleRecord = await ruleModel.create(testRule);
   await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
@@ -604,7 +605,7 @@ test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to Dyn
     body: newRule,
     testContext: {
       knex: testKnex,
-      rulesModel: failingRulesModel,
+      ruleModel: failingRulesModel,
     },
   };
 
@@ -656,20 +657,21 @@ test.serial('post() does not write to DynamoDB/PostgreSQL if writing to Elastics
 });
 
 test('PUT replaces a rule', async (t) => {
-  const putTestRule = {
-    ...t.context.newRule,
-    queueUrl: 'fake-queue-url',
-  };
-  t.truthy(putTestRule.queueUrl);
-  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.testKnex);
-
-  await t.context.testKnex.transaction(async (trx) => {
-    await t.context.rulePgModel.create(trx, postgresRule);
-    await ruleModel.create(putTestRule, putTestRule.createdAt);
-  });
+  const {
+    originalRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queueUrl: 'fake-queue-url',
+      collection: undefined,
+      provider: undefined,
+    }
+  );
 
   const updateRule = {
-    ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
+    ...omit(originalRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
     // these timestamps should not get used
     createdAt: Date.now(),
@@ -684,38 +686,41 @@ test('PUT replaces a rule', async (t) => {
     .expect(200);
 
   const actualRule = await ruleModel.get({ name: updateRule.name });
-
   const actualPostgresRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
-  const postgresExpectedRule = await translateApiRuleToPostgresRule(
-    {
-      ...updateRule,
-      createdAt: actualRule.createdAt,
-    },
-    t.context.testKnex
+  const updatedEsRecord = await t.context.esRulesClient.get(
+    originalRule.name
   );
-  Object.keys(postgresExpectedRule).forEach((key) => {
-    if (postgresExpectedRule[key] === undefined) {
-      postgresExpectedRule[key] = null;
-    }
-  });
 
   t.true(actualRule.updatedAt > updateRule.updatedAt);
   // PG and Dynamo records have the same timestamps
   t.is(actualPostgresRule.created_at.getTime(), actualRule.createdAt);
   t.is(actualPostgresRule.updated_at.getTime(), actualRule.updatedAt);
+  t.is(actualPostgresRule.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPostgresRule.updated_at.getTime(), updatedEsRecord.updatedAt);
 
   t.like(actualPostgresRule, {
-    ...postgresExpectedRule,
-    created_at: postgresRule.created_at,
+    ...omit(originalPgRecord, ['queue_url']),
+    enabled: true,
+    created_at: new Date(originalRule.createdAt),
     updated_at: actualPostgresRule.updated_at,
   });
   t.deepEqual(actualRule, {
     // should not contain a queueUrl property
     ...updateRule,
-    createdAt: putTestRule.createdAt,
+    createdAt: originalRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
+  t.deepEqual(
+    updatedEsRecord,
+    {
+      ...omit(originalEsRecord, ['queueUrl']),
+      state: 'ENABLED',
+      createdAt: originalRule.createdAt,
+      updatedAt: actualRule.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {
