@@ -65,6 +65,7 @@ function getFileDescription(file, urlType = 'distribution') {
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+// eslint-disable-next-line max-len
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename) || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
@@ -985,7 +986,7 @@ async function getGranuleTemporalInfo(granule) {
 
     // Get beginning and ending date time from beginPosition and endPosition
     const identificationInfo = miMetadata['gmd:identificationInfo'];
-    const dataIdentification = (identificationInfo.find((o) => Object.keys(o).filter((k) => Object.keys(o[k]).includes('gmd:extent'))));
+    const dataIdentification = (identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent'))));
     const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
     const beginningDateTime = temporalInfo['gml:beginPosition'];
     const endingDateTime = temporalInfo['gml:endPosition'];
@@ -994,7 +995,7 @@ async function getGranuleTemporalInfo(granule) {
     const productionDateTime = miMetadata['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
 
     // Get last update date time from CI_Citation with UpdateTime
-    const citation = identificationInfo.find((o) => o['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
+    const citation = identificationInfo.find((dataIdObject) => dataIdObject['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
     const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
 
     return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
@@ -1042,6 +1043,7 @@ module.exports = {
   isCMRFile,
   isCMRFilename,
   isECHO10File,
+  isISOFile,
   isUMMGFile,
   metadataObjectFromCMRFile,
   publish2CMR,
