@@ -8,7 +8,6 @@ const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
   RulePgModel,
-  tableNames,
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const { isBadRequestError } = require('../lib/errors');
@@ -183,13 +182,18 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const name = (req.params.name || '').replace(/%20/g, ' ');
-  const model = new models.Rule();
-  const dbClient = await getKnexClient();
 
   let apiRule;
   try {
-    apiRule = await model.get({ name });
+    apiRule = await ruleModel.get({ name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
@@ -197,19 +201,26 @@ async function del(req, res) {
     throw error;
   }
 
-  await dbClient.transaction(async (trx) => {
-    await trx(tableNames.rules).where({ name }).del();
-    await model.delete(apiRule);
-  });
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await esClient.delete({
-      id: name,
-      index: process.env.ES_INDEX,
-      type: 'rule',
-    }, { ignore: [404] });
+  try {
+    await knex.transaction(async (trx) => {
+      await rulePgModel.delete(trx, { name });
+      await ruleModel.delete(apiRule);
+      await esClient.delete({
+        id: name,
+        index: process.env.ES_INDEX,
+        type: 'rule',
+        refresh: inTestMode(),
+      }, { ignore: [404] });
+    });
+  } catch (error) {
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (apiRule) {
+      await ruleModel.create(apiRule);
+    }
+    throw error;
   }
+
   return res.send({ message: 'Record deleted' });
 }
 
@@ -223,4 +234,5 @@ module.exports = {
   router,
   post,
   put,
+  del,
 };
