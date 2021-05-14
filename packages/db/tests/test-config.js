@@ -72,8 +72,8 @@ test('getKnexConfig returns an expected default configuration object', async (t)
     pool: {
       min: 0,
       max: 200,
-      idleTimeoutMillis: 10000,
-      createTimeoutMillis: 120000,
+      idleTimeoutMillis: 1000,
+      createTimeoutMillis: 60000,
     },
   };
   t.deepEqual(result, expectedConfig);

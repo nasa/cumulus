@@ -132,11 +132,11 @@ export const getKnexConfig = async ({
     pool: {
       min: 0,
       max: Number.parseInt(env.dbMaxPool ?? '200', 10),
-      idleTimeoutMillis: Number.parseInt(env.idleTimeoutMillis ?? '10000', 10),
+      idleTimeoutMillis: Number.parseInt(env.idleTimeoutMillis ?? '1000', 10),
       // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
       // is improperly typed.
       //@ts-ignore
-      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '120000', 10),
+      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
     },
   };
 
