@@ -467,7 +467,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const originalRule = fakeRuleFactoryV2(ruleParams);
 
   const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
-  await ruleModel.create(originalRule);
+  const originalDynamoRule = await ruleModel.create(originalRule);
   const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
@@ -477,7 +477,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
     originalRule.name
   );
   return {
-    originalRule,
+    originalDynamoRule,
     originalPgRecord,
     originalEsRecord,
   };

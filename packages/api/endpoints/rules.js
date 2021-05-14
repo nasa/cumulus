@@ -14,7 +14,7 @@ const {
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
-const { addToLocalES, indexRule } = require('../es/indexer');
+const { indexRule } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -119,8 +119,16 @@ async function post(req, res) {
  *    name request parameter, or a Not Found (404) if there is no existing rule
  *    with the specified name
  */
-async function put({ params: { name }, body }, res) {
-  const model = new models.Rule();
+async function put(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { name }, body } = req;
+
   const apiRule = { ...body };
   let newRule;
 
@@ -130,14 +138,12 @@ async function put({ params: { name }, body }, res) {
   }
 
   try {
-    const oldRule = await model.get({ name });
-    const dbClient = await getKnexClient();
-    const rulePgModel = new RulePgModel();
+    const oldRule = await ruleModel.get({ name });
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
-    // If rule type is onetime no change is allowed unless it is a rerun
 
+    // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
@@ -145,14 +151,20 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
-    });
+    try {
+      await knex.transaction(async (trx) => {
+        await rulePgModel.upsert(trx, postgresRule);
+        newRule = await ruleModel.update(oldRule, apiRule, fieldsToDelete);
+        await indexRule(esClient, newRule, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Revert Dynamo record update if any write fails
+      await ruleModel.create(oldRule);
+      throw innerError;
+    }
 
-    if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -210,4 +222,5 @@ router.delete('/:name', del);
 module.exports = {
   router,
   post,
+  put,
 };
