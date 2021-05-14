@@ -264,12 +264,12 @@ const samlToken = (req, res) => {
   try {
     apiBaseUrl = process.env.API_BASE_URL;
     if (!apiBaseUrl) {
-      return Promise.reject(new Error('API_BASE_URL environment variable is required'));
+      throw new Error('API_BASE_URL environment variable is required');
     }
 
     RelayState = getIncomingUrlFromRequest(apiBaseUrl, req.path);
     if (!RelayState) {
-      return Promise.reject(new Error('Could not determine RelayState from incoming URL'));
+      throw new Error('Could not determine RelayState from incoming URL');
     }
   } catch (error) {
     return res.boom.badImplementation(error.message);
