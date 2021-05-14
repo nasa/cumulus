@@ -85,7 +85,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'RUNNER_FAILED',
+        status: ['RUNNER_FAILED'],
         stackName: config.stackName,
       });
     } catch (error) {

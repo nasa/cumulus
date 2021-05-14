@@ -794,7 +794,7 @@ describe('The S3 Ingest Granules workflow', () => {
         it('executes async operation successfully', async () => {
           const asyncOperation = await waitForAsyncOperationStatus({
             id: asyncOperationId,
-            status: 'SUCCEEDED',
+            statuses: ['SUCCEEDED'],
             stackName: config.stackName,
             retryOptions: {
               retries: 70,

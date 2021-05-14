@@ -8,8 +8,10 @@ echo Running parallel integration tests
 (while true; do sleep 60; echo .; done) &
 DOT_PID="$!"
 
-TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
-testOutputDir=scripts/test_output
+#TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Recon |grep -v testApi |grep -v testAPI |grep -v ingestGranule)
+TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Recon |grep -v testApi |grep -v testAPI |grep -v Orca)
+
+testOutputDir=scripts/test_output${RANDOM}
 
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
@@ -22,7 +24,7 @@ echo parallel tests complete: $result suite failures
 find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-passed.txt' -exec cat {} \;
 find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-failed.txt' -exec cat {} \;
 
-rm -rf $testOutputDir
+#rm -rf $testOutputDir
 
 kill "$DOT_PID"
 exit $result

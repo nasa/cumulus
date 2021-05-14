@@ -131,12 +131,18 @@ const deleteProvidersByHost = async (stackName, host) => {
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
-  const deletes = ids.map((id) => providersApi.deleteProvider({
-    prefix: stackName,
-    providerId: id,
-  }));
-  await Promise.all(deletes).catch(console.error);
-  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(stackName, id, false)));
+  let deletes;
+  try {
+    deletes = ids.map((id) => providersApi.deleteProvider({
+      prefix: stackName,
+      providerId: id,
+    }));
+    await Promise.all(deletes);
+    await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(stackName, id, false)));
+  } catch (error) {
+    console.log(`Failed to delete providers by host: ${JSON.stringify(host)}`);
+    throw error;
+  }
 };
 
 module.exports = {

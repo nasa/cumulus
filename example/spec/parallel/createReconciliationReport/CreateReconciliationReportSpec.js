@@ -428,7 +428,7 @@ describe('When there are granule differences and granule reconciliation is run',
       try {
         asyncOperation = await waitForAsyncOperationStatus({
           id: asyncOperationId,
-          status: 'SUCCEEDED',
+          statuses: ['SUCCEEDED'],
           stackName: config.stackName,
           retryOptions: {
             retries: 70,
@@ -578,7 +578,7 @@ describe('When there are granule differences and granule reconciliation is run',
       try {
         asyncOperation = await waitForAsyncOperationStatus({
           id: asyncOperationId,
-          status: 'SUCCEEDED',
+          statuses: ['SUCCEEDED'],
           stackName: config.stackName,
           retryOptions: {
             retries: 70,
@@ -663,7 +663,7 @@ describe('When there are granule differences and granule reconciliation is run',
       try {
         asyncOperation = await waitForAsyncOperationStatus({
           id: asyncOperationId,
-          status: 'SUCCEEDED',
+          statuses: ['SUCCEEDED'],
           stackName: config.stackName,
           retryOptions: {
             retries: 70,

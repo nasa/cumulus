@@ -4,7 +4,6 @@ const get = require('lodash/get');
 const pAll = require('p-all');
 const pick = require('lodash/pick');
 const { randomId } = require('@cumulus/common/test-utils');
-
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
@@ -40,6 +39,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       collection = await createCollection(
         prefix,
         {
+          name: randomId('collection-11G-name-'),
           duplicateHandling: 'version',
           process: 'modis',
         }

@@ -98,7 +98,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
-        status: 'SUCCEEDED',
+        status: ['SUCCEEDED'],
         stackName: config.stackName,
       });
     } catch (error) {

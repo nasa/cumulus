@@ -60,7 +60,7 @@ const lambdaStep = new LambdaStep();
  *
  * @param {Object} params - params
  * @param {string} params.id - the id of the AsyncOperation
- * @param {string} params.status - the status to wait for
+ * @param {string[] | string} params.statuses - the list of statuses to wait for
  * @param {string} params.stackName - the Cumulus stack name
  * @param {number} params.retryOptions - retrying options.
  *                   The Default values result in 15 attempts in ~1 min.
@@ -69,7 +69,7 @@ const lambdaStep = new LambdaStep();
  */
 async function waitForAsyncOperationStatus({
   id,
-  status,
+  statuses,
   stackName,
   retryOptions = {
     retries: 15,
@@ -79,6 +79,10 @@ async function waitForAsyncOperationStatus({
   },
 }) {
   let operation;
+  const checkStatuses = [statuses].flat();
+  if (!id) {
+    throw new Error('Id cannot be undefined');
+  }
   return pRetry(
     async () => {
       const response = await asyncOperationsApi.getAsyncOperation({
@@ -88,11 +92,11 @@ async function waitForAsyncOperationStatus({
 
       operation = JSON.parse(response.body);
 
-      if (operation.status === status) return operation;
-      throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
+      if (checkStatuses.includes(operation.status)) return operation;
+      throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${statuses}.`);
     },
     {
-      onFailedAttempt: (error) => console.log(`Waiting for AsyncOperation status ${operation.status} to reach ${status}. ${error.attemptsLeft} retries remain.`),
+      onFailedAttempt: (error) => console.log(`Waiting for AsyncOperation status ${operation.status} to reach ${statuses}. ${error.attemptsLeft} retries remain.`),
       ...retryOptions,
     }
   );

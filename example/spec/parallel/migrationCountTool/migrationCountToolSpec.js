@@ -32,7 +32,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: JSON.parse(response.body).id,
-        status: 'SUCCEEDED',
+        statuses: ['SUCCEEDED', 'TASK_FAILED'],
         stackName: config.stackName,
         retryOptions: {
           retries: 30 * 5,

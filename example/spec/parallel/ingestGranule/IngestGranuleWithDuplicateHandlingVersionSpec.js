@@ -245,11 +245,11 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         () => deleteS3Object(sourceBucket, sameChecksumKey),
         () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
-        () => deleteCollection({
+        /* () => deleteCollection({
           prefix,
           collectionName: get(collection, 'name'),
           collectionVersion: get(collection, 'version'),
-        }),
+        }), */
       ],
       { stopOnError: false }
     ).catch(console.error);
