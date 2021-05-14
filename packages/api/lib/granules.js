@@ -150,6 +150,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
           writeToPostgres
         );
         updatedFiles.push(renameProperty('name', 'fileName', updatedFile));
+        return updatedFile;
       });
       // Add updated file to postgresDatabase
     } catch (error) {

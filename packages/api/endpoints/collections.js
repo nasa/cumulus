@@ -199,6 +199,7 @@ async function put(req, res) {
   await dbClient.transaction(async (trx) => {
     await collectionPgModel.upsert(trx, postgresCollection);
     dynamoRecord = await collectionsModel.create(collection);
+    return dynamoRecord;
   });
 
   if (inTestMode()) {
@@ -223,7 +224,7 @@ async function del(req, res) {
   try {
     await knex.transaction(async (trx) => {
       await trx(tableNames.collections).where({ name, version }).del();
-      await collectionsModel.delete({ name, version });
+      const deleteResult = await collectionsModel.delete({ name, version });
       if (inTestMode()) {
         const collectionId = constructCollectionId(name, version);
         const esClient = await Search.es(process.env.ES_HOST);
@@ -233,6 +234,7 @@ async function del(req, res) {
           type: 'collection',
         }, { ignore: [404] });
       }
+      return deleteResult;
     });
     return res.send({ message: 'Record deleted' });
   } catch (error) {

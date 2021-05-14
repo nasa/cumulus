@@ -107,6 +107,7 @@ async function post(req, res) {
     await knex.transaction(async (trx) => {
       await providerPgModel.create(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
+      return record;
     });
 
     if (inTestMode()) {
@@ -166,6 +167,7 @@ async function put({ params: { id }, body }, res) {
   await knex.transaction(async (trx) => {
     await providerPgModel.upsert(trx, postgresProvider);
     record = await providerModel.create(apiProvider);
+    return record;
   });
 
   if (inTestMode()) {
@@ -189,7 +191,7 @@ async function del(req, res) {
   try {
     await knex.transaction(async (trx) => {
       await trx(tableNames.providers).where({ name: req.params.id }).del();
-      await providerModel.delete({ id: req.params.id });
+      const deleteResult = await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
         const esClient = await Search.es(process.env.ES_HOST);
         await esClient.delete({
@@ -198,6 +200,7 @@ async function del(req, res) {
           index: process.env.ES_INDEX,
         }, { ignore: [404] });
       }
+      return deleteResult;
     });
     return res.send({ message: 'Record deleted' });
   } catch (error) {

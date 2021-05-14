@@ -329,7 +329,7 @@ const _writeGranuleFiles = async ({
         throw updateError;
       });
 
-      await granuleModel.update(
+      return granuleModel.update(
         { granuleId: granule.granuleId },
         {
           status: 'failed',

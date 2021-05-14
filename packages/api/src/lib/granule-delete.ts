@@ -77,7 +77,7 @@ const deleteGranuleAndFiles = async ({
       await granulePgModel.delete(trx, {
         cumulus_id: pgGranule.cumulus_id,
       });
-      await granuleModelClient.delete(dynamoGranule);
+      return granuleModelClient.delete(dynamoGranule);
     });
 
     await _deleteS3Files(files);

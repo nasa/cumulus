@@ -75,7 +75,7 @@ async function del(req, res) {
     await knex.transaction(async (trx) => {
       await pdrPgModel.delete(trx, { name: pdrName });
       await deleteS3Object(process.env.system_bucket, pdrS3Key);
-      await pdrModel.delete({ pdrName });
+      return pdrModel.delete({ pdrName });
     });
 
     if (inTestMode()) {

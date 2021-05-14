@@ -88,6 +88,7 @@ async function post(req, res) {
     await dbClient.transaction(async (trx) => {
       await rulePgModel.create(trx, postgresRule);
       record = await model.create(apiRule);
+      return record;
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
@@ -143,6 +144,7 @@ async function put({ params: { name }, body }, res) {
     await dbClient.transaction(async (trx) => {
       await rulePgModel.upsert(trx, postgresRule);
       newRule = await model.update(oldRule, apiRule, fieldsToDelete);
+      return newRule;
     });
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
@@ -180,7 +182,7 @@ async function del(req, res) {
 
   await dbClient.transaction(async (trx) => {
     await trx(tableNames.rules).where({ name }).del();
-    await model.delete(apiRule);
+    return model.delete(apiRule);
   });
 
   if (inTestMode()) {

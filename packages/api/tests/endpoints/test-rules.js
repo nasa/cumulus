@@ -623,7 +623,7 @@ test('PUT replaces a rule', async (t) => {
 
   await t.context.testKnex.transaction(async (trx) => {
     await t.context.rulePgModel.create(trx, postgresRule);
-    await ruleModel.create(putTestRule, putTestRule.createdAt);
+    return ruleModel.create(putTestRule, putTestRule.createdAt);
   });
 
   const updateRule = {
