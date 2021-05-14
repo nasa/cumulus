@@ -152,13 +152,14 @@ const isTokenAuthRequest = (req) =>
   req.get('EDL-Client-Id') && req.get('EDL-Token');
 
 const handleTokenAuthRequest = async (req, res, next) => {
+  console.log('3a ===================');
   try {
     const userName = await req.earthdataLoginClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token'),
       xRequestId: req.get('X-Request-Id'),
     });
-
+    console.log('3b ===================');
     req.authorizedMetadata = { userName };
 
     const clientName = req.get('EDL-Client-Name');
@@ -167,9 +168,11 @@ const handleTokenAuthRequest = async (req, res, next) => {
     } else {
       return res.boom.badRequest('EDL-Client-Name is invalid');
     }
-
+    console.log('3c ===================');
     return next();
   } catch (error) {
+    console.log('3d ===================');
+    console.log(error);
     if (error instanceof EarthdataLoginError) {
       res.boom.forbidden('EDL-Token authentication failed');
     }
@@ -189,28 +192,29 @@ const handleTokenAuthRequest = async (req, res, next) => {
 async function ensureAuthorizedOrRedirect(req, res, next) {
   // Skip authentication for debugging purposes.
   // TODO Really should remove this
+  console.log('beginning of authorized ===================');
   if (process.env.FAKE_AUTH) {
     req.authorizedMetadata = { userName: 'fake-auth-username' };
     return next();
   }
-
+  console.log('1 ===================');
   // Public data doesn't need authentication
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
-
+  console.log('2  ===================');
   req.earthdataLoginClient = buildEarthdataLoginClient();
 
   if (isTokenAuthRequest(req)) {
     return handleTokenAuthRequest(req, res, next);
   }
-
+  console.log('3 ===================');
   const {
     accessTokenModel,
     authClient,
   } = getConfigurations();
-
+  console.log('4 ===================');
   const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
@@ -228,7 +232,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   if (isAccessTokenExpired(accessTokenRecord)) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
-
+  console.log('got to end of authorized----------');
   req.authorizedMetadata = { userName: accessTokenRecord.username };
   return next();
 }
