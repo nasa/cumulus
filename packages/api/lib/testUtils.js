@@ -11,6 +11,7 @@ const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -18,7 +19,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
-const { indexCollection, indexProvider } = require('../es/indexer');
+const { indexCollection, indexProvider, indexRule } = require('../es/indexer');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -455,6 +456,33 @@ const createProviderTestRecords = async (context, providerParams) => {
   };
 };
 
+const createRuleTestRecords = async (context, ruleParams) => {
+  const {
+    testKnex,
+    ruleModel,
+    rulePgModel,
+    esClient,
+    esRulesClient,
+  } = context;
+  const originalRule = fakeRuleFactoryV2(ruleParams);
+
+  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
+  await ruleModel.create(originalRule);
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await rulePgModel.get(
+    testKnex, { cumulus_id: ruleCumulusId }
+  );
+  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  const originalEsRecord = await esRulesClient.get(
+    originalRule.name
+  );
+  return {
+    originalRule,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -480,4 +508,5 @@ module.exports = {
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
   createProviderTestRecords,
+  createRuleTestRecords,
 };
