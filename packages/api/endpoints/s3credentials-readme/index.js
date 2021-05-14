@@ -1,7 +1,8 @@
 const template = require('lodash/template');
-// eslint-disable-next-line max-len
-// eslint-disable-next-line import/no-webpack-loader-syntax,import/no-unresolved,node/no-extraneous-require
-const instructions = require('html-loader!./instructions/index.html');
+const { promisify } = require('util');
+const fs = require('fs');
+const readFile = promisify(fs.readFile);
+const { join: pathjoin } = require('path');
 
 /**
  * Sends a sample webpage describing how to use s3Credentials endpoint
@@ -11,7 +12,8 @@ const instructions = require('html-loader!./instructions/index.html');
  * @returns {Object} express repose object of the s3Credentials directions.
  */
 async function displayS3CredentialInstructions(_req, res) {
-  const compiled = template(instructions);
+  const instructionTemplate = await readFile(pathjoin(process.cwd(), 'instructions', 'index.html'), 'utf-8');
+  const compiled = template(instructionTemplate);
   res.send(compiled(process.env));
 }
 
