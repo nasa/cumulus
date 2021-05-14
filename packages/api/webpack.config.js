@@ -96,6 +96,12 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.html$/,
+        loader: 'html-loader',
+        include: [path.resolve(__dirname, 'endpoints', 's3credentials-readme')],
+        options: {},
+      },
     ],
   },
   target: 'node',
