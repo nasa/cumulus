@@ -1,11 +1,9 @@
 const { resolve: pathresolve } = require('path');
 const router = require('express-promise-router')();
 const { render } = require('nunjucks');
-const urljoin = require('url-join');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
 const {
   getConfigurations,
@@ -13,6 +11,7 @@ const {
   handleFileRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
+const { buildOAuthClient, doLogin, getCookieVars } = require('../lib/distributionUtils');
 
 /**
  * Helper function to pull bucket out of a path string.
@@ -94,34 +93,20 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   return next();
 }
 
-const buildOAuthClient = async () => {
-  const clientPassword = await getSecretString(
-    process.env.oauthClientPasswordSecretName
-  );
-  const oauthClientConnfig = {
-    clientId: process.env.oauthClientId,
-    clientPassword,
-    earthdataLoginUrl: process.env.oauthHostUrl,
-    redirectUri: urljoin(process.env.apiBaseUrl, 'login'),
-  };
-  if (process.env.oauthProvider === 'earthdata') {
-    return new EarthdataLoginClient(oauthClientConnfig);
-  }
-  // TODO update
-  // return new CognitoClient(oauthClientConnfig);
-  return new EarthdataLoginClient(oauthClientConnfig);
-};
-
 /**
  * Sends a welcome page
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  */
 const root = async (req, res) => {
+  const cookieVars = getCookieVars(req);
+  const templateVars = { title: 'Welcome', profile: cookieVars || {} };
   const oauthClient = await buildOAuthClient();
   const authorizeUrl = oauthClient.getAuthorizationUrl();
   console.log(authorizeUrl);
-  const templateVars = { URS_URL: authorizeUrl };
+  if (cookieVars === undefined) {
+    templateVars.URL = authorizeUrl;
+  }
   const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
   console.log(rendered);
   return res.send(rendered);
@@ -132,15 +117,17 @@ const locate = (req, res) => res.status(501).end();
 const login = async (req, res) => {
   console.log(req);
   console.log(req.cookies);
+  console.log(req.signedCookies);
   console.log(req.query);
   console.log(req.url);
-
-  //TODO
-  // from code->accessToken
-  // accessToken->userinfo
-  // cookie?
-
-  return res.send({ url: req.url });
+  console.log(req.secret);
+  const { templateVars, statusCode, headers } = await doLogin(req.query, req, res);
+  if (statusCode >= 400) {
+    const rendered = render(pathresolve(__dirname, 'templates/error.html'), templateVars);
+    return res.type('.html').send(rendered);
+  }
+  // redirect to state or base url
+  return res.set({ ...headers }).status(statusCode).end();
 };
 
 const logout = (req, res) => res.status(501).end();

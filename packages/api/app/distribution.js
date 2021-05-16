@@ -37,11 +37,16 @@ morgan.format(
   + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
 
+const secret = process.env.COOKIE_SECRET || '123456';
+if (!secret) {
+  throw new Error('The "COOKIE_SECRET" environment variable must be set to a random secret string.');
+}
+
 // Config
 distributionApp.use(boom());
 distributionApp.use(morgan('combined'));
 distributionApp.use(cors());
-distributionApp.use(cookieParser());
+distributionApp.use(cookieParser(secret));
 distributionApp.use(bodyParser.json()); // for parsing distributionApplication/json
 distributionApp.use(hsts({ maxAge: 31536000 }));
 

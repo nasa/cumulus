@@ -10,20 +10,15 @@
 
 {% block content %}
 <div id="logincontrols">
-{% if URS_URL %}
-   <a href="{{ URS_URL }}">Log In</a>
+{% if URL %}
+   <a href="{{ URL }}">Log In</a>
 {% else %}
-   {% if STAGE %}    
-       <a href="/{{ STAGE }}/logout">Log Out</a>
-   {% else %}
-       <a href="/logout">Log Out</a>
-   {% endif %}
+    <a href="/logout">Log Out</a>
 {% endif %}
-
 </div>
 
 {% if profile %}
-    <p>Welcome URS user {{ profile.first_name }} {{ profile.last_name }}.</p>
+    <p>Welcome user {{ profile.given_name}} {{ profile.family_name }}.</p>
 {% endif %}
 {% if contentstring %}
     <div id="contentstring">{{ contentstring }}</div>
