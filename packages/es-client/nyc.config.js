@@ -4,7 +4,7 @@ module.exports = {
   extends: '../../nyc.config.js',
   include: [
     '*.js',
-    'lib/*.js'
+    'lib/*.js',
   ],
-  'exclude-after-remap': false
+  'exclude-after-remap': false,
 };
