@@ -1,0 +1,11 @@
+node_modules
+build/
+dist/
+test-reports
+tmp
+.tmp
+/*.js
+!/nyc.config.js
+/*.d.ts
+/lib/*.js
+/lib/*.d.ts
