@@ -3,12 +3,14 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
-      apiBaseUrl           = local.api_uri
-      oauthClientId        = var.oauth_client_id
-      oauthClientPasswordSecretName  = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
-      oauthHostUrl         = var.oauth_host_url
-      oauthProvider        = var.oauth_provider
-      stackName            = var.prefix
+      API_BASE_URL          = local.api_uri
+      OAUTH_CLIENT_ID       = var.oauth_client_id
+      OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      OAUTH_HOST_URL        = var.oauth_host_url
+      OAUTH_PROVIDER        = var.oauth_provider
+      JWT_COOKIENAME        = var.jwt_cookiename
+      stackName             = var.prefix
+      TOKEN_SECRET          = var.token_secret
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }

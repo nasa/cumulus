@@ -16,5 +16,6 @@ module "cumulus_distribution" {
 
   permissions_boundary_arn = var.permissions_boundary_arn
   tags                     = local.tags
+  token_secret             = var.token_secret
   vpc_id                   = var.vpc_id
 }

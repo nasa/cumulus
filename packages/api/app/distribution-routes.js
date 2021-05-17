@@ -1,7 +1,9 @@
 const { resolve: pathresolve } = require('path');
+const isEmpty = require('lodash/isEmpty');
+const urljoin = require('url-join');
 const router = require('express-promise-router')();
 const { render } = require('nunjucks');
-
+const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -11,8 +13,8 @@ const {
   handleFileRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
-const { buildOAuthClient, doLogin, getCookieVars } = require('../lib/distributionUtils');
-
+const { buildOAuthClient, checkLoginQuery, getAccessToken, getProfile } = require('../lib/distribution/utils');
+const { clearCookie, getCookieVars, setCookieVars } = require('../lib/distribution/cookies');
 /**
  * Helper function to pull bucket out of a path string.
  * Will ignore leading slash.
@@ -100,37 +102,77 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
  */
 const root = async (req, res) => {
   const cookieVars = getCookieVars(req);
-  const templateVars = { title: 'Welcome', profile: cookieVars || {} };
-  const oauthClient = await buildOAuthClient();
-  const authorizeUrl = oauthClient.getAuthorizationUrl();
-  console.log(authorizeUrl);
+  const templateVars = {
+    title: 'Welcome',
+    profile: cookieVars,
+    logoutURL: urljoin(process.env.API_BASE_URL, 'logout'),
+  };
   if (cookieVars === undefined) {
+    const authorizeUrl = (await buildOAuthClient()).getAuthorizationUrl();
     templateVars.URL = authorizeUrl;
   }
+
   const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
-  console.log(rendered);
   return res.send(rendered);
 };
 
 const locate = (req, res) => res.status(501).end();
 
 const login = async (req, res) => {
-  console.log(req);
-  console.log(req.cookies);
-  console.log(req.signedCookies);
-  console.log(req.query);
-  console.log(req.url);
-  console.log(req.secret);
-  const { templateVars, statusCode, headers } = await doLogin(req.query, req, res);
+  const errorTemplate = pathresolve(__dirname, 'templates/error.html');
+  const query = req.query;
+  log.debug('the query params:', query);
+  const { statusCode, templateVars } = checkLoginQuery(query);
   if (statusCode >= 400) {
-    const rendered = render(pathresolve(__dirname, 'templates/error.html'), templateVars);
-    return res.type('.html').send(rendered);
+    const rendered = render(errorTemplate, templateVars);
+    return res.type('.html').status(statusCode).send(rendered);
   }
+
+  log.debug('pre getAccessToken() with query params:', query);
+  const authToken = await getAccessToken(query.code);
+  log.debug('getAccessToken:', authToken);
+  if (isEmpty(authToken)) {
+    log.debug('no auth returned from getAccessToken()');
+    const vars = {
+      contentstring: 'There was a problem talking to OAuth Login',
+      title: 'Could Not Login',
+      statusCode: 400,
+    };
+    const rendered = render(errorTemplate, vars);
+    return res.type('.html').status(400).send(rendered);
+  }
+
+  const userProfile = await getProfile(authToken);
+  if (isEmpty(userProfile)) {
+    const vars = { contentstring: 'Could not get user profile from OAuth provider', title: 'Could Not Login' };
+    const rendered = render(errorTemplate, vars);
+    return res.type('.html').status(400).send(rendered);
+  }
+
+  log.debug('Got the user profile: ', userProfile);
+  const cookieVars = { accessToken: authToken.accessToken, ...userProfile };
+  setCookieVars(res, cookieVars, authToken.expirationTime);
   // redirect to state or base url
-  return res.set({ ...headers }).status(statusCode).end();
+  const redirectTo = query.state || process.env.API_BASE_URL;
+  return res
+    .status(301)
+    .set({ Location: redirectTo })
+    .send('Redirecting');
 };
 
-const logout = (req, res) => res.status(501).end();
+const logout = async (req, res) => {
+  const cookieVars = getCookieVars(req);
+  const authorizeUrl = (await buildOAuthClient()).getAuthorizationUrl();
+  const templateVars = {
+    title: 'Logged Out',
+    contentstring: (cookieVars) ? 'You are logged out.' : 'No active login found.',
+    URL: authorizeUrl,
+    logoutURL: urljoin(process.env.API_BASE_URL, 'logout'),
+  };
+  clearCookie(res);
+  const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
+  return res.send(rendered);
+};
 
 const profile = (req, res) => res.send('Profile not available.');
 

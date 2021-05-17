@@ -23,6 +23,11 @@ variable "oauth_host_url" {
   description = "oauth_host_url"
 }
 
+variable "token_secret" {
+  description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the API. Should be a 32-character string for security"
+  type        = string
+}
+
 # Optional
 
 variable "api_url" {
@@ -35,6 +40,12 @@ variable "api_gateway_stage" {
   type        = string
   default     = "dev"
   description = "The API Gateway stage name for the distribution App"
+}
+
+variable "jwt_cookiename" {
+  type        = string
+  default     = "cumulus_distribution_oauth"
+  description = "The JWT cookie's name is set with the 'JWT_COOKIENAME' env variable"
 }
 
 variable "lambda_subnet_ids" {

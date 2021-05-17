@@ -1,8 +1,8 @@
 {% extends "./base.html" %}
 
 {% block pagetitle %}
-   {% if status_code %}
-      {{ status_code }}
+   {% if statusCode %}
+      {{ statusCode }}
    {% endif %}
    {% if title %}
    {{ title }}
@@ -13,7 +13,7 @@
 
 {% block content %}
 
-<div id="status_code">{{ status_code }}</div>
+<div id="statusCode">{{ statusCode }}</div>
 
 {% if contentstring %}
     <div id="contentstring">{{ contentstring }}</div>
