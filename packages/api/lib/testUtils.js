@@ -12,6 +12,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  translateApiPdrToPostgresPdr,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -19,7 +20,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
-const { indexCollection, indexProvider, indexRule } = require('../es/indexer');
+const { indexCollection, indexProvider, indexRule, indexPdr } = require('../es/indexer');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -483,6 +484,40 @@ const createRuleTestRecords = async (context, ruleParams) => {
   };
 };
 
+const createPdrTestRecords = async (context, pdrParams = {}) => {
+  const {
+    knex,
+    pdrModel,
+    pdrPgModel,
+    esClient,
+    esPdrsClient,
+    testPgCollection,
+    testPgProvider,
+  } = context;
+
+  const originalPdr = fakePdrFactoryV2({
+    ...pdrParams,
+    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
+    provider: testPgProvider.name,
+  });
+
+  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
+  const originalDynamoPdr = await pdrModel.create(originalPdr);
+  const [ruleCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await pdrPgModel.get(
+    knex, { cumulus_id: ruleCumulusId }
+  );
+  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
+  const originalEsRecord = await esPdrsClient.get(
+    originalPdr.pdrName
+  );
+  return {
+    originalDynamoPdr,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -509,4 +544,5 @@ module.exports = {
   createCollectionTestRecords,
   createProviderTestRecords,
   createRuleTestRecords,
+  createPdrTestRecords,
 };
