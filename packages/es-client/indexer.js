@@ -20,7 +20,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search, defaultIndexAlias } = require('./search');
 const mappings = require('./config/mappings.json');
 
-const logger = new Logger({ sender: '@cumulus/es-client' });
+const logger = new Logger({ sender: '@cumulus/es-client/indexer' });
 
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
