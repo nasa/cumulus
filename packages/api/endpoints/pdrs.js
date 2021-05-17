@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const Search = require('../es/search').Search;
+const { Search } = require('../es/search');
 const models = require('../models');
 
 /**
@@ -73,18 +73,37 @@ async function del(req, res) {
   const pdrName = req.params.pdrName;
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
+  let existingPdr;
   try {
-    await knex.transaction(async (trx) => {
-      await pdrPgModel.delete(trx, { name: pdrName });
-      await deleteS3Object(process.env.system_bucket, pdrS3Key);
-      await pdrModel.delete({ pdrName });
-      await esClient.delete({
-        id: pdrName,
-        index: process.env.ES_INDEX,
-        type: 'pdr',
-        refresh: inTestMode(),
-      }, { ignore: [404] });
-    });
+    existingPdr = await pdrModel.get({ pdrName });
+  } catch (error) {
+    // Ignore error if record does not exist in DynamoDb
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  try {
+    try {
+      await knex.transaction(async (trx) => {
+        await pdrPgModel.delete(trx, { name: pdrName });
+        await deleteS3Object(process.env.system_bucket, pdrS3Key);
+        await pdrModel.delete({ pdrName });
+        await esClient.delete({
+          id: pdrName,
+          index: process.env.ES_INDEX,
+          type: 'pdr',
+          refresh: inTestMode(),
+        }, { ignore: [404] });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingPdr) {
+        await pdrModel.create(existingPdr);
+      }
+      throw innerError;
+    }
   } catch (error) {
     if (!isRecordDoesNotExistError(error)) throw error;
   }

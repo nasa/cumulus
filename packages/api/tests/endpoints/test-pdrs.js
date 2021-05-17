@@ -34,6 +34,8 @@ const {
 } = require('../../es/testUtils');
 const assertions = require('../../lib/assertions');
 const { migrationDir } = require('../../../../lambdas/db-migration');
+const { del } = require('../../endpoints/pdrs');
+const { buildFakeExpressResponse } = require('./utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
@@ -77,7 +79,7 @@ test.before(async (t) => {
   t.context.esClient = esClient;
   t.context.esPdrsClient = new Search(
     {},
-    'rule',
+    'pdr',
     t.context.esIndex
   );
 
@@ -359,4 +361,195 @@ test.serial('DELETE removes a PDR from DynamoDB only if no RDS record exists', a
     await t.context.pdrModel.exists({ pdrName })
   );
   t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: pdrName }));
+});
+
+test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(
+    t.context
+  );
+
+  t.teardown(async () => {
+    await t.context.pdrModel.delete({
+      pdrName: originalDynamoPdr.pdrName,
+    });
+    await t.context.pdrPgModel.delete(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    });
+    await indexer.deleteRecord({
+      esClient: t.context.esClient,
+      id: originalDynamoPdr.pdrName,
+      type: 'pdr',
+      index: t.context.esIndex,
+    });
+  });
+
+  const fakePdrsModel = {
+    get: async () => originalDynamoPdr,
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: async () => true,
+  };
+
+  const expressRequest = {
+    params: {
+      pdrName: originalDynamoPdr.pdrName,
+    },
+    testContext: {
+      knex: t.context.knex,
+      pdrModel: fakePdrsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.pdrModel.get({
+      pdrName: originalDynamoPdr.pdrName,
+    }),
+    originalDynamoPdr
+  );
+  t.true(
+    await t.context.pdrPgModel.exists(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    })
+  );
+  t.true(
+    await t.context.esPdrsClient.exists(
+      originalDynamoPdr.pdrName
+    )
+  );
+});
+
+test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(
+    t.context
+  );
+
+  t.teardown(async () => {
+    await t.context.pdrModel.delete({
+      pdrName: originalDynamoPdr.pdrName,
+    });
+    await t.context.pdrPgModel.delete(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    });
+    await indexer.deleteRecord({
+      esClient: t.context.esClient,
+      id: originalDynamoPdr.pdrName,
+      type: 'pdr',
+      index: t.context.esIndex,
+    });
+  });
+
+  const fakePdrPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      pdrName: originalDynamoPdr.pdrName,
+    },
+    testContext: {
+      knex: t.context.knex,
+      pdrPgModel: fakePdrPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.pdrModel.get({
+      pdrName: originalDynamoPdr.pdrName,
+    }),
+    originalDynamoPdr
+  );
+  t.true(
+    await t.context.pdrPgModel.exists(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    })
+  );
+  t.true(
+    await t.context.esPdrsClient.exists(
+      originalDynamoPdr.pdrName
+    )
+  );
+});
+
+test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(
+    t.context
+  );
+
+  t.teardown(async () => {
+    await t.context.pdrModel.delete({
+      pdrName: originalDynamoPdr.pdrName,
+    });
+    await t.context.pdrPgModel.delete(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    });
+    await indexer.deleteRecord({
+      esClient: t.context.esClient,
+      id: originalDynamoPdr.pdrName,
+      type: 'pdr',
+      index: t.context.esIndex,
+    });
+  });
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      pdrName: originalDynamoPdr.pdrName,
+    },
+    testContext: {
+      knex: t.context.knex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.pdrModel.get({
+      pdrName: originalDynamoPdr.pdrName,
+    }),
+    originalDynamoPdr
+  );
+  t.true(
+    await t.context.pdrPgModel.exists(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    })
+  );
+  t.true(
+    await t.context.esPdrsClient.exists(
+      originalDynamoPdr.pdrName
+    )
+  );
 });
