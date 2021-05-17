@@ -63,29 +63,28 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    pdrModel = new models.Pdr(),
+    pdrPgModel = new PdrPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const pdrName = req.params.pdrName;
-
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
-
-  const pdrModel = new models.Pdr();
-  const pdrPgModel = new PdrPgModel();
-  const knex = await getKnexClient();
 
   try {
     await knex.transaction(async (trx) => {
       await pdrPgModel.delete(trx, { name: pdrName });
       await deleteS3Object(process.env.system_bucket, pdrS3Key);
       await pdrModel.delete({ pdrName });
-    });
-
-    if (inTestMode()) {
-      const esClient = await Search.es(process.env.ES_HOST);
       await esClient.delete({
         id: pdrName,
         index: process.env.ES_INDEX,
         type: 'pdr',
+        refresh: inTestMode(),
       }, { ignore: [404] });
-    }
+    });
   } catch (error) {
     if (!isRecordDoesNotExistError(error)) throw error;
   }
@@ -96,4 +95,7 @@ router.get('/:pdrName', get);
 router.get('/', list);
 router.delete('/:pdrName', del);
 
-module.exports = router;
+module.exports = {
+  del,
+  router,
+};

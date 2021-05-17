@@ -55,7 +55,7 @@ router.use('/granule-csv', ensureAuthorized, granuleCsv);
 router.use('/providers', ensureAuthorized, providers.router);
 
 // pdr endpoints
-router.use('/pdrs', ensureAuthorized, pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs.router);
 
 // rules endpoints
 router.use('/rules', ensureAuthorized, rules.router);

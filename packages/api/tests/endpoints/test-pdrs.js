@@ -6,7 +6,6 @@ const cryptoRandomString = require('crypto-random-string');
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   localStackConnectionEnv,
   CollectionPgModel,
@@ -24,6 +23,7 @@ const {
   createFakeJwtAuthToken,
   fakePdrFactory,
   setAuthorizedOAuthUsers,
+  createPdrTestRecords,
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const indexer = require('../../es/indexer');
@@ -58,8 +58,6 @@ const testDbName = `pdrs_${cryptoRandomString({ length: 10 })}`;
 let fakePdrs;
 let jwtAuthToken;
 let accessTokenModel;
-let pdrModel;
-let pdrPgModel;
 
 test.before(async (t) => {
   const esAlias = randomString();
@@ -86,10 +84,10 @@ test.before(async (t) => {
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  pdrModel = new models.Pdr();
-  await pdrModel.createTable();
+  t.context.pdrModel = new models.Pdr();
+  await t.context.pdrModel.createTable();
 
-  pdrPgModel = new PdrPgModel();
+  t.context.pdrPgModel = new PdrPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -103,7 +101,7 @@ test.before(async (t) => {
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
   await Promise.all(
     fakePdrs.map(
-      (pdr) => pdrModel.create(pdr)
+      (pdr) => t.context.pdrModel.create(pdr)
         .then((record) => indexer.indexPdr(t.context.esClient, record, t.context.esIndex))
     )
   );
@@ -127,7 +125,7 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await pdrModel.deleteTable();
+  await t.context.pdrModel.deleteTable();
   await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
@@ -239,10 +237,10 @@ test('GET fails if pdr is not found', async (t) => {
   t.true(message.includes('No record found for'));
 });
 
-test('DELETE a pdr', async (t) => {
+test.serial('DELETE a pdr', async (t) => {
   const newPdr = fakePdrFactory('completed');
   // create a new pdr
-  await pdrModel.create(newPdr);
+  await t.context.pdrModel.create(newPdr);
 
   const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
   await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
@@ -258,7 +256,7 @@ test('DELETE a pdr', async (t) => {
   t.is(detail, 'Record deleted');
 });
 
-test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', async (t) => {
+test.serial('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', async (t) => {
   const pdrName = `${randomString()}.PDR`;
 
   await uploadPdrToS3(
@@ -279,9 +277,9 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
   t.is(parsedBody.detail, 'Record deleted');
 });
 
-test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
+test.serial('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
   const newPdr = fakePdrFactory('completed');
-  await pdrModel.create(newPdr);
+  await t.context.pdrModel.create(newPdr);
 
   const response = await request(app)
     .delete(`/pdrs/${newPdr.pdrName}`)
@@ -295,44 +293,30 @@ test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', a
   t.is(parsedBody.detail, 'Record deleted');
 });
 
-test('DELETE removes a PDR from all data stores', async (t) => {
-  // Create the same PDR in Dynamo and PG
-  const newDynamoPdr = fakePdrFactory('completed');
-  const pdrName = newDynamoPdr.pdrName;
-  const newPGPdr = fakePdrRecordFactory({
-    name: pdrName,
-    status: 'completed',
-    collection_cumulus_id: t.context.collectionCumulusId,
-    provider_cumulus_id: t.context.providerCumulusId,
-  });
-
-  // create a new PDR in Dynamo
-  await pdrModel.create(newDynamoPdr);
-
-  // create a new PDR in RDS
-  await pdrPgModel.create(t.context.knex, newPGPdr);
+test.serial('DELETE removes a PDR from all data stores', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(t.context);
 
   const response = await request(app)
-    .delete(`/pdrs/${pdrName}`)
+    .delete(`/pdrs/${originalDynamoPdr.pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
   t.is(response.status, 200);
 
   // Check Dynamo and RDS. The PDR should have been removed from both.
-  await t.throwsAsync(
-    pdrModel.get({ pdrName }),
-    { instanceOf: RecordDoesNotExist }
+  t.false(
+    await t.context.pdrModel.exists({ pdrName: originalDynamoPdr.pdrName })
   );
-
-  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+  t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: originalDynamoPdr.pdrName }));
   t.false(
     await t.context.esPdrsClient.exists(
-      pdrName
+      originalDynamoPdr.pdrName
     )
   );
 });
 
-test('DELETE removes a PDR from RDS only if no DynamoDB record exists', async (t) => {
+test.serial('DELETE removes a PDR from RDS only if no DynamoDB record exists', async (t) => {
   const pdrName = `pdr_${cryptoRandomString({ length: 6 })}`;
   const newPGPdr = fakePdrRecordFactory({
     name: pdrName,
@@ -342,7 +326,7 @@ test('DELETE removes a PDR from RDS only if no DynamoDB record exists', async (t
   });
 
   // create a new PDR in RDS
-  await pdrPgModel.create(t.context.knex, newPGPdr);
+  await t.context.pdrPgModel.create(t.context.knex, newPGPdr);
 
   const response = await request(app)
     .delete(`/pdrs/${pdrName}`)
@@ -352,17 +336,17 @@ test('DELETE removes a PDR from RDS only if no DynamoDB record exists', async (t
 
   // Check Dynamo and RDS. The PDR should not exist in either.
   t.false(
-    await pdrModel.exists({ pdrName })
+    await t.context.pdrModel.exists({ pdrName })
   );
-  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+  t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
 
-test('DELETE removes a PDR from DynamoDB only if no RDS record exists', async (t) => {
+test.serial('DELETE removes a PDR from DynamoDB only if no RDS record exists', async (t) => {
   const newDynamoPdr = fakePdrFactory('completed');
   const pdrName = newDynamoPdr.pdrName;
 
   // create a new PDR in Dynamo
-  await pdrModel.create(newDynamoPdr);
+  await t.context.pdrModel.create(newDynamoPdr);
 
   const response = await request(app)
     .delete(`/pdrs/${pdrName}`)
@@ -372,7 +356,7 @@ test('DELETE removes a PDR from DynamoDB only if no RDS record exists', async (t
 
   // Check Dynamo and RDS. The PDR should not exist in either.
   t.false(
-    await pdrModel.exists({ pdrName })
+    await t.context.pdrModel.exists({ pdrName })
   );
-  t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+  t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
