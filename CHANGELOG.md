@@ -10,10 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-  
+
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
   reporting is now handled through Cloud Metrics
+
+
+### Added
+- **CUMULUS-2354**
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
+  - Configures the example deployment to enable this feature.
+
 
 ### Changed
 
@@ -21,6 +28,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add both HTTPS URLS and S3 URIs to CMR metadata.
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+
+## [v9.0.1] 2021-05-07
+
+### Migration Steps
+
+Please review the migration steps for 9.0.0 as this release is only a patch to
+correct a failure in our build script and push out corrected release artifacts. The previous migration steps still apply.
+
+### Changed
+
+- Corrected `@cumulus/db` configuration to correctly build package.
 
 ## [v9.0.0] 2021-05-03
 
@@ -380,8 +398,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
     endpoint will not dispense S3 credentials and instead return a message
     indicating that the endpoint has been disabled.
-- **CUMULUS-2355**
-  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
 - **CUMULUS-2397**
   - Updated `/elasticsearch` endpoint's `reindex` function to prevent
     reindexing when source and destination indices are the same.
@@ -4299,7 +4315,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.1...HEAD
+[v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
+[v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
