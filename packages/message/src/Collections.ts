@@ -17,6 +17,8 @@ type CollectionInfo = {
   version: string
 };
 
+const getCollectionIdSeparator = () => '___';
+
 /**
  * Returns the collection ID.
  *
@@ -27,7 +29,22 @@ type CollectionInfo = {
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}___${version}`;
+  `${name}${getCollectionIdSeparator()}${version}`;
+
+/**
+ * Returns the name and version of a collection based on
+ * the collectionId used in elasticsearch indexing
+ *
+ * @param {string} collectionId - collectionId used in elasticsearch index
+ * @returns {Object} name and version as object
+ */
+export const deconstructCollectionId = (collectionId: string) => {
+  const [name, version] = collectionId.split(getCollectionIdSeparator());
+  return {
+    name,
+    version,
+  };
+};
 
 /**
  * Get collection name from execution message.
