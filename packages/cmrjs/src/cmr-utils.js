@@ -25,7 +25,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
-
+const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
@@ -389,7 +389,7 @@ function generateFileUrl({
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
  * @param {Object} params.urlType - url type, distribution or s3
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution bucketss
+ *                                                               for all distribution buckets
  * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
 function constructOnlineAccessUrl({
@@ -425,7 +425,7 @@ function constructOnlineAccessUrl({
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
  * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
- *                                                               for all distribution bucketss
+ *                                                               for all distribution buckets
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
  *    online access url objects
  */
@@ -967,6 +967,19 @@ async function getCollectionsByShortNameAndVersion(results) {
 }
 
 /**
+ * Call CMR to get a list of bucket/paths that a user has access to
+ *
+ * @param {string} edlUser - users earthdata login name
+ * @param {string} cmrProvider - cumulus CMR provider name
+ * @returns {Object} list of bucket/paths that a user has access to
+ */
+async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_provider) {
+  const searchParams = { user_id: edlUser, 'provider[]': cmrProvider };
+  const cmrResult = await got.get(getBucketAccessUrl({}), { searchParams });
+  return JSON.parse(cmrResult.body);
+}
+
+/**
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
@@ -1017,6 +1030,7 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
+  getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,
