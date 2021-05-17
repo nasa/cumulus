@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated logic for rules API POST/PUT/DELETE to created/update/delete records directly in Elasticsearch
   - Updated logic for providers API POST/PUT/DELETE to created/update/delete records directly in Elasticsearch
   - Updated logic for PDRs API DELETE to created/update/delete records directly in Elasticsearch
-  - Remove trigger for `dbIndexer` Lambda from DynamoDB table streams:
+  - Removed trigger for `dbIndexer` Lambda from DynamoDB table streams:
     - collections
     - providers
     - rules
