@@ -26,9 +26,12 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../../es/testUtils');
 const assertions = require('../../lib/assertions');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
@@ -51,20 +54,14 @@ const uploadPdrToS3 = (bucket, pdrName, pdrBody) =>
   }).promise();
 
 // create all the variables needed across this test
-let esClient;
-let fakePdrs;
 const testDbName = `pdrs_${cryptoRandomString({ length: 10 })}`;
-const esIndex = randomString();
-
+let fakePdrs;
 let jwtAuthToken;
 let accessTokenModel;
 let pdrModel;
 let pdrPgModel;
 
 test.before(async (t) => {
-  // create esClient
-  esClient = await Search.es('fakehost');
-
   const esAlias = randomString();
   process.env = {
     ...process.env,
@@ -77,8 +74,14 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esPdrsClient = new Search(
+    {},
+    'rule',
+    t.context.esIndex
+  );
 
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
@@ -101,7 +104,7 @@ test.before(async (t) => {
   await Promise.all(
     fakePdrs.map(
       (pdr) => pdrModel.create(pdr)
-        .then((record) => indexer.indexPdr(esClient, record, esAlias))
+        .then((record) => indexer.indexPdr(t.context.esClient, record, t.context.esIndex))
     )
   );
 
@@ -125,7 +128,7 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await pdrModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -292,7 +295,7 @@ test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', a
   t.is(parsedBody.detail, 'Record deleted');
 });
 
-test('DELETE removes a PDR from RDS and DynamoDB', async (t) => {
+test('DELETE removes a PDR from all data stores', async (t) => {
   // Create the same PDR in Dynamo and PG
   const newDynamoPdr = fakePdrFactory('completed');
   const pdrName = newDynamoPdr.pdrName;
@@ -322,9 +325,14 @@ test('DELETE removes a PDR from RDS and DynamoDB', async (t) => {
   );
 
   t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
+  t.false(
+    await t.context.esPdrsClient.exists(
+      pdrName
+    )
+  );
 });
 
-test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t) => {
+test('DELETE removes a PDR from RDS only if no DynamoDB record exists', async (t) => {
   const pdrName = `pdr_${cryptoRandomString({ length: 6 })}`;
   const newPGPdr = fakePdrRecordFactory({
     name: pdrName,
@@ -343,15 +351,13 @@ test('DELETE removes a PDR from RDS only if no DynamoDB match exists', async (t)
   t.is(response.status, 200);
 
   // Check Dynamo and RDS. The PDR should not exist in either.
-  await t.throwsAsync(
-    pdrModel.get({ pdrName }),
-    { instanceOf: RecordDoesNotExist }
+  t.false(
+    await pdrModel.exists({ pdrName })
   );
-
   t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
 
-test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t) => {
+test('DELETE removes a PDR from DynamoDB only if no RDS record exists', async (t) => {
   const newDynamoPdr = fakePdrFactory('completed');
   const pdrName = newDynamoPdr.pdrName;
 
@@ -365,10 +371,8 @@ test('DELETE removes a PDR from DynamoDB only if no RDS match exists', async (t)
   t.is(response.status, 200);
 
   // Check Dynamo and RDS. The PDR should not exist in either.
-  await t.throwsAsync(
-    pdrModel.get({ pdrName }),
-    { instanceOf: RecordDoesNotExist }
+  t.false(
+    await pdrModel.exists({ pdrName })
   );
-
   t.false(await pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
