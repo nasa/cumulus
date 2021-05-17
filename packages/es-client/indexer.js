@@ -11,13 +11,16 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const { constructCollectionId } = require('@cumulus/message/Collections');
-const log = require('@cumulus/common/log');
+
+const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { IndexExistsError } = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { IndexExistsError } = require('../lib/errors');
 const mappings = require('./config/mappings.json');
+
+const logger = new Logger({ sender: '@cumulus/es-client' });
 
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
@@ -39,7 +42,7 @@ async function createIndex(esClient, indexName) {
     },
   });
 
-  log.info(`Created esIndex ${indexName}`);
+  logger.info(`Created esIndex ${indexName}`);
 }
 
 /**
