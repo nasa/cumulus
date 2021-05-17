@@ -89,14 +89,3 @@ resource "aws_lambda_event_source_mapping" "reconciliation_reports_table_db_inde
   starting_position = "TRIM_HORIZON"
   batch_size        = 10
 }
-
-data "aws_dynamodb_table" "rules" {
-  name = var.dynamo_tables.rules.name
-}
-
-resource "aws_lambda_event_source_mapping" "rules_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.rules.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
