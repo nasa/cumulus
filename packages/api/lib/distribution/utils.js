@@ -4,6 +4,11 @@ const log = require('@cumulus/common/log');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 
+/**
+ * build OAuth client based on environment variables
+ *
+ * @returns {Object} - OAuthClient object
+ */
 const buildOAuthClient = async () => {
   if (process.env.OAUTH_CLIENT_PASSWORD === undefined) {
     const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRETE_NAME);
@@ -25,13 +30,7 @@ const buildOAuthClient = async () => {
 
 async function getAccessToken(code) {
   const oauthClient = await buildOAuthClient();
-  try {
-    const auth = await oauthClient.getAccessToken(code);
-    return auth;
-  } catch (error) {
-    log.error('Error fetching auth', error);
-    return {};
-  }
+  return oauthClient.getAccessToken(code);
 }
 
 async function getProfile({ username, accessToken }) {
@@ -66,8 +65,13 @@ async function getProfile({ username, accessToken }) {
   };
 }
 
-function checkLoginQuery(query) {
-  let statusCode = 200;
+/**
+ * checks the login query and build error messages
+ *
+ * @param {Object} query - request query parameters
+ * @returns {Object} template variables for building response html, empty if no errors
+ */
+function checkLoginQueryErrors(query) {
   let templateVars = {};
   if (isEmpty(query)) {
     templateVars = {
@@ -75,27 +79,24 @@ function checkLoginQuery(query) {
       title: 'Could Not Login',
       statusCode: 400,
     };
-    statusCode = 400;
   } else if (query.error) {
     templateVars = {
       contentstring: `An error occurred while trying to log. OAuth provider says: "${query.error}".`,
       title: 'Could Not Login',
       statusCode: 400,
     };
-    statusCode = 400;
   } else if (query.code === undefined) {
-    statusCode = 400;
     templateVars = {
       contentstring: 'Did not get the required CODE from OAuth provider',
       title: 'Could not login.',
       statusCode: 400,
     };
   }
-  return { statusCode, templateVars };
+  return templateVars;
 }
 
 module.exports = {
-  checkLoginQuery,
+  checkLoginQueryErrors,
   buildOAuthClient,
   getAccessToken,
   getProfile,

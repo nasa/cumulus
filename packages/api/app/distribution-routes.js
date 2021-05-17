@@ -13,7 +13,7 @@ const {
   handleFileRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
-const { buildOAuthClient, checkLoginQuery, getAccessToken, getProfile } = require('../lib/distribution/utils');
+const { buildOAuthClient, checkLoginQueryErrors, getAccessToken, getProfile } = require('../lib/distribution/utils');
 const { clearCookie, getCookieVars, setCookieVars } = require('../lib/distribution/cookies');
 /**
  * Helper function to pull bucket out of a path string.
@@ -97,6 +97,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 /**
  * Sends a welcome page
+ *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  */
@@ -118,48 +119,57 @@ const root = async (req, res) => {
 
 const locate = (req, res) => res.status(501).end();
 
+/**
+ * login endpoint
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} - promise of an express response object
+ */
 const login = async (req, res) => {
   const errorTemplate = pathresolve(__dirname, 'templates/error.html');
   const query = req.query;
   log.debug('the query params:', query);
-  const { statusCode, templateVars } = checkLoginQuery(query);
-  if (statusCode >= 400) {
+  const templateVars = checkLoginQueryErrors(query);
+  if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     const rendered = render(errorTemplate, templateVars);
-    return res.type('.html').status(statusCode).send(rendered);
+    return res.type('.html').status(templateVars.statusCode).send(rendered);
   }
 
-  log.debug('pre getAccessToken() with query params:', query);
-  const authToken = await getAccessToken(query.code);
-  log.debug('getAccessToken:', authToken);
-  if (isEmpty(authToken)) {
-    log.debug('no auth returned from getAccessToken()');
+  try {
+    log.debug('pre getAccessToken() with query params:', query);
+    const authToken = await getAccessToken(query.code);
+    log.debug('getAccessToken:', authToken);
+
+    const userProfile = await getProfile(authToken);
+    log.debug('Got the user profile: ', userProfile);
+
+    const cookieVars = { accessToken: authToken.accessToken, ...userProfile };
+    setCookieVars(res, cookieVars, authToken.expirationTime);
+    // redirect to state or base url
+    const redirectTo = query.state || process.env.API_BASE_URL;
+    return res
+      .status(301)
+      .set({ Location: redirectTo })
+      .send('Redirecting');
+  } catch (error) {
     const vars = {
-      contentstring: 'There was a problem talking to OAuth Login',
+      contentstring: `There was a problem talking to OAuth provider, ${error.message}`,
       title: 'Could Not Login',
-      statusCode: 400,
+      statusCode: 401,
     };
     const rendered = render(errorTemplate, vars);
-    return res.type('.html').status(400).send(rendered);
+    return res.type('.html').status(401).send(rendered);
   }
-
-  const userProfile = await getProfile(authToken);
-  if (isEmpty(userProfile)) {
-    const vars = { contentstring: 'Could not get user profile from OAuth provider', title: 'Could Not Login' };
-    const rendered = render(errorTemplate, vars);
-    return res.type('.html').status(400).send(rendered);
-  }
-
-  log.debug('Got the user profile: ', userProfile);
-  const cookieVars = { accessToken: authToken.accessToken, ...userProfile };
-  setCookieVars(res, cookieVars, authToken.expirationTime);
-  // redirect to state or base url
-  const redirectTo = query.state || process.env.API_BASE_URL;
-  return res
-    .status(301)
-    .set({ Location: redirectTo })
-    .send('Redirecting');
 };
 
+/**
+ * logout endpoint
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} - promise of an express response object
+ */
 const logout = async (req, res) => {
   const cookieVars = getCookieVars(req);
   const authorizeUrl = (await buildOAuthClient()).getAuthorizationUrl();

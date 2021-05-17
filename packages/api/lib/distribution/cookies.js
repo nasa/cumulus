@@ -6,20 +6,14 @@ const cookieName = process.env.JWT_COOKIENAME;
 const cookieOptions = { httpOnly: true, secure: true };
 
 /**
- * Extracts and decodes and returns relevant cookies from http headers
+ * Extracts and decodes and returns relevant cookies from request
  *
- * @param {*} headers - dict of http headers
- * @returns on success dict with keys env value of 'JWT_COOKIENAME' containing decoded
- * jwt, 'urs-user-id', 'urs-access-token' on failure empty dict.
+ * @param {Object} req - express request object
+ * @returns {Object} on success the decoded jwt object of env value of 'JWT_COOKIENAME',
+ * on failure undefined
  */
-// Extracts and decodes and returns relevant cookies from http headers
-// :param headers: dict of http headers
-// return: on success dict with keys env value of 'JWT_COOKIENAME' containing decoded
-// jwt, 'urs-user-id', 'urs-access-token' on failure empty dict.
-// type: dict
 function getCookieVars(req) {
   let cookieVars;
-  console.log('req.cookies', req.cookies);
   try {
     if (req.cookies[cookieName]) {
       cookieVars = verifyJwtToken(req.cookies[cookieName]);
@@ -36,6 +30,13 @@ function getCookieVars(req) {
   return cookieVars;
 }
 
+/**
+ * Creates and sets cookie on response
+ *
+ * @param {Object} res - express response object
+ * @param {Object} cookieVars - cookie value
+ * @param {number} expirationTime - expirationTime in seconds
+ */
 function setCookieVars(res, cookieVars, expirationTime) {
   log.debug('setCookieVars');
   const token = createJwtToken({ ...cookieVars, expirationTime });
