@@ -17,10 +17,11 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 
+const Search = require('@cumulus/es-client/search').Search;
+const indexer = require('@cumulus/es-client/indexer');
+
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const Search = require('../es/search').Search;
-const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');

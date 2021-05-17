@@ -13,7 +13,7 @@ const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { ESSearchQueue } = require('../es/esSearchQueue');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const {
   convertToDBCollectionSearchParams,

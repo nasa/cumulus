@@ -16,12 +16,12 @@ const {
   getKnexClient,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 const {
   indexCollection,
-} = require('../es/indexer');
+} = require('@cumulus/es-client/indexer');
+const Collection = require('@cumulus/es-client/collections');
 const models = require('../models');
-const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 

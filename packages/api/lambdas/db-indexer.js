@@ -5,8 +5,8 @@ const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
-const indexer = require('../es/indexer');
-const { Search } = require('../es/search');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const unwrap = AttributeValue.unwrap;
 
 /**
