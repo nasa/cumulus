@@ -23,7 +23,7 @@
   },
   "ava": {
     "files": [
-      "tests/**/*.js"
+      "tests/*.js"
     ],
     "verbose": true
   },
@@ -40,5 +40,10 @@
     "lodash": "~4.17.20",
     "moment": "2.24.0",
     "p-limit": "^1.2.0"
+  },
+  "devDependencies": {
+    "@cumulus/aws-client": "9.0.1",
+    "@cumulus/test-data": "9.0.1",
+    "p-each-series": "^2.1.0"
   }
 }

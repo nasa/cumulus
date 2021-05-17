@@ -5,10 +5,10 @@ const orderBy = require('lodash/orderBy');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
+const indexer = require('../indexer');
+const { Search } = require('../search');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { bootstrapElasticSearch } = require('../bootstrap');
 
 const collectionIds = [randomId('collectionId-abc'), randomId('collectionId-efg')];
 const granules = [

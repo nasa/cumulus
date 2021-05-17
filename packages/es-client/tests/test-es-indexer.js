@@ -1,69 +1,27 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const rewire = require('rewire');
-const fs = require('fs');
-const path = require('path');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const cmrjs = require('@cumulus/cmrjs');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { IndexExistsError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const indexer = rewire('../../es/indexer');
-const { Search } = require('../../es/search');
-const Collection = require('../../models/collections');
-const Execution = require('../../models/executions');
-const Granule = require('../../models/granules');
-const Pdr = require('../../models/pdrs');
-const Rule = require('../../models/rules');
-const { fakeGranuleFactory, fakeCollectionFactory } = require('../../lib/testUtils');
-const { IndexExistsError } = require('../../lib/errors');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const indexer = rewire('../indexer');
+const { Search } = require('../search');
 
-const granuleSuccess = require('../data/granule_success.json');
+const { bootstrapElasticSearch } = require('../bootstrap');
 
 const esIndex = randomString();
-const collectionTable = randomString();
-const granuleTable = randomString();
-const executionTable = randomString();
-const pdrsTable = randomString();
 
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 let esClient;
-let collectionModel;
-let executionModel;
-let granuleModel;
-let pdrsModel;
-let cmrStub;
-let stepFunctionsStub;
-let existsStub;
-let templateStub;
-
-const input = JSON.stringify(granuleSuccess);
 
 test.before(async (t) => {
   // create the tables
-  process.env.CollectionsTable = collectionTable;
-  collectionModel = new Collection();
-  await collectionModel.createTable();
-
-  process.env.ExecutionsTable = executionTable;
-  executionModel = new Execution();
-  await executionModel.createTable();
-
-  process.env.GranulesTable = granuleTable;
-  granuleModel = new Granule();
-  await granuleModel.createTable();
-
-  process.env.PdrsTable = pdrsTable;
-  pdrsModel = new Pdr();
-  await pdrsModel.createTable();
-
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
 
@@ -72,46 +30,24 @@ test.before(async (t) => {
   esClient = await Search.es();
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-
-  const fakeMetadata = {
-    beginningDateTime: '2017-10-24T00:00:00.000Z',
-    endingDateTime: '2018-10-24T00:00:00.000Z',
-    lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
-    productionDateTime: '2018-04-25T21:45:45.524Z',
-  };
-  cmrStub = sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
-
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
-    input,
-    startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1)),
-  });
-  existsStub = sinon.stub(s3Utils, 'fileExists').returns(true);
-  templateStub = sinon.stub(Rule, 'buildPayload')
-    .callsFake(() => ({}));
 });
 
 test.after.always(async () => {
-  await collectionModel.deleteTable();
-  await executionModel.deleteTable();
-  await granuleModel.deleteTable();
-  await pdrsModel.deleteTable();
-
   await esClient.indices.delete({ index: esIndex });
   await s3Utils.recursivelyDeleteS3Bucket(process.env.system_bucket);
-
-  cmrStub.restore();
-  stepFunctionsStub.restore();
-  existsStub.restore();
-  templateStub.restore();
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
   const { esAlias } = t.context;
 
   const granuletype = 'granule';
-  const granule = fakeGranuleFactory();
-  const collection = fakeCollectionFactory();
+  const granule = {
+    granuleId: randomString(),
+  };
+  const collection = {
+    name: randomString(),
+    version: 1,
+  };
   const collectionId = constructCollectionId(collection.name, collection.version);
   granule.collectionId = collectionId;
 
@@ -157,14 +93,16 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
 
   const granuleIds = [];
   const granules = [];
+  const collectionId = constructCollectionId(randomString(), 1);
 
   for (let i = 0; i < 11; i += 1) {
-    const newgran = fakeGranuleFactory();
+    const newgran = {
+      granuleId: randomString(),
+      collectionId,
+    };
     granules.push(newgran);
     granuleIds.push(newgran.granuleId);
   }
-
-  const collectionId = granules[0].collectionId;
 
   // add the records
   let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esAlias)));
@@ -415,26 +353,13 @@ test.serial('delete a provider record', async (t) => {
   );
 });
 
-// This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('reingest a granule', async (t) => {
-  const record = fakeGranuleFactory();
-
-  await granuleModel.create(record);
-
-  t.is(record.status, 'completed');
-
-  await indexer.reingest(record);
-
-  const g = new Granule();
-  const newRecord = await g.get({ granuleId: record.granuleId });
-
-  t.is(newRecord.status, 'running');
-});
-
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
-  const granule = fakeGranuleFactory();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: `${randomString}___1`,
+  };
 
   await indexer.indexGranule(esClient, granule, esAlias);
 
@@ -451,15 +376,9 @@ test.serial('indexing a granule record', async (t) => {
 test.serial('indexing a PDR record', async (t) => {
   const { esAlias } = t.context;
 
-  const txt = fs.readFileSync(
-    path.join(__dirname, '../data/sns_message_parse_pdr.txt'),
-    'utf8'
-  );
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-
-  const pdr = await pdrsModel.generatePdrRecord(msg);
+  const pdr = {
+    pdrName: randomString(),
+  };
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
   await indexer.indexPdr(esClient, pdr, esAlias);

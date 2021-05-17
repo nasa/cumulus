@@ -10,15 +10,10 @@ const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const indexer = rewire('../../es/indexer');
-const Collection = require('../../es/collections');
-const { Search } = require('../../es/search');
-const models = require('../../models');
-const { fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-
-const collectionTable = randomId('collectionsTable');
-const granuleTable = randomId('granulesTable');
+const indexer = rewire('../indexer');
+const Collection = require('../collections');
+const { Search } = require('../search');
+const { bootstrapElasticSearch } = require('../bootstrap');
 
 process.env.system_bucket = randomId('systemBucket');
 process.env.stackName = randomId('stackName');
@@ -26,21 +21,10 @@ process.env.stackName = randomId('stackName');
 let esClient;
 let esAlias;
 let esIndex;
-let collectionModel;
-let granuleModel;
 
 // Before each test create a new index and use that since it's very important for
 // these tests to test a clean ES index
 test.before(async () => {
-  // create the tables
-  process.env.CollectionsTable = collectionTable;
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
-  process.env.GranulesTable = granuleTable;
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
-
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -53,64 +37,69 @@ test.before(async () => {
   esClient = await Search.es();
 
   await Promise.all([
-    indexer.indexCollection(esClient, fakeCollectionFactory({
+    indexer.indexCollection(esClient, {
       name: 'coll1',
       version: '1',
-    }), esAlias),
-    indexer.indexCollection(esClient, fakeCollectionFactory({
+    }, esAlias),
+    indexer.indexCollection(esClient, {
       name: 'coll1',
       version: '2',
-    }), esAlias),
-    indexer.indexCollection(esClient, fakeCollectionFactory({
+    }, esAlias),
+    indexer.indexCollection(esClient, {
       name: 'coll2',
       version: '1',
-    }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+    }, esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
       collectionId: 'coll1___1',
       status: 'completed',
-    }), esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+    }, esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
       collectionId: 'coll1___1',
       status: 'completed',
-    }), esAlias),
+    }, esAlias),
   ]);
 
   // Adding a bunch of collections with granules to test more than 10 collections
   // can be returned
   await Promise.all(range(9).map((i) =>
-    indexer.indexCollection(esClient, fakeCollectionFactory({
+    indexer.indexCollection(esClient, {
       name: 'coll4',
       version: i.toString(),
-    }), esAlias)));
+    }, esAlias)));
 
   await Promise.all(range(9).map((i) =>
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
       collectionId: `coll4___${i}`,
       status: 'completed',
-    }), esAlias)));
+    }, esAlias)));
 
   // Add more than 10 granules to `coll4___0`
   await Promise.all(range(10).map(() =>
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
       collectionId: 'coll4___0',
       status: 'completed',
-    }), esAlias)));
+    }, esAlias)));
 
   // Indexing using Date.now() to generate the timestamp
   const stub = sinon.stub(Date, 'now').returns((new Date(2020, 0, 29)).getTime());
 
   try {
     await Promise.all([
-      indexer.indexCollection(esClient, fakeCollectionFactory({
+      indexer.indexCollection(esClient, {
         name: 'coll3',
         version: '1',
         updatedAt: new Date(2020, 0, 29),
-      }), esAlias),
-      indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+      }, esAlias),
+      indexer.indexGranule(esClient, {
+        granuleId: randomId('granule'),
         updatedAt: new Date(2020, 1, 29),
         collectionId: 'coll3___1',
         status: 'completed',
-      }), esAlias),
+      }, esAlias),
     ]);
   } finally {
     stub.restore();
@@ -119,8 +108,6 @@ test.before(async () => {
 
 test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
   await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 

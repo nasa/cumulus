@@ -5,8 +5,8 @@ const rewire = require('rewire');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
-const bootstrap = require('../../lambdas/bootstrap');
-const esSearch = rewire('../../es/search');
+const bootstrap = require('../bootstrap');
+const esSearch = rewire('../search');
 
 const { Search } = esSearch;
 
