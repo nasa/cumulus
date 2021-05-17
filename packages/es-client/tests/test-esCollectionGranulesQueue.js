@@ -3,9 +3,9 @@
 const test = require('ava');
 const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const { ESCollectionGranuleQueue } = require('../../es/esCollectionGranuleQueue');
-const { Search } = require('../../es/search');
+const { bootstrapElasticSearch } = require('../bootstrap');
+const { ESCollectionGranuleQueue } = require('../esCollectionGranuleQueue');
+const { Search } = require('../search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();

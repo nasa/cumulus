@@ -2,7 +2,9 @@
 
 const test = require('ava');
 const rewire = require('rewire');
-const esSearch = rewire('../../es/search');
+
+const esSearch = rewire('../search');
+
 const { Search } = esSearch;
 
 const localEsHost = process.env.LOCAL_ES_HOST;

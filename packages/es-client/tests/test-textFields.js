@@ -2,7 +2,7 @@
 
 const test = require('ava');
 
-const { convertTextField } = require('../../es/textFields');
+const { convertTextField } = require('../textFields');
 
 test('Given a field that has a keyword version, it returns the keyword version', async (t) => {
   const field = 'granuleId';
