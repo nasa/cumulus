@@ -1,10 +1,11 @@
 import Knex from 'knex';
 
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
-const { deconstructCollectionId } = require('../../../api/lib/utils');
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
