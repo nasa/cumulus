@@ -16,9 +16,8 @@ const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { Granule } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
-const mappings = require('../models/mappings.json');
+const mappings = require('./config/mappings.json');
 
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
@@ -263,17 +262,6 @@ async function deleteRecord({
 }
 
 /**
- * start the re-ingest of a given granule object
- *
- * @param  {Object} g - the granule object
- * @returns {Promise} an object showing the start of the re-ingest
- */
-async function reingest(g) {
-  const gObj = new Granule();
-  return gObj.reingest(g);
-}
-
-/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -297,5 +285,4 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
-  reingest,
 };
