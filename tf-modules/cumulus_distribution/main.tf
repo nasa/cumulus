@@ -19,5 +19,10 @@ resource "aws_dynamodb_table" "access_tokens" {
     type = "S"
   }
 
+  ttl {
+    attribute_name = "expirationTime"
+    enabled        = true
+  }
+
   tags = var.tags
 }
