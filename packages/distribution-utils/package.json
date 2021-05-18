@@ -1,0 +1,40 @@
+{
+  "name": "@cumulus/distribution-utils",
+  "version": "9.0.1",
+  "description": "Cumulus Distribution utilities",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
+  "scripts": {
+    "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
+    "clean": "rm -rf dist",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/checksum/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/errors": "9.0.1",
+    "url-join": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/url-join": "^4.0.0"
+  }
+}
