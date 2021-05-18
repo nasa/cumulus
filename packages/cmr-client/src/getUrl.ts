@@ -33,6 +33,16 @@ export function getCmrHost({
   }
 }
 
+export function getBucketAccessUrl({
+  host,
+  cmrEnv,
+}: {
+  host?: string,
+  cmrEnv?: string,
+}): string {
+  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/access-control/s3-buckets/`;
+}
+
 export function getIngestUrl({
   host,
   cmrEnv,
