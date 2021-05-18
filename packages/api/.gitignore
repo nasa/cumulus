@@ -1,3 +1,2 @@
 src/**/*.d.ts
 src/**/*.js
-!*.html
