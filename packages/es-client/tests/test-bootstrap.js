@@ -3,36 +3,22 @@
 const test = require('ava');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { Search } = require('@cumulus/es-client/search');
-const mappings = require('@cumulus/es-client/config/mappings.json');
 
-const bootstrap = require('../../lambdas/bootstrap');
-const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
-const testMappings = require('../data/testEsMappings.json');
-const mappingsSubset = require('../data/testEsMappingsSubset.json');
-const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
+const { bootstrapElasticSearch, findMissingMappings } = require('../bootstrap');
+const { Search } = require('../search');
+const mappings = require('../config/mappings.json');
+
+const testMappings = require('./data/testEsMappings.json');
+const mappingsSubset = require('./data/testEsMappingsSubset.json');
+const mappingsNoFields = require('./data/testEsMappingsNoFields.json');
 
 let esClient;
-
-// This is for a skipped test: bootstrap dynamoDb activates pointInTime on a given table
-const tableName = randomString();
-
-// Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
-// When this test is back in, make sure to delete the table
-test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', async (t) => {
-  const resp = await bootstrapDynamoDbTables([{ name: tableName, pointInTime: true }]);
-
-  t.is(
-    resp.ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus,
-    'ENABLED'
-  );
-});
 
 test('bootstrap creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch('fakehost', indexName, testAlias);
   try {
     esClient = await Search.es();
 
@@ -53,7 +39,7 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
 
   process.env.ES_INDEX_SHARDS = 4;
   try {
-    await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+    await bootstrapElasticSearch('fakehost', indexName, testAlias);
     esClient = await Search.es();
 
     const indexSettings = await esClient.indices.get({ index: indexName })
@@ -77,7 +63,7 @@ test('bootstrap adds alias to existing index', async (t) => {
     body: { mappings },
   });
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch('fakehost', indexName, testAlias);
   esClient = await Search.es();
 
   const alias = await esClient.indices.getAlias({ name: testAlias })
@@ -100,15 +86,15 @@ test('Missing types added to index', async (t) => {
   });
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    await findMissingMappings(esClient, indexName, testMappings),
     ['logs', 'deletedgranule']
   );
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch('fakehost', indexName, testAlias);
   esClient = await Search.es();
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    await findMissingMappings(esClient, indexName, testMappings),
     []
   );
 
@@ -127,15 +113,15 @@ test('Missing fields added to index', async (t) => {
   });
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    await findMissingMappings(esClient, indexName, testMappings),
     ['logs', 'execution']
   );
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch('fakehost', indexName, testAlias);
   esClient = await Search.es();
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    await findMissingMappings(esClient, indexName, testMappings),
     []
   );
 
@@ -154,7 +140,7 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
     body: { mappings },
   });
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch('fakehost', indexName, testAlias);
 
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
   // If you use indices.exist on testAlias it'll return true because the alias is
@@ -172,10 +158,10 @@ test('If an alias exists that index is used and a new one is not created', async
   const existingAlias = randomId('esalias');
 
   esClient = await Search.es();
-  await bootstrap.bootstrapElasticSearch('fakehost', existingIndex, existingAlias);
+  await bootstrapElasticSearch('fakehost', existingIndex, existingAlias);
 
   // Try bootstrapping with a different index name
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, existingAlias);
+  await bootstrapElasticSearch('fakehost', indexName, existingAlias);
 
   const indexExists = await esClient.indices.exists({ index: indexName })
     .then((response) => response.body);
