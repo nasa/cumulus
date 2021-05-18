@@ -19,6 +19,12 @@ const {
 } = require('@cumulus/aws-client/S3');
 const asyncOperations = require('@cumulus/async-operations');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
+
 const {
   createFakeJwtAuthToken,
   fakeReconciliationReportFactory,
@@ -26,11 +32,6 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
-const {
-  Search,
-} = require('../../es/search');
 
 process.env = { ...process.env, ...localStackConnectionEnv };
 process.env.invoke = 'granule-reconciliation-reports';
@@ -69,7 +70,7 @@ test.before(async () => {
   process.env.ES_INDEX = esAlias;
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();

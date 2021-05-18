@@ -13,6 +13,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
+const mappings = require('@cumulus/es-client/config/mappings.json');
 
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
@@ -20,9 +23,6 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search, defaultIndexAlias } = require('../../es/search');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const mappings = require('../../models/mappings.json');
 
 const esIndex = randomString();
 
