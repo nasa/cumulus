@@ -138,4 +138,5 @@ module.exports = {
   getConfigurations,
   handleRedirectRequest,
   handleFileRequest,
+  useSecureCookies,
 };
