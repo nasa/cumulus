@@ -993,13 +993,14 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile.length === 0) return {};
 
   const cmrFilename = cmrFile[0].filename;
+
   if (isISOFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
 
     // Get beginning and ending date time from beginPosition and endPosition
     const identificationInfo = metadataMI['gmd:identificationInfo'];
-    const dataIdentification = (identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent'))));
+    const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
     const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
     const beginningDateTime = temporalInfo['gml:beginPosition'];
     const endingDateTime = temporalInfo['gml:endPosition'];
