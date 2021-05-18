@@ -1,5 +1,6 @@
 const template = require('lodash/template');
-const instructions = require('./instructions/index.html');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const instructions = inTestMode() ? `<a href="${process.env.DISTRIBUTION_ENDPOINT}s3credentials" target="_blank">${process.env.DISTRIBUTION_ENDPOINT}s3credentials</a>` : require('./instructions/index.html');
 
 /**
  * Sends a sample webpage describing how to use s3Credentials endpoint
