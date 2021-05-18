@@ -1,12 +1,13 @@
 'use strict';
 
 const test = require('ava');
+
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { Search } = require('@cumulus/es-client/search');
+const mappings = require('@cumulus/es-client/config/mappings.json');
 
 const bootstrap = require('../../lambdas/bootstrap');
-const { Search } = require('../../es/search');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
-const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
 const mappingsNoFields = require('../data/testEsMappingsNoFields.json');

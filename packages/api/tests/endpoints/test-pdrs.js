@@ -19,6 +19,13 @@ const {
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
+
 const {
   createFakeJwtAuthToken,
   fakePdrFactory,
@@ -26,12 +33,6 @@ const {
   createPdrTestRecords,
 } = require('../../lib/testUtils');
 const models = require('../../models');
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../es/testUtils');
 const assertions = require('../../lib/assertions');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 const { del } = require('../../endpoints/pdrs');

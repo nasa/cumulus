@@ -17,6 +17,12 @@ const {
   translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -30,13 +36,6 @@ const {
 const { post, put, del } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
-
-const { Search } = require('../../es/search');
-const indexer = require('../../es/indexer');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../es/testUtils');
 const assertions = require('../../lib/assertions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');

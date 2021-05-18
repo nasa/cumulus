@@ -9,16 +9,17 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = rewire('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
-const indexer = rewire('../../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomId('accessTokensTable');
@@ -42,7 +43,7 @@ let granuleModel;
 test.before(async () => {
   const esAlias = randomId('esAlias');
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 

@@ -16,6 +16,11 @@ const {
   translateApiProviderToPostgresProvider,
   ProviderPgModel,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const models = require('../../../models');
 const {
@@ -25,11 +30,6 @@ const {
   createProviderTestRecords,
 } = require('../../../lib/testUtils');
 
-const { Search } = require('../../../es/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/providers');
 const { buildFakeExpressResponse } = require('../utils');
