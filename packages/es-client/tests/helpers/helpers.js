@@ -6,7 +6,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const indexer = require('../../indexer');
 
-const granuleFactory = (number = 1, opts) =>
+const granuleFactory = (number = 1, opts, granuleParams = {}) =>
   range(number).map(() => {
     const bucket = randomId('bucket');
     const filename = randomId('filename');
@@ -16,6 +16,8 @@ const granuleFactory = (number = 1, opts) =>
       granuleId: randomId('granule'),
       collectionId: constructCollectionId(randomId('collection'), 1),
       files: [factOpts],
+      timestamp: new Date(),
+      ...granuleParams,
     };
   });
 

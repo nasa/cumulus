@@ -414,9 +414,11 @@ test.serial('Create new index - index already exists', async (t) => {
   await indexer.createIndex(esClient, newIndex);
 
   await t.throwsAsync(
-    () => indexer.createIndex(esClient, newIndex),
-    { instanceOf: IndexExistsError },
-    `Index ${newIndex} exists and cannot be created.`
+    indexer.createIndex(esClient, newIndex),
+    {
+      instanceOf: IndexExistsError,
+      message: `Index ${newIndex} exists and cannot be created.`,
+    }
   );
 
   await esClient.indices.delete({ index: newIndex });
