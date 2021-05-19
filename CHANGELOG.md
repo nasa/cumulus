@@ -26,7 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
 ### Changed
-
+- **CUMULUS-2517**
+  - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
     both HTTPS URLS and S3 URIsto  CMR metadata.
@@ -41,6 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
+
 
 ## [v9.0.1] 2021-05-07
 
