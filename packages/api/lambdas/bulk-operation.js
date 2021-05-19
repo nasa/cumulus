@@ -1,10 +1,10 @@
-const elasticsearch = require('@elastic/elasticsearch');
 const get = require('lodash/get');
 const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
 
 const { deconstructCollectionId } = require('../lib/utils');
 const GranuleModel = require('../models/granules');
@@ -31,22 +31,11 @@ async function getGranuleIdsForPayload(payload) {
   if (granuleIds.length === 0 && payload.query) {
     log.info('No granule ids detected. Searching for granules in Elasticsearch.');
 
-    if (!process.env.METRICS_ES_HOST
-        || !process.env.METRICS_ES_USER
-        || !process.env.METRICS_ES_PASS) {
-      throw new Error('ELK Metrics stack not configured');
-    }
-
     const query = payload.query;
     const index = payload.index;
     const responseQueue = [];
 
-    const esUrl = `https://${process.env.METRICS_ES_USER}:${
-      process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
-    const client = new elasticsearch.Client({
-      node: esUrl,
-    });
-
+    const client = await Search.es(undefined, true);
     const searchResponse = await client.search({
       index: index,
       scroll: '30s',
