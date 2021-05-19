@@ -10,11 +10,13 @@ const { Consumer } = require('../consumer');
 
 const timeToReceiveMessages = 200; // ms
 const timeLimitModifier = 50;
+const sqsMessage = { Body: 'message', MessageId: 'id' };
 let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
   await delay(timeToReceiveMessages);
-  return Array.apply(undefined, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
+  // eslint-disable-next-line prefer-spread
+  return Array.apply(undefined, { length: numOfMessages }).map(() => sqsMessage);
 }
 
 sinon.stub(SQS, 'deleteSQSMessage').resolves();

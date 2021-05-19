@@ -10,6 +10,7 @@ fi
 
 ./node_modules/.bin/lerna run prepare
 ./node_modules/.bin/lerna run package
+./node_modules/.bin/lerna run prepublish
 
 export VERSION=$(jq --raw-output .version lerna.json)
 export NPM_TAG=$(node ./bamboo/npm-tag.js);

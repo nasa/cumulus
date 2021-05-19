@@ -106,8 +106,15 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
+}
+
+variable "sts_policy_helper_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "system_bucket" {
@@ -280,60 +287,6 @@ variable "elasticsearch_alarms" {
   description = "List of Cloudwatch alarms monitoring Elasticsearch domain"
   type        = list(object({ name = string, arn = string }))
   default     = []
-}
-
-variable "ems_datasource" {
-  type        = string
-  description = "the data source of EMS reports"
-  default     = "UAT"
-}
-
-variable "ems_host" {
-  type        = string
-  description = "EMS host"
-  default     = "change-ems-host"
-}
-
-variable "ems_path" {
-  type        = string
-  description = "EMS host directory path for reports"
-  default     = "/"
-}
-
-variable "ems_port" {
-  type        = number
-  description = "EMS host port"
-  default     = 22
-}
-
-variable "ems_private_key" {
-  type        = string
-  description = "the private key file used for sending reports to EMS"
-  default     = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type        = string
-  description = "the provider used for sending reports to EMS"
-  default     = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type        = number
-  description = "the retention in days for reports and s3 server access logs"
-  default     = 30
-}
-
-variable "ems_submit_report" {
-  type        = bool
-  description = "toggle whether the reports will be sent to EMS"
-  default     = false
-}
-
-variable "ems_username" {
-  type        = string
-  description = "the username used for sending reports to EMS"
-  default     = "cumulus"
 }
 
 variable "es_request_concurrency" {
@@ -515,6 +468,12 @@ variable "urs_url" {
   default     = "https://uat.urs.earthdata.nasa.gov"
 }
 
+variable "cmr_acl_based_credentials" {
+  type = bool
+  default = false
+  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+}
+
 variable "vpc_id" {
   description = "VPC used by Lambda functions"
   type        = string
@@ -570,12 +529,6 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
-}
-
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
-  type        = bool
-  default     = false
 }
 
 variable "ecs_custom_sg_ids" {

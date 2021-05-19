@@ -49,6 +49,10 @@ data "aws_lambda_function" "sts_credentials" {
   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
+data "aws_lambda_function" "sts_policy_helper" {
+  function_name = "gsfc-ngap-sh-sts-policy-helper"
+}
+
 data "aws_ssm_parameter" "ecs_image_id" {
   name = "image_id_ecs_amz2"
 }
@@ -89,16 +93,6 @@ module "cumulus" {
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
-
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
 
   es_request_concurrency = var.es_request_concurrency
 
@@ -148,7 +142,6 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
-    "brian.tennity",
     "dopeters",
     "jasmine",
     "jennyhliu",
@@ -181,10 +174,10 @@ module "cumulus" {
 
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
+  cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
-
-  ems_deploy = var.ems_deploy
 
   tags = local.tags
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-integration-tests",
-  "version": "8.1.0",
+  "version": "9.0.1",
   "description": "Cumulus Integration Test Deployment",
   "private": true,
   "main": "index.js",
@@ -57,6 +57,7 @@
     "@cumulus/discover-pdrs": "8.1.0",
     "@cumulus/files-to-granules": "8.1.0",
     "@cumulus/hello-world": "8.1.0",
+    "@cumulus/ingest": "8.1.0",
     "@cumulus/integration-tests": "8.1.0",
     "@cumulus/message": "8.1.0",
     "@cumulus/move-granules": "8.1.0",
@@ -70,6 +71,6 @@
     "@cumulus/test-processing": "8.1.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "8.1.0"
+    "@cumulus/test-data": "9.0.1"
   }
 }
