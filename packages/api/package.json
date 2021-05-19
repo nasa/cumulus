@@ -109,7 +109,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "9.0.1",
-    "node-loader": "^1.0.3"
+    "@cumulus/test-data": "9.0.1"
   }
 }

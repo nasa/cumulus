@@ -37,17 +37,17 @@ variable "cmr_oauth_provider" {
 
 variable "csdap_client_id" {
   type        = string
-  description = "csdap_client_id"
+  description = "The csdap client id"
 }
 
 variable "csdap_client_password" {
   type        = string
-  description = "csdap_client_password"
+  description = "The csdap client password"
 }
 
 variable "csdap_host_url" {
   type        = string
-  description = "csdap_host_url"
+  description = "The csdap host url"
 }
 
 variable "launchpad_api" {

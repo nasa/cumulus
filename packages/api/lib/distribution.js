@@ -56,9 +56,10 @@ async function getConfigurations() {
   };
 }
 
+// TODO update the function when OAuthClient is available
 async function getProfile(oauthClient, { username, accessToken }) {
   //const oauthClient = await buildOAuthClient();
-  if (username) { // EDL
+  if (username && accessToken) { // EDL
     // // TODO add method not only get user profile
     // const uid = await oauthClient.getTokenUsername({
     //   onBehalfOf: username,

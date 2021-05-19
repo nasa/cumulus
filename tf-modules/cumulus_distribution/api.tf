@@ -9,7 +9,6 @@ locals {
       OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
       OAUTH_HOST_URL        = var.oauth_host_url
       OAUTH_PROVIDER        = var.oauth_provider
-      JWT_COOKIENAME        = var.jwt_cookiename
       stackName             = var.prefix
       TOKEN_SECRET          = var.token_secret
   }

@@ -42,12 +42,6 @@ variable "api_gateway_stage" {
   description = "The API Gateway stage name for the distribution App"
 }
 
-variable "jwt_cookiename" {
-  type        = string
-  default     = "cumulus_distribution_oauth"
-  description = "The JWT cookie's name is set with the 'JWT_COOKIENAME' env variable"
-}
-
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
