@@ -42,17 +42,52 @@ test('mapCNMTypeToCMRType returns a mapping for non science data type', (t) => {
 
 test('mapCNMTypeToCMRType returns a mapping for science data type', (t) => {
   t.is(mapCNMTypeToCMRType('data'), 'GET DATA');
-  t.is(mapCNMTypeToCMRType('data', 's3'), 'GET DATA VIA DIRECT ACCESS');
+  t.is(mapCNMTypeToCMRType('data', 's3'), 'GET DATA');
+  t.is(mapCNMTypeToCMRType('data', 's3', true), 'GET DATA VIA DIRECT ACCESS');
 });
 
 test('mapCNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
   t.is(mapCNMTypeToCMRType('NOTAREALVALUE'), 'GET DATA');
-  t.is(mapCNMTypeToCMRType('NOTAREALVALUE', 's3'), 'GET DATA VIA DIRECT ACCESS');
+  t.is(mapCNMTypeToCMRType('NOTAREALVALUE', 's3'), 'GET DATA');
+  t.is(mapCNMTypeToCMRType('NOTAREALVALUE', 's3', true), 'GET DATA VIA DIRECT ACCESS');
   t.is(mapCNMTypeToCMRType(undefined), 'GET DATA');
-  t.is(mapCNMTypeToCMRType(undefined, 's3'), 'GET DATA VIA DIRECT ACCESS');
+  t.is(mapCNMTypeToCMRType(undefined, 's3'), 'GET DATA');
+  t.is(mapCNMTypeToCMRType(undefined, 's3', true), 'GET DATA VIA DIRECT ACCESS');
 });
 
-test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set', async (t) => {
+test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is not set', async (t) => {
+  const movedFiles = [
+    {
+      key: 'some/path/protected-file.hdf',
+      bucket: t.context.bucketConfig.protected.name,
+    },
+  ];
+  const expected = [
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
+      Description: 'Download protected-file.hdf',
+      URLDescription: 'Download protected-file.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+  ];
+
+  const actual = await constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint,
+    bucketTypes: t.context.bucketTypes,
+    distributionBucketMap: t.context.distributionBucketMap,
+  });
+
+  t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
+});
+
+test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is true', async (t) => {
   const movedFiles = [
     {
       key: 'some/path/protected-file.hdf',
@@ -79,6 +114,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap,
+    useDirectS3Type: true,
   });
 
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
@@ -107,6 +143,7 @@ test('constructOnlineAccessUrls returns correct url for public data when cmrGran
     bucketTypes: t.context.bucketTypes,
     cmrGranuleUrlType: 'distribution',
     distributionBucketMap: t.context.distributionBucketMap,
+    useDirectS3Type: true,
   });
 
   t.deepEqual(actual, expected);
@@ -166,7 +203,7 @@ test('constructOnlineAccessUrls returns expected array when called with file lis
       URL: `s3://${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
       Description: 'This link provides direct download access via S3 to the granule',
       URLDescription: 'This link provides direct download access via S3 to the granule',
-      Type: 'GET DATA VIA DIRECT ACCESS',
+      Type: 'GET DATA',
     },
     {
       URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
@@ -244,7 +281,57 @@ test('constructOnlineAccessUrls throws error if URL type is distribution and dis
   }));
 });
 
-test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set', async (t) => {
+test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is not set', async (t) => {
+  const movedFiles = [
+    {
+      key: 'hidden/secretfile.gpg',
+      bucket: t.context.bucketConfig.private.name,
+    },
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+    },
+    {
+      key: 'another/path/protected.hdf',
+      bucket: t.context.bucketConfig.protected.name,
+    },
+  ];
+
+  const expected = [
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      Description: 'Download protected.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'Download publicfile.jpg',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    omit(s3CredentialsEndpointObject, 'URLDescription'),
+  ];
+
+  const actual = await constructRelatedUrls({
+    files: movedFiles,
+    distEndpoint,
+    bucketTypes: t.context.bucketTypes,
+    distributionBucketMap: t.context.distributionBucketMap,
+  });
+
+  t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
+});
+
+test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is true', async (t) => {
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
@@ -289,6 +376,7 @@ test('constructRelatedUrls returns expected array when called with file list and
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
     distributionBucketMap: t.context.distributionBucketMap,
+    useDirectS3Type: true,
   });
 
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
