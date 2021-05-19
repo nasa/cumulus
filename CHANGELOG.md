@@ -18,12 +18,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
   reporting is now handled through Cloud Metrics
 
-
 ### Added
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
-
 
 ### Changed
 - **CUMULUS-2517**
@@ -42,7 +40,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
-
 
 ## [v9.0.1] 2021-05-07
 
