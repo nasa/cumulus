@@ -31,7 +31,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { post } = require('../../endpoints/rules');
-const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const assertions = require('../../lib/assertions');
