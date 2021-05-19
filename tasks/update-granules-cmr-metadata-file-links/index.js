@@ -10,7 +10,7 @@ const {
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 

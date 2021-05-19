@@ -19,10 +19,9 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 
-const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
