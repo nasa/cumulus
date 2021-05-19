@@ -20,8 +20,15 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
+class FakeSearch {
+  static async es() {
+    return new FakeEsClient();
+  }
+}
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
-  '@elastic/elasticsearch': { Client: FakeEsClient },
+  '@cumulus/es-client/search': {
+    Search: FakeSearch,
+  },
 });
 
 const models = require('../../models');
