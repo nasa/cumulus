@@ -66,7 +66,7 @@ export const handler = async (
   }
 ): Promise<any> => {
   const {
-    dbConcurrency = 20,
+    dbConcurrency = 1,
     dbMaxPool = 20,
     reportBucket,
     reportPath,
