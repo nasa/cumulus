@@ -15,7 +15,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
   reporting is now handled through Cloud Metrics
 
-
 ### Added
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
@@ -29,6 +28,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
+### Fixed
+
+- **CUMULUS-2519**
+  - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collectAPI response is not successful
 ## [v9.0.1] 2021-05-07
 
 ### Migration Steps
