@@ -4,6 +4,7 @@ const get = require('lodash/get');
 
 const { sqs } = require('@cumulus/aws-client/services');
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
+const { deleteArchivedMessageFromS3 } = require('@cumulus/ingest/sqs');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -11,6 +12,7 @@ const {
   isSfExecutionEvent,
   isTerminalSfStatus,
 } = require('@cumulus/common/cloudwatch-event');
+
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/sqs-message-remover' });
@@ -57,6 +59,7 @@ async function updateSqsQueue(event) {
   const eventMessage = getSfEventMessageObject(event, 'input', '{}');
 
   const {
+    messageId,
     queueUrl,
     receiptHandle,
   } = eventMessage.meta.eventSource;
@@ -74,7 +77,10 @@ async function updateSqsQueue(event) {
   } else {
     // delete SQS message from the source queue when the workflow succeeded
     logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);
-    await deleteSQSMessage(queueUrl, receiptHandle);
+    await Promise.all([
+      deleteSQSMessage(queueUrl, receiptHandle),
+      deleteArchivedMessageFromS3(messageId),
+    ]);
   }
 
   return Promise.resolve();
