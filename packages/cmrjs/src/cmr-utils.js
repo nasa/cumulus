@@ -4,6 +4,7 @@ const got = require('got');
 const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
+const semver = require('semver');
 const set = require('lodash/set');
 const { promisify } = require('util');
 const js2xmlParser = require('js2xmlparser');
@@ -614,10 +615,9 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
  * @returns {boolean} indicate if direct s3 access type is used
  */
 function shouldUseDirectS3Type(metadataObject) {
-  const versionWithDirectS3Type = 1.62;
+  const versionWithDirectS3Type = '1.6.2';
   const versionString = ummVersion(metadataObject);
-  // convert version string like 1.6.1 to 1.61 for comparision
-  if (Number(versionString.replace('.', '_').replace(/\./g, '').replace('_', '.')) >= versionWithDirectS3Type) {
+  if (semver.gte(versionString, versionWithDirectS3Type)) {
     return true;
   }
   return false;
