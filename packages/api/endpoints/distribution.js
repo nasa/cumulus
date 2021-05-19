@@ -133,11 +133,9 @@ async function handleLoginRequest(req, res) {
     const userProfile = await getProfile(oauthClient, accessTokenResponse);
     log.debug('Got the user profile: ', userProfile);
 
-    // expirationTime is in seconds whereas Date is expecting milliseconds
-    const expirationTime = accessTokenResponse.expirationTime * 1000;
     await accessTokenModel.create({
       accessToken: accessTokenResponse.accessToken,
-      expirationTime,
+      expirationTime: accessTokenResponse.expirationTime,
       refreshToken: accessTokenResponse.refreshToken,
       username: accessTokenResponse.username,
       tokenInfo: userProfile,
@@ -148,7 +146,8 @@ async function handleLoginRequest(req, res) {
         'accessToken',
         accessTokenResponse.accessToken,
         {
-          expires: new Date(expirationTime),
+          // expirationTime is in seconds but Date() expects milliseconds
+          expires: new Date(accessTokenResponse.expirationTime * 1000),
           httpOnly: true,
           secure: useSecureCookies(),
         }
