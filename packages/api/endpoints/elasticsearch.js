@@ -236,11 +236,11 @@ async function indexFromDatabase(req, res) {
       },
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
-      stackName,
-      systemBucket,
-      dynamoTableName: tableName,
-      knexConfig,
     },
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
   }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
