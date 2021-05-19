@@ -3,7 +3,6 @@
 const delay = require('delay');
 const got = require('got');
 const pWaitFor = require('p-wait-for');
-const semver = require('semver');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
@@ -376,9 +375,9 @@ async function generateAndStoreCmrUmmJson(
     }));
   }
 
-  const defaultVersion = '1.4';
+  const defaultVersion = 1.4;
   // convert version string like 1.6.2 to 1.62 for comparision
-  if (semver.gt(versionString, defaultVersion)) {
+  if (Number(versionString.replace('.', '_').replace(/\./g, '').replace('_', '.')) > defaultVersion) {
     jsonObject.MetadataSpecification = {
       URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
       Name: 'UMM-G',
