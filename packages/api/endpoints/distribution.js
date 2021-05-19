@@ -4,26 +4,11 @@ const isEmpty = require('lodash/isEmpty');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
 const { render } = require('nunjucks');
-
 const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-// const { s3 } = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
 const { URL } = require('url');
-
-// const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
-// const { isLocalApi } = require('../lib/testUtils');
-// const { AccessToken } = require('../models');
 const { checkLoginQueryErrors, getConfigurations, getProfile, useSecureCookies } = require('../lib/distribution');
-
-// Running API locally will be on http, not https, so cookies
-// should not be set to secure for local runs of the API.
-// const useSecureCookies = () => {
-//   if (isLocalApi()) {
-//     return false;
-//   }
-//   return true;
-// };
 
 /**
  * Return a signed URL to an S3 object
@@ -42,27 +27,6 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
 
   return parsedSignedUrl.toString();
 }
-
-/**
- * Returns a configuration object
- *
- * @returns {Object} the configuration object needed to handle requests
- */
-// function getConfigurations() {
-//   const earthdataLoginClient = new EarthdataLoginClient({
-//     clientId: process.env.EARTHDATA_CLIENT_ID,
-//     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-//     earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-//     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-//   });
-
-//   return {
-//     accessTokenModel: new AccessToken(),
-//     authClient: earthdataLoginClient,
-//     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-//     s3Client: s3(),
-//   };
-// }
 
 /**
  * Sends a welcome page
@@ -92,6 +56,7 @@ async function handleRootRequest(req, res) {
     title: 'Welcome',
     profile: accessTokenRecord && accessTokenRecord.tokenInfo,
     logoutURL: urljoin(distributionUrl, 'logout'),
+    requestid: req.apiGateway.context.awsRequestId,
   };
 
   if (!accessToken || !accessTokenRecord) {
@@ -102,8 +67,9 @@ async function handleRootRequest(req, res) {
   const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
   return res.send(rendered);
 }
+
 /**
- * login endpoint
+ * Responds to a login/redirect request
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -118,9 +84,11 @@ async function handleLoginRequest(req, res) {
 
   const { code, state } = req.query;
   const errorTemplate = pathresolve(__dirname, 'templates/error.html');
+  const requestid = req.apiGateway.context.awsRequestId;
   log.debug('the query params:', req.query);
   const templateVars = checkLoginQueryErrors(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
+    templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);
     return res.type('.html').status(templateVars.statusCode).send(rendered);
   }
@@ -161,6 +129,7 @@ async function handleLoginRequest(req, res) {
       contentstring: `There was a problem talking to OAuth provider, ${error.message}`,
       title: 'Could Not Login',
       statusCode: 401,
+      requestid,
     };
     const rendered = render(errorTemplate, vars);
     return res.type('.html').status(401).send(rendered);
@@ -168,7 +137,7 @@ async function handleLoginRequest(req, res) {
 }
 
 /**
- * logout endpoint
+ * Responds to a logout request
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -191,50 +160,10 @@ async function handleLogoutRequest(req, res) {
     contentstring: accessToken ? 'You are logged out.' : 'No active login found.',
     URL: authorizeUrl,
     logoutURL: urljoin(distributionUrl, 'logout'),
+    requestid: req.apiGateway.context.awsRequestId,
   };
   const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
   return res.send(rendered);
-}
-
-/**
- * Responds to a redirect request
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
- */
-async function handleRedirectRequest(req, res) {
-  const {
-    accessTokenModel,
-    oauthClient,
-    distributionUrl,
-  } = await getConfigurations();
-
-  const { code, state } = req.query;
-
-  const getAccessTokenResponse = await oauthClient.getAccessToken(code);
-
-  await accessTokenModel.create({
-    accessToken: getAccessTokenResponse.accessToken,
-    expirationTime: getAccessTokenResponse.expirationTime,
-    refreshToken: getAccessTokenResponse.refreshToken,
-    username: getAccessTokenResponse.username,
-  });
-
-  return res
-    .cookie(
-      'accessToken',
-      getAccessTokenResponse.accessToken,
-      {
-        // expirationTime is in seconds but Date() expects milliseconds
-        expires: new Date(getAccessTokenResponse.expirationTime * 1000),
-        httpOnly: true,
-        secure: useSecureCookies(),
-      }
-    )
-    .set({ Location: urljoin(distributionUrl, state) })
-    .status(307)
-    .send('Redirecting');
 }
 
 /**
@@ -274,7 +203,6 @@ async function handleFileRequest(req, res) {
 module.exports = {
   handleLoginRequest,
   handleLogoutRequest,
-  handleRedirectRequest,
   handleRootRequest,
   handleFileRequest,
   useSecureCookies,

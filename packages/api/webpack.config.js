@@ -84,7 +84,8 @@ module.exports = {
   externals: [
     'aws-sdk',
     'electron',
-    { formidable: 'url' }
+    { formidable: 'url' },
+    { fsevents: "require('fsevents')" }
   ],
   module: {
     rules: [
@@ -100,10 +101,6 @@ module.exports = {
           },
         ],
       },
-      {
-        test: /.node$/,
-        loader: 'node-loader',
-      }
     ],
   },
   target: 'node',

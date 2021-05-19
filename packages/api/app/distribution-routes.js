@@ -1,24 +1,15 @@
-const { resolve: pathresolve } = require('path');
-const get = require('lodash/get');
-const isEmpty = require('lodash/isEmpty');
-const urljoin = require('url-join');
 const router = require('express-promise-router')();
-const { render } = require('nunjucks');
-const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { AccessToken } = require('../models');
 
 const {
   handleLoginRequest,
   handleLogoutRequest,
-  handleRedirectRequest,
   handleFileRequest,
-  useSecureCookies,
   handleRootRequest,
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
-const { getConfigurations, checkLoginQueryErrors, getAccessToken, getProfile } = require('../lib/distribution');
+const { getConfigurations } = require('../lib/distribution');
 
 /**
  * Helper function to pull bucket out of a path string.
@@ -66,6 +57,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   }
 
   // Public data doesn't need authentication
+  // but still need to add username to s3 access log
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
@@ -73,10 +65,10 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   const {
     accessTokenModel,
-    authClient,
+    oauthClient,
   } = getConfigurations();
 
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
+  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
 
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
@@ -118,7 +110,6 @@ router.get('/login', handleLoginRequest);
 router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
-router.get('/redirect', handleRedirectRequest);
 router.get('/s3Credentials', s3Credentials);
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
 router.get('/version', version);
