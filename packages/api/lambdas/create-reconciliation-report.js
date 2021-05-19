@@ -329,6 +329,7 @@ async function reconciliationReportForGranuleFiles(params) {
           bucketTypes,
           urlType: 's3',
           distributionBucketMap,
+          useDirectS3Type: true,
         });
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
