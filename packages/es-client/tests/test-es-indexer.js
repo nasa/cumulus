@@ -28,7 +28,7 @@ test.before(async (t) => {
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
   esClient = await Search.es();
-  // create buckets
+  // create bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 });
 
