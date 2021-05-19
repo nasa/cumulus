@@ -10,6 +10,8 @@ const {
 } = require('../endpoints/distribution');
 const { isAccessTokenExpired } = require('../lib/token');
 
+const version = require('../endpoints/version');
+
 /**
  * Helper function to pull bucket out of a path string.
  * Will ignore leading slash.
@@ -106,8 +108,6 @@ const pubkey = (req, res) => res.status(501).end();
 const s3Credentials = (req, res) => res.status(501).end();
 
 const s3CredentialsREADME = (req, res) => res.status(501).end();
-
-const version = (req, res) => res.status(501).end();
 
 router.get('/', root);
 router.get('/locate', locate);
