@@ -72,13 +72,13 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What are Terraform modules?</summary>
 
-  Answer: They are modules that are composed to create a Cumulus deployment, which gives integrators the flexibility to choose the components of Cumulus that want/need. To view Cumulus maintained modules or steps on how to create a module go to [Terraform modules](../tf-modules).
+  Answer: They are modules that are composed to create a Cumulus deployment, which gives integrators the flexibility to choose the components of Cumulus that want/need. To view Cumulus maintained modules or steps on how to create a module go to [Terraform modules](https://github.com/nasa/cumulus/tree/master/tf-modules).
 </details>
 
 <details>
   <summary>Where do I find Terraform module variables</summary>
 
-  Answer: Go [here](../tf-modules/cumulus/variables.tf) for a list of Cumulus maintained variables.
+  Answer: Go [here](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for a list of Cumulus maintained variables.
 </details>
 
 <details>
