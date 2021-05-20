@@ -476,6 +476,27 @@ test('generateDirectS3Url generates a signed URL using passed credentials', asyn
   t.regex(actual, /X-Amz-Credential=FAKEId/);
 });
 
+test.serial('generateAccessUrl switches correctly based on urlType', async (t) => {
+  const params = {
+    Bucket: 'irrelevant',
+    Key: 'irrelevant',
+    urlConfig: {
+      roleCreds: {},
+      urlType: 's3',
+      distributionEndpoint: 'irrelevant',
+    },
+  };
+
+  sandbox.stub(index, 'generateDirectS3Url');
+  await index.generateAccessUrl(params);
+  t.true(index.generateDirectS3Url.calledOnce);
+
+  params.urlConfig.urlType = 'distribution';
+  sandbox.stub(index, 'generateDistributionUrl');
+  await index.generateAccessUrl(params);
+  t.true(index.generateDirectS3Url.calledOnce);
+});
+
 test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
