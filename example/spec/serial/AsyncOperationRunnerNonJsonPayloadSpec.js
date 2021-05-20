@@ -2,6 +2,8 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -121,5 +123,8 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     }
   });
 
-  afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
+  afterAll(async () => {
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+  });
 });

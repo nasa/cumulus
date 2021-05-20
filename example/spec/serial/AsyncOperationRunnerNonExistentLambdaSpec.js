@@ -2,6 +2,7 @@
 
 const uuidv4 = require('uuid/v4');
 
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
@@ -92,6 +93,11 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       beforeAllFailed = true;
       throw error;
     }
+  });
+
+  afterAll(async () => {
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
   });
 
   it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
