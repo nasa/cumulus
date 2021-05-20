@@ -142,6 +142,8 @@ describe('POST /granules/bulk', () => {
           { timeout: 15 }
         );
 
+        console.log(`Ingest Execution ARN is : ${firstIngestGranuleExecutionArn}`);
+
         // Wait for the execution to be completed
         await getExecutionWithStatus({
           prefix,
