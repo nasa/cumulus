@@ -73,7 +73,7 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });
 
-test.serial('S3ProviderClient.download downloads a file with source_bucket set to local disk', async (t) => {
+test.serial('S3ProviderClient.download downloads a file to local disk when source_bucket is set', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: 'fake_bucket' });
 
   const localPath = './tmp.json';

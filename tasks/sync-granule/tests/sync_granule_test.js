@@ -330,11 +330,9 @@ test.serial('download granule from S3 provider with checksum and data file in an
   await validateInput(t, t.context.event.input);
 
   await s3().createBucket({ Bucket: alternateDataBucket }).promise();
-  t.teardown(async () => {
-    await recursivelyDeleteS3Bucket(alternateDataBucket);
-  });
   await s3().createBucket({ Bucket: alternateBucket }).promise();
   t.teardown(async () => {
+    await recursivelyDeleteS3Bucket(alternateDataBucket);
     await recursivelyDeleteS3Bucket(alternateBucket);
   });
 
@@ -363,8 +361,7 @@ test.serial('download granule from S3 provider with checksum and data file in an
     output.granules[0].files[0].filename,
     `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
   );
-  t.is(
-    true,
+  t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
       Key: `${keypath}/${granuleFileName}`,
