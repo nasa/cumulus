@@ -3,7 +3,7 @@
 import isNil from 'lodash/isNil';
 import urljoin from 'url-join';
 
-import { MissingBucketMap, MissingRequiredEnvVarError, ValidationError } from '@cumulus/errors';
+import { InvalidArgument, MissingBucketMap, MissingRequiredEnvVarError } from '@cumulus/errors';
 import { getJsonS3Object } from '@cumulus/aws-client/S3';
 
 import { DistributionBucketMap } from './types';
@@ -15,7 +15,7 @@ export async function fetchDistributionBucketMap(
   systemBucket: string = (process.env.system_bucket || ''),
   stackName: string = (process.env.stackName || '')
 ): Promise<DistributionBucketMap> {
-  if (systemBucket === '' || stackName === '') {
+  if (!systemBucket || !stackName) {
     throw new MissingRequiredEnvVarError('Missing system_bucket and/or stackName env variable');
   }
   const distributionBucketMap = await getJsonS3Object(
@@ -28,11 +28,11 @@ export async function fetchDistributionBucketMap(
 export function constructDistributionUrl(
   fileBucket: string,
   fileKey: string,
-  distEndpoint: string,
-  distributionBucketMap: DistributionBucketMap
+  distributionBucketMap: DistributionBucketMap,
+  distEndpoint?: string
 ): string {
   if (isNil(distEndpoint)) {
-    throw new ValidationError(`Cannot construct distribution url: distEndpoint is ${distEndpoint}`);
+    throw new InvalidArgument(`Cannot construct distribution url: distEndpoint is ${distEndpoint}`);
   }
   const bucketPath = distributionBucketMap[fileBucket];
   if (isNil(bucketPath)) {

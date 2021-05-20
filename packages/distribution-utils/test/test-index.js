@@ -7,7 +7,7 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { MissingBucketMap, MissingRequiredEnvVarError, ValidationError } = require('@cumulus/errors');
+const { InvalidArgument, MissingBucketMap, MissingRequiredEnvVarError } = require('@cumulus/errors');
 
 const {
   constructDistributionUrl,
@@ -51,7 +51,7 @@ test('constructDistributionUrl returns distribution URL', (t) => {
     bucketMap,
   } = t.context;
   t.is(
-    constructDistributionUrl(fileBucket, fileKey, distEndpoint, bucketMap),
+    constructDistributionUrl(fileBucket, fileKey, bucketMap, distEndpoint),
     'https://cumulus-distribution.nasa.gov/prod1A2B/coll123/granABC'
   );
 });
@@ -63,7 +63,7 @@ test('constructDistributionUrl throws error if no bucketPath can be found', (t) 
     distEndpoint,
   } = t.context;
   t.throws(
-    () => constructDistributionUrl(fileBucket, fileKey, distEndpoint, {}),
+    () => constructDistributionUrl(fileBucket, fileKey, {}, distEndpoint),
     {
       instanceOf: MissingBucketMap,
     }
@@ -77,9 +77,9 @@ test('constructDistributionUrl throws error if distEndpoint is undefined', (t) =
     bucketMap,
   } = t.context;
   t.throws(
-    () => constructDistributionUrl(fileBucket, fileKey, undefined, bucketMap),
+    () => constructDistributionUrl(fileBucket, fileKey, bucketMap),
     {
-      instanceOf: ValidationError,
+      instanceOf: InvalidArgument,
     }
   );
 });

@@ -29,3 +29,11 @@ export class GetAuthTokenError extends Error {
     Error.captureStackTrace(this, ChecksumError);
   }
 }
+
+export class InvalidUrlTypeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidUrlTypeError';
+    Error.captureStackTrace(this, ChecksumError);
+  }
+}
