@@ -9,6 +9,7 @@ const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
@@ -288,7 +289,6 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 };
 
 describe('When there are granule differences and granule reconciliation is run', () => {
-  let asyncOperationId;
   let beforeAllFailed = false;
   let cmrClient;
   let cmrGranule;
@@ -405,6 +405,12 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
+    let inventoryReportAsyncOperationId;
+
+    afterAll(async () => {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: inventoryReportAsyncOperationId });
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
@@ -419,7 +425,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      inventoryReportAsyncOperationId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -427,7 +433,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: inventoryReportAsyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
@@ -554,6 +560,12 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
+    let internalReportAsyncOperationId;
+
+    afterAll(async () => {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: internalReportAsyncOperationId });
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Internal',
@@ -569,7 +581,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      internalReportAsyncOperationId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -577,7 +589,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: internalReportAsyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
@@ -638,6 +650,12 @@ describe('When there are granule differences and granule reconciliation is run',
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
+    let granuleInventoryAsyncOpId;
+
+    afterAll(async () => {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Granule Inventory',
@@ -654,7 +672,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      granuleInventoryAsyncOpId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -662,7 +680,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: granuleInventoryAsyncOpId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
