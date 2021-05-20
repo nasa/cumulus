@@ -17,19 +17,12 @@ interface MetaWithGranuleQueryFields extends Message.Meta {
   }
 }
 
-interface MessageWithOptionalGranules extends Message.CumulusMessage {
-  payload: {
-    granules?: object[]
-  }
-}
-
 interface MessageWithGranules extends Message.CumulusMessage {
   meta: MetaWithGranuleQueryFields,
   payload: {
     granules?: object[]
   }
 }
-
 
 /**
  * Get granules from payload?.granules of a workflow message.
@@ -53,7 +46,7 @@ export const getMessageGranules = (
  * @alias module:PDRs
  */
  export const messageHasGranules = (
-  message: MessageWithOptionalGranules
+  message: MessageWithGranules
 ): boolean => getMessageGranules(message).length !== 0;
 
 /**
