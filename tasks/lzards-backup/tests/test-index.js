@@ -147,9 +147,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult when fi
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -187,9 +190,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZAR
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -227,9 +233,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
   const granuleId = 'fakeGranuleId';
 
   let actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -271,9 +280,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     generateAccessUrlMethod,
@@ -440,16 +452,16 @@ test.serial('postRequestToLzards throws if provider is not set ', async (t) => {
   }));
 });
 
-test('generateAccessUrl generates an v4 accessURL', async (t) => {
-  const actual = await index.generateAccessUrl({
+test('generateDirectS3Url generates an v4 accessURL', async (t) => {
+  const actual = await index.generateDirectS3Url({
     Bucket: 'foo',
     Key: 'bar',
   });
   t.regex(actual, /X-Amz-Algorithm=AWS4-HMAC-SHA256/);
 });
 
-test('generateAccessUrl generates a signed URL using passed credentials', async (t) => {
-  const actual = await index.generateAccessUrl({
+test('generateDirectS3Url generates a signed URL using passed credentials', async (t) => {
+  const actual = await index.generateDirectS3Url({
     usePassedCredentials: true,
     roleCreds: {
       Credentials: {
@@ -515,6 +527,9 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           ],
         },
       ],
+    },
+    config: {
+      urlType: 's3',
     },
   };
 
@@ -613,6 +628,9 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
           ],
         },
       ],
+    },
+    config: {
+      urlType: 's3',
     },
   };
 
