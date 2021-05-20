@@ -2,6 +2,9 @@
   "name": "@cumulus/distribution-utils",
   "version": "9.0.1",
   "description": "Cumulus Distribution utilities",
+  "keywords": [
+    "CUMULUS"
+  ],
   "engines": {
     "node": ">=12.18.0"
   },
@@ -20,9 +23,9 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
-  "keywords": [
-    "CUMULUS"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/checksum/README.md",
   "repository": {
     "type": "git",
