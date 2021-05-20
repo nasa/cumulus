@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
-  reporting is now handled through Cloud Metrics
+    reporting is now handled through Cloud Metrics
 - **CUMULUS-2472**
   - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
   - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
