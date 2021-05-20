@@ -1,10 +1,12 @@
 'use strict';
 
 const get = require('lodash/get');
+const { log } = require('@cumulus/common');
+const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const log = require('@cumulus/common/log');
-const { Consumer } = require('@cumulus/ingest/consumer');
+const { archiveSqsMessageToS3 } = require('@cumulus/ingest/sqs');
+
 const rulesHelpers = require('../lib/rulesHelpers');
 const Rule = require('../models/rules');
 
@@ -61,23 +63,25 @@ async function processQueues(event, dispatchFn) {
       visibilityTimeout,
       deleteProcessedMessage: false,
     });
-    log.info(`processing queue ${queueUrl}`);
 
+    log.info(`Processing queue ${queueUrl}`);
     const messageConsumerFn = dispatchFn.bind({ rulesForQueue });
+
     return consumer.consume(messageConsumerFn);
   }));
 }
 
 /**
- * Process an SQS message
+ * Archive and process an SQS message
  *
  * @param {string} queueUrl - Queue URL for incoming message
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
  */
-function dispatch(queueUrl, message) {
+async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
+  await archiveSqsMessageToS3(queueUrl, message);
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
