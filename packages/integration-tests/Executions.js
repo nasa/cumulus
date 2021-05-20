@@ -131,7 +131,7 @@ const getExecutionWithStatus = async (params) =>
       throw new Error(`Execution ${params.arn} still running`);
     },
     {
-      retries: get(params, 'timeout', 30),
+      retries: get(params, 'timeout', 60),
       maxTimeout: 1000,
     }
   );

@@ -275,6 +275,14 @@ describe('POST /granules/bulk', () => {
         } catch (error) {
           throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
         }
+
+        await getGranuleWithStatus({
+          prefix,
+          granuleId: JSON.parse(getAsyncOperationBody.output)[0],
+          status: 'running',
+          timeout: 120,
+          updatedAt: ingestedGranule.updatedAt,
+        });
         expect(output).toEqual([granuleId]);
       }
     });
