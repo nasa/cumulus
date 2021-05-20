@@ -9,7 +9,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - **CUMULUS-2434**
-  - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
+    link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
@@ -20,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
@@ -28,13 +32,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
-  - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add both HTTPS URLS and S3 URIs to CMR metadata.
-  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
+  - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
+    both HTTPS URLS and S3 URIsto  CMR metadata.
+  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
+    URLs and S3 URIs to the OnlineAccessRLs  field of CMR metadata. The task
+    configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
     type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 
+### Added
+
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 
 ## [v9.0.1] 2021-05-07
 
