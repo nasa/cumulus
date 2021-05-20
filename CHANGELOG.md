@@ -7,12 +7,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-- **CUMULUS-2472**
-  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
-  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
+
+- **CUMULUS-2434**
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
+    link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
   reporting is now handled through Cloud Metrics
+- **CUMULUS-2472**
+  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
 - **CUMULUS-2354**
@@ -24,18 +30,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
-    both HTTPS URLS and S3 URIs to CMR metadata.
+    both HTTPS URLS and S3 URIsto  CMR metadata.
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
-    URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task
+    URLs and S3 URIs to the OnlineAccessRLs  field of CMR metadata. The task
     configuration parameter `cmrGranuleUrlType` now has default value `both`.
-  - With the updated `update-granules-cmr-metadata-file-links` task, only the
-    granule UMM-G metadata with version 1.6.2 or later will have the s3 link
-    with type 'GET DATA VIA DIRECT ACCESS' for its science file. CMR s3 link
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
     type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
+
+### Added
+
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 
 ## [v9.0.1] 2021-05-07
 
