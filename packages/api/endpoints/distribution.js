@@ -1,14 +1,20 @@
 'use strict';
 
+const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
+const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
-const { render } = require('nunjucks');
 const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
 const { URL } = require('url');
 const { checkLoginQueryErrors, getConfigurations, getProfile, useSecureCookies } = require('../lib/distribution');
+
+const templatesDirectory = (inTestMode)
+  ? pathresolve(__dirname, '../app/data/distribution/templates')
+  : pathresolve(__dirname, 'templates');
 
 /**
  * Return a signed URL to an S3 object
@@ -52,11 +58,13 @@ async function handleRootRequest(req, res) {
     }
   }
 
+  // req.apiGateway is not available for unit test
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
   const templateVars = {
     title: 'Welcome',
     profile: accessTokenRecord && accessTokenRecord.tokenInfo,
     logoutURL: urljoin(distributionUrl, 'logout'),
-    requestid: req.apiGateway.context.awsRequestId,
+    requestid,
   };
 
   if (!accessToken || !accessTokenRecord) {
@@ -64,7 +72,7 @@ async function handleRootRequest(req, res) {
     templateVars.URL = authorizeUrl;
   }
 
-  const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
+  const rendered = render(pathresolve(templatesDirectory, 'root.html'), templateVars);
   return res.send(rendered);
 }
 
@@ -83,14 +91,14 @@ async function handleLoginRequest(req, res) {
   } = await getConfigurations();
 
   const { code, state } = req.query;
-  const errorTemplate = pathresolve(__dirname, 'templates/error.html');
-  const requestid = req.apiGateway.context.awsRequestId;
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
   log.debug('the query params:', req.query);
   const templateVars = checkLoginQueryErrors(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);
-    return res.type('.html').status(templateVars.statusCode).send(rendered);
+    return res.status(templateVars.statusCode).send(rendered);
   }
 
   try {
@@ -120,7 +128,7 @@ async function handleLoginRequest(req, res) {
           secure: useSecureCookies(),
         }
       )
-      .status(307)
+      .status(301)
       .set({ Location: urljoin(distributionUrl, state || '') })
       .send('Redirecting');
   } catch (error) {
@@ -132,7 +140,7 @@ async function handleLoginRequest(req, res) {
       requestid,
     };
     const rendered = render(errorTemplate, vars);
-    return res.type('.html').status(401).send(rendered);
+    return res.status(401).send(rendered);
   }
 }
 
@@ -145,24 +153,23 @@ async function handleLoginRequest(req, res) {
  */
 async function handleLogoutRequest(req, res) {
   const {
+    accessTokenModel,
     oauthClient,
     distributionUrl,
   } = await getConfigurations();
   const accessToken = req.cookies.accessToken;
   const authorizeUrl = oauthClient.getAuthorizationUrl();
-  res.clearCookie('accessToken',
-    {
-      httpOnly: true,
-      secure: useSecureCookies(),
-    });
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+  await accessTokenModel.delete({ accessToken });
   const templateVars = {
     title: 'Logged Out',
     contentstring: accessToken ? 'You are logged out.' : 'No active login found.',
     URL: authorizeUrl,
     logoutURL: urljoin(distributionUrl, 'logout'),
-    requestid: req.apiGateway.context.awsRequestId,
+    requestid,
   };
-  const rendered = render(pathresolve(__dirname, 'templates/root.html'), templateVars);
+
+  const rendered = render(pathresolve(templatesDirectory, 'root.html'), templateVars);
   return res.send(rendered);
 }
 
@@ -174,7 +181,7 @@ async function handleLogoutRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const { s3Client } = getConfigurations();
+  const { s3Client } = await getConfigurations();
 
   let fileBucket;
   let fileKey;

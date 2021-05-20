@@ -66,7 +66,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   const {
     accessTokenModel,
     oauthClient,
-  } = getConfigurations();
+  } = await getConfigurations();
 
   const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
