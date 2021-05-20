@@ -112,7 +112,7 @@ class SftpProviderClient {
    * @param {Object} params             - parameter object
    * @param {string} params.remotePath  - the full path to the remote file to be fetched
    * @param {string} params.localPath   - the full local destination file path
-   * @returns {Promise.<string>}        - the path that the file was saved to
+   * @returns {Promise<string>}        - the path that the file was saved to
    */
   async download(params) {
     const { remotePath, localPath } = params;
