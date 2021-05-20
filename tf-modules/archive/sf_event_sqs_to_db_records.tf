@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 30
+  sf_event_sqs_lambda_timeout = 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -167,7 +167,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs12.x"
-  timeout          = local.sf_event_sqs_lambda_timeout
+  timeout          = local.sf_event_sqs_lambda_timeo60
   memory_size      = 256
 
   dead_letter_config {
@@ -211,7 +211,7 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs12.x"
-  timeout          = local.sf_event_sqs_lambda_timeout
+  timeout          = local.sf_event_sqs_lambda_timeo60
   memory_size      = 256
 
   environment {
