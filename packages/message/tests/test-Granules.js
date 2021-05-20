@@ -74,7 +74,7 @@ test('getGranuleQueryFields returns undefined', (t) => {
   );
 });
 
-test('messageHasGranules returns undefined if message does not have granules object', (t) => {
+test('messageHasGranules returns undefined if message does not have granules', (t) => {
   t.is(
     messageHasGranules({}),
     false
