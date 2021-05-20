@@ -211,7 +211,7 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs12.x"
-  timeout          = local.sf_event_sqs_lambda_timeo60
+  timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = 256
 
   environment {
