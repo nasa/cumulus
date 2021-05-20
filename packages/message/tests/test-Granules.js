@@ -81,7 +81,7 @@ test('messageHasGranules returns undefined if message does not have granules obj
   );
 });
 
-test('messageHasGranules returns granules object if message has granules object', (t) => {
+test('messageHasGranules returns granules object if message has granules', (t) => {
   const payloadObject = { payload: { granules: ['someGranuleObject'] } };
   t.is(
     messageHasGranules(payloadObject),
