@@ -110,14 +110,14 @@ test.after.always(async (t) => {
   t.context.launchpadStub.restore();
 });
 
-test('isCMRFile returns truthy if fileobject has valid xml filename', (t) => {
+test('isCMRFile returns truthy if fileobject has valid .cmr.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.xml',
   };
   t.truthy(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid xml filename', (t) => {
+test('isCMRFile returns falsy if fileobject does not have a valid xml filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.xml',
   };
@@ -497,7 +497,9 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        filename: 'test.cmr_iso.xml',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
