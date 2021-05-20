@@ -45,7 +45,7 @@ export const getMessageGranules = (
  *
  * @alias module:Granules
  */
- export const messageHasGranules = (
+export const messageHasGranules = (
   message: MessageWithGranules
 ): boolean => getMessageGranules(message).length !== 0;
 
