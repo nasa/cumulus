@@ -50,7 +50,7 @@ export const getMessageGranules = (
  * @param {MessageWithOptionalGranules} message - A workflow message object
  * @returns {boolean} true if message has a granules object
  *
- * @alias module:PDRs
+ * @alias module:Granules
  */
  export const messageHasGranules = (
   message: MessageWithOptionalGranules
