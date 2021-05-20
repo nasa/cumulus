@@ -31,6 +31,37 @@ test('getAsyncOperation calls the callback with the expected object and returns 
   t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
 });
 
+test('deleteAsyncOperation calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
+  const asyncOperationId = 'id-1234';
+
+  const expected = {
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/asyncOperations/${asyncOperationId}`,
+    },
+  };
+  const resultBody = {
+    foo: 'bar',
+  };
+
+  const callback = async (configObject) => {
+    t.deepEqual(configObject, expected);
+
+    return { body: JSON.stringify(resultBody) };
+  };
+
+  const result = await asyncOperations.deleteAsyncOperation({
+    prefix,
+    asyncOperationId,
+    callback,
+  });
+
+  t.deepEqual(JSON.parse(result.body), resultBody);
+});
+
 test('listAsyncOperations calls the callback with the expected object and returns the parsed response', async (t) => {
   const prefix = 'unitTestStack';
   const query = { fake: 'query' };
