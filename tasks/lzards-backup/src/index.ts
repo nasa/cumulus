@@ -44,7 +44,7 @@ export const generateDistributionUrl = async (params: {
     params.Bucket,
     params.Key,
     distributionBucketMap,
-    (params.distributionEndpoint || ''),
+    (params.distributionEndpoint || '')
   );
 };
 
