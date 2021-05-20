@@ -231,7 +231,6 @@ test('A /login request with a good authorization code stores the access token', 
   t.true(await accessTokenModel.exists({ accessToken: setAccessTokenCookie.value }));
 });
 
-
 test('A /logout request deletes the access token', async (t) => {
   const { accessTokenModel } = context;
   const accessTokenRecord = fakeAccessTokenFactory();

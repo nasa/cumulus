@@ -1,11 +1,10 @@
 const { sign: jwtSign, verify: jwtVerify } = require('jsonwebtoken');
 
-const createJwtToken = ({ accessToken, expirationTime, username, ...additional }) =>
+const createJwtToken = ({ accessToken, expirationTime, username }) =>
   jwtSign({
     exp: expirationTime,
     accessToken,
     username,
-    ...additional,
   }, process.env.TOKEN_SECRET, {
     algorithm: 'HS256',
     noTimestamp: true,
