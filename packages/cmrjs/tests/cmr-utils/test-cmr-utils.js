@@ -368,7 +368,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   }
 });
 
-test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.5 ', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
@@ -377,6 +377,88 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 
   const cmrJSON = await fs.readFile(
     path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const distEndpoint = 'https://distendpoint.com';
+
+  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
+
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
+
+  const expectedRelatedURLs = [
+    {
+      URL: 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Type: 'EXTENDED METADATA',
+    },
+    {
+      URL: `${distEndpoint}/s3credentials`,
+      Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+      Type: 'VIEW RELATED INFORMATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
+  ];
+
+  try {
+    const { metadataObject, etag } = await updateUMMGMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      bucketTypes,
+      distributionBucketMap,
+    });
+
+    t.is(etag, expectedEtag, "ETag doesn't match");
+    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
+  } finally {
+    revertMetaObject();
+    revertMockUpload();
+  }
+});
+
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.6.2 ', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  // Yes, ETag values always include enclosing double-quotes
+  const expectedEtag = '"abc"';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: expectedEtag }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
     'utf8'
   );
   const cmrMetadata = JSON.parse(cmrJSON);
