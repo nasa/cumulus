@@ -361,7 +361,7 @@ function generateFileUrl({
 }) {
   if (urlType === 'distribution') {
     const fileKey = getS3KeyOfFile(file);
-    return constructDistributionUrl(file.bucket, fileKey, distEndpoint, distributionBucketMap);
+    return constructDistributionUrl(file.bucket, fileKey, distributionBucketMap, distEndpoint);
   }
 
   if (urlType === 's3') {
