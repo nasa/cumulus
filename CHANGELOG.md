@@ -17,10 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
 ### Added
-- **CUMULUS-2354**
-  - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
-  - Configures the example deployment to enable this feature.
 
+- **CUMULUS-2354**
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute
+    same-region read-only tokens based on a user's CMR ACLs.
+  - Configures the example deployment to enable this feature.
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ### Changed
 
@@ -40,11 +43,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
-
-### Added
-
-- **CUMULUS-2497**
-  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ## [v9.0.1] 2021-05-07
 

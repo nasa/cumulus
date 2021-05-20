@@ -110,44 +110,44 @@ test.after.always(async (t) => {
   t.context.launchpadStub.restore();
 });
 
-test('isCMRFile returns truthy if fileobject has valid .cmr.xml filename', (t) => {
+test('isCMRFile returns true if fileobject has valid .cmr.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.xml',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not have a valid xml filename', (t) => {
+test('isCMRFile returns false if fileobject does not have a valid xml filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.xml',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns truthy if fileobject has a valid cmr_iso.xml filename', (t) => {
+test('isCMRFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr_iso.xml',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns truthy if fileobject has valid json filename', (t) => {
+test('isCMRFile returns true if fileobject has valid json filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.json',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid json filename', (t) => {
+test('isCMRFile returns false if fileobject does not valid json filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.json',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject is invalid', (t) => {
+test('isCMRFile returns false if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
@@ -338,7 +338,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
       AssociatedBrowseExpected.sort(sortByURL)
     );
-    t.truthy(uploadEchoSpy.calledWith('testXmlString',
+    t.true(uploadEchoSpy.calledWith('testXmlString',
       { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
   } finally {
     revertMetaObject();
@@ -432,7 +432,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.json', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -445,12 +444,13 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        filename: 'test.cmr.json',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
@@ -458,7 +458,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.xml', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -471,12 +470,13 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        filename: 'test.cmr.xml',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
@@ -484,7 +484,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR ISO xml file', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/ATL03_20190101000418_00540208_004_01.cmr_iso.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr_iso.xml', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -504,7 +503,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
