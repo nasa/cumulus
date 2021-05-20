@@ -31,7 +31,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/aws-client": "9.0.1",
     "@cumulus/errors": "9.0.1",
+    "lodash": "^4.17.20",
     "url-join": "^1.1.0"
   },
   "devDependencies": {
