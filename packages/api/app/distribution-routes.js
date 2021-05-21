@@ -118,7 +118,8 @@ router.get('/pubkey', pubkey);
 router.get('/redirect', handleRedirectRequest);
 router.get('/s3Credentials', s3Credentials);
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
-router.get('/version', version);
+// Use router.use to leverage custom version middleware
+router.use('/version', version);
 
 // HEAD /*
 // GET /* <- Actual presigned URL
