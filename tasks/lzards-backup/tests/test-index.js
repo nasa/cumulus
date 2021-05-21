@@ -494,7 +494,7 @@ test('generateDistributionUrl generates a URL with the distribution endpoint and
       Key,
       distributionEndpoint,
     }),
-    `${distributionEndpoint}/bar/test`
+    `${distributionEndpoint}/${fakeBucketMap[Bucket]}/${Key}`
   );
 });
 
