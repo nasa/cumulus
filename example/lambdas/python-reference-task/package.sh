@@ -19,6 +19,7 @@ cd "$DIR" || exit 1
 cp ./*.py ./dist/
 
 cd ./dist || exit 1
+rm -f lambda.zip
 
 find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip 
 
