@@ -65,7 +65,6 @@ function getFileDescription(file, urlType = 'distribution') {
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
-// eslint-disable-next-line max-len
 const isCMRFilename = (filename) => isECHO10File(filename)
   || isUMMGFile(filename)
   || isISOFile(filename);
