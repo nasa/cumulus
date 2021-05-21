@@ -75,6 +75,11 @@ describe('The Ingest Granule failure workflow', () => {
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
+      // Add bucket to files to prevent files write failure
+      inputPayload.granules[0].files.forEach((file) => {
+        file.bucket = 'non-existent-bucket';
+      });
+
       // add a non-existent file to input payload to cause lambda error
       const nonexistentFile = {
         path: 'non-existent-path',
