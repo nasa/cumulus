@@ -90,3 +90,31 @@ export const getExecutionStatus = async (params: {
     },
   });
 };
+
+/**
+ * DELETE /executions/{executionArn}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.executionArn - the async operation ARN
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const deleteExecution = async (params: {
+  prefix: string,
+  executionArn: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, executionArn, callback = invokeApi } = params;
+
+  return callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/executions/${executionArn}`,
+    },
+  });
+};

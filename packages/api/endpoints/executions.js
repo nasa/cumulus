@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { getKnexClient, ExecutionPgModel } = require('@cumulus/db');
 
 /**
  * List and search executions
@@ -45,7 +46,50 @@ async function get(req, res) {
   }
 }
 
+/**
+ * Delete an execution
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function deleteExecution(req, res) {
+  const {
+    executionModel = new models.Execution(),
+    executionPgModel = new ExecutionPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  const { arn } = req.params;
+
+  let existingExecution;
+  try {
+    existingExecution = await executionModel.get({ arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw error;
+  }
+
+  try {
+    await knex.transaction(async (trx) => {
+      await executionPgModel.delete(trx, { arn });
+      await executionModel.delete({ arn });
+    });
+    return res.send({ message: 'Record deleted' });
+  } catch (error) {
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (existingExecution) {
+      await executionModel.create(existingExecution);
+    }
+    throw error;
+  }
+}
+
 router.get('/:arn', get);
 router.get('/', list);
+router.delete('/:arn', deleteExecution);
 
 module.exports = router;
