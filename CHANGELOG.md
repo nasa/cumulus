@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
 
+- **CUMULUS-2479**
+  - Adds /version endpoint to distribution API
+
 ### Changed
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
