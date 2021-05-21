@@ -4,8 +4,9 @@ const cryptoRandomString = require('crypto-random-string');
 
 const test = require('ava');
 const sinon = require('sinon');
-
 const omit = require('lodash/omit');
+
+const { v4: uuidv4 } = require('uuid');
 const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 // eslint-disable-next-line node/no-unpublished-require
@@ -27,7 +28,11 @@ const {
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../../lambdas/db-migration');
 
-const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
+const {
+  getLambdaEnvironmentVariables,
+  createAsyncOperation,
+  startAsyncOperation,
+} = require('../dist/async_operations');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
@@ -83,7 +88,32 @@ test.before(async (t) => {
     }),
   });
 
+  t.context.createSpy = sinon.spy((record) => Promise.resolve(record));
+  t.context.deleteSpy = sinon.spy(() => true);
+  t.context.stubbedAsyncOperationsModel = class {
+    create = t.context.createSpy;
+
+    delete = t.context.deleteSpy;
+  };
+
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
+});
+
+test.beforeEach((t) => {
+  t.context.id = uuidv4();
+  t.context.createObject = {
+    id: t.context.id,
+    status: 'RUNNING',
+    taskArn: cryptoRandomString({ length: 5 }),
+    description: 'testing',
+    operationType: 'ES Index',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+});
+
+test.afterEach.always((t) => {
+  t.context.createSpy.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -208,10 +238,6 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
 });
 
 test('startAsyncOperation calls Dynamo model create method', async (t) => {
-  const createSpy = sinon.spy(() => true);
-  const stubbedAsyncOperationsModel = class {
-    create = createSpy;
-  };
   const stackName = randomString();
   const description = randomString();
   const taskArn = randomString();
@@ -231,9 +257,9 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
     dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  }, stubbedAsyncOperationsModel);
+  }, t.context.stubbedAsyncOperationsModel);
 
-  const spyCall = createSpy.getCall(0).args[0];
+  const spyCall = t.context.createSpy.getCall(0).args[0];
 
   const expected = {
     description,
@@ -242,7 +268,10 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
     taskArn,
   };
 
-  t.true(result);
+  t.like(result, {
+    ...expected,
+    id: spyCall.id,
+  });
   t.deepEqual(omit(spyCall, ['id', 'createdAt', 'updatedAt']), expected);
   t.truthy(spyCall.id);
 });
@@ -418,4 +447,98 @@ test.serial('ECS task params contain lambda environment variables when useLambda
 
   t.is(environmentOverrides.ES_HOST, 'es-host');
   t.is(environmentOverrides.AsyncOperationsTable, 'async-operations-table');
+});
+
+test.serial('createAsyncOperation() does not write to Elasticsearch/DynamoDB if writing to PostgreSQL fails', async (t) => {
+  const { id, createObject } = t.context;
+
+  const fakeAsyncOpPgModel = {
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const createParams = {
+    knex: t.context.testKnex,
+    asyncOperationPgModel: fakeAsyncOpPgModel,
+    createObject,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    { message: 'something bad' }
+  );
+
+  t.false(t.context.createSpy.called);
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
+});
+
+test.serial('createAsyncOperation() does not write to Elasticsearch/PostgreSQL if writing to DynamoDB fails', async (t) => {
+  const { id, createObject } = t.context;
+
+  const fakeCreate = () => {
+    throw new Error('something bad');
+  };
+  const fakeCreateSpy = sinon.spy(fakeCreate);
+  const deleteSpy = sinon.spy();
+  class fakeAsyncOperationsModel {
+    create(record) {
+      return fakeCreateSpy(record);
+    }
+
+    delete(record) {
+      deleteSpy(record);
+    }
+  }
+
+  const createParams = {
+    knex: t.context.testKnex,
+    createObject,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, fakeAsyncOperationsModel),
+    { message: 'something bad' }
+  );
+
+  t.true(fakeCreateSpy.threw());
+  // Not called because no record was ever created
+  t.false(deleteSpy.called);
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
+});
+
+test.serial('createAsyncOperation() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { id, createObject } = t.context;
+  const fakeEsClient = {
+    index: () => {
+      throw new Error('ES something bad');
+    },
+  };
+
+  const createParams = {
+    knex: t.context.testKnex,
+    createObject,
+    esClient: fakeEsClient,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    { message: 'ES something bad' }
+  );
+
+  t.true(t.context.createSpy.called);
+  t.true(t.context.deleteSpy.calledWith(createObject));
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
 });
