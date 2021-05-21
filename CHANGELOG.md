@@ -19,9 +19,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   reporting is now handled through Cloud Metrics
 
 ### Added
+
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Changed
 - **CUMULUS-2517**
