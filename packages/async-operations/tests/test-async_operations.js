@@ -304,7 +304,7 @@ test.serial('The startAsyncOperation writes records to all data stores', async (
   t.deepEqual(omit(asyncOpDynamoSpyRecord, ['createdAt', 'updatedAt']), omit(expected, ['createdAt', 'updatedAt']));
 });
 
-test.serial('The startAsyncOperation writes records to the databases with correct timestamps', async (t) => {
+test.serial('The startAsyncOperation writes records with correct timestamps', async (t) => {
   const createSpy = sinon.spy((createObject) => createObject);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -339,6 +339,10 @@ test.serial('The startAsyncOperation writes records to the databases with correc
   );
   t.is(asyncOperationPgRecord.created_at.getTime(), asyncOpDynamoSpyRecord.createdAt);
   t.is(asyncOperationPgRecord.updated_at.getTime(), asyncOpDynamoSpyRecord.updatedAt);
+
+  const esRecord = await t.context.esAsyncOperationsClient.get(id);
+  t.is(esRecord.createdAt, asyncOpDynamoSpyRecord.createdAt);
+  t.is(esRecord.updatedAt, asyncOpDynamoSpyRecord.updatedAt);
 });
 
 test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {
