@@ -23,6 +23,7 @@ const {
   getMessageGranules,
   getGranuleStatus,
   getGranuleQueryFields,
+  messageHasGranules,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -494,6 +495,10 @@ const writeGranules = async ({
   pdrCumulusId,
   granuleModel = new Granule(),
 }) => {
+  if (!messageHasGranules(cumulusMessage)) {
+    log.info('No granules to write, skipping writeGranules');
+    return undefined;
+  }
   if (!collectionCumulusId) {
     throw new Error('Collection reference is required for granules');
   }
