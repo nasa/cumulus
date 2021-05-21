@@ -96,7 +96,7 @@ export const getExecutionStatus = async (params: {
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
- * @param {Object} params.executionArn - the async operation ARN
+ * @param {Object} params.executionArn - the execution ARN
  * @param {Function} params.callback   - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
