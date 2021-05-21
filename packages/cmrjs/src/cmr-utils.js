@@ -60,7 +60,10 @@ function getFileDescription(file) {
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
+const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRFilename = (filename) => isECHO10File(filename)
+  || isUMMGFile(filename)
+  || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
@@ -943,6 +946,27 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile.length === 0) return {};
 
   const cmrFilename = cmrFile[0].filename;
+
+  if (isISOFile(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
+    const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
+
+    // Get beginning and ending date time from beginPosition and endPosition
+    const identificationInfo = metadataMI['gmd:identificationInfo'];
+    const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
+    const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
+    const beginningDateTime = temporalInfo['gml:beginPosition'];
+    const endingDateTime = temporalInfo['gml:endPosition'];
+
+    // Get production date time from LE_ProcessStep
+    const productionDateTime = metadataMI['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
+
+    // Get last update date time from CI_Citation with UpdateTime
+    const citation = identificationInfo.find((dataIdObject) => dataIdObject['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
+    const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
+
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
   if (isECHO10File(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
@@ -985,6 +1009,7 @@ module.exports = {
   isCMRFile,
   isCMRFilename,
   isECHO10File,
+  isISOFile,
   isUMMGFile,
   metadataObjectFromCMRFile,
   publish2CMR,
