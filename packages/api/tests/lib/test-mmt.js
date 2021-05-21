@@ -18,7 +18,7 @@ const log = mmt.__get__('log');
  *  Fakes a CMR return feed where each item in the list contains an
  *  collection_id labeled "id" that is made of the short_name and version
  * @param {Array<Object>} list - parsed list of collection results
- * @returns {Object} Fake CMR responses
+ * @returns {Promise<Object>} Fake CMR responses
  */
 const cmrReturnsWithIds = (list) => {
   const entry = list.map((l) => ({
@@ -32,7 +32,7 @@ const cmrReturnsWithIds = (list) => {
 /**
  * Fakes a CMR return feed where no items in the list have a collection_id.
  * @param {Array<Object>} list - parsed list of collection results
- * @returns {Object} Fake CMR responses
+ * @returns {Promise<Object>} Fake CMR responses
  */
 const cmrMissingCollection = (list) => {
   const entry = list.map(() => ({ }));
