@@ -176,8 +176,6 @@ describe('Ingesting from PDR', () => {
       deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn }),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      // executionModel.delete({ arn: workflowExecution.executionArn }),
-      // executionModel.delete({ arn: parsePdrExecutionArn }),
       apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename,
