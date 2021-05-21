@@ -18,6 +18,11 @@ const {
   AsyncOperationPgModel,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../../lambdas/db-migration');
@@ -45,6 +50,15 @@ test.before(async (t) => {
 
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    t.context.esIndex
+  );
 
   // Set up the mock ECS client
   ecsClient = ecs();
@@ -75,6 +89,7 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   sinon.restore();
   await recursivelyDeleteS3Bucket(systemBucket);
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -232,7 +247,7 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
   t.truthy(spyCall.id);
 });
 
-test.serial('The startAsyncOperation writes records to the databases', async (t) => {
+test.serial('The startAsyncOperation writes records to all data stores', async (t) => {
   const createSpy = sinon.spy((createObject) => createObject);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -276,6 +291,15 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   t.deepEqual(
     omit(asyncOperationPgRecord, omitList),
     translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
+  );
+  const esRecord = await t.context.esAsyncOperationsClient.get(id);
+  t.deepEqual(
+    await t.context.esAsyncOperationsClient.get(id),
+    {
+      ...asyncOpDynamoSpyRecord,
+      _id: esRecord._id,
+      timestamp: esRecord.timestamp,
+    }
   );
   t.deepEqual(omit(asyncOpDynamoSpyRecord, ['createdAt', 'updatedAt']), omit(expected, ['createdAt', 'updatedAt']));
 });
