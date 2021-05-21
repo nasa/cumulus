@@ -12,7 +12,7 @@ const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/er
 const { URL } = require('url');
 const { checkLoginQueryErrors, getConfigurations, getProfile, useSecureCookies } = require('../lib/distribution');
 
-const templatesDirectory = (inTestMode)
+const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
   : pathresolve(__dirname, 'templates');
 
@@ -29,7 +29,7 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
   const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
 
   const parsedSignedUrl = new URL(signedUrl);
-  parsedSignedUrl.searchParams.set('x-EarthdataLoginUsername', username);
+  parsedSignedUrl.searchParams.set('A-userid', username);
 
   return parsedSignedUrl.toString();
 }

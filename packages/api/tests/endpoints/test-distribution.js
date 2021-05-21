@@ -17,7 +17,8 @@ const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.OAUTH_CLIENT_ID = randomId('edlId');
 process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
-process.env.API_BASE_URL = 'http://example.com';
+process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
+process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
@@ -96,7 +97,7 @@ test.before(async () => {
     authorizationUrl,
     signedFileUrl,
     authorizationCode: randomId('code'),
-    distributionUrl: process.env.API_BASE_URL,
+    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
   };
 });
 
@@ -176,7 +177,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   const redirectLocation = new URL(response.headers.location);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), accessTokenRecord.username);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
 test('A /login request with a good authorization code returns a correct response', async (t) => {

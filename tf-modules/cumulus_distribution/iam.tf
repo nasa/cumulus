@@ -40,7 +40,8 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
   statement {
     actions = [
       "dynamodb:GetItem",
-      "dynamodb:PutItem"
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem"
     ]
     resources = [aws_dynamodb_table.access_tokens.arn]
   }

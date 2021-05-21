@@ -1,5 +1,4 @@
 const isEmpty = require('lodash/isEmpty');
-const urljoin = require('url-join');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -30,7 +29,7 @@ const buildOAuthClient = async () => {
     clientId: process.env.OAUTH_CLIENT_ID,
     clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
     earthdataLoginUrl: process.env.OAUTH_HOST_URL,
-    redirectUri: urljoin(process.env.API_BASE_URL, 'login'),
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   };
   if (process.env.OAUTH_PROVIDER === 'earthdata') {
     return new EarthdataLoginClient(oauthClientConnfig);
@@ -51,7 +50,7 @@ async function getConfigurations() {
   return {
     accessTokenModel: new AccessToken(),
     oauthClient,
-    distributionUrl: process.env.API_BASE_URL,
+    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: s3(),
   };
 }
