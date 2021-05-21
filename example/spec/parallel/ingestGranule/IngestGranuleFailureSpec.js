@@ -79,6 +79,7 @@ describe('The Ingest Granule failure workflow', () => {
       const nonexistentFile = {
         path: 'non-existent-path',
         name: 'non-existent-file',
+        bucket: 'non-existent-bucket',
       };
       inputPayload.granules[0].files.push(nonexistentFile);
 
