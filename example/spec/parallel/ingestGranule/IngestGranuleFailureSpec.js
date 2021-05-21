@@ -78,8 +78,8 @@ describe('The Ingest Granule failure workflow', () => {
       // add a non-existent file to input payload to cause lambda error
       inputPayload.granules[0].files = [
         {
-          path: 'non-existent-path',
           name: 'non-existent-file',
+          key: 'non-existent-path/non-existent-file',
           bucket: 'non-existent-bucket',
         },
       ];
