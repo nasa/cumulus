@@ -44,6 +44,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 
+### Fixed
+
+- **CUMULUS-2518**
+  - Update sf-event-sqs-to-db-records to not throw if a collection is not
+    defined on a payload that has no granules/an empty granule payload object
+
 ## [v9.0.1] 2021-05-07
 
 ### Migration Steps
