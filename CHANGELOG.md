@@ -19,9 +19,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   reporting is now handled through Cloud Metrics
 
 ### Added
+
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Changed
 - **CUMULUS-2517**
@@ -40,6 +45,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
+
+### Fixed
+
+- **CUMULUS-2518**
+  - Update sf-event-sqs-to-db-records to not throw if a collection is not
+    defined on a payload that has no granules/an empty granule payload object
 
 ## [v9.0.1] 2021-05-07
 
