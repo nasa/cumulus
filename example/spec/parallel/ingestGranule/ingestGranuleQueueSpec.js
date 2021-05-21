@@ -262,7 +262,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await waitForModelStatus(
       granuleModel,
       { granuleId: inputPayload.granules[0].granuleId },
-      'running'
+      'completed'
     );
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -272,7 +272,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
-    expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();
+    expect((granule.status === 'completed')).toBeTrue();
   });
 
   it('completes execution with success status', async () => {
@@ -481,6 +481,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('publishes the granule metadata to CMR', async () => {
+        if (beforeAllError) fail(beforeAllError);
         const result = await conceptExists(granule.cmrLink);
 
         expect(granule.published).toEqual(true);
@@ -488,6 +489,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('updates the CMR metadata online resources with the final metadata location', () => {
+        if (beforeAllError) fail(beforeAllError);
+
         console.log('parallel resourceURLs:', resourceURLs);
         console.log('s3CredsUrl:', s3CredsUrl);
 
@@ -499,6 +502,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('updates the CMR metadata "online resources" with the proper types and urls', () => {
+        if (beforeAllError) fail(beforeAllError);
         const resource = ummCmrResource;
         const expectedTypes = [
           'GET DATA',
@@ -519,6 +523,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('includes the Earthdata login ID for requests to protected science files', async () => {
+        if (beforeAllError) fail(beforeAllError);
         const filepath = `/${files[0].bucket}/${files[0].filepath}`;
         const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
         const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
@@ -526,6 +531,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('downloads the requested science file for authorized requests', async () => {
+        if (beforeAllError) fail(beforeAllError);
         const scienceFileUrls = resourceURLs
           .filter((url) =>
             (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||

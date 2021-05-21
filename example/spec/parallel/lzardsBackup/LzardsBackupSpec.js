@@ -131,6 +131,7 @@ describe('The Lzards Backup Task ', () => {
   });
 
   it('has the expected backup information', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
