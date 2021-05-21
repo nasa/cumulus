@@ -2,15 +2,25 @@
 
 const test = require('ava');
 const request = require('supertest');
+const { v4: uuidv4 } = require('uuid');
+const noop = require('lodash/noop');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const noop = require('lodash/noop');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  AsyncOperationPgModel,
+  translateApiAsyncOperationToPostgresAsyncOperation,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
   AccessToken,
@@ -34,7 +44,21 @@ let jwtAuthToken;
 let asyncOperationModel;
 let accessTokenModel;
 
-test.before(async () => {
+const testDbName = randomId('async_operations_test');
+
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.asyncOperationPgModel = new AsyncOperationPgModel();
+
   esIndex = randomString();
   esAlias = randomString();
   process.env.ES_INDEX = esAlias;
@@ -60,11 +84,16 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await asyncOperationModel.deleteTable().catch(noop);
   await accessTokenModel.deleteTable().catch(noop);
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
@@ -211,4 +240,37 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
       taskArn: asyncOperation.taskArn,
     }
   );
+});
+
+test('DELETE deletes the async operation from all data stores', async (t) => {
+  const asyncOperation = {
+    id: uuidv4(),
+    status: 'RUNNING',
+    taskArn: randomString(),
+    description: 'Some async run',
+    operationType: 'ES Index',
+    output: JSON.stringify({ foo: 'bar' }),
+  };
+  await asyncOperationModel.create(asyncOperation);
+  const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOperationPgRecord);
+
+  t.true(await asyncOperationModel.exists({ id: asyncOperation.id }));
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.testKnex, { id: asyncOperation.id })
+  );
+
+  const response = await request(app)
+    .delete(`/asyncOperations/${asyncOperation.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { message } = response.body;
+
+  t.is(message, 'Record deleted');
+  t.false(await asyncOperationModel.exists({ id: asyncOperation.id }));
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id: asyncOperation.id });
+  t.is(dbRecords.length, 0);
 });
