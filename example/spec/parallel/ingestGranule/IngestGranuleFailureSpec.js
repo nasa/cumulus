@@ -12,6 +12,8 @@ const {
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 
+const { deleteExecution } = require('@cumulus/api-client/executions');
+
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
@@ -103,9 +105,9 @@ describe('The Ingest Granule failure workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
+      deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn }),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,

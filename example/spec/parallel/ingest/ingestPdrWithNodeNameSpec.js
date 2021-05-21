@@ -446,7 +446,7 @@ describe('Ingesting from PDR', () => {
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         afterAll(async () => {
-          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
+          await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
         });
 
         it('displays a link to the parent', async () => {

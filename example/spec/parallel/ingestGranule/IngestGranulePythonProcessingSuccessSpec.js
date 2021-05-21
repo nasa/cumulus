@@ -6,7 +6,6 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 
 const {
-  Execution,
   Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
@@ -20,6 +19,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteProvider, createProvider,
 } = require('@cumulus/api-client/providers');
@@ -56,7 +56,6 @@ describe('The TestPythonProcessing workflow', () => {
   let beforeAllError;
   let collection;
   let config;
-  let executionModel;
   let expectedS3TagSet;
   let granuleResult;
   let inputPayload;
@@ -78,7 +77,6 @@ describe('The TestPythonProcessing workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
@@ -131,13 +129,13 @@ describe('The TestPythonProcessing workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
+      deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
-      executionModel.delete({ arn: workflowExecutionArn }),
       removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,

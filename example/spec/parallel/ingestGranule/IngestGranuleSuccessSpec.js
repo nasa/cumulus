@@ -49,6 +49,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
 const providersApi = require('@cumulus/api-client/providers');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -256,6 +257,7 @@ describe('The S3 Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
+      deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
@@ -265,7 +267,6 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         provider: { id: provider.id },
       }),
-      executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
@@ -677,7 +678,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     afterAll(async () => {
       await Promise.all([
-        executionModel.delete({ arn: failedExecutionArn }),
+        deleteExecution({ prefix: config.stackName, executionArn: failedExecutionArn }),
         deleteS3Object(config.bucket, executionCompletedKey),
         deleteS3Object(config.bucket, executionFailedKey),
       ]);

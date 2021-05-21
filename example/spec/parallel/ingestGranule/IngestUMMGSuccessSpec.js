@@ -10,7 +10,6 @@ const {
 } = require('url');
 const mime = require('mime-types');
 
-const Execution = require('@cumulus/api/models/executions');
 const {
   getS3Object,
   s3ObjectExists,
@@ -27,6 +26,7 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const providersApi = require('@cumulus/api-client/providers');
 const {
@@ -110,7 +110,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let expectedPayload;
   let postToCmrOutput;
   let granule;
-  let executionModel;
   let config;
   let testDataFolder;
   let collection;
@@ -129,7 +128,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
     process.env.system_bucket = config.bucket;
 
     const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
@@ -207,6 +205,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
+      deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
@@ -216,7 +215,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         prefix: config.stackName,
         provider: { id: provider.id },
       }),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,

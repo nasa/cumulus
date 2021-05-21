@@ -31,6 +31,7 @@ const {
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -223,13 +224,13 @@ describe('The S3 Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
+      deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
       providerModel.delete(provider),
-      executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
