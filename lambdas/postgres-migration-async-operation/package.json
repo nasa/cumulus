@@ -11,7 +11,7 @@
   "types": "./dist/lambda/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
+    "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
