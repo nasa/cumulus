@@ -188,6 +188,7 @@ const handler = async (event) => {
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
+      log.fatal(`Writing message failed with error: ${error.name} ---- ${error.message}`);
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
