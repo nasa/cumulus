@@ -33,11 +33,19 @@ const fakeCollection = {
   ],
 };
 
+const fakeBucketMap = {
+  foo: 'bar',
+};
+
 const getCollectionStub = sandbox.stub().returns(fakeCollection);
 const gotPostStub = sandbox.stub().returns(fakePostReturn);
+const fetchBucketMapStub = sandbox.stub().returns(fakeBucketMap);
 const index = proxyquire('../dist/src', {
   '@cumulus/api-client/collections': {
     getCollection: getCollectionStub,
+  },
+  '@cumulus/distribution-utils': {
+    fetchDistributionBucketMap: fetchBucketMapStub,
   },
   got: {
     default: {
@@ -476,6 +484,20 @@ test('generateDirectS3Url generates a signed URL using passed credentials', asyn
   t.regex(actual, /X-Amz-Credential=FAKEId/);
 });
 
+test('generateDistributionUrl generates a URL with the distribution endpoint and obeying the bucket map', async (t) => {
+  const Bucket = 'foo';
+  const Key = 'test';
+  const distributionEndpoint = 'https://nasa.gov/distro';
+  t.is(
+    await index.generateDistributionUrl({
+      Bucket,
+      Key,
+      distributionEndpoint,
+    }),
+    `${distributionEndpoint}/bar/test`
+  );
+});
+
 test.serial('generateAccessUrl switches correctly based on urlType', async (t) => {
   const params = {
     Bucket: 'irrelevant',
@@ -494,7 +516,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
   params.urlConfig.urlType = 'distribution';
   sandbox.stub(index, 'generateDistributionUrl');
   await index.generateAccessUrl(params);
-  t.true(index.generateDirectS3Url.calledOnce);
+  t.true(index.generateDistributionUrl.calledOnce);
 });
 
 test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
