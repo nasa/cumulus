@@ -10,7 +10,8 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const Logger = require('@cumulus/logger');
-const { getBucketsConfigKey, fetchDistributionBucketMap } = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
