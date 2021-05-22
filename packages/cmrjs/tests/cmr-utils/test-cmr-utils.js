@@ -110,65 +110,44 @@ test.after.always(async (t) => {
   t.context.launchpadStub.restore();
 });
 
-test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.xml',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid xml name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.xml',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid json name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.json',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid json name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.json',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid xml filenamename', (t) => {
+test('isCMRFile returns true if fileobject has valid .cmr.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.xml',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid xml filenamename', (t) => {
+test('isCMRFile returns false if fileobject does not have a valid xml filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.xml',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns truthy if fileobject has valid json filenamename', (t) => {
+test('isCMRFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.cmr_iso.xml',
+  };
+  t.true(isCMRFile(fileObj));
+});
+
+test('isCMRFile returns true if fileobject has valid json filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.json',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid json filenamename', (t) => {
+test('isCMRFile returns false if fileobject does not valid json filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.json',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject is invalid', (t) => {
+test('isCMRFile returns false if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
@@ -359,7 +338,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
       AssociatedBrowseExpected.sort(sortByURL)
     );
-    t.truthy(uploadEchoSpy.calledWith('testXmlString',
+    t.true(uploadEchoSpy.calledWith('testXmlString',
       { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
   } finally {
     revertMetaObject();
@@ -368,7 +347,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   }
 });
 
-test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.5 ', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
@@ -377,6 +356,88 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 
   const cmrJSON = await fs.readFile(
     path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const distEndpoint = 'https://distendpoint.com';
+
+  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
+
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
+
+  const expectedRelatedURLs = [
+    {
+      URL: 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Type: 'EXTENDED METADATA',
+    },
+    {
+      URL: `${distEndpoint}/s3credentials`,
+      Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+      Type: 'VIEW RELATED INFORMATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
+  ];
+
+  try {
+    const { metadataObject, etag } = await updateUMMGMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      bucketTypes,
+      distributionBucketMap,
+    });
+
+    t.is(etag, expectedEtag, "ETag doesn't match");
+    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
+  } finally {
+    revertMetaObject();
+    revertMockUpload();
+  }
+});
+
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.6.2 ', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  // Yes, ETag values always include enclosing double-quotes
+  const expectedEtag = '"abc"';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: expectedEtag }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
     'utf8'
   );
   const cmrMetadata = JSON.parse(cmrJSON);
@@ -453,7 +514,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.json', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -466,12 +526,13 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        filename: 'test.cmr.json',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
@@ -479,7 +540,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.xml', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -492,12 +552,39 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        filename: 'test.cmr.xml',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
+    revertMetaObject();
+  }
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR ISO xml file', async (t) => {
+  const cmrXml = await fs.readFile('./tests/fixtures/ATL03_20190101000418_00540208_004_01.cmr_iso.xml', 'utf8');
+  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2019-01-01T00:04:18.809303Z',
+    endingDateTime: '2019-01-01T00:11:20.899913Z',
+    productionDateTime: '2021-02-05T04:23:58.000000Z',
+    lastUpdateDateTime: '2021-05-07T09:10:59.891292Z',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        filename: 'test.cmr_iso.xml',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
     revertMetaObject();
   }
 });

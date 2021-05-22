@@ -23,6 +23,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       const payload = {
         reportBucket,
         reportPath,
+        dbConcurrency: 1,
       };
 
       const response = await postMigrationCounts({

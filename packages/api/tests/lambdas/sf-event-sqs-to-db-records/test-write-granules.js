@@ -307,6 +307,44 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
+test.serial('writeGranules() returns undefined if message has no granules', async (t) => {
+  const {
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+  } = t.context;
+  const cumulusMessage = {};
+  const actual = await writeGranules({
+    cumulusMessage,
+    collectionCumulusId: undefined,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+  t.is(actual, undefined);
+});
+
+test.serial('writeGranules() returns undefined if message has empty granule set', async (t) => {
+  const {
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+  } = t.context;
+  const cumulusMessage = { granules: [] };
+  const actual = await writeGranules({
+    cumulusMessage,
+    collectionCumulusId: undefined,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+  t.is(actual, undefined);
+});
+
 test.serial('writeGranules() throws an error if collection is not provided', async (t) => {
   const {
     cumulusMessage,

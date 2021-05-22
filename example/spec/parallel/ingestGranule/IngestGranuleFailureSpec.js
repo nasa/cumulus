@@ -76,11 +76,13 @@ describe('The Ingest Granule failure workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
       // add a non-existent file to input payload to cause lambda error
-      const nonexistentFile = {
-        path: 'non-existent-path',
-        name: 'non-existent-file',
-      };
-      inputPayload.granules[0].files.push(nonexistentFile);
+      inputPayload.granules[0].files = [
+        {
+          name: 'non-existent-file',
+          key: 'non-existent-path/non-existent-file',
+          bucket: 'non-existent-bucket',
+        },
+      ];
 
       // delete the granule record from DynamoDB if exists
       await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
