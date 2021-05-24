@@ -55,11 +55,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2519**
+  - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
 - **CUMULUS-2518**
   - Update sf-event-sqs-to-db-records to not throw if a collection is not
     defined on a payload that has no granules/an empty granule payload object
 
-## [v9.0.1] 2021-05-07
+## [v9.0.1] 2021-05-07
 
 ### Migration Steps
 
