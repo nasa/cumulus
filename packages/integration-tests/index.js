@@ -27,7 +27,6 @@ const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
@@ -656,18 +655,31 @@ async function buildWorkflow(
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
   if (collection) {
-    template.meta.collection = await collectionsApi.getCollection({
+    const collectionsApiResponse = await collectionsApi.getCollection({
       prefix: stackName,
       collectionName: collection.name,
       collectionVersion: collection.version,
     });
+    if (collectionsApiResponse.statusCode) {
+      throw new Error(`Collections API responded with error on buildWorkflow ${JSON.stringify(collectionsApiResponse)}`);
+    }
+    template.meta.collection = collectionsApiResponse;
   } else {
     template.meta.collection = {};
   }
 
   if (provider) {
-    const providersModel = new ProvidersModel();
-    template.meta.provider = await providersModel.get({ id: provider.id });
+    const providersApiResponse = await providersApi.getProvider(
+      {
+        prefix: stackName,
+        providerId: provider.id,
+      }
+    );
+    if (providersApiResponse.statusCode !== 200) {
+      throw new Error(`Providers API responded with error on buildWorkflow ${JSON.stringify(providersApiResponse)}`);
+    }
+    template.meta.provider = JSON.parse(providersApiResponse.body);
+    template.meta.provider.password = provider.password;
   } else {
     template.meta.provider = {};
   }
