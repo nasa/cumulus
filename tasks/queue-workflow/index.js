@@ -44,6 +44,6 @@ exports.queueWorkflow = queueWorkflow;
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(queueWorkflow, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(queueWorkflow, event, context);
 }
 exports.handler = handler;

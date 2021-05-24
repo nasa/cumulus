@@ -20,7 +20,7 @@ export const getReconciliationReport = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, name, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -50,7 +50,7 @@ export const deleteReconciliationReport = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, name, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -79,7 +79,7 @@ export async function createReconciliationReport(params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> {
   const { prefix, request, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',

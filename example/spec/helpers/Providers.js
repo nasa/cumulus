@@ -38,7 +38,7 @@ const fetchFakeProviderIp = async () => {
   return ip;
 };
 
-const getProviderHost = async () => process.env.PROVIDER_HOST || fetchFakeProviderIp();
+const getProviderHost = async () => process.env.PROVIDER_HOST || await fetchFakeProviderIp();
 
 const buildFtpProvider = async (postfix = '') => {
   const provider = {
@@ -88,7 +88,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
   return provider;
 };
 
-const throwIfApiReturnFail = async (apiResult) => {
+const throwIfApiReturnFail = (apiResult) => {
   if (apiResult.statusCode === 500) {
     throw new Error(`API returned a 500 status: ${apiResult}, failing.`);
   }
@@ -104,7 +104,7 @@ const createProvider = async (stackName, provider) => {
 
 const waitForProviderRecordInOrNotInList = async (
   stackName, id, recordIsIncluded = true, additionalQueryParams = {}
-) => pWaitFor(
+) => await pWaitFor(
   async () => {
     const resp = await providersApi.getProviders({
       prefix: stackName,

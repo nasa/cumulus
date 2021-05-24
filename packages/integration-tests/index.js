@@ -78,7 +78,7 @@ async function waitForAsyncOperationStatus({
   },
 }) {
   let operation;
-  return pRetry(
+  return await pRetry(
     async () => {
       const response = await asyncOperationsApi.getAsyncOperation({
         prefix: stackName,
@@ -220,7 +220,7 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
     name: workflowMsg.cumulus_meta.execution_name,
   };
 
-  return sfn().startExecution(workflowParams).promise();
+  return await sfn().startExecution(workflowParams).promise();
 }
 
 /**
@@ -315,7 +315,7 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
  * @returns {Object} a collection
  */
 const loadCollection = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((collection) => buildCollection({ ...params, collection }));
 
 /**
@@ -424,7 +424,7 @@ const buildProvider = (params = {}) => {
  * @returns {Object} a provider
  */
 const loadProvider = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((provider) => buildProvider({ ...params, provider }));
 
 /**
@@ -528,7 +528,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   // Rules should be added in serial because, in the case of SNS and Kinesis rule types,
   // they may share an event source mapping and running them in parallel will cause a
   // race condition
-  return pMap(
+  return await pMap(
     rules,
     (rule) => {
       if (postfix) {
@@ -573,7 +573,7 @@ function addRules(config, dataDirectory, overrides) {
  */
 async function _deleteOneRule(name) {
   const rulesModel = new RulesModel();
-  return rulesModel.get({ name }).then((item) => rulesModel.delete(item));
+  return await rulesModel.get({ name }).then((item) => rulesModel.delete(item));
 }
 
 /**

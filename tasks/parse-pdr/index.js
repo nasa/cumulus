@@ -292,7 +292,7 @@ const parsePdr = async ({ config, input }) => {
  *                             See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);
 }
 
 module.exports = { handler, parsePdr };
