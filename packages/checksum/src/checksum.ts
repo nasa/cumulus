@@ -4,7 +4,7 @@ import { Readable, TransformOptions } from 'stream';
 
 // Calculate the cksum of a readable stream
 async function getCksumFromStream(stream: Readable): Promise<number> {
-  return new Promise((resolve, reject) =>
+  return await new Promise((resolve, reject) =>
     stream
       .pipe(cksum.stream((value: Buffer) => resolve(value.readUInt32BE(0))))
       .on('error', reject));
@@ -16,7 +16,7 @@ async function getChecksumFromStream(
   stream: Readable,
   options: TransformOptions = {}
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const hash = crypto.createHash(algorithm, options);
     stream.on('error', reject);
     stream.on('data', (chunk) => hash.update(chunk));
@@ -35,14 +35,14 @@ async function getChecksumFromStream(
  *
  * @alias module:checksum.generateChecksumFromStream
  */
-export function generateChecksumFromStream(
+export async function generateChecksumFromStream(
   algorithm: string,
   stream: Readable,
   options?: TransformOptions
 ): Promise<number | string> {
   if (algorithm.toLowerCase() === 'cksum') {
-    return getCksumFromStream(stream);
+    return await getCksumFromStream(stream);
   }
 
-  return getChecksumFromStream(algorithm, stream, options);
+  return await getChecksumFromStream(algorithm, stream, options);
 }

@@ -77,7 +77,7 @@ export const generateDirectS3Url = async (params: {
     coreS3().config.update({ signatureVersion: 'v4' });
     s3 = coreS3();
   }
-  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
+  return await s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
 };
 
 export const generateAccessUrl = async (params: {
@@ -141,7 +141,7 @@ export const postRequestToLzards = async (params: {
 
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
-  return got.post(lzardsApiUrl,
+  return await got.post(lzardsApiUrl,
     {
       json: {
         provider,
@@ -240,7 +240,7 @@ export const getGranuleCollection = async (params: {
   if (!collectionName && !collectionVersion) {
     throw new CollectionNotDefinedError('Collection Name and Version not defined');
   }
-  return getCollection({
+  return await getCollection({
     prefix,
     collectionName,
     collectionVersion,
@@ -269,7 +269,7 @@ export const backupGranule = async (params: {
     );
 
     log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
-    return Promise.all(backupFiles.map((file) => makeBackupFileRequest({
+    return await Promise.all(backupFiles.map((file) => makeBackupFileRequest({
       backupConfig,
       file,
       collectionId,
@@ -346,4 +346,4 @@ export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
 ): Promise<CumulusMessageWithAssignedPayload
-| CumulusRemoteMessage> => runCumulusTask(backupGranulesToLzards, event, context);
+| CumulusRemoteMessage> => await runCumulusTask(backupGranulesToLzards, event, context);

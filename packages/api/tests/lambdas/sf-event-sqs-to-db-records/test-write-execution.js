@@ -102,7 +102,7 @@ test('shouldWriteExecutionToPostgres() returns false if collection from message 
   );
 });
 
-test('shouldWriteExecutionToPostgres() returns false if async operation from message is not found in Postgres', async (t) => {
+test('shouldWriteExecutionToPostgres() returns false if async operation from message is not found in Postgres', (t) => {
   const {
     asyncOperationId,
   } = t.context;
@@ -115,7 +115,7 @@ test('shouldWriteExecutionToPostgres() returns false if async operation from mes
   );
 });
 
-test('shouldWriteExecutionToPostgres() returns false if parent execution from message is not found in Postgres', async (t) => {
+test('shouldWriteExecutionToPostgres() returns false if parent execution from message is not found in Postgres', (t) => {
   const {
     parentExecutionArn,
   } = t.context;

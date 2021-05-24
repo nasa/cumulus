@@ -56,7 +56,7 @@ function templateFile({ inputTemplateFilename, config }) {
  * @param {Array<StringReplacement>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
+async function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
   if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
@@ -65,7 +65,7 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
     });
   } else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
-  return s3().putObject({
+  return await s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
     Body: data,
@@ -83,8 +83,8 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
  * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
-  return Promise.all(data.map((file) => updateAndUploadTestFileToBucket(file, bucket, prefix, replacements)));
+async function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
+  return await Promise.all(data.map((file) => updateAndUploadTestFileToBucket(file, bucket, prefix, replacements)));
 }
 
 /**
@@ -95,8 +95,8 @@ function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
  * @param {string} prefix - S3 folder prefix
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function uploadTestDataToBucket(bucket, data, prefix) {
-  return updateAndUploadTestDataToBucket(bucket, data, prefix);
+async function uploadTestDataToBucket(bucket, data, prefix) {
+  return await updateAndUploadTestDataToBucket(bucket, data, prefix);
 }
 
 /**
@@ -167,8 +167,8 @@ async function getFileMetadata(file) {
  * @param {Array<Object>} files - array of file objects
  * @returns {Promise<Array>} - file detail responses
  */
-function getFilesMetadata(files) {
-  return Promise.all(files.map(getFileMetadata));
+async function getFilesMetadata(files) {
+  return await Promise.all(files.map(getFileMetadata));
 }
 
 function isValidAsyncOperationId(asyncOperationId) {

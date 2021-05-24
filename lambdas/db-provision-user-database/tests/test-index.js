@@ -25,7 +25,7 @@ test.before(async (t) => {
   };
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   const randomDbString = randomString(10);
   const dbUser = `${randomDbString}-${randomDbString}-test`;
   const expectedDbUser = `${randomDbString}_${randomDbString}_test`;

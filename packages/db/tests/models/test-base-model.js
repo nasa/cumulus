@@ -256,7 +256,7 @@ test('BasePgModel.search() works with knex transaction', async (t) => {
   ]);
 
   const searchResponse = await knex.transaction(async (trx) =>
-    basePgModel.search(trx, recordBody));
+    await basePgModel.search(trx, recordBody));
 
   t.is(searchResponse.length, 3);
 
@@ -329,7 +329,7 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
 
   // Use existing transation rather than knex client
   await knex.transaction(async (trx) =>
-    basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
+    await basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
 
   const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(

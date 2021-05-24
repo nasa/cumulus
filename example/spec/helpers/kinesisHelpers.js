@@ -71,7 +71,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
 
   await delay(initialDelaySecs * 1000);
 
-  return pRetry(
+  return await pRetry(
     async () => {
       stream = await kinesis.describeStream({ StreamName: streamName }).promise();
       streamStatus = stream.StreamDescription.StreamStatus;
@@ -97,7 +97,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
  */
 async function deleteTestStream(streamName) {
   const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return kinesis.deleteStream({ StreamName: streamName }).promise();
+  return await kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
 /**
@@ -108,10 +108,10 @@ async function deleteTestStream(streamName) {
  */
 async function createKinesisStream(streamName) {
   const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return pRetry(
+  return await pRetry(
     async () => {
       try {
-        return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+        return await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
       } catch (error) {
         if (error.code === 'LimitExceededException') throw error;
         throw new pRetry.AbortError(error);
@@ -209,7 +209,7 @@ async function getRecords(shardIterator, records = []) {
  */
 async function putRecordOnStream(streamName, record) {
   const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return kinesis.putRecord({
+  return await kinesis.putRecord({
     Data: JSON.stringify(record),
     PartitionKey: '1',
     StreamName: streamName,
@@ -227,7 +227,7 @@ async function putRecordOnStream(streamName, record) {
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
 async function waitForAllTestSfForRecord(recordIdentifier, workflowArn, maxWaitTimeSecs, numExecutions) {
-  return waitForAllTestSf(
+  return await waitForAllTestSf(
     { identifier: recordIdentifier },
     workflowArn,
     maxWaitTimeSecs,
@@ -316,7 +316,7 @@ async function scanQueueForMessage(queueUrl, recordIdentifier) {
  * @returns {Object} - matched Message from SQS.
  */
 async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) {
-  return pRetry(
+  return await pRetry(
     async () => {
       try {
         return await scanQueueForMessage(queueUrl, recordIdentifier);

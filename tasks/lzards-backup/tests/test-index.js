@@ -61,7 +61,7 @@ test.beforeEach(() => {
   process.env = { ...env };
 });
 
-test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', async (t) => {
+test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -93,7 +93,7 @@ test('shouldBackupFile throws if multiple files match the collection regexp on t
   t.throws(() => index.shouldBackupFile('foo.jpg', fakeCollectionConfig), { instanceOf: CollectionInvalidRegexpError });
 });
 
-test('shouldBackupFile returns false if the regex matches and the backup option is set to false on the matching collection file', async (t) => {
+test('shouldBackupFile returns false if the regex matches and the backup option is set to false on the matching collection file', (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -105,7 +105,7 @@ test('shouldBackupFile returns false if the regex matches and the backup option 
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('shouldBackupFile returns false if the regex matches and the backup option is not set to false on the matching collection file', async (t) => {
+test('shouldBackupFile returns false if the regex matches and the backup option is not set to false on the matching collection file', (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -116,7 +116,7 @@ test('shouldBackupFile returns false if the regex matches and the backup option 
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('shouldBackupFile returns false if the regex does not match any file', async (t) => {
+test('shouldBackupFile returns false if the regex does not match any file', (t) => {
   const fakeCollectionConfig = {
     files: [
       {
@@ -128,16 +128,16 @@ test('shouldBackupFile returns false if the regex does not match any file', asyn
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('shouldBackupFile returns false if there is no collection file defined', async (t) => {
+test('shouldBackupFile returns false if there is no collection file defined', (t) => {
   const fakeCollectionConfig = {};
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
-  const lzardsPostMethod = (async () => ({
+  const lzardsPostMethod = () => Promise.resolve({
     body: 'success body',
     statusCode: 201,
-  }));
+  });
   const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
@@ -177,10 +177,10 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult when fi
 });
 
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
-  const lzardsPostMethod = (async () => ({
+  const lzardsPostMethod = () => Promise.resolve({
     body: 'failure body',
     statusCode: 404,
-  }));
+  });
   const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
@@ -221,9 +221,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZAR
 });
 
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult on other failure', async (t) => {
-  const lzardsPostMethod = (async () => {
-    throw new Error('DANGER WILL ROBINSON');
-  });
+  const lzardsPostMethod = () => Promise.reject(new Error('DANGER WILL ROBINSON'));
   const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';
   const filepath = 'fakeFilePath';
@@ -266,10 +264,10 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
 test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
   const accessUrl = 'fakeURL';
   const generateAccessUrlMethod = (() => accessUrl);
-  const lzardsPostMethod = (async () => ({
+  const lzardsPostMethod = () => Promise.resolve({
     body: 'fake body',
     statusCode: 201,
-  }));
+  });
 
   const roleCreds = { fake: 'creds_object' };
   const name = 'fakeFilename';

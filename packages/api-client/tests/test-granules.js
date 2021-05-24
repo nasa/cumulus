@@ -3,7 +3,7 @@
 const test = require('ava');
 const granulesApi = require('../granules');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
 });
@@ -54,11 +54,11 @@ test('getGranule calls the callback with the expected object when there is query
 });
 
 test('waitForGranules calls getGranules with the expected payload', async (t) => {
-  const callback = async ({ prefix, payload }) => {
+  const callback = ({ prefix, payload }) => {
     t.true(payload.path.endsWith(t.context.granuleId));
     t.is(prefix, t.context.testPrefix);
 
-    return { statusCode: 200 };
+    return Promise.resolve({ statusCode: 200 });
   };
 
   await granulesApi.waitForGranule({
@@ -70,7 +70,7 @@ test('waitForGranules calls getGranules with the expected payload', async (t) =>
 
 test('waitForGranules fails on 500 statusCode', async (t) => {
   await t.throwsAsync(granulesApi.waitForGranule({
-    callback: async () => ({ statusCode: 500 }),
+    callback: () => Promise.resolve({ statusCode: 500 }),
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
   }));
@@ -303,7 +303,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   let removeFromCmrCalled = false;
   let deleteGranuleCalled = false;
 
-  const callback = async ({ payload }) => {
+  const callback = ({ payload }) => {
     if (
       payload.httpMethod === 'PUT'
       && payload.path === `/granules/${t.context.granuleId}`

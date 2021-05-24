@@ -59,7 +59,7 @@ class Mutex {
         ':expire': now,
       },
     };
-    return this.docClient.put(params).promise();
+    return await this.docClient.put(params).promise();
   }
 
   /**
