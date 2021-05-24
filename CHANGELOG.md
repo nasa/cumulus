@@ -20,18 +20,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
+
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
-  - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute
+    same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Changed
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
-    both HTTPS URLS and S3 URIsto  CMR metadata.
+    both HTTPS URLS and S3 URIs to CMR metadata.
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
-    URLs and S3 URIs to the OnlineAccessRLs  field of CMR metadata. The task
+    URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task
     configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
@@ -40,10 +49,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
 
-### Added
-
-- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 
 ### Fixed
 
