@@ -745,6 +745,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest(event);
+  return await processRequest(event);
 }
 exports.handler = handler;

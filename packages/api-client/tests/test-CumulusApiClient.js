@@ -12,7 +12,7 @@ const apiClient = proxyquire(
   }
 );
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testPayload = { payload: 'payloadValue' };
   // eslint-disable-next-line quotes
@@ -29,9 +29,9 @@ test.serial('invokeApi invokes the lambda with the expected Payload and Function
     invoke: (payloadObject) => {
       const passedPayload = payloadObject;
       return {
-        promise: async () => {
+        promise: () => {
           t.deepEqual(Payload, passedPayload);
-          return { Payload: JSON.stringify(t.context.testLambdaReturn) };
+          return Promise.resolve({ Payload: JSON.stringify(t.context.testLambdaReturn) });
         },
       };
     },
@@ -53,7 +53,9 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
     invoke: () => {
       lambdaInvocations += 1;
       return {
-        promise: async () => ({ Payload: JSON.stringify({ errorMessage: 'Task timed out' }) }),
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({ errorMessage: 'Task timed out' }),
+        }),
       };
     },
   });

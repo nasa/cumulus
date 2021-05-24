@@ -140,11 +140,11 @@ test('getParentExecutionCumulusId returns correct parent execution cumulus_id', 
   const { parentExecutionArn } = t.context;
 
   const fakeExecutionPgModel = {
-    getRecordCumulusId: async (_, record) => {
+    getRecordCumulusId: (_, record) => {
       if (record.arn === parentExecutionArn) {
-        return 9;
+        return Promise.resolve(9);
       }
-      return undefined;
+      return Promise.resolve();
     },
   };
 
@@ -199,11 +199,11 @@ test('getMessageProviderCumulusId returns cumulus_id of provider in message', as
   const { cumulusMessage, provider } = t.context;
 
   const fakeProviderPgModel = {
-    getRecordCumulusId: async (_, record) => {
+    getRecordCumulusId: (_, record) => {
       if (record.name === provider.id) {
-        return 234;
+        return Promise.resolve(234);
       }
-      return undefined;
+      return Promise.resolve();
     },
   };
 

@@ -127,7 +127,7 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return knex.transaction(async (trx) => {
+  return await knex.transaction(async (trx) => {
     // eslint-disable-next-line camelcase
     const [cumulus_id] = await writePdrViaTransaction({
       cumulusMessage,
