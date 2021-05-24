@@ -99,6 +99,7 @@ const createProvider = async (stackName, provider) => {
   const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
   throwIfApiReturnFail(deleteProviderResult);
   throwIfApiReturnFail(createProviderResult);
+  return createProviderResult;
 };
 
 const waitForProviderRecordInOrNotInList = async (
