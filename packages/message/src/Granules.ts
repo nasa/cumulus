@@ -17,12 +17,6 @@ interface MetaWithGranuleQueryFields extends Message.Meta {
   }
 }
 
-interface MessageWithOptionalGranules extends Message.CumulusMessage {
-  payload: {
-    granules?: object[]
-  }
-}
-
 interface MessageWithGranules extends Message.CumulusMessage {
   meta: MetaWithGranuleQueryFields,
   payload: {
