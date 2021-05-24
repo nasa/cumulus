@@ -123,7 +123,7 @@ class Execution extends Manager {
       }
       return Promise.resolve();
     }));
-    return Promise.all(updatePromises);
+    return await Promise.all(updatePromises);
   }
 
   /**
@@ -131,7 +131,9 @@ class Execution extends Manager {
    */
   async deleteExecutions() {
     const executions = await this.scan();
-    return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
+    return await Promise.all(executions.Items.map(
+      (execution) => super.delete({ arn: execution.arn })
+    ));
   }
 
   /**

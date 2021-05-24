@@ -4,7 +4,7 @@ const {
   nullifyUndefinedProviderValues,
 } = require('../dist/provider');
 
-test('nullifyUndefinedProviderValues sets undefined provider values to "null"', async (t) => {
+test('nullifyUndefinedProviderValues sets undefined provider values to "null"', (t) => {
   const cumulusProviderObject = {
     name: 'fakeName',
     protocol: 'fakeProtocol',

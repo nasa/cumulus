@@ -94,9 +94,9 @@ test.serial('GET /token with an invalid code results in an authorization failure
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(async (authorizationCode) => {
+  ).callsFake((authorizationCode) => {
     t.is(authorizationCode, 'invalid-authorization-code');
-    throw new EarthdataLoginError('BadRequest', 'Failed to get authorization token');
+    return Promise.reject(new EarthdataLoginError('BadRequest', 'Failed to get authorization token'));
   });
 
   const response = await request(app)
@@ -257,9 +257,7 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'refreshAccessToken'
-  ).callsFake(async () => {
-    throw new Error('Refresh token request failed');
-  });
+  ).callsFake(() => Promise.reject(new Error('Refresh token request failed')));
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -294,7 +292,7 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'refreshAccessToken'
-  ).callsFake(async () => refreshedTokenRecord);
+  ).callsFake(() => Promise.resolve(refreshedTokenRecord));
 
   const response = await request(app)
     .post('/refresh')

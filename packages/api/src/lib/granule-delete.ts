@@ -23,7 +23,7 @@ const Granule = require('../../models/granules');
 const _deleteS3Files = async (
   files: (ApiFile | PostgresFileRecord)[] = []
 ) =>
-  pMap(
+  await pMap(
     files,
     async (file) => {
       await deleteS3Object(

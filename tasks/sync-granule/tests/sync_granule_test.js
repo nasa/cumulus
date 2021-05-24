@@ -80,7 +80,7 @@ async function getFilesMetadata(files) {
       LastModified: s3object[0].LastModified,
     };
   });
-  return Promise.all(getFileRequests);
+  return await Promise.all(getFileRequests);
 }
 
 // Setup buckets and the test event
