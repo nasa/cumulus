@@ -47,7 +47,7 @@ const getGranule = async (params) => {
  * @alias module:Granules
  */
 const getGranuleWithStatus = async (params = {}) =>
-  pRetry(
+  await pRetry(
     async () => {
       let granule;
       const updatedAt = params.updatedAt || 0;

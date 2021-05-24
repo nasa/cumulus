@@ -19,7 +19,7 @@ export const getAsyncOperation = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, asyncOperationId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -50,7 +50,7 @@ export const listAsyncOperations = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',

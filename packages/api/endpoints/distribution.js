@@ -107,7 +107,7 @@ async function handleRedirectRequest(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function handleFileRequest(req, res) {
+function handleFileRequest(req, res) {
   const { s3Client } = getConfigurations();
 
   let fileBucket;

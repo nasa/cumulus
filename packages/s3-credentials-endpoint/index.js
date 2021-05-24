@@ -76,7 +76,7 @@ async function requestTemporaryCredentialsFromNgap({
     policy,
   });
 
-  return lambda.invoke({
+  return await lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
@@ -316,7 +316,7 @@ async function handleRedirectRequest(req, res) {
  */
 async function handleCredentialRequest(req, res) {
   req.lambda = awsServices.lambda();
-  return s3credentials(req, res);
+  return await s3credentials(req, res);
 }
 
 /**
@@ -475,7 +475,7 @@ distributionApp.use((err, req, res, _next) => {
 });
 
 const handler = async (event, context) =>
-  awsServerlessExpress.proxy(
+  await awsServerlessExpress.proxy(
     awsServerlessExpress.createServer(distributionApp),
     event,
     context,

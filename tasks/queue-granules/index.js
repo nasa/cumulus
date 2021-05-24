@@ -62,6 +62,6 @@ exports.queueGranules = queueGranules;
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(queueGranules, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(queueGranules, event, context);
 }
 exports.handler = handler;
