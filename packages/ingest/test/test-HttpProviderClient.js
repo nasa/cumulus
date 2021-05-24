@@ -302,7 +302,7 @@ test.serial('list fails if client wait time is set less than the response delay'
     .reply(200, '');
 
   await t.throwsAsync(
-    async () => httpProviderClient.list('test_url'),
+    async () => await httpProviderClient.list('test_url'),
     {
       message: 'Connection timed out',
       instanceOf: errors.RemoteResourceError,

@@ -43,10 +43,10 @@ async function updateEachCmrFileAccessURLs(
   bucketTypes,
   distributionBucketMap
 ) {
-  return Promise.all(cmrFiles.map((cmrFile) => {
+  return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
-    return updateCMRMetadata({
+    return await updateCMRMetadata({
       granuleId,
       cmrFile: granule.files.find(isCMRFile),
       files: granule.files,
@@ -120,7 +120,10 @@ async function updateGranulesCmrMetadataFileLinks(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(updateGranulesCmrMetadataFileLinks, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(
+    updateGranulesCmrMetadataFileLinks,
+    event, context
+  );
 }
 
 exports.handler = handler;

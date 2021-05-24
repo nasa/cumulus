@@ -163,7 +163,7 @@ test('files existing at location returns both files if both exist', async (t) =>
       Key: filename,
       Body: 'test',
     };
-    return awsServices.s3().putObject(params).promise();
+    return await awsServices.s3().putObject(params).promise();
   });
 
   await Promise.all(dataSetupPromises);
@@ -720,7 +720,7 @@ test.serial(
       provider: 'someProvider',
       queueUrl,
     };
-    const fileExists = async () => true;
+    const fileExists = () => Promise.resolve(true);
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
     const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
 
@@ -738,7 +738,7 @@ test.serial(
   }
 );
 
-test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { granuleModel } = t.context;
 
   const updatedItem = {
@@ -753,7 +753,7 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
   ]);
 });
 
-test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for completed status', (t) => {
   const { granuleModel } = t.context;
 
   const item = {

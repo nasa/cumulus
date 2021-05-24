@@ -65,7 +65,7 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   );
   const key = getS3KeyForArchivedMessage(process.env.stackName, message.MessageId);
 
-  await Promise.all(messages.map(async (m) => archiveSqsMessageToS3(queueUrl, m)));
+  await Promise.all(messages.map((m) => archiveSqsMessageToS3(queueUrl, m)));
 
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,

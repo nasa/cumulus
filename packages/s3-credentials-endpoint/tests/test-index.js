@@ -194,7 +194,7 @@ test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with 
       );
 
       return {
-        promise: async () => undefined,
+        promise: () => Promise.resolve(),
       };
     },
   };
@@ -220,8 +220,8 @@ test('handleTokenAuthRequest() saves the client name in the request, if provided
       'EDL-Client-Name': 'my-client-name',
     },
     earthdataLoginClient: {
-      async getTokenUsername() {
-        return 'my-username';
+      getTokenUsername() {
+        return Promise.resolve('my-username');
       },
     },
   };
@@ -242,8 +242,8 @@ test('handleTokenAuthRequest() with an invalid client name results in a "Bad Req
       'EDL-Client-Name': 'not valid',
     },
     earthdataLoginClient: {
-      async getTokenUsername() {
-        return 'my-username';
+      getTokenUsername() {
+        return Promise.resolve('my-username');
       },
     },
   };
@@ -275,7 +275,7 @@ test('s3credentials() with just a username sends the correct request to the Lamb
       t.is(parsedPayload.rolesession, 'my-user-name');
 
       return {
-        promise: async () => ({
+        promise: () => Promise.resolve({
           Payload: JSON.stringify({}),
         }),
       };
@@ -311,7 +311,7 @@ test('s3credentials() with a username and a client name sends the correct reques
       t.is(parsedPayload.rolesession, 'my-user-name@my-client-name');
 
       return {
-        promise: async () => ({
+        promise: () => Promise.resolve({
           Payload: JSON.stringify({}),
         }),
       };

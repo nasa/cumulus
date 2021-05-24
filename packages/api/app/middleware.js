@@ -16,7 +16,7 @@ const defaultErrorHandler = (error, req, res, next) => {
 };
 
 // eslint-disable-next-line no-unused-vars
-const asyncOperationEndpointErrorHandler = async (err, req, res, next) => {
+const asyncOperationEndpointErrorHandler = (err, req, res, next) => {
   const message = 'Failed to start async operation:';
   logger.error(message, err);
   if (err instanceof EcsStartTaskError) {

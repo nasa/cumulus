@@ -80,7 +80,7 @@ test.serial('closeErrorFileWriteStream closes write stream', async (t) => {
   const errorFileWriteStream = fs.createWriteStream(filepath);
   const jsonWriteStream = JSONStream.stringify();
   await t.notThrowsAsync(closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream }));
-  t.teardown(async () => {
+  t.teardown(() => {
     fs.unlinkSync(filepath);
   });
 });
