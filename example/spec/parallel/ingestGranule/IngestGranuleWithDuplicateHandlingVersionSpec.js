@@ -14,6 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -25,9 +26,11 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The IngestGranule workflow with DuplicateHandling="version" and a granule re-ingested with one new file, one unchanged existing file, and one modified file', () => {
   let beforeAllFailed = false;
   let collection;
+  let config;
   let differentChecksumFilename;
   let differentChecksumKey;
   let firstIngestGranuleRule;
+  let firstIngestGranuleExecutionArn;
   let granuleId;
   let newFileFilename;
   let newFileKey;
@@ -36,12 +39,13 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
   let sameChecksumFilename;
   let sameChecksumKey;
   let secondIngestGranuleExecution;
+  let secondIngestGranuleExecutionArn;
   let secondIngestGranuleRule;
   let sourceBucket;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
@@ -112,7 +116,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       );
 
       // Find the execution ARN
-      const firstIngestGranuleExecutionArn = await findExecutionArn(
+      firstIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -183,7 +187,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       );
 
       // Find the execution ARN
-      const secondIngestGranuleExecutionArn = await findExecutionArn(
+      secondIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -237,6 +241,9 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       ],
       { stopOnError: false }
     ).catch(console.error);
+
+    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
 
     await pAll(
       [

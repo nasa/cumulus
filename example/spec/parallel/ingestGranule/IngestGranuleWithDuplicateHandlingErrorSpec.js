@@ -14,6 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -25,19 +26,22 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandling = "error" and a granule re-ingested', () => {
   let beforeAllFailed = false;
   let collection;
+  let config;
   let firstIngestGranuleRule;
+  let firstIngestGranuleExecutionArn;
   let granuleId;
   let prefix;
   let provider;
   let sameChecksumFilename;
   let sameChecksumKey;
   let secondIngestGranuleExecution;
+  let secondIngestGranuleExecutionArn;
   let secondIngestGranuleRule;
   let sourceBucket;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
@@ -99,7 +103,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       // Find the execution ARN
       console.log('firstIngestGranuleRule.payload.testExecutionId', firstIngestGranuleRule.payload.testExecutionId);
-      const firstIngestGranuleExecutionArn = await findExecutionArn(
+      firstIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -147,7 +151,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       // Find the execution ARN
       console.log('secondIngestGranuleRule.payload.testExecutionId', secondIngestGranuleRule.payload.testExecutionId);
-      const secondIngestGranuleExecutionArn = await findExecutionArn(
+      secondIngestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -203,6 +207,9 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       ],
       { stopOnError: false }
     ).catch(console.error);
+
+    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
 
     await pAll(
       [
