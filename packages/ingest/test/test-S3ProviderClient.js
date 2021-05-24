@@ -29,7 +29,7 @@ test.before(async (t) => {
   });
 });
 
-test.after.always(async (t) => Promise.all([
+test.after.always(async (t) => await Promise.all([
   S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
   S3.recursivelyDeleteS3Bucket(t.context.targetBucket),
 ]));

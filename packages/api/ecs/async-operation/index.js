@@ -154,7 +154,7 @@ const writeAsyncOperationToPostgres = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
   const asyncOperationPgModel = new AsyncOperationPgModel();
-  return asyncOperationPgModel
+  return await asyncOperationPgModel
     .update(
       trx,
       { id },
@@ -168,7 +168,7 @@ const writeAsyncOperationToPostgres = async (params) => {
 
 const writeAsyncOperationToDynamoDb = async (params) => {
   const { env, status, dbOutput, updatedTime } = params;
-  return dynamodb().updateItem({
+  return await dynamodb().updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
     ExpressionAttributeNames: {

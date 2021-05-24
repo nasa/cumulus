@@ -26,7 +26,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTransaction: Knex | Knex.Transaction,
     params: PostgresGranuleUniqueColumns | { cumulus_id: number }
   ): Promise<number> {
-    return knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .where(params)
       .del();
   }
@@ -68,9 +68,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       }
 
       upsertQuery.returning('cumulus_id');
-      return upsertQuery;
+      return await upsertQuery;
     }
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
