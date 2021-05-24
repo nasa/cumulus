@@ -12,6 +12,7 @@ const {
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -29,6 +30,7 @@ describe('The FTP Ingest Granules workflow', () => {
   let provider;
   let testSuffix;
   let workflowExecution;
+  let ingestGranuleExecutionArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -60,10 +62,14 @@ describe('The FTP Ingest Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    ingestGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, provider: provider.id }),

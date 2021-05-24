@@ -10,6 +10,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const rulesApi = require('@cumulus/api-client/rules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -26,6 +27,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   let scheduledRuleName;
   let scheduledHelloWorldRule;
   let testSuffix;
+  let executionArn;
+
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   beforeAll(async () => {
@@ -65,6 +68,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
+    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -80,6 +84,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         findExecutionFnParams: { ruleName: scheduledRuleName },
         startTask: 'HelloWorld',
       });
+
+      executionArn = execution.executionArn;
 
       console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
     });
@@ -124,6 +130,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
   let scheduledRuleName;
   let scheduledHelloWorldRule;
   let testSuffix;
+  let executionArn;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -169,6 +176,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       startTask: 'HelloWorld',
     });
 
+    executionArn = execution.executionArn;
     executionName = execution.executionArn.split(':').reverse()[0];
   });
 
@@ -179,6 +187,8 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
+    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -236,6 +246,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   describe('Upon rule creation', () => {
     let execution;
+    let executionArn;
+    let executionArn2;
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
@@ -248,7 +260,14 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         findExecutionFnParams: { rule: createdCheck },
         startTask: 'HelloWorld',
       });
-      console.log(`Execution ARN: ${execution.executionArn}`);
+
+      executionArn = execution.executionArn;
+      console.log(`Execution ARN: ${executionArn}`);
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+      await deleteExecution({ prefix: config.stackName, executionArn: executionArn2 });
     });
 
     it('the rule can be updated', async () => {
@@ -280,6 +299,9 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         findExecutionFnParams: { rule: updatedCheck },
         startTask: 'HelloWorld',
       });
+
+      executionArn2 = updatedExecution.executionArn;
+
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
@@ -315,6 +337,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
   let execution;
   let executionName;
   let executionNamePrefix;
+  let executionArn;
   let helloWorldRule;
 
   beforeAll(async () => {
@@ -354,12 +377,13 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
       findExecutionFnParams: { rule: createdCheck },
       startTask: 'HelloWorld',
     });
-
-    executionName = execution.executionArn.split(':').reverse()[0];
+    executionArn = execution.executionArn;
+    executionName = executionArn.split(':').reverse()[0];
   });
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
+    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
     await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name,

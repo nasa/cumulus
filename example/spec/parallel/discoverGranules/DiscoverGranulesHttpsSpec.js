@@ -1,5 +1,6 @@
 const { Execution } = require('@cumulus/api/models');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
@@ -29,6 +30,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   let queueGranulesOutput;
   let testId;
   let testSuffix;
+  let httpsWorkflowExecutionArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -57,16 +59,20 @@ describe('The Discover Granules workflow with https Protocol', () => {
       { provider_path: 'granules/fake_granules' }
     );
 
+    httpsWorkflowExecutionArn = httpsWorkflowExecution.executionArn;
+
     lambdaStep = new LambdaStep();
 
     queueGranulesOutput = await lambdaStep.getStepOutput(
-      httpsWorkflowExecution.executionArn,
+      httpsWorkflowExecutionArn,
       'QueueGranules'
     );
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: httpsWorkflowExecutionArn });
+
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
@@ -142,6 +148,10 @@ describe('The Discover Granules workflow with https Protocol', () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
     });
 
     it('executes successfully', () => {

@@ -7,6 +7,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { models: { Granule, Pdr } } = require('@cumulus/api');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
   addProviders,
@@ -58,6 +59,12 @@ describe('When the Sync Granule workflow is configured', () => {
   let pdrModel;
   let testSuffix;
   let testDataFolder;
+  let syncGranuleExecutionArn;
+  let syncGranuleExecutionArn1;
+  let syncGranuleExecutionArn2;
+  let syncGranuleExecutionArn3;
+  let syncGranuleExecutionArn4;
+  let syncGranuleExecutionArn5;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -124,10 +131,14 @@ describe('When the Sync Granule workflow is configured', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -169,9 +180,13 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        syncGranuleExecutionArn1 = workflowExecution.executionArn;
       });
 
-      afterAll(() => {
+      afterAll(async () => {
+        await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn1 });
+
         // delete reporting expectations
         delete expectedPayload.granules[0].files[0].duplicate_found;
         delete expectedPayload.granules[0].files[1].duplicate_found;
@@ -225,6 +240,12 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        syncGranuleExecutionArn2 = workflowExecution.executionArn;
+      });
+
+      afterAll(async () => {
+        await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn2 });
       });
 
       it('does not raise a workflow error', () => {
@@ -281,6 +302,12 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        syncGranuleExecutionArn3 = workflowExecution.executionArn;
+      });
+
+      afterAll(async () => {
+        await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn3 });
       });
 
       it('does not raise a workflow error', () => {
@@ -327,6 +354,12 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        syncGranuleExecutionArn4 = workflowExecution.executionArn;
+      });
+
+      afterAll(async () => {
+        await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn4 });
       });
 
       it('configured collection to handle duplicates as error', async () => {
@@ -359,6 +392,11 @@ describe('When the Sync Granule workflow is configured', () => {
           provider,
           inputPayload
         );
+        syncGranuleExecutionArn5 = workflowExecution.executionArn;
+      });
+
+      afterAll(async () => {
+        await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn5 });
       });
 
       it('configured collection to handle duplicates as error', async () => {

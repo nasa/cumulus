@@ -25,6 +25,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -73,6 +74,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   let addedCollection;
   let executionNamePrefix;
   let queuePdrsOutput;
+  let ingestPdrExecutionArn;
+  let ingestGranuleExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -134,6 +137,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         }
       );
 
+      ingestPdrExecutionArn = workflowExecution.executionArn;
+
       queuePdrsOutput = await lambdaStep.getStepOutput(
         workflowExecution.executionArn,
         'QueuePdrs'
@@ -146,6 +151,9 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -178,8 +186,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('results in an IngestGranule workflow execution', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const executionArn = queuePdrsOutput.payload.running[0];
-      await expectAsync(waitForStartedExecution(executionArn)).toBeResolved();
+      ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
+      await expectAsync(waitForStartedExecution(ingestGranuleExecutionArn)).toBeResolved();
     }
   });
 });

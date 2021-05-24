@@ -3,6 +3,7 @@
 const { Execution } = require('@cumulus/api/models');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   api: apiTestUtils,
   addCollections,
@@ -35,6 +36,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let testSuffix;
   let collection;
   let provider;
+  let discoverGranulesExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -70,6 +72,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
         { provider_path: 'granules/fake_granules' }
       );
 
+      discoverGranulesExecutionArn = httpWorkflowExecution.executionArn;
+
       lambdaStep = new LambdaStep();
 
       queueGranulesOutput = await lambdaStep.getStepOutput(
@@ -84,6 +88,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn });
+
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
@@ -204,6 +210,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda with partial files config', () => {
+    let discoverGranulesExecutionArn2;
+
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
@@ -220,6 +228,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
         undefined,
         { provider_path: 'granules/fake_granules' }
       );
+
+      discoverGranulesExecutionArn2 = httpWorkflowExecution;
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn2 });
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -248,6 +262,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda ignoring files config', () => {
+    let discoverGranulesExecutionArn3;
+
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
@@ -267,6 +283,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
         undefined,
         { provider_path: 'granules/fake_granules' }
       );
+
+      discoverGranulesExecutionArn3 = httpWorkflowExecution.executionArn;
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn3 });
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {

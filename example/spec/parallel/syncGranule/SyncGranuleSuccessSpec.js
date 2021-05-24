@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -55,6 +56,7 @@ describe('The Sync Granules workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let syncGranuleExecutionArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -141,10 +143,14 @@ describe('The Sync Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -254,6 +260,7 @@ describe('The Sync Granules workflow', () => {
     let oldUpdatedAt;
     let reingestResponse;
     let granule;
+    let reingestGranuleExecutionArn;
 
     beforeAll(async () => {
       const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -269,6 +276,11 @@ describe('The Sync Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId,
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
+    });
+
+    afterAll(async () => {
+      // clean up stack state added by test
+      await deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn });
     });
 
     it('executes successfully', () => {
@@ -290,12 +302,14 @@ describe('The Sync Granules workflow', () => {
         startTask: 'SyncGranule',
       });
 
-      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+      reingestGranuleExecutionArn = reingestGranuleExecution.executionArn;
 
-      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+      console.log(`Wait for completed execution ${reingestGranuleExecutionArn}`);
+
+      await waitForCompletedExecution(reingestGranuleExecutionArn);
 
       const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
-        reingestGranuleExecution.executionArn,
+        reingestGranuleExecutionArn,
         'SyncGranule'
       );
 
@@ -334,13 +348,22 @@ describe('The Sync Granules workflow', () => {
   describe('when a bad checksum is provided', () => {
     let lambdaOutput = null;
     let failingExecution = null;
+    let failingExecutionArn = null;
 
     beforeAll(async () => {
       inputPayload.granules[0].files[0].checksum = 'badCheckSum01';
       failingExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+
+      failingExecutionArn = failingExecution.executionArn;
+
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
+    });
+
+    afterAll(async () => {
+      // clean up stack state added by test
+      await deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn });
     });
 
     it('completes execution with failure status', () => {

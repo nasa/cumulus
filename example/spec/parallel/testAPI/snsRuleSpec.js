@@ -12,6 +12,7 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -146,6 +147,7 @@ describe('The SNS-type rule', () => {
 
   describe('when an SNS message is published', () => {
     let execution;
+    let executionArn;
 
     beforeAll(async () => {
       await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
@@ -157,6 +159,13 @@ describe('The SNS-type rule', () => {
         findExecutionFnParams: { rule: ruleName },
         startTask: 'HelloWorld',
       });
+
+      executionArn = execution.executionArn;
+    });
+
+    afterAll(async () => {
+      // clean up stack state added by test
+      await deleteExecution({ prefix: config.stackName, executionArn });
     });
 
     it('triggers the workflow', () => {
