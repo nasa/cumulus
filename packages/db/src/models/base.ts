@@ -31,7 +31,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
         }
       });
     }).count();
-    return query;
+    return await query;
   }
 
   /**
@@ -125,11 +125,11 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    * @param {ItemType} item - A record to insert into the DB
    * @returns {Promise<number[]>} List of IDs of the inserted records
    */
-  create(
+  async create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: ItemType
   ): Promise<number[]> {
-    return knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .insert(item)
       .returning('cumulus_id');
   }
@@ -145,7 +145,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<number> {
-    return knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .where(params)
       .del();
   }
@@ -165,7 +165,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     updateParams: Partial<RecordType>,
     returning: Array<string> = []
   ) {
-    return knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .where(whereClause)
       .update(updateParams, returning);
   }

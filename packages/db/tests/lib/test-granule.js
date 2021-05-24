@@ -176,9 +176,7 @@ test('upsertGranuleWithExecutionJoinRecord() does not write anything if upsertin
   });
 
   const fakeGranulesExecutionsPgModel = {
-    upsert: async () => {
-      throw new Error('error');
-    },
+    upsert: () => Promise.reject(new Error('error')),
   };
 
   await t.throwsAsync(

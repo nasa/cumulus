@@ -977,8 +977,10 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
   ]);
 
   t.teardown(async () => {
-    granulesModel.delete({ granuleId: testGranule.granuleId });
-    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    await Promise.all([
+      granulesModel.delete({ granuleId: testGranule.granuleId }),
+      granulesModel.delete({ granuleId: testGranule2.granuleId }),
+    ]);
   });
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');
@@ -1020,8 +1022,10 @@ test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 obj
   await migrateGranuleRecord(testGranule, knex);
 
   t.teardown(async () => {
-    granulesModel.delete({ granuleId: testGranule.granuleId });
-    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    await Promise.all([
+      granulesModel.delete({ granuleId: testGranule.granuleId }),
+      granulesModel.delete({ granuleId: testGranule2.granuleId }),
+    ]);
   });
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');

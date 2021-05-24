@@ -17,7 +17,7 @@ class AsyncOperationPgModel extends BasePgModel<PostgresAsyncOperation, Postgres
     knexOrTrx: Knex | Knex.Transaction,
     asyncOperation: PostgresAsyncOperation
   ) {
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(asyncOperation)
       .onConflict('id')
       .merge()
