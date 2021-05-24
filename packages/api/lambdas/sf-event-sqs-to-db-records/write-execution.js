@@ -90,7 +90,7 @@ const writeExecutionViaTransaction = async ({
     parentExecutionCumulusId,
     updatedAt,
   });
-  return executionPgModel.upsert(trx, executionRecord);
+  return await executionPgModel.upsert(trx, executionRecord);
 };
 
 const writeExecution = async ({
@@ -102,7 +102,7 @@ const writeExecution = async ({
   executionModel = new Execution(),
   updatedAt = Date.now(),
 }) =>
-  knex.transaction(async (trx) => {
+  await knex.transaction(async (trx) => {
     const [executionCumulusId] = await writeExecutionViaTransaction({
       cumulusMessage,
       collectionCumulusId,

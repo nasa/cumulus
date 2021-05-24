@@ -18,12 +18,12 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
  * @returns {Promise<Object|undefined>} - Returns promise that resolves to the
  *   output payload from the API lambda
  */
-export function invokeApi(
+export async function invokeApi(
   params: types.InvokeApiFunctionParams
 ): Promise<types.ApiGatewayLambdaHttpProxyResponse> {
   const { prefix, payload, pRetryOptions = {} } = params;
 
-  return pRetry(
+  return await pRetry(
     async () => {
       const apiOutput = await lambda().invoke({
         Payload: JSON.stringify(payload),

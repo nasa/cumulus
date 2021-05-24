@@ -12,7 +12,7 @@ export const queryHeartbeat = async ({
   knex,
 }: {
   knex: Knex
-}): Promise<void> => pRetry(
+}): Promise<void> => await pRetry(
   async () => {
     log.info('Sending Heartbeat Query');
     await knex.raw('SELECT 1');

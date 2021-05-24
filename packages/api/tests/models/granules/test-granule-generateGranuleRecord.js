@@ -52,7 +52,7 @@ test.before(async (t) => {
 
   t.context.fakeS3 = {
     headObject: () => ({
-      promise: async () => ({
+      promise: () => Promise.resolve({
         ContentLength: mockedFileSize,
       }),
     }),

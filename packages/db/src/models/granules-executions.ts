@@ -18,7 +18,7 @@ export default class GranulesExecutionsPgModel {
     knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return knexTransaction(this.tableName).insert(item);
+    return await knexTransaction(this.tableName).insert(item);
   }
 
   async exists(
@@ -32,7 +32,7 @@ export default class GranulesExecutionsPgModel {
     knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return knexTransaction(this.tableName)
+    return await knexTransaction(this.tableName)
       .insert(item)
       .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
       .merge();

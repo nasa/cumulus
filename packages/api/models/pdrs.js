@@ -126,7 +126,7 @@ class Pdr extends Manager {
   async storePdrFromCumulusMessage(cumulusMessage, updatedAt) {
     const pdrRecord = this.generatePdrRecord(cumulusMessage, updatedAt);
     if (!pdrRecord) return undefined;
-    const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+    const updateParams = this.generatePdrUpdateParamsFromRecord(pdrRecord);
 
     // createdAt comes from cumulus_meta.workflow_start_time
     // records should *not* be updating from createdAt times that are *older* start
@@ -153,7 +153,7 @@ class Pdr extends Manager {
    * @param {Object} pdrRecord - the PDR record
    * @returns {Object} DynamoDB update parameters
    */
-  async generatePdrUpdateParamsFromRecord(pdrRecord) {
+  generatePdrUpdateParamsFromRecord(pdrRecord) {
     const mutableFieldNames = Object.keys(pdrRecord);
     const updateParams = this._buildDocClientUpdateParams({
       item: pdrRecord,
@@ -168,7 +168,7 @@ class Pdr extends Manager {
    */
   async deletePdrs() {
     const pdrs = await this.scan();
-    return Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
+    return await Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
   }
 }
 

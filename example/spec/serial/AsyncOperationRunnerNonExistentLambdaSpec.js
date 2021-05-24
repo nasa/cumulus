@@ -94,12 +94,12 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
     }
   });
 
-  it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
+  it('updates the status field in DynamoDB to "RUNNER_FAILED"', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('RUNNER_FAILED');
   });
 
-  it('updates the output field in DynamoDB', async () => {
+  it('updates the output field in DynamoDB', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);

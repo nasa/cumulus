@@ -29,7 +29,7 @@ const EXECUTION_LIST_LIMIT = 50;
  * @alias module:Executions
  */
 const findExecutionArn = async (prefix, matcher, queryParameters = { }, options = { timeout: 0 }) =>
-  pRetry(
+  await pRetry(
     async () => {
       let execution;
       let pageNumber = 1;
@@ -107,7 +107,7 @@ const getExecution = async (params) => {
  * @alias module:Executions
  */
 const getExecutionWithStatus = async (params) =>
-  pRetry(
+  await pRetry(
     async () => {
       let execution;
 

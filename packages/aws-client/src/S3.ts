@@ -510,7 +510,7 @@ export const fileExists = async (bucket: string, key: string) => {
   }
 };
 
-export const downloadS3Files = (
+export const downloadS3Files = async (
   s3Objs: AWS.S3.GetObjectRequest[],
   dir: string,
   s3opts: Partial<AWS.S3.GetObjectRequest> = {}
@@ -540,7 +540,7 @@ export const downloadS3Files = (
     });
   };
 
-  return pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
+  return await pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
@@ -550,7 +550,7 @@ export const downloadS3Files = (
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-export const deleteS3Files = (s3Objs: AWS.S3.DeleteObjectRequest[]) => pMap(
+export const deleteS3Files = async (s3Objs: AWS.S3.DeleteObjectRequest[]) => await pMap(
   s3Objs,
   (s3Obj) => s3().deleteObject(s3Obj).promise(),
   { concurrency: S3_RATE_LIMIT }
@@ -587,7 +587,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
 **/
 export const deleteS3Buckets = async (
   buckets: Array<string>
-): Promise<any> => Promise.all(buckets.map(recursivelyDeleteS3Bucket));
+): Promise<any> => await Promise.all(buckets.map(recursivelyDeleteS3Bucket));
 
 type FileInfo = {
   filename: string,
@@ -595,7 +595,7 @@ type FileInfo = {
   bucket: string
 };
 
-export const uploadS3Files = (
+export const uploadS3Files = async (
   files: Array<string | FileInfo>,
   defaultBucket: string,
   keyPath: string | ((x: string) => string),
@@ -640,7 +640,7 @@ export const uploadS3Files = (
     return { key, bucket };
   };
 
-  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
+  return await pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
@@ -765,7 +765,7 @@ export const calculateObjectHash = async (
 
   const stream = getObjectReadStream({ s3, bucket, key });
 
-  return generateChecksumFromStream(algorithm, stream);
+  return await generateChecksumFromStream(algorithm, stream);
 };
 
 /**
@@ -833,7 +833,7 @@ export const createBucket = (Bucket: string) =>
  */
 export const createS3Buckets = async (
   buckets: Array<string>
-): Promise<any> => Promise.all(buckets.map(createBucket));
+): Promise<any> => await Promise.all(buckets.map(createBucket));
 
 const createMultipartUpload = async (
   params: {

@@ -22,7 +22,7 @@ test('handler adds Dynamo table names from parameter to environment variables', 
   };
   const ssmClient = {
     getParameter: () => ({
-      promise: async () => ({
+      promise: () => Promise.resolve({
         Parameter: {
           Value: JSON.stringify(dynamoTableNames),
         },
