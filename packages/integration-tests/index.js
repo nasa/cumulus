@@ -684,6 +684,7 @@ async function buildWorkflow(
       throw new Error(`Providers API responded with error on buildWorkflow ${JSON.stringify(providersApiResponse)}`);
     }
     template.meta.provider = JSON.parse(providersApiResponse.body);
+    template.meta.provider.password = provider.password;
   } else {
     template.meta.provider = {};
   }
