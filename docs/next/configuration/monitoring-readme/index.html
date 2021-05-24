@@ -97,7 +97,7 @@ exports.handler = <span class="hljs-keyword">async</span> (event) =&gt; {
   <span class="hljs-keyword">const</span> payload = Buffer.from(event.awslogs.data, <span class="hljs-string">'base64'</span>);
   <span class="hljs-keyword">const</span> decompressedData = <span class="hljs-keyword">await</span> gunzip(payload);
   <span class="hljs-keyword">const</span> logData = <span class="hljs-built_in">JSON</span>.parse(decompressedData.toString(<span class="hljs-string">'ascii'</span>));
-  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.all(logData.logEvents.map(<span class="hljs-keyword">async</span> (logEvent) =&gt; {
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> <span class="hljs-built_in">Promise</span>.all(logData.logEvents.map(<span class="hljs-keyword">async</span> (logEvent) =&gt; {
     <span class="hljs-keyword">const</span> logMessage = <span class="hljs-built_in">JSON</span>.parse(logEvent.message);
     <span class="hljs-keyword">if</span> ([<span class="hljs-string">'error'</span>, <span class="hljs-string">'fatal'</span>].includes(logMessage.level)) {
       <span class="hljs-keyword">return</span> sns.publish({
