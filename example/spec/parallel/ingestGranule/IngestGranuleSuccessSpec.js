@@ -255,9 +255,9 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
@@ -677,8 +677,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: failedExecutionArn });
       await Promise.all([
-        deleteExecution({ prefix: config.stackName, executionArn: failedExecutionArn }),
         deleteS3Object(config.bucket, executionCompletedKey),
         deleteS3Object(config.bucket, executionFailedKey),
       ]);

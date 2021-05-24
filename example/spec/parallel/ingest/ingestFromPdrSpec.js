@@ -140,10 +140,10 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn }),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       apiTestUtils.deletePdr({

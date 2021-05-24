@@ -105,9 +105,9 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn }),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({

@@ -127,9 +127,9 @@ describe('The TestPythonProcessing workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn }),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
