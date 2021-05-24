@@ -45,9 +45,9 @@
     ]
   },
   "dependencies": {
+    "@cumulus/async-operations": "9.0.1",
     "@cumulus/api": "9.0.1",
     "@cumulus/api-client": "9.0.1",
-    "@cumulus/async-operations": "9.0.1",
     "@cumulus/aws-client": "9.0.1",
     "@cumulus/checksum": "9.0.1",
     "@cumulus/cmr-client": "9.0.1",
@@ -57,6 +57,7 @@
     "@cumulus/discover-pdrs": "9.0.1",
     "@cumulus/files-to-granules": "9.0.1",
     "@cumulus/hello-world": "9.0.1",
+    "@cumulus/ingest": "9.0.1",
     "@cumulus/integration-tests": "9.0.1",
     "@cumulus/message": "9.0.1",
     "@cumulus/move-granules": "9.0.1",

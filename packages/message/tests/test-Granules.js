@@ -74,14 +74,14 @@ test('getGranuleQueryFields returns undefined', (t) => {
   );
 });
 
-test('messageHasGranules returns undefined if message does not have granules object', (t) => {
+test('messageHasGranules returns undefined if message does not have granules', (t) => {
   t.is(
     messageHasGranules({}),
     false
   );
 });
 
-test('messageHasGranules returns granules object if message has granules object', (t) => {
+test('messageHasGranules returns granules object if message has granules', (t) => {
   const payloadObject = { payload: { granules: ['someGranuleObject'] } };
   t.is(
     messageHasGranules(payloadObject),
