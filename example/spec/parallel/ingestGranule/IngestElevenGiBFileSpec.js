@@ -125,9 +125,9 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

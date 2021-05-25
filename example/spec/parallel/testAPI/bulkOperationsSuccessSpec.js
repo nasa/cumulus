@@ -182,6 +182,7 @@ describe('POST /granules/bulk', () => {
       // Must delete rules before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
 
+      await granules.deleteGranule({ prefix, granuleId });
       await pAll(
         [
           () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
@@ -190,7 +191,6 @@ describe('POST /granules/bulk', () => {
             collectionName: get(collection, 'name'),
             collectionVersion: get(collection, 'version'),
           }),
-          () => granules.deleteGranule({ prefix, granuleId }),
         ],
         { stopOnError: false }
       ).catch(console.error);

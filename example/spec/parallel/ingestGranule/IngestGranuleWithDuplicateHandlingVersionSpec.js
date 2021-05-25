@@ -238,12 +238,12 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
     await pAll(
       [
         () => deleteS3Object(sourceBucket, differentChecksumKey),
         () => deleteS3Object(sourceBucket, newFileKey),
         () => deleteS3Object(sourceBucket, sameChecksumKey),
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

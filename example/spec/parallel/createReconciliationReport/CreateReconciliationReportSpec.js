@@ -158,10 +158,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
   const cleanupFunction = async () => {
+    await deleteGranule({ prefix, granuleId });
     await Promise.allSettled(
       [
         deleteS3Object(sourceBucket, granFileKey),
-        deleteGranule({ prefix, granuleId }),
         deleteProvider({ prefix, providerId: get(provider, 'id') }),
         deleteCollection({
           prefix,
@@ -730,14 +730,13 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
-
+    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId });
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
       extraCumulusCollectionCleanup(),
       cmrClient.deleteGranule(cmrGranule),
     ]);

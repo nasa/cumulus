@@ -204,10 +204,10 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
     await pAll(
       [
         () => deleteS3Object(sourceBucket, sameChecksumKey),
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
