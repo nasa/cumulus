@@ -279,7 +279,7 @@ describe('The S3 Ingest Granules workflow', () => {
     ]);
   });
 
-  it('prepares the test suite successfully', async () => {
+  it('prepares the test suite successfully', () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
   });
 
@@ -664,7 +664,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let failedExecutionArn;
     let failedExecutionName;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       failedExecutionArn = failingWorkflowExecution.executionArn;
       failedExecutionName = failedExecutionArn.split(':').pop();
       executionName = postToCmrOutput.cumulus_meta.execution_name;
@@ -738,7 +738,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await deleteS3Object(config.bucket, `${config.stackName}/test-output/${publishExecutionName}.output`);
       });
 
-      it('makes the granule available through the Cumulus API', async () => {
+      it('makes the granule available through the Cumulus API', () => {
         expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
       });
 
@@ -771,7 +771,7 @@ describe('The S3 Ingest Granules workflow', () => {
         let asyncOperationId;
         let reingestExecutionArn;
 
-        beforeAll(async () => {
+        beforeAll(() => {
           startTime = new Date();
           oldUpdatedAt = granule.updatedAt;
           oldExecution = granule.execution;
@@ -1069,18 +1069,18 @@ describe('The S3 Ingest Granules workflow', () => {
         });
       });
 
-      it('returns a list of exeuctions', async () => {
+      it('returns a list of exeuctions', () => {
         expect(executions.results.length).toBeGreaterThan(0);
       });
 
-      it('returns overall status and timing for the execution', async () => {
+      it('returns overall status and timing for the execution', () => {
         expect(executionResponse.status).toBeDefined();
         expect(executionResponse.createdAt).toBeDefined();
         expect(executionResponse.updatedAt).toBeDefined();
         expect(executionResponse.duration).toBeDefined();
       });
 
-      it('returns tasks metadata with name and version', async () => {
+      it('returns tasks metadata with name and version', () => {
         expect(executionResponse.tasks).toBeDefined();
         expect(executionResponse.tasks.length).not.toEqual(0);
         Object.keys(executionResponse.tasks).forEach((step) => {
@@ -1103,7 +1103,7 @@ describe('The S3 Ingest Granules workflow', () => {
         executionStatus = JSON.parse(executionStatusResponse.body);
       });
 
-      it('returns the inputs and outputs for the entire workflow', async () => {
+      it('returns the inputs and outputs for the entire workflow', () => {
         expect(executionStatus.execution).toBeTruthy();
         expect(executionStatus.execution.executionArn).toEqual(workflowExecutionArn);
         const input = JSON.parse(executionStatus.execution.input);
@@ -1112,7 +1112,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(output.payload || output.replace).toBeTruthy();
       });
 
-      it('returns the stateMachine information and workflow definition', async () => {
+      it('returns the stateMachine information and workflow definition', () => {
         expect(executionStatus.stateMachine).toBeTruthy();
         expect(executionStatus.stateMachine.stateMachineArn).toEqual(executionStatus.execution.stateMachineArn);
         expect(executionStatus.stateMachine.stateMachineArn.endsWith(executionStatus.stateMachine.name)).toBeTrue();
@@ -1124,7 +1124,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(Object.keys(definition.States).length).toBe(12);
       });
 
-      it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
+      it('returns the inputs, outputs, timing, and status information for each executed step', () => {
         expect(executionStatus.executionHistory).toBeTruthy();
 
         // expected 'not executed' steps

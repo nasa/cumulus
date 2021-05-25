@@ -75,7 +75,7 @@ async function getUmmObject(fileLocation) {
 }
 
 const getOnlineResourcesWithRetries = async (granule) =>
-  pRetry(
+  await pRetry(
     async () => {
       let onlineResources;
 

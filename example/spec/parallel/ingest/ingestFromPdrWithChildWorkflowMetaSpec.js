@@ -127,7 +127,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         config.stackName,
         config.bucket,
         workflowName,
-        { name: addedCollection.name, version: addedCollection.version },
+        { name: addedCollection[0].name, version: addedCollection[0].version },
         provider,
         undefined,
         {

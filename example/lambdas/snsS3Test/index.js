@@ -15,7 +15,7 @@ async function handleExecutions(event) {
   if (!executionRecord.name) {
     return Promise.resolve();
   }
-  return s3.putObject({
+  return await s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${executionRecord.name}.output`,
     Body: JSON.stringify(event, undefined, 2),
@@ -35,7 +35,7 @@ async function handleGranules(event) {
   if (!granuleRecord.record.granuleId) {
     return Promise.resolve();
   }
-  return s3.putObject({
+  return await s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${granuleRecord.record.granuleId}-${granuleRecord.record.status}.output`,
     Body: JSON.stringify(event, undefined, 2),
@@ -55,7 +55,7 @@ async function handlePdrs(event) {
   if (!pdr.pdrName) {
     return Promise.resolve();
   }
-  return s3.putObject({
+  return await s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${pdr.pdrName}-${pdr.status}.output`,
     Body: JSON.stringify(event, undefined, 2),
@@ -80,7 +80,7 @@ async function handleCollections(event) {
 
   const s3 = new S3();
 
-  return s3.putObject({
+  return await s3.putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${collection.name}-${collection.version}-${eventType}.output`,
     Body: JSON.stringify(event, undefined, 2),

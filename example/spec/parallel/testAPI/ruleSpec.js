@@ -193,7 +193,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       testSuffix);
   });
 
-  it('the triggered execution has the requested prefix', async () => {
+  it('the triggered execution has the requested prefix', () => {
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });
@@ -390,7 +390,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
     });
   });
 
-  it('the triggered execution has the requested prefix', async () => {
+  it('the triggered execution has the requested prefix', () => {
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });

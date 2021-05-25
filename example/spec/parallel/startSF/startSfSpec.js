@@ -43,7 +43,7 @@ async function sendStartSfMessages({
       () =>
         sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(message) }).promise()
     );
-  return Promise.all(sendMessages);
+  return await Promise.all(sendMessages);
 }
 
 const createCloudwatchRuleWithTarget = async ({
@@ -229,7 +229,7 @@ describe('the sf-starter lambda function', () => {
       ]);
     });
 
-    it('that has messages', async () => {
+    it('that has messages', () => {
       pending('until SQS provides a strongly consistent getNumberOfMessages function');
     });
 
@@ -261,7 +261,7 @@ describe('the sf-starter lambda function', () => {
         expect(executions.length).toEqual(initialMessageCount);
       });
 
-      it('and then deleted from the queue', async () => {
+      it('and then deleted from the queue', () => {
         pending('until SQS provides a strongly consistent getNumberOfMessages function');
       });
     });

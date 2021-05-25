@@ -41,13 +41,13 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
 
   const fakeDbClient = {};
   const fakeCollectionPgModel = {
-    getRecordCumulusId: async () => collectionCumulusId,
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
   };
   const fakeProviderPgModel = {
-    getRecordCumulusId: async () => providerCumulusId,
+    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
   };
   const fakePdrPgModel = {
-    getRecordCumulusId: async () => pdrCumulusId,
+    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
   };
 
   const expectedPostgresGranule = {
