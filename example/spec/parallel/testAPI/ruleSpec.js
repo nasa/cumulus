@@ -187,7 +187,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
-    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn });
 
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
