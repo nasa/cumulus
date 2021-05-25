@@ -100,7 +100,7 @@ class CollectionConfigStore {
 
     this.cache[collectionId] = config;
 
-    return putJsonS3Object(
+    return await putJsonS3Object(
       this.bucket,
       this.configKey(collectionId),
       config

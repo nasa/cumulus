@@ -208,7 +208,7 @@ async function indexRecords(records) {
  * @param {Object} event - aws lambda event object.
  */
 const handler = async ({ Records }) =>
-  (Records ? indexRecords(Records) : 'No records found in event');
+  (Records ? await indexRecords(Records) : 'No records found in event');
 
 module.exports = {
   getTableName,

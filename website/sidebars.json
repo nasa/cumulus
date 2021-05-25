@@ -20,15 +20,15 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
-      "deployment/postgres_database_deployment",
-      "deployment/terraform-best-practices",
-      "deployment/upgrade-readme",
-      "deployment/components",
       "deployment/create_bucket",
+      "deployment/terraform-best-practices",
+      "deployment/postgres_database_deployment",
+      "deployment/components",
       "deployment/thin_egress_app",
       "deployment/api-gateway-logging",
       "deployment/share-s3-access-logs",
-      "deployment/cloudwatch-logs-delivery"
+      "deployment/cloudwatch-logs-delivery",
+      "deployment/upgrade-readme"
     ],
     "Configuration": [
       "configuration/data-management-types",

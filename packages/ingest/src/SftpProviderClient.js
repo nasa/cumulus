@@ -115,7 +115,7 @@ class SftpProviderClient {
    * @returns {Promise<string>} the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    return this.getSftpClient().download(remotePath, localPath);
+    return await this.getSftpClient().download(remotePath, localPath);
   }
 
   /**
@@ -148,7 +148,7 @@ class SftpProviderClient {
     const remotePath = params.fileRemotePath;
     const bucket = params.destinationBucket;
     const key = params.destinationKey;
-    return this.getSftpClient().syncToS3(remotePath, bucket, key);
+    return await this.getSftpClient().syncToS3(remotePath, bucket, key);
   }
 }
 

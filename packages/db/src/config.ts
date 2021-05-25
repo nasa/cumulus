@@ -67,14 +67,14 @@ export const getConnectionConfig = async ({
 }): Promise<Knex.PgConnectionConfig> => {
   // Storing credentials in Secrets Manager
   if (env.databaseCredentialSecretArn) {
-    return getSecretConnectionConfig(
+    return await getSecretConnectionConfig(
       env.databaseCredentialSecretArn,
       secretsManager
     );
   }
 
   // Getting credentials from environment variables
-  return getConnectionConfigEnv(env);
+  return await getConnectionConfigEnv(env);
 };
 
 /**

@@ -19,7 +19,7 @@ const generateAddress = HyraxMetadataUpdate.__get__('generateAddress');
 const getGranuleUr = HyraxMetadataUpdate.__get__('getGranuleUr');
 const addHyraxUrl = HyraxMetadataUpdate.__get__('addHyraxUrl');
 
-test.afterEach.always(async () => {
+test.afterEach.always(() => {
   delete process.env.CMR_ENVIRONMENT;
 });
 

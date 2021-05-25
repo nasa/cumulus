@@ -39,7 +39,7 @@ export const createMultipartChunks = (
 
 export const createMultipartUpload = async (
   params: AWS.S3.CreateMultipartUploadRequest
-) => s3().createMultipartUpload(params).promise();
+) => await s3().createMultipartUpload(params).promise();
 
 export const completeMultipartUpload = async (
   params: AWS.S3.CompleteMultipartUploadRequest
@@ -49,10 +49,10 @@ export const completeMultipartUpload = async (
   return <CompleteMultipartUploadOutput>result;
 };
 
-export const abortMultipartUpload = (
+export const abortMultipartUpload = async (
   params: AWS.S3.AbortMultipartUploadRequest
-) => s3().abortMultipartUpload(params).promise();
+) => await s3().abortMultipartUpload(params).promise();
 
-export const uploadPartCopy = (
+export const uploadPartCopy = async (
   params: AWS.S3.UploadPartCopyRequest
-) => s3().uploadPartCopy(params).promise();
+) => await s3().uploadPartCopy(params).promise();
