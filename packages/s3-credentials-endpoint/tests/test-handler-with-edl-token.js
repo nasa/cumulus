@@ -6,8 +6,8 @@ const proxyquire = require('proxyquire');
 
 const lambdaResponsePayload = { a: 1 };
 
-const { handler } = proxyquire(
-  '..',
+const s3credentials = proxyquire(
+  '@cumulus/api/endpoints/s3credentials',
   {
     '@cumulus/aws-client/services': {
       lambda: () => ({
@@ -20,6 +20,9 @@ const { handler } = proxyquire(
     },
   }
 );
+const { handler } = proxyquire('..', {
+  '@cumulus/api/endpoints/s3credentials': s3credentials,
+});
 
 test.before(async (t) => {
   t.context.callerClientId = 'caller-client-id';

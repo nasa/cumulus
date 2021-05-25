@@ -27,7 +27,6 @@ async function requestTemporaryCredentialsFromNgap({
   userId,
   roleSessionName,
 }) {
-  console.log('7a ===================');
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
@@ -35,19 +34,11 @@ async function requestTemporaryCredentialsFromNgap({
     rolesession: roleSessionName, // <- shows up in S3 server access logs
     userid: userId, // <- used by NGAP
   });
-  console.log('7b ===================');
 
-  const response1 = lambda.invoke({
+  return lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
-  console.log(lambdaFunctionName);
-  console.log(lambda);
-
-  console.log('7c ===================');
-  console.log(response1);
-
-  return response1;
 }
 
 /**
@@ -60,23 +51,19 @@ async function requestTemporaryCredentialsFromNgap({
  */
 async function s3credentials(req, res) {
   const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
-  console.log('5 ===================');
   if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
     return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
   }
-  console.log('6 ===================');
   const roleSessionName = buildRoleSessionName(
     req.authorizedMetadata.userName,
     req.authorizedMetadata.clientName
   );
-  console.log('7 ===================');
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
     lambdaFunctionName: process.env.STSCredentialsLambda,
     userId: req.authorizedMetadata.userName,
     roleSessionName,
   });
-  console.log('8 ===================');
   const creds = JSON.parse(credentials.Payload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
     log.error(credentials.Payload);
@@ -84,7 +71,6 @@ async function s3credentials(req, res) {
       `Unable to retrieve credentials from Server: ${credentials.Payload}`
     );
   }
-  console.log('9 ===================');
   return res.send(creds);
 }
 
@@ -97,7 +83,6 @@ async function s3credentials(req, res) {
  * temporary credentials
  */
 async function handleCredentialRequest(req, res) {
-  console.log('In here at all?????? ===================');
   req.lambda = awsServices.lambda();
   return s3credentials(req, res);
 }
