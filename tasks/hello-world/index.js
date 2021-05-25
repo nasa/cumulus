@@ -69,7 +69,7 @@ async function helloWorld(event) {
  * @returns {Promise<Object>} - sample JSON object
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(helloWorld, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(helloWorld, event, context);
 }
 
 exports.handler = handler;

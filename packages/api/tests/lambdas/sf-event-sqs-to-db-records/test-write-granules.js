@@ -37,10 +37,10 @@ test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
 
   const fakeFileUtils = {
-    buildDatabaseFiles: async (params) => params.files,
+    buildDatabaseFiles: (params) => Promise.resolve(params.files),
   };
   const fakeStepFunctionUtils = {
-    describeExecution: async () => ({}),
+    describeExecution: () => Promise.resolve({}),
   };
   const granuleModel = new Granule({
     fileUtils: fakeFileUtils,
@@ -219,7 +219,7 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
   };
 
   const fakeCmrUtils = {
-    getGranuleTemporalInfo: async () => temporalInfo,
+    getGranuleTemporalInfo: () => Promise.resolve(temporalInfo),
   };
 
   const record = await generateGranuleRecord({
@@ -260,11 +260,11 @@ test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from datab
   const granuleRecord = fakeGranuleRecordFactory();
   const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
   const fakeGranulePgModel = {
-    getRecordCumulusId: async (_, record) => {
+    getRecordCumulusId: (_, record) => {
       if (record.granule_id === granuleRecord.granule_id) {
-        return fakeGranuleCumulusId;
+        return Promise.resolve(fakeGranuleCumulusId);
       }
-      return undefined;
+      return Promise.resolve();
     },
   };
 
@@ -564,7 +564,7 @@ test.serial('writeGranules() does not persist records to Dynamo or Postgres if D
     storeGranuleFromCumulusMessage: () => {
       throw new Error('Granules dynamo error');
     },
-    describeGranuleExecution: async () => ({}),
+    describeGranuleExecution: () => Promise.resolve({}),
   };
 
   const [error] = await t.throwsAsync(

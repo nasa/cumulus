@@ -90,7 +90,7 @@ test.before(async (t) => {
 
   process.env.collection_sns_topic_arn = randomString();
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
-    promise: async () => true,
+    promise: () => Promise.resolve(true),
   });
 });
 

@@ -4,10 +4,10 @@ const {
   isRecordDefined,
 } = require('../dist/database');
 
-test('isRecordDefined correctly returns true', async (t) => {
+test('isRecordDefined correctly returns true', (t) => {
   t.true(isRecordDefined({ info: 'value' }));
 });
 
-test('isRecordDefined correctly returns false', async (t) => {
+test('isRecordDefined correctly returns false', (t) => {
   t.false(isRecordDefined(undefined));
 });

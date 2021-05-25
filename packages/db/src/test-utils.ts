@@ -20,7 +20,7 @@ export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: str
 };
 
 export const deleteTestDatabase = async (knex: Knex, dbName: string) =>
-  knex.raw(`drop database if exists "${dbName}"`);
+  await knex.raw(`drop database if exists "${dbName}"`);
 
 export const generateLocalTestDb = async (
   testDbName: string,

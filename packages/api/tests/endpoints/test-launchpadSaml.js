@@ -90,7 +90,7 @@ test.before(async () => {
 });
 
 let sandbox;
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   sandbox = sinon.createSandbox();
   const validIndex = randomId('session_index');
   const validUser = randomId('userId');
@@ -139,7 +139,7 @@ test.beforeEach(async (t) => {
   };
 });
 
-test.afterEach(async () => {
+test.afterEach(() => {
   sandbox.restore();
 });
 

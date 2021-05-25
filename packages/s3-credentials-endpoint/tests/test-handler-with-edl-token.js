@@ -12,7 +12,7 @@ const { handler } = proxyquire(
     '@cumulus/aws-client/services': {
       lambda: () => ({
         invoke: () => ({
-          promise: async () => ({
+          promise: () => Promise.resolve({
             Payload: JSON.stringify(lambdaResponsePayload),
           }),
         }),
@@ -21,7 +21,7 @@ const { handler } = proxyquire(
   }
 );
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.callerClientId = 'caller-client-id';
 
   t.context.validToken = 'valid-token';

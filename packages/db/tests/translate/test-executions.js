@@ -34,13 +34,13 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
   const fakeDbClient = {};
 
   const fakeCollectionPgModel = {
-    getRecordCumulusId: async () => collectionCumulusId,
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
   };
   const fakeAsyncOperationPgModel = {
-    getRecordCumulusId: async () => asyncOperationCumulusId,
+    getRecordCumulusId: () => Promise.resolve(asyncOperationCumulusId),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: async () => executionCumulusId,
+    getRecordCumulusId: () => Promise.resolve(executionCumulusId),
   };
 
   const expectedPostgresExecution = {

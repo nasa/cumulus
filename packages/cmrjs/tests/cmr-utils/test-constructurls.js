@@ -55,7 +55,7 @@ test('mapCNMTypeToCMRType returns a default mapping if non CNM mapping specified
   t.is(mapCNMTypeToCMRType(undefined, 's3', true), 'GET DATA VIA DIRECT ACCESS');
 });
 
-test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is not set', async (t) => {
+test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is not set', (t) => {
   const movedFiles = [
     {
       key: 'some/path/protected-file.hdf',
@@ -77,7 +77,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -87,7 +87,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is true', async (t) => {
+test('constructOnlineAccessUrls returns both distribution and s3 urls for protected data when cmrGranuleUrlType is not set and useDirectS3Type is true', (t) => {
   const movedFiles = [
     {
       key: 'some/path/protected-file.hdf',
@@ -109,7 +109,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -120,7 +120,7 @@ test('constructOnlineAccessUrls returns both distribution and s3 urls for protec
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructOnlineAccessUrls returns correct url for public data when cmrGranuleUrlType is distribution', async (t) => {
+test('constructOnlineAccessUrls returns correct url for public data when cmrGranuleUrlType is distribution', (t) => {
   const publicBucketName = t.context.bucketConfig.public.name;
   const movedFiles = [
     {
@@ -137,7 +137,7 @@ test('constructOnlineAccessUrls returns correct url for public data when cmrGran
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -149,7 +149,7 @@ test('constructOnlineAccessUrls returns correct url for public data when cmrGran
   t.deepEqual(actual, expected);
 });
 
-test('constructOnlineAccessUrls returns empty url list for private data.', async (t) => {
+test('constructOnlineAccessUrls returns empty url list for private data.', (t) => {
   const privateBucket = t.context.bucketConfig.private.name;
   const movedFiles = [
     {
@@ -157,7 +157,7 @@ test('constructOnlineAccessUrls returns empty url list for private data.', async
       bucket: privateBucket,
     },
   ];
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -167,7 +167,7 @@ test('constructOnlineAccessUrls returns empty url list for private data.', async
   t.deepEqual(actual, []);
 });
 
-test('constructOnlineAccessUrls returns expected array when called with file list and cmrGranuleUrlType is not set', async (t) => {
+test('constructOnlineAccessUrls returns expected array when called with file list and cmrGranuleUrlType is not set', (t) => {
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
@@ -213,7 +213,7 @@ test('constructOnlineAccessUrls returns expected array when called with file lis
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -223,7 +223,7 @@ test('constructOnlineAccessUrls returns expected array when called with file lis
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructOnlineAccessUrls returns correct links when cmrGranuleUrlType is s3', async (t) => {
+test('constructOnlineAccessUrls returns correct links when cmrGranuleUrlType is s3', (t) => {
   const movedFiles = [
     {
       key: 'path/publicfile.jpg',
@@ -242,7 +242,7 @@ test('constructOnlineAccessUrls returns correct links when cmrGranuleUrlType is 
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -253,7 +253,7 @@ test('constructOnlineAccessUrls returns correct links when cmrGranuleUrlType is 
   t.deepEqual(actual, expected.sort(sortByURL));
 });
 
-test('constructOnlineAccessUrls returns no links when cmrGranuleUrlType is none', async (t) => {
+test('constructOnlineAccessUrls returns no links when cmrGranuleUrlType is none', (t) => {
   const movedFiles = [
     {
       key: 'path/publicfile.jpg',
@@ -263,7 +263,7 @@ test('constructOnlineAccessUrls returns no links when cmrGranuleUrlType is none'
     },
   ];
 
-  const actual = await constructOnlineAccessUrls({
+  const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -274,14 +274,14 @@ test('constructOnlineAccessUrls returns no links when cmrGranuleUrlType is none'
   t.deepEqual(actual, []);
 });
 
-test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', async (t) => {
-  await t.throwsAsync(constructOnlineAccessUrls({
+test('constructOnlineAccessUrls throws error if URL type is distribution and distribution endpoint is missing', (t) => {
+  t.throws(() => constructOnlineAccessUrls({
     distEndpoint: {},
     cmrGranuleUrlType: 'distribution',
   }));
 });
 
-test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is not set', async (t) => {
+test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is not set', (t) => {
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
@@ -321,7 +321,7 @@ test('constructRelatedUrls returns expected array when called with file list and
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -331,7 +331,7 @@ test('constructRelatedUrls returns expected array when called with file list and
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is true', async (t) => {
+test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is true', (t) => {
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
@@ -371,7 +371,7 @@ test('constructRelatedUrls returns expected array when called with file list and
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -382,7 +382,7 @@ test('constructRelatedUrls returns expected array when called with file list and
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is distribution', async (t) => {
+test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is distribution', (t) => {
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
@@ -412,7 +412,7 @@ test('constructRelatedUrls returns expected array when called with file list and
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -423,11 +423,11 @@ test('constructRelatedUrls returns expected array when called with file list and
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructRelatedUrls returns expected array when called with an empty file list', async (t) => {
+test('constructRelatedUrls returns expected array when called with an empty file list', (t) => {
   const movedFiles = [];
   const expected = [omit(s3CredentialsEndpointObject, 'URLDescription')];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketsTypes: t.context.bucketTypes,
@@ -437,7 +437,7 @@ test('constructRelatedUrls returns expected array when called with an empty file
   t.deepEqual(actual, expected);
 });
 
-test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async (t) => {
+test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', (t) => {
   const movedFiles = [
     {
       key: 'path/publicfile.jpg',
@@ -456,7 +456,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
     omit(s3CredentialsEndpointObject, 'URLDescription'),
   ];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,
@@ -467,7 +467,7 @@ test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', async 
   t.deepEqual(actual, expected);
 });
 
-test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlType is none', async (t) => {
+test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlType is none', (t) => {
   const movedFiles = [
     {
       key: 'path/publicfile.jpg',
@@ -477,7 +477,7 @@ test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlTyp
     },
   ];
 
-  const actual = await constructRelatedUrls({
+  const actual = constructRelatedUrls({
     files: movedFiles,
     distEndpoint,
     bucketTypes: t.context.bucketTypes,

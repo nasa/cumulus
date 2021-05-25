@@ -1,8 +1,6 @@
 'use strict';
 
 module.exports = {
-  fail: async () => {
-    throw new Error('triggered failure');
-  },
-  success: async (event) => event,
+  fail: () => Promise.reject(new Error('triggered failure')),
+  success: (event) => Promise.resolve(event),
 };
