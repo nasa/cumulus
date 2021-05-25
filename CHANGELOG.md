@@ -7,16 +7,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
     link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
-  reporting is now handled through Cloud Metrics
+    reporting is now handled through Cloud Metrics
+- **CUMULUS-2472**
+  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
 
@@ -35,6 +36,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
+
+- **CUMULUS-2489**
+  - Updated docs for Terraform references in FAQs, glossary, and in Deployment sections
+
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
     both HTTPS URLS and S3 URIs to CMR metadata.
@@ -45,6 +50,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
     type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+- **CUMULUS-2472**
+  - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
+  - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
     - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
