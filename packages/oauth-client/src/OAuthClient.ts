@@ -1,4 +1,4 @@
-import got, { CancelableRequest, HTTPError, Response } from 'got';
+import got, { CancelableRequest, Headers, HTTPError, Response } from 'got';
 import { URL } from 'url';
 
 import { OAuthError } from './OAuthError';
@@ -100,7 +100,7 @@ export class OAuthClient {
 
   private requestAccessToken(authorizationCode: string) {
     return <CancelableRequest<AccessTokenResponse>>(this.postRequest({
-      loginPath: 'oauth/token',
+      path: 'oauth/token',
       form: {
         grant_type: 'authorization_code',
         code: authorizationCode,
@@ -161,23 +161,23 @@ export class OAuthClient {
    * Make an HTTP POST request to the login service
    *
    * @param {Object} params
-   * @param {string} params.loginPath - the URL for the request
+   * @param {string} params.path - the URL for the request
    * @param {Object} params.form - the body of the POST request
-   * @param {Array} [params.headers] - Optional request headers
+   * @param {Object} [params.headers] - Optional request headers
    * @returns {CancelableRequest<Response<unknown>>} The return of the POST call
    */
   postRequest(
     params: {
-      loginPath: string,
+      path: string,
       form: {[key: string]: any},
-      headers?: Record<string, string|string[]|undefined>
+      headers?: Headers,
     }
   ) {
     // https://github.com/sindresorhus/got/issues/1169
     const credentials = encodeCredentials(this.clientId, this.clientPassword);
 
     return got.post(
-      params.loginPath,
+      params.path,
       {
         prefixUrl: this.loginUrl,
         headers: {
@@ -195,14 +195,16 @@ export class OAuthClient {
    *
    * @param {Object} params
    * @param {string} params.path - the URL for the request
-   * @param {string} params.accessToken - Auth bearer token for request
+   * @param {string} params.token - Auth bearer token for request
+   * @param {Object} [params.headers] - Optional request headers
+   * @param {Object} [params.searchParams] - Optional search parameters
    * @returns {CancelableRequest<Response<unknown>>} The return of the GET call
    */
   getRequest(
     params: {
       path: string,
       token: string,
-      headers?: Record<string, string|string[]|undefined>,
+      headers?: Headers,
       searchParams?: {[key: string]: any},
     }
   ) {
@@ -223,7 +225,7 @@ export class OAuthClient {
 
   private requestRefreshAccessToken(refreshToken: string) {
     return <CancelableRequest<AccessTokenResponse>>(this.postRequest({
-      loginPath: 'oauth/token',
+      path: 'oauth/token',
       form: {
         grant_type: 'refresh_token',
         refresh_token: refreshToken,

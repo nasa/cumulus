@@ -71,7 +71,7 @@ test('CognitoClient.getUserInfo() returns the user info associated with a valid 
   const studyArea = randomString();
   const organization = randomString();
   const email = randomString();
-  const accessToken = randomString();
+  const token = randomString();
 
   const expectedUserInfo = {
     username: expectedUsername,
@@ -85,12 +85,12 @@ test('CognitoClient.getUserInfo() returns the user info associated with a valid 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 200,
     responseBody: expectedUserInfo,
   });
 
-  const userInfo = await cognitoClient.getUserInfo(accessToken);
+  const userInfo = await cognitoClient.getUserInfo({ token });
 
   t.deepEqual(userInfo, expectedUserInfo);
 });
@@ -102,7 +102,7 @@ test('CognitoClient.getUserInfo() throws error if access token is missing', asyn
     cognitoClient.getUserInfo(),
     {
       instanceOf: TypeError,
-      message: 'accessToken is required',
+      message: 'token is required',
     }
   );
 });
@@ -110,12 +110,12 @@ test('CognitoClient.getUserInfo() throws error if access token is missing', asyn
 test('CognitoClient.getUserInfo() throws an exception for an invalid token', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const token = randomString();
 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 401,
     responseBody: {
       error: 'InvalidToken',
@@ -124,7 +124,7 @@ test('CognitoClient.getUserInfo() throws an exception for an invalid token', asy
   });
 
   await t.throwsAsync(
-    cognitoClient.getUserInfo(accessToken),
+    cognitoClient.getUserInfo({ token }),
     {
       instanceOf: CognitoError,
       code: 'InvalidToken',
@@ -136,12 +136,12 @@ test('CognitoClient.getUserInfo() throws an exception for an invalid token', asy
 test('CognitoClient.getUserInfo() throws an exception for an expired token', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const token = randomString();
 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 401,
     responseBody: {
       error: 'InvalidToken',
@@ -150,7 +150,7 @@ test('CognitoClient.getUserInfo() throws an exception for an expired token', asy
   });
 
   await t.throwsAsync(
-    cognitoClient.getUserInfo(accessToken),
+    cognitoClient.getUserInfo({ token }),
     {
       instanceOf: CognitoError,
       code: 'InvalidToken',
@@ -162,18 +162,18 @@ test('CognitoClient.getUserInfo() throws an exception for an expired token', asy
 test('CognitoClient.getUserInfo() throws an exception if Cognito returns 200 with invalid JSON', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const token = randomString();
 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 200,
     responseBody: 'asdf',
   });
 
   await t.throwsAsync(
-    cognitoClient.getUserInfo(accessToken),
+    cognitoClient.getUserInfo({ token }),
     {
       instanceOf: CognitoError,
       code: 'InvalidResponse',
@@ -184,18 +184,18 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns 200 wit
 test('CognitoClient.getUserInfo() throws an exception if Cognito returns 401 with invalid JSON', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const token = randomString();
 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 401,
     responseBody: 'asdf',
   });
 
   await t.throwsAsync(
-    cognitoClient.getUserInfo(accessToken),
+    cognitoClient.getUserInfo({ token }),
     {
       instanceOf: CognitoError,
       code: 'UnexpectedResponse',
@@ -207,12 +207,12 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns 401 wit
 test('CognitoClient.getUserInfo() throws an exception if Cognito returns an unexpected error', async (t) => {
   const cognitoClient = buildCognitoClient();
 
-  const accessToken = randomString();
+  const token = randomString();
 
   nockCognitoGet({
     cognitoClient,
     path: '/oauth/userInfo',
-    requestHeaders: { Authorization: `Bearer ${accessToken}` },
+    requestHeaders: { Authorization: `Bearer ${token}` },
     responseStatus: 401,
     responseBody: {
       error: 'SomethingUnexpected',
@@ -221,7 +221,7 @@ test('CognitoClient.getUserInfo() throws an exception if Cognito returns an unex
   });
 
   await t.throwsAsync(
-    cognitoClient.getUserInfo(accessToken),
+    cognitoClient.getUserInfo({ token }),
     {
       instanceOf: CognitoError,
       code: 'SomethingUnexpected',

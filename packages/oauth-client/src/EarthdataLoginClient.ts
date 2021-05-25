@@ -59,10 +59,12 @@ export class EarthdataLoginClient extends OAuthClient {
   };
 
   /**
-   * Query the API for the user object associated with an access token.
+   * Query the API for the user object associated with a user.
    *
    * @param {Object} params
    * @param {string} params.token - The access token for Authorization header
+   * @param {string} params.username - The uid of the registered user
+   * @param {string} [params.xRequestId] - a string to help identify the request
    * @returns {Promise<Object>} The user object (see example)
    *
    * @example
@@ -93,11 +95,11 @@ export class EarthdataLoginClient extends OAuthClient {
    */
   async getUserInfo(params: {
     token: string,
-    xRequestId?: string,
     username: string,
+    xRequestId?: string,
   }) {
-    const { token, xRequestId, username } = params;
-    if (!token || !username) throw new TypeError('token and username required');
+    const { token, xRequestId, username } = params || {};
+    if (!token || !username) throw new TypeError('token and username are required');
 
     const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
     try {
@@ -115,7 +117,7 @@ export class EarthdataLoginClient extends OAuthClient {
       if (error instanceof got.ParseError) {
         throw new EarthdataLoginError(
           'InvalidResponse',
-          'Response from Cognito was not valid JSON'
+          'Response from Earthdata Login was not valid JSON'
         );
       }
 
@@ -145,7 +147,7 @@ export class EarthdataLoginClient extends OAuthClient {
 
     try {
       const response = <VerifyTokenResponse>(await super.postRequest({
-        loginPath: 'oauth/tokens/user',
+        path: 'oauth/tokens/user',
         headers,
         form: {
           client_id: this.clientId,

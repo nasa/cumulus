@@ -5,12 +5,10 @@ const request = require('supertest');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
-const moment = require('moment');
 
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
-const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
+const { OAuthClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 
 const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
@@ -20,6 +18,7 @@ process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
+process.env.OAUTH_PROVIDER = 'earthdata';
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
 
@@ -67,11 +66,11 @@ test.before(async () => {
   ).callsFake(() => authorizationUrl);
 
   sinon.stub(
-    CognitoClient.prototype,
+    EarthdataLoginClient.prototype,
     'getUserInfo'
   ).callsFake(() => getUserInfoResponse);
 
-  const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
+  const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('anyvalue') } });
   await accessTokenModel.create(accessTokenRecord);
 
   sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
@@ -120,68 +119,6 @@ test('A request for a file without an access token returns a redirect to an OAut
     .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
-});
-
-test('A request for a file using a non-existent access token returns a redirect to an OAuth2 provider', async (t) => {
-  const { fileLocation } = context;
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${randomId('cookie')}`])
-    .expect(307);
-
-  validateRedirectToGetAuthorizationCode(t, response);
-});
-
-test('A request for a file using an expired access token returns a redirect to an OAuth2 provider', async (t) => {
-  const { accessTokenModel, fileLocation } = context;
-
-  const accessTokenRecord = fakeAccessTokenFactory({
-    expirationTime: moment().unix(),
-  });
-  await accessTokenModel.create(accessTokenRecord);
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
-    .expect(307);
-
-  validateRedirectToGetAuthorizationCode(t, response);
-});
-
-test('An authenticated request for a file that cannot be parsed returns a 404', async (t) => {
-  const { accessTokenCookie } = context;
-  const response = await request(distributionApp)
-    .get('/invalid')
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(404);
-
-  t.is(response.statusCode, 404);
-});
-
-test('An authenticated request for a file returns a redirect to S3', async (t) => {
-  const {
-    accessTokenCookie,
-    accessTokenRecord,
-    fileLocation,
-    signedFileUrl,
-  } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(307);
-
-  t.is(response.status, 307);
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
 test('A /login request with a good authorization code returns a correct response', async (t) => {
@@ -234,51 +171,4 @@ test('A /login request with a good authorization code stores the access token', 
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
   t.true(await accessTokenModel.exists({ accessToken: setAccessTokenCookie.value }));
-});
-
-test('A /logout request deletes the access token', async (t) => {
-  const { accessTokenModel } = context;
-  const accessTokenRecord = fakeAccessTokenFactory();
-  await accessTokenModel.create(accessTokenRecord);
-  const response = await request(distributionApp)
-    .get('/logout')
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
-    .expect(200);
-
-  t.falsy(response.headers['set-cookie']);
-  try {
-    await accessTokenModel.get({ accessToken: accessTokenRecord.accessToken });
-    t.fail('expected code to throw error');
-  } catch (error) {
-    console.log(error);
-    t.true(error instanceof RecordDoesNotExist);
-  }
-  t.true(response.text.startsWith('<html>'));
-});
-
-test('An authenticated / request displays welcome and logout page', async (t) => {
-  const { accessTokenRecord } = context;
-  const response = await request(distributionApp)
-    .get('/')
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
-    .expect(200);
-
-  t.true(response.text.startsWith('<html>'));
-  t.true(response.text.includes('Log Out'));
-  t.false(response.text.includes('Log In'));
-  t.true(response.text.includes('Welcome user'));
-});
-
-test('A / request without an access token displays login page', async (t) => {
-  const response = await request(distributionApp)
-    .get('/')
-    .set('Accept', 'application/json')
-    .expect(200);
-
-  t.true(response.text.startsWith('<html>'));
-  t.true(response.text.includes('Log In'));
-  t.false(response.text.includes('Log Out'));
-  t.false(response.text.includes('Welcome user'));
 });

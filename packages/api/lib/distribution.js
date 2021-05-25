@@ -31,10 +31,10 @@ const buildOAuthClient = async () => {
     loginUrl: process.env.OAUTH_HOST_URL,
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   };
-  if (process.env.OAUTH_PROVIDER === 'cognito') {
-    return new CognitoClient(oauthClientConnfig);
+  if (process.env.OAUTH_PROVIDER === 'earthdata') {
+    return new EarthdataLoginClient(oauthClientConnfig);
   }
-  return new EarthdataLoginClient(oauthClientConnfig);
+  return new CognitoClient(oauthClientConnfig);
 };
 
 /**

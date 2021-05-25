@@ -33,6 +33,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
+- **CUMULUS-2477**
+  - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
+
 ### Changed
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
