@@ -55,7 +55,7 @@ async function handleSemaphoreDecrementTask(event) {
  * @returns {Promise}
  */
 async function handler(event) {
-  return handleSemaphoreDecrementTask(event);
+  return await handleSemaphoreDecrementTask(event);
 }
 
 module.exports = {

@@ -180,9 +180,9 @@ async function handleLogoutRequest(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
+
 async function handleFileRequest(req, res) {
   const { s3Client } = await getConfigurations();
-
   let fileBucket;
   let fileKey;
   try {

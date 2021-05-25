@@ -21,7 +21,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
       throw new Error(`To upsert pdr record must have 'created_at' set: ${JSON.stringify(pdr)}`);
     }
     if (pdr.status === 'running') {
-      return knexOrTrx(this.tableName)
+      return await knexOrTrx(this.tableName)
         .insert(pdr)
         .onConflict('name')
         .merge()
@@ -34,7 +34,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         })
         .returning('cumulus_id');
     }
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(pdr)
       .onConflict('name')
       .merge()

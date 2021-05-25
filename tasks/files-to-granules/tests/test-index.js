@@ -41,9 +41,7 @@ test.beforeEach(async (t) => {
   await Promise.all(updates);
 });
 
-test.afterEach(async (t) => {
-  recursivelyDeleteS3Bucket(t.context.bucket);
-});
+test.afterEach(async (t) => await recursivelyDeleteS3Bucket(t.context.bucket));
 
 test('files-to-granules transforms files array to granules object', async (t) => {
   const event = t.context.payload;
