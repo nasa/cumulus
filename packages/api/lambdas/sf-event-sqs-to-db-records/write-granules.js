@@ -504,6 +504,9 @@ const writeGranules = async ({
   }
 
   const granules = getMessageGranules(cumulusMessage);
+  const granuleIds = granules.map((granule) => granule.granuleId);
+  log.info(`process granule IDs ${granuleIds.join(',')}`);
+
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
