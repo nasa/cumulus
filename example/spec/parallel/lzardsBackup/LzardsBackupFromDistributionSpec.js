@@ -64,7 +64,7 @@ describe('The Lzards Backup Task ', () => {
           },
           task_config: {
             urlType: 'distribution',
-            distributionEndpoint: 'https://',
+            distributionEndpoint: 'https://fake-endpoint.com/data',
             cumulus_message: {
               outputs: [
                 {

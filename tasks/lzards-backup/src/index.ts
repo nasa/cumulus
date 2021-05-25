@@ -85,8 +85,7 @@ export const generateAccessUrl = async (params: {
   Key: string,
   urlConfig: {
     roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
+    urlType?: string,
     distributionEndpoint?: string,
   },
 }) => {
@@ -99,10 +98,9 @@ export const generateAccessUrl = async (params: {
       distributionEndpoint,
     },
   } = params;
-
-  switch (urlType) {
-    case 's3': return generateDirectS3Url({ roleCreds, Bucket, Key });
-    case 'distribution': return generateDistributionUrl({ Bucket, Key, distributionEndpoint });
+  switch ((urlType || 's3')) {
+    case 's3': return await generateDirectS3Url({ roleCreds, Bucket, Key });
+    case 'distribution': return await generateDistributionUrl({ Bucket, Key, distributionEndpoint });
     default: throw new InvalidUrlTypeError(`${urlType} is not a recognized type for access URL generation`);
   }
 };
