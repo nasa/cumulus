@@ -37,7 +37,7 @@ const getGranule = async (params) => {
  * @param {string} params.prefix    - the name of the Cumulus stack
  * @param {string} params.granuleId - the `granuleId` of the granule
  * @param {string} params.status    - the status to wait for
- * @param {string} params.updatedAt - minimum updatedAt time the granule must have
+ * @param {string} params.updatedAt - minimum updatedAt time the granule must have to return
  * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
  * invoke the API Lambda that takes a prefix / user payload
  * @param {integer} [params.timeout=30] - the number of seconds to wait for the
