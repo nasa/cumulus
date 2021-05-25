@@ -7,7 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 const { URL } = require('url');
 
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
 
@@ -47,7 +47,7 @@ function getConfigurations() {
   const earthdataLoginClient = new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
