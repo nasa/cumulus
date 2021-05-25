@@ -98,10 +98,16 @@ export const generateAccessUrl = async (params: {
       distributionEndpoint,
     },
   } = params;
-  switch ((urlType || 's3')) {
-    case 's3': return await generateDirectS3Url({ roleCreds, Bucket, Key });
-    case 'distribution': return await generateDistributionUrl({ Bucket, Key, distributionEndpoint });
-    default: throw new InvalidUrlTypeError(`${urlType} is not a recognized type for access URL generation`);
+
+  try {
+    switch ((urlType || 's3')) {
+      case 's3': return await generateDirectS3Url({ roleCreds, Bucket, Key });
+      case 'distribution': return await generateDistributionUrl({ Bucket, Key, distributionEndpoint });
+      default: throw new InvalidUrlTypeError(`${urlType} is not a recognized type for access URL generation`);
+    }
+  } catch (error) {
+    log.error(`${urlType} access URL generation failed for s3://${Bucket}/${Key}: ${error}`);
+    throw error;
   }
 };
 
