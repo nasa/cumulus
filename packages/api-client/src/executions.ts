@@ -109,7 +109,7 @@ export const deleteExecution = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, executionArn, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
