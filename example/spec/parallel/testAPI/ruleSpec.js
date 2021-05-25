@@ -68,7 +68,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
-    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
