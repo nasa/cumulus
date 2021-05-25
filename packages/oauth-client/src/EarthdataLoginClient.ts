@@ -59,6 +59,71 @@ export class EarthdataLoginClient extends OAuthClient {
   };
 
   /**
+   * Query the API for the user object associated with an access token.
+   *
+   * @param {Object} params
+   * @param {string} params.token - The access token for Authorization header
+   * @returns {Promise<Object>} The user object (see example)
+   *
+   * @example
+   *
+   * {
+   *  "uid": "janedoe",
+   *  "first_name": "Jane",
+   *  "last_name": "Doe",
+   *  "registered_date": "15 Sep 2015 12:42:17PM",
+   *  "email_address": "janedoe@example.com",
+   *  "country": "United States",
+   *  "affiliation": "Government",
+   *  "authorized_date": "21 Apr 2016 01:13:28AM",
+   *  "allow_auth_app_emails": true,
+   *  "agreed_to_meris_eula": false,
+   *  "agreed_to_sentinel_eula": false,
+   *  "app_content": {
+   *     "param1": "value1",
+   *     "app_groups": {
+   *         "test": {
+   *            "param2": "value2"
+   *          }
+   *      }
+   *  },
+   *  "user_groups": [],
+   *  "user_authorized_apps": 3
+   * }
+   */
+  async getUserInfo(params: {
+    token: string,
+    xRequestId?: string,
+    username: string,
+  }) {
+    const { token, xRequestId, username } = params;
+    if (!token || !username) throw new TypeError('token and username required');
+
+    const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
+    try {
+      const response = await super.getRequest({
+        path: `api/users/${username}`,
+        token,
+        headers,
+        searchParams: {
+          client_id: this.clientId,
+        },
+      });
+
+      return response.body;
+    } catch (error) {
+      if (error instanceof got.ParseError) {
+        throw new EarthdataLoginError(
+          'InvalidResponse',
+          'Response from Cognito was not valid JSON'
+        );
+      }
+
+      throw this.httpErrorToAuthError(error);
+    }
+  }
+
+  /**
    * Query the Earthdata Login API for the UID associated with a token
    *
    * @param {Object} params

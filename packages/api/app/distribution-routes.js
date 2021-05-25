@@ -56,8 +56,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
-  // Public data doesn't need authentication
-  // but still need to add username to s3 access log
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();

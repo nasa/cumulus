@@ -201,19 +201,23 @@ export class OAuthClient {
   getRequest(
     params: {
       path: string,
-      accessToken: string,
+      token: string,
+      headers?: Record<string, string|string[]|undefined>,
+      searchParams?: {[key: string]: any},
     }
   ) {
+    const { path, token, headers, searchParams } = params;
     return got.get(
-      params.path,
+      path,
       {
         prefixUrl: this.loginUrl,
         headers: {
-          Authorization: `Bearer ${params.accessToken}`,
+          ...headers,
+          Authorization: `Bearer ${token}`,
         },
         responseType: 'json',
+        searchParams,
       }
-
     );
   }
 

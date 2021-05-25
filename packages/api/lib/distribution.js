@@ -1,6 +1,6 @@
 const isEmpty = require('lodash/isEmpty');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { CognitoClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const { isLocalApi } = require('./testUtils');
@@ -28,14 +28,12 @@ const buildOAuthClient = async () => {
   const oauthClientConnfig = {
     clientId: process.env.OAUTH_CLIENT_ID,
     clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.OAUTH_HOST_URL,
+    loginUrl: process.env.OAUTH_HOST_URL,
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   };
-  if (process.env.OAUTH_PROVIDER === 'earthdata') {
-    return new EarthdataLoginClient(oauthClientConnfig);
+  if (process.env.OAUTH_PROVIDER === 'cognito') {
+    return new CognitoClient(oauthClientConnfig);
   }
-  // TODO update
-  // return new CognitoClient(oauthClientConnfig);
   return new EarthdataLoginClient(oauthClientConnfig);
 };
 
@@ -52,39 +50,6 @@ async function getConfigurations() {
     oauthClient,
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: s3(),
-  };
-}
-
-// TODO update the function when OAuthClient is available
-async function getProfile(oauthClient, { username, accessToken }) {
-  //const oauthClient = await buildOAuthClient();
-  if (username && accessToken) { // EDL
-    // // TODO add method not only get user profile
-    // const uid = await oauthClient.getTokenUsername({
-    //   onBehalfOf: username,
-    //   token: accessToken,
-    //   //xRequestId?: string where to get this
-    // });
-    // log.debug(uid);
-  } else {
-    // const uid = await oauthClient.getTokenUsername({
-    //   onBehalfOf: username,
-    //   token: accessToken,
-    //   //xRequestId?: string where to get this
-    // });
-    // log.debug(uid);
-    // if (userProfile.user_groups === undefined) {
-    //   userProfile.user_groups = [];
-    // }
-  }
-  // TODO handle any errors and rename the one from EDL
-  return {
-    username: 'Jane Doe',
-    given_name: 'Jane',
-    family_name: 'Doe',
-    study_area: 'Atmospheric Composition',
-    organization: 'NASA',
-    email: 'janedoe@example.com',
   };
 }
 
@@ -121,6 +86,5 @@ function checkLoginQueryErrors(query) {
 module.exports = {
   checkLoginQueryErrors,
   getConfigurations,
-  getProfile,
   useSecureCookies,
 };

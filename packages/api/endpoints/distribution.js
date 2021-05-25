@@ -5,12 +5,13 @@ const isEmpty = require('lodash/isEmpty');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
+const { URL } = require('url');
 const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const { inTestMode } = require('@cumulus/common/test-utils');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
-const { URL } = require('url');
-const { checkLoginQueryErrors, getConfigurations, getProfile, useSecureCookies } = require('../lib/distribution');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const { checkLoginQueryErrors, getConfigurations, useSecureCookies } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -106,15 +107,21 @@ async function handleLoginRequest(req, res) {
     const accessTokenResponse = await oauthClient.getAccessToken(code);
     log.debug('getAccessToken:', accessTokenResponse);
 
-    const userProfile = await getProfile(oauthClient, accessTokenResponse);
-    log.debug('Got the user profile: ', userProfile);
+    // getAccessToken returns username only for EDL
+    const params = {
+      token: accessTokenResponse.accessToken,
+      username: accessTokenResponse.username,
+      xRequestId: requestid,
+    };
+    const userInfo = await oauthClient.getUserInfo(removeNilProperties(params));
+    log.debug('getUserInfo:', userInfo);
 
     await accessTokenModel.create({
       accessToken: accessTokenResponse.accessToken,
       expirationTime: accessTokenResponse.expirationTime,
       refreshToken: accessTokenResponse.refreshToken,
       username: accessTokenResponse.username,
-      tokenInfo: userProfile,
+      tokenInfo: userInfo,
     });
 
     return res
