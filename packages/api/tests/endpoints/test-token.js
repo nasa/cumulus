@@ -10,7 +10,7 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
-} = require('@cumulus/earthdata-login-client');
+} = require('@cumulus/oauth-client');
 
 const assertions = require('../../lib/assertions');
 const {
