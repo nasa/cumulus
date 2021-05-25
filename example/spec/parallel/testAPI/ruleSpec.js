@@ -383,7 +383,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
-    await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn });
     await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name,
