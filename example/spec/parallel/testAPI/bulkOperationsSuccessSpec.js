@@ -142,6 +142,8 @@ describe('POST /granules/bulk', () => {
           { timeout: 15 }
         );
 
+        console.log(`Ingest Execution ARN is : ${firstIngestGranuleExecutionArn}`);
+
         // Wait for the execution to be completed
         await getExecutionWithStatus({
           prefix,
@@ -273,10 +275,19 @@ describe('POST /granules/bulk', () => {
         } catch (error) {
           throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
         }
+
+        await getGranuleWithStatus({
+          prefix,
+          granuleId: JSON.parse(getAsyncOperationBody.output)[0],
+          status: 'running',
+          timeout: 120,
+          updatedAt: ingestedGranule.updatedAt,
+        });
         expect(output).toEqual([granuleId]);
       }
     });
 
+    // xit comment: https://github.com/nasa/cumulus/pull/2146/files
     xit('starts a workflow with an execution message referencing the correct queue URL', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
