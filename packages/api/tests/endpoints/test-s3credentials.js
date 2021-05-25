@@ -33,7 +33,7 @@ test('s3credentials() with just a username sends the correct request to the Lamb
       t.is(parsedPayload.rolesession, 'my-user-name');
 
       return {
-        promise: async () => ({
+        promise: () => Promise.resolve({
           Payload: JSON.stringify({}),
         }),
       };
@@ -48,7 +48,6 @@ test('s3credentials() with just a username sends the correct request to the Lamb
   };
 
   const res = {
-    // eslint-disable-next-line lodash/prefer-noop
     send() {},
   };
 
@@ -70,7 +69,7 @@ test('s3credentials() with a username and a client name sends the correct reques
       t.is(parsedPayload.rolesession, 'my-user-name@my-client-name');
 
       return {
-        promise: async () => ({
+        promise: () => Promise.resolve({
           Payload: JSON.stringify({}),
         }),
       };
@@ -86,7 +85,6 @@ test('s3credentials() with a username and a client name sends the correct reques
   };
 
   const res = {
-    // eslint-disable-next-line lodash/prefer-noop
     send() {},
   };
 
@@ -134,7 +132,7 @@ test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with 
       );
 
       return {
-        promise: async () => undefined,
+        promise: () => Promise.resolve(),
       };
     },
   };

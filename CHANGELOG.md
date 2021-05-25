@@ -7,27 +7,68 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
-
 - **CUMULUS-2434**
-  - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-  
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
+    link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
-  reporting is now handled through Cloud Metrics
+    reporting is now handled through Cloud Metrics
+- **CUMULUS-2472**
+  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
+
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
+- **CUMULUS-2354**
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute
+    same-region read-only tokens based on a user's CMR ACLs.
+  - Configures the example deployment to enable this feature.
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 - **CUMULUS-2470**
   - Added `/s3credentials` endpoint for distribution API
 
 ### Changed
-
+- **CUMULUS-2517**
+  - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
-  - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add both HTTPS URLS and S3 URIs to CMR metadata.
-  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task configuration parameter `cmrGranuleUrlType` now has default value `both`.
-  - To use the updated `update-granules-cmr-metadata-file-links` task, the granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+  - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
+    both HTTPS URLS and S3 URIs to CMR metadata.
+  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
+    URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task
+    configuration parameter `cmrGranuleUrlType` now has default value `both`.
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
+    type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+- **CUMULUS-2472**
+  - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
+  - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
 
-## [v9.0.1] 2021-05-07
+
+### Fixed
+
+- **CUMULUS-2519**
+  - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
+- **CUMULUS-2518**
+  - Update sf-event-sqs-to-db-records to not throw if a collection is not
+    defined on a payload that has no granules/an empty granule payload object
+
+## [v9.0.1] 2021-05-07
 
 ### Migration Steps
 
@@ -77,6 +118,15 @@ correct a failure in our build script and push out corrected release artifacts. 
       accessible via the Core API.
 
 ### Added
+
+- **CUMULUS-2371**
+  - Added helpers to `@cumulus/ingest/sqs`:
+    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
+    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
@@ -396,8 +446,6 @@ correct a failure in our build script and push out corrected release artifacts. 
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
     endpoint will not dispense S3 credentials and instead return a message
     indicating that the endpoint has been disabled.
-- **CUMULUS-2355**
-  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
 - **CUMULUS-2397**
   - Updated `/elasticsearch` endpoint's `reindex` function to prevent
     reindexing when source and destination indices are the same.

@@ -23,6 +23,7 @@ const {
   getMessageGranules,
   getGranuleStatus,
   getGranuleQueryFields,
+  messageHasGranules,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -163,9 +164,9 @@ const _writeFiles = async ({
   fileRecords,
   knex,
   filePgModel = new FilePgModel(),
-}) => pMap(
+}) => await pMap(
   fileRecords,
-  async (fileRecord) => filePgModel.upsert(knex, fileRecord),
+  async (fileRecord) => await filePgModel.upsert(knex, fileRecord),
   { stopOnError: false }
 );
 
@@ -361,7 +362,7 @@ const _generateFilesFromGranule = async ({
   // `key`, which is required for the Postgres schema. And
   // `size` which is used to calculate the granule product
   // volume
-  return FileUtils.buildDatabaseFiles({
+  return await FileUtils.buildDatabaseFiles({
     s3: s3(),
     providerURL: buildURL(provider),
     files,
@@ -494,6 +495,10 @@ const writeGranules = async ({
   pdrCumulusId,
   granuleModel = new Granule(),
 }) => {
+  if (!messageHasGranules(cumulusMessage)) {
+    log.info('No granules to write, skipping writeGranules');
+    return undefined;
+  }
   if (!collectionCumulusId) {
     throw new Error('Collection reference is required for granules');
   }

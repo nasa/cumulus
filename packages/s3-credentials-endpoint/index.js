@@ -13,7 +13,7 @@ const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
-} = require('@cumulus/earthdata-login-client');
+} = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
 const { join: pathjoin } = require('path');
@@ -24,6 +24,7 @@ const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
+const { getUserAccessibleBuckets } = require('@cumulus/cmrjs');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -36,7 +37,7 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
@@ -267,7 +268,7 @@ distributionApp.use((err, req, res, _next) => {
 });
 
 const handler = async (event, context) =>
-  awsServerlessExpress.proxy(
+  await awsServerlessExpress.proxy(
     awsServerlessExpress.createServer(distributionApp),
     event,
     context,

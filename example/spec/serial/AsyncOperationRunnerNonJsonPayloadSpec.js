@@ -107,12 +107,12 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     }
   });
 
-  it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
+  it('updates the status field in DynamoDB to "TASK_FAILED"', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('TASK_FAILED');
   });
 
-  it('updates the output field in DynamoDB', async () => {
+  it('updates the output field in DynamoDB', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
@@ -121,5 +121,5 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     }
   });
 
-  afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
+  afterAll(async () => await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
 });

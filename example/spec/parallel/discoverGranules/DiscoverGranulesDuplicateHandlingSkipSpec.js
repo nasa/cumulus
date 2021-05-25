@@ -157,7 +157,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
     }
   });
 
-  it('queues one granule for ingest', async () => {
+  it('queues one granule for ingest', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(finishedDiscoverGranulesExecution.finalPayload.running.length).toEqual(1);
   });
