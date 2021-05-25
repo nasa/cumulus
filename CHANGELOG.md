@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
+  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 
 ### Changed
 - **CUMULUS-2517**
