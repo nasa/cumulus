@@ -273,7 +273,7 @@ export const backupGranule = async (params: {
     );
 
     log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
-    return await Promise.all(backupFiles.map((file) => makeBackupFileRequest({
+    return Promise.all(backupFiles.map((file) => makeBackupFileRequest({
       backupConfig,
       file,
       collectionId,
