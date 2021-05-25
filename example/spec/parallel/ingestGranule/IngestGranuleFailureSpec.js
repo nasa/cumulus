@@ -11,6 +11,7 @@ const {
   executionsApi: executionsApiTestUtils,
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   waitForModelStatus,
@@ -84,8 +85,8 @@ describe('The Ingest Granule failure workflow', () => {
         },
       ];
 
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+      // delete the granule record from DynamoDB and PG if exists
+      await deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
