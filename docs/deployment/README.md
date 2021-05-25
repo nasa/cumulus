@@ -164,6 +164,10 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 ```
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+ 
+### Lookup ECS-optimized AMI
+ 
+Lookup the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the Cumulus module terraformation.
 
 ### Set up EC2 key pair (optional)
 
