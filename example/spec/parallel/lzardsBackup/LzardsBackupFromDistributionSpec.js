@@ -12,7 +12,7 @@ const { putFile } = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
-describe('The Lzards Backup Task ', () => {
+describe('The Lzards Backup Task with distribution URL', () => {
   let beforeAllFailed = false;
   let collection;
   let FunctionName;
@@ -28,9 +28,9 @@ describe('The Lzards Backup Task ', () => {
       const config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
-      ingestPath = `${ingestBucket}/${prefix}/lzardsBackupSpec`;
-      await putFile(ingestBucket, `${prefix}/lzardsBackupSpec/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
-      await putFile(ingestBucket, `${prefix}/lzardsBackupSpec/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
+      ingestPath = `${ingestBucket}/${prefix}/lzardsBackupFromDistributionSpec`;
+      await putFile(ingestBucket, `${prefix}/lzardsBackupFromDistributionSpec/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
+      await putFile(ingestBucket, `${prefix}/lzardsBackupFromDistributionSpec/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
