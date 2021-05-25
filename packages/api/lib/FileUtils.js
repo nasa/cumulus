@@ -127,7 +127,7 @@ const cleanDatabaseFile = (file) =>
   ])(file);
 
 const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
-  Promise.all(
+  await Promise.all(
     files.map(partial(buildDatabaseFile, s3, providerURL))
   ).then((newFiles) => newFiles.map(cleanDatabaseFile));
 

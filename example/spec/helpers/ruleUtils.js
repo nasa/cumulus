@@ -9,7 +9,7 @@ const { listRules } = require('@cumulus/api-client/rules');
  *   Query params to use for search in rules listing
  * @returns {Promise}
  */
-const waitForRuleInList = async (stackName, ruleQueryParams) => pWaitFor(
+const waitForRuleInList = async (stackName, ruleQueryParams) => await pWaitFor(
   async () => {
     const resp = await listRules({
       prefix: stackName,

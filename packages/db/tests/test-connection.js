@@ -14,7 +14,7 @@ const fakeConnectionConfig = {
 const knexFakeError = new Error('Fake Knex Timeout Error');
 knexFakeError.name = 'KnexTimeoutError';
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.secretsManager = {
     getSecretValue: () => ({
       promise: () => Promise.resolve({
@@ -138,14 +138,14 @@ test.serial('queryHeartbeat retries and does not throw error when KnexTimeOutErr
     const knexRawStub = sinon.stub();
     knexRawStub.onCall(0).throws(knexFakeError);
     knexRawStub.onCall(1).returns(Promise.resolve());
-    await t.notThrowsAsync(async () => queryHeartbeat({ knex: { raw: knexRawStub } }));
+    await t.notThrowsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
   });
 
 test.serial('queryHeartbeat throws when non-KnexTimeOutError error is thrown',
   async (t) => {
     const knexRawStub = sinon.stub();
     knexRawStub.onCall(0).throws(new Error('some random error'));
-    await t.throwsAsync(async () => queryHeartbeat({ knex: { raw: knexRawStub } }));
+    await t.throwsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
   });
 
 test.serial('queryHeartbeat throws error when KnexTimeOutError is thrown repeatedly',
@@ -154,5 +154,5 @@ test.serial('queryHeartbeat throws error when KnexTimeOutError is thrown repeate
     knexRawStub.onCall(0).throws(knexFakeError);
     knexRawStub.onCall(1).throws(knexFakeError);
     knexRawStub.onCall(2).returns(Promise.resolve());
-    await t.throwsAsync(async () => queryHeartbeat({ knex: { raw: knexRawStub } }));
+    await t.throwsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
   });

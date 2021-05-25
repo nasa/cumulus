@@ -41,7 +41,7 @@ class AsyncOperation extends Manager {
   }
 
   async getAllAsyncOperations() {
-    return this.dynamoDbClient.scan({
+    return await this.dynamoDbClient.scan({
       names: {
         '#id': 'id',
       },

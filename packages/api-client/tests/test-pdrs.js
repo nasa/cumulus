@@ -3,7 +3,7 @@
 const test = require('ava');
 const pdrsApi = require('../pdrs');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.name = 'testPdr';
   t.context.testPdrReturn = { body: '{"some": "object"}' };
@@ -19,9 +19,9 @@ test('getPdr calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
-    return (t.context.testPdrReturn);
+    return Promise.resolve(t.context.testPdrReturn);
   };
 
   await t.notThrowsAsync(pdrsApi.getPdr({
@@ -43,7 +43,7 @@ test('getPdrs calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 

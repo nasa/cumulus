@@ -27,7 +27,7 @@ export const invoke = async (name: string, payload: unknown, type = 'Event') => 
 
   log.info(`Invoking ${name}`);
 
-  return lambda().invoke({
+  return await lambda().invoke({
     FunctionName: name,
     Payload: JSON.stringify(payload),
     InvocationType: type,

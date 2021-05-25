@@ -35,7 +35,7 @@ async function getKinesisEventMappings() {
     const mappingParms = { FunctionName: lambda };
     return awsServices.lambda().listEventSourceMappings(mappingParms).promise();
   });
-  return Promise.all(mappingPromises);
+  return await Promise.all(mappingPromises);
 }
 
 async function deleteKinesisEventSourceMappings() {
@@ -49,7 +49,7 @@ async function deleteKinesisEventSourceMappings() {
     eventMappings[1].EventSourceMappings
   );
 
-  return Promise.all(allEventMappings.map((e) =>
+  return await Promise.all(allEventMappings.map((e) =>
     awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
 }
 
@@ -74,7 +74,7 @@ test.before(async () => {
   ]);
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.onetimeRule = fakeRuleFactoryV2({
     name: randomString(),
     workflow,
