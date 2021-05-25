@@ -112,6 +112,8 @@ module.exports = {
     'unicorn/no-fn-reference-in-iterator': 'off',
     'spaced-comment': 'off',
     'require-yield': 'off',
+    'require-await': 'error',
+    'no-return-await': 'off',
     'prefer-template': 'warn',
     'no-underscore-dangle': 'off',
     'comma-dangle': [

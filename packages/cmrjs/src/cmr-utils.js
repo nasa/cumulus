@@ -64,7 +64,10 @@ function getFileDescription(file, urlType = 'distribution') {
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
+const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRFilename = (filename) => isECHO10File(filename)
+  || isUMMGFile(filename)
+  || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
@@ -197,10 +200,10 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
 
   // choose xml or json and do the things.
   if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
   if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
@@ -214,14 +217,14 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  * @param {string|undefined} [etag] - entity tag of the desired object (optional)
  * @returns {Promise} result of `AWS.S3.getObject()` as a Promise
  */
-function getObjectByFilename(filename, etag) {
+async function getObjectByFilename(filename, etag) {
   const { Bucket, Key } = parseS3Uri(filename);
 
   const params = etag
     ? { Bucket, Key, IfMatch: etag }
     : { Bucket, Key };
 
-  return waitForObject(s3(), params, { retries: 5 });
+  return await waitForObject(s3(), params, { retries: 5 });
 }
 
 /**
@@ -247,7 +250,7 @@ async function getXMLMetadataAsString(xmlFilePath, etag) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return promisify(xml2js.parseString)(xml, xmlParseOptions);
+  return await promisify(xml2js.parseString)(xml, xmlParseOptions);
 }
 
 /**
@@ -394,7 +397,7 @@ function generateFileUrl({
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
-async function constructOnlineAccessUrl({
+function constructOnlineAccessUrl({
   file,
   distEndpoint,
   bucketTypes,
@@ -433,7 +436,7 @@ async function constructOnlineAccessUrl({
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
  *    online access url objects
  */
-async function constructOnlineAccessUrls({
+function constructOnlineAccessUrls({
   files,
   distEndpoint,
   bucketTypes,
@@ -445,10 +448,10 @@ async function constructOnlineAccessUrls({
     throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
   }
 
-  const urlListPromises = files.map(async (file) => {
+  const urlListCalls = files.map((file) => {
     const urls = [];
     if (['both', 'distribution'].includes(cmrGranuleUrlType)) {
-      const url = await constructOnlineAccessUrl({
+      const url = constructOnlineAccessUrl({
         file,
         distEndpoint,
         bucketTypes,
@@ -459,7 +462,7 @@ async function constructOnlineAccessUrls({
       urls.push(url);
     }
     if (['both', 's3'].includes(cmrGranuleUrlType)) {
-      const url = await constructOnlineAccessUrl({
+      const url = constructOnlineAccessUrl({
         file,
         distEndpoint,
         bucketTypes,
@@ -471,7 +474,7 @@ async function constructOnlineAccessUrls({
     }
     return urls;
   });
-  const urlList = flatten(await Promise.all(urlListPromises));
+  const urlList = flatten(urlListCalls);
   return urlList.filter((urlObj) => urlObj);
 }
 
@@ -490,7 +493,7 @@ async function constructOnlineAccessUrls({
  * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
  *   an array of online access url objects
  */
-async function constructRelatedUrls({
+function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
@@ -501,7 +504,7 @@ async function constructRelatedUrls({
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
-  const cmrUrlObjects = await constructOnlineAccessUrls({
+  const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -651,7 +654,7 @@ async function updateUMMGMetadata({
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
   const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
 
-  const newURLs = await constructRelatedUrls({
+  const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -813,7 +816,7 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const newURLs = await constructOnlineAccessUrls({
+  const newURLs = constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -930,7 +933,7 @@ async function reconcileCMRMetadata({
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
-    return updateCMRMetadata({
+    return await updateCMRMetadata({
       granuleId,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
@@ -1021,6 +1024,27 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile.length === 0) return {};
 
   const cmrFilename = cmrFile[0].filename;
+
+  if (isISOFile(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
+    const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
+
+    // Get beginning and ending date time from beginPosition and endPosition
+    const identificationInfo = metadataMI['gmd:identificationInfo'];
+    const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
+    const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
+    const beginningDateTime = temporalInfo['gml:beginPosition'];
+    const endingDateTime = temporalInfo['gml:endPosition'];
+
+    // Get production date time from LE_ProcessStep
+    const productionDateTime = metadataMI['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
+
+    // Get last update date time from CI_Citation with UpdateTime
+    const citation = identificationInfo.find((dataIdObject) => dataIdObject['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
+    const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
+
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
   if (isECHO10File(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
@@ -1065,6 +1089,7 @@ module.exports = {
   isCMRFile,
   isCMRFilename,
   isECHO10File,
+  isISOFile,
   isUMMGFile,
   metadataObjectFromCMRFile,
   publish2CMR,

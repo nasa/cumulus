@@ -81,7 +81,7 @@ async function getGranuleIdsForPayload(payload) {
   return uniqueGranuleIds;
 }
 
-function applyWorkflowToGranules({
+async function applyWorkflowToGranules({
   granuleIds,
   workflowName,
   meta,
@@ -103,7 +103,7 @@ function applyWorkflowToGranules({
       return { granuleId, err: error };
     }
   });
-  return Promise.all(applyWorkflowRequests);
+  return await Promise.all(applyWorkflowRequests);
 }
 
 /**
@@ -229,13 +229,13 @@ async function bulkGranuleDelete(
 async function bulkGranule(payload) {
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
 }
 
 async function bulkGranuleReingest(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  return pMap(
+  return await pMap(
     granuleIds,
     async (granuleId) => {
       try {
@@ -267,13 +267,13 @@ async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
   if (event.type === 'BULK_GRANULE') {
-    return bulkGranule(event.payload);
+    return await bulkGranule(event.payload);
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
-    return bulkGranuleDelete(event.payload);
+    return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    return bulkGranuleReingest(event.payload);
+    return await bulkGranuleReingest(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);
