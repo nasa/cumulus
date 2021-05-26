@@ -71,7 +71,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     defined on a payload that has no granules/an empty granule payload object
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
-
+  -
+## [v9.0.1] 2021-05-07
 ### Migration Steps
 
 Please review the migration steps for 9.0.0 as this release is only a patch to
