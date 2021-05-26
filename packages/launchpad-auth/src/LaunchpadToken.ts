@@ -89,9 +89,9 @@ class LaunchpadToken {
     const options = {
       port: launchpadUrl.port || 443,
       prefixUrl: this.api,
+      pfx,
       https: {
         passphrase: this.passphrase,
-        pfx,
       },
     };
 
