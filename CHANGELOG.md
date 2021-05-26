@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
     added `remoteAltBucket`to allow for an override of the passed in provider
     bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
 
 ### Changed
 
