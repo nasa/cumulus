@@ -121,7 +121,7 @@ test('download() downloads a file', async (t) => {
   const { httpsProviderClient } = t.context;
   const localPath = path.join(tmpdir(), randomString());
   try {
-    await httpsProviderClient.download(publicFile, localPath);
+    await httpsProviderClient.download({ remotePath: publicFile, localPath });
     t.is(fs.existsSync(localPath), true);
   } finally {
     fs.unlinkSync(localPath);
@@ -178,7 +178,7 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
 
   const localPath = path.join(tmpdir(), randomString());
   try {
-    await httpsProviderClient.download(protectedFile, localPath);
+    await httpsProviderClient.download({ remotePath: protectedFile, localPath });
     t.is(fs.existsSync(localPath), true);
   } finally {
     fs.unlinkSync(localPath);
