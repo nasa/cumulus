@@ -120,7 +120,7 @@ async function handleLoginRequest(req, res) {
       accessToken: accessTokenResponse.accessToken,
       expirationTime: accessTokenResponse.expirationTime,
       refreshToken: accessTokenResponse.refreshToken,
-      username: accessTokenResponse.username,
+      username: accessTokenResponse.username || userInfo.username,
       tokenInfo: userInfo,
     });
 
