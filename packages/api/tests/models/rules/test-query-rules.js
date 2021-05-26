@@ -229,10 +229,10 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   // See https://github.com/localstack/localstack/issues/2016
   const stub = sinon.stub(awsServices, 'lambda').returns({
     addPermission: () => ({
-      promise: async () => true,
+      promise: () => Promise.resolve(true),
     }),
     removePermission: () => ({
-      promise: async () => true,
+      promise: () => Promise.resolve(true),
     }),
   });
 
@@ -277,10 +277,10 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   // See https://github.com/localstack/localstack/issues/2016
   const stub = sinon.stub(awsServices, 'lambda').returns({
     addPermission: () => ({
-      promise: async () => true,
+      promise: () => Promise.resolve(true),
     }),
     removePermission: () => ({
-      promise: async () => true,
+      promise: () => Promise.resolve(true),
     }),
   });
 

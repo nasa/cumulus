@@ -27,7 +27,6 @@ const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
@@ -79,7 +78,7 @@ async function waitForAsyncOperationStatus({
   },
 }) {
   let operation;
-  return pRetry(
+  return await pRetry(
     async () => {
       const response = await asyncOperationsApi.getAsyncOperation({
         prefix: stackName,
@@ -221,7 +220,7 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
     name: workflowMsg.cumulus_meta.execution_name,
   };
 
-  return sfn().startExecution(workflowParams).promise();
+  return await sfn().startExecution(workflowParams).promise();
 }
 
 /**
@@ -316,7 +315,7 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
  * @returns {Object} a collection
  */
 const loadCollection = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((collection) => buildCollection({ ...params, collection }));
 
 /**
@@ -425,7 +424,7 @@ const buildProvider = (params = {}) => {
  * @returns {Object} a provider
  */
 const loadProvider = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((provider) => buildProvider({ ...params, provider }));
 
 /**
@@ -529,7 +528,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   // Rules should be added in serial because, in the case of SNS and Kinesis rule types,
   // they may share an event source mapping and running them in parallel will cause a
   // race condition
-  return pMap(
+  return await pMap(
     rules,
     (rule) => {
       if (postfix) {
@@ -574,7 +573,7 @@ function addRules(config, dataDirectory, overrides) {
  */
 async function _deleteOneRule(name) {
   const rulesModel = new RulesModel();
-  return rulesModel.get({ name }).then((item) => rulesModel.delete(item));
+  return await rulesModel.get({ name }).then((item) => rulesModel.delete(item));
 }
 
 /**
@@ -656,18 +655,31 @@ async function buildWorkflow(
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
   if (collection) {
-    template.meta.collection = await collectionsApi.getCollection({
+    const collectionsApiResponse = await collectionsApi.getCollection({
       prefix: stackName,
       collectionName: collection.name,
       collectionVersion: collection.version,
     });
+    if (collectionsApiResponse.statusCode) {
+      throw new Error(`Collections API responded with error on buildWorkflow ${JSON.stringify(collectionsApiResponse)}`);
+    }
+    template.meta.collection = collectionsApiResponse;
   } else {
     template.meta.collection = {};
   }
 
   if (provider) {
-    const providersModel = new ProvidersModel();
-    template.meta.provider = await providersModel.get({ id: provider.id });
+    const providersApiResponse = await providersApi.getProvider(
+      {
+        prefix: stackName,
+        providerId: provider.id,
+      }
+    );
+    if (providersApiResponse.statusCode !== 200) {
+      throw new Error(`Providers API responded with error on buildWorkflow ${JSON.stringify(providersApiResponse)}`);
+    }
+    template.meta.provider = JSON.parse(providersApiResponse.body);
+    template.meta.provider.password = provider.password;
   } else {
     template.meta.provider = {};
   }

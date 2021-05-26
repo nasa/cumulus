@@ -8,9 +8,9 @@
  * @param {Object} options - options passed from the main runner
  * @returns {Promise<string>} test message
  */
-async function run(options) {
+function run(options) {
   console.log('this is an example migration');
-  return options;
+  return Promise.resolve(options);
 }
 
 module.exports.name = 'migration_0';
