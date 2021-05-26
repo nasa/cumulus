@@ -29,6 +29,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 ## [v8.1.0] 2021-04-29
 
 ### Added
+
 - **CUMULUS-2348**
   - The `@cumulus/api` `/granules` and `/granules/{granuleId}` endpoints now take `getRecoveryStatus` parameter
   to include recoveryStatus in result granule(s)
@@ -38,6 +39,17 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 - **CUMULUS-2469**
   - Added `tf-modules/cumulus_distribution` module to standup a skeleton
     distribution api
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+
+### Changed
+
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
 
 ## [v8.0.0] 2021-04-08
 
