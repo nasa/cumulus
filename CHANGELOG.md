@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
+
+### Changed
+
+- Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
+  per https://github.com/nasa/cumulus/pull/2216
+
 ## [v8.1.0] 2021-04-29
 
 ### Added
@@ -16,7 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 - **CUMULUS-2469**
-  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton
+    distribution api
 
 ## [v8.0.0] 2021-04-08
 
