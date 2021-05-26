@@ -10,6 +10,7 @@ locals {
       OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
       OAUTH_HOST_URL        = var.oauth_host_url
       OAUTH_PROVIDER        = var.oauth_provider
+      public_buckets        = join(",", var.public_buckets)
       stackName             = var.prefix
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]

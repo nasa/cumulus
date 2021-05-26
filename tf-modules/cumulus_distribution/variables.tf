@@ -54,6 +54,18 @@ variable "permissions_boundary_arn" {
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
 }
 
+variable "protected_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of protected buckets"
+}
+
+variable "public_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of public buckets"
+}
+
 variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
