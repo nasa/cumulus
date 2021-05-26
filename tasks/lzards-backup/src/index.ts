@@ -145,22 +145,28 @@ export const postRequestToLzards = async (params: {
 
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
-  return await got.post(lzardsApiUrl,
-    {
-      json: {
-        provider,
-        objectUrl: accessUrl,
-        metadata: {
-          filename: file.filename,
-          collection,
-          granuleId,
+  try {
+    return await got.post(lzardsApiUrl,
+      {
+        json: {
+          provider,
+          objectUrl: accessUrl,
+          metadata: {
+            filename: file.filename,
+            collection,
+            granuleId,
+          },
+          ...checksumConfig,
         },
-        ...checksumConfig,
-      },
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+  } catch (error) {
+    console.log('caught error:', error);
+    console.log('error response:', JSON.stringify(error.response));
+    throw error;
+  }
 };
 
 export const makeBackupFileRequest = async (params: {
@@ -207,7 +213,7 @@ export const makeBackupFileRequest = async (params: {
     }
     return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
   } catch (error) {
-    log.error(`${granuleId}: LZARDS request failed: ${error}, response: ${JSON.stringify(error.response)}`);
+    log.error(`${granuleId}: LZARDS request failed: ${error}, response: ${error.response}`);
     return {
       granuleId,
       filename: file.filename,
