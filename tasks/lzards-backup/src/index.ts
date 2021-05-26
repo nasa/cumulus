@@ -164,7 +164,8 @@ export const postRequestToLzards = async (params: {
       });
   } catch (error) {
     console.log('caught error:', error);
-    console.log('error response:', JSON.stringify(error.response));
+    console.log('erroring request:', JSON.stringify(error.options));
+    console.log('error response:', JSON.stringify(error.response.body));
     throw error;
   }
 };
@@ -213,7 +214,7 @@ export const makeBackupFileRequest = async (params: {
     }
     return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
   } catch (error) {
-    log.error(`${granuleId}: LZARDS request failed: ${error}, response: ${error.response}`);
+    log.error(`${granuleId}: LZARDS request failed: ${error}, response: ${error.response.body}`);
     return {
       granuleId,
       filename: file.filename,
