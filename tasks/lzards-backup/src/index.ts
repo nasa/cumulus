@@ -164,8 +164,8 @@ export const postRequestToLzards = async (params: {
       });
   } catch (error) {
     console.log('caught error:', error);
-    console.log('erroring request:', JSON.stringify(error.options));
-    console.log('error response:', JSON.stringify(error.response.body));
+    if (error.options) console.log('erroring request:', JSON.stringify(error.options));
+    if (error.response) console.log('error response:', JSON.stringify(error.response.body));
     throw error;
   }
 };
