@@ -23,11 +23,6 @@ variable "oauth_host_url" {
   description = "oauth_host_url"
 }
 
-variable "token_secret" {
-  description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the API. Should be a 32-character string for security"
-  type        = string
-}
-
 # Optional
 
 variable "api_url" {

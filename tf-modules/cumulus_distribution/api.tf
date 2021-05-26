@@ -11,7 +11,6 @@ locals {
       OAUTH_HOST_URL        = var.oauth_host_url
       OAUTH_PROVIDER        = var.oauth_provider
       stackName             = var.prefix
-      TOKEN_SECRET          = var.token_secret
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }
