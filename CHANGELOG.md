@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [v8.1.1] 2021-04-30 -- Patch Release
+
+**Please note** changes in 8.1.1 may not yet be released in future versions, as this
+is a backport/patch release on the 8.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ### Fixed
 
@@ -19,8 +28,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
-  per https://github.com/nasa/cumulus/pull/2216
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
+
+- **[2216](https://github.com/nasa/cumulus/issues/2216)**
+  - Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
 
 ## [v8.1.0] 2021-04-29
 
@@ -35,17 +51,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2469**
   - Added `tf-modules/cumulus_distribution` module to standup a skeleton
     distribution api
-- **CUMULUS-2497**
-  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
-
-### Changed
-
-- **CUMULUS-2497**
-  - Changed the `@cumulus/cmrjs` package:
-    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
-      returns temporal info for CMR ISO 19115 SMAP XML files.
-    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
-      `isISOFile()`.
 
 ## [v8.0.0] 2021-04-08
 
@@ -705,6 +710,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - `@cumulus/message/Queue.getQueueNameByUrl`
 
 ## v2.0.2+ Backport releases
+
 
 Release v2.0.1 was the last release on the 2.0.x release series.
 
@@ -3999,8 +4005,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
-[v8.0.1]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.1...HEAD
+[v8.1.1]: https://github.com/nasa/cumulus/compare/v8.1.0...8.1.1
+[v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
