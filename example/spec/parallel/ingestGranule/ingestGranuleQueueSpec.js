@@ -221,6 +221,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -230,10 +234,6 @@ describe('The S3 Ingest Granules workflow', () => {
       }),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecutionArn }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
       pdrModel.delete({
         pdrName: inputPayload.pdr.name,
       }),

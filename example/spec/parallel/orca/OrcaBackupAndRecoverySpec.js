@@ -129,6 +129,10 @@ describe('The S3 Ingest Granules workflow', () => {
     if (!isOrcaIncluded) return;
 
     // clean up stack state added by test
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -137,10 +141,6 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: config.stackName, providerId: get(provider, 'id') }),
-      removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 

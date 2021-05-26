@@ -205,6 +205,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -217,10 +221,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         provider: { id: provider.id },
       }),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
