@@ -63,8 +63,8 @@ describe('The Lzards Backup Task with distribution URL', () => {
             TargetPath: '$.payload',
           },
           task_config: {
-            urlType: 'distribution',
-            distributionEndpoint: 'https://fake-endpoint.com/data',
+            urlType: 'cloudfront',
+            cloudfrontEndpoint: 'http://d111111abcdef8.cloudfront.net/',
             cumulus_message: {
               outputs: [
                 {

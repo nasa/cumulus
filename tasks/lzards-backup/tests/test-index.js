@@ -482,17 +482,17 @@ test('generateDirectS3Url generates a signed URL using passed credentials', asyn
   t.regex(actual, /X-Amz-Credential=FAKEId/);
 });
 
-test('generateDistributionUrl generates a URL with the distribution endpoint and obeying the bucket map', async (t) => {
+test('generateCloudfrontUrl generates a URL with the cloudfront endpoint and obeying the bucket map', async (t) => {
   const Bucket = 'foo';
   const Key = 'test';
-  const distributionEndpoint = 'https://nasa.gov/distro';
+  const cloudfrontEndpoint = 'http://d111111abcdef8.cloudfront.net/';
   t.is(
-    await index.generateDistributionUrl({
+    await index.generateCloudfrontUrl({
       Bucket,
       Key,
-      distributionEndpoint,
+      cloudfrontEndpoint,
     }),
-    `${distributionEndpoint}/${fakeBucketMap[Bucket]}/${Key}`
+    'http://d111111abcdef8.cloudfront.net/bar/test'
   );
 });
 
@@ -503,7 +503,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
     urlConfig: {
       roleCreds: {},
       urlType: 's3',
-      distributionEndpoint: 'irrelevant',
+      cloudfrontEndpoint: 'irrelevant',
     },
   };
 
@@ -511,10 +511,10 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
   await index.generateAccessUrl(params);
   t.true(index.generateDirectS3Url.calledOnce);
 
-  params.urlConfig.urlType = 'distribution';
-  sandbox.stub(index, 'generateDistributionUrl');
+  params.urlConfig.urlType = 'cloudfront';
+  sandbox.stub(index, 'generateCloudfrontUrl');
   await index.generateAccessUrl(params);
-  t.true(index.generateDistributionUrl.calledOnce);
+  t.true(index.generateCloudfrontUrl.calledOnce);
 });
 
 test.serial('backupGranulesToLzards returns the expected payload', async (t) => {

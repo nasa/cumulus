@@ -4,8 +4,8 @@ export interface HandlerInput {
 }
 
 export interface HandlerConfig {
-  urlType: 's3' | 'distribution',
-  distributionEndpoint: string,
+  urlType: 's3' | 'cloudfront',
+  cloudfrontEndpoint: string,
 }
 
 export interface HandlerEvent {

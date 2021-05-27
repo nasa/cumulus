@@ -1,8 +1,5 @@
 'use strict';
 
-import isNil from 'lodash/isNil';
-import urljoin from 'url-join';
-
 import { InvalidArgument, MissingBucketMap, MissingRequiredEnvVarError } from '@cumulus/errors';
 import { getJsonS3Object } from '@cumulus/aws-client/S3';
 
@@ -29,15 +26,14 @@ export function constructDistributionUrl(
   fileBucket: string,
   fileKey: string,
   distributionBucketMap: DistributionBucketMap,
-  distEndpoint?: string
+  distributionEndpoint?: string
 ): string {
-  if (isNil(distEndpoint)) {
-    throw new InvalidArgument(`Cannot construct distribution url: distEndpoint is ${distEndpoint}`);
+  if (!distributionEndpoint) {
+    throw new InvalidArgument(`Cannot construct distribution url with host ${distributionEndpoint}`);
   }
   const bucketPath = distributionBucketMap[fileBucket];
-  if (isNil(bucketPath)) {
+  if (!bucketPath) {
     throw new MissingBucketMap(`No distribution bucket mapping exists for ${fileBucket}`);
   }
-  const urlPath = urljoin(bucketPath, fileKey);
-  return urljoin(distEndpoint, urlPath);
+  return new URL(`${bucketPath}/${fileKey}`, distributionEndpoint).href;
 }

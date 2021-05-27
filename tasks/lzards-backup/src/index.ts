@@ -34,17 +34,17 @@ const log = new Logger({ sender: '@cumulus/lzards-backup' });
 const CREDS_EXPIRY_SECONDS = 1000;
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 
-export const generateDistributionUrl = async (params: {
+export const generateCloudfrontUrl = async (params: {
   Bucket: string,
   Key: string,
-  distributionEndpoint?: string,
+  cloudfrontEndpoint?: string,
 }) => {
   const distributionBucketMap = await fetchDistributionBucketMap();
   return constructDistributionUrl(
     params.Bucket,
     params.Key,
     distributionBucketMap,
-    (params.distributionEndpoint || '')
+    (params.cloudfrontEndpoint || '')
   );
 };
 
@@ -86,7 +86,7 @@ export const generateAccessUrl = async (params: {
   urlConfig: {
     roleCreds: AWS.STS.AssumeRoleResponse,
     urlType?: string,
-    distributionEndpoint?: string,
+    cloudfrontEndpoint?: string,
   },
 }) => {
   const {
@@ -95,14 +95,14 @@ export const generateAccessUrl = async (params: {
     urlConfig: {
       roleCreds,
       urlType,
-      distributionEndpoint,
+      cloudfrontEndpoint,
     },
   } = params;
 
   try {
     switch ((urlType || 's3')) {
       case 's3': return await generateDirectS3Url({ roleCreds, Bucket, Key });
-      case 'distribution': return await generateDistributionUrl({ Bucket, Key, distributionEndpoint });
+      case 'cloudfront': return await generateCloudfrontUrl({ Bucket, Key, cloudfrontEndpoint });
       default: throw new InvalidUrlTypeError(`${urlType} is not a recognized type for access URL generation`);
     }
   } catch (error) {
@@ -175,7 +175,7 @@ export const makeBackupFileRequest = async (params: {
     roleCreds: AWS.STS.AssumeRoleResponse,
     authToken: string,
     urlType: string,
-    distributionEndpoint?: string,
+    cloudfrontEndpoint?: string,
   },
   collectionId: string,
   file: MessageGranuleFilesObject,
@@ -264,7 +264,7 @@ export const backupGranule = async (params: {
     roleCreds: AWS.STS.AssumeRoleResponse,
     authToken: string,
     urlType: string,
-    distributionEndpoint?: string,
+    cloudfrontEndpoint?: string,
   },
 }) => {
   const { granule, backupConfig } = params;

@@ -4,13 +4,13 @@
   "type": "object",
   "properties": {
     "urlType": {
-      "description": "The type of access URL to pass to LZARDS: S3 direct access OR distribution",
+      "description": "The type of access URL to pass to LZARDS: S3 direct access OR cloudfront",
       "type": "string",
       "default": "s3",
-      "enum": ["s3", "distribution"]
+      "enum": ["s3", "cloudfront"]
     },
-    "distributionEndpoint": {
-      "description": "Distribution endpoint URL/host. Required if urlType is distribution",
+    "cloudfrontEndpoint": {
+      "description": "cloudfront endpoint URL/host. Required if urlType is cloudfront",
       "type": "string"
     }
   }

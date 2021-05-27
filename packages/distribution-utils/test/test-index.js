@@ -21,7 +21,7 @@ test.before(async (t) => {
 
   t.context.fileBucket = 'abcd1234';
   t.context.fileKey = 'coll123/granABC';
-  t.context.distEndpoint = 'https://cumulus-distribution.nasa.gov/';
+  t.context.distEndpoint = 'http://d111111abcdef8.cloudfront.net/';
   t.context.bucketMap = {
     abcd1234: 'prod1A2B',
   };
@@ -52,7 +52,19 @@ test('constructDistributionUrl returns distribution URL', (t) => {
   } = t.context;
   t.is(
     constructDistributionUrl(fileBucket, fileKey, bucketMap, distEndpoint),
-    'https://cumulus-distribution.nasa.gov/prod1A2B/coll123/granABC'
+    'http://d111111abcdef8.cloudfront.net/prod1A2B/coll123/granABC'
+  );
+});
+
+test('constructDistributionUrl correctly handles variation in distributionEndpoint formatting', (t) => {
+  const {
+    fileBucket,
+    fileKey,
+    bucketMap,
+  } = t.context;
+  t.is(
+    constructDistributionUrl(fileBucket, fileKey, bucketMap, 'http://d111111abcdef8.cloudfront.net'),
+    'http://d111111abcdef8.cloudfront.net/prod1A2B/coll123/granABC'
   );
 });
 
