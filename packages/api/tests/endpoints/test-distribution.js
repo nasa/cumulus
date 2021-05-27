@@ -20,6 +20,7 @@ process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
+process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
 
@@ -79,7 +80,7 @@ test.before(async () => {
       throw new Error(`Unexpected operation: ${operation}`);
     }
 
-    if (params.Bucket !== fileBucket) {
+    if (params.Bucket !== fileBucket && params.Bucket !== process.env.public_buckets) {
       throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
     }
 
@@ -182,6 +183,22 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+});
+
+test('A request for a public file without an access token returns a redirect to S3', async (t) => {
+  const { fileKey, signedFileUrl } = context;
+  const response = await request(distributionApp)
+    .get(`/${process.env.public_buckets}/${fileKey}`)
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  t.is(response.status, 307);
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
 });
 
 test('A /login request with a good authorization code returns a correct response', async (t) => {
