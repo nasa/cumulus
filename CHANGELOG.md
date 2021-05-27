@@ -29,13 +29,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
+- **CUMULUS-2473**
+  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
+
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
-  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 
 ### Changed
 
