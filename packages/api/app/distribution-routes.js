@@ -102,8 +102,6 @@ const s3Credentials = (req, res) => res.status(501).end();
 
 const s3CredentialsREADME = (req, res) => res.status(501).end();
 
-const version = (req, res) => res.status(501).end();
-
 router.get('/', handleRootRequest);
 router.get('/locate', locate);
 router.get('/login', handleLoginRequest);
