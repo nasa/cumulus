@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/export
 export * as cumulusApiClient from './cumulusApiClient';
 export * as asyncOperations from './asyncOperations';
+export * as elasticsearch from './elasticsearch';
 export * as granules from './granules';
 // eslint-disable-next-line import/export
 export { invokeApi } from './cumulusApiClient';
