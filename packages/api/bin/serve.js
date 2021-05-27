@@ -5,6 +5,7 @@ const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
@@ -231,6 +232,11 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   process.env.API_BASE_URL = `http://localhost:${port}`;
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomId('tokensecret');
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+  };
 
   if (inTestMode()) {
     // set env variables

@@ -11,6 +11,8 @@ const {
 const { isAccessTokenExpired } = require('../lib/token');
 const { getConfigurations } = require('../lib/distribution');
 
+const version = require('../endpoints/version');
+
 /**
  * Helper function to pull bucket out of a path string.
  * Will ignore leading slash.
@@ -110,7 +112,8 @@ router.get('/profile', profile);
 router.get('/pubkey', pubkey);
 router.get('/s3Credentials', s3Credentials);
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
-router.get('/version', version);
+// Use router.use to leverage custom version middleware
+router.use('/version', version);
 
 // HEAD /*
 // GET /* <- Actual presigned URL
