@@ -62,7 +62,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
 
-
 ### Fixed
 
 - **CUMULUS-2519**
@@ -70,8 +69,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2518**
   - Update sf-event-sqs-to-db-records to not throw if a collection is not
     defined on a payload that has no granules/an empty granule payload object
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
 
-## [v9.0.1] 2021-05-07
+## [v9.0.1] 2021-05-07
 
 ### Migration Steps
 
