@@ -89,6 +89,7 @@ describe('Ingesting from PDR', () => {
   let addedCollection;
   let nodeName;
   let nodeNameProviderId;
+  let testDataGranuleId;
   const ingestTime = Date.now() - 1000 * 30;
 
   beforeAll(async () => {
@@ -130,6 +131,8 @@ describe('Ingesting from PDR', () => {
 
       await waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime });
 
+      testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
         updateAndUploadTestDataToBucket(
@@ -169,6 +172,10 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: testDataGranuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -264,7 +271,6 @@ describe('Ingesting from PDR', () => {
       let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
-      const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(() => {
