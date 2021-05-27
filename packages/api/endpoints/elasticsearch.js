@@ -19,7 +19,7 @@ function timestampedIndexName() {
   return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-async function createEsSnapshot(req, res) {
+function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****

@@ -22,7 +22,7 @@ function setDistributionApiEnvVars() {
  * @param {string} status - status to wait for
  */
 async function waitForModelStatus(model, params, status) {
-  return pRetry(
+  return await pRetry(
     async () => {
       const record = await model.get(params);
 

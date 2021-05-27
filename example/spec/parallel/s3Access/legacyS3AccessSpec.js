@@ -47,15 +47,15 @@ async function invokeTestLambda(stackName, region, testBucketName, testFileKey, 
 }
 
 async function canGetObject(stackName, region, testBucketName, testFileKey, credentials) {
-  return invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'get-object');
+  return await invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'get-object');
 }
 
 async function canWriteObject(stackName, region, testBucketName, testFileKey, credentials) {
-  return invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'write-object');
+  return await invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'write-object');
 }
 
 async function canListObjects(stackName, region, testBucketName, testFileKey, credentials) {
-  return invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'list-objects');
+  return await invokeTestLambda(stackName, region, testBucketName, testFileKey, credentials, 'list-objects');
 }
 
 xdescribe('When accessing an S3 bucket directly', () => {

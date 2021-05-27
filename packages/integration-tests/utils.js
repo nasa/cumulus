@@ -31,7 +31,7 @@ const readJsonFilesFromDir = async (sourceDir) => {
   const allFiles = await fs.readdir(sourceDir);
   const jsonFiles = allFiles.filter((f) => f.endsWith('.json'));
   const absoluteFiles = jsonFiles.map((f) => path.join(sourceDir, f));
-  return Promise.all(absoluteFiles.map(readJsonFile));
+  return await Promise.all(absoluteFiles.map(readJsonFile));
 };
 
 /**

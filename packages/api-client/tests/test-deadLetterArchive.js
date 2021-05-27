@@ -18,7 +18,7 @@ test('postRecoverCumulusMessages call the callback with the expected object when
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({
@@ -45,7 +45,7 @@ test('postRecoverCumulusMessages calls the callback with the expected object', a
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({

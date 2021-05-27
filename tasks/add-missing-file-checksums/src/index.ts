@@ -32,7 +32,7 @@ const calculateGranuleFileChecksum = async (params: {
 
   const { bucket, key } = parseS3Uri(granuleFile.filename);
 
-  return S3.calculateObjectHash({ s3, algorithm, bucket, key });
+  return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
 };
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
@@ -118,4 +118,4 @@ export const handler = async (event: HandlerEvent) => {
 export const cmaHandler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
-) => runCumulusTask(handler, event, context);
+) => await runCumulusTask(handler, event, context);

@@ -10,7 +10,7 @@ test.beforeEach(() => {
 });
 
 test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
-  const fakeEncryptFunction = async () => 'fakeEncryptedString';
+  const fakeEncryptFunction = () => Promise.resolve('fakeEncryptedString');
   const cumulusProviderObject = {
     id: 'testId',
     globalConnectionLimit: 1,

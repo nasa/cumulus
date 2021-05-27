@@ -8,7 +8,7 @@ const esSearch = rewire('../search');
 const { Search } = esSearch;
 
 const localEsHost = process.env.LOCAL_ES_HOST;
-test.before (() => {
+test.before(() => {
   const awsMock = {
     config: {
       credentials: {
