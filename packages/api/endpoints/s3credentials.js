@@ -1,6 +1,7 @@
 'use strict';
 
 const awsServices = require('@cumulus/aws-client/services');
+const { getUserAccessibleBuckets } = require('@cumulus/cmrjs');
 const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: 's3credentials' });
 

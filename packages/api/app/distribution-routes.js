@@ -115,7 +115,7 @@ router.get('/logout', logout);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
 router.get('/redirect', handleRedirectRequest);
-router.get('/s3Credentials', handleCredentialRequest);
+router.get('/s3Credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
 // TODO Add ensureAuthorized for Cognito before the handleCredentialRequest ?
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
 router.get('/version', version);

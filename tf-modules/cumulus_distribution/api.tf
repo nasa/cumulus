@@ -3,8 +3,20 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
-      API_BASE_URL          = local.api_uri
-      stackName             = var.prefix
+      AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
+      API_BASE_URL                   = local.api_uri
+      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
+      CMR_ENVIRONMENT                = var.cmr_environment
+      DISTRIBUTION_ENDPOINT          = local.api_uri
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${local.api_uri}redirect"
+      EARTHDATA_BASE_URL             = var.urs_url
+      EARTHDATA_CLIENT_ID            = var.urs_client_id
+      EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
+      stackName                      = var.prefix
+      STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
+      STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
+      cmr_provider                   = var.cmr_provider
+      public_buckets                 = join(",", var.public_buckets)
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }

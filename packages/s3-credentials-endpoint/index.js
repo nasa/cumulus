@@ -30,7 +30,6 @@ const {
   fetchPolicyForUser,
   configuredForACLCredentials
 } = require('@cumulus/api/endpoints/s3credentials');
-const { getUserAccessibleBuckets } = require('@cumulus/cmrjs');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
