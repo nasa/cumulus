@@ -12,7 +12,7 @@ module "cumulus_distribution" {
   cmr_environment           = var.cmr_environment
   cmr_provider              = var.cmr_provider
   permissions_boundary_arn  = var.permissions_boundary_arn
-  public_buckets            = join(",", var.public_buckets)
+  public_buckets            = local.public_bucket_names
   urs_url                   = var.urs_url
   urs_client_id             = var.urs_client_id
   urs_client_password       = var.urs_client_password
