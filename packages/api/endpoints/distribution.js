@@ -11,7 +11,7 @@ const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { checkLoginQueryErrors, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { buildErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -95,7 +95,7 @@ async function handleLoginRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   log.debug('the query params:', req.query);
-  const templateVars = checkLoginQueryErrors(req.query);
+  const templateVars = buildErrorTemplateVars(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);

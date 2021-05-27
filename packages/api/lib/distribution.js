@@ -59,7 +59,7 @@ async function getConfigurations() {
  * @param {Object} query - request query parameters
  * @returns {Object} template variables for building response html, empty if no errors
  */
-function checkLoginQueryErrors(query) {
+function buildErrorTemplateVars(query) {
   let templateVars = {};
   if (isEmpty(query)) {
     templateVars = {
@@ -84,7 +84,7 @@ function checkLoginQueryErrors(query) {
 }
 
 module.exports = {
-  checkLoginQueryErrors,
+  buildErrorTemplateVars,
   getConfigurations,
   useSecureCookies,
 };
