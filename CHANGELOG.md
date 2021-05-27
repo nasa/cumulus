@@ -34,8 +34,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Changed
+
+- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
+
+- **CUMULUS-2489**
+  - Updated docs for Terraform references in FAQs, glossary, and in Deployment sections
+
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
     both HTTPS URLS and S3 URIs to CMR metadata.
