@@ -23,7 +23,7 @@ const granuleFactory = (number = 1, opts, granuleParams = {}) =>
 
 const loadGranules = async (granules, t) => {
   const loadGranule = async (granule) =>
-    indexer.indexGranule(t.context.esClient, granule, t.context.esAlias);
+    await indexer.indexGranule(t.context.esClient, granule, t.context.esAlias);
   await pEachSeries(granules, loadGranule);
 };
 
