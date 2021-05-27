@@ -12,7 +12,7 @@ variable "cmr_client_id" {
 }
 
 variable "cmr_environment" {
-  description = "Environment that should be used for CMR requests (e.g. 'UAT', 'SIT')"
+  description = "Environment that should be used for CMR requests ('UAT', 'SIT', or 'PROD')"
   type        = string
 }
 
