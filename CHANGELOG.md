@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 - **CUMULUS-2473**
+  - Updated `tf-modules/cumulus_distribution` module to take earthdata or cognito credentials
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 
 - **CUMULUS-2474**
