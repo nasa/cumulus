@@ -26,9 +26,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+- **CUMULUS-2442**
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
-
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
