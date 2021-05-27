@@ -35,7 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
+- **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
+  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 
@@ -69,6 +70,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2518**
   - Update sf-event-sqs-to-db-records to not throw if a collection is not
     defined on a payload that has no granules/an empty granule payload object
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
 
@@ -363,7 +372,8 @@ correct a failure in our build script and push out corrected release artifacts. 
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 - **CUMULUS-2469**
-  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton
+    distribution api
 
 ## [v8.0.0] 2021-04-08
 
