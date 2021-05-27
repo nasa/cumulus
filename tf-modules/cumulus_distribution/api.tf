@@ -147,7 +147,8 @@ resource "aws_api_gateway_integration" "root_proxy" {
 }
 
 resource "aws_api_gateway_deployment" "api" {
-  depends_on = [aws_api_gateway_integration.root_proxy, aws_api_gateway_integration.any_proxy]
-  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
-  stage_name  = var.api_gateway_stage
+  depends_on        = [aws_api_gateway_integration.root_proxy, aws_api_gateway_integration.any_proxy]
+  rest_api_id       = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  stage_description = md5(file("${path.module}/api.tf"))
+  stage_name        = var.api_gateway_stage
 }
