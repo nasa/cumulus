@@ -45,19 +45,19 @@ async function nukeStream(streamName) {
       const delay = randomInterval();
       console.log(`Limit exceeded...waiting ${delay / 1000} seconds and retrying to delete ${streamName}`);
       await new Promise((resolve) => setTimeout(resolve, delay));
-      return nukeStream(streamName);
+      return await nukeStream(streamName);
     }
     throw error;
   }
 }
 
-function nukeStreams(listStreams) {
+async function nukeStreams(listStreams) {
   console.log(`deleting ${listStreams.length} streams...`);
-  return Promise.all(listStreams.map((s) => nukeStream(s)));
+  return await Promise.all(listStreams.map((s) => nukeStream(s)));
 }
 
 async function runReaper() {
-  return getStreams()
+  return await getStreams()
     .then(filterOld)
     .then(nukeStreams);
 }

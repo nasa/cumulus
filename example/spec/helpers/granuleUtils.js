@@ -74,9 +74,9 @@ const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
  * @param {string} newGranuleId - new granule id
  * @returns {Promise<Array>} - AWS S3 copyObject responses
  */
-function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
-  const copyFile = (file) =>
-    s3().copyObject({
+async function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
+  const copyFile = async (file) =>
+    await s3().copyObject({
       Bucket: bucket,
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`,
@@ -86,7 +86,7 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
         throw error;
       });
 
-  return Promise.all(granuleFiles.map(copyFile));
+  return await Promise.all(granuleFiles.map(copyFile));
 }
 
 /**
@@ -167,7 +167,7 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   ])(fileContents);
 };
 
-const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIsIncluded = true, additionalQueryParams = {}) => pWaitFor(
+const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIsIncluded = true, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     const resp = await listGranules({
       prefix: stackName,
@@ -187,20 +187,20 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
 );
 
 const waitForGranuleRecordNotInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, false, additionalQueryParams);
+  await waitForGranuleRecordInOrNotInList(stackName, granuleId, false, additionalQueryParams);
 
-const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => await Promise.all(
   granuleIds.map((id) => waitForGranuleRecordNotInList(stackName, id, additionalQueryParams))
 );
 
 const waitForGranuleRecordInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, true, additionalQueryParams);
+  await waitForGranuleRecordInOrNotInList(stackName, granuleId, true, additionalQueryParams);
 
-const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => await Promise.all(
   granuleIds.map((id) => waitForGranuleRecordInList(stackName, id, additionalQueryParams))
 );
 
-const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => pWaitFor(
+const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     const fieldsIgnored = ['timestamp', 'updatedAt'];
     const resp = await listGranules({

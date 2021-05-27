@@ -195,7 +195,7 @@ export const getDynamoTableEntries = async (params: {
     dynamoRulesModel,
     dynamoAsyncOperationsModel,
   } = params;
-  return Promise.all([
+  return await Promise.all([
     dynamoCollectionModel.getAllCollections(),
     dynamoProvidersModel.getAllProviders(),
     dynamoRulesModel.getAllRules(),

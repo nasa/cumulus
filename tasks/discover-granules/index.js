@@ -301,7 +301,7 @@ const discoverGranules = async ({ config }) => {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-const handler = async (event, context) => runCumulusTask(discoverGranules, event, context);
+const handler = async (event, context) => await runCumulusTask(discoverGranules, event, context);
 
 module.exports = {
   checkGranuleHasNoDuplicate, // exported to support testing

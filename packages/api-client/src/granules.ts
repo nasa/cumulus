@@ -27,7 +27,7 @@ export const getGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -90,7 +90,7 @@ export const waitForGranule = async (params: {
     },
     {
       retries,
-      onFailedAttempt: async (e) => {
+      onFailedAttempt: (e) => {
         logger.error(e.message);
       },
       ...pRetryOptions,
@@ -118,7 +118,7 @@ export const reingestGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -152,7 +152,7 @@ export const removeFromCMR = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -195,7 +195,7 @@ export const applyWorkflow = async (params: {
     callback = invokeApi,
   } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -229,7 +229,7 @@ export const deleteGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -266,7 +266,7 @@ export const moveGranule = async (params: {
     callback = invokeApi,
   } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PUT',
@@ -325,7 +325,7 @@ export const listGranules = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -354,7 +354,7 @@ export const bulkGranules = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
@@ -386,7 +386,7 @@ export const bulkDeleteGranules = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
@@ -407,7 +407,7 @@ export const bulkReingestGranules = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',
@@ -442,7 +442,7 @@ export const bulkOperation = async (params: {
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, ids, workflowName, callback = invokeApi } = params;
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'POST',

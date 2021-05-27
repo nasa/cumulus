@@ -6,18 +6,18 @@ const { setS3FileSize } = require('../../../lib/FileUtils');
 test.before((t) => {
   t.context.fakeS3 = {
     headObject: (params = {}) => ({
-      promise: async () => {
+      promise: () => {
         if (params.Key === 'four-byte-file') {
-          return { ContentLength: 4 };
+          return Promise.resolve({ ContentLength: 4 });
         }
 
         if (params.Key === 'does-not-exist') {
           const error = new Error();
           error.code = 'NotFound';
-          throw error;
+          return Promise.reject(error);
         }
 
-        throw new TypeError(`Unexpected key: ${params.Key}`);
+        return Promise.reject(new TypeError(`Unexpected key: ${params.Key}`));
       },
     }),
   };
@@ -74,9 +74,7 @@ test('setS3FileSize() returns input file if S3 request to get file size throws e
 
   const fakeS3 = {
     headObject: (params = {}) => ({
-      promise: async () => {
-        throw new TypeError(`Unexpected key: ${params.Key}`);
-      },
+      promise: () => Promise.reject(new TypeError(`Unexpected key: ${params.Key}`)),
     }),
   };
 

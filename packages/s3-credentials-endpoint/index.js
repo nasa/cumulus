@@ -9,7 +9,7 @@ const distributionRouter = require('express-promise-router')();
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
-} = require('@cumulus/earthdata-login-client');
+} = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
 const Logger = require('@cumulus/logger');
@@ -43,7 +43,7 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
@@ -72,7 +72,7 @@ async function requestTemporaryCredentialsFromNgap({
     policy,
   });
 
-  return lambda.invoke({
+  return await lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
@@ -299,7 +299,7 @@ async function handleRedirectRequest(req, res) {
  */
 async function handleCredentialRequest(req, res) {
   req.lambda = awsServices.lambda();
-  return s3credentials(req, res);
+  return await s3credentials(req, res);
 }
 
 /**
@@ -458,7 +458,7 @@ distributionApp.use((err, req, res, _next) => {
 });
 
 const handler = async (event, context) =>
-  awsServerlessExpress.proxy(
+  await awsServerlessExpress.proxy(
     awsServerlessExpress.createServer(distributionApp),
     event,
     context,

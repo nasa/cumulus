@@ -198,7 +198,7 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
  * @returns {Promise} Elasticsearch response
  */
 async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
-  return genericRecordUpdate(
+  return await genericRecordUpdate(
     esClient,
     payload.pdrName,
     payload,
@@ -270,7 +270,7 @@ async function deleteRecord({
  */
 async function reingest(g) {
   const gObj = new Granule();
-  return gObj.reingest(g);
+  return await gObj.reingest(g);
 }
 
 /**
