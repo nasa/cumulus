@@ -7,7 +7,7 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
-const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
