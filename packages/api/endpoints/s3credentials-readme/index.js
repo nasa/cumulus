@@ -7,11 +7,11 @@ const instructions = inTestMode() ? `<a href="${process.env.DISTRIBUTION_ENDPOIN
  *
  * @param {Object} _req - express request object (unused)
  * @param {Object} res - express response object
- * @returns {Object} express repose object of the s3Credentials directions.
+ * @returns {Object} express response object of the s3Credentials directions.
  */
-async function displayS3CredentialInstructions(_req, res) {
+function displayS3CredentialInstructions(_req, res) {
   const compiled = template(instructions);
-  res.send(compiled(process.env));
+  return res.send(compiled(process.env));
 }
 
 module.exports = displayS3CredentialInstructions;
