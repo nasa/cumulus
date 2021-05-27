@@ -36,7 +36,7 @@
   "dependencies": {
     "@cumulus/aws-client": "9.0.1",
     "@cumulus/errors": "9.0.1",
-    "url-": "^1.1.0"
+    "url-join": "^1.1.0"
   },
   "devDependencies": {
     "@types/url-join": "^4.0.0"
