@@ -14,13 +14,13 @@ const {
   localStackConnectionEnv,
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const { AccessToken, Execution } = require('../../models');

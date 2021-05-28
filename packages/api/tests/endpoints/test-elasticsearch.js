@@ -13,6 +13,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
+const mappings = require('@cumulus/es-client/config/mappings.json');
 
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
@@ -20,9 +23,6 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search, defaultIndexAlias } = require('../../es/search');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const mappings = require('../../models/mappings.json');
 
 const esIndex = randomString();
 
@@ -250,6 +250,7 @@ test.serial('Reindex request returns 400 with the expected message when source i
     index: defaultIndexName,
     body: { mappings },
   });
+  t.teardown(() => esClient.indices.delete({ index: defaultIndexName }));
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
@@ -259,7 +260,6 @@ test.serial('Reindex request returns 400 with the expected message when source i
     .expect(400);
 
   t.is(response.body.message, `source index(${defaultIndexName}) and destination index(${defaultIndexName}) must be different.`);
-  await esClient.indices.delete({ index: defaultIndexName });
 });
 
 test.serial('Reindex success', async (t) => {
@@ -584,6 +584,7 @@ test.serial('Indices status', async (t) => {
 test.serial('Current index - default alias', async (t) => {
   const indexName = randomString();
   await createIndex(indexName, defaultIndexAlias);
+  t.teardown(() => esClient.indices.delete({ index: indexName }));
 
   const response = await request(app)
     .get('/elasticsearch/current-index')
@@ -591,8 +592,6 @@ test.serial('Current index - default alias', async (t) => {
     .expect(200);
 
   t.true(response.body.includes(indexName));
-
-  await esClient.indices.delete({ index: indexName });
 });
 
 test.serial('Current index - custom alias', async (t) => {

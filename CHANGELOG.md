@@ -29,12 +29,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
+- **CUMULUS-2473**
+  - Updated `tf-modules/cumulus_distribution` module to take earthdata or cognito credentials
+  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
+
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
+- **CUMULUS-2477**
+  - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
+
+- **CUMULUS-2479**
+  - Adds /version endpoint to distribution API
+
 ### Changed
 
+- **CUMULUS-2208**
+  - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
 - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
@@ -62,7 +74,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
 
-
 ### Fixed
 
 - **CUMULUS-2519**
@@ -70,8 +81,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2518**
   - Update sf-event-sqs-to-db-records to not throw if a collection is not
     defined on a payload that has no granules/an empty granule payload object
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
 
-## [v9.0.1] 2021-05-07
+## [v9.0.1] 2021-05-07
 
 ### Migration Steps
 
