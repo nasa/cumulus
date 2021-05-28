@@ -59,6 +59,73 @@ export class EarthdataLoginClient extends OAuthClient {
   };
 
   /**
+   * Query the API for the user object associated with a user.
+   *
+   * @param {Object} params
+   * @param {string} params.token - The access token for Authorization header
+   * @param {string} params.username - The uid of the registered user
+   * @param {string} [params.xRequestId] - a string to help identify the request
+   * @returns {Promise<Object>} The user object (see example)
+   *
+   * @example
+   *
+   * {
+   *  "uid": "janedoe",
+   *  "first_name": "Jane",
+   *  "last_name": "Doe",
+   *  "registered_date": "15 Sep 2015 12:42:17PM",
+   *  "email_address": "janedoe@example.com",
+   *  "country": "United States",
+   *  "affiliation": "Government",
+   *  "authorized_date": "21 Apr 2016 01:13:28AM",
+   *  "allow_auth_app_emails": true,
+   *  "agreed_to_meris_eula": false,
+   *  "agreed_to_sentinel_eula": false,
+   *  "app_content": {
+   *     "param1": "value1",
+   *     "app_groups": {
+   *         "test": {
+   *            "param2": "value2"
+   *          }
+   *      }
+   *  },
+   *  "user_groups": [],
+   *  "user_authorized_apps": 3
+   * }
+   */
+  async getUserInfo(params: {
+    token: string,
+    username: string,
+    xRequestId?: string,
+  }) {
+    const { token, xRequestId, username } = params || {};
+    if (!token || !username) throw new TypeError('token and username are required');
+
+    const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
+    try {
+      const response = await super.getRequest({
+        path: `api/users/${username}`,
+        token,
+        headers,
+        searchParams: {
+          client_id: this.clientId,
+        },
+      });
+
+      return response.body;
+    } catch (error) {
+      if (error instanceof got.ParseError) {
+        throw new EarthdataLoginError(
+          'InvalidResponse',
+          'Response from Earthdata Login was not valid JSON'
+        );
+      }
+
+      throw this.httpErrorToAuthError(error);
+    }
+  }
+
+  /**
    * Query the Earthdata Login API for the UID associated with a token
    *
    * @param {Object} params
@@ -80,7 +147,7 @@ export class EarthdataLoginClient extends OAuthClient {
 
     try {
       const response = <VerifyTokenResponse>(await super.postRequest({
-        loginPath: 'oauth/tokens/user',
+        path: 'oauth/tokens/user',
         headers,
         form: {
           client_id: this.clientId,

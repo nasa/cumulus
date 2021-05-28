@@ -28,6 +28,12 @@ module.exports.accessToken = {
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
       type: 'string',
     },
+    tokenInfo: {
+      title: 'Token Info',
+      description: 'The information associated with the access token, such as user profile information',
+      type: 'object',
+      additionalProperties: true,
+    },
   },
 };
 
