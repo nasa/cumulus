@@ -98,7 +98,7 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   afterAll(async () => {
-    await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606'});
+    await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
     await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
