@@ -8,6 +8,7 @@ const {
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteGranule } = require('@cumulus/integration-tests/api/granules');
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
@@ -45,6 +46,8 @@ describe('The DiscoverGranules workflow', () => {
       postfix: testId,
       s3Host: bucket,
     });
+
+    console.log('PROVIDER', provider);
     await createProvider({ prefix: stackName, provider });
 
     // Create the collection
@@ -94,8 +97,9 @@ describe('The DiscoverGranules workflow', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606'});
+    await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
         prefix: stackName,
@@ -106,7 +110,8 @@ describe('The DiscoverGranules workflow', () => {
         prefix: stackName,
         provider: provider.id,
       }),
-    ]));
+    ]);
+  });
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
