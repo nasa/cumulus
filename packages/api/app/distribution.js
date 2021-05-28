@@ -20,9 +20,11 @@ const express = require('express');
 const boom = require('express-boom');
 const awsServerlessExpress = require('aws-serverless-express');
 const morgan = require('morgan');
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 const distributionRouter = require('./distribution-routes');
 
 const distributionApp = express();
+distributionApp.use(awsServerlessExpressMiddleware.eventContext());
 
 // logging config
 morgan.token('error_obj', (req, res) => {
