@@ -78,6 +78,7 @@ describe('A dead letter record archive processing operation', () => {
         granuleId: `MOD09GQ.${randomString()}.hdf`,
         collectionId: constructCollectionId(testCollection.name, testCollection.version),
         files: testFiles,
+        published: false,
       });
 
       testRule = await createOneTimeRule(
