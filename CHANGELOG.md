@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 
 ### Changed
+
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2434**
@@ -1140,6 +1141,8 @@ the [release page](https://github.com/nasa/cumulus/releases)
 
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and collection deletion in test cleanup.
 
 ## [v2.0.1] 2020-07-28
 
