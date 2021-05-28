@@ -123,6 +123,12 @@ describe('The S3 Ingest Granules workflow', () => {
     workflowExecutionArn = await buildAndStartWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    await waitForModelStatus(
+      granuleModel,
+      { granuleId: inputPayload.granules[0].granuleId },
+      'completed'
+    );
   });
 
   afterAll(async () => {

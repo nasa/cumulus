@@ -11,6 +11,5 @@ Addresses [CUMULUS-XX: Develop amazing new feature](https://bugs.earthdata.nasa.
 
 - [ ] Update CHANGELOG
 - [ ] Unit tests
-- [ ] Adhoc testing
+- [ ] Ad-hoc testing - Deploy changes and test manually
 - [ ] Integration tests
-

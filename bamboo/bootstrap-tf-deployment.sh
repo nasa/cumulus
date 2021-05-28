@@ -111,6 +111,8 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
   -var "cmr_provider=CUMULUS" \
   -var "cmr_environment=UAT" \
+  -var "csdap_client_id=$CSDAP_CLIENT_ID" \
+  -var "csdap_client_password=$CSDAP_CLIENT_PASSWORD" \
   -var "launchpad_passphrase=$LAUNCHPAD_PASSPHRASE" \
   -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
   -var "region=$AWS_REGION" \
