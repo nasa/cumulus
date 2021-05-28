@@ -7,10 +7,10 @@ const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
 
 const models = require('../../models');
-const { Search } = require('../../es/search');
-const bootstrap = require('../../lambdas/bootstrap');
 const dbIndexer = rewire('../../lambdas/db-indexer');
 const {
   fakeCollectionFactory,
@@ -146,7 +146,7 @@ test.before(async (t) => {
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
 
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 });
 
 test.after.always(async () => {

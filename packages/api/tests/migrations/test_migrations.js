@@ -4,9 +4,9 @@ const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { Search, getLocalEsHost } = require('../../es/search');
-const indexer = require('../../es/indexer');
-const bootstrap = require('../../lambdas/bootstrap');
+const { Search, getLocalEsHost } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
 const models = require('../../models');
 const migrations = require('../../migrations');
 const migration0 = require('../../migrations/migration_0');
@@ -38,7 +38,7 @@ test.before(async (t) => {
 
   esClient = await Search.es();
   t.context.esAlias = randomString();
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 });
 
 test.after.always(async () => {

@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const query = require('../../es/queries');
+const query = require('../queries');
 
 test('query creates correct string for multiple collectionIds', (t) => {
   const inputQueryParams = {
