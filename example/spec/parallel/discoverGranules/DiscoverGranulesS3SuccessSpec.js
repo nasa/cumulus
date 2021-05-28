@@ -17,6 +17,7 @@ const { getExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   deleteFolder, loadConfig, updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
@@ -30,6 +31,7 @@ describe('The DiscoverGranules workflow', () => {
   let stackName;
   let bucket;
   let providerPath;
+  let expectedGranuleId;
 
   beforeAll(async () => {
     ({ stackName, bucket } = await loadConfig());
@@ -40,6 +42,7 @@ describe('The DiscoverGranules workflow', () => {
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
     const testId = randomString();
+    expectedGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
     // Create the provider
     provider = await loadProvider({
@@ -91,8 +94,9 @@ describe('The DiscoverGranules workflow', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    await deleteGranule({ prefix: stackName, granuleId: expectedGranuleId });
+    await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
         prefix: stackName,
@@ -103,7 +107,8 @@ describe('The DiscoverGranules workflow', () => {
         prefix: stackName,
         provider: provider.id,
       }),
-    ]));
+    ]);
+  });
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
@@ -150,7 +155,7 @@ describe('The DiscoverGranules workflow', () => {
 
         expect(discoverGranulesOutput.payload.granules.length).toEqual(1);
         const granule = discoverGranulesOutput.payload.granules[0];
-        expect(granule.granuleId).toEqual('MOD09GQ.A2016358.h13v04.006.2016360104606');
+        expect(granule.granuleId).toEqual(expectedGranuleId);
         expect(granule.dataType).toEqual(collection.name);
         expect(granule.version).toEqual(collection.version);
         expect(granule.files.length).toEqual(3);
