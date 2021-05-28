@@ -53,7 +53,7 @@ async function get(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function deleteExecution(req, res) {
+async function del(req, res) {
   const {
     executionModel = new models.Execution(),
     executionPgModel = new ExecutionPgModel(),
@@ -90,6 +90,6 @@ async function deleteExecution(req, res) {
 
 router.get('/:arn', get);
 router.get('/', list);
-router.delete('/:arn', deleteExecution);
+router.delete('/:arn', del);
 
 module.exports = router;
