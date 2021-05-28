@@ -47,7 +47,6 @@ describe('The DiscoverGranules workflow', () => {
       s3Host: bucket,
     });
 
-    console.log('PROVIDER', provider);
     await createProvider({ prefix: stackName, provider });
 
     // Create the collection
