@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { getKnexClient, ExecutionPgModel } = require('@cumulus/db');
-const Search = require('../es/search').Search;
+const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
 
 /**
