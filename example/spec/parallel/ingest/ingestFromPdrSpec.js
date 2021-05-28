@@ -256,10 +256,12 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await granulesApiTestUtils.deleteGranule({
-          prefix: config.stackName,
-          granuleId: parseLambdaOutput.payload.granules[0].granuleId,
-        });
+        await Promise.all(parseLambdaOutput.payload.granules.map(
+          (granule) => granulesApiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          })
+        ));
       });
 
       it('executes successfully', async () => {

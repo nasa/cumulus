@@ -85,8 +85,13 @@ describe('The Ingest Granule failure workflow', () => {
         },
       ];
 
-      // delete the granule record from DynamoDB and PG if exists
       await deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
+      await Promise.all(inputPayload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,

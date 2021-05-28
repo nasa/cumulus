@@ -1,5 +1,6 @@
-const { Execution } = require('@cumulus/api/models');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { Execution } = require('@cumulus/api/models');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
@@ -7,7 +8,6 @@ const {
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');

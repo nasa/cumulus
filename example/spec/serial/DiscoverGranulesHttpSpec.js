@@ -1,7 +1,8 @@
 'use strict';
 
-const { Execution } = require('@cumulus/api/models');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { Execution } = require('@cumulus/api/models');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   api: apiTestUtils,
@@ -27,6 +28,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   let beforeAllFailed = false;
   let config;
+  let discoverGranulesLambdaOutput;
   let executionModel;
   let httpWorkflowExecution;
   let lambdaStep;
@@ -84,6 +86,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
+      (granule) => deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      })
+    ));
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
@@ -97,19 +105,17 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaOutput;
-
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(
+      discoverGranulesLambdaOutput = await lambdaStep.getStepOutput(
         httpWorkflowExecution.executionArn,
         'DiscoverGranules'
       );
     });
     it('has expected granules output', () => {
-      expect(lambdaOutput.payload.granules.length).toEqual(3);
-      expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
-      expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
-      expect(lambdaOutput.payload.granules[0].files[0].type).toEqual('data');
+      expect(discoverGranulesLambdaOutput.payload.granules.length).toEqual(3);
+      expect(discoverGranulesLambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
+      expect(discoverGranulesLambdaOutput.payload.granules[0].files.length).toEqual(2);
+      expect(discoverGranulesLambdaOutput.payload.granules[0].files[0].type).toEqual('data');
     });
   });
 

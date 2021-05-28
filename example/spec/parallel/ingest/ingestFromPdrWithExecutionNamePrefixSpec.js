@@ -23,6 +23,7 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
@@ -146,6 +147,12 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(queuePdrsOutput.payload.granules.map(
+      (granule) => deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      })
+    ));
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
