@@ -208,10 +208,10 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+    const y = await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
 
-    await pAll(
+    const z = await pAll(
       [
         () => deleteS3Object(sourceBucket, sameChecksumKey),
         () => deleteGranule({ prefix, granuleId }),
@@ -224,5 +224,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       ],
       { stopOnError: false }
     ).catch(console.error);
+
+    console.log('afterAll - IngestGranuleWithDuplicateHandlingErrorSpec:::', x, y, z);
   });
 });

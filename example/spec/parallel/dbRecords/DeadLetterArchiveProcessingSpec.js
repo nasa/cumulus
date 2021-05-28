@@ -140,11 +140,12 @@ describe('A dead letter record archive processing operation', () => {
     if (testGranule) await deleteGranule({ prefix: stackName, granuleId: testGranule.granuleId });
     if (ruleName) await deleteRule({ prefix: stackName, ruleName });
     if (testCollection) {
-      await deleteCollection({
+      const x = await deleteCollection({
         prefix: stackName,
         collectionName: testCollection.name,
         collectionVersion: testCollection.version,
       });
+      console.log('afterAll - DeadLetterArchiveProcessingSpec:::', x);
     }
     if (testProvider) await deleteProvider({ prefix: stackName, providerId: testProvider.id });
   });

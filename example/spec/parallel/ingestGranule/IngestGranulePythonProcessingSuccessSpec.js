@@ -127,8 +127,8 @@ describe('The TestPythonProcessing workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
@@ -144,6 +144,8 @@ describe('The TestPythonProcessing workflow', () => {
         pdrName: inputPayload.pdr.name,
       }),
     ]);
+
+    console.log('afterAll - IngestGranulePythonProcessingSuccessSpec:::', x, y);
   });
 
   it('makes the granule available through the Cumulus API', async () => {

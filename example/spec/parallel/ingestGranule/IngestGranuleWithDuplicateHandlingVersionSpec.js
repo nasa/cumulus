@@ -242,10 +242,10 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+    const y = await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
 
-    await pAll(
+    const z = await pAll(
       [
         () => deleteS3Object(sourceBucket, differentChecksumKey),
         () => deleteS3Object(sourceBucket, newFileKey),
@@ -260,5 +260,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       ],
       { stopOnError: false }
     ).catch(console.error);
+
+    console.log('afterAll - IngestGranuleWithDuplicateHandlingVersionSpec:::', x, y, z);
   });
 });

@@ -135,7 +135,8 @@ describe('The S3 Ingest Granules workflow', () => {
     if (!isOrcaIncluded) return;
 
     // clean up stack state added by test
-    await Promise.all([
+
+    const x = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
@@ -148,6 +149,8 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId,
       }),
     ]);
+
+    console.log('afterAll - OrcaBackupAndRecoverySpec:::', x);
   });
 
   it('completes execution with success status', async () => {

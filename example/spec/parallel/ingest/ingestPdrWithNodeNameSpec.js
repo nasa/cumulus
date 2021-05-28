@@ -170,9 +170,9 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    const y = await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    const z = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -181,6 +181,8 @@ describe('Ingesting from PDR', () => {
         pdr: pdrFilename,
       }),
     ]).catch(console.error);
+
+    console.log('afterAll - IngestPdrWithNodeNameSpec:::', x, y, z);
 
     await providersApi.deleteProvider({
       prefix: config.stackName,

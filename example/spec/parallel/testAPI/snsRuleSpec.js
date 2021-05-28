@@ -165,7 +165,8 @@ describe('The SNS-type rule', () => {
 
     afterAll(async () => {
       // clean up stack state added by test
-      await deleteExecution({ prefix: config.stackName, executionArn });
+      const x = await deleteExecution({ prefix: config.stackName, executionArn });
+      console.log('afterAll - snsRuleSpec:::', x);
     });
 
     it('triggers the workflow', () => {

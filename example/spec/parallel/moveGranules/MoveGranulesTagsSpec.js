@@ -97,7 +97,7 @@ describe('The MoveGranules task', () => {
 
       expect(movedFileTags.TagSet).toEqual(expectedTagSet);
     } finally {
-      await pAll(
+      const x = await pAll(
         [
           () => deleteS3Object(sourceBucket, sourceKey),
           () => deleteS3Object(movedFile.bucket, movedFile.filepath),
@@ -109,6 +109,8 @@ describe('The MoveGranules task', () => {
         ],
         { stopOnError: false }
       ).catch(console.error);
+
+      console.log('afterAll - MoveGranulesTagsSpec:::', x);
     }
   });
 });

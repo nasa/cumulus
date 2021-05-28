@@ -70,12 +70,14 @@ describe('The FTP Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
-    await Promise.all([
+    const y = await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, provider: provider.id }),
     ]);
+
+    console.log('afterAll - IngestGranuleFtpSuccessSpec:::', x, y);
   });
 
   describe('the execution', () => {

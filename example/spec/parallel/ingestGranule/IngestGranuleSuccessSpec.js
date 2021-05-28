@@ -255,8 +255,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
@@ -277,6 +277,8 @@ describe('The S3 Ingest Granules workflow', () => {
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
       deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
+
+    console.log('afterAll - IngestGranuleSuccessSpec:::', x, y);
   });
 
   it('prepares the test suite successfully', () => {

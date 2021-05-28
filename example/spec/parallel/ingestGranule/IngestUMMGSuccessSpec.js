@@ -203,8 +203,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
@@ -220,6 +220,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         granuleId: inputPayload.granules[0].granuleId,
       }),
     ]);
+
+    console.log('afterAll - IngestUMMGSuccessSpec:::', x, y);
   });
 
   it('completes execution with success status', () => {

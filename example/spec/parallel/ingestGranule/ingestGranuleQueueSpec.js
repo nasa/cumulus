@@ -222,8 +222,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
@@ -239,6 +239,8 @@ describe('The S3 Ingest Granules workflow', () => {
         pdrName: inputPayload.pdr.name,
       }),
     ]);
+
+    console.log('afterAll - ingestGranuleQueueSpec:::', x, y);
   });
 
   it('triggers a running execution record being added to DynamoDB', async () => {

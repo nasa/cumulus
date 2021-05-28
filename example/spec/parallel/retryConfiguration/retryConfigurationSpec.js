@@ -27,8 +27,6 @@ function getRetryIntervals(executions) {
   return retryIntervals;
 }
 
-// TODO delete executions
-
 describe('When a task is configured', () => {
   let retryPassWorkflowExecution = null;
   let noRetryWorkflowExecution = null;
@@ -83,11 +81,13 @@ describe('When a task is configured', () => {
   });
 
   afterAll(async () => {
-    await Promise.all([
+    const x = await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: retryPassWorkflowExecution.executionArn }),
       deleteExecution({ prefix: config.stackName, executionArn: noRetryWorkflowExecution.executionArn }),
       deleteExecution({ prefix: config.stackName, executionArn: retryFailWorkflowExecution.executionArn }),
     ]);
+
+    console.log('afterAll - retryConfigurationSpec:::', x);
   });
 
   describe('to retry', () => {

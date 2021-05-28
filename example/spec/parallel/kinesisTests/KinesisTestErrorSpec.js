@@ -66,13 +66,15 @@ describe('The messageConsumer receives a bad record.\n', () => {
     const rules = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nDeleting testStream '${streamName}'`);
-    await Promise.all([
+    const x = await Promise.all([
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
       deleteTestStream(streamName),
     ]);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+
+    console.log('afterAll - KnesisTestErrorSpec:::', x);
   }
 
   beforeAll(async () => {

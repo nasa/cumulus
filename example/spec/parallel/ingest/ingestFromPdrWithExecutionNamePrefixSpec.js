@@ -151,10 +151,10 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    const y = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
-    await Promise.all([
+    const z = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -163,6 +163,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         pdr: pdrFilename,
       }),
     ]);
+    console.log('afterAll - IngestFromPdrWithExecutionNamePrefixSpec:::', x, y, z);
   });
 
   it('executes successfully', () => {

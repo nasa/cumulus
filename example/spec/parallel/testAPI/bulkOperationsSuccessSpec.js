@@ -184,7 +184,7 @@ describe('POST /granules/bulk', () => {
       // Must delete rules before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
 
-      await pAll(
+      const x = await pAll(
         [
           () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
           () => deleteCollection({
@@ -196,6 +196,7 @@ describe('POST /granules/bulk', () => {
         ],
         { stopOnError: false }
       ).catch(console.error);
+      console.log('afterAll - bulkOperationsSuccessSpec:::', x);
     });
 
     it('ingested granule is archived', () => {

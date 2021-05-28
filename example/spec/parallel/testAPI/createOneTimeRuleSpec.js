@@ -55,15 +55,18 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
     if (ruleName) await deleteRule({ prefix, ruleName });
 
-    await deleteExecution({ prefix: config.stackName, executionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn });
 
+    let y;
     if (collection) {
-      await deleteCollection({
+      y = await deleteCollection({
         prefix,
         collectionName: collection.name,
         collectionVersion: collection.version,
       });
     }
+
+    console.log('afterAll - createOneTimeRuleSpec:::', x, y);
   });
 
   it('starts a workflow execution', async () => {

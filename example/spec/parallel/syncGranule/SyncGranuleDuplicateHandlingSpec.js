@@ -137,9 +137,9 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
 
-    await Promise.all([
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -151,6 +151,8 @@ describe('When the Sync Granule workflow is configured', () => {
         pdrName: inputPayload.pdr.name,
       }),
     ]);
+
+    console.log('afterAll - SyncGranuleDuplicateHandlingSpec:::', x, y);
   });
 
   describe('to keep both files when encountering duplicate filenames\n', () => {

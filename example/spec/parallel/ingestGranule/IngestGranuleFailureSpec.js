@@ -105,8 +105,8 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await Promise.all([
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -115,6 +115,7 @@ describe('The Ingest Granule failure workflow', () => {
         granuleId: inputPayload.granules[0].granuleId,
       }),
     ]);
+    console.log('afterAll - IngestGranuleFailureSpec:::', x, y);
   });
 
   it('completes execution with failure status', () => {

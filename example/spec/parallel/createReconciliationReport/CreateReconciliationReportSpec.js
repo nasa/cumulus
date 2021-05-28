@@ -736,9 +736,9 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
-    await Promise.all([
+    const y = await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
@@ -748,7 +748,7 @@ describe('When there are granule differences and granule reconciliation is run',
       extraCumulusCollectionCleanup(),
       cmrClient.deleteGranule(cmrGranule),
     ]);
-
+    console.log('afterAll - CreateReconcilliationReportSpec:::', x, y);
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });

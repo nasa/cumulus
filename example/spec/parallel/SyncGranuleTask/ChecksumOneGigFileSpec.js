@@ -138,7 +138,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
     const fileUrl = fullTaskOutput.payload.granules[0].files[0].filename;
     const parsedFileUrl = S3.parseS3Uri(fileUrl);
 
-    await pAll(
+    const x = await pAll(
       [
         () => S3.deleteS3Object(parsedFileUrl.Bucket, parsedFileUrl.Key),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
@@ -150,5 +150,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       ],
       { stopOnError: false }
     ).catch(console.error);
+
+    console.log('afterAll - ChecksumOneGigFileSpec:::', x);
   });
 });

@@ -104,7 +104,7 @@ describe('The SyncGranule task', () => {
 
       expect(stagedFileTags.TagSet).toEqual(expectedTagSet);
     } finally {
-      await pAll(
+      const x = await pAll(
         [
           () => deleteS3Object(sourceBucket, sourceKey),
           () => deleteGranule({ prefix, granuleId }),
@@ -117,6 +117,8 @@ describe('The SyncGranule task', () => {
         ],
         { stopOnError: false }
       ).catch(console.error);
+
+      console.log('afterAll - SyncGranuleCopyTagsSpec:::', x);
     }
   });
 });

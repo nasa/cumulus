@@ -149,9 +149,9 @@ describe('The Sync Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+    const x = await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
 
-    await Promise.all([
+    const y = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -160,6 +160,8 @@ describe('The Sync Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId,
       }),
     ]);
+
+    console.log('afterAll - SyncGranuleSuccessSpec:::', x, y);
   });
 
   it('has a checksum to test', () => {

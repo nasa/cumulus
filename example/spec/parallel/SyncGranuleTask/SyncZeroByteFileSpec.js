@@ -146,7 +146,7 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
   });
 
   afterAll(async () => {
-    await pAll(
+    const x = await pAll(
       [
         () => S3.deleteS3Object(parsedFileUrl.Bucket, parsedFileUrl.Key),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
@@ -158,5 +158,6 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
       ],
       { stopOnError: false }
     ).catch(console.error);
+    console.log('afterAll - SyncZeroByteFileSpec:::', x);
   });
 });
