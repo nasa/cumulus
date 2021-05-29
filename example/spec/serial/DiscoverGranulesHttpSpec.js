@@ -254,6 +254,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda ignoring files config', () => {
+    let lambdaOutput;
+
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
         prefix: config.stackName,
@@ -282,6 +284,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
           granuleId: granule.granuleId,
         })
       ));
+    });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
@@ -296,7 +299,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('discovers granules, but output includes all files', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(
+      lambdaOutput = await lambdaStep.getStepOutput(
         httpWorkflowExecution.executionArn, 'DiscoverGranules'
       );
 
