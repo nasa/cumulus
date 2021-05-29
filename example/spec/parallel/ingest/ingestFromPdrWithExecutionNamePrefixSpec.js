@@ -86,7 +86,6 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
-      console.log(testSuffix);
 
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
 
