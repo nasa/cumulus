@@ -34,6 +34,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
+  waitForCompletedExecution,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -64,16 +65,17 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let addedCollection;
   let beforeAllFailed;
   let config;
+  let executionArn;
+  let executionNamePrefix;
   let pdrFilename;
   let provider;
   let testDataFolder;
   let testSuffix;
-  let workflowExecution;
-  let addedCollection;
-  let executionNamePrefix;
   let queuePdrsOutput;
+  let workflowExecution;
 
   beforeAll(async () => {
     try {
@@ -84,6 +86,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
+      console.log(testSuffix);
 
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
 
@@ -146,13 +149,13 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   });
 
   afterAll(async () => {
+    // wait for execution to complete before deleting granule
+    await waitForCompletedExecution(executionArn);
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    });
     // clean up stack state added by test
-    await Promise.all(queuePdrsOutput.payload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
-    ));
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -185,7 +188,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('results in an IngestGranule workflow execution', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const executionArn = queuePdrsOutput.payload.running[0];
+      executionArn = queuePdrsOutput.payload.running[0];
       await expectAsync(waitForStartedExecution(executionArn)).toBeResolved();
     }
   });
