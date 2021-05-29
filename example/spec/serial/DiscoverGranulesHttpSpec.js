@@ -275,6 +275,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
     });
 
+    afterAll(async () => {
+      await Promise.all(lambdaOutput.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
+
     it('encounters a collection that has no files config, but should ignore files config', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
         httpWorkflowExecution.executionArn, 'DiscoverGranules'
