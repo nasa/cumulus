@@ -176,7 +176,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('properly sets the name of the queued execution', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const executionArn = queuePdrsOutput.payload.running[0];
+      executionArn = queuePdrsOutput.payload.running[0];
 
       const executionName = executionArn.split(':').reverse()[0];
 
