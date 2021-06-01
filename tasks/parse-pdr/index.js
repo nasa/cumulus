@@ -245,10 +245,10 @@ const parsePdr = async ({ config, input }) => {
   try {
     await providerClient.connect();
 
-    rawPdr = await fetchTextFile(
+    rawPdr = await fetchTextFile({
       providerClient,
-      path.join(input.pdr.path, input.pdr.name)
-    );
+      remotePath: path.join(input.pdr.path, input.pdr.name),
+    });
   } finally {
     await providerClient.end();
   }
