@@ -151,17 +151,19 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]);
   });
 

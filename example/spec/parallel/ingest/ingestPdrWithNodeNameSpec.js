@@ -175,6 +175,7 @@ describe('Ingesting from PDR', () => {
       pdr: pdrFilename,
     });
 
+    // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
 

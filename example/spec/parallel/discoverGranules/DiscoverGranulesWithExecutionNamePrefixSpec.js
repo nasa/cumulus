@@ -97,6 +97,7 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   afterAll(async () => {
+    // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });
     await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
 

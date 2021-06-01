@@ -242,8 +242,10 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn }),
+    ]);
 
     await pAll(
       [

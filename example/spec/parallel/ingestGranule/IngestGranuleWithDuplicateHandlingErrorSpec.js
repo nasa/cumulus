@@ -208,8 +208,10 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn });
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn }),
+    ]);
 
     await pAll(
       [

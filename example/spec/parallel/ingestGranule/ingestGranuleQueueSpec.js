@@ -228,6 +228,7 @@ describe('The S3 Ingest Granules workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
+    // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([

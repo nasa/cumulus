@@ -173,8 +173,10 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn });
+    await Promise.all([
+      deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn }),
+      deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn }),
+    ]);
 
     await pAll(
       [

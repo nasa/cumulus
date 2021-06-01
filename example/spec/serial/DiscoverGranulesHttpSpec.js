@@ -93,6 +93,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    // Order matters. Parent executions must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });

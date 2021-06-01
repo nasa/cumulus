@@ -199,6 +199,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       { stopOnError: false }
     ).catch(console.error);
 
+    // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix, executionArn: finishedIngestGranulesArn });
     await deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn });
