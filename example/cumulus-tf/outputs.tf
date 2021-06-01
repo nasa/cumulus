@@ -14,6 +14,10 @@ output "s3_credentials_redirect_uri" {
   value = module.cumulus.s3_credentials_redirect_uri
 }
 
+output "s3_credentials_cumulus_redirect_uri" {
+  value = module.cumulus_distribution.s3_credentials_redirect_uri
+}
+
 output "distribution_redirect_uri" {
   value = module.thin_egress_app.urs_redirect_uri
 }

@@ -12,7 +12,7 @@ module "cumulus_distribution" {
   oauth_client_id          = var.csdap_client_id
   oauth_client_password    = var.csdap_client_password
   oauth_host_url           = var.csdap_host_url
-  oauth_provider           = "cognito"
+  oauth_provider           = "earthdata"
   urs_url                   = var.urs_url
   urs_client_id             = var.urs_client_id
   urs_client_password       = var.urs_client_password

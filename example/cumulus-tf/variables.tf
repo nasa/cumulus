@@ -9,7 +9,7 @@ variable "cmr_environment" {
 }
 
 variable "cmr_password" {
-  type = stringx
+  type = string
 }
 
 variable "cmr_provider" {

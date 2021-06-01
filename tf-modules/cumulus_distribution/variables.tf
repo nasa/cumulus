@@ -64,6 +64,7 @@ variable "deploy_s3_credentials_endpoint" {
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
+  description = "VPC subnets used by Lambda functions"
 }
 
 variable "oauth_provider" {
@@ -88,11 +89,6 @@ variable "sts_policy_helper_lambda_function_arn" {
   type        = string
   default     = null
   description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
-}
-
-variable "subnet_ids" {
-  type        = list(string)
-  description = "VPC subnets used by Lambda functions"
 }
 
 variable "protected_buckets" {

@@ -107,7 +107,6 @@ router.get('/login', handleLoginRequest);
 router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
-router.get('/redirect', handleRedirectRequest);
 router.get('/s3Credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
 router.get('/s3CredentialsREADME', s3CredentialsREADME);
 // Use router.use to leverage custom version middleware
