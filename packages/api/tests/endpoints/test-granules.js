@@ -37,6 +37,9 @@ const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -50,8 +53,6 @@ const {
 
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
 
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 
@@ -67,7 +68,6 @@ const {
 const {
   createJwtToken,
 } = require('../../lib/token');
-const { Search } = require('../../es/search');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
@@ -157,7 +157,7 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);

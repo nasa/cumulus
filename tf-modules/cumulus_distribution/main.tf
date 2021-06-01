@@ -8,3 +8,21 @@ terraform {
 }
 
 data "aws_region" "current" {}
+
+resource "aws_dynamodb_table" "access_tokens" {
+  name         = "${var.prefix}-DistributionAccessTokensTable"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "accessToken"
+
+  attribute {
+    name = "accessToken"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expirationTime"
+    enabled        = true
+  }
+
+  tags = var.tags
+}

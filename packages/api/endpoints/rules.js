@@ -11,10 +11,11 @@ const {
   tableNames,
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const { addToLocalES, indexRule } = require('@cumulus/es-client/indexer');
+
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
-const { Search } = require('../es/search');
-const { addToLocalES, indexRule } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 

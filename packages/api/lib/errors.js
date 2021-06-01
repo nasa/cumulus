@@ -20,7 +20,6 @@ const isResourceNotFoundException = (error) =>
   error.code === 'ResourceNotFoundException';
 
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
-const IndexExistsError = createErrorType('IndexExistsError');
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {
@@ -56,7 +55,6 @@ class ResourceNotFoundError extends Error {
 
 module.exports = {
   AssociatedRulesError,
-  IndexExistsError,
   TokenUnauthorizedUserError,
   EarthdataLoginError,
   isBadRequestError,

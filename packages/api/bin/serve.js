@@ -5,8 +5,8 @@ const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { localStackConnectionEnv } = require('@cumulus/db');
-const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
@@ -110,7 +110,7 @@ async function checkOrCreateTables(stackName) {
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
+  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -161,7 +161,7 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrap.bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
 }
 
 /**
