@@ -71,19 +71,21 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
-  const executions = [
+  t.context.executions = [
     {
       arn: 'arn1',
       status: 'running',
+      name: 'test_execution',
     },
     {
       arn: 'arn2',
       status: 'completed',
-      asyncOperationId: '012345-12345',
+      asyncOperationId: '0fe6317a-233c-4f19-a551-f0f76071402f',
+      name: 'test_execution',
     },
   ];
 
-  const executionIndexPromises = executions
+  const executionIndexPromises = t.context.executions
     .map((execution) => indexer.indexExecution(esClient, execution, esAlias));
 
   await Promise.all(executionIndexPromises);
@@ -148,7 +150,7 @@ test('GET logs returns all executions', async (t) => {
 
 test('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
   const response = await request(app)
-    .get('/executions?asyncOperationId=012345-12345')
+    .get('/executions?asyncOperationId=0fe6317a-233c-4f19-a551-f0f76071402f')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -157,39 +159,59 @@ test('GET executions with asyncOperationId filter returns the correct executions
   t.is(response.body.results[0].arn, 'arn2');
 });
 
-test('DELETE removes executions from all data stores', async (t) => {
+test('DELETE removes only specified execution from all data stores', async (t) => {
   const {
     executionDynamoModel,
     executionPgModel,
     testKnex,
+    executions,
   } = t.context;
 
-  const execution = {
+  const newExecution = {
     arn: 'arn3',
     status: 'completed',
     name: 'test_execution',
   };
 
-  await executionDynamoModel.create(execution);
-  const executionPgRecord = await translateApiExecutionToPostgresExecution(execution, testKnex);
-  await executionPgModel.create(testKnex, executionPgRecord);
+  executions.push(newExecution);
 
-  t.true(await executionDynamoModel.exists({ arn: execution.arn }));
+  await Promise.all(executions.map(async (execution) => {
+    delete execution.asyncOperationId;
+    await executionDynamoModel.create(execution);
+    const executionPgRecord = await translateApiExecutionToPostgresExecution(execution, testKnex);
+    await executionPgModel.create(testKnex, executionPgRecord);
+  }));
+
+  t.true(await executionDynamoModel.exists({ arn: newExecution.arn }));
   t.true(
-    await executionPgModel.exists(testKnex, { arn: execution.arn })
+    await executionPgModel.exists(testKnex, { arn: newExecution.arn })
   );
 
-  const response = await request(app)
-    .delete(`/executions/${execution.arn}`)
+  await request(app)
+    .delete(`/executions/${newExecution.arn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { message } = response.body;
+  // Correct Dynamo and PG execution was deleted
+  t.false(await executionDynamoModel.exists({ arn: newExecution.arn }));
 
-  t.is(message, 'Record deleted');
-  t.false(await executionDynamoModel.exists({ arn: execution.arn }));
   const dbRecords = await executionPgModel
-    .search(t.context.testKnex, { arn: execution.arn });
+    .search(t.context.testKnex, { arn: newExecution.arn });
+
   t.is(dbRecords.length, 0);
+
+  // Previously created executions still exist
+  t.true(await executionDynamoModel.exists({ arn: executions[0].arn }));
+  t.true(await executionDynamoModel.exists({ arn: executions[1].arn }));
+
+  const originalExecution1 = await executionPgModel
+    .search(t.context.testKnex, { arn: executions[0].arn });
+
+  t.is(originalExecution1.length, 1);
+
+  const originalExecution2 = await executionPgModel
+    .search(t.context.testKnex, { arn: executions[1].arn });
+
+  t.is(originalExecution2.length, 1);
 });
