@@ -109,22 +109,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "urs_client_id" {
-  type        = string
-  description = "The client ID for your Earthdata login (URS) application"
-}
-
-variable "urs_client_password" {
-  type        = string
-  description = "The client password for your Earthdata login (URS) application"
-}
-
-variable "urs_url" {
-  type        = string
-  default     = "https://urs.earthdata.nasa.gov"
-  description = "The URL of the Earthdata Login site"
-}
-
 variable "vpc_id" {
   type        = string
   description = "VPC used by Lambda functions"
