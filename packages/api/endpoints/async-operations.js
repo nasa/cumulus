@@ -7,9 +7,6 @@ const {
   AsyncOperationPgModel,
   getKnexClient,
 } = require('@cumulus/db');
-const {
-  RecordDoesNotExist,
-} = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 
@@ -69,30 +66,11 @@ async function deleteAsyncOperation(req, res) {
 
   const { id } = req.params;
 
-  let existingAsyncOperation;
-  try {
-    existingAsyncOperation = await asyncOperationModel.get({ id });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
-    }
-    throw error;
-  }
-
-  try {
-    await knex.transaction(async (trx) => {
-      await asyncOperationPgModel.delete(trx, { id });
-      await asyncOperationModel.delete({ id });
-    });
-    return res.send({ message: 'Record deleted' });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (existingAsyncOperation) {
-      await asyncOperationModel.create(existingAsyncOperation);
-    }
-    throw error;
-  }
+  await knex.transaction(async (trx) => {
+    await asyncOperationPgModel.delete(trx, { id });
+    await asyncOperationModel.delete({ id });
+  });
+  return res.send({ message: 'Record deleted' });
 }
 
 router.get('/', list);
