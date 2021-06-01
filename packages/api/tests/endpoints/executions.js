@@ -90,10 +90,9 @@ test.before(async (t) => {
 
   await esClient.indices.refresh();
 
-  const executionDynamoModel = new Execution();
-  await executionDynamoModel.createTable();
+  t.context.executionDynamoModel = new Execution();
+  await t.context.executionDynamoModel.createTable();
 
-  t.context.executionDynamoModel = executionDynamoModel;
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
