@@ -10,8 +10,12 @@ const {
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const pRetry = require('p-retry');
+
 const Search = require('../es/search').Search;
 const models = require('../models');
+
+const retryConfig = require('./retryConfig');
 
 /**
  * List and search pdrs
@@ -72,11 +76,16 @@ async function del(req, res) {
   const knex = await getKnexClient();
 
   try {
-    await knex.transaction(async (trx) => {
-      await pdrPgModel.delete(trx, { name: pdrName });
-      await deleteS3Object(process.env.system_bucket, pdrS3Key);
-      await pdrModel.delete({ pdrName });
-    });
+    await pRetry(
+      async () => {
+        await knex.transaction(async (trx) => {
+          await pdrPgModel.delete(trx, { name: pdrName });
+          await deleteS3Object(process.env.system_bucket, pdrS3Key);
+          await pdrModel.delete({ pdrName });
+        });
+      },
+      retryConfig
+    );
 
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);

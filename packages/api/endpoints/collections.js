@@ -2,6 +2,8 @@
 
 const omit = require('lodash/omit');
 const router = require('express-promise-router')();
+const pRetry = require('p-retry');
+
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
@@ -22,6 +24,8 @@ const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
+
+const retryConfig = require('./retryConfig');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
@@ -136,7 +140,12 @@ async function post(req, res) {
 
     try {
       log.info('Attempting collection model postgres insert');
-      await dbClient('collections').insert(dbRecord, 'cumulus_id');
+      await pRetry(
+        async () => {
+          await dbClient('collections').insert(dbRecord, 'cumulus_id');
+        },
+        retryConfig
+      );
     } catch (error) {
       log.info('Error attempting collection model delete');
       await collectionsModel.delete({ name, version });
@@ -209,13 +218,18 @@ async function put(req, res) {
   log.info('Getting knex client');
   const dbClient = await getKnexClient();
   log.info('Start transaction');
-  await dbClient.transaction(async (trx) => {
-    log.info('Start upsert');
-    await collectionPgModel.upsert(trx, postgresCollection);
-    log.info('Finish upsert start dynamo create');
-    dynamoRecord = await collectionsModel.create(collection);
-    log.info('Finish dynamo create');
-  });
+  await pRetry(
+    async () => {
+      await dbClient.transaction(async (trx) => {
+        log.info('Start upsert');
+        await collectionPgModel.upsert(trx, postgresCollection);
+        log.info('Finish upsert start dynamo create');
+        dynamoRecord = await collectionsModel.create(collection);
+        log.info('Finish dynamo create');
+      });
+    },
+    retryConfig
+  );
 
   if (inTestMode()) {
     await addToLocalES(dynamoRecord, indexCollection);
@@ -239,22 +253,27 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
   try {
     log.info('Starting Knex Transaction');
-    await knex.transaction(async (trx) => {
-      log.info('deleting record');
-      await trx(tableNames.collections).where({ name, version }).del();
-      log.info('deleting record complete awaiting dynamo delete');
-      await collectionsModel.delete({ name, version });
-      if (inTestMode()) {
-        log.info('TEST MODE -BAD');
-        const collectionId = constructCollectionId(name, version);
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: collectionId,
-          index: process.env.ES_INDEX,
-          type: 'collection',
-        }, { ignore: [404] });
-      }
-    });
+    await pRetry(
+      async () => {
+        await knex.transaction(async (trx) => {
+          log.info('deleting record');
+          await trx(tableNames.collections).where({ name, version }).del();
+          log.info('deleting record complete awaiting dynamo delete');
+          await collectionsModel.delete({ name, version });
+          if (inTestMode()) {
+            log.info('TEST MODE -BAD');
+            const collectionId = constructCollectionId(name, version);
+            const esClient = await Search.es(process.env.ES_HOST);
+            await esClient.delete({
+              id: collectionId,
+              index: process.env.ES_INDEX,
+              type: 'collection',
+            }, { ignore: [404] });
+          }
+        });
+      },
+      retryConfig
+    );
     log.info('Record deleted!');
     return res.send({ message: 'Record deleted' });
   } catch (error) {

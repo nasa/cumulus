@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const log = require('@cumulus/common/log');
@@ -26,6 +27,7 @@ const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+const retryConfig = require('./retryConfig');
 
 /**
  * List all granules for a given collection.
@@ -181,56 +183,61 @@ async function del(req, res) {
     throw error;
   }
 
-  // If the granule does not exist in PG, just log that information. The logic that
-  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
-  // does not exist. see deleteGranuleAndFiles().
-  try {
-    if (dynamoGranule.collectionId) {
-      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-      log.info('getting cumulus ID');
-      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+  await pRetry(
+    async () => {
+      // If the granule does not exist in PG, just log that information. The logic that
+      // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
+      // does not exist. see deleteGranuleAndFiles().
+      try {
+        if (dynamoGranule.collectionId) {
+          const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
+          log.info('getting cumulus ID');
+          const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+            knex,
+            { name, version }
+          );
+          // Need granule_id + collection_cumulus_id to get truly unique record.
+          log.info('getting granulePgModel ID');
+          pgGranule = await granulePgModel.get(knex, {
+            granule_id: granuleId,
+            collection_cumulus_id: collectionCumulusId,
+          });
+          log.info('getting granulePgModel ID done');
+        }
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+        } else {
+          throw error;
+        }
+      }
+
+      if (dynamoGranule.published) {
+        throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+      }
+
+      log.info('calling deleteGranuleAndFiles');
+      await deleteGranuleAndFiles({
         knex,
-        { name, version }
-      );
-      // Need granule_id + collection_cumulus_id to get truly unique record.
-      log.info('getting granulePgModel ID');
-      pgGranule = await granulePgModel.get(knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: collectionCumulusId,
+        dynamoGranule,
+        pgGranule,
       });
-      log.info('getting granulePgModel ID done');
-    }
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
-    } else {
-      throw error;
-    }
-  }
+      log.info('end deleteGranuleAndFiles');
 
-  if (dynamoGranule.published) {
-    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-  }
-
-  log.info('calling deleteGranuleAndFiles');
-  await deleteGranuleAndFiles({
-    knex,
-    dynamoGranule,
-    pgGranule,
-  });
-  log.info('end deleteGranuleAndFiles');
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await indexer.deleteRecord({
-      esClient,
-      id: granuleId,
-      type: 'granule',
-      parent: dynamoGranule.collectionId,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  }
+      if (inTestMode()) {
+        const esClient = await Search.es(process.env.ES_HOST);
+        await indexer.deleteRecord({
+          esClient,
+          id: granuleId,
+          type: 'granule',
+          parent: dynamoGranule.collectionId,
+          index: process.env.ES_INDEX,
+          ignore: [404],
+        });
+      }
+    },
+    retryConfig
+  );
 
   log.info('delete done');
   return res.send({ detail: 'Record deleted' });

@@ -2,6 +2,8 @@
 
 const router = require('express-promise-router')();
 
+const pRetry = require('p-retry');
+
 const {
   getKnexClient,
   ProviderPgModel,
@@ -21,6 +23,8 @@ const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const { Search } = require('../es/search');
 const { addToLocalES, indexProvider } = require('../es/indexer');
+
+const retryConfig = require('./retryConfig');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -109,13 +113,18 @@ async function post(req, res) {
     validateProviderHost(apiProvider.host);
     log.info('translation finished');
 
-    await knex.transaction(async (trx) => {
-      log.info('starting transaction - Pg model creating');
-      await providerPgModel.create(trx, postgresProvider);
-      log.info('starting transaction - Dynamo model creating');
-      record = await providerModel.create(apiProvider);
-      log.info('finished');
-    });
+    await pRetry(
+      async () => {
+        await knex.transaction(async (trx) => {
+          log.info('starting transaction - Pg model creating');
+          await providerPgModel.create(trx, postgresProvider);
+          log.info('starting transaction - Dynamo model creating');
+          record = await providerModel.create(apiProvider);
+          log.info('finished');
+        });
+      },
+      retryConfig
+    );
 
     if (inTestMode()) {
       log.info('test mode -- BAD ');
@@ -179,19 +188,24 @@ async function put({ params: { id }, body }, res) {
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
   log.info('translate end');
 
-  await knex.transaction(async (trx) => {
-    log.info('transaction start -- PgModel upsert');
-    await providerPgModel.upsert(trx, postgresProvider);
-    log.info('transaction start -- PgModel end');
-    log.info('transaction start -- Dynamo Create');
-    record = await providerModel.create(apiProvider);
-    log.info('transaction start -- Dynamo Create end');
-  });
+  await pRetry(
+    async () => {
+      await knex.transaction(async (trx) => {
+        log.info('transaction start -- PgModel upsert');
+        await providerPgModel.upsert(trx, postgresProvider);
+        log.info('transaction start -- PgModel end');
+        log.info('transaction start -- Dynamo Create');
+        record = await providerModel.create(apiProvider);
+        log.info('transaction start -- Dynamo Create end');
+      });
 
-  if (inTestMode()) {
-    log.info('test -- bad');
-    await addToLocalES(record, indexProvider);
-  }
+      if (inTestMode()) {
+        log.info('test -- bad');
+        await addToLocalES(record, indexProvider);
+      }
+    },
+    retryConfig
+  );
 
   log.info('PUT done');
   return res.send(record);
@@ -209,18 +223,26 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
 
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
-      await providerModel.delete({ id: req.params.id });
-      if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: req.params.id,
-          type: 'provider',
-          index: process.env.ES_INDEX,
-        }, { ignore: [404] });
-      }
-    });
+    await pRetry(
+      async () => {
+        await knex.transaction(async (trx) => {
+          log.info('Attempting to run provider deletion');
+          await trx(tableNames.providers).where({ name: req.params.id }).del();
+          log.info('Attempting to run dynamo provider deletion');
+          await providerModel.delete({ id: req.params.id });
+          if (inTestMode()) {
+            log.info('This should not happen outside of units');
+            const esClient = await Search.es(process.env.ES_HOST);
+            await esClient.delete({
+              id: req.params.id,
+              type: 'provider',
+              index: process.env.ES_INDEX,
+            }, { ignore: [404] });
+          }
+        });
+      },
+      retryConfig
+    );
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {

@@ -4,6 +4,8 @@ const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+const pRetry = require('p-retry');
+const retryConfig = require('./retryConfig');
 
 const {
   getKnexClient,
@@ -85,10 +87,16 @@ async function post(req, res) {
     apiRule.updatedAt = Date.now();
     const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.create(trx, postgresRule);
-      record = await model.create(apiRule);
-    });
+    await pRetry(
+      async () => {
+        await dbClient.transaction(async (trx) => {
+          await rulePgModel.create(trx, postgresRule);
+          record = await model.create(apiRule);
+        });
+      },
+      retryConfig
+    );
+
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
   } catch (error) {
@@ -138,12 +146,17 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    await pRetry(
+      async() => {
+        const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
-    });
+        await dbClient.transaction(async (trx) => {
+          await rulePgModel.upsert(trx, postgresRule);
+          newRule = await model.update(oldRule, apiRule, fieldsToDelete);
+        });
+      },
+      retryConfig
+    );
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
@@ -177,11 +190,15 @@ async function del(req, res) {
     }
     throw error;
   }
-
-  await dbClient.transaction(async (trx) => {
-    await trx(tableNames.rules).where({ name }).del();
-    await model.delete(apiRule);
-  });
+  await pRetry(
+    async () => {
+      await dbClient.transaction(async (trx) => {
+        await trx(tableNames.rules).where({ name }).del();
+        await model.delete(apiRule);
+      });
+    },
+    retryConfig
+  );
 
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
