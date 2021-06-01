@@ -53,7 +53,9 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
   });
 
   afterAll(async () => {
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+    if (postBulkDeleteBody.id) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+    }
   });
 
   it('returns a status code of 202', () => {

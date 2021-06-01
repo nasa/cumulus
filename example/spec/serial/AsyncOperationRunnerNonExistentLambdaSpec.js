@@ -97,7 +97,9 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
 
   afterAll(async () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
   });
 
   it('updates the status field in DynamoDB to "RUNNER_FAILED"', () => {

@@ -102,7 +102,9 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
   });
 
   afterAll(async () => {
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
   });
 
   it('updates the status field in DynamoDB to "RUNNER_FAILED"', () => {

@@ -176,7 +176,9 @@ describe('POST /granules/bulkDelete', () => {
       // Must delete rules before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
 
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+      if (postBulkDeleteBody.id) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+      }
 
       await pAll(
         [

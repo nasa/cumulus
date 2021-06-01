@@ -408,7 +408,9 @@ describe('When there are granule differences and granule reconciliation is run',
     let inventoryReportAsyncOperationId;
 
     afterAll(async () => {
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: inventoryReportAsyncOperationId });
+      if (inventoryReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: inventoryReportAsyncOperationId });
+      }
     });
 
     it('generates an async operation through the Cumulus API', async () => {
@@ -563,7 +565,9 @@ describe('When there are granule differences and granule reconciliation is run',
     let internalReportAsyncOperationId;
 
     afterAll(async () => {
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: internalReportAsyncOperationId });
+      if (internalReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: internalReportAsyncOperationId });
+      }
     });
 
     it('generates an async operation through the Cumulus API', async () => {
@@ -653,7 +657,9 @@ describe('When there are granule differences and granule reconciliation is run',
     let granuleInventoryAsyncOpId;
 
     afterAll(async () => {
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
+      if (granuleInventoryAsyncOpId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
+      }
     });
 
     it('generates an async operation through the Cumulus API', async () => {

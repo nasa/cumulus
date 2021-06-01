@@ -123,6 +123,8 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
   afterAll(async () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
   });
 });

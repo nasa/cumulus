@@ -125,6 +125,8 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
 
   afterAll(async () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
   });
 });

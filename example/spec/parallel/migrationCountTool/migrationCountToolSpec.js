@@ -53,7 +53,9 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   });
 
   afterAll(async () => {
-    await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id });
+    if (migrationCountResponseBody.id) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id });
+    }
   });
 
   it('updates the status field to "SUCCEEDED"', () => {
