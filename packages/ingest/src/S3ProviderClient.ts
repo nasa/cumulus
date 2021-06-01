@@ -17,14 +17,24 @@ class S3ProviderClient implements ProviderClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
+   * @param {string} param.remoteAltBucket - alternate per-file bucket override to this.bucket
+   * bucket
    * @returns {Promise<string>} - the path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<string> {
-    const remoteUrl = `s3://${this.bucket}/${remotePath}`;
+  async download(params: {
+    remotePath: string,
+    localPath: string,
+    remoteAltBucket?: string,
+  }): Promise<string> {
+    const { remotePath, localPath, remoteAltBucket } = params;
+
+    const remoteBucket = remoteAltBucket || this.bucket;
+
+    const remoteUrl = `s3://${remoteBucket}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const s3Obj = {
-      Bucket: this.bucket,
+      Bucket: remoteBucket,
       Key: remotePath,
     };
 

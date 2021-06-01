@@ -32,6 +32,10 @@ s3_replicator_config = {
 }
 system_bucket="cumulus-test-sandbox-internal"
 
+csdap_client_id = "csdap client id "
+csdap_client_password = "csdap client password"
+csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
+
 launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
 

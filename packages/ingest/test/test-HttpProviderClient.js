@@ -254,7 +254,7 @@ test.serial('download() downloads a file', async (t) => {
   const { httpProviderClient } = t.context;
   const localPath = path.join(tmpdir(), randomString());
   try {
-    await httpProviderClient.download('pdrs/PDN.ID1611071307.PDR', localPath);
+    await httpProviderClient.download({ remotePath: 'pdrs/PDN.ID1611071307.PDR', localPath });
     t.is(await promisify(fs.access)(localPath), undefined);
   } finally {
     await promisify(fs.unlink)(localPath);

@@ -46,15 +46,17 @@ export class CognitoClient extends OAuthClient {
   };
 
   /**
-   * Query the Cognito API for the user object associated with an access token.
+   * Query the API for the user object associated with an access token.
    *
-   * @param {string} accessToken - The Cognito access token for Authorization header
+   * @param {Object} params
+   * @param {string} params.token - The access token for Authorization header
+   * @param {string} [params.xRequestId] - a string to help identify the request
    * @returns {Promise<Object>} The user object (see example)
    *
    * @example
    *
    * {
-   *  "username": "Jane Doe",
+   *  "username": "janedoe",
    *  "given_name": "Jane",
    *  "family_name": "Doe",
    *  "study_area": "Atmospheric Composition",
@@ -62,13 +64,19 @@ export class CognitoClient extends OAuthClient {
    *  "email": "janedoe@example.com"
    * }
    */
-  async getUserInfo(accessToken: string) {
-    if (!accessToken) throw new TypeError('accessToken is required');
+  async getUserInfo(params: {
+    token: string,
+    xRequestId?: string,
+  }) {
+    const { token, xRequestId } = params || {};
+    if (!token) throw new TypeError('token is required');
+    const headers = xRequestId ? { 'X-Request-Id': xRequestId } : undefined;
 
     try {
       const response = await super.getRequest({
         path: 'oauth/userInfo',
-        accessToken,
+        token,
+        headers,
       });
 
       return response.body;

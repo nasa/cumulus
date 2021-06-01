@@ -7,15 +7,16 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
 const {
   createFakeJwtAuthToken,
   fakeExecutionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
 
 // create all the variables needed across this test
@@ -44,7 +45,7 @@ test.before(async () => {
   process.env.ES_INDEX = esAlias;
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();

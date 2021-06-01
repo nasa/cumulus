@@ -139,7 +139,7 @@ describe('POST /granules/bulk', () => {
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
           { timestamp__from: ingestTime },
-          { timeout: 15 }
+          { timeout: 30 }
         );
 
         console.log(`Ingest Execution ARN is : ${firstIngestGranuleExecutionArn}`);
