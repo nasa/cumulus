@@ -3,15 +3,19 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
-      AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
+      AccessTokensTable              = aws_dynamodb_table.access_tokens.id
       API_BASE_URL                   = local.api_uri
       CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
       CMR_ENVIRONMENT                = var.cmr_environment
       DISTRIBUTION_ENDPOINT          = local.api_uri
-      DISTRIBUTION_REDIRECT_ENDPOINT = "${local.api_uri}redirect"
+      DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
+      OAUTH_CLIENT_ID                = var.oauth_client_id
+      OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      OAUTH_HOST_URL                 = var.oauth_host_url
+      OAUTH_PROVIDER                 = var.oauth_provider
       stackName                      = var.prefix
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
       STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
@@ -19,6 +23,18 @@ locals {
       public_buckets                 = join(",", var.public_buckets)
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
+}
+
+resource "aws_secretsmanager_secret" "api_oauth_client_password" {
+  name_prefix = "${var.prefix}-distribution-api-oauth-client-password"
+  description = "OAuth client password for the Cumulus Distribution API's ${var.prefix} deployment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
+  count         = length(var.oauth_client_password) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_oauth_client_password.id
+  secret_string = var.oauth_client_password
 }
 
 resource "aws_cloudwatch_log_group" "api" {
@@ -123,9 +139,25 @@ resource "aws_api_gateway_integration" "any_proxy" {
   uri                     = aws_lambda_function.api.invoke_arn
 }
 
-resource "aws_api_gateway_deployment" "api" {
-  depends_on = [aws_api_gateway_integration.any_proxy]
+resource "aws_api_gateway_method" "root_proxy" {
+  rest_api_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  resource_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
+  http_method   = "GET"
+  authorization = "NONE"
+}
 
-  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
-  stage_name  = var.api_gateway_stage
+resource "aws_api_gateway_integration" "root_proxy" {
+  rest_api_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  resource_id             = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
+  http_method             = aws_api_gateway_method.root_proxy.http_method
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.api.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "api" {
+  depends_on        = [aws_api_gateway_integration.root_proxy, aws_api_gateway_integration.any_proxy]
+  rest_api_id       = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  stage_description = md5(file("${path.module}/api.tf"))
+  stage_name        = var.api_gateway_stage
 }

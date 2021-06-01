@@ -35,6 +35,21 @@ variable "cmr_oauth_provider" {
   default = "earthdata"
 }
 
+variable "csdap_client_id" {
+  type        = string
+  description = "The csdap client id"
+}
+
+variable "csdap_client_password" {
+  type        = string
+  description = "The csdap client password"
+}
+
+variable "csdap_host_url" {
+  type        = string
+  description = "The csdap host url"
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -170,6 +185,12 @@ variable "cmr_acl_based_credentials" {
   type = bool
   default = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+}
+
+variable "cumulus_distribution_url" {
+  type        = string
+  default     = null
+  description = "The url of cumulus distribution API Gateway endpoint"
 }
 
 variable "distribution_url" {

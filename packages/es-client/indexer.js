@@ -11,14 +11,16 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const { constructCollectionId } = require('@cumulus/message/Collections');
-const log = require('@cumulus/common/log');
+
+const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { IndexExistsError } = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { Granule } = require('../models');
-const { IndexExistsError } = require('../lib/errors');
-const mappings = require('../models/mappings.json');
+const mappings = require('./config/mappings.json');
+
+const logger = new Logger({ sender: '@cumulus/es-client/indexer' });
 
 async function createIndex(esClient, indexName) {
   const indexExists = await esClient.indices.exists({ index: indexName })
@@ -40,7 +42,7 @@ async function createIndex(esClient, indexName) {
     },
   });
 
-  log.info(`Created esIndex ${indexName}`);
+  logger.info(`Created esIndex ${indexName}`);
 }
 
 /**
@@ -263,17 +265,6 @@ async function deleteRecord({
 }
 
 /**
- * start the re-ingest of a given granule object
- *
- * @param  {Object} g - the granule object
- * @returns {Promise} an object showing the start of the re-ingest
- */
-async function reingest(g) {
-  const gObj = new Granule();
-  return await gObj.reingest(g);
-}
-
-/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -297,5 +288,4 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
-  reingest,
 };

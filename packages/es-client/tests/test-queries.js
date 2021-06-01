@@ -5,17 +5,28 @@ const orderBy = require('lodash/orderBy');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
-const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const indexer = require('../indexer');
+const { Search } = require('../search');
+const { bootstrapElasticSearch } = require('../bootstrap');
 
 const collectionIds = [randomId('collectionId-abc'), randomId('collectionId-efg')];
 const granules = [
-  fakeGranuleFactoryV2({ collectionId: collectionIds[0] }),
-  fakeGranuleFactoryV2({ collectionId: collectionIds[1], granuleId: randomId('granprefix123') }),
-  fakeGranuleFactoryV2({ collectionId: collectionIds[1], granuleId: randomId('granprefix'), status: 'failed' }),
-  fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' }),
+  {
+    collectionId: collectionIds[0],
+    granuleId: randomId('granule'),
+    status: 'completed',
+  },
+  {
+    collectionId: collectionIds[1],
+    granuleId: randomId('granprefix123'),
+    status: 'completed',
+  },
+  { collectionId: collectionIds[1], granuleId: randomId('granprefix'), status: 'failed' },
+  {
+    granuleId: randomId('granule'),
+    collectionId: collectionIds[0],
+    status: 'failed',
+  },
 ];
 const reconciliationReports = [
   { type: 'Inventory' },

@@ -7,34 +7,19 @@ const range = require('lodash/range');
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const indexer = rewire('../../es/indexer');
-const { Search } = require('../../es/search');
-const models = require('../../models');
-const { fakeGranuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const Stats = require('../../es/stats');
-
-const collectionTable = randomId('collectionsTable');
-const granuleTable = randomId('granulesTable');
+const indexer = rewire('../indexer');
+const { Search } = require('../search');
+const { bootstrapElasticSearch } = require('../bootstrap');
+const Stats = require('../stats');
 
 process.env.system_bucket = randomId('systemBucket');
 process.env.stackName = randomId('stackName');
 
 let esClient;
-let collectionModel;
-let granuleModel;
 
 test.before(async () => {
-  // create the tables
-  process.env.CollectionsTable = collectionTable;
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
-  process.env.GranulesTable = granuleTable;
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
-
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 });
@@ -56,13 +41,14 @@ test.afterEach(async (t) => {
 });
 
 test.after.always(async () => {
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
   await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('Stats does not return a collection if the collection has no active granules', async (t) => {
-  const collection = fakeCollectionFactory();
+  const collection = {
+    name: randomId('name'),
+    version: 1,
+  };
   await indexer.indexCollection(esClient, collection, t.context.esAlias);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
@@ -72,7 +58,10 @@ test.serial('Stats does not return a collection if the collection has no active 
 });
 
 test.serial('Stats returns one granule when a granule is indexed', async (t) => {
-  const granule = fakeGranuleFactoryV2();
+  const granule = {
+    granuleId: randomId('granule'),
+    collectionId: constructCollectionId(randomId('name'), 1),
+  };
   await indexer.indexGranule(esClient, granule, t.context.esAlias);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
@@ -83,12 +72,23 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
 
 test.serial('Stats returns correct granule errors', async (t) => {
   await Promise.all(
-    range(10).map(() => indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias))
+    range(10).map(() => indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias))
   );
 
   await Promise.all([
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      status: 'failed',
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      status: 'failed',
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias),
   ]);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
@@ -108,16 +108,31 @@ test.serial('Count returns 0 if there are no granules', async (t) => {
 test.serial('Count returns correct granule and collection count', async (t) => {
   await Promise.all(
     range(12).map(() =>
-      indexer.indexCollection(esClient, fakeCollectionFactory(), t.context.esAlias))
+      indexer.indexCollection(esClient, {
+        name: randomId('collection'),
+        version: 1,
+      }, t.context.esAlias))
   );
 
   await Promise.all(
-    range(10).map(() => indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias))
+    range(10).map(() => indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: constructCollectionId(randomId('name'), 1),
+      status: 'completed',
+    }, t.context.esAlias))
   );
 
   await Promise.all([
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      status: 'failed',
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: constructCollectionId(randomId('name'), 1),
+      status: 'failed',
+    }, t.context.esAlias),
   ]);
 
   const stats = new Stats({}, 'granule', process.env.ES_INDEX);
@@ -137,12 +152,30 @@ test.serial('Count returns correct granule and collection count', async (t) => {
 
 test.serial('Count returns correct count for date range', async (t) => {
   await Promise.all([
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
       updatedAt: new Date(2020, 0, 27),
-    }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2(), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias),
+      status: 'completed',
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      status: 'completed',
+      collectionId: constructCollectionId(randomId('name'), 1),
+      updatedAt: new Date(),
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: constructCollectionId(randomId('name'), 1),
+      status: 'failed',
+      updatedAt: new Date(),
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      status: 'failed',
+      updatedAt: new Date(2020, 0, 29),
+      collectionId: constructCollectionId(randomId('name'), 1),
+    }, t.context.esAlias),
   ]);
 
   let stats = new Stats(
@@ -191,10 +224,25 @@ test.serial('Count returns correct count for date range', async (t) => {
 
 test.serial('Count returns correct count for with custom field specified', async (t) => {
   await Promise.all([
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection2' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection3', status: 'failed' }), t.context.esAlias),
-    indexer.indexGranule(esClient, fakeGranuleFactoryV2({ collectionId: 'collection1', status: 'failed', updatedAt: new Date(2020, 0, 29) }), t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: 'collection1',
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: 'collection2',
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: 'collection3',
+      status: 'failed',
+    }, t.context.esAlias),
+    indexer.indexGranule(esClient, {
+      granuleId: randomId('granule'),
+      collectionId: 'collection1',
+      status: 'failed',
+      updatedAt: new Date(2020, 0, 29),
+    }, t.context.esAlias),
   ]);
 
   const stats = new Stats(
