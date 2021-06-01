@@ -524,7 +524,7 @@ class Granule extends Manager {
    * @private
    */
   async _deleteRecord(granule) {
-    return super.delete({ granuleId: granule.granuleId });
+    return await super.delete({ granuleId: granule.granuleId });
   }
 
   /**
@@ -538,7 +538,7 @@ class Granule extends Manager {
       throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
     }
 
-    return this._deleteRecord(granule);
+    return await this._deleteRecord(granule);
   }
 
   /**
@@ -546,7 +546,7 @@ class Granule extends Manager {
    */
   async deleteGranules() {
     const granules = await this.scan();
-    return Promise.all(granules.Items.map((granule) =>
+    return await Promise.all(granules.Items.map((granule) =>
       this.delete(granule)));
   }
 
@@ -698,7 +698,7 @@ class Granule extends Manager {
     const workflowStatus = getMetaStatus(cumulusMessage);
     const queryFields = getGranuleQueryFields(cumulusMessage);
 
-    return Promise.all(granules.map(
+    return await Promise.all(granules.map(
       (granule) =>
         this.storeGranuleFromCumulusMessage({
           granule,

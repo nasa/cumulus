@@ -42,10 +42,12 @@ describe('The FTP Ingest Granules workflow', () => {
     granuleModel = new Granule();
 
     // populate collections, providers and test data
-    await Promise.all([
+    const promiseResults = await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       createProvider(config.stackName, provider),
     ]);
+
+    const createdProvider = JSON.parse(promiseResults[1].body).record;
 
     console.log('\nStarting ingest test');
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
@@ -58,7 +60,7 @@ describe('The FTP Ingest Granules workflow', () => {
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, createdProvider, inputPayload
     );
   });
 
@@ -102,7 +104,7 @@ describe('The FTP Ingest Granules workflow', () => {
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     });
 
-    it('makes the granule available through the Cumulus API', async () => {
+    it('makes the granule available through the Cumulus API', () => {
       expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     });
 

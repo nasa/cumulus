@@ -235,7 +235,7 @@ test.serial('unpublishGranule() does not update granule if PG write fails', asyn
   });
 
   const fakeGranulePgModel = {
-    getRecordCumulusId: async () => pgGranuleCumulusId,
+    getRecordCumulusId: () => Promise.resolve(pgGranuleCumulusId),
     update: () => {
       throw new Error('PG error');
     },

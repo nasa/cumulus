@@ -136,7 +136,7 @@ describe('POST /granules/bulkDelete', () => {
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
           { timestamp__from: ingestTime },
-          { timeout: 15 }
+          { timeout: 30 }
         );
 
         // Wait for the execution to be completed

@@ -251,7 +251,7 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
 }
 
 // wait for collection in list
-const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => pWaitFor(
+const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({ prefix: stackName,
@@ -397,7 +397,7 @@ describe('When there are granule differences and granule reconciliation is run',
     }
   });
 
-  it('prepares the test suite successfully', async () => {
+  it('prepares the test suite successfully', () => {
     if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
   });
 

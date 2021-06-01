@@ -15,11 +15,13 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
+const Collection = require('@cumulus/es-client/collections');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
-const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
@@ -29,8 +31,6 @@ const {
   filterCMRCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
-const Collection = require('../es/collections');
-const { ESSearchQueue } = require('../es/esSearchQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -745,6 +745,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest(event);
+  return await processRequest(event);
 }
 exports.handler = handler;

@@ -10,7 +10,7 @@ const {
 const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 
 async function list(req, res) {

@@ -230,7 +230,7 @@ export class CMR {
    */
   async ingestCollection(xml: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
   /**
@@ -242,7 +242,7 @@ export class CMR {
    */
   async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
-    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+    return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
   /**
@@ -297,7 +297,7 @@ export class CMR {
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return deleteConcept('collections', datasetID, this.provider, headers);
+    return await deleteConcept('collections', datasetID, this.provider, headers);
   }
 
   /**
@@ -308,7 +308,7 @@ export class CMR {
    */
   async deleteGranule(granuleUR: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return deleteConcept('granules', granuleUR, this.provider, headers);
+    return await deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
   async searchConcept(
@@ -318,7 +318,7 @@ export class CMR {
     recursive = true
   ): Promise<unknown[]> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
-    return searchConcept({
+    return await searchConcept({
       type,
       searchParams,
       previousResults: [],
@@ -344,7 +344,7 @@ export class CMR {
       ...params,
     });
 
-    return this.searchConcept(
+    return await this.searchConcept(
       'collections',
       searchParams,
       format
@@ -367,7 +367,7 @@ export class CMR {
       ...params,
     });
 
-    return this.searchConcept(
+    return await this.searchConcept(
       'granules',
       searchParams,
       format
@@ -382,6 +382,6 @@ export class CMR {
    */
   async getGranuleMetadata(cmrLink: string): Promise<unknown> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
-    return getConceptMetadata(cmrLink, headers);
+    return await getConceptMetadata(cmrLink, headers);
   }
 }

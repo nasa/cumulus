@@ -326,7 +326,7 @@ async function hyraxMetadataUpdate({ config, input }) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(hyraxMetadataUpdate, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(hyraxMetadataUpdate, event, context);
 }
 
 exports.handler = handler;

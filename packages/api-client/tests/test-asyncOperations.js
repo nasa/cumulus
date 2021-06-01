@@ -16,10 +16,10 @@ test('getAsyncOperation calls the callback with the expected object and returns 
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
 
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await asyncOperations.getAsyncOperation({
@@ -76,10 +76,10 @@ test('listAsyncOperations calls the callback with the expected object and return
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
 
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await asyncOperations.listAsyncOperations({

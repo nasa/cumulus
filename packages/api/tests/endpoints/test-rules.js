@@ -18,6 +18,9 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -28,12 +31,8 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const { post } = require('../../endpoints/rules');
-const bootstrap = require('../../lambdas/bootstrap');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
-
-const { Search } = require('../../es/search');
-const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -91,7 +90,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   esClient = await Search.es('fakehost');
   await S3.createBucket(process.env.system_bucket);
@@ -118,7 +117,7 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   const newRule = fakeRuleFactoryV2();
   delete newRule.collection;
   delete newRule.provider;

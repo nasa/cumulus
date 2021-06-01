@@ -3,12 +3,15 @@
 const test = require('ava');
 const request = require('supertest');
 const { v4: uuidv4 } = require('uuid');
+const noop = require('lodash/noop');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const noop = require('lodash/noop');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -19,9 +22,6 @@ const {
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const bootstrap = require('../../lambdas/bootstrap');
-const { Search } = require('../../es/search');
-const indexer = require('../../es/indexer');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
@@ -62,7 +62,7 @@ test.before(async (t) => {
   esIndex = randomString();
   esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
   // create esClient
   esClient = await Search.es('fakehost');
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();

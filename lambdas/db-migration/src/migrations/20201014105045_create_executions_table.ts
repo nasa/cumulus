@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 
 export const up = async (knex: Knex): Promise<void> =>
-  knex.schema.createTable('executions', (table) => {
+  await knex.schema.createTable('executions', (table) => {
     table
       .increments('cumulus_id')
       .primary();
@@ -58,5 +58,5 @@ export const up = async (knex: Knex): Promise<void> =>
     table.unique(['arn']);
   });
 
-export const down = async (knex: Knex): Promise<void> => knex.schema
+export const down = async (knex: Knex): Promise<void> => await knex.schema
   .dropTableIfExists('executions');

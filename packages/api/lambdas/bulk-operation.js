@@ -1,10 +1,10 @@
-const elasticsearch = require('@elastic/elasticsearch');
 const get = require('lodash/get');
 const pMap = require('p-map');
 
 const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
 
 const { deconstructCollectionId } = require('../lib/utils');
 const GranuleModel = require('../models/granules');
@@ -31,22 +31,11 @@ async function getGranuleIdsForPayload(payload) {
   if (granuleIds.length === 0 && payload.query) {
     log.info('No granule ids detected. Searching for granules in Elasticsearch.');
 
-    if (!process.env.METRICS_ES_HOST
-        || !process.env.METRICS_ES_USER
-        || !process.env.METRICS_ES_PASS) {
-      throw new Error('ELK Metrics stack not configured');
-    }
-
     const query = payload.query;
     const index = payload.index;
     const responseQueue = [];
 
-    const esUrl = `https://${process.env.METRICS_ES_USER}:${
-      process.env.METRICS_ES_PASS}@${process.env.METRICS_ES_HOST}`;
-    const client = new elasticsearch.Client({
-      node: esUrl,
-    });
-
+    const client = await Search.es(undefined, true);
     const searchResponse = await client.search({
       index: index,
       scroll: '30s',
@@ -81,7 +70,7 @@ async function getGranuleIdsForPayload(payload) {
   return uniqueGranuleIds;
 }
 
-function applyWorkflowToGranules({
+async function applyWorkflowToGranules({
   granuleIds,
   workflowName,
   meta,
@@ -103,7 +92,7 @@ function applyWorkflowToGranules({
       return { granuleId, err: error };
     }
   });
-  return Promise.all(applyWorkflowRequests);
+  return await Promise.all(applyWorkflowRequests);
 }
 
 /**
@@ -229,13 +218,13 @@ async function bulkGranuleDelete(
 async function bulkGranule(payload) {
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
 }
 
 async function bulkGranuleReingest(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  return pMap(
+  return await pMap(
     granuleIds,
     async (granuleId) => {
       try {
@@ -267,13 +256,13 @@ async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
   if (event.type === 'BULK_GRANULE') {
-    return bulkGranule(event.payload);
+    return await bulkGranule(event.payload);
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
-    return bulkGranuleDelete(event.payload);
+    return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    return bulkGranuleReingest(event.payload);
+    return await bulkGranuleReingest(event.payload);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

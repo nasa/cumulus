@@ -33,29 +33,29 @@ class FakeLogger extends Logger {
 // This fakes the `@cumulus/api-client/granules` module so that we can simulate responses from the
 // Cumulus API in our tests. It returns different canned responses depending on the `granuleId`.
 const fakeGranulesModule = {
-  getGranule: async ({ granuleId }) => {
+  getGranule: ({ granuleId }) => {
     if (granuleId === 'throw-error') {
-      throw new Error('Test Error');
+      return Promise.reject(new Error('Test Error'));
     }
 
     if (granuleId === 'crash-the-api') {
-      return {
+      return Promise.resolve({
         statusCode: 500,
         body: '{}',
-      };
+      });
     }
 
     if (granuleId === 'duplicate') {
-      return {
+      return Promise.resolve({
         statusCode: 200,
         body: '{}',
-      };
+      });
     }
 
-    return {
+    return Promise.resolve({
       statusCode: 404,
       body: JSON.stringify({ error: 'Not Found' }),
-    };
+    });
   },
 };
 
