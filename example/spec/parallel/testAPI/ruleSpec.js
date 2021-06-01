@@ -266,8 +266,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     });
 
     afterAll(async () => {
-      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
-      await deleteExecution({ prefix: config.stackName, executionArn: executionArn2 });
+      await Promise.allSettled([
+        deleteExecution({ prefix: config.stackName, executionArn: executionArn }),
+        deleteExecution({ prefix: config.stackName, executionArn: executionArn2 }),
+      ]);
     });
 
     it('the rule can be updated', async () => {
