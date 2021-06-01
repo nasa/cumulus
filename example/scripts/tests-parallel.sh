@@ -9,14 +9,16 @@ echo Running parallel integration tests
 DOT_PID="$!"
 
 #TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Recon |grep -v testApi |grep -v testAPI |grep -v ingestGranule)
-TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Recon |grep -v testApi |grep -v testAPI |grep -v Orca)
-
+#TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Recon |grep -v testApi |grep -v testAPI |grep -v Orca)
+#TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -E 'testAPI|discoverGranule')
+#TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Orca)
+TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js' |grep -v Orca |grep -v migrationCountToolSpec)
 testOutputDir=scripts/test_output${RANDOM}
 
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-echo "" | ../node_modules/.bin/parallel -j 0 --timeout 1200 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
+echo "" | ../node_modules/.bin/parallel -j 20 --timeout 1200 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 result=$?
 echo parallel tests complete: $result suite failures
 

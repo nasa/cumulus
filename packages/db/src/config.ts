@@ -137,12 +137,13 @@ export const getKnexConfig = async ({
       // is improperly typed.
       //@ts-ignore
       createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
+      //@ts-ignore
     },
   };
 
   knexConfig.acquireConnectionTimeout = env.knexAcquireConnectionTimeout
     ? Number(env.knexAcquireConnectionTimeout)
-    : 60000;
+    : 10000;
 
   if (env.migrationDir) {
     knexConfig.migrations = {

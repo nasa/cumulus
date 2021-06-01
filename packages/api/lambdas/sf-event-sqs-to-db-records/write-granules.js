@@ -241,27 +241,39 @@ const _writeGranuleViaTransaction = async ({
   updatedAt,
   files,
 }) => {
-  const granuleRecord = await generateGranuleRecord({
-    error,
-    granule,
-    files,
-    workflowStartTime,
-    workflowStatus,
-    queryFields,
-    collectionCumulusId,
-    providerCumulusId,
-    pdrCumulusId,
-    processingTimeInfo,
-    updatedAt,
-  });
+  let granuleRecord;
+  let upsertQueryResult;
+  try {
+    granuleRecord = await generateGranuleRecord({
+      error,
+      granule,
+      files,
+      workflowStartTime,
+      workflowStatus,
+      queryFields,
+      collectionCumulusId,
+      providerCumulusId,
+      pdrCumulusId,
+      processingTimeInfo,
+      updatedAt,
+    });
+  } catch (locError) {
+    log.info(`Error thrown in generateGranuleRecord ${JSON.stringify(locError)}`);
+    throw locError;
+  }
 
-  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
-    trx,
-    granuleRecord,
-    executionCumulusId
-  );
+  try {
+    upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
+      trx,
+      granuleRecord,
+      executionCumulusId
+    );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
+  } catch (locError) {
+    log.info(`Error thrown in upsertGranuleWithExecutionJoinRecord ${JSON.stringify(locError)}`);
+  }
+
   return getGranuleCumulusIdFromQueryResultOrLookup({
     trx,
     queryResult: upsertQueryResult,
@@ -312,7 +324,7 @@ const _writeGranuleFiles = async ({
     if (!isEmpty(workflowError)) {
       log.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
     }
-    log.error('Failed writing files to Postgres, updating granule with error', error);
+    log.error(`Failed writing files to Postgres, updating granule with error: ${JSON.stringify(fileRecords)}`, error);
     const errorObject = {
       Error: 'Failed writing files to Postgres.',
       Cause: error.toString(),
@@ -416,52 +428,75 @@ const _writeGranule = async ({
   granuleModel,
   updatedAt = Date.now(),
 }) => {
-  const files = await _generateFilesFromGranule({ granule, provider });
+  try {
+    const files = await _generateFilesFromGranule({ granule, provider });
+    let granuleCumulusId;
 
-  let granuleCumulusId;
+    await knex.transaction(async (trx) => {
+      let returnVal;
 
-  await knex.transaction(async (trx) => {
-    granuleCumulusId = await _writeGranuleViaTransaction({
-      granule,
-      processingTimeInfo,
-      error,
-      provider,
-      workflowStartTime,
-      workflowStatus,
-      queryFields,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
-      trx,
-      updatedAt,
-      files,
+      try {
+        granuleCumulusId = await _writeGranuleViaTransaction({
+          granule,
+          processingTimeInfo,
+          error,
+          provider,
+          workflowStartTime,
+          workflowStatus,
+          queryFields,
+          collectionCumulusId,
+          providerCumulusId,
+          executionCumulusId,
+          pdrCumulusId,
+          trx,
+          updatedAt,
+          files,
+        });
+        log.info(`Writing `)
+      } catch (e) {
+        log.error(`Error thrown in _writeGranuleViaTransaction for ${JSON.stringify(granule)} -- ${e.message} --- ${JSON.stringify(error.stack)}`);
+        throw e;
+      }
+
+      try {
+        returnVal = granuleModel.storeGranuleFromCumulusMessage({
+          granule,
+          executionUrl,
+          collectionId,
+          provider,
+          workflowStartTime,
+          error,
+          pdrName,
+          workflowStatus,
+          processingTimeInfo,
+          queryFields,
+          updatedAt,
+        });
+      } catch (e) {
+        log.error(`Error thrown in storeGranuleFromCumulusMessage for ${JSON.stringify(granule)} -- ${e.message} --- ${JSON.stringify(e.stack)}`);
+        throw e;
+      }
+      return returnVal;
     });
 
-    return granuleModel.storeGranuleFromCumulusMessage({
-      granule,
-      executionUrl,
-      collectionId,
-      provider,
-      workflowStartTime,
-      error,
-      pdrName,
-      workflowStatus,
-      processingTimeInfo,
-      queryFields,
-      updatedAt,
-    });
-  });
-
-  await _writeGranuleFiles({
-    files,
-    granuleCumulusId,
-    granule,
-    workflowError: error,
-    workflowStatus,
-    knex,
-    granuleModel,
-  });
+    try {
+      await _writeGranuleFiles({
+        files,
+        granuleCumulusId,
+        granule,
+        workflowError: error,
+        workflowStatus,
+        knex,
+        granuleModel,
+      });
+    } catch (e) {
+      log.error(`Error thrown in _writeGranuleFiles for files ${JSON.stringify(files)} **************** ${JSON.stringify(granule)} -- ${e.message} --- ${JSON.stringify(e.stack)}`);
+      throw e;
+    }
+  } catch (thrownError) {
+    log.error(`Error thrown in writeGranule for ${JSON.stringify(granule)} -- ${thrownError.message} --- ${JSON.stringify(thrownError.stack)}`);
+    throw thrownError;
+  }
 };
 
 /**
