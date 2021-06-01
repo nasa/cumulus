@@ -47,7 +47,7 @@ test('deleteAsyncOperation calls the callback with the expected object and retur
     foo: 'bar',
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
 
     return { body: JSON.stringify(resultBody) };
