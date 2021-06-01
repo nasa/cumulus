@@ -86,6 +86,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
+      (granule) => deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      })
+    ));
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
