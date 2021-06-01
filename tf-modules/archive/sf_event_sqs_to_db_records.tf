@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 30
+  sf_event_sqs_lambda_timeout = 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -13,7 +13,11 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
-    actions = ["dynamodb:UpdateItem"]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ]
     resources = [
       var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
@@ -177,7 +181,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       PdrsTable       = var.dynamo_tables.pdrs.name
       DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "5.0.0"
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
     }
   }
 
@@ -230,5 +234,4 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
 
   tags = var.tags
 }
-
 

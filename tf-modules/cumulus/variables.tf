@@ -12,7 +12,7 @@ variable "cmr_client_id" {
 }
 
 variable "cmr_environment" {
-  description = "Environment that should be used for CMR requests (e.g. 'UAT', 'SIT')"
+  description = "Environment that should be used for CMR requests ('UAT', 'SIT', or 'PROD')"
   type        = string
 }
 
@@ -106,8 +106,15 @@ variable "prefix" {
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
+}
+
+variable "sts_policy_helper_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "system_bucket" {
@@ -459,6 +466,12 @@ variable "urs_url" {
   description = "The URL of the Earthdata login (URS) site"
   type        = string
   default     = "https://uat.urs.earthdata.nasa.gov"
+}
+
+variable "cmr_acl_based_credentials" {
+  type = bool
+  default = false
+  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
 }
 
 variable "vpc_id" {

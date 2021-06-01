@@ -7,12 +7,14 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
   receiveSQSMessages,
   sendSQSMessage,
   getQueueUrlByName,
 } = require('@cumulus/aws-client/SQS');
+const { s3 } = require('@cumulus/aws-client/services');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
   addCollections,
@@ -26,6 +28,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -162,7 +165,7 @@ describe('The SQS rule', () => {
     await cleanUp();
   });
 
-  it('SQS rules are added', async () => {
+  it('SQS rules are added', () => {
     expect(ruleList.length).toBe(1);
     expect(ruleList[0].rule.value).toBe(queues.sourceQueueUrl);
     expect(ruleList[0].meta.visibilityTimeout).toBe(300);
@@ -171,6 +174,7 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
+    let messageId;
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 
     beforeAll(async () => {
@@ -178,10 +182,13 @@ describe('The SQS rule', () => {
       granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
 
       // post a non-processable message
-      await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      messageId = message.MessageId;
     });
 
     afterAll(async () => {
+      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
+      await deleteS3Object(config.bucket, key);
       await deleteGranule({ prefix: config.stackName, granuleId });
     });
 
@@ -198,7 +205,7 @@ describe('The SQS rule', () => {
         );
       });
 
-      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
+      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });
@@ -237,6 +244,15 @@ describe('The SQS rule', () => {
 
     it('messages are picked up and removed from source queue', async () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
+    });
+
+    it('stores incoming messages on S3', async () => {
+      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
+      const message = await s3().getObject({
+        Bucket: config.bucket,
+        Key: key,
+      }).promise();
+      expect(message.Body.toString()).toBe(invalidMessage);
     });
   });
 });

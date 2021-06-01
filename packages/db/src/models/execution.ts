@@ -17,7 +17,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution
   ) {
     if (execution.status === 'running') {
-      return knexOrTrx(this.tableName)
+      return await knexOrTrx(this.tableName)
         .insert(execution)
         .onConflict('arn')
         .merge({
@@ -28,7 +28,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
         })
         .returning('cumulus_id');
     }
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(execution)
       .onConflict('arn')
       .merge()

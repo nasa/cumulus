@@ -10,7 +10,7 @@ class StubGranuleSearchQueue {
     this.items = items ? [...items] : [];
   }
 
-  async empty() {
+  empty() {
     const results = this.items.slice();
     this.items = [];
     return results;

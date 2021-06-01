@@ -329,6 +329,7 @@ async function reconciliationReportForGranuleFiles(params) {
           bucketTypes,
           urlType: 's3',
           distributionBucketMap,
+          useDirectS3Type: true,
         });
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
@@ -744,6 +745,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest(event);
+  return await processRequest(event);
 }
 exports.handler = handler;

@@ -3,7 +3,7 @@
 const test = require('ava');
 const collectionsApi = require('../collections');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.collectionName = 'testCollection';
   t.context.collectionVersion = 1;
@@ -19,7 +19,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
 
@@ -43,7 +43,7 @@ test('createCollection calls the callback with the expected object', async (t) =
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(collectionsApi.createCollection({
@@ -63,9 +63,9 @@ test('getCollection calls the callback with the expected object and returns the 
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await collectionsApi.getCollection({
@@ -89,9 +89,9 @@ test('getCollections calls the callback with the expected object and returns the
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { foo: 'bar' };
+    return Promise.resolve({ foo: 'bar' });
   };
 
   const result = await collectionsApi.getCollections({

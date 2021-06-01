@@ -13,7 +13,7 @@ const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
-} = require('@cumulus/earthdata-login-client');
+} = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
 const { join: pathjoin } = require('path');
@@ -24,6 +24,7 @@ const urljoin = require('url-join');
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
+const { getUserAccessibleBuckets } = require('@cumulus/cmrjs');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -46,7 +47,7 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
 
@@ -63,6 +64,7 @@ async function requestTemporaryCredentialsFromNgap({
   lambda,
   lambdaFunctionName,
   userId,
+  policy = undefined,
   roleSessionName,
 }) {
   const Payload = JSON.stringify({
@@ -71,9 +73,10 @@ async function requestTemporaryCredentialsFromNgap({
     duration: '3600', // one hour max allowed by AWS.
     rolesession: roleSessionName, // <- shows up in S3 server access logs
     userid: userId, // <- used by NGAP
+    policy,
   });
 
-  return lambda.invoke({
+  return await lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
   }).promise();
@@ -93,6 +96,112 @@ async function displayS3CredentialInstructions(_req, res) {
 }
 
 /**
+ * If DISABLE_S3_CREDENTIALS is not "true", returns undefined, otherwise, send a
+ * boom.ServerUnavailable to the caller, Exiting the request.
+ *
+ * @param {Object} res - express request object
+ * @returns {undefined} - when DISABLE_S3_CREDENTIALS is not 'true'
+ */
+function ensureEndpointEnabled(res) {
+  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
+
+  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
+    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
+  }
+  return undefined;
+}
+
+/**
+ * @returns {bool} whether or not the endpoint is configured to send ACL based
+ * credentials.
+ */
+function configuredForACLCredentials() {
+  if (process.env.CMR_ACL_BASED_CREDENTIALS && process.env.CMR_ACL_BASED_CREDENTIALS.toLowerCase() === 'true') {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Parses a "bucket/key/path" to return an array of ["bucket", "key/path"] where
+ * keypath is "/" if not specified.
+ *
+ * @param {string} bucketKeyPath
+ * @returns {Array<string>} Array [bucket, keypath]
+ */
+function parseBucketKey(bucketKeyPath) {
+  try {
+    const parts = bucketKeyPath.split('/');
+    const bucket = parts.shift();
+    const keypath = parts.join('/');
+    return { bucket, keypath: `/${keypath}` };
+  } catch (error) {
+    return {};
+  }
+}
+
+/**
+ * Reformats a list of buckets and bucket/keyspaths into the shape needed for
+ * calling the sts policy helper function. The desired payload is an object
+ * with 3 keys, 'accessmode', 'bucketlist' and 'pathlist'. 'bucketlist' and
+ * 'pathlist' are arrays of matching bucket and paths.
+ *
+ * Example:
+ * if the cmrAllowedBucketKeyList is:
+ * [ 'bucket1/somepath', 'bucket2']
+ * then the desired output would be the stringified object:
+ *
+ *  {
+ *   accessmode: 'Allow',
+ *   bucketlist: ['bucket1','bucket2'],
+ *   pathlist: ['/somepath', '/']
+ *  }
+ *
+ * @param {Array<string>} cmrAllowedBucketKeyList - earthdata login user name
+ * @returns {string} - stringified payload for policy helper function.
+ */
+function formatAllowedBucketKeys(cmrAllowedBucketKeyList) {
+  const bucketKeyPairList = cmrAllowedBucketKeyList.map(parseBucketKey);
+  const bucketlist = [];
+  const pathlist = [];
+
+  bucketKeyPairList.forEach((bucketKeyPair) => {
+    bucketlist.push(bucketKeyPair.bucket);
+    pathlist.push(bucketKeyPair.keypath);
+  });
+
+  return JSON.stringify({
+    accessmode: 'Allow',
+    bucketlist,
+    pathlist,
+  });
+}
+
+/**
+ *  Retrieve the sts session policy for a user when s3 credentials endpoint is
+ *  configured to use CMR ACLs. If the endpoint is not configured for CMR ACLs,
+ *  return undefined.
+ *
+ * @param {string} edlUser - earthdatalogin username
+ * @param {string} cmrProvider - Cumulus' CMR provider.
+ * @param {Object} lambda - aws lambda service.
+ * @returns {Object} session policy generated from user's CMR ACLs or undefined.
+ */
+async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
+  if (!configuredForACLCredentials()) return undefined;
+
+  // fetch allowed bucket keys from CMR
+  const cmrAllowedBucketKeyList = await getUserAccessibleBuckets(edlUser, cmrProvider);
+  const Payload = formatAllowedBucketKeys(cmrAllowedBucketKeyList);
+
+  return lambda.invoke({
+    FunctionName: process.env.STS_POLICY_HELPER_LAMBDA,
+    Payload,
+  }).promise()
+    .then((lambdaReturn) => JSON.parse(lambdaReturn.Payload));
+}
+
+/**
  * Dispenses time-based temporary credentials for same-region direct s3 access.
  *
  * @param {Object} req - express request object
@@ -101,22 +210,25 @@ async function displayS3CredentialInstructions(_req, res) {
  *                   tempoary s3 credentials for direct same-region s3 access.
  */
 async function s3credentials(req, res) {
-  const disableS3Credentials = process.env.DISABLE_S3_CREDENTIALS;
-
-  if (disableS3Credentials && (disableS3Credentials.toLowerCase() === 'true')) {
-    return res.boom.serverUnavailable('S3 Credentials Endpoint has been disabled');
-  }
+  ensureEndpointEnabled(res);
 
   const roleSessionName = buildRoleSessionName(
     req.authorizedMetadata.userName,
     req.authorizedMetadata.clientName
   );
 
+  const policy = await fetchPolicyForUser(
+    req.authorizedMetadata.userName,
+    process.env.cmr_provider,
+    req.lambda
+  );
+
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
-    lambdaFunctionName: process.env.STSCredentialsLambda,
+    lambdaFunctionName: process.env.STS_CREDENTIALS_LAMBDA,
     userId: req.authorizedMetadata.userName,
     roleSessionName,
+    policy,
   });
 
   const creds = JSON.parse(credentials.Payload);
@@ -204,7 +316,7 @@ async function handleRedirectRequest(req, res) {
  */
 async function handleCredentialRequest(req, res) {
   req.lambda = awsServices.lambda();
-  return s3credentials(req, res);
+  return await s3credentials(req, res);
 }
 
 /**
@@ -363,7 +475,7 @@ distributionApp.use((err, req, res, _next) => {
 });
 
 const handler = async (event, context) =>
-  awsServerlessExpress.proxy(
+  await awsServerlessExpress.proxy(
     awsServerlessExpress.createServer(distributionApp),
     event,
     context,

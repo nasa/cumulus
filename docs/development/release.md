@@ -60,10 +60,13 @@ Pre-release testing steps:
 
 #### From Master
 
-Create a branch titled `release-MAJOR.MINOR.x` for the release.
+Create a branch titled `release-MAJOR.MINOR.x` for the release (use a literal x for the patch version).
 
 ```shell
-git checkout -b release-MAJOR.MINOR.x
+    git checkout -b release-MAJOR.MINOR.x
+
+e.g.:
+    git checkout -b release-9.1.x
 ```
 
 If creating a new major version release from master, say `5.0.0`, then the branch would be named `release-5.0.x`. If creating a new minor version release from master, say `1.14.0` then the branch would be named `release-1.14.x`.
@@ -173,7 +176,7 @@ Commit and push these changes.
 
     **IMPORTANT**: Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
 
-    ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
+    ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](assets/configure-release-branch-test.png)
 
 4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch (`release-1.2.x`).
     - It **is safe** to do a squash merge in this instance, but not required
@@ -188,8 +191,12 @@ Ensure you are on the latest commit.
 Create and push a new git tag:
 
 ```bash
-git tag -a v1.x.x -m "Release 1.x.x"
-git push origin v1.x.x
+    git tag -a vMAJOR.MINOR.PATCH -m "Release MAJOR.MINOR.PATCH"
+    git push origin vMAJOR.MINOR.PATCH
+
+e.g.:
+    git tag -a v9.1.0 -m "Release 9.1.0"
+    git push origin v9.1.0
 ```
 
 ### 10. Publishing the release
@@ -264,6 +271,10 @@ If this is a backport, you will need to create a PR that ports the changelog upd
 To delete a published tag to re-tag, follow these steps:
 
 ```bash
-  git tag -d v1.x.x
-  git push -d origin v1.x.x
+  git tag -d vMAJOR.MINOR.PATCH
+  git push -d origin vMAJOR.MINOR.PATCH
+
+e.g.:
+  git tag -d v9.1.0
+  git push -d origin v9.1.0
 ```

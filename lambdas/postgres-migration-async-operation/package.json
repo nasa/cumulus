@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/postgres-migration-async-operation",
-  "version": "8.1.0",
+  "version": "9.0.1",
   "description": "A Lambda function used to start an ECS task to run data-migrations2 lambda",
   "license": "Apache-2.0",
   "engines": {
@@ -11,7 +11,7 @@
   "types": "./dist/lambda/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
+    "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
@@ -28,12 +28,12 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "8.1.0",
-    "@cumulus/async-operations": "8.1.0-alpha.1",
-    "@cumulus/logger": "8.1.0",
-    "@cumulus/types": "8.1.0"
+    "@cumulus/api": "9.0.1",
+    "@cumulus/async-operations": "9.0.1",
+    "@cumulus/logger": "9.0.1",
+    "@cumulus/types": "9.0.1"
   },
   "devDependencies": {
-    "@cumulus/test-data": "8.1.0"
+    "@cumulus/test-data": "9.0.1"
   }
 }
