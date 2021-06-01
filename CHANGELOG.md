@@ -28,22 +28,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Configures the example deployment to enable this feature.
 - **CUMULUS-2442**
   - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
-- **CUMULUS-2497**
-  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
-
+- **CUMULUS-2471**
+  - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
   - Updated `tf-modules/cumulus_distribution` module to take earthdata or cognito credentials
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
-
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
-
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
-
 - **CUMULUS-2479**
   - Adds /version endpoint to distribution API
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ### Changed
 
