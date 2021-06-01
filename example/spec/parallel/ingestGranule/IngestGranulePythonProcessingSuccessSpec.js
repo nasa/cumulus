@@ -5,9 +5,6 @@ const hasha = require('hasha');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 
-const {
-  Pdr,
-} = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
