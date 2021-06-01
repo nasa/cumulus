@@ -8,6 +8,7 @@ const {
   handleFileRequest,
   handleRootRequest,
 } = require('../endpoints/distribution');
+const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
 const { isAccessTokenExpired } = require('../lib/token');
 const { handleCredentialRequest } = require('../endpoints/s3credentials');
 const { getConfigurations } = require('../lib/distribution');
@@ -99,8 +100,6 @@ const profile = (req, res) => res.send('Profile not available.');
 
 const pubkey = (req, res) => res.status(501).end();
 
-const s3CredentialsREADME = (req, res) => res.status(501).end();
-
 router.get('/', handleRootRequest);
 router.get('/locate', locate);
 router.get('/login', handleLoginRequest);
@@ -108,7 +107,7 @@ router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
 router.get('/s3Credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
-router.get('/s3CredentialsREADME', s3CredentialsREADME);
+router.get('/s3CredentialsREADME', displayS3CredentialInstructions);
 // Use router.use to leverage custom version middleware
 router.use('/version', version);
 

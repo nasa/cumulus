@@ -34,7 +34,6 @@ const {
 } = require('..');
 
 const index = rewire('../index.js');
-const displayS3CredentialInstructions = index.__get__('displayS3CredentialInstructions');
 const parseBucketKey = index.__get__('parseBucketKey');
 const formatAllowedBucketKeys = index.__get__('formatAllowedBucketKeys');
 const fetchPolicyForUser = index.__get__('fetchPolicyForUser');
@@ -203,15 +202,6 @@ test('handleTokenAuthRequest() with an invalid client name results in a "Bad Req
     await handleTokenAuthRequest(req, res, next),
     'response-from-boom-badRequest'
   );
-});
-
-test('displayS3Credentials fills template with correct distribution endpoint.', async (t) => {
-  const send = sinon.spy();
-  const res = { send };
-  const expectedLink = `<a href="${process.env.DISTRIBUTION_ENDPOINT}s3credentials" target="_blank">${process.env.DISTRIBUTION_ENDPOINT}s3credentials</a>`;
-
-  await displayS3CredentialInstructions(undefined, res);
-  t.true(send.calledWithMatch(expectedLink));
 });
 
 test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true results in a 503 error', async (t) => {

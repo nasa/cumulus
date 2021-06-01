@@ -6,17 +6,12 @@ const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
-const template = require('lodash/template');
-const { promisify } = require('util');
-const fs = require('fs');
-const readFile = promisify(fs.readFile);
 const {
   EarthdataLoginClient,
   EarthdataLoginError,
 } = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
-const { join: pathjoin } = require('path');
 const morgan = require('morgan');
 const urljoin = require('url-join');
 
@@ -32,6 +27,7 @@ const {
 } = require('@cumulus/api/endpoints/s3credentials');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3credentials-readme');
 
 // From https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html#API_AssumeRole_RequestParameters
 const roleSessionNameRegex = /^[\w+,.=@-]{2,64}$/;
@@ -45,19 +41,6 @@ const buildEarthdataLoginClient = () =>
     loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
-
-/**
- * Sends a sample webpage describing how to use s3Credentials endpoint
- *
- * @param {Object} _req - express request object (unused)
- * @param {Object} res - express response object
- * @returns {Object} express repose object of the s3Credentials directions.
- */
-async function displayS3CredentialInstructions(_req, res) {
-  const instructionTemplate = await readFile(pathjoin(__dirname, 'instructions', 'index.html'), 'utf-8');
-  const compiled = template(instructionTemplate);
-  res.send(compiled(process.env));
-}
 
 // Running API locally will be on http, not https, so cookies
 // should not be set to secure for local runs of the API.
