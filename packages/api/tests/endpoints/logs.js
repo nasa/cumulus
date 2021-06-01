@@ -7,11 +7,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { Search } = require('@cumulus/es-client/search');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
 
 const { AccessToken } = require('../../models');
 

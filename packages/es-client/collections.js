@@ -1,8 +1,10 @@
 'use strict';
 
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
+
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { BaseSearch } = require('./search');
 
 const ES_MAX_AGG = 2147483647;

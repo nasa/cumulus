@@ -2,10 +2,13 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+
 const { randomId } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const { ESCollectionGranuleQueue } = require('../../es/esCollectionGranuleQueue');
-const { Search } = require('../../es/search');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const { bootstrapElasticSearch } = require('../bootstrap');
+const { ESCollectionGranuleQueue } = require('../esCollectionGranuleQueue');
+const { Search } = require('../search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();
@@ -53,9 +56,9 @@ test.serial(
 test.serial(
   'esCollectionGranuleQueue.shift() returns the next item and removes it from the queue and returns undefined when empty.',
   async (t) => {
-    const granules = granuleFactory(2);
+    const collectionId = constructCollectionId(randomId('collection'), 1);
+    const granules = granuleFactory(2, undefined, { collectionId });
     await loadGranules(granules, t);
-    const collectionId = granules[0].collectionId;
 
     // expect them to be sorted.
     granules.sort(sortByGranuleId);
@@ -80,9 +83,9 @@ test.serial(
 test.serial(
   'esCollectionGranuleQueue returns the granules sorted by granuleId.',
   async (t) => {
-    const granules = granuleFactory(20);
+    const collectionId = constructCollectionId(randomId('collection'), 1);
+    const granules = granuleFactory(20, undefined, { collectionId });
     await loadGranules(granules, t);
-    const collectionId = granules[0].collectionId;
 
     granules.sort(sortByGranuleId);
     const sq = new ESCollectionGranuleQueue({ collectionId });

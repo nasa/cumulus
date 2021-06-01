@@ -27,7 +27,7 @@ This package contains a generic, parent class called `OAuthClient`. This class h
 like `oAuthClient.getAuthorizationUrl()` which are used by all classes that inherit from `OAuthClient`.
 
 The examples below document these common methods as well as methods specific to the child classes, e.g.
-`cognitoClient.getUserInfo(accessToken)`.
+`cognitoClient.getUserInfo(params)`.
 
 ## Earthdata Login Usage Example
 
@@ -78,17 +78,19 @@ A client for the Cognito API. Extents OAuthClient.
 **Kind**: global class  
 <a name="CognitoClient+getUserInfo"></a>
 
-### cognitoClient.getUserInfo(accessToken) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cognitoClient.getUserInfo(params) ⇒ <code>Promise.&lt;Object&gt;</code>
 Query the Cognito API for the user object associated with an access token.
 
-**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)  
+**Kind**: instance method of [<code>CognitoClient</code>](#CognitoClient)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)
 
 | Param | Type | Description |
 | --- | --- | --- |
-| accessToken | <code>string</code> | The Cognito access token for Authorization header |
+| params | <code>Object</code> |  |
+| params.token | <code>string</code> | the access token for Authorization header |
+| [params.xRequestId] | <code>string</code> | a string to help identify the request in the OAuth provider logs |
 
-**Example**  
+**Example**
 ```js
 {
  "username": "Jane Doe",
@@ -119,6 +121,48 @@ Query the Earthdata Login API for the UID associated with a token
 | params.onBehalfOf | <code>string</code> | the Earthdata Login client id of the   app requesting the username |
 | params.token | <code>string</code> | the Earthdata Login token |
 | [params.xRequestId] | <code>string</code> | a string to help identify the request   in the Earthdata Login logs |
+
+<a name="EarthdataLoginClient+getUserInfo"></a>
+
+### earthdataLoginClient.getUserInfo(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Query the Earthdata Login API for the user object associated with a user.
+
+**Kind**: instance method of [<code>EarthdataLoginClient</code>](#CognitoClient)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - The user object (see example)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.token | <code>string</code> | the access token for Authorization header |
+| params.username | <code>string</code> | the uid of the registered user |
+| [params.xRequestId] | <code>string</code> | a string to help identify the request in the OAuth provider logs |
+
+**Example**  
+```js
+{
+  "uid": "janedoe",
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "registered_date": "15 Sep 2015 12:42:17PM",
+  "email_address": "janedoe@example.com",
+  "country": "United States",
+  "affiliation": "Government",
+  "authorized_date": "21 Apr 2016 01:13:28AM",
+  "allow_auth_app_emails": true,
+  "agreed_to_meris_eula": false,
+  "agreed_to_sentinel_eula": false,
+  "app_content": {
+    "param1": "value1",
+    "app_groups": {
+      "test": {
+        "param2": "value2"
+      }
+    }
+  },
+  "user_groups": [],
+  "user_authorized_apps": 3
+}
+```
 
 <a name="OAuthClient"></a>
 
@@ -199,9 +243,9 @@ Make an HTTP POST request to the login service
 | Param | Type | Description |
 | --- | --- | --- |
 | params | <code>Object</code> |  |
-| params.loginPath | <code>string</code> | the URL for the request |
+| params.path | <code>string</code> | the URL for the request |
 | params.form | <code>Object</code> | the body of the POST request |
-| [params.headers] | <code>Array</code> | Optional request headers |
+| [params.headers] | <code>Object</code> | Optional request headers |
 
 <a name="OAuthClient+getRequest"></a>
 
@@ -215,7 +259,9 @@ Make an HTTP GET request to the login service
 | --- | --- | --- |
 | params | <code>Object</code> |  |
 | params.path | <code>string</code> | the URL for the request |
-| params.accessToken | <code>string</code> | Auth bearer token for request |
+| params.token | <code>string</code> | Auth bearer token for request |
+| params.headers | <code>Object</code> | Optional request headers |
+| params.searchParams | <code>Object</code> | Optional search parameters |
 
 <a name="OAuthClient+refreshAccessToken"></a>
 

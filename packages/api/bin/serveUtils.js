@@ -1,6 +1,6 @@
 'use strict';
 
-const indexer = require('../es/indexer');
+const indexer = require('@cumulus/es-client/indexer');
 const models = require('../models');
 const { getESClientAndIndex } = require('./local-test-defaults');
 

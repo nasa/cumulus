@@ -8,9 +8,10 @@ const {
 } = require('@cumulus/aws-client/S3');
 const noop = require('lodash/noop');
 const { randomString } = require('@cumulus/common/test-utils');
-const bootstrap = require('../../lambdas/bootstrap');
-const { Search } = require('../../es/search');
-const indexer = require('../../es/indexer');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
+
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
@@ -37,7 +38,7 @@ test.before(async () => {
   esIndex = randomString();
   esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
   // create esClient
   esClient = await Search.es('fakehost');
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();

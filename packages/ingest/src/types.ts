@@ -17,7 +17,13 @@ export interface ProviderClient {
 
   end(): Promise<void>
 
-  download(remotePath: string, localPath: string): Promise<string>
+  download(
+    params: {
+      remotePath: string,
+      localPath: string,
+      remoteAltBucket?: string,
+    }
+  ): Promise<string>
 
   list(path: string): Promise<ProviderClientListItem[]>
 

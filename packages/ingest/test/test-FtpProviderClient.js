@@ -72,7 +72,7 @@ test('FtpProviderClient.list filters listed objects with path', async (t) => {
   t.is(list[0].name, 'MOD09GQ_1granule_v3.PDR');
 });
 
-test('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
+test.serial('FtpProviderClient supports plaintext usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: false,
@@ -87,7 +87,7 @@ test('FtpProviderClient supports plaintext usernames and passwords', async (t) =
   t.true(fileNames.includes('index.html'));
 });
 
-test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
+test.serial('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
   async (t) => {
     const ftpClient = new FtpProviderClient({
       host: '127.0.0.1',
@@ -103,7 +103,7 @@ test('FtpProviderClient supports S3-keypair-encrypted usernames and passwords',
     t.true(fileNames.includes('index.html'));
   });
 
-test('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
+test.serial('FtpProviderClient supports KMS-encrypted usernames and passwords', async (t) => {
   const ftpClient = new FtpProviderClient({
     host: '127.0.0.1',
     encrypted: true,

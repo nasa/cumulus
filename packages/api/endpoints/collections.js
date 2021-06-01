@@ -16,10 +16,13 @@ const {
   tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
-const { Search } = require('../es/search');
-const { addToLocalES, indexCollection } = require('../es/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  addToLocalES,
+  indexCollection,
+} = require('@cumulus/es-client/indexer');
+const Collection = require('@cumulus/es-client/collections');
 const models = require('../models');
-const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
