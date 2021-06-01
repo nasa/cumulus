@@ -39,9 +39,9 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let ingestGranuleWorkflowArn;
   let ingestGranuleWorkflowArn1;
   let ingestGranuleWorkflowArn2;
-  let discoverGranulesExecutionArn1;
-  let discoverGranulesExecutionArn2;
-  let discoverGranulesExecutionArn3;
+  let noFilesConfigExecutionArn;
+  let partialFilesConfigExecutionArn;
+  let ignoringFilesConfigExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -193,12 +193,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
         { provider_path: 'granules/fake_granules' }
       );
 
-      discoverGranulesExecutionArn1 = httpWorkflowExecution.executionArn;
+      noFilesConfigExecutionArn = httpWorkflowExecution.executionArn;
     });
 
     it('encounters a collection without a files configuration', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
-        discoverGranulesExecutionArn1, 'DiscoverGranules'
+        noFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaInput.meta.collection.files).toEqual([]);
@@ -210,7 +210,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('discovers granules, but output has no files', async () => {
       const lambdaOutput = await lambdaStep.getStepOutput(
-        discoverGranulesExecutionArn1, 'DiscoverGranules'
+        noFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaOutput.payload.granules.length).toEqual(3);
@@ -239,12 +239,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
         { provider_path: 'granules/fake_granules' }
       );
 
-      discoverGranulesExecutionArn2 = httpWorkflowExecution.executionArn;
+      partialFilesConfigExecutionArn = httpWorkflowExecution.executionArn;
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
-        discoverGranulesExecutionArn2, 'DiscoverGranules'
+        partialFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaInput.meta.collection.files).toEqual([collection.files[0]]);
@@ -256,7 +256,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('discovers granules, but output does not include all files', async () => {
       const lambdaOutput = await lambdaStep.getStepOutput(
-        discoverGranulesExecutionArn2, 'DiscoverGranules'
+        partialFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaOutput.payload.granules.length).toEqual(3);
@@ -288,12 +288,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
         { provider_path: 'granules/fake_granules' }
       );
 
-      discoverGranulesExecutionArn3 = httpWorkflowExecution.executionArn;
+      ignoringFilesConfigExecutionArn = httpWorkflowExecution.executionArn;
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
-        discoverGranulesExecutionArn3, 'DiscoverGranules'
+        ignoringFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaInput.meta.collection.files).toEqual([]);
@@ -305,7 +305,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('discovers granules, but output includes all files', async () => {
       const lambdaOutput = await lambdaStep.getStepOutput(
-        discoverGranulesExecutionArn3, 'DiscoverGranules'
+        ignoringFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
       expect(lambdaOutput.payload.granules.length).toEqual(3);
