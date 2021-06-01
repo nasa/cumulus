@@ -38,7 +38,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -730,7 +730,11 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId });
+    await deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId });
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: publishedGranuleId,
+    });
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
@@ -740,8 +744,5 @@ describe('When there are granule differences and granule reconciliation is run',
       extraCumulusCollectionCleanup(),
       cmrClient.deleteGranule(cmrGranule),
     ]);
-
-    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });
