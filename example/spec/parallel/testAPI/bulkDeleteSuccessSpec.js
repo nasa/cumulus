@@ -5,6 +5,7 @@ const pAll = require('p-all');
 
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -47,6 +48,7 @@ describe('POST /granules/bulkDelete', () => {
 
   describe('deletes a published granule', () => {
     let beforeAllSucceeded = false;
+    let firstIngestGranuleExecutionArn;
     let postBulkDeleteResponse;
     let postBulkDeleteBody;
     let taskArn;
@@ -128,7 +130,7 @@ describe('POST /granules/bulkDelete', () => {
         );
 
         // Find the execution ARN
-        const firstIngestGranuleExecutionArn = await findExecutionArn(
+        firstIngestGranuleExecutionArn = await findExecutionArn(
           prefix,
           (execution) => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -172,8 +174,9 @@ describe('POST /granules/bulkDelete', () => {
     });
 
     afterAll(async () => {
-      // Must delete rules before deleting associated collection and provider
+      // Must delete rules and executions before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
+      await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
 
       await pAll(
         [

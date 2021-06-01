@@ -108,6 +108,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let workflowExecution;
   let inputPayload;
   let expectedPayload;
+  let pdrFilename;
   let postToCmrOutput;
   let granule;
   let config;
@@ -147,6 +148,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    pdrFilename = inputPayload.pdr.name;
     const granuleId = inputPayload.granules[0].granuleId;
 
     const templatedOutputPayloadFilename = templateFile({
@@ -203,7 +205,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await granulesApiTestUtils.removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -214,10 +224,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       providersApi.deleteProvider({
         prefix: config.stackName,
         provider: { id: provider.id },
-      }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
       }),
     ]);
   });

@@ -111,6 +111,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let pdrModel;
   let postToCmrOutput;
   let provider;
@@ -158,6 +159,7 @@ describe('The S3 Ingest Granules workflow', () => {
       ]);
 
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+      pdrFilename = inputPayload.pdr.name;
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       const granuleId = inputPayload.granules[0].granuleId;
@@ -255,28 +257,31 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-    await Promise.all([
+    const a = await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    const b = await granulesApiTestUtils.removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+    const c = await providersApi.deleteProvider({
+      prefix: config.stackName,
+      provider: { id: provider.id },
+    });
+    const d = await deleteExecution({ prefix: config.stackName, executionArn: failingWorkflowExecution.executionArn });
+    const e = await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    const f = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providersApi.deleteProvider({
-        prefix: config.stackName,
-        provider: { id: provider.id },
-      }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
-      }),
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
       deleteS3Object(config.bucket, granuleRunningMessageKey),
     ]);
+    console.log('afterAll IngestGranuleSuccessSpec:::', a, b, c, d, e, f);
   });
 
   it('prepares the test suite successfully', () => {

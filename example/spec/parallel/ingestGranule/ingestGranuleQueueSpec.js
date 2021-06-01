@@ -85,6 +85,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let pdrModel;
   let postToCmrOutput;
   let publishGranuleExecutionArn;
@@ -131,6 +132,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    pdrFilename = inputPayload.pdr.name;
     const granuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -222,6 +224,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -234,9 +241,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
       }),
     ]);
   });

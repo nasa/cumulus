@@ -5,6 +5,7 @@ const pAll = require('p-all');
 
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -61,6 +62,8 @@ describe('POST /granules/bulk', () => {
     let ingestedGranule;
     let scheduleQueueUrl;
     let bulkRequestTime;
+    let firstIngestGranuleExecutionArn;
+    let bulkOperationExecutionArn;
 
     beforeAll(async () => {
       try {
@@ -132,7 +135,7 @@ describe('POST /granules/bulk', () => {
         );
 
         // Find the execution ARN
-        const firstIngestGranuleExecutionArn = await findExecutionArn(
+        firstIngestGranuleExecutionArn = await findExecutionArn(
           prefix,
           (execution) => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -181,8 +184,10 @@ describe('POST /granules/bulk', () => {
     });
 
     afterAll(async () => {
-      // Must delete rules before deleting associated collection and provider
+      // Must delete rules and executions before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
+      await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+      await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
 
       await pAll(
         [
@@ -292,7 +297,7 @@ describe('POST /granules/bulk', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         // Find the execution ARN
-        const bulkOperationExecutionArn = await findExecutionArn(
+        bulkOperationExecutionArn = await findExecutionArn(
           prefix,
           (execution) => {
             const asyncOperationId = get(execution, 'asyncOperationId');

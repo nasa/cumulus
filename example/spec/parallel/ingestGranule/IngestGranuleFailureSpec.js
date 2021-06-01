@@ -5,6 +5,7 @@ const { models: { Execution, Granule } } = require('@cumulus/api');
 const {
   addCollections,
   addProviders,
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
@@ -45,6 +46,7 @@ describe('The Ingest Granule failure workflow', () => {
   let executionModel;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
@@ -76,6 +78,7 @@ describe('The Ingest Granule failure workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
 
       // add a non-existent file to input payload to cause lambda error
       inputPayload.granules[0].files = [
@@ -105,15 +108,21 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 

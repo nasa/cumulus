@@ -7,6 +7,7 @@ const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
@@ -27,6 +28,7 @@ describe('The FTP Ingest Granules workflow', () => {
   let config;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let provider;
   let testSuffix;
   let workflowExecution;
@@ -55,6 +57,7 @@ describe('The FTP Ingest Granules workflow', () => {
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
     inputPayload.granules[0].dataType += testSuffix;
     inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
+    pdrFilename = inputPayload.pdr.name;
 
     console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
@@ -70,6 +73,11 @@ describe('The FTP Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
     await Promise.all([
