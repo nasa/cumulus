@@ -10,11 +10,15 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
+  AsyncOperationPgModel,
+  CollectionPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
   ExecutionPgModel,
   localStackConnectionEnv,
   fakeExecutionRecordFactory,
+  fakeAsyncOperationRecordFactory,
+  fakeCollectionRecordFactory,
 } = require('@cumulus/db');
 
 const models = require('../../models');
@@ -39,9 +43,7 @@ process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-// import the express app after setting the env variables
-const { app } = require('../../app');
-const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -68,6 +70,7 @@ test.before(async (t) => {
   // create fake execution records
   fakeExecutions.push(fakeExecutionFactory('completed'));
   fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
+  // TODO - this needs updated after postgres->ES work
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
     .then((record) => indexer.indexExecution(esClient, record, esAlias))));
 
@@ -84,7 +87,11 @@ test.before(async (t) => {
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
-    PG_DATABASE: testDbName };
+    PG_DATABASE: testDbName,
+  };
+  // eslint-disable-next-line global-require
+  const { app } = require('../../app');
+  t.context.app = app;
 });
 
 test.after.always(async (t) => {
@@ -101,7 +108,7 @@ test.after.always(async (t) => {
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .expect(401);
@@ -110,7 +117,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
     .expect(401);
@@ -119,7 +126,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
 });
 
 test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .expect(401);
@@ -128,7 +135,7 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
 });
 
 test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
     .expect(401);
@@ -137,7 +144,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('default returns list of executions', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -155,7 +162,7 @@ test('default returns list of executions', async (t) => {
 });
 
 test('executions can be filtered by workflow', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .query({ type: 'workflow2' })
     .set('Accept', 'application/json')
@@ -170,30 +177,68 @@ test('executions can be filtered by workflow', async (t) => {
   t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
-test('GET returns an existing execution', async (t) => {
-  const executionRecord = await fakeExecutionRecordFactory();
-  const executionPgModel = new ExecutionPgModel();
+test.only('GET returns an existing execution', async (t) => {
+  const collectionRecord = fakeCollectionRecordFactory();
+  const asyncRecord = fakeAsyncOperationRecordFactory();
+  const parentExecutionRecord = fakeExecutionRecordFactory();
 
-  await executionPgModel.create(
+  const executionPgModel = new ExecutionPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const asyncOperationsPgModel = new AsyncOperationPgModel();
+
+  const [collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    collectionRecord
+  );
+
+  const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
+    t.context.knex,
+    asyncRecord
+  );
+
+  const [parentExecutionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    parentExecutionRecord
+  );
+
+  const executionRecord = await fakeExecutionRecordFactory({
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    parent_cumulus_id: parentExecutionCumulusId,
+  });
+
+  const createResult = await executionPgModel.create(
     t.context.knex,
     executionRecord
   );
-  t.teardown(() => executionPgModel.delete(t.context.knex, executionRecord));
+  t.teardown(async () => await executionPgModel.delete(t.context.knex, executionRecord));
 
-  const response = await request(app)
+  console.log(`Create result is ${createResult}`);
+  console.log(`Create value is ${JSON.stringify(executionRecord)}`);
+  const response = await request(t.context.app)
     .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const executionResult = response.body;
+  const expectedRecord = {
+    ...executionRecord,
+    created_at: executionRecord.created_at.toISOString(),
+    timestamp: executionRecord.timestamp.toISOString(),
+    updated_at: executionRecord.updated_at.toISOString(),
+  };
+
   t.is(executionResult.arn, executionRecord.arn);
-  t.is(executionResult.name, executionRecord.name);
-  t.is(executionResult.status, 'running');
+  t.is(executionResult.asyncOperationId, asyncRecord.id);
+  t.is(executionResult.collectionId, `${collectionRecord.name}___${collectionRecord.version}`);
+  t.is(executionResult.parentArn, parentExecutionRecord.arn);
+
+  t.like(executionResult, expectedRecord);
 });
 
-test('GET fails if execution is not found', async (t) => {
-  const response = await request(app)
+test.serial('GET fails if execution is not found', async (t) => {
+  const response = await request(t.context.app)
     .get('/executions/unknown')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)

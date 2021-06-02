@@ -5,7 +5,6 @@ const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executi
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const models = require('../models');
 
 const {
   getKnexClient,
@@ -82,7 +81,7 @@ async function get(req, res) {
       updatedEvents.push(getEventDetails(sfEvent));
     }
     status.executionHistory.events = await Promise.all(updatedEvents);
-    return res.send(status);3
+    return res.send(status);
   }
 
   // get the execution information from database
