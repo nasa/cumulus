@@ -40,6 +40,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
+const testGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
@@ -128,6 +129,10 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: testGranuleId,
+    });
     await granulesApiTestUtils.deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
