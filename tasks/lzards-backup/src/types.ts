@@ -5,7 +5,7 @@ export interface HandlerInput {
 
 export interface HandlerConfig {
   urlType: 's3' | 'cloudfront',
-  cloudfrontEndpoint: string,
+  cloudfrontEndpoint?: string,
 }
 
 export interface HandlerEvent {
