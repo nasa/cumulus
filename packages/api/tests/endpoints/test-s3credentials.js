@@ -28,7 +28,7 @@ const {
 } = require('../../endpoints/s3credentials');
 const index = rewire('../../endpoints/s3credentials.js');
 
-test('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
+test.serial('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
   let lambdaInvocationCount = 0;
 
   const fakeLambda = {
@@ -64,7 +64,7 @@ test('s3credentials() with just a username sends the correct request to the Lamb
   t.is(lambdaInvocationCount, 1);
 });
 
-test('s3credentials() with a username and a client name sends the correct request to the Lambda function', async (t) => {
+test.serial('s3credentials() with a username and a client name sends the correct request to the Lambda function', async (t) => {
   let lambdaInvocationCount = 0;
 
   const fakeLambda = {
