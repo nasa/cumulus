@@ -2,7 +2,8 @@
 
 import urljoin from 'url-join';
 
-import { InvalidArgument, MissingBucketMap, MissingRequiredEnvVarError } from '@cumulus/errors';
+import { envUtils } from '@cumulus/common';
+import { InvalidArgument, MissingBucketMap } from '@cumulus/errors';
 import { getJsonS3Object } from '@cumulus/aws-client/S3';
 
 import { DistributionBucketMap } from './types';
@@ -11,12 +12,9 @@ export const getDistributionBucketMapKey = (stackName: string) =>
   `${stackName}/distribution_bucket_map.json`;
 
 export async function fetchDistributionBucketMap(
-  systemBucket: string = (process.env.system_bucket || ''),
-  stackName: string = (process.env.stackName || '')
+  systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
+  stackName: string = envUtils.getRequiredEnvVar('stackName'),
 ): Promise<DistributionBucketMap> {
-  if (!systemBucket || !stackName) {
-    throw new MissingRequiredEnvVarError('Missing system_bucket and/or stackName env variable');
-  }
   const distributionBucketMap = await getJsonS3Object(
     systemBucket,
     getDistributionBucketMapKey(stackName)
