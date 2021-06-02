@@ -1,3 +1,3 @@
 export interface DistributionBucketMap {
-  [key: string]: string;
+  [bucket: string]: string;
 }
