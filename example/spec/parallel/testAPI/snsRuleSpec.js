@@ -115,8 +115,9 @@ describe('The SNS-type rule', () => {
       prefix: config.stackName,
       ruleName: snsRuleDefinition.name,
     });
-    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+    const x = await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
+    console.log('snsRuleSpec afterAll:::', x);
   });
 
   describe('on creation', () => {

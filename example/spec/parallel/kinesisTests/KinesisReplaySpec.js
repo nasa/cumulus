@@ -72,12 +72,14 @@ describe('The Kinesis Replay API', () => {
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     try {
       await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);
-      await Promise.all([
+      const x = await Promise.all([
         deleteFolder(testConfig.bucket, testDataFolder),
         cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
         cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
         deleteTestStream(streamName),
       ]);
+
+      console.log('KinesisReplaySpec afterAll:::', x);
     } catch (error) {
       console.log(`Cleanup failed, ${error}.   Stack may need to be manually cleaned up.`);
     }

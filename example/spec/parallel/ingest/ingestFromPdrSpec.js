@@ -147,11 +147,13 @@ describe('Ingesting from PDR', () => {
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await Promise.all([
+    const x = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     ]);
+
+    console.log('ingestFromPdrSpec afterAll:::', x);
   });
 
   describe('The Discover and Queue PDRs workflow', () => {

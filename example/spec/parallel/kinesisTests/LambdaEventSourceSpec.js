@@ -72,13 +72,15 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);
     await deleteExecution({ prefix: testConfig.stackName, executionArn: executionArn });
-    await Promise.all([
+    const x = await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDirMOD09GQ, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteTestStream(streamName),
     ]);
+
+    console.log('LambdaEventSourceSpec afterAll:::', x);
   }
 
   beforeAll(async () => {

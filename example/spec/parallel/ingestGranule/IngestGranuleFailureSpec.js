@@ -119,11 +119,13 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await Promise.all([
+    const x = await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     ]);
+
+    console.log('IngestGranuleFailureSpec afterAll:::', x);
   });
 
   it('completes execution with failure status', () => {

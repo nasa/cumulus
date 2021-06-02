@@ -73,10 +73,12 @@ describe('The Discover Granules workflow with https Protocol', () => {
     // clean up stack state added by test
     await deleteExecution({ prefix: config.stackName, executionArn: httpsWorkflowExecutionArn });
 
-    await Promise.all([
+    const x = await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
     ]);
+
+    console.log('DiscoverGranulesHTTPsSpec afterAll:::', x);
   });
 
   it('executes successfully', () => {

@@ -92,13 +92,15 @@ async function cleanUp() {
 
   await deleteExecution({ prefix: config.stackName, executionArn });
 
-  await Promise.all([
+  const x = await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
   ]);
+
+  console.log('sqsRuleSpec afterAll:::', x);
 }
 
 async function sendIngestGranuleMessage(queueUrl) {
