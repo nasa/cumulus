@@ -56,7 +56,7 @@ test('constructDistributionUrl returns distribution URL', (t) => {
   );
 });
 
-test('constructDistributionUrl correctly handles variation in distributionEndpoint formatting', (t) => {
+test('constructDistributionUrl correctly handles distributionEndpoint without a trailing slash', (t) => {
   const {
     fileBucket,
     fileKey,
