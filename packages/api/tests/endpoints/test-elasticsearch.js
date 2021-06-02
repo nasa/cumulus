@@ -19,9 +19,9 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const mappings = require('@cumulus/es-client/config/mappings.json');
 
+const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
