@@ -34,10 +34,10 @@ const {
   writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
-    sendSQSMessage: async (queue, message) => [queue, message],
+    sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
   },
   '@cumulus/aws-client/StepFunctions': {
-    describeExecution: async () => ({}),
+    describeExecution: () => Promise.resolve({}),
   },
 });
 
@@ -126,10 +126,10 @@ test.before(async (t) => {
   t.context.executionModel = executionModel;
 
   const fakeFileUtils = {
-    buildDatabaseFiles: async (params) => params.files,
+    buildDatabaseFiles: (params) => Promise.resolve(params.files),
   };
   const fakeStepFunctionUtils = {
-    describeExecution: async () => ({}),
+    describeExecution: () => Promise.resolve({}),
   };
   const granuleModel = new Granule({
     fileUtils: fakeFileUtils,

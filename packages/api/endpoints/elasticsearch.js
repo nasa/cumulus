@@ -4,11 +4,12 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 const asyncOperations = require('@cumulus/async-operations');
+const { IndexExistsError } = require('@cumulus/errors');
+const { defaultIndexAlias, Search } = require('@cumulus/es-client/search');
+const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const { IndexExistsError } = require('../lib/errors');
-const { defaultIndexAlias, Search } = require('../es/search');
-const { createIndex } = require('../es/indexer');
+
 const models = require('../models');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
@@ -18,7 +19,7 @@ function timestampedIndexName() {
   return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-async function createEsSnapshot(req, res) {
+function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****

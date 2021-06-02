@@ -41,5 +41,5 @@ const updateCache = (record) => {
 
 module.exports = {
   // eslint-disable-next-line no-console
-  handler: async ({ Records }) => pMap(Records, updateCache).catch(console.log),
+  handler: async ({ Records }) => await pMap(Records, updateCache).catch(console.log),
 };

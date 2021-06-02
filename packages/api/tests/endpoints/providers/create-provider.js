@@ -19,8 +19,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const AccessToken = require('../../../models/access-tokens');
 const Provider = require('../../../models/providers');
 const {
@@ -28,7 +29,6 @@ const {
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 const testDbName = randomString(12);
@@ -73,7 +73,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   providerModel = new Provider();
   await providerModel.createTable();

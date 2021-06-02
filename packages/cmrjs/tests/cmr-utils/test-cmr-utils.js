@@ -42,7 +42,7 @@ const {
   '@cumulus/aws-client/S3': {
     buildS3Uri,
     getS3Object,
-    getJsonS3Object: async () => stubDistributionBucketMap,
+    getJsonS3Object: () => Promise.resolve(stubDistributionBucketMap),
     parseS3Uri,
     promiseS3Upload,
     s3GetObjectTagging,
@@ -589,7 +589,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -609,7 +609,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -629,7 +629,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -648,7 +648,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', async (t) => {
+test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -668,7 +668,7 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
   t.is(url, undefined);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with bucket map defined', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with bucket map defined', (t) => {
   const filename = 's3://mapped-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -689,7 +689,7 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
   t.is(url, 'www.example.com/mapped/path/example/folder/key.txt');
 });
 
-test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', async (t) => {
+test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', (t) => {
   const filename = 's3://other-fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -851,9 +851,9 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
     '../../cmr-utils',
     {
       '@cumulus/aws-client/S3': {
-        waitForObject: async (_, params) => {
+        waitForObject: (_, params) => {
           t.is(params.IfMatch, etag);
-          throw Object.assign(new Error(), errorSelector);
+          return Promise.reject(Object.assign(new Error(), errorSelector));
         },
       },
     }

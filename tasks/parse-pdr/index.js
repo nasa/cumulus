@@ -245,10 +245,10 @@ const parsePdr = async ({ config, input }) => {
   try {
     await providerClient.connect();
 
-    rawPdr = await fetchTextFile(
+    rawPdr = await fetchTextFile({
       providerClient,
-      path.join(input.pdr.path, input.pdr.name)
-    );
+      remotePath: path.join(input.pdr.path, input.pdr.name),
+    });
   } finally {
     await providerClient.end();
   }
@@ -292,7 +292,7 @@ const parsePdr = async ({ config, input }) => {
  *                             See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(parsePdr, event, context);
 }
 
 module.exports = { handler, parsePdr };

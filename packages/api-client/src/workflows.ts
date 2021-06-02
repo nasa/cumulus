@@ -13,14 +13,14 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-export const getWorkflow = (params: {
+export const getWorkflow = async (params: {
   prefix: string,
   workflowName: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, workflowName, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -37,13 +37,13 @@ export const getWorkflow = (params: {
  * @param {string} params.prefix - the prefix configured for the stack
  * @returns {Promise<Object>} - the list of workflows fetched by the API
  */
-export const getWorkflows = (params: {
+export const getWorkflows = async (params: {
   prefix: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',

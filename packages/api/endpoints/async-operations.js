@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 const pick = require('lodash/pick');
 
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 
 async function list(req, res) {

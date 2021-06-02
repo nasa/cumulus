@@ -239,7 +239,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await cleanUp();
   });
 
-  it('Creates an event to log incoming records', async () => {
+  it('Creates an event to log incoming records', () => {
     const mapping = logEventSourceMapping;
     expect(mapping.FunctionArn.endsWith(`${testConfig.stackName}-KinesisInboundEventLogger`)).toBeTrue();
     expect(mapping.EventSourceArn.endsWith(streamName)).toBeTrue();
@@ -379,7 +379,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         expect(responseRecord).toEqual(lambdaOutput.meta.cnmResponse);
       });
 
-      it('puts cnmResponse to cumulus message for granule record', async () => {
+      it('puts cnmResponse to cumulus message for granule record', () => {
         const expectedCnmResponse = {
           version: record.version,
           submissionTime: record.submissionTime,
@@ -459,7 +459,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         }
       });
 
-      it('prepares the test suite successfully', async () => {
+      it('prepares the test suite successfully', () => {
         if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
       });
 
@@ -483,7 +483,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         }
       });
 
-      it('puts cnm message to cumulus message for granule record', async () => {
+      it('puts cnm message to cumulus message for granule record', () => {
         const cnm = get(lambdaOutput, 'meta.granule.queryFields.cnm');
         expect(isMatch(cnm, badRecord)).toBe(true);
         expect(get(granule, 'queryFields.cnm')).toEqual(cnm);
