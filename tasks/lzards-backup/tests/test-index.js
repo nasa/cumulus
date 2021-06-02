@@ -54,11 +54,15 @@ const index = proxyquire('../dist/src', {
   },
 });
 const env = { ...process.env };
+
 test.beforeEach(() => {
+  process.env = { ...env };
+});
+
+test.afterEach(() => {
   sandbox.restore();
   gotPostStub.resetHistory();
   getCollectionStub.resetHistory();
-  process.env = { ...env };
 });
 
 test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', (t) => {
