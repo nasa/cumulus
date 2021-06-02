@@ -44,7 +44,7 @@ export const generateCloudfrontUrl = async (params: {
     params.Bucket,
     params.Key,
     distributionBucketMap,
-    (params.cloudfrontEndpoint || '')
+    params.cloudfrontEndpoint
   );
 };
 
