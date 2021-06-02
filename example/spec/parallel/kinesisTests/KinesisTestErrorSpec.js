@@ -64,16 +64,16 @@ describe('The messageConsumer receives a bad record.\n', () => {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     console.log(`\nDeleting ${ruleOverride.name}`);
     const rules = await readJsonFilesFromDir(ruleDirectory);
-    // clean up stack state added by test
+
     console.log(`\nDeleting testStream '${streamName}'`);
-    const x = await Promise.all([
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
+
+    await Promise.all([
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
       deleteTestStream(streamName),
     ]);
 
-    console.log('KinesisTestErrorSpec afterAll:::', x);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
   }
 
