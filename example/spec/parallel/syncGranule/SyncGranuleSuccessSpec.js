@@ -169,13 +169,11 @@ describe('The Sync Granules workflow', () => {
       deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
     ]);
 
-    const x = await Promise.all([
+    await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     ]);
-
-    console.log('SyncGranuleSuccessSpec afterAll:::', x);
   });
 
   it('has a checksum to test', () => {

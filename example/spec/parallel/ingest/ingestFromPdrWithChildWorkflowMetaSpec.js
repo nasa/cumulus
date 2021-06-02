@@ -158,13 +158,11 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
 
-    const x = await Promise.all([
+    await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     ]);
-
-    console.log('ingestFromPdrWithChildWorkflowMetaSpec afterAll:::', x);
   });
 
   it('executes successfully', () => {

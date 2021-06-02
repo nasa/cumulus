@@ -80,12 +80,10 @@ describe('The FTP Ingest Granules workflow', () => {
 
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
-    const x = await Promise.all([
+    await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, provider: provider.id }),
     ]);
-
-    console.log('IngestGranuleFtpSuccessSpec afterAll:::', x);
   });
 
   describe('the execution', () => {

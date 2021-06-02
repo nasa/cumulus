@@ -179,7 +179,7 @@ describe('Ingesting from PDR', () => {
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
 
-    const x = await Promise.all([
+    await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -193,8 +193,6 @@ describe('Ingesting from PDR', () => {
       prefix: config.stackName,
       providerId: nodeNameProviderId,
     }).catch(console.error);
-
-    console.log('ingestPdrWithNodeNameSpec afterAll:::', x);
   });
 
   describe('The Discover and Queue PDRs workflow', () => {
