@@ -12,7 +12,7 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { S3ObjectStore } = require('@cumulus/aws-client');
-const { buildErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { buildErrorTemplateVars, getConfigurations, useSecureCookies, ensureAuthorizedOrRedirect } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -184,8 +184,9 @@ async function handleFileRequest(req, res) {
 
 function head() {}
 
-rootRouter.get('/*', handleFileRequest);
-rootRouter.head('/*', head);
+rootRouter.get('/', handleRootRequest);
+rootRouter.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
+rootRouter.head('/*', ensureAuthorizedOrRedirect, head);
 
 module.exports = {
   handleLoginRequest,
