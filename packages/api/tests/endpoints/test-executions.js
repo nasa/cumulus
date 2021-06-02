@@ -177,7 +177,7 @@ test('executions can be filtered by workflow', async (t) => {
   t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
-test.only('GET returns an existing execution', async (t) => {
+test('GET returns an existing execution', async (t) => {
   const collectionRecord = fakeCollectionRecordFactory();
   const asyncRecord = fakeAsyncOperationRecordFactory();
   const parentExecutionRecord = fakeExecutionRecordFactory();
@@ -207,14 +207,17 @@ test.only('GET returns an existing execution', async (t) => {
     parent_cumulus_id: parentExecutionCumulusId,
   });
 
-  const createResult = await executionPgModel.create(
+  await executionPgModel.create(
     t.context.knex,
     executionRecord
   );
-  t.teardown(async () => await executionPgModel.delete(t.context.knex, executionRecord));
+  t.teardown(async () => {
+    await executionPgModel.delete(t.context.knex, executionRecord);
+    await executionPgModel.delete(t.context.knex, parentExecutionRecord);
+    await collectionPgModel.delete(t.context.knex, collectionRecord);
+    await asyncOperationsPgModel.delete(t.context.knex, asyncRecord);
+  });
 
-  console.log(`Create result is ${createResult}`);
-  console.log(`Create value is ${JSON.stringify(executionRecord)}`);
   const response = await request(t.context.app)
     .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
@@ -234,6 +237,34 @@ test.only('GET returns an existing execution', async (t) => {
   t.is(executionResult.collectionId, `${collectionRecord.name}___${collectionRecord.version}`);
   t.is(executionResult.parentArn, parentExecutionRecord.arn);
 
+  t.like(executionResult, expectedRecord);
+});
+
+test('GET returns an existing execution without any foreign keys', async (t) => {
+  const executionPgModel = new ExecutionPgModel();
+
+  const executionRecord = await fakeExecutionRecordFactory();
+
+  await executionPgModel.create(
+    t.context.knex,
+    executionRecord
+  );
+
+  t.teardown(async () => await executionPgModel.delete(t.context.knex, executionRecord));
+
+  const response = await request(t.context.app)
+    .get(`/executions/${executionRecord.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionResult = response.body;
+  const expectedRecord = {
+    ...executionRecord,
+    created_at: executionRecord.created_at.toISOString(),
+    timestamp: executionRecord.timestamp.toISOString(),
+    updated_at: executionRecord.updated_at.toISOString(),
+  };
   t.like(executionResult, expectedRecord);
 });
 
