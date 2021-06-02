@@ -56,10 +56,14 @@ describe('When the Sync Granule workflow is configured', () => {
   let inputPayload;
   let granuleModel;
   let expectedPayload;
-  let pdrModel;
   let testSuffix;
   let testDataFolder;
   let syncGranuleExecutionArn;
+  let duplicateChecksumExecutionArn;
+  let duplicateFilenameExecutionArn;
+  let existingVersionedFileExecutionArn;
+  let uncaughtDuplicateErrorExecutionArn;
+  let caughtDuplicateErrorExecutionArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -77,7 +81,6 @@ describe('When the Sync Granule workflow is configured', () => {
     granuleModel = new Granule();
 
     process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-    pdrModel = new Pdr();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -132,22 +135,29 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: inputPayload.pdr.name,
+    });
+
+    // Executions must be deleted in a specific order due to foreign key relationships
+    await deleteExecution({ prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
 
-    const x = await Promise.all([
+    await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
-      }),
     ]);
-
-    console.log('SyncGranuleDuplicateHandlingSpec afterAll:::', x);
   });
 
   describe('to keep both files when encountering duplicate filenames\n', () => {
@@ -158,7 +168,6 @@ describe('When the Sync Granule workflow is configured', () => {
     describe('and it encounters data with a duplicated filename with duplicate checksum', () => {
       let lambdaOutput;
       let existingfiles;
-      let duplicateChecksumExecutionArn;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
@@ -182,9 +191,7 @@ describe('When the Sync Granule workflow is configured', () => {
         duplicateChecksumExecutionArn = workflowExecution.executionArn;
       });
 
-      afterAll(async () => {
-        await deleteExecution({ prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
-
+      afterAll(() => {
         // delete reporting expectations
         delete expectedPayload.granules[0].files[0].duplicate_found;
         delete expectedPayload.granules[0].files[1].duplicate_found;
@@ -218,7 +225,6 @@ describe('When the Sync Granule workflow is configured', () => {
       let lambdaOutput;
       let existingfiles;
       let fileUpdated;
-      let duplicateFilenameExecutionArn;
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
@@ -241,10 +247,6 @@ describe('When the Sync Granule workflow is configured', () => {
         );
 
         duplicateFilenameExecutionArn = workflowExecution.executionArn;
-      });
-
-      afterAll(async () => {
-        await deleteExecution({ prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
       });
 
       it('does not raise a workflow error', () => {
@@ -285,7 +287,6 @@ describe('When the Sync Granule workflow is configured', () => {
     describe('and it encounters data with a duplicated filename with different checksum and there is an existing versioned file', () => {
       let lambdaOutput;
       let updatedFileName;
-      let existingVersionedFileExecutionArn;
 
       beforeAll(async () => {
         // update one of the input files, so that the file has different checksum
@@ -306,16 +307,12 @@ describe('When the Sync Granule workflow is configured', () => {
         existingVersionedFileExecutionArn = workflowExecution.executionArn;
       });
 
-      afterAll(async () => {
-        await deleteExecution({ prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
-      });
-
       it('does not raise a workflow error', () => {
         expect(workflowExecution.status).toEqual('SUCCEEDED');
       });
 
       it('moves the existing data to a file with a suffix to distinguish it from the new file and existing versioned file', async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+        lambdaOutput = await lambdaStep.getStepOutput(existingVersionedFileExecutionArn, 'SyncGranule');
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(4);
 
@@ -343,8 +340,6 @@ describe('When the Sync Granule workflow is configured', () => {
 
   describe('to handle duplicates as "error"', () => {
     describe('and it is not configured to catch the duplicate error', () => {
-      let uncaughtDuplicateErrorExecutionArn;
-
       beforeAll(async () => {
         // set collection duplicate handling to 'error'
         await apiTestUtils.updateCollection({
@@ -360,17 +355,13 @@ describe('When the Sync Granule workflow is configured', () => {
         uncaughtDuplicateErrorExecutionArn = workflowExecution.executionArn;
       });
 
-      afterAll(async () => {
-        await deleteExecution({ prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
-      });
-
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
+        const lambdaInput = await lambdaStep.getStepInput(uncaughtDuplicateErrorExecutionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(uncaughtDuplicateErrorExecutionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
@@ -385,8 +376,6 @@ describe('When the Sync Granule workflow is configured', () => {
     });
 
     describe('and it is configured to catch the duplicate error', () => {
-      let caughtDuplicateErrorExecutionArn;
-
       beforeAll(async () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName,
@@ -399,17 +388,13 @@ describe('When the Sync Granule workflow is configured', () => {
         caughtDuplicateErrorExecutionArn = workflowExecution.executionArn;
       });
 
-      afterAll(async () => {
-        await deleteExecution({ prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
-      });
-
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
+        const lambdaInput = await lambdaStep.getStepInput(caughtDuplicateErrorExecutionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(caughtDuplicateErrorExecutionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');

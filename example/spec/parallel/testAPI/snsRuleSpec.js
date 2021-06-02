@@ -55,6 +55,7 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let testSuffix;
   let updatedRule;
+  let hellowWorldExecutionArn;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -109,15 +110,15 @@ describe('The SNS-type rule', () => {
       // the case where the deletion test did not properly clean this up.
     }
 
-    console.log(`deleting rule ${snsRuleDefinition.name}`);
+    await deleteExecution({ prefix: config.stackName, executionArn: hellowWorldExecutionArn });
 
+    console.log(`deleting rule ${snsRuleDefinition.name}`);
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
       ruleName: snsRuleDefinition.name,
     });
-    const x = await cleanupCollections(config.stackName, config.bucket, collectionsDir,
+    await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
-    console.log('snsRuleSpec afterAll:::', x);
   });
 
   describe('on creation', () => {
@@ -148,7 +149,6 @@ describe('The SNS-type rule', () => {
 
   describe('when an SNS message is published', () => {
     let execution;
-    let executionArn;
 
     beforeAll(async () => {
       await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
@@ -161,12 +161,7 @@ describe('The SNS-type rule', () => {
         startTask: 'HelloWorld',
       });
 
-      executionArn = execution.executionArn;
-    });
-
-    afterAll(async () => {
-      // clean up stack state added by test
-      await deleteExecution({ prefix: config.stackName, executionArn });
+      hellowWorldExecutionArn = execution.executionArn;
     });
 
     it('triggers the workflow', () => {
@@ -175,12 +170,12 @@ describe('The SNS-type rule', () => {
     });
 
     it('passes the message as payload', async () => {
-      const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'HelloWorld');
+      const executionInput = await lambdaStep.getStepInput(hellowWorldExecutionArn, 'HelloWorld');
       expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
     });
 
     it('results in an execution with the correct prefix', () => {
-      const executionName = execution.executionArn.split(':').reverse()[0];
+      const executionName = hellowWorldExecutionArn.split(':').reverse()[0];
 
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
