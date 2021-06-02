@@ -36,7 +36,6 @@ const {
   getESClientAndIndex,
 } = require('./local-test-defaults');
 
-
 const workflowList = testUtils.getWorkflowList();
 
 async function createTable(Model, tableName) {
@@ -189,13 +188,9 @@ async function initializeLocalElasticsearch(stackName) {
  * @param {string} user - username
  */
 async function createDBRecords(stackName, user, knex) {
-  const asyncOperationPgModel = new AsyncOperationPgModel();
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
-  const filePgModel = new FilePgModel();
-  const granulePgModel = new GranulePgModel()
-  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
-  const pdrPgModel = new PdrPgModel();
+  const granulePgModel = new GranulePgModel();
   const providerPgModel = new ProviderPgModel();
   const rulePgModel = new RulePgModel();
 
@@ -234,20 +229,20 @@ async function createDBRecords(stackName, user, knex) {
   const postgresRule = translateApiRuleToPostgresRule(rule);
   await rulePgModel.upsert(knex, postgresRule);
 
-  // add granule records
+  // add fake granule records
   const granule = testUtils.fakeGranuleFactoryV2({
     granuleId: `${stackName}-granule`,
     collectionId: `${stackName}-collection___0.0.0`,
   });
   await serveUtils.addGranules([granule]);
   const postgresGranule = translateApiGranuleToPostgresGranule(granule);
-  const [ pgGranuleCumulusId ] = await granulePgModel.upsert(knex, postgresGranule);
+  await granulePgModel.upsert(knex, postgresGranule);
 
   // add fake execution records
   const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
   await serveUtils.addExecutions([execution]);
-  const postgresExecution = translateApiExecutionToPostgresExecution(execution)
-  const [ pgExecutionCumulusId ] = await executionPgModel.update(knex, execution);
+  const postgresExecution = translateApiExecutionToPostgresExecution(execution);
+  await executionPgModel.update(knex, postgresExecution);
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });

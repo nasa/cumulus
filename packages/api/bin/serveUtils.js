@@ -1,10 +1,5 @@
 'use strict';
 
-const {
-  getKnexClient,
-  ExecutionPgModel,
-} = require('@cumulus/db');
-
 const indexer = require('../es/indexer');
 const models = require('../models');
 const { getESClientAndIndex } = require('./local-test-defaults');
