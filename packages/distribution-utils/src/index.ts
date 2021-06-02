@@ -13,7 +13,7 @@ export const getDistributionBucketMapKey = (stackName: string) =>
 
 export async function fetchDistributionBucketMap(
   systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
-  stackName: string = envUtils.getRequiredEnvVar('stackName'),
+  stackName: string = envUtils.getRequiredEnvVar('stackName')
 ): Promise<DistributionBucketMap> {
   const distributionBucketMap = await getJsonS3Object(
     systemBucket,
