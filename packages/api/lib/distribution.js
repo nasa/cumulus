@@ -25,19 +25,19 @@ const useSecureCookies = () => {
  */
 const buildOAuthClient = async () => {
   if (process.env.OAUTH_CLIENT_PASSWORD === undefined) {
-    const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRETE_NAME);
+    const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRET_NAME);
     process.env.OAUTH_CLIENT_PASSWORD = clientPassword;
   }
-  const oauthClientConnfig = {
+  const oauthClientConfig = {
     clientId: process.env.OAUTH_CLIENT_ID,
     clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
     loginUrl: process.env.OAUTH_HOST_URL,
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   };
   if (process.env.OAUTH_PROVIDER === 'earthdata') {
-    return new EarthdataLoginClient(oauthClientConnfig);
+    return new EarthdataLoginClient(oauthClientConfig);
   }
-  return new CognitoClient(oauthClientConnfig);
+  return new CognitoClient(oauthClientConfig);
 };
 
 /**
