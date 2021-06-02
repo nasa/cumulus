@@ -9,6 +9,7 @@ const {
   addCollections,
   buildAndExecuteWorkflow,
   cleanupCollections,
+  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -87,7 +88,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-      (granule) => deleteGranule({
+      (granule) => granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: granule.granuleId,
       })
