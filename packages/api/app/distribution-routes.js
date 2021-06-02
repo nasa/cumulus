@@ -1,7 +1,7 @@
 const router = require('express-promise-router')();
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-
+const { EarthdataLoginError } = require('@cumulus/oauth-client');
 const {
   handleLoginRequest,
   handleLogoutRequest,
@@ -14,6 +14,10 @@ const { handleCredentialRequest } = require('../endpoints/s3credentials');
 const { getConfigurations } = require('../lib/distribution');
 
 const version = require('../endpoints/version');
+
+// From https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html#API_AssumeRole_RequestParameters
+const roleSessionNameRegex = /^[\w+,.=@-]{2,64}$/;
+const isValidRoleSessionNameString = (x) => roleSessionNameRegex.test(x);
 
 /**
  * Helper function to pull bucket out of a path string.

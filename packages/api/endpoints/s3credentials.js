@@ -208,9 +208,5 @@ module.exports = {
   s3credentials,
   buildRoleSessionName,
   requestTemporaryCredentialsFromNgap,
-  parseBucketKey,
-  formatAllowedBucketKeys,
-  fetchPolicyForUser,
-  configuredForACLCredentials,
   getUserAccessibleBuckets,
 };

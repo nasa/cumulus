@@ -10,8 +10,8 @@ const randomString = () => cryptoRandomString({ length: 6 });
 const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
-process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
-process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
+process.env.OAUTH_CLIENT_ID = randomId('oauthID');
+process.env.OAUTH_CLIENT_PASSWORD = randomId('oauthPW');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.AccessTokensTable = randomId('tokenTable');
@@ -21,12 +21,13 @@ const {
   s3credentials,
   buildRoleSessionName,
   requestTemporaryCredentialsFromNgap,
-  fetchPolicyForUser,
-  parseBucketKey,
-  formatAllowedBucketKeys,
-  configuredForACLCredentials,
 } = require('../../endpoints/s3credentials');
 const index = rewire('../../endpoints/s3credentials.js');
+
+const parseBucketKey = index.__get__('parseBucketKey');
+const formatAllowedBucketKeys = index.__get__('formatAllowedBucketKeys');
+const fetchPolicyForUser = index.__get__('fetchPolicyForUser');
+const configuredForACLCredentials = index.__get__('configuredForACLCredentials');
 
 test.serial('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
   let lambdaInvocationCount = 0;
