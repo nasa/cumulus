@@ -212,4 +212,5 @@ module.exports = {
   formatAllowedBucketKeys,
   fetchPolicyForUser,
   configuredForACLCredentials,
+  getUserAccessibleBuckets,
 };

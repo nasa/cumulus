@@ -18,13 +18,7 @@ const urljoin = require('url-join');
 const { AccessToken } = require('@cumulus/api/models');
 const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
-const {
-  handleCredentialRequest,
-  parseBucketKey,
-  formatAllowedBucketKeys,
-  fetchPolicyForUser,
-  configuredForACLCredentials
-} = require('@cumulus/api/endpoints/s3credentials');
+const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3credentials-readme');
@@ -267,8 +261,4 @@ module.exports = {
   distributionApp,
   handler,
   handleTokenAuthRequest,
-  parseBucketKey,
-  formatAllowedBucketKeys,
-  fetchPolicyForUser,
-  configuredForACLCredentials,
 };
