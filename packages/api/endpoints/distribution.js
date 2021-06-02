@@ -5,35 +5,18 @@ const isEmpty = require('lodash/isEmpty');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
-const { URL } = require('url');
-const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
+const rootRouter = require('express-promise-router')();
+
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { S3ObjectStore } = require('@cumulus/aws-client');
 const { buildErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
   : pathresolve(__dirname, 'templates');
-
-/**
- * Return a signed URL to an S3 object
- *
- * @param {Object} s3Client - an AWS S3 Service Object
- * @param {string} Bucket - the bucket of the requested object
- * @param {string} Key - the key of the requested object
- * @param {string} username - the username to add to the redirect url
- * @returns {string} a URL
- */
-function getSignedS3Url(s3Client, Bucket, Key, username) {
-  const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
-
-  const parsedSignedUrl = new URL(signedUrl);
-  parsedSignedUrl.searchParams.set('A-userid', username);
-
-  return parsedSignedUrl.toString();
-}
 
 /**
  * Sends a welcome page
@@ -187,32 +170,22 @@ async function handleLogoutRequest(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-
 async function handleFileRequest(req, res) {
-  const { s3Client } = await getConfigurations();
-  let fileBucket;
-  let fileKey;
-  try {
-    [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  } catch (error) {
-    if (error instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(error.message);
-    }
-    throw error;
-  }
-
-  const signedS3Url = getSignedS3Url(
-    s3Client,
-    fileBucket,
-    fileKey,
-    req.authorizedMetadata.userName
+  const objectStore = new S3ObjectStore();
+  const signedS3Url = await objectStore.signGetObject(
+    req.params[0],
+    { 'A-userid': req.authorizedMetadata.userName }
   );
-
   return res
     .status(307)
     .set({ Location: signedS3Url })
     .send('Redirecting');
 }
+
+function head() {}
+
+rootRouter.get('/*', handleFileRequest);
+rootRouter.head('/*', head);
 
 module.exports = {
   handleLoginRequest,
@@ -220,4 +193,5 @@ module.exports = {
   handleRootRequest,
   handleFileRequest,
   useSecureCookies,
+  rootRouter,
 };

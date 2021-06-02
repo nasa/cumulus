@@ -5,8 +5,8 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   handleLoginRequest,
   handleLogoutRequest,
-  handleFileRequest,
   handleRootRequest,
+  rootRouter,
 } = require('../endpoints/distribution');
 const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
 const { isAccessTokenExpired } = require('../lib/token');
@@ -114,6 +114,6 @@ router.use('/version', version);
 
 // HEAD /*
 // GET /* <- Actual presigned URL
-router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
+router.use('/*', ensureAuthorizedOrRedirect, rootRouter);
 
 module.exports = router;
