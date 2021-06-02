@@ -364,7 +364,7 @@ async function erasePostgresTables(knex) {
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
   const filePgModel = new FilePgModel();
-  const granulePgModel = new GranulePgModel()
+  const granulePgModel = new GranulePgModel();
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   const pdrPgModel = new PdrPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -446,14 +446,8 @@ async function resetTables( // Fix api setup.    Ugh.
 ) {
   if (inTestMode() || runIt) {
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
-
-    // TODO - is this *really* running against a remote stack?
-    // We can't delete databases this way.....
-    // do we need to invoke lambda?
     await eraseDynamoTables(stackName, systemBucket);
     await erasePostgresTables(knex);
-    // TODO erase and reset postgres DB?
-    // Populate tables with original test data (localstack)
     if (inTestMode()) {
       await createDBRecords(stackName, user, knex);
     }
