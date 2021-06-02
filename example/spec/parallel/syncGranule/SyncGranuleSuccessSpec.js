@@ -345,6 +345,15 @@ describe('The Sync Granules workflow', () => {
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
     });
 
+    afterAll(async () => {
+      await Promise.all(inputPayload.granules.map(
+        (granule) => granulesApiTestUtils.deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
+    });
+
     it('completes execution with failure status', () => {
       expect(failingExecution.status).toEqual('FAILED');
     });
