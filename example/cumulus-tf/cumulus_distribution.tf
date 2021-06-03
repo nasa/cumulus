@@ -13,7 +13,6 @@ module "cumulus_distribution" {
   oauth_client_password    = var.csdap_client_password
   oauth_host_url           = var.csdap_host_url
   oauth_provider           = "cognito"
-  cmr_acl_based_credentials = var.cmr_acl_based_credentials
   cmr_environment           = var.cmr_environment
   cmr_provider              = var.cmr_provider
   permissions_boundary_arn = var.permissions_boundary_arn
