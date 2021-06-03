@@ -6,7 +6,7 @@ const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { models: { Granule, Pdr } } = require('@cumulus/api');
+const { models: { Granule } } = require('@cumulus/api');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
