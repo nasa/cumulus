@@ -103,6 +103,7 @@ function fakeRuleFactoryV2(params = {}) {
     },
     rule: {
       type: 'onetime',
+      arn: 'someArn',
     },
     state: 'DISABLED',
     createdAt: Date.now(),
