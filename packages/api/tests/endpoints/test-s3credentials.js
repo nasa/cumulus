@@ -22,12 +22,12 @@ const {
   buildRoleSessionName,
   requestTemporaryCredentialsFromNgap,
 } = require('../../endpoints/s3credentials');
-const index = rewire('../../endpoints/s3credentials.js');
+const credentialsFile = rewire('../../endpoints/s3credentials');
 
-const parseBucketKey = index.__get__('parseBucketKey');
-const formatAllowedBucketKeys = index.__get__('formatAllowedBucketKeys');
-const fetchPolicyForUser = index.__get__('fetchPolicyForUser');
-const configuredForACLCredentials = index.__get__('configuredForACLCredentials');
+const parseBucketKey = credentialsFile.__get__('parseBucketKey');
+const formatAllowedBucketKeys = credentialsFile.__get__('formatAllowedBucketKeys');
+const fetchPolicyForUser = credentialsFile.__get__('fetchPolicyForUser');
+const configuredForACLCredentials = credentialsFile.__get__('configuredForACLCredentials');
 
 test.serial('s3credentials() with just a username sends the correct request to the Lambda function', async (t) => {
   let lambdaInvocationCount = 0;
@@ -259,7 +259,7 @@ test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the corr
   const path1 = randomId('path');
   const bucket2 = randomId('bucket2');
   const getUserAccessibleBucketFake = sinon.fake.resolves([`${bucket1}/${path1}`, bucket2]);
-  const bucketRestore = index.__set__('getUserAccessibleBuckets', getUserAccessibleBucketFake);
+  const bucketRestore = credentialsFile.__set__('getUserAccessibleBuckets', getUserAccessibleBucketFake);
 
   const edlUser = randomId('cmruser');
   const cmrProvider = randomId('cmrprovider');

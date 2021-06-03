@@ -55,12 +55,6 @@ variable "cmr_provider" {
   default     = null
 }
 
-variable "deploy_s3_credentials_endpoint" {
-  type         = bool
-  default      = true
-  description  = "Option to deploy the s3 credentials endpoint."
-}
-
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
