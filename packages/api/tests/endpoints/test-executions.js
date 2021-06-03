@@ -12,13 +12,13 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
   CollectionPgModel,
-  generateLocalTestDb,
   destroyLocalTestDb,
   ExecutionPgModel,
-  localStackConnectionEnv,
-  fakeExecutionRecordFactory,
   fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
 } = require('@cumulus/db');
 
 const models = require('../../models');
@@ -242,16 +242,12 @@ test('GET returns an existing execution', async (t) => {
 
 test('GET returns an existing execution without any foreign keys', async (t) => {
   const executionPgModel = new ExecutionPgModel();
-
   const executionRecord = await fakeExecutionRecordFactory();
-
   await executionPgModel.create(
     t.context.knex,
     executionRecord
   );
-
   t.teardown(async () => await executionPgModel.delete(t.context.knex, executionRecord));
-
   const response = await request(t.context.app)
     .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
@@ -268,7 +264,7 @@ test('GET returns an existing execution without any foreign keys', async (t) => 
   t.like(executionResult, expectedRecord);
 });
 
-test.serial('GET fails if execution is not found', async (t) => {
+test('GET fails if execution is not found', async (t) => {
   const response = await request(t.context.app)
     .get('/executions/unknown')
     .set('Accept', 'application/json')

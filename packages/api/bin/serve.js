@@ -366,6 +366,11 @@ async function serveDistributionApi(stackName = localStackName, done) {
   return distributionApp.listen(port, done);
 }
 
+/**
+* Remove all records from api-related postgres tables
+* @param {Object} knex - knex/knex transaction object
+* @returns {[Promise]} - Array of promises with deletion results
+*/
 async function erasePostgresTables(knex) {
   const asyncOperationPgModel = new AsyncOperationPgModel();
   const collectionPgModel = new CollectionPgModel();
@@ -396,7 +401,7 @@ async function erasePostgresTables(knex) {
 /**
  * erase all dynamoDB tables
  * @param {string} stackName - stack name (generally 'localrun')
- * @param {string} systemBucket - system bucket (generally 'localbucket' )
+ * @param {string} systemBucket - system bucket (generally 'localbucket'
  */
 async function eraseDynamoTables(stackName, systemBucket) {
   setTableEnvVariables(stackName);

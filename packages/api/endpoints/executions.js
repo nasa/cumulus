@@ -78,7 +78,7 @@ async function get(req, res) {
     ...executionRecord,
     asyncOperationId,
     collectionId,
-    parentArn: parentArn,
+    parentArn,
   });
 }
 
