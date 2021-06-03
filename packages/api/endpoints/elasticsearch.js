@@ -205,6 +205,9 @@ async function indicesStatus(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
+  const {
+    startEcsTaskFunc,
+  } = req.testContext || {};
   const esClient = await Search.es();
   const indexName = req.body.indexName || timestampedIndexName();
   const stackName = process.env.stackName;
@@ -237,11 +240,12 @@ async function indexFromDatabase(req, res) {
       },
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
-      stackName,
-      systemBucket,
-      dynamoTableName: tableName,
-      knexConfig,
     },
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+    startEcsTaskFunc,
   }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
@@ -267,4 +271,7 @@ router.get('/indices-status', indicesStatus);
 router.get('/current-index/:alias', getCurrentIndex);
 router.get('/current-index', getCurrentIndex);
 
-module.exports = router;
+module.exports = {
+  indexFromDatabase,
+  router,
+};
