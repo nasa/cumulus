@@ -49,34 +49,6 @@ function isPublicRequest(path) {
   }
 }
 
-const isTokenAuthRequest = (req) =>
-  req.get('EDL-Client-Id') && req.get('EDL-Token');
-
-const handleTokenAuthRequest = async (req, res, next) => {
-  try {
-    const userName = await req.earthdataLoginClient.getTokenUsername({
-      onBehalfOf: req.get('EDL-Client-Id'),
-      token: req.get('EDL-Token'),
-      xRequestId: req.get('X-Request-Id'),
-    });
-    req.authorizedMetadata = { userName };
-
-    const clientName = req.get('EDL-Client-Name');
-    if (isValidRoleSessionNameString(clientName)) {
-      req.authorizedMetadata.clientName = clientName;
-    } else {
-      return res.boom.badRequest('EDL-Client-Name is invalid');
-    }
-    return next();
-  } catch (error) {
-    if (error instanceof EarthdataLoginError) {
-      res.boom.forbidden('EDL-Token authentication failed');
-    }
-
-    throw error;
-  }
-};
-
 /**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
  *
@@ -95,10 +67,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
-  }
-
-  if (isTokenAuthRequest(req)) {
-    return handleTokenAuthRequest(req, res, next);
   }
 
   const {

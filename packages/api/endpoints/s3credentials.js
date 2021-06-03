@@ -166,11 +166,14 @@ async function s3credentials(req, res) {
     req.authorizedMetadata.clientName
   );
 
-  const policy = await fetchPolicyForUser(
-    req.authorizedMetadata.userName,
-    process.env.cmr_provider,
-    req.lambda
-  );
+  let policy;
+  if (process.env.OAUTH_PROVIDER === 'earthdata') {
+    policy = await fetchPolicyForUser(
+      req.authorizedMetadata.userName,
+      process.env.cmr_provider,
+      req.lambda
+    );
+  }
 
   const credentials = await requestTemporaryCredentialsFromNgap({
     lambda: req.lambda,
