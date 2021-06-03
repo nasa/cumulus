@@ -190,7 +190,7 @@ async function initializeLocalElasticsearch(stackName) {
 async function createDBRecords(stackName, user, knexOverride) {
   let knex = knexOverride;
   if (!knex) {
-    knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env }});
+    knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
   }
 
   const collectionPgModel = new CollectionPgModel();
@@ -453,7 +453,6 @@ async function resetTables(
   systemBucket = localSystemBucket,
   runIt = false
 ) {
-  console.log(`here`);
   if (inTestMode() || runIt) {
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
     console.log(`KNEX is : ${JSON.stringify(knex)}`);
