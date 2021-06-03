@@ -90,6 +90,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
 }
 
 let ingestGranuleExecutionArn;
+let ingestAndPublishGranuleExecutionArn;
 
 /**
  * Creates a new test collection with associated granule for testing.
@@ -198,7 +199,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     testDataFolder
   );
 
-  await buildAndExecuteWorkflow(
+  ingestAndPublishGranuleExecutionArn = await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
 
@@ -736,9 +737,10 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const a = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const b = await deleteExecution({ prefix: config.stackName, executionArn: ingestAndPublishGranuleExecutionArn });
 
-    const x = await Promise.all([
+    const c = await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
@@ -748,7 +750,7 @@ describe('When there are granule differences and granule reconciliation is run',
       extraCumulusCollectionCleanup(),
       cmrClient.deleteGranule(cmrGranule),
     ]);
-    console.log('CreateReconcilliationReportSpec afterAll:::', x);
+    console.log('CreateReconcilliationReportSpec afterAll:::', a, b, c);
 
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
