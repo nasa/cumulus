@@ -19,10 +19,9 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 
-const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
@@ -200,10 +199,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
       {}
     );
 
-  const distributionBucketMap = await s3Utils.getJsonS3Object(
-    process.env.system_bucket,
-    getDistributionBucketMapKey(process.env.stackName)
-  );
+  const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,
