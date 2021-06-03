@@ -15,6 +15,8 @@ import type { AsyncOperationModelClass } from './types';
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
+type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
+
 export const getLambdaEnvironmentVariables = async (
   functionName: string
 ): Promise<EnvironmentVariables[]> => {
@@ -64,7 +66,7 @@ export const startECSTask = async ({
   payloadKey: string,
   useLambdaEnvironmentVariables?: boolean,
   dynamoTableName: string,
-}): Promise<PromiseResult<ECS.RunTaskResponse, AWSError>> => {
+}): StartEcsTaskReturnType => {
   const envVars = [
     { name: 'asyncOperationId', value: id },
     { name: 'asyncOperationsTable', value: dynamoTableName },
@@ -130,6 +132,7 @@ export const startAsyncOperation = async (params: {
   stackName: string,
   systemBucket: string,
   useLambdaEnvironmentVariables?: boolean,
+  startEcsTaskFunc?: () => StartEcsTaskReturnType
 }, AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
@@ -140,6 +143,7 @@ export const startAsyncOperation = async (params: {
     stackName,
     dynamoTableName,
     knexConfig = process.env,
+    startEcsTaskFunc = startECSTask,
   } = params;
 
   const id = uuidv4();
@@ -154,7 +158,7 @@ export const startAsyncOperation = async (params: {
   }).promise();
 
   // Start the task in ECS
-  const runTaskResponse = await startECSTask({
+  const runTaskResponse = await startEcsTaskFunc({
     ...params,
     id,
     payloadBucket,
