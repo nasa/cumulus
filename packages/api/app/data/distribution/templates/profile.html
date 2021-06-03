@@ -1,0 +1,23 @@
+{% extends "./base.html" %}
+
+{% block content %}
+
+{% if profile %}
+   <h2>Profile:</h2>
+   <ul>
+   {% for param, value in profile.items() %}
+      <li><b>{{param}}</b>: {{value}}</li>
+   {% endfor %}
+   </ul>
+
+   {% if downloads %}
+     {{ downloads|safe }}
+   {% endif %}
+
+   <br><a href="{{ logoutURL }}">Log Out</a>
+
+{% endif %}
+
+{% endblock %}
+
+

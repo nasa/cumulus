@@ -6,11 +6,7 @@ const keyBy = require('lodash/keyBy');
 const mapValues = require('lodash/mapValues');
 const set = require('lodash/set');
 
-const {
-  getJsonS3Object,
-} = require('@cumulus/aws-client/S3');
-
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
@@ -92,10 +88,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
 
-  const distributionBucketMap = await getJsonS3Object(
-    process.env.system_bucket,
-    getDistributionBucketMapKey(process.env.stackName)
-  );
+  const distributionBucketMap = await fetchDistributionBucketMap();
   const updatedCmrFiles = await updateEachCmrFileAccessURLs(
     cmrFiles,
     granulesByGranuleId,

@@ -8,8 +8,7 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
-
-const Search = require('../es/search').Search;
+const Search = require('@cumulus/es-client/search').Search;
 
 /**
  * List and search executions

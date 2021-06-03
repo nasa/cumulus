@@ -15,19 +15,19 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
 } = require('@cumulus/db');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/collections');
 const { buildFakeExpressResponse } = require('../utils');
@@ -69,7 +69,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 

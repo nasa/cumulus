@@ -8,6 +8,21 @@ variable "prefix" {
   description = "Resource prefix unique to this deployment"
 }
 
+variable "oauth_client_id" {
+  type        = string
+  description = "oauth_client_id"
+}
+
+variable "oauth_client_password" {
+  type        = string
+  description = "oauth_client_password"
+}
+
+variable "oauth_host_url" {
+  type        = string
+  description = "oauth_host_url"
+}
+
 # Optional
 
 variable "api_url" {
@@ -27,10 +42,28 @@ variable "lambda_subnet_ids" {
   default = []
 }
 
+variable "oauth_provider" {
+  type        = string
+  default     = "cognito"
+  description = "The OAuth provider, cognito or earthdata"
+}
+
 variable "permissions_boundary_arn" {
   type        = string
   default     = null
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
+}
+
+variable "protected_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of protected buckets"
+}
+
+variable "public_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of public buckets"
 }
 
 variable "tags" {

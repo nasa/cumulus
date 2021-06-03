@@ -7,17 +7,20 @@ const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 const moment = require('moment');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
-const { EarthdataLoginClient } = require('@cumulus/oauth-client');
+const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
 
 const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
-process.env.EARTHDATA_CLIENT_ID = randomId('edlId');
-process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPw');
+process.env.OAUTH_CLIENT_ID = randomId('edlId');
+process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
+process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
+process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
 
@@ -52,18 +55,24 @@ test.before(async () => {
   const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
+  const getUserInfoResponse = { foo: 'bar' };
 
   sinon.stub(
-    EarthdataLoginClient.prototype,
+    OAuthClient.prototype,
     'getAccessToken'
   ).callsFake(() => getAccessTokenResponse);
 
   sinon.stub(
-    EarthdataLoginClient.prototype,
+    OAuthClient.prototype,
     'getAuthorizationUrl'
   ).callsFake(() => authorizationUrl);
 
-  const accessTokenRecord = fakeAccessTokenFactory();
+  sinon.stub(
+    CognitoClient.prototype,
+    'getUserInfo'
+  ).callsFake(() => getUserInfoResponse);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
 
   sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
@@ -71,7 +80,7 @@ test.before(async () => {
       throw new Error(`Unexpected operation: ${operation}`);
     }
 
-    if (params.Bucket !== fileBucket) {
+    if (params.Bucket !== fileBucket && params.Bucket !== process.env.public_buckets) {
       throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
     }
 
@@ -173,10 +182,26 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   const redirectLocation = new URL(response.headers.location);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), accessTokenRecord.username);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
-test('A /redirect request with a good authorization code returns a correct response', async (t) => {
+test('A request for a public file without an access token returns a redirect to S3', async (t) => {
+  const { fileKey, signedFileUrl } = context;
+  const response = await request(distributionApp)
+    .get(`/${process.env.public_buckets}/${fileKey}`)
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  t.is(response.status, 307);
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
+});
+
+test('A /login request with a good authorization code returns a correct response', async (t) => {
   const {
     authorizationCode,
     getAccessTokenResponse,
@@ -185,12 +210,12 @@ test('A /redirect request with a good authorization code returns a correct respo
   } = context;
 
   const response = await request(distributionApp)
-    .get('/redirect')
+    .get('/login')
     .query({ code: authorizationCode, state: fileLocation })
     .set('Accept', 'application/json')
-    .expect(307);
+    .expect(301);
 
-  t.is(response.status, 307);
+  t.is(response.status, 301);
   validateDefaultHeaders(t, response);
   t.is(response.headers.location, `${distributionUrl}/${fileLocation}`);
 
@@ -209,7 +234,7 @@ test('A /redirect request with a good authorization code returns a correct respo
   );
 });
 
-test('A /redirect request with a good authorization code stores the access token', async (t) => {
+test('A /login request with a good authorization code stores the access token', async (t) => {
   const {
     accessTokenModel,
     authorizationCode,
@@ -217,13 +242,60 @@ test('A /redirect request with a good authorization code stores the access token
   } = context;
 
   const response = await request(distributionApp)
-    .get('/redirect')
+    .get('/login')
     .query({ code: authorizationCode, state: fileLocation })
     .set('Accept', 'application/json')
-    .expect(307);
+    .expect(301);
 
   const cookies = response.headers['set-cookie'].map(Cookie.parse);
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
   t.true(await accessTokenModel.exists({ accessToken: setAccessTokenCookie.value }));
+});
+
+test('A /logout request deletes the access token', async (t) => {
+  const { accessTokenModel } = context;
+  const accessTokenRecord = fakeAccessTokenFactory();
+  await accessTokenModel.create(accessTokenRecord);
+  const response = await request(distributionApp)
+    .get('/logout')
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(200);
+
+  t.falsy(response.headers['set-cookie']);
+  try {
+    await accessTokenModel.get({ accessToken: accessTokenRecord.accessToken });
+    t.fail('expected code to throw error');
+  } catch (error) {
+    console.log(error);
+    t.true(error instanceof RecordDoesNotExist);
+  }
+  t.true(response.text.startsWith('<html>'));
+});
+
+test('An authenticated / request displays welcome and logout page', async (t) => {
+  const { accessTokenRecord } = context;
+  const response = await request(distributionApp)
+    .get('/')
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(200);
+
+  t.true(response.text.startsWith('<html>'));
+  t.true(response.text.includes('Log Out'));
+  t.false(response.text.includes('Log In'));
+  t.true(response.text.includes('Welcome user'));
+});
+
+test('A / request without an access token displays login page', async (t) => {
+  const response = await request(distributionApp)
+    .get('/')
+    .set('Accept', 'application/json')
+    .expect(200);
+
+  t.true(response.text.startsWith('<html>'));
+  t.true(response.text.includes('Log In'));
+  t.false(response.text.includes('Log Out'));
+  t.false(response.text.includes('Welcome user'));
 });

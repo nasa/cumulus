@@ -9,6 +9,7 @@ const range = require('lodash/range');
 const sample = require('lodash/sample');
 const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
+
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const {
   buildS3Uri,
@@ -19,16 +20,17 @@ const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
-const { Search } = require('../../es/search');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
-const indexer = require('../../es/indexer');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 // Call normalize event on all input events before calling the handler.
