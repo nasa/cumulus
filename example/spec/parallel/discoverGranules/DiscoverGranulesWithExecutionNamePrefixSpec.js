@@ -5,10 +5,11 @@ const {
   buildAndExecuteWorkflow,
   loadCollection,
   loadProvider,
+  granulesApi: granulesApiTestUtils,
   waitForStartedExecution,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteGranule } = require('@cumulus/integration-tests/api/granules');
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
@@ -16,7 +17,10 @@ const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 const {
-  deleteFolder, loadConfig, updateAndUploadTestDataToBucket,
+  createTimestampedTestId,
+  deleteFolder,
+  loadConfig,
+  updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow', () => {
@@ -38,7 +42,8 @@ describe('The DiscoverGranules workflow', () => {
 
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = randomString();
+    // const testId = randomString();
+    const testId = createTimestampedTestId(stackName, 'DiscoverGranulesWithExecutionNamePrefix');
 
     // Create the provider
     provider = await loadProvider({
@@ -97,7 +102,8 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   afterAll(async () => {
-    await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
+    await waitForCompletedExecution(workflowExecution.executionArn);
+    await granulesApiTestUtils.deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
     await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
