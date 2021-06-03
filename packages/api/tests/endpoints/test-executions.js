@@ -19,6 +19,7 @@ const {
   fakeExecutionRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 
 const models = require('../../models');
@@ -225,18 +226,15 @@ test('GET returns an existing execution', async (t) => {
     .expect(200);
 
   const executionResult = response.body;
-  const expectedRecord = {
-    ...executionRecord,
-    created_at: executionRecord.created_at.toISOString(),
-    timestamp: executionRecord.timestamp.toISOString(),
-    updated_at: executionRecord.updated_at.toISOString(),
-  };
+  const expectedRecord = await translatePostgresExecutionToApiExecution(
+    executionRecord,
+    t.context.knex
+  );
 
   t.is(executionResult.arn, executionRecord.arn);
   t.is(executionResult.asyncOperationId, asyncRecord.id);
   t.is(executionResult.collectionId, `${collectionRecord.name}___${collectionRecord.version}`);
   t.is(executionResult.parentArn, parentExecutionRecord.arn);
-
   t.like(executionResult, expectedRecord);
 });
 
@@ -255,13 +253,8 @@ test('GET returns an existing execution without any foreign keys', async (t) => 
     .expect(200);
 
   const executionResult = response.body;
-  const expectedRecord = {
-    ...executionRecord,
-    created_at: executionRecord.created_at.toISOString(),
-    timestamp: executionRecord.timestamp.toISOString(),
-    updated_at: executionRecord.updated_at.toISOString(),
-  };
-  t.like(executionResult, expectedRecord);
+  const expectedRecord = await translatePostgresExecutionToApiExecution(executionRecord);
+  t.deepEqual(executionResult, expectedRecord);
 });
 
 test('GET fails if execution is not found', async (t) => {

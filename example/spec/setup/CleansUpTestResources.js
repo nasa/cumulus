@@ -9,9 +9,9 @@ describe('Cleans up Test Resources', () => {
       Bucket: testConfig.bucket,
       Prefix: `${testConfig.stackName}/test-output/`,
     };
-    const s3list = await listS3ObjectsV2(params);
-    const s3objects = s3list.map((obj) => ({ Bucket: testConfig.bucket, Key: obj.Key }));
-    console.log(`\nDeleting ${s3objects.length} objects`);
-    await deleteS3Files(s3objects);
+    //const s3list = await listS3ObjectsV2(params);
+    //const s3objects = s3list.map((obj) => ({ Bucket: testConfig.bucket, Key: obj.Key }));
+    //console.log(`\nDeleting ${s3objects.length} objects`);
+    //await deleteS3Files(s3objects);
   });
 });
