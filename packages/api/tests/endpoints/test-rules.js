@@ -17,6 +17,12 @@ const {
   translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -30,13 +36,6 @@ const {
 const { post, put, del } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
-
-const { Search } = require('../../es/search');
-const indexer = require('../../es/indexer');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../es/testUtils');
 const assertions = require('../../lib/assertions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -123,7 +122,7 @@ test.before(async (t) => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   const newRule = fakeRuleFactoryV2();
   delete newRule.collection;
   delete newRule.provider;
@@ -594,11 +593,11 @@ test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to Dyn
   const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
-    exists: () => false,
+    exists: () => Promise.resolve(false),
     create: () => {
       throw new Error('Rule error');
     },
-    delete: async () => true,
+    delete: () => Promise.resolve(true),
   };
 
   const expressRequest = {
@@ -767,11 +766,11 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
   );
 
   const fakeRulesModel = {
-    get: async () => originalDynamoRule,
+    get: () => Promise.resolve(originalDynamoRule),
     update: () => {
       throw new Error('something bad');
     },
-    create: async () => originalDynamoRule,
+    create: () => Promise.resolve(originalDynamoRule),
   };
 
   const updatedRule = {
@@ -982,11 +981,11 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
   );
 
   const fakeRulesModel = {
-    get: async () => originalDynamoRule,
+    get: () => Promise.resolve(originalDynamoRule),
     delete: () => {
       throw new Error('something bad');
     },
-    create: async () => true,
+    create: () => Promise.resolve(true),
   };
 
   const expressRequest = {

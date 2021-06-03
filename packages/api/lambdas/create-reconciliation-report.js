@@ -10,16 +10,19 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const Logger = require('@cumulus/logger');
-const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
+const Collection = require('@cumulus/es-client/collections');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
-const { ESCollectionGranuleQueue } = require('../es/esCollectionGranuleQueue');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
@@ -29,8 +32,6 @@ const {
   filterCMRCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
-const Collection = require('../es/collections');
-const { ESSearchQueue } = require('../es/esSearchQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -329,6 +330,7 @@ async function reconciliationReportForGranuleFiles(params) {
           bucketTypes,
           urlType: 's3',
           distributionBucketMap,
+          useDirectS3Type: true,
         });
 
         if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
@@ -598,9 +600,7 @@ async function createReconciliationReport(recReportParams) {
   } = recReportParams;
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
-  const distributionBucketMap = await getJsonS3Object(
-    systemBucket, getDistributionBucketMapKey(stackName)
-  );
+  const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
 
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
@@ -744,6 +744,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest(event);
+  return await processRequest(event);
 }
 exports.handler = handler;

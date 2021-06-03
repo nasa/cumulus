@@ -7,11 +7,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { Search } = require('@cumulus/es-client/search');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
 
 const { AccessToken } = require('../../models');
 
@@ -46,7 +46,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.afterEach(async () => {
+test.afterEach(() => {
   delete process.env.log_destination_arn;
 });
 

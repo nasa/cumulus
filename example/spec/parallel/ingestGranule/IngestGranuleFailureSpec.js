@@ -76,11 +76,13 @@ describe('The Ingest Granule failure workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
       // add a non-existent file to input payload to cause lambda error
-      const nonexistentFile = {
-        path: 'non-existent-path',
-        name: 'non-existent-file',
-      };
-      inputPayload.granules[0].files.push(nonexistentFile);
+      inputPayload.granules[0].files = [
+        {
+          name: 'non-existent-file',
+          key: 'non-existent-path/non-existent-file',
+          bucket: 'non-existent-bucket',
+        },
+      ];
 
       // delete the granule record from DynamoDB if exists
       await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
@@ -147,7 +149,7 @@ describe('The Ingest Granule failure workflow', () => {
       });
     });
 
-    it('branches appropriately according to the CMA output', async () => {
+    it('branches appropriately according to the CMA output', () => {
       expect(executionStatus.executionHistory).toBeTruthy();
       const { events } = executionStatus.executionHistory;
 
@@ -188,14 +190,14 @@ describe('The Ingest Granule failure workflow', () => {
       expect(choiceVerified).toBeTrue();
     });
 
-    it('propagates the error message to CMA output for next step', async () => {
+    it('propagates the error message to CMA output for next step', () => {
       const syncGranExceptionCause = JSON.parse(syncGranStepOutput.exception.Cause);
       const syncGranFailedCause = JSON.parse(syncGranFailedDetail.cause);
       expect(syncGranStepOutput.exception.Error).toBe(syncGranFailedDetail.error);
       expect(syncGranExceptionCause).toEqual(syncGranFailedCause);
     });
 
-    it('logs the execution with the error message', async () => {
+    it('logs the execution with the error message', () => {
       expect(execution.error.Error).toBe(syncGranFailedDetail.error);
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });

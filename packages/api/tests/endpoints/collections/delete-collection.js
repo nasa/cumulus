@@ -16,6 +16,11 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const EsCollection = require('@cumulus/es-client/collections');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
@@ -26,11 +31,6 @@ const {
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
 } = require('../../../lib/testUtils');
-const EsCollection = require('../../../es/collections');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const { del } = require('../../../endpoints/collections');
@@ -274,11 +274,11 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
   );
 
   const fakeCollectionsModel = {
-    get: async () => originalCollection,
+    get: () => Promise.resolve(originalCollection),
     delete: () => {
       throw new Error('something bad');
     },
-    create: async () => true,
+    create: () => Promise.resolve(true),
   };
 
   const expressRequest = {

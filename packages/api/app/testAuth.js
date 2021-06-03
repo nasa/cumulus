@@ -29,7 +29,7 @@ let jwt = newToken();
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function tokenEndpoint(req, res) {
+function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
   if (jwt === '') jwt = newToken();
@@ -67,7 +67,7 @@ async function tokenEndpoint(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function refreshEndpoint(req, res) {
+function refreshEndpoint(req, res) {
   jwt = newToken();
   return res.send({
     message: {
@@ -83,7 +83,7 @@ async function refreshEndpoint(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} a promise of an express response
  */
-async function deleteTokenEndpoint(req, res) {
+function deleteTokenEndpoint(req, res) {
   jwt = '';
   return res.send({ message: 'Token record was deleted' });
 }
@@ -97,7 +97,7 @@ async function deleteTokenEndpoint(req, res) {
  * @param {Function} next - express middleware callback function
  * @returns {Promise<Object>} - promise of an express response object
  */
-async function ensureAuthorized(req, res, next) {
+function ensureAuthorized(req, res, next) {
   if (process.env.auth_mode === 'private') {
     return next();
   }

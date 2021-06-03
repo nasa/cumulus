@@ -17,6 +17,11 @@ const {
   RulePgModel,
   ProviderPgModel,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const models = require('../../../models');
 const {
@@ -25,11 +30,6 @@ const {
   setAuthorizedOAuthUsers,
   createProviderTestRecords,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const { del } = require('../../../endpoints/providers');
@@ -294,11 +294,11 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
   );
 
   const fakeProvidersModel = {
-    get: async () => originalProvider,
+    get: () => Promise.resolve(originalProvider),
     delete: () => {
       throw new Error('something bad');
     },
-    create: async () => true,
+    create: () => Promise.resolve(true),
   };
 
   const expressRequest = {

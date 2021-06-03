@@ -232,7 +232,7 @@ describe('Ingesting from PDR', () => {
       const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
-      beforeAll(async () => {
+      beforeAll(() => {
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
 
         try {
@@ -460,7 +460,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        it('branches according to the CMA output', async () => {
+        it('branches according to the CMA output', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else {
             expect(executionStatus.executionHistory).toBeTruthy();
@@ -570,7 +570,7 @@ describe('Ingesting from PDR', () => {
       let pdrRunningMessageKey;
       let pdrCompletedMessageKey;
 
-      beforeAll(async () => {
+      beforeAll(() => {
         try {
           const parsePdrExecutionName = parsePdrExecutionArn.split(':').pop();
 

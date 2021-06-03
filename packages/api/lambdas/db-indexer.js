@@ -5,8 +5,8 @@ const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
-const indexer = require('../es/indexer');
-const { Search } = require('../es/search');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const unwrap = AttributeValue.unwrap;
 
 /**
@@ -210,7 +210,7 @@ async function indexRecords(records) {
  * @param {Object} event - aws lambda event object.
  */
 const handler = async ({ Records }) =>
-  (Records ? indexRecords(Records) : 'No records found in event');
+  (Records ? await indexRecords(Records) : 'No records found in event');
 
 module.exports = {
   getTableName,

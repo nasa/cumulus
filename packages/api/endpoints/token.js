@@ -8,7 +8,7 @@ const {
   JsonWebTokenError,
   TokenExpiredError,
 } = require('jsonwebtoken');
-const { EarthdataLoginClient } = require('@cumulus/earthdata-login-client');
+const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 const {
   TokenUnauthorizedUserError,
 } = require('../lib/errors');
@@ -205,7 +205,7 @@ async function login(request, oAuth2Provider, response) {
   const state = get(request, 'query.state');
 
   if (code) {
-    return token(request, oAuth2Provider, response);
+    return await token(request, oAuth2Provider, response);
   }
 
   const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
@@ -228,7 +228,7 @@ function buildEarthdataLoginProviderFromEnv() {
   return new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
     clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT,
   });
 }
@@ -248,7 +248,7 @@ function buildOAuth2ProviderFromEnv() {
  */
 async function tokenEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
-  return login(req, oAuth2Provider, res);
+  return await login(req, oAuth2Provider, res);
 }
 
 /**
@@ -260,7 +260,7 @@ async function tokenEndpoint(req, res) {
  */
 async function refreshEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
-  return refreshAccessToken(req, oAuth2Provider, res);
+  return await refreshAccessToken(req, oAuth2Provider, res);
 }
 
 module.exports = {

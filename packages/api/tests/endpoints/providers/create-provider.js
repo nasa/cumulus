@@ -19,6 +19,11 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const AccessToken = require('../../../models/access-tokens');
 const Provider = require('../../../models/providers');
@@ -28,11 +33,6 @@ const {
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/providers');
 

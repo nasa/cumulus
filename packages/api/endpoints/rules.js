@@ -10,10 +10,11 @@ const {
   RulePgModel,
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const { indexRule } = require('@cumulus/es-client/indexer');
+
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
-const { Search } = require('../es/search');
-const { indexRule } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 

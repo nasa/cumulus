@@ -16,6 +16,11 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const EsCollection = require('@cumulus/es-client/collections');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const models = require('../../../models');
 const {
@@ -24,11 +29,6 @@ const {
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
 } = require('../../../lib/testUtils');
-const EsCollection = require('../../../es/collections');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
 
@@ -343,7 +343,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
   );
 
   const fakeCollectionsModel = {
-    get: async () => originalCollection,
+    get: () => Promise.resolve(originalCollection),
     create: () => {
       throw new Error('something bad');
     },

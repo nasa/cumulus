@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 30
+  sf_event_sqs_lambda_timeout = 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {

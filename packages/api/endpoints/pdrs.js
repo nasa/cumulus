@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 const models = require('../models');
 
 /**

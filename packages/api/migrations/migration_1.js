@@ -2,7 +2,7 @@
 
 const pLimit = require('p-limit');
 const chunk = require('lodash/chunk');
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 const models = require('../models');
 
 /**

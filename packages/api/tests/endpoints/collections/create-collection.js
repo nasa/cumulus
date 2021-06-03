@@ -18,6 +18,11 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const EsCollection = require('@cumulus/es-client/collections');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
@@ -29,11 +34,7 @@ const {
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const EsCollection = require('../../../es/collections');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('../../../es/testUtils');
+
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/collections');
 const { buildFakeExpressResponse } = require('../utils');
@@ -97,7 +98,7 @@ test.before(async (t) => {
 
   process.env.collection_sns_topic_arn = randomString();
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
-    promise: async () => true,
+    promise: () => Promise.resolve(true),
   });
 });
 

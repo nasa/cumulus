@@ -64,6 +64,24 @@ Below are some commonly asked questions that you may encounter that can assist y
 </details>
 
 <details>
+  <summary>Is Cumulus customizable and flexible?</summary>
+
+  Answer: Yes. Cumulus is a modular architecture that allows you to decide which components that you want/need to deploy. These components are maintained as Terraform modules.
+</details>
+
+<details>
+  <summary>What are Terraform modules?</summary>
+
+  Answer: They are modules that are composed to create a Cumulus deployment, which gives integrators the flexibility to choose the components of Cumulus that want/need. To view Cumulus maintained modules or steps on how to create a module go to [Terraform modules](https://github.com/nasa/cumulus/tree/master/tf-modules).
+</details>
+
+<details>
+  <summary>Where do I find Terraform module variables</summary>
+
+  Answer: Go [here](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for a list of Cumulus maintained variables.
+</details>
+
+<details>
   <summary>What is a Cumulus workflow?</summary>
 
   Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](../workflows/workflows-readme).
