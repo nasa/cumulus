@@ -16,15 +16,10 @@ const {
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
-const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
+const { indexProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-<<<<<<< HEAD
-const { Search } = require('../es/search');
-const { indexProvider } = require('../es/indexer');
-=======
->>>>>>> master
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
