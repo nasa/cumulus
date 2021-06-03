@@ -57,6 +57,7 @@
     "@cumulus/collection-config-store": "9.0.1",
     "@cumulus/common": "9.0.1",
     "@cumulus/db": "9.0.1",
+    "@cumulus/distribution-utils": "9.0.1",
     "@cumulus/oauth-client": "9.0.1-alpha1",
     "@cumulus/errors": "9.0.1",
     "@cumulus/es-client": "9.0.1-alpha.1",
