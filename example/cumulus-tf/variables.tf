@@ -116,12 +116,6 @@ variable "prefix" {
   type = string
 }
 
-variable "public_buckets" {
-  type        = list(string)
-  default     = []
-  description = "A list of public buckets"
-}
-
 variable "saml_entity_id" {
   type    = string
   default = "N/A"
@@ -158,12 +152,6 @@ variable "urs_client_password" {
   type = string
 }
 
-variable "urs_url" {
-  type        = string
-  default     = "https://urs.earthdata.nasa.gov"
-  description = "The URL of the Earthdata Login site"
-}
-
 variable "vpc_id" {
   type = string
 }
@@ -179,12 +167,6 @@ variable "api_gateway_stage" {
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
-}
-
-variable "cmr_acl_based_credentials" {
-  type = bool
-  default = false
-  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
 }
 
 variable "cumulus_distribution_url" {
@@ -315,18 +297,6 @@ variable "rds_connection_heartbeat" {
   description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
   type        = bool
   default     = false
-}
-
-variable "sts_credentials_lambda_function_arn" {
-  type        = string
-  default     = null
-  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
-}
-
-variable "sts_policy_helper_lambda_function_arn" {
-  type        = string
-  default     = null
-  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "async_operation_image_version" {

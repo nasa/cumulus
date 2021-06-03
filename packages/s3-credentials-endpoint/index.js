@@ -16,8 +16,11 @@ const morgan = require('morgan');
 const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
-const { isLocalApi } = require('@cumulus/api/lib/testUtils');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
+const {
+  useSecureCookies,
+  isPublicRequest,
+} = require('@cumulus/api/lib/distribution');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -35,15 +38,6 @@ const buildEarthdataLoginClient = () =>
     loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
-
-// Running API locally will be on http, not https, so cookies
-// should not be set to secure for local runs of the API.
-const useSecureCookies = () => {
-  if (isLocalApi()) {
-    return false;
-  }
-  return true;
-};
 
 /**
  * Returns a configuration object
@@ -99,36 +93,6 @@ async function handleRedirectRequest(req, res) {
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
-}
-
-/**
- * Helper function to pull bucket out of a path string.
- * Will ignore leading slash.
- * "/bucket/key" -> "bucket"
- * "bucket/key" -> "bucket"
- *
- * @param {string} path - express request path parameter
- * @returns {string} the first part of a path which is our bucket name
- */
-function bucketNameFromPath(path) {
-  return path.split('/').filter((d) => d).shift();
-}
-
-/**
- * Reads the input path and determines if this is a request for public data
- * or not.
- *
- * @param {string} path - req.path paramater
- * @returns {boolean} - whether this request goes to a public bucket
- */
-function isPublicRequest(path) {
-  try {
-    const publicBuckets = process.env.public_buckets.split(',');
-    const requestedBucket = bucketNameFromPath(path);
-    return publicBuckets.includes(requestedBucket);
-  } catch (error) {
-    return false;
-  }
 }
 
 const isTokenAuthRequest = (req) =>

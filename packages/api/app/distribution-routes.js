@@ -10,41 +10,12 @@ const {
 const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
 const { isAccessTokenExpired } = require('../lib/token');
 const { handleCredentialRequest } = require('../endpoints/s3credentials');
-const { getConfigurations } = require('../lib/distribution');
+const {
+  getConfigurations,
+  isPublicRequest,
+} = require('../lib/distribution');
 
 const version = require('../endpoints/version');
-
-// From https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html#API_AssumeRole_RequestParameters
-
-/**
- * Helper function to pull bucket out of a path string.
- * Will ignore leading slash.
- * "/bucket/key" -> "bucket"
- * "bucket/key" -> "bucket"
- *
- * @param {string} path - express request path parameter
- * @returns {string} the first part of a path which is our bucket name
- */
-function bucketNameFromPath(path) {
-  return path.split('/').filter((d) => d).shift();
-}
-
-/**
- * Reads the input path and determines if this is a request for public data
- * or not.
- *
- * @param {string} path - req.path paramater
- * @returns {boolean} - whether this request goes to a public bucket
- */
-function isPublicRequest(path) {
-  try {
-    const publicBuckets = process.env.public_buckets.split(',');
-    const requestedBucket = bucketNameFromPath(path);
-    return publicBuckets.includes(requestedBucket);
-  } catch (error) {
-    return false;
-  }
-}
 
 /**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
