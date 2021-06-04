@@ -292,8 +292,6 @@ describe('The Sync Granules workflow', () => {
         startTask: 'SyncGranule',
       });
 
-      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
-
       await waitForCompletedExecution(reingestGranuleExecution.executionArn);
 
       const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
@@ -343,9 +341,8 @@ describe('The Sync Granules workflow', () => {
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
-    });
 
-    afterAll(async () => {
+      // Immediately clean up granules
       await Promise.all(inputPayload.granules.map(
         (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
