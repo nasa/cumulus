@@ -9,7 +9,13 @@ For more information on configuring a Cumulus Message Adapter task, see
 
 ### Config
 
-There are no configuration fields defined for this task.
+This task has two optional configuration fields, reflecting the options for passing an access URL to the LZARDS API.
+Conformant to the included `config.json` schema, these are:
+
+| field name            | type    | default    | description
+| --------------------- | ------- | ---------- | -----------
+| urlType               | string  | 's3'       | urlType to generate and pass to LZARDS. Accepted values are 's3' and 'cloudfront'.
+| cloudfrontEndpoint    | string  | N/A        | cloudfront endpoint URL, required if urlType is 'cloudfront'
 
 ### Input
 

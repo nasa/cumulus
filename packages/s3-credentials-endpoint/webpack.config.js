@@ -48,6 +48,10 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
+      },
     ],
   },
   devtool: 'inline-source-map',

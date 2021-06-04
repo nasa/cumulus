@@ -33,11 +33,19 @@ const fakeCollection = {
   ],
 };
 
+const fakeBucketMap = {
+  foo: 'bar',
+};
+
 const getCollectionStub = sandbox.stub().returns(fakeCollection);
 const gotPostStub = sandbox.stub().returns(fakePostReturn);
+const fetchBucketMapStub = sandbox.stub().returns(fakeBucketMap);
 const index = proxyquire('../dist/src', {
   '@cumulus/api-client/collections': {
     getCollection: getCollectionStub,
+  },
+  '@cumulus/distribution-utils': {
+    fetchDistributionBucketMap: fetchBucketMapStub,
   },
   got: {
     default: {
@@ -46,11 +54,15 @@ const index = proxyquire('../dist/src', {
   },
 });
 const env = { ...process.env };
+
 test.beforeEach(() => {
+  process.env = { ...env };
+});
+
+test.afterEach(() => {
   sandbox.restore();
   gotPostStub.resetHistory();
   getCollectionStub.resetHistory();
-  process.env = { ...env };
 });
 
 test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', (t) => {
@@ -147,9 +159,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult when fi
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -187,9 +202,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZAR
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -225,9 +243,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
   const granuleId = 'fakeGranuleId';
 
   let actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     lzardsPostMethod,
@@ -269,9 +290,12 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
-    authToken,
+    backupConfig: {
+      authToken,
+      roleCreds,
+      urlType: 's3',
+    },
     collectionId,
-    roleCreds,
     file,
     granuleId,
     generateAccessUrlMethod,
@@ -438,16 +462,16 @@ test.serial('postRequestToLzards throws if provider is not set ', async (t) => {
   }));
 });
 
-test('generateAccessUrl generates an v4 accessURL', async (t) => {
-  const actual = await index.generateAccessUrl({
+test('generateDirectS3Url generates an v4 accessURL', async (t) => {
+  const actual = await index.generateDirectS3Url({
     Bucket: 'foo',
     Key: 'bar',
   });
   t.regex(actual, /X-Amz-Algorithm=AWS4-HMAC-SHA256/);
 });
 
-test('generateAccessUrl generates a signed URL using passed credentials', async (t) => {
-  const actual = await index.generateAccessUrl({
+test('generateDirectS3Url generates a signed URL using passed credentials', async (t) => {
+  const actual = await index.generateDirectS3Url({
     usePassedCredentials: true,
     roleCreds: {
       Credentials: {
@@ -460,6 +484,41 @@ test('generateAccessUrl generates a signed URL using passed credentials', async 
     Key: 'bar',
   });
   t.regex(actual, /X-Amz-Credential=FAKEId/);
+});
+
+test('generateCloudfrontUrl generates a URL with the cloudfront endpoint and obeying the bucket map', async (t) => {
+  const Bucket = 'foo';
+  const Key = 'test';
+  const cloudfrontEndpoint = 'http://d111111abcdef8.cloudfront.net/';
+  t.is(
+    await index.generateCloudfrontUrl({
+      Bucket,
+      Key,
+      cloudfrontEndpoint,
+    }),
+    'http://d111111abcdef8.cloudfront.net/bar/test'
+  );
+});
+
+test.serial('generateAccessUrl switches correctly based on urlType', async (t) => {
+  const params = {
+    Bucket: 'irrelevant',
+    Key: 'irrelevant',
+    urlConfig: {
+      roleCreds: {},
+      urlType: 's3',
+      cloudfrontEndpoint: 'irrelevant',
+    },
+  };
+
+  sandbox.stub(index, 'generateDirectS3Url');
+  await index.generateAccessUrl(params);
+  t.true(index.generateDirectS3Url.calledOnce);
+
+  params.urlConfig.urlType = 'cloudfront';
+  sandbox.stub(index, 'generateCloudfrontUrl');
+  await index.generateAccessUrl(params);
+  t.true(index.generateCloudfrontUrl.calledOnce);
 });
 
 test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
@@ -513,6 +572,9 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           ],
         },
       ],
+    },
+    config: {
+      urlType: 's3',
     },
   };
 
@@ -611,6 +673,9 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
           ],
         },
       ],
+    },
+    config: {
+      urlType: 's3',
     },
   };
 
