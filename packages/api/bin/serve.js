@@ -462,9 +462,7 @@ async function resetTables(
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
     await eraseDynamoTables(stackName, systemBucket);
     await erasePostgresTables(knex);
-    if (inTestMode() || runIt) {
-      await createDBRecords(stackName, user, knex);
-    }
+    await createDBRecords(stackName, user, knex);
   }
 }
 
