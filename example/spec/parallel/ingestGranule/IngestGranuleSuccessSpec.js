@@ -284,7 +284,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('prepares the test suite successfully', () => {
-    if (beforeAllError) fail(`beforeAll() failed to prepare test suite: ${testSetupError}`);
+    if (beforeAllError) fail('beforeAll() failed to prepare test suite');
   });
 
   it('triggers a running execution record being added to DynamoDB', async () => {
