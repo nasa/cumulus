@@ -62,7 +62,7 @@ describe('POST /granules/bulk', () => {
     let ingestedGranule;
     let scheduleQueueUrl;
     let bulkRequestTime;
-    let firstIngestGranuleExecutionArn;
+    let ingestGranuleExecution1Arn;
     let bulkOperationExecutionArn;
 
     beforeAll(async () => {
@@ -135,7 +135,7 @@ describe('POST /granules/bulk', () => {
         );
 
         // Find the execution ARN
-        firstIngestGranuleExecutionArn = await findExecutionArn(
+        ingestGranuleExecution1Arn = await findExecutionArn(
           prefix,
           (execution) => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -145,12 +145,12 @@ describe('POST /granules/bulk', () => {
           { timeout: 30 }
         );
 
-        console.log(`Ingest Execution ARN is : ${firstIngestGranuleExecutionArn}`);
+        console.log(`Ingest Execution ARN is : ${ingestGranuleExecution1Arn}`);
 
         // Wait for the execution to be completed
         await getExecutionWithStatus({
           prefix,
-          arn: firstIngestGranuleExecutionArn,
+          arn: ingestGranuleExecution1Arn,
           status: 'completed',
           timeout: 60,
         });
@@ -186,7 +186,7 @@ describe('POST /granules/bulk', () => {
     afterAll(async () => {
       // Must delete rules and executions before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
-      await deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn });
+      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
       await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
 
       await pAll(

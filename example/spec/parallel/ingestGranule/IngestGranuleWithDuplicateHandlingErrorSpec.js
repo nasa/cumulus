@@ -27,15 +27,15 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
   let beforeAllFailed = false;
   let collection;
   let config;
-  let firstIngestGranuleRule;
-  let firstIngestGranuleExecutionArn;
+  let ingestGranuleRule1;
+  let ingestGranuleExecutionArn1;
   let granuleId;
   let prefix;
   let provider;
   let sameChecksumFilename;
   let sameChecksumKey;
-  let secondIngestGranuleExecution;
-  let secondIngestGranuleExecutionArn;
+  let ingestGranuleExecution2;
+  let ingestGranuleExecution2Arn;
   let secondIngestGranuleRule;
   let sourceBucket;
 
@@ -76,7 +76,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       // Ingest the granule the first time
       const testExecutionId = randomId('test-execution-');
       console.log('testExecutionId:', testExecutionId);
-      firstIngestGranuleRule = await createOneTimeRule(
+      ingestGranuleRule1 = await createOneTimeRule(
         prefix,
         {
           workflow: 'IngestGranule',
@@ -102,12 +102,12 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       );
 
       // Find the execution ARN
-      console.log('firstIngestGranuleRule.payload.testExecutionId', firstIngestGranuleRule.payload.testExecutionId);
-      firstIngestGranuleExecutionArn = await findExecutionArn(
+      console.log('ingestGranuleRule1.payload.testExecutionId', ingestGranuleRule1.payload.testExecutionId);
+      ingestGranuleExecutionArn1 = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
-          return executionId === firstIngestGranuleRule.payload.testExecutionId;
+          return executionId === ingestGranuleRule1.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
         { timeout: 30 }
@@ -116,7 +116,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       // Wait for the execution to be completed
       await getExecutionWithStatus({
         prefix,
-        arn: firstIngestGranuleExecutionArn,
+        arn: ingestGranuleExecutionArn1,
         status: 'completed',
       });
 
@@ -151,7 +151,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       // Find the execution ARN
       console.log('secondIngestGranuleRule.payload.testExecutionId', secondIngestGranuleRule.payload.testExecutionId);
-      secondIngestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecution2Arn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -162,9 +162,9 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       );
 
       // Wait for the execution to be completed
-      secondIngestGranuleExecution = await getExecutionWithStatus({
+      ingestGranuleExecution2 = await getExecutionWithStatus({
         prefix,
-        arn: secondIngestGranuleExecutionArn,
+        arn: ingestGranuleExecution2Arn,
         status: 'completed',
       });
     } catch (error) {
@@ -177,7 +177,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(
-        get(secondIngestGranuleExecution, 'error.Error')
+        get(ingestGranuleExecution2, 'error.Error')
       ).toBe('DuplicateFile');
     }
   });
@@ -185,7 +185,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
   it('returns the expected files', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const files = secondIngestGranuleExecution.finalPayload.granules[0].files;
+      const files = ingestGranuleExecution2.finalPayload.granules[0].files;
 
       // Make sure we got the expected number of files
       expect(files.length).toBe(2);
@@ -202,15 +202,15 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     // Must delete rules before deleting associated collection and provider
     await pAll(
       [
-        () => deleteRule({ prefix, ruleName: get(firstIngestGranuleRule, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule1, 'name') }),
         () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
 
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: firstIngestGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: secondIngestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn1 }),
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
     ]);
 
     await pAll(
