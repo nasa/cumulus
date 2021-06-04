@@ -1,7 +1,7 @@
 import Knex from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { ExecutionRecord, } from '@cumulus/types/api/executions';
+import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
