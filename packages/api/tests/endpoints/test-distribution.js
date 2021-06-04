@@ -18,8 +18,8 @@ const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 process.env.OAUTH_CLIENT_ID = randomId('edlId');
 process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
-process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
-process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
+process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('disthost')}/${randomId('distpath')}`;
+process.env.OAUTH_HOST_URL = `https://${randomId('oauthhost')}/${randomId('oauthpath')}`;
 process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
@@ -48,11 +48,11 @@ test.before(async () => {
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
-  const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
+  const authorizationUrl = `https://${randomId('authhost')}.com/${randomId('authpath')}`;
   const fileBucket = randomId('bucket');
   const fileKey = randomId('key');
   const fileLocation = `${fileBucket}/${fileKey}`;
-  const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
+  const signedFileUrl = new URL(`https://${randomId('signedhost2')}.com/${randomId('path2')}`);
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const getUserInfoResponse = { foo: 'bar' };
@@ -89,6 +89,10 @@ test.before(async () => {
     }
 
     return signedFileUrl.toString();
+  });
+
+  sinon.stub(s3(), 'headObject').returns({
+    promise: sinon.stub().resolves(),
   });
 
   context = {
@@ -171,7 +175,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   } = context;
 
   const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
+    .get(`/s3://${fileLocation}`)
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
@@ -188,7 +192,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
 test('A request for a public file without an access token returns a redirect to S3', async (t) => {
   const { fileKey, signedFileUrl } = context;
   const response = await request(distributionApp)
-    .get(`/${process.env.public_buckets}/${fileKey}`)
+    .get(`/s3://${process.env.public_buckets}/${fileKey}`)
     .set('Accept', 'application/json')
     .expect(307);
 

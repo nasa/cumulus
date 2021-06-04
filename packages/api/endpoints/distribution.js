@@ -172,14 +172,19 @@ async function handleLogoutRequest(req, res) {
  */
 async function handleFileRequest(req, res) {
   const objectStore = new S3ObjectStore();
-  const signedS3Url = await objectStore.signGetObject(
-    req.params[0],
-    { 'A-userid': req.authorizedMetadata.userName }
-  );
+  let signedS3Url;
+
+  try {
+    signedS3Url = await objectStore.signGetObject(
+      req.params[0],
+      { 'A-userid': req.authorizedMetadata.userName }
+    );
+  } catch (error) {
+    if (error.code === 'ERR_INVALID_URL') return res.sendStatus(404);
+  }
   return res
-    .status(307)
     .set({ Location: signedS3Url })
-    .send('Redirecting');
+    .sendStatus(307);
 }
 
 function head() {}

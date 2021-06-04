@@ -4,6 +4,7 @@ const { CognitoClient, EarthdataLoginClient } = require('@cumulus/oauth-client')
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 
 const { isLocalApi } = require('./testUtils');
 const { AccessToken } = require('../models');
@@ -96,7 +97,8 @@ function buildErrorTemplateVars(query) {
  * @returns {string} the first part of a path which is our bucket name
  */
 function bucketNameFromPath(path) {
-  return path.split('/').filter((d) => d).shift();
+  const { Bucket } = parseS3Uri(path.replace(/^\//, ''));
+  return Bucket;
 }
 
 /**
