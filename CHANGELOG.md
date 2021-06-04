@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ### Changed
+
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2306**
     - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
