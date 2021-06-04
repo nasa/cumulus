@@ -76,14 +76,22 @@ const deleteGranuleAndFiles = async ({
       { granule_cumulus_id: pgGranule.cumulus_id }
     );
 
-    await knex.transaction(async (trx) => {
-      await granulePgModel.delete(trx, {
-        cumulus_id: pgGranule.cumulus_id,
+    try {
+      await knex.transaction(async (trx) => {
+        await granulePgModel.delete(trx, {
+          cumulus_id: pgGranule.cumulus_id,
+        });
+        await granuleModelClient.delete(dynamoGranule);
       });
-      await granuleModelClient.delete(dynamoGranule);
-    });
 
-    await _deleteS3Files(files);
+      await _deleteS3Files(files);
+    } catch (error) {
+      // Delete S3 Files even if delete fails
+      await _deleteS3Files(files);
+
+      logger.error(`Error deleting granule with ID ${pgGranule.granule_id}: ${JSON.stringify(error)}`);
+      throw error;
+    }
   }
 };
 
