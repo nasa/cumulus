@@ -406,7 +406,6 @@ describe('The S3 Ingest Granules workflow', () => {
     let existCheck = [];
     let subTestSetupError;
 
-
     beforeAll(async () => {
       try {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
