@@ -110,7 +110,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     await deleteExecution({ prefix: config.stackName, executionArn: partialFilesConfigExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: noFilesConfigExecutionArn });
 
-    const x = await Promise.all([
+    await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
     ]);

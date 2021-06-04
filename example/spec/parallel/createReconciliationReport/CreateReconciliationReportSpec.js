@@ -43,7 +43,6 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
-const { execution } = require('@cumulus/api/models/schemas');
 const {
   loadConfig,
   uploadTestDataToBucket,
