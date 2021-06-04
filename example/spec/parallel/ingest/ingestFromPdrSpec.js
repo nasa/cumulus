@@ -262,10 +262,6 @@ describe('Ingesting from PDR', () => {
             granuleId: granule.granuleId,
           })
         ));
-        await granulesApiTestUtils.deleteGranule({
-          prefix: config.stackName,
-          granuleId: testDataGranuleId,
-        });
       });
 
       it('executes successfully', async () => {

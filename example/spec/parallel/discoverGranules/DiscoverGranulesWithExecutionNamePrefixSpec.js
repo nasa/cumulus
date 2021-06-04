@@ -1,20 +1,24 @@
 'use strict';
 
+const pAll = require('p-all');
+
 const { randomString } = require('@cumulus/common/test-utils');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   buildAndExecuteWorkflow,
+  granulesApi: granulesApiTestUtils,
   loadCollection,
   loadProvider,
-  granulesApi: granulesApiTestUtils,
   waitForStartedExecution,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
-  createCollection, deleteCollection,
+  createCollection,
+  deleteCollection,
 } = require('@cumulus/api-client/collections');
 const {
-  createProvider, deleteProvider,
+  createProvider,
+  deleteProvider,
 } = require('@cumulus/api-client/providers');
 const {
   createTimestampedTestId,
@@ -103,18 +107,22 @@ describe('The DiscoverGranules workflow', () => {
   afterAll(async () => {
     await waitForCompletedExecution(workflowExecution.executionArn);
     await granulesApiTestUtils.deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
-    await Promise.all([
-      deleteFolder(bucket, providerPath),
-      deleteCollection({
-        prefix: stackName,
-        collectionName: collection.name,
-        collectionVersion: collection.version,
-      }),
-      deleteProvider({
-        prefix: stackName,
-        provider: provider.id,
-      }),
-    ]);
+
+    await pAll(
+      [
+        () => deleteFolder(bucket, providerPath),
+        () => deleteCollection({
+          prefix: stackName,
+          collectionName: collection.name,
+          collectionVersion: collection.version,
+        }),
+        () => deleteProvider({
+          prefix: stackName,
+          provider: provider.id,
+        }),
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
   });
 
   it('executes successfully', () => {

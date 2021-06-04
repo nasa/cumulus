@@ -175,7 +175,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     describe('SyncGranule lambda function', () => {
-      it('outputs 1 granule', async () => {
+      it('outputs the expected granule', async () => {
         lambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArn,
           'SyncGranule'

@@ -11,18 +11,17 @@ const {
   executionsApi: executionsApiTestUtils,
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
-const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
-  loadConfig,
-  uploadTestDataToBucket,
-  deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
+  deleteFolder,
+  loadConfig,
+  uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -84,14 +83,6 @@ describe('The Ingest Granule failure workflow', () => {
           bucket: 'non-existent-bucket',
         },
       ];
-
-      await deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
-      await Promise.all(inputPayload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
