@@ -62,7 +62,7 @@ const deleteGranuleAndFiles = async ({
   granulePgModel: GranulePgModel,
   granuleModelClient: typeof Granule
 }) => {
-  logger.info(`Deleting PG granule ${pgGranule} mapped to dynamoGranule ${dynamoGranule}`);
+  logger.info(`Deleting PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
   if (pgGranule === undefined) {
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
