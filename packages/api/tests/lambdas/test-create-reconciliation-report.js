@@ -20,7 +20,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
