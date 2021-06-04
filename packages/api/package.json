@@ -88,6 +88,7 @@
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^1.1.0",
     "jsonwebtoken": "^8.4.0",
+    "js-yaml": "^3.13.1",
     "knex": "0.21.13",
     "lodash": "^4.17.20",
     "moment": "2.24.0",

@@ -8,6 +8,16 @@ variable "prefix" {
   description = "Resource prefix unique to this deployment"
 }
 
+variable "bucketname_prefix" {
+  type        = string
+  description = "all data buckets should have names prefixed with this. Must be compatible with S3 naming conventions (lower case only, etc). An empty string can be used to indicate no prefix"
+}
+
+variable "config_bucket" {
+  type        = string
+  description = "the bucket where config files can be found"
+}
+
 variable "oauth_client_id" {
   type        = string
   description = "oauth_client_id"
@@ -35,6 +45,12 @@ variable "api_gateway_stage" {
   type        = string
   default     = "dev"
   description = "The API Gateway stage name for the distribution App"
+}
+
+variable "bucket_map_file" {
+  type        = string
+  default     = "bucket_map.yaml"
+  description = "path and file of bucketmap file's location in the config_bucket"
 }
 
 variable "lambda_subnet_ids" {
