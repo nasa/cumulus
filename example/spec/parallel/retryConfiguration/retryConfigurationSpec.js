@@ -27,8 +27,6 @@ function getRetryIntervals(executions) {
   return retryIntervals;
 }
 
-// TODO delete executions
-
 describe('When a task is configured', () => {
   let retryPassWorkflowExecution = null;
   let noRetryWorkflowExecution = null;

@@ -43,6 +43,7 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { execution } = require('@cumulus/api/models/schemas');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -90,7 +91,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
 }
 
 let ingestGranuleExecutionArn;
-let ingestAndPublishGranuleExecutionArn;
+const ingestAndPublishGranuleExecutionArns = [];
 
 /**
  * Creates a new test collection with associated granule for testing.
@@ -199,9 +200,9 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     testDataFolder
   );
 
-  ingestAndPublishGranuleExecutionArn = await buildAndExecuteWorkflow(
+  ingestAndPublishGranuleExecutionArns.push(await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-  );
+  ));
 
   await waitForModelStatus(
     new Granule(),
@@ -738,7 +739,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
 
     const a = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    const b = await deleteExecution({ prefix: config.stackName, executionArn: ingestAndPublishGranuleExecutionArn });
+    const b = await Promise.all(ingestAndPublishGranuleExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
 
     const c = await Promise.all([
       s3().deleteObject(extraS3Object).promise(),

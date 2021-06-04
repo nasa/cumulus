@@ -36,12 +36,15 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let collection;
   let provider;
   let discoverGranulesExecutionArn;
-  let ingestGranuleWorkflowArn;
   let ingestGranuleWorkflowArn1;
   let ingestGranuleWorkflowArn2;
+  let ingestGranuleWorkflowArn3;
   let noFilesConfigExecutionArn;
   let partialFilesConfigExecutionArn;
   let ignoringFilesConfigExecutionArn;
+  let noFilesIngestExecutionArns;
+  let partialFilesIngestExecutionArns;
+  let ignoringFilesIngestExecutionArns;
 
   beforeAll(async () => {
     try {
@@ -94,20 +97,23 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     // Order matters. Parent executions must be deleted before children.
-    const a = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
-    const b = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
-    const c = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
-    const d = await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn3 });
+    await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn });
 
-    const e = await deleteExecution({ prefix: config.stackName, executionArn: ignoringFilesConfigExecutionArn });
-    const f = await deleteExecution({ prefix: config.stackName, executionArn: partialFilesConfigExecutionArn });
-    const g = await deleteExecution({ prefix: config.stackName, executionArn: noFilesConfigExecutionArn });
+    await Promise.all(noFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
+    await Promise.all(partialFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
+    await Promise.all(ignoringFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
+
+    await deleteExecution({ prefix: config.stackName, executionArn: ignoringFilesConfigExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: partialFilesConfigExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: noFilesConfigExecutionArn });
 
     const x = await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
     ]);
-    console.log('DiscoverGranulesHTTPSpec afterAll:::', a, b, c, d, e, f, g, x);
   });
 
   it('executes successfully', () => {
@@ -158,11 +164,11 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
-      ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-      ingestGranuleWorkflowArn1 = queueGranulesOutput.payload.running[1];
-      ingestGranuleWorkflowArn2 = queueGranulesOutput.payload.running[2];
-      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+      ingestGranuleWorkflowArn1 = queueGranulesOutput.payload.running[0];
+      ingestGranuleWorkflowArn2 = queueGranulesOutput.payload.running[1];
+      ingestGranuleWorkflowArn3 = queueGranulesOutput.payload.running[2];
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
+      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     });
 
     it('executes successfully', () => {
@@ -172,7 +178,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     describe('SyncGranule lambda function', () => {
       it('outputs 1 granule', async () => {
         const lambdaOutput = await lambdaStep.getStepOutput(
-          ingestGranuleWorkflowArn,
+          ingestGranuleWorkflowArn1,
           'SyncGranule'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);
@@ -201,6 +207,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       noFilesConfigExecutionArn = noFilesConfigExecution.executionArn;
+
+      const noFilesConfigQueueGranulesOutput = await lambdaStep.getStepOutput(
+        noFilesConfigExecutionArn,
+        'QueueGranules'
+      );
+
+      noFilesIngestExecutionArns = noFilesConfigQueueGranulesOutput.payload.running;
     });
 
     it('encounters a collection without a files configuration', async () => {
@@ -249,6 +262,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       partialFilesConfigExecutionArn = partialFilesConfigExecution.executionArn;
+
+      const partialFilesQueueGranulesOutput = await lambdaStep.getStepOutput(
+        partialFilesConfigExecutionArn,
+        'QueueGranules'
+      );
+
+      partialFilesIngestExecutionArns = partialFilesQueueGranulesOutput.payload.running;
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -300,6 +320,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       ignoringFilesConfigExecutionArn = ignoringFilesConfigExecution.executionArn;
+
+      const ignoringFilesQueueGranulesOutput = await lambdaStep.getStepOutput(
+        ignoringFilesConfigExecutionArn,
+        'QueueGranules'
+      );
+
+      ignoringFilesIngestExecutionArns = ignoringFilesQueueGranulesOutput.payload.running;
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {
