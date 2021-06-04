@@ -25,7 +25,10 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../../helpers/testUtils');
+const {
+  createTimestampedTestId,
+  loadConfig,
+} = require('../../helpers/testUtils');
 
 describe('A dead letter record archive processing operation', () => {
   let beforeAllFailed = false;
@@ -47,7 +50,7 @@ describe('A dead letter record archive processing operation', () => {
       systemBucket = config.bucket;
 
       let response;
-      const testId = randomString();
+      const testId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessing');
 
       testCollection = await loadCollection({
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',

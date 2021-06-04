@@ -19,7 +19,10 @@ const {
 } = require('@cumulus/api-client/providers');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
-  deleteFolder, loadConfig, updateAndUploadTestDataToBucket,
+  createTimestampedTestId,
+  deleteFolder,
+  loadConfig,
+  updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow', () => {
@@ -41,7 +44,7 @@ describe('The DiscoverGranules workflow', () => {
 
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = randomString();
+    const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3Success');
     expectedGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
     // Create the provider
