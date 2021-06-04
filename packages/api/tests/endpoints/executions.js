@@ -176,6 +176,7 @@ test('DELETE removes only specified execution from all data stores', async (t) =
   executions.push(newExecution);
 
   await Promise.all(executions.map(async (execution) => {
+    // delete async operation foreign key to avoid needing a valid async operation
     delete execution.asyncOperationId;
     await executionDynamoModel.create(execution);
     const executionPgRecord = await translateApiExecutionToPostgresExecution(execution, testKnex);
