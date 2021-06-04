@@ -1,7 +1,6 @@
 'use strict';
 
 const pWaitFor = require('p-wait-for');
-const { randomString } = require('@cumulus/common/test-utils');
 const {
   buildAndExecuteWorkflow,
   getExecutionInputObject,
