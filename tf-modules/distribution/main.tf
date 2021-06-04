@@ -153,7 +153,7 @@ resource "aws_lambda_function" "s3_credentials" {
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
-      OAUTH_PROVIDER                 = var.oauth_provider
+      OAUTH_PROVIDER                 = "earthdata"
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
       STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
       cmr_provider                   = var.cmr_provider
