@@ -215,3 +215,19 @@ test('DELETE removes only specified execution from all data stores', async (t) =
 
   t.is(originalExecution2.length, 1);
 });
+
+test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
+  const nonExistantExecution = {
+    arn: 'arn9',
+    status: 'completed',
+    name: 'test_execution',
+  };
+
+  const response = await request(app)
+    .delete(`/executions/${nonExistantExecution.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.body.message, 'No record found');
+});

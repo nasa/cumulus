@@ -62,9 +62,8 @@ async function del(req, res) {
 
   const { arn } = req.params;
 
-  let existingExecution;
   try {
-    existingExecution = await executionModel.get({ arn });
+    await executionModel.get({ arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
@@ -72,20 +71,12 @@ async function del(req, res) {
     throw error;
   }
 
-  try {
-    await knex.transaction(async (trx) => {
-      await executionPgModel.delete(trx, { arn });
-      await executionModel.delete({ arn });
-    });
-    return res.send({ message: 'Record deleted' });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (existingExecution) {
-      await executionModel.create(existingExecution);
-    }
-    throw error;
-  }
+  await knex.transaction(async (trx) => {
+    await executionPgModel.delete(trx, { arn });
+    await executionModel.delete({ arn });
+  });
+
+  return res.send({ message: 'Record deleted' });
 }
 
 router.get('/:arn', get);
