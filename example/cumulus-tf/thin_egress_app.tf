@@ -40,6 +40,7 @@ module "thin_egress_app" {
   config_bucket                 = var.system_bucket
   domain_name                   = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
   jwt_secret_name               = var.thin_egress_jwt_secret_name
+  oauth_provider                = "earthdata"
   permissions_boundary_name     = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                   = var.vpc_id
   stack_name                    = local.tea_stack_name

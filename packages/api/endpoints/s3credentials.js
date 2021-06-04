@@ -167,7 +167,7 @@ async function s3credentials(req, res) {
   );
 
   let policy;
-  if (process.env.OAUTH_PROVIDER !== 'cognito') {
+  if (process.env.OAUTH_PROVIDER === 'earthdata') {
     policy = await fetchPolicyForUser(
       req.authorizedMetadata.userName,
       process.env.cmr_provider,

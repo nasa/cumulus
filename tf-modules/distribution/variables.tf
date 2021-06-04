@@ -51,6 +51,12 @@ variable "log_destination_arn" {
   description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true for TEA module."
 }
 
+variable "oauth_provider" {
+  type        = string
+  default     = "earthdata"
+  description = "The OAuth provider, cognito or earthdata"
+}
+
 variable "permissions_boundary_arn" {
   type        = string
   default     = null
