@@ -10,9 +10,11 @@ import {
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
 import { ApiFile, ApiGranule } from '@cumulus/types';
+import Logger from '@cumulus/logger';
 
 const FileUtils = require('../../lib/FileUtils');
 const Granule = require('../../models/granules');
+const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
 
 /**
  * Delete a list of files from S3
@@ -60,6 +62,7 @@ const deleteGranuleAndFiles = async ({
   granulePgModel: GranulePgModel,
   granuleModelClient: typeof Granule
 }) => {
+  log.info(`Deleting PG granule ${pgGranule} mapped to dynamoGranule ${dynamoGranule}`);
   if (pgGranule === undefined) {
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
