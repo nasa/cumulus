@@ -78,8 +78,8 @@ router.get('/login', handleLoginRequest);
 router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);
 router.get('/pubkey', pubkey);
-router.get('/s3Credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
-router.get('/s3CredentialsREADME', displayS3CredentialInstructions);
+router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+router.get('/s3credentialsREADME', displayS3CredentialInstructions);
 // Use router.use to leverage custom version middleware
 router.use('/version', version);
 
