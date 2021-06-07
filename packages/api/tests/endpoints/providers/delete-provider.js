@@ -6,10 +6,15 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
+
+const {
+  fakeGranuleRecordFactory,
+} = require('@cumulus/db/dist/test-utils');
 const {
   destroyLocalTestDb,
   generateLocalTestDb,
+  GranulePgModel,
   localStackConnectionEnv,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
@@ -23,11 +28,13 @@ const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
+  fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+
 const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
@@ -48,8 +55,9 @@ const esIndex = randomString();
 let esClient;
 let providerModel;
 
-let jwtAuthToken;
 let accessTokenModel;
+let granuleModel;
+let jwtAuthToken;
 let ruleModel;
 
 test.before(async (t) => {
@@ -60,6 +68,7 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.providerPgModel = new ProviderPgModel();
   t.context.rulePgModel = new RulePgModel();
+  t.context.granulePgModel = new GranulePgModel();
 
   process.env.stackName = randomString();
 
@@ -88,6 +97,10 @@ test.before(async (t) => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
+  process.env.GranulesTable = randomId('granules');
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
+
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
@@ -111,6 +124,7 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
+  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -270,4 +284,69 @@ test('Attempting to delete a provider with an associated rule does not delete th
     .expect(409);
 
   t.true(await providerModel.exists(testProvider.id));
+});
+
+test.only('Attempting to delete a provider with an associated granule does not delete the provider', async (t) => {
+  const {
+    collectionPgModel,
+    granulePgModel,
+    providerCumulusId,
+    testKnex,
+    testProvider,
+  } = t.context;
+
+  const granuleId = randomString();
+
+  const dynamoGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: granuleId,
+      status: 'completed',
+      published: false,
+      provider: testProvider.id,
+    }
+  );
+
+  await granuleModel.create(dynamoGranule);
+
+  const collection = {
+    name: randomString(),
+    version: '001',
+    sample_file_name: 'fake',
+    granule_id_validation_regex: 'fake',
+    granule_id_extraction_regex: 'fake',
+    files: {},
+  };
+
+  const [collectionCumulusId] = await collectionPgModel
+    .create(
+      t.context.testKnex,
+      collection
+    );
+
+  const pgGranule = fakeGranuleRecordFactory(
+    {
+      granule_id: granuleId,
+      status: 'completed',
+      provider_cumulus_id: providerCumulusId,
+      collection_cumulus_id: collectionCumulusId,
+      published: false,
+    }
+  );
+
+  await granulePgModel.create(testKnex, pgGranule);
+
+  const response = await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
+
+  t.is(response.status, 409);
+  t.is(response.body.message, `Cannot delete provider ${testProvider.id} with associated granules.`);
+  t.true(await providerModel.exists(testProvider.id));
+
+  t.teardown(async () => {
+    await granulePgModel.delete(testKnex, { granule_id: pgGranule.granule_id });
+    await collectionPgModel.delete(testKnex, { cumulus_id: collectionCumulusId });
+  });
 });
