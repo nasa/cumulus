@@ -51,7 +51,6 @@ data "aws_iam_policy_document" "lambda_backup_role_policy" {
       type = "AWS"
       identifiers = [var.lambda_processing_role_arn]
     }
-
   }
 }
 
@@ -85,6 +84,10 @@ data "aws_iam_policy_document" "lambda_backup_policy" {
       "s3:GetObject*"
     ]
     resources = [for b in local.all_non_internal_buckets : "arn:aws:s3:::${b}/*"]
+  }
+  statement {
+    actions = ["s3:GetObject*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 }
 

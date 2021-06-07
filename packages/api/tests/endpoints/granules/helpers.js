@@ -8,10 +8,9 @@ const {
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 
-const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const {
   fakeFileFactory,

@@ -112,7 +112,7 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);
