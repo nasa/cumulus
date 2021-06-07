@@ -46,6 +46,9 @@ from a Cumulus message</p>
 <dt><a href="#exp_module_Granules--exports.getMessageGranules">exports.getMessageGranules(message)</a> ⇒ <code>Array.&lt;Object&gt;</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get granules from payload?.granules of a workflow message.</p>
 </dd>
+<dt><a href="#exp_module_Granules--exports.messageHasGranules">exports.messageHasGranules(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Determine if message has a granules object.</p>
+</dd>
 <dt><a href="#exp_module_Granules--exports.getGranuleStatus">exports.getGranuleStatus(workflowStatus, granule)</a> ⇒ <code>string</code> ⏏</dt>
 <dd><p>Determine the status of a granule.</p>
 </dd>
