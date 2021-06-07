@@ -1,4 +1,3 @@
-// import * as querystring from 'querystring';
 import { URL } from 'url';
 import isEmpty from 'lodash/isEmpty';
 import { s3 } from './services';
@@ -40,12 +39,12 @@ class S3ObjectStore {
     // Verifies that the object exists, or throws NotFound
     await headObject(Bucket, Key);
 
-    const signedUrl = this.s3.getSignedUrl('getObject', { Bucket, Key });
+    const signedUrl = await this.s3.getSignedUrl('getObject', { Bucket, Key });
     const parsedSignedUrl = new URL(signedUrl);
     if (!isEmpty(params)) {
       Object.entries(params).map(([key, value]) => parsedSignedUrl.searchParams.set(key, value));
     }
-    return parsedSignedUrl.toString();
+    return signedUrl;
   }
 }
 

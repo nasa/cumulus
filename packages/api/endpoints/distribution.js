@@ -180,11 +180,12 @@ async function handleFileRequest(req, res) {
       { 'A-userid': req.authorizedMetadata.userName }
     );
   } catch (error) {
-    if (error.code === 'ERR_INVALID_URL') return res.sendStatus(404);
+    return res.sendStatus(404);
   }
   return res
+    .status(307)
     .set({ Location: signedS3Url })
-    .sendStatus(307);
+    .send('Redirecting');
 }
 
 function head() {}
