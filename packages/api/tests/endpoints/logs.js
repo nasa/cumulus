@@ -46,7 +46,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.afterEach(async () => {
+test.afterEach(() => {
   delete process.env.log_destination_arn;
 });
 

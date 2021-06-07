@@ -24,6 +24,8 @@ const {
   Search,
 } = require('@cumulus/es-client/search');
 
+type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
+
 export const getLambdaEnvironmentVariables = async (
   functionName: string
 ): Promise<EnvironmentVariables[]> => {
@@ -73,7 +75,7 @@ export const startECSTask = async ({
   payloadKey: string,
   useLambdaEnvironmentVariables?: boolean,
   dynamoTableName: string,
-}): Promise<PromiseResult<ECS.RunTaskResponse, AWSError>> => {
+}): StartEcsTaskReturnType => {
   const envVars = [
     { name: 'asyncOperationId', value: id },
     { name: 'asyncOperationsTable', value: dynamoTableName },
@@ -174,20 +176,20 @@ export const createAsyncOperation = async (
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (
-  params: {
-    asyncOperationTaskDefinition: string,
-    cluster: string,
-    description: string,
-    dynamoTableName: string,
-    lambdaName: string,
-    operationType: AsyncOperationType,
-    payload: unknown,
-    stackName: string,
-    systemBucket: string,
-    useLambdaEnvironmentVariables?: boolean,
-  },
-  AsyncOperation: AsyncOperationModelClass
+export const startAsyncOperation = async (params: {
+  asyncOperationTaskDefinition: string,
+  cluster: string,
+  description: string,
+  dynamoTableName: string,
+  knexConfig?: NodeJS.ProcessEnv,
+  lambdaName: string,
+  operationType: AsyncOperationType,
+  payload: unknown,
+  stackName: string,
+  systemBucket: string,
+  useLambdaEnvironmentVariables?: boolean,
+  startEcsTaskFunc?: () => StartEcsTaskReturnType
+}, AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,
@@ -196,6 +198,8 @@ export const startAsyncOperation = async (
     systemBucket,
     stackName,
     dynamoTableName,
+    knexConfig,
+    startEcsTaskFunc = startECSTask,
   } = params;
 
   const id = uuidv4();
@@ -210,7 +214,7 @@ export const startAsyncOperation = async (
   }).promise();
 
   // Start the task in ECS
-  const runTaskResponse = await startECSTask({
+  const runTaskResponse = await startEcsTaskFunc({
     ...params,
     id,
     payloadBucket,
@@ -237,6 +241,7 @@ export const startAsyncOperation = async (
       stackName,
       systemBucket,
       dynamoTableName,
+      knexConfig,
     },
     AsyncOperation
   );

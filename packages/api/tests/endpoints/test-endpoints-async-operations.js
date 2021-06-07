@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const request = require('supertest');
+const sinon = require('sinon');
 const { v4: uuidv4 } = require('uuid');
 const noop = require('lodash/noop');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -22,6 +23,9 @@ const {
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
+const {
+  deleteAsyncOperation,
+} = require('../../endpoints/async-operations');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
@@ -240,6 +244,17 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
       taskArn: asyncOperation.taskArn,
     }
   );
+});
+
+test('deleteAsyncOperation returns a 401 bad request if id is not provided', async (t) => {
+  const fakeRequest = {};
+  const fakeResponse = {
+    boom: {
+      badRequest: sinon.stub(),
+    },
+  };
+  await deleteAsyncOperation(fakeRequest, fakeResponse);
+  t.true(fakeResponse.boom.badRequest.called);
 });
 
 test('DELETE deletes the async operation from all data stores', async (t) => {

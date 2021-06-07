@@ -11,7 +11,7 @@ test.before(async (t) => {
   await t.context.executionModel.createTable();
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.executionName = randomId('execution');
 
   t.context.workflowStartTime = Date.now();
@@ -152,7 +152,7 @@ test('generateRecord() returns a record with correct duration for non-running me
   t.is(record.duration, 1);
 });
 
-test.serial('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { executionModel } = t.context;
 
   const updatedItem = {
@@ -168,7 +168,7 @@ test.serial('_getMutableFieldNames() returns correct fields for running status',
   ]);
 });
 
-test.serial('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for completed status', (t) => {
   const { executionModel } = t.context;
 
   const item = {

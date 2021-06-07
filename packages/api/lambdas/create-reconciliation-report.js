@@ -10,7 +10,8 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const Logger = require('@cumulus/logger');
-const { getBucketsConfigKey, getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
@@ -599,9 +600,7 @@ async function createReconciliationReport(recReportParams) {
   } = recReportParams;
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
-  const distributionBucketMap = await getJsonS3Object(
-    systemBucket, getDistributionBucketMapKey(stackName)
-  );
+  const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
 
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);
@@ -745,6 +744,6 @@ async function handler(event) {
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
 
-  return processRequest(event);
+  return await processRequest(event);
 }
 exports.handler = handler;

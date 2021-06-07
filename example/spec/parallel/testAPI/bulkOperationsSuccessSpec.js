@@ -140,8 +140,10 @@ describe('POST /granules/bulk', () => {
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
           { timestamp__from: ingestTime },
-          { timeout: 15 }
+          { timeout: 30 }
         );
+
+        console.log(`Ingest Execution ARN is : ${firstIngestGranuleExecutionArn}`);
 
         // Wait for the execution to be completed
         await getExecutionWithStatus({
@@ -183,7 +185,9 @@ describe('POST /granules/bulk', () => {
       // Must delete rules before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
 
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkOperationsBody.id });
+      if (postBulkOperationsBody.id) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkOperationsBody.id });
+      }
 
       await pAll(
         [
@@ -276,10 +280,19 @@ describe('POST /granules/bulk', () => {
         } catch (error) {
           throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
         }
+
+        await getGranuleWithStatus({
+          prefix,
+          granuleId: JSON.parse(getAsyncOperationBody.output)[0],
+          status: 'running',
+          timeout: 120,
+          updatedAt: ingestedGranule.updatedAt,
+        });
         expect(output).toEqual([granuleId]);
       }
     });
 
+    // xit comment: https://github.com/nasa/cumulus/pull/2146/files
     xit('starts a workflow with an execution message referencing the correct queue URL', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {

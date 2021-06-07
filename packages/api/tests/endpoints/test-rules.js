@@ -117,7 +117,7 @@ test.before(async (t) => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   const newRule = fakeRuleFactoryV2();
   delete newRule.collection;
   delete newRule.provider;

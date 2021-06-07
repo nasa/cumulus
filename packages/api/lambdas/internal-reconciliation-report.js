@@ -50,7 +50,7 @@ async function internalRecReportForCollections(recReportParams) {
 
   // get collections from database and sort them, since the scan result is not ordered
   const dbSearchParams = convertToDBCollectionSearchParams(recReportParams);
-  const dbCollectionsQueue = await (new Collection()).search(dbSearchParams);
+  const dbCollectionsQueue = (new Collection()).search(dbSearchParams);
   const dbCollectionsSearched = await dbCollectionsQueue.empty();
   const dbCollectionItems = sortBy(
     filterDBCollections(dbCollectionsSearched, recReportParams),

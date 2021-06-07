@@ -46,10 +46,10 @@ async function getConceptMetadata(
   headers: Headers
 ): Promise<unknown> {
   if (conceptLink.match(/search\/granules.json\?/)) {
-    return getGranuleConceptMetadata(conceptLink, headers, 'granuleSearch');
+    return await getGranuleConceptMetadata(conceptLink, headers, 'granuleSearch');
   }
   if (conceptLink.match(/\/search\/concepts\//)) {
-    return getGranuleConceptMetadata(conceptLink.replace(/(\.\w+)$/, '.json'), headers, 'granuleConceptSearch');
+    return await getGranuleConceptMetadata(conceptLink.replace(/(\.\w+)$/, '.json'), headers, 'granuleConceptSearch');
   }
   throw new Error(`Unhandled CMR conceptLink -- links must either search by granule/concept_id or granule concept: ${conceptLink}`);
 }

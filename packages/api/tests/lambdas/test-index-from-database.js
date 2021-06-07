@@ -213,7 +213,7 @@ test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) =
 test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase({
+  await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
     tables,
   }));

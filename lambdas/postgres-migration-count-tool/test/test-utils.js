@@ -62,12 +62,12 @@ test('buildCollectionMappings returns the expected mappings', async (t) => {
   ];
 
   const collectionModelMock = {
-    get: async (_knex, collection) => {
+    get: (_knex, collection) => {
       if (collection.name === 'BADCOLLECTION') {
-        throw new Error('Danger Will Robinson');
+        return Promise.reject(new Error('Danger Will Robinson'));
       }
       collectionIdIncrement += 1;
-      return { cumulus_id: collectionIdIncrement };
+      return Promise.resolve({ cumulus_id: collectionIdIncrement });
     },
   };
   const actual = await buildCollectionMappings(
@@ -179,7 +179,7 @@ test('generateCollectionReportObject does not return a report object if there ar
 });
 
 test('getDynamoTableEntries calls the correct model methods', async (t) => {
-  const getAllSpy = sinon.spy(async () => true);
+  const getAllSpy = sinon.spy(() => Promise.resolve(true));
   const modelStub = {
     getAllCollections: getAllSpy,
     getAllProviders: getAllSpy,

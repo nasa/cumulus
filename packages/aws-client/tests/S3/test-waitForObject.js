@@ -13,7 +13,7 @@ test('waitForObject() returns the requested object', async (t) => {
       t.is(params.Key, Key);
 
       return {
-        promise: async () => 'asdf',
+        promise: () => Promise.resolve('asdf'),
       };
     },
   };

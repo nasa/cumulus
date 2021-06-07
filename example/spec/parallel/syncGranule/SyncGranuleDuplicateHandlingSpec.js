@@ -376,7 +376,7 @@ describe('When the Sync Granule workflow is configured', () => {
         );
       });
 
-      it('completes execution with success status', async () => {
+      it('completes execution with success status', () => {
         expect(workflowExecution.status).toEqual('SUCCEEDED');
       });
     });

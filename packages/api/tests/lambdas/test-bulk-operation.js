@@ -21,7 +21,7 @@ const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
 class FakeSearch {
-  static async es() {
+  static es() {
     return new FakeEsClient();
   }
 }

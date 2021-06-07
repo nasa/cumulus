@@ -7,7 +7,7 @@ const { getESClientAndIndex } = require('./local-test-defaults');
 async function addCollections(collections) {
   const collectionModel = new models.Collection();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     collections.map((c) =>
       collectionModel
         .create(c)
@@ -19,7 +19,7 @@ async function addCollections(collections) {
 async function addGranules(granules) {
   const granuleModel = new models.Granule();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     granules.map((c) =>
       granuleModel
         .create(c)
@@ -30,7 +30,7 @@ async function addGranules(granules) {
 async function addProviders(providers) {
   const providerModel = new models.Provider();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     providers.map((p) =>
       providerModel
         .create(p)
@@ -41,7 +41,7 @@ async function addProviders(providers) {
 async function addRules(rules) {
   const ruleModel = new models.Rule();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     rules.map((r) =>
       ruleModel
         .create(r)
@@ -52,7 +52,7 @@ async function addRules(rules) {
 async function addExecutions(executions) {
   const executionModel = new models.Execution();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     executions.map((e) =>
       executionModel
         .create(e)
@@ -64,7 +64,7 @@ async function addExecutions(executions) {
 async function addPdrs(pdrs) {
   const pdrModel = new models.Pdr();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     pdrs.map((p) =>
       pdrModel.create(p).then((pdr) => indexer.indexPdr(es.client, pdr, es.index)))
   );
@@ -73,7 +73,7 @@ async function addPdrs(pdrs) {
 async function addReconciliationReports(reconciliationReports) {
   const reconciliationReportModel = new models.ReconciliationReport();
   const es = await getESClientAndIndex();
-  return Promise.all(
+  return await Promise.all(
     reconciliationReports.map((r) =>
       reconciliationReportModel
         .create(r)

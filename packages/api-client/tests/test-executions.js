@@ -3,7 +3,7 @@
 const test = require('ava');
 const executionsApi = require('../executions');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.arn = 'testArn';
   t.context.testExecutionReturn = { body: '{"some": "object"}' };
@@ -19,9 +19,9 @@ test('getExecution calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
-    return (t.context.testExecutionReturn);
+    return Promise.resolve(t.context.testExecutionReturn);
   };
 
   await t.notThrowsAsync(executionsApi.getExecution({
@@ -42,7 +42,7 @@ test('getExecutions calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -64,7 +64,7 @@ test('getExecutions calls the callback with the expected object with query param
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -85,7 +85,7 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 

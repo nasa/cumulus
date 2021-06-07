@@ -13,43 +13,99 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
     link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-
 - **CUMULUS-2488**
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
-  reporting is now handled through Cloud Metrics
+    reporting is now handled through Cloud Metrics
+- **CUMULUS-2472**
+  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
 
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
-  - Adds configuration options to allow `/s3credentials` endpoint to distribute same-region read-only tokens based on a user's CMR ACLs.
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute
+    same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+- **CUMULUS-2442**
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+- **CUMULUS-2471**
+  - Add `/s3credentialsREADME` endpoint to distribution API
+- **CUMULUS-2473**
+  - Updated `tf-modules/cumulus_distribution` module to take earthdata or cognito credentials
+  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
+- **CUMULUS-2477**
+  - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
+- **CUMULUS-2479**
+  - Adds /version endpoint to distribution API
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
 
 ### Changed
 
+- **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
+  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
+
+- **CUMULUS-2489**
+  - Updated docs for Terraform references in FAQs, glossary, and in Deployment sections
+
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
-    both HTTPS URLS and S3 URIsto  CMR metadata.
+    both HTTPS URLS and S3 URIs to CMR metadata.
   - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
-    URLs and S3 URIs to the OnlineAccessRLs  field of CMR metadata. The task
+    URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task
     configuration parameter `cmrGranuleUrlType` now has default value `both`.
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
     type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
-
-### Added
-
-- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
+- **CUMULUS-2472**
+  - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
+  - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
 
 ### Fixed
 
+- **CUMULUS-2519**
+  - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
 - **CUMULUS-2518**
   - Update sf-event-sqs-to-db-records to not throw if a collection is not
     defined on a payload that has no granules/an empty granule payload object
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
+
+### Fixed
+
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+
+### Removed
+
+- **CUMULUS-2502**
+  - Removed outdated documenation regarding Kibana index patterns for metrics.
 
 ## [v9.0.1] 2021-05-07
 
@@ -342,7 +398,8 @@ correct a failure in our build script and push out corrected release artifacts. 
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 - **CUMULUS-2469**
-  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton
+    distribution api
 
 ## [v8.0.0] 2021-04-08
 

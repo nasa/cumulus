@@ -63,6 +63,10 @@ module.exports = {
         {
           from: 'node_modules/xml-encryption/lib/templates',
           to: 'app/templates'
+        },
+        {
+          from: 'app/data/distribution/templates',
+          to: 'distribution/templates'
         }
       ]
     }),
@@ -79,7 +83,8 @@ module.exports = {
   externals: [
     'aws-sdk',
     'electron',
-    { formidable: 'url' }
+    { formidable: 'url' },
+    { fsevents: "require('fsevents')" }
   ],
   module: {
     rules: [
@@ -94,6 +99,10 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
       },
     ],
   },

@@ -3,7 +3,7 @@
 const test = require('ava');
 const providersApi = require('../providers');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testProviderId = 'testProviderId';
   t.context.testProvider = '{ some: "providerObject" }';
@@ -20,7 +20,7 @@ test('createProvider calls the callback with the expected object', async (t) => 
       body: JSON.stringify(t.context.testProvider),
     },
   };
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -40,7 +40,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
       path: `/providers/${t.context.testProviderId}`,
     },
   };
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -61,7 +61,7 @@ test('getProvider calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -82,7 +82,7 @@ test('getProviders calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.like(configObject, expected);
   };
 
