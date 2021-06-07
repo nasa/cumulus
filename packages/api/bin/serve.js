@@ -24,6 +24,8 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
@@ -249,7 +251,7 @@ async function createDBRecords(stackName, user, knexOverride) {
   // add fake granule records
   const granule = testUtils.fakeGranuleFactoryV2({
     granuleId: `${stackName}-granule`,
-    collectionId: `${collection.name}___${collection.version}`,
+    collectionId: constructCollectionId(collection.name, collection.version),
     execution: execution.name,
     published: false, // Important - we need to be able to delete these.
   });
@@ -402,7 +404,7 @@ async function erasePostgresTables(knex) {
 /**
  * erase all dynamoDB tables
  * @param {string} stackName - stack name (generally 'localrun')
- * @param {string} systemBucket - system bucket (generally 'localbucket'
+ * @param {string} systemBucket - system bucket (generally 'localbucket')
  */
 async function eraseDynamoTables(stackName, systemBucket) {
   setTableEnvVariables(stackName);

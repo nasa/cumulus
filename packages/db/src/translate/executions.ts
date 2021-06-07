@@ -8,6 +8,7 @@ import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
 const { removeNilProperties } = require('@cumulus/common/util');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 export const translatePostgresExecutionToApiExecution = async (
   executionRecord: PostgresExecutionRecord,
@@ -24,7 +25,7 @@ export const translatePostgresExecutionToApiExecution = async (
     const collection = await collectionPgModel.get(knex, {
       cumulus_id: executionRecord.collection_cumulus_id,
     });
-    collectionId = `${collection.name}___${collection.version}`;
+    collectionId = constructCollectionId(collection.name, collection.version);
   }
   if (executionRecord.async_operation_cumulus_id) {
     const asyncOperation = await asyncOperationPgModel.get(knex, {

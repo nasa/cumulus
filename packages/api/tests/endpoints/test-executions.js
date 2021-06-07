@@ -24,6 +24,7 @@ const {
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const models = require('../../models');
 const {
@@ -233,7 +234,10 @@ test('GET returns an existing execution', async (t) => {
 
   t.is(executionResult.arn, executionRecord.arn);
   t.is(executionResult.asyncOperationId, asyncRecord.id);
-  t.is(executionResult.collectionId, `${collectionRecord.name}___${collectionRecord.version}`);
+  t.is(executionResult.collectionId, constructCollectionId(
+    collectionRecord.name,
+    collectionRecord.version
+  ));
   t.is(executionResult.parentArn, parentExecutionRecord.arn);
   t.like(executionResult, expectedRecord);
 });
