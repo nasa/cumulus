@@ -15,7 +15,7 @@ const {
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const { updateGranulesCmrMetadataFileLinks } = require('..');
 

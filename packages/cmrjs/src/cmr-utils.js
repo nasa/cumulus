@@ -25,6 +25,7 @@ const log = require('@cumulus/common/log');
 const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
+const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
 const {
   xmlParseOptions,
@@ -362,13 +363,8 @@ function generateFileUrl({
   distributionBucketMap,
 }) {
   if (urlType === 'distribution') {
-    const bucketPath = distributionBucketMap[file.bucket];
-    if (!bucketPath) {
-      throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
-    }
-
-    const urlPath = urljoin(bucketPath, getS3KeyOfFile(file));
-    return urljoin(distEndpoint, urlPath);
+    const fileKey = getS3KeyOfFile(file);
+    return constructDistributionUrl(file.bucket, fileKey, distributionBucketMap, distEndpoint);
   }
 
   if (urlType === 's3') {
