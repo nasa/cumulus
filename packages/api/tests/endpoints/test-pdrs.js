@@ -4,7 +4,11 @@ const test = require('ava');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
 const awsServices = require('@cumulus/aws-client/services');
-const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const {
+  recursivelyDeleteS3Bucket,
+  deleteS3Object,
+  s3ObjectExists,
+} = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
@@ -364,7 +368,7 @@ test.serial('DELETE removes a PDR from DynamoDB only if no RDS record exists', a
   t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: pdrName }));
 });
 
-test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL/Elasticsearch/S3 if removing from Dynamo fails', async (t) => {
   const {
     originalDynamoPdr,
   } = await createPdrTestRecords(
@@ -384,6 +388,7 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing fro
       type: 'pdr',
       index: t.context.esIndex,
     });
+    await deleteS3Object(process.env.system_bucket, pdrS3Key(originalDynamoPdr.pdrName));
   });
 
   const fakePdrsModel = {
@@ -427,9 +432,15 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing fro
       originalDynamoPdr.pdrName
     )
   );
+  t.true(
+    await s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: pdrS3Key(originalDynamoPdr.pdrName),
+    })
+  );
 });
 
-test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+test.serial('del() does not remove from Dynamo/Elasticsearch/S3 if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoPdr,
   } = await createPdrTestRecords(
@@ -449,6 +460,7 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
       type: 'pdr',
       index: t.context.esIndex,
     });
+    await deleteS3Object(process.env.system_bucket, pdrS3Key(originalDynamoPdr.pdrName));
   });
 
   const fakePdrPgModel = {
@@ -490,9 +502,15 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
       originalDynamoPdr.pdrName
     )
   );
+  t.true(
+    await s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: pdrS3Key(originalDynamoPdr.pdrName),
+    })
+  );
 });
 
-test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from Dynamo/PostgreSQL/S3 if removing from Elasticsearch fails', async (t) => {
   const {
     originalDynamoPdr,
   } = await createPdrTestRecords(
@@ -512,6 +530,7 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
       type: 'pdr',
       index: t.context.esIndex,
     });
+    await deleteS3Object(process.env.system_bucket, pdrS3Key(originalDynamoPdr.pdrName));
   });
 
   const fakeEsClient = {
@@ -552,5 +571,81 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
     await t.context.esPdrsClient.exists(
       originalDynamoPdr.pdrName
     )
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: pdrS3Key(originalDynamoPdr.pdrName),
+    })
+  );
+});
+
+test.serial('del() does not remove from Dynamo/PostgreSQL/Elasticsearch if removing from S3 fails', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(
+    t.context
+  );
+
+  t.teardown(async () => {
+    await t.context.pdrModel.delete({
+      pdrName: originalDynamoPdr.pdrName,
+    });
+    await t.context.pdrPgModel.delete(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    });
+    await indexer.deleteRecord({
+      esClient: t.context.esClient,
+      id: originalDynamoPdr.pdrName,
+      type: 'pdr',
+      index: t.context.esIndex,
+    });
+    await deleteS3Object(process.env.system_bucket, pdrS3Key(originalDynamoPdr.pdrName));
+  });
+
+  const fakeS3Utils = {
+    deleteS3Object: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      pdrName: originalDynamoPdr.pdrName,
+    },
+    testContext: {
+      knex: t.context.knex,
+      s3Utils: fakeS3Utils,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.pdrModel.get({
+      pdrName: originalDynamoPdr.pdrName,
+    }),
+    originalDynamoPdr
+  );
+  t.true(
+    await t.context.pdrPgModel.exists(t.context.knex, {
+      name: originalDynamoPdr.pdrName,
+    })
+  );
+  t.true(
+    await t.context.esPdrsClient.exists(
+      originalDynamoPdr.pdrName
+    )
+  );
+  t.true(
+    await s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: pdrS3Key(originalDynamoPdr.pdrName),
+    })
   );
 });

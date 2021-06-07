@@ -5,9 +5,9 @@ const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
 
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
-const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
@@ -499,6 +499,13 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
     ...pdrParams,
     collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
     provider: testPgProvider.name,
+  });
+
+  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: pdrS3Key,
+    Body: randomString(),
   });
 
   const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);

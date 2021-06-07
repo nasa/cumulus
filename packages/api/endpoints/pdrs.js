@@ -1,15 +1,15 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const {
-  deleteS3Object,
-} = require('@cumulus/aws-client/S3');
+const S3UtilsLib = require('@cumulus/aws-client/S3');
 const {
   getKnexClient,
   PdrPgModel,
 } = require('@cumulus/db');
+const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { indexPdr } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const models = require('../models');
 
@@ -68,6 +68,7 @@ async function del(req, res) {
     pdrPgModel = new PdrPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    s3Utils = S3UtilsLib,
   } = req.testContext || {};
 
   const pdrName = req.params.pdrName;
@@ -83,24 +84,39 @@ async function del(req, res) {
     }
   }
 
+  const esPdrClient = new Search(
+    {},
+    'pdr',
+    process.env.ES_INDEX
+  );
+  const esPdrRecord = await esPdrClient.get(pdrName).catch(log.info);
+
   try {
+    let dynamoPdrDeleted = false;
+    let esPdrDeleted = false;
     try {
       await knex.transaction(async (trx) => {
         await pdrPgModel.delete(trx, { name: pdrName });
-        await deleteS3Object(process.env.system_bucket, pdrS3Key);
         await pdrModel.delete({ pdrName });
+        dynamoPdrDeleted = true;
         await esClient.delete({
           id: pdrName,
           index: process.env.ES_INDEX,
           type: 'pdr',
           refresh: inTestMode(),
         }, { ignore: [404] });
+        esPdrDeleted = true;
+        await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
       });
     } catch (innerError) {
       // Delete is idempotent, so there may not be a DynamoDB
       // record to recreate
-      if (existingPdr) {
+      if (dynamoPdrDeleted && existingPdr) {
         await pdrModel.create(existingPdr);
+      }
+      if (esPdrDeleted && esPdrRecord) {
+        delete esPdrRecord._id;
+        await indexPdr(esClient, esPdrRecord, process.env.ES_INDEX);
       }
       throw innerError;
     }
