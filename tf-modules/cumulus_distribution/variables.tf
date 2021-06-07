@@ -53,9 +53,28 @@ variable "bucket_map_file" {
   description = "path and file of bucketmap file's location in the config_bucket"
 }
 
+variable "cmr_acl_based_credentials" {
+  type = bool
+  default = false
+  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+}
+
+variable "cmr_environment" {
+  description = "The CMR environment to access"
+  type        = string
+  default     = null
+}
+
+variable "cmr_provider" {
+  description = "The provider used to search CMR ACLs"
+  type        = string
+  default     = null
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
+  description = "VPC subnets used by Lambda functions"
 }
 
 variable "oauth_provider" {
@@ -68,6 +87,18 @@ variable "permissions_boundary_arn" {
   type        = string
   default     = null
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
+}
+
+variable "sts_credentials_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
+}
+
+variable "sts_policy_helper_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "protected_buckets" {

@@ -31,9 +31,14 @@ module "cumulus_distribution" {
   oauth_client_password    = var.csdap_client_password
   oauth_host_url           = var.csdap_host_url
   oauth_provider           = "cognito"
+  cmr_acl_based_credentials = true
+  cmr_environment           = var.cmr_environment
+  cmr_provider              = var.cmr_provider
   permissions_boundary_arn = var.permissions_boundary_arn
   protected_buckets        = local.protected_bucket_names
   public_buckets           = local.public_bucket_names
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
   tags                     = local.tags
   vpc_id                   = var.vpc_id
 }
