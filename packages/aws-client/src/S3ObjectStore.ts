@@ -44,7 +44,7 @@ class S3ObjectStore {
     if (!isEmpty(params)) {
       Object.entries(params).map(([key, value]) => parsedSignedUrl.searchParams.set(key, value));
     }
-    return signedUrl;
+    return parsedSignedUrl.toString();
   }
 }
 
