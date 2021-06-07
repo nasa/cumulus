@@ -186,6 +186,7 @@ async function initializeLocalElasticsearch(stackName) {
  * Fill dynamo, postgres and elastic with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {string} user - username
+ * @param {Object} knexOverride - Used to override knex object for testing
  */
 async function createDBRecords(stackName, user, knexOverride) {
   let knex = knexOverride;
@@ -230,8 +231,8 @@ async function createDBRecords(stackName, user, knexOverride) {
       version: collection.version,
     },
     rule: {
-      type: 'onetime',
-      arn: 'someArn',
+      type: 'kinesis',
+      arn: '164ab703-ffaa-413b-ab6a-7f813a9483b7',
     },
   });
   await serveUtils.addRules([rule]);
