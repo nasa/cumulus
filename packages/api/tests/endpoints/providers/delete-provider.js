@@ -286,7 +286,7 @@ test('Attempting to delete a provider with an associated rule does not delete th
   t.true(await providerModel.exists(testProvider.id));
 });
 
-test.only('Attempting to delete a provider with an associated granule does not delete the provider', async (t) => {
+test('Attempting to delete a provider with an associated granule does not delete the provider', async (t) => {
   const {
     collectionPgModel,
     granulePgModel,
