@@ -296,7 +296,6 @@ test('Attempting to delete a provider with an associated granule does not delete
   } = t.context;
 
   const granuleId = randomString();
-
   const dynamoGranule = fakeGranuleFactoryV2(
     {
       granuleId: granuleId,
