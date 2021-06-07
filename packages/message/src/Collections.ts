@@ -17,7 +17,7 @@ type CollectionInfo = {
   version: string
 };
 
-const getCollectionIdSeparator = () => '___';
+const collectionIdSeparator = '___';
 
 /**
  * Returns the collection ID.
@@ -29,7 +29,7 @@ const getCollectionIdSeparator = () => '___';
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}${getCollectionIdSeparator()}${version}`;
+  `${name}${collectionIdSeparator}${version}`;
 
 /**
  * Returns the name and version of a collection based on
@@ -39,7 +39,7 @@ export const constructCollectionId = (name: string, version: string) =>
  * @returns {Object} name and version as object
  */
 export const deconstructCollectionId = (collectionId: string) => {
-  const [name, version] = collectionId.split(getCollectionIdSeparator());
+  const [name, version] = collectionId.split(collectionIdSeparator);
   return {
     name,
     version,
