@@ -14,13 +14,13 @@ const {
   translateApiRuleToPostgresRule,
   translateApiPdrToPostgresPdr,
 } = require('@cumulus/db');
+const { indexCollection, indexProvider, indexRule, indexPdr } = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
-const { indexCollection, indexProvider, indexRule, indexPdr } = require('../es/indexer');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
