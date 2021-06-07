@@ -142,7 +142,6 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         'QueuePdrs'
       );
       executionArn = queuePdrsOutput.payload.running[0];
-
     } catch (error) {
       beforeAllFailed = true;
       throw error;
