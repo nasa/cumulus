@@ -266,7 +266,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     });
 
     afterAll(async () => {
-      await Promise.allSettled([
+      await Promise.all([
         deleteExecution({ prefix: config.stackName, executionArn: executionArn }),
         deleteExecution({ prefix: config.stackName, executionArn: executionArn2 }),
       ]);

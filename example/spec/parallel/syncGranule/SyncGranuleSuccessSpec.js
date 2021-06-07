@@ -163,7 +163,7 @@ describe('The Sync Granules workflow', () => {
       pdr: inputPayload.pdr.name,
     });
 
-    await Promise.allSettled([
+    await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
       deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
       deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),

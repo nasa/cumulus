@@ -218,7 +218,7 @@ describe('The Kinesis Replay API', () => {
         await Promise.all(tooNewToExpectWorkflows);
 
         console.log('Cleaning up executions...');
-        await Promise.allSettled([
+        await Promise.all([
           deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[0].executionArn }),
           deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[1].executionArn }),
         ]);
