@@ -24,13 +24,13 @@ test('translateApiPdrToPostgresPdr converts API rule to Postgres', async (t) => 
 
   const fakeKnex = {};
   const fakeCollectionPgModel = {
-    getRecordCumulusId: async () => 1,
+    getRecordCumulusId: () => Promise.resolve(1),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: async () => 2,
+    getRecordCumulusId: () => Promise.resolve(2),
   };
   const fakeProviderPgModel = {
-    getRecordCumulusId: async () => 3,
+    getRecordCumulusId: () => Promise.resolve(3),
   };
 
   const expectedPostgresRule = {
@@ -74,13 +74,13 @@ test('translateApiPdrToPostgresPdr handles optional fields', async (t) => {
 
   const fakeKnex = {};
   const fakeCollectionPgModel = {
-    getRecordCumulusId: async () => 1,
+    getRecordCumulusId: () => Promise.resolve(1),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: async () => 2,
+    getRecordCumulusId: () => Promise.resolve(2),
   };
   const fakeProviderPgModel = {
-    getRecordCumulusId: async () => 3,
+    getRecordCumulusId: () => Promise.resolve(3),
   };
 
   const expectedPostgresRule = {

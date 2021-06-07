@@ -352,7 +352,7 @@ test('post() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fai
     create: () => {
       throw new Error('something bad');
     },
-    delete: async () => true,
+    delete: () => Promise.resolve(true),
   };
 
   const expressRequest = {
