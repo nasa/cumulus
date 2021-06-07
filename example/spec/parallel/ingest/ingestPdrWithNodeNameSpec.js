@@ -112,7 +112,7 @@ describe('Ingesting from PDR', () => {
       nodeName = config.pdrNodeNameProviderBucket;
       await deleteProvidersByHost(config.stackName, nodeName);
 
-      nodeNameProviderId = `provider-${randomString(4)}`;
+      nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
 
       const createProviderResponse = await providersApi.createProvider({
         prefix: config.stackName,
@@ -122,6 +122,7 @@ describe('Ingesting from PDR', () => {
           host: nodeName,
         },
       });
+      console.log(createProviderResponse);
 
       const createProviderResponseBody = JSON.parse(
         createProviderResponse.body
