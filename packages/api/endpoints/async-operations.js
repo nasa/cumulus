@@ -64,7 +64,11 @@ async function deleteAsyncOperation(req, res) {
     knex = await getKnexClient(),
   } = req.testContext || {};
 
-  const { id } = req.params;
+  const { id } = req.params || {};
+
+  if (!id) {
+    return res.boom.badRequest('id parameter is missing');
+  }
 
   await knex.transaction(async (trx) => {
     await asyncOperationPgModel.delete(trx, { id });
@@ -77,4 +81,7 @@ router.get('/', list);
 router.get('/:id', getAsyncOperation);
 router.delete('/:id', deleteAsyncOperation);
 
-module.exports = router;
+module.exports = {
+  router,
+  deleteAsyncOperation,
+};
