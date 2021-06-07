@@ -15,6 +15,10 @@ const { pipeline } = require('stream');
 const { promisify } = require('util');
 const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
+// const {
+//   indexAsyncOperation,
+// } = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
@@ -185,6 +189,31 @@ const writeAsyncOperationToDynamoDb = async (params) => {
   }).promise();
 };
 
+const writeAsyncOperationToEs = async (params) => {
+  const {
+    env,
+    status,
+    dbOutput,
+    updatedTime,
+    esClient = await Search.es(),
+  } = params;
+
+  await esClient.update({
+    index: process.env.ES_INDEX,
+    type: 'asyncOperation',
+    id: env.asyncOperationId,
+    body: {
+      doc: {
+        status,
+        output: dbOutput,
+        updatedAt: Number(updatedTime),
+      },
+    },
+    // TODO: make this conditional
+    refresh: true,
+  });
+};
+
 /**
  * Update an AsyncOperation item in DynamoDB
  *
@@ -198,10 +227,12 @@ const writeAsyncOperationToDynamoDb = async (params) => {
  */
 const updateAsyncOperation = async (status, output, envOverride = {}) => {
   logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
+
   const knex = await getKnexClient({ env });
   return knex.transaction(async (trx) => {
     await writeAsyncOperationToPostgres({
@@ -211,7 +242,9 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
       trx,
       updatedTime,
     });
-    return writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
+    const result = await writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
+    await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime });
+    return result;
   });
 };
 

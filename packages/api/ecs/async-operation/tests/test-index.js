@@ -12,6 +12,14 @@ const {
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
+const {
+  indexAsyncOperation,
+} = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 // eslint-disable-next-line unicorn/import-index
 const { updateAsyncOperation } = require('../index');
 
@@ -48,6 +56,15 @@ test.before(async (t) => {
 
   const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
   t.context.dynamodbDocClient = dynamodbDocClient;
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    t.context.esIndex
+  );
 });
 
 test.beforeEach(async (t) => {
@@ -68,6 +85,11 @@ test.beforeEach(async (t) => {
     TableName: t.context.dynamoTableName,
     Item: t.context.testAsyncOperation,
   }).promise();
+  await indexAsyncOperation(
+    t.context.esClient,
+    t.context.testAsyncOperation,
+    t.context.esIndex
+  );
   await t.context.asyncOperationPgModel.create(
     t.context.testKnex,
     t.context.testAsyncOperationPgRecord
@@ -83,6 +105,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test('updateAsyncOperation updates databases as expected', async (t) => {
@@ -125,6 +148,18 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   });
   t.deepEqual(dynamoResponse, {
     ...t.context.testAsyncOperation,
+    status,
+    output: JSON.stringify(output),
+    updatedAt: Number(updateTime),
+  });
+
+  const asyncOpEsRecord = await t.context.esAsyncOperationsClient.get(
+    t.context.testAsyncOperation.id
+  );
+  t.deepEqual(asyncOpEsRecord, {
+    ...t.context.testAsyncOperation,
+    _id: asyncOpEsRecord._id,
+    timestamp: asyncOpEsRecord.timestamp,
     status,
     output: JSON.stringify(output),
     updatedAt: Number(updateTime),
