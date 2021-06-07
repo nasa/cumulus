@@ -4,6 +4,9 @@ locals {
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
       AccessTokensTable     = aws_dynamodb_table.access_tokens.id
+      BUCKETNAME_PREFIX     = var.bucketname_prefix
+      BUCKET_MAP_FILE       = var.bucket_map_file
+      CONFIG_BUCKET         = var.config_bucket
       DISTRIBUTION_ENDPOINT = local.api_uri
       DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
       OAUTH_CLIENT_ID       = var.oauth_client_id

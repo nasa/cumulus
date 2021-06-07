@@ -77,6 +77,7 @@
     "commander": "^2.15.0",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.5",
+    "deepdash": "^5.3.9",
     "dynamodb-data-types": "^3.0.0",
     "express": "^4.16.4",
     "express-boom": "^3.0.0",

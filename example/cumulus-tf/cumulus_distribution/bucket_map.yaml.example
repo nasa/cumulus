@@ -2,7 +2,7 @@ MAP:
   path1:
     bucket: bucket-path-1
     headers:
-        Content-Type: "text/plain"bucket-path-1
+        Content-Type: "text/plain"
   
   path2:
     path2a: bucket-path-2a
