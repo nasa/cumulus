@@ -62,8 +62,8 @@ const deleteGranuleAndFiles = async ({
   granulePgModel: GranulePgModel,
   granuleModelClient: typeof Granule
 }) => {
-  logger.info(`Deleting PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
   if (pgGranule === undefined) {
+    logger.info(`PG Granule is undefined, only deleting DynamoDB granule ${dynamoGranule}`);
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
@@ -71,6 +71,7 @@ const deleteGranuleAndFiles = async ({
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+    logger.info(`Deleting PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
     const files = await filePgModel.search(
       knex,
       { granule_cumulus_id: pgGranule.cumulus_id }
@@ -85,7 +86,7 @@ const deleteGranuleAndFiles = async ({
       });
       await _deleteS3Files(files);
     } catch (error) {
-      logger.error(`Error deleting granule with ID ${pgGranule.granule_id}: ${JSON.stringify(error)}`);
+      logger.error(`Error deleting granule with ID ${pgGranule.granule_id} with files ${dynamoGranule.files}: ${JSON.stringify(error)}`);
       throw error;
     }
   }

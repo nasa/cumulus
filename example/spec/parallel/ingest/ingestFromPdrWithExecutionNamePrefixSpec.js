@@ -141,6 +141,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         workflowExecution.executionArn,
         'QueuePdrs'
       );
+      executionArn = queuePdrsOutput.payload.running[0];
+
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -176,8 +178,6 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('properly sets the name of the queued execution', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      executionArn = queuePdrsOutput.payload.running[0];
-
       const executionName = executionArn.split(':').reverse()[0];
 
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
@@ -187,7 +187,6 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('results in an IngestGranule workflow execution', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      executionArn = queuePdrsOutput.payload.running[0];
       await expectAsync(waitForStartedExecution(executionArn)).toBeResolved();
     }
   });
