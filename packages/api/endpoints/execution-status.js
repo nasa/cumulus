@@ -92,7 +92,7 @@ async function get(req, res) {
     response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('Execution not found in API or database');
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
     }
   }
 
