@@ -90,17 +90,16 @@ async function cleanUp() {
     pdr: pdrFilename,
   });
 
+  // TODO there may be another execution to delete here
   await deleteExecution({ prefix: config.stackName, executionArn });
 
-  const x = await Promise.all([
+  await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
   ]);
-
-  console.log('sqsRuleSpec afterAll:::', x);
 }
 
 async function sendIngestGranuleMessage(queueUrl) {
