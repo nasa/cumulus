@@ -2,5 +2,5 @@
     "high": true,
     "pass-enoaudit": true,
     "retry-count": 20,
-    "whitelist": ["underscore"]
+    "whitelist": ["underscore", "trim-newlines"]
 }
