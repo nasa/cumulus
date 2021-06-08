@@ -1167,7 +1167,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('can delete the ingested granule from the API', async () => {
-        if (beforeAllError || subTestSetupError || moveGranuleSetupError) throw SetupError;
+        if (beforeAllError || subTestSetupError) throw SetupError;
         // pre-delete: Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
