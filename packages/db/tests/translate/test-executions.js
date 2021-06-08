@@ -7,7 +7,7 @@ const {
   translatePostgresExecutionToApiExecution,
 } = require('../../dist/translate/executions');
 
-test.only('translatePostgresExecutionToApiExecution translates a Postgres execution to an API record', async (t) => {
+test('translatePostgresExecutionToApiExecution translates a Postgres execution to an API record', async (t) => {
   const collectionId = 'name___version';
 
   const fakeCollectionPgModel = {

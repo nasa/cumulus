@@ -40,13 +40,13 @@ export const translatePostgresExecutionToApiExecution = async (
     parentArn = parentExecution.arn;
   }
 
-  const name = executionRecord.arn.split(':').pop();
-  if (!name) {
-    throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannont generate the required 'name' field`);
+  const postfix = executionRecord.arn.split(':').pop();
+  if (!postfix) {
+    throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
   }
 
   const translatedRecord: ExecutionRecord = {
-    name,
+    name: postfix,
     status: executionRecord.status,
     arn: executionRecord.arn,
     duration: executionRecord.duration,
