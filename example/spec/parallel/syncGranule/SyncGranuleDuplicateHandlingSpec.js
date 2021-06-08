@@ -133,7 +133,7 @@ describe('When the Sync Granule workflow is configured', () => {
     await granulesApiTestUtils.deleteGranule({
       prefix: config.stackName,
       granuleId: newGranuleId,
-    })
+    });
     await granulesApiTestUtils.deleteGranule({
       prefix: config.stackName,
       granuleId: testGranuleId,
