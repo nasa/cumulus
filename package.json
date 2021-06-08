@@ -56,7 +56,7 @@
     "node": ">=12.18.0"
   },
   "bin": {
-    "build-tasks-doc": "./bin/build-tasks-doc.js"
+    "build-tasks-doc": "bin/build-tasks-doc.js"
   },
   "keywords": [
     "GIBS",
@@ -86,7 +86,7 @@
     "@types/xml2js": "^0.4.5",
     "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
-    "audit-ci": "^2.4.2",
+    "audit-ci": "3.2.0",
     "ava": "^3.12.1",
     "aws-sdk": "^2.585.0",
     "babel-eslint": "^10.0.3",
@@ -122,7 +122,7 @@
     "jsdoc-to-markdown": "^5.0.3",
     "knex": "0.21.13",
     "latest-version": "^4.0.0",
-    "lerna": "3.20.2",
+    "lerna": "4.0.0",
     "lodash": "^4.17.20",
     "markdownlint-cli": "^0.19.0",
     "md5": "^2.2.1",
@@ -157,5 +157,6 @@
     "webpack-cli": "^3.3.5",
     "xml2js": "^0.4.19"
   },
-  "private": true
+  "private": true,
+  "_id": "@cumulus/core@1.0.0"
 }
