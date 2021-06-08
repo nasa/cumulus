@@ -86,7 +86,7 @@ const deleteGranuleAndFiles = async ({
       });
       await _deleteS3Files(files);
     } catch (error) {
-      logger.error(`Error deleting granule with ID ${pgGranule.granule_id} with files ${dynamoGranule.files}: ${JSON.stringify(error)}`);
+      logger.error(`Error deleting granule with ID ${pgGranule.granule_id} with files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
       throw error;
     }
   }
