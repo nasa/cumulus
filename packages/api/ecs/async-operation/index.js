@@ -15,9 +15,7 @@ const { pipeline } = require('stream');
 const { promisify } = require('util');
 const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
-// const {
-//   indexAsyncOperation,
-// } = require('@cumulus/es-client/indexer');
+const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
@@ -198,20 +196,16 @@ const writeAsyncOperationToEs = async (params) => {
     esClient = await Search.es(),
   } = params;
 
-  await esClient.update({
-    index: process.env.ES_INDEX,
-    type: 'asyncOperation',
-    id: env.asyncOperationId,
-    body: {
-      doc: {
-        status,
-        output: dbOutput,
-        updatedAt: Number(updatedTime),
-      },
+  await indexer.updateAsyncOperation(
+    esClient,
+    env.asyncOperationId,
+    {
+      status,
+      output: dbOutput,
+      updatedAt: Number(updatedTime),
     },
-    // TODO: make this conditional
-    refresh: true,
-  });
+    process.env.ES_INDEX
+  );
 };
 
 /**
