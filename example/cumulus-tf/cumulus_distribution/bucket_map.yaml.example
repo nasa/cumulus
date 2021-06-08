@@ -18,7 +18,6 @@ PUBLIC_BUCKETS:
   data-bucket/browse: "Browse image"
 
 PRIVATE_BUCKETS:
-  path1: 'private bucket'
   data-bucket/pre-commission-data:
     - internal_users
     - external_team
