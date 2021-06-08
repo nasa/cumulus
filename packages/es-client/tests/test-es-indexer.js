@@ -393,6 +393,41 @@ test.serial('indexing a PDR record', async (t) => {
   t.falsy(record._source.error);
 });
 
+test.serial('updateAsyncOperation updates an async operation record', async (t) => {
+  const { esAlias } = t.context;
+
+  const id = randomString();
+  const asyncOperation = {
+    id,
+    status: 'RUNNING',
+  };
+
+  await indexer.indexAsyncOperation(esClient, asyncOperation, esAlias);
+
+  const record = await esClient.get({
+    index: esAlias,
+    type: 'asyncOperation',
+    id,
+  }).then((response) => response.body);
+  t.is(record._source.status, 'RUNNING');
+
+  await indexer.updateAsyncOperation(
+    esClient,
+    id,
+    {
+      status: 'SUCCEEDED',
+    },
+    esAlias
+  );
+
+  const updatedRecord = await esClient.get({
+    index: esAlias,
+    type: 'asyncOperation',
+    id,
+  }).then((response) => response.body);
+  t.is(updatedRecord._source.status, 'SUCCEEDED');
+});
+
 test.serial('Create new index', async (t) => {
   const newIndex = randomId('esindex');
 
