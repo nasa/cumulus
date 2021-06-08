@@ -1,6 +1,5 @@
 'use strict';
 
-const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { Execution } = require('@cumulus/api/models');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -115,7 +114,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -164,7 +163,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -207,7 +206,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutputWithNoFilesConfig.payload.granules.map(
-        (granule) => deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -262,7 +261,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutputWithFilesConfig.payload.granules.map(
-        (granule) => deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -320,7 +319,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })

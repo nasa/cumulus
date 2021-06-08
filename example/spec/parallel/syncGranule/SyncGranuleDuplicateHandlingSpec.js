@@ -48,17 +48,18 @@ const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
 describe('When the Sync Granule workflow is configured', () => {
-  let config;
-  let lambdaStep;
-  let workflowExecution;
   let collection;
-  let provider;
-  let inputPayload;
-  let granuleModel;
+  let config;
   let expectedPayload;
+  let granuleModel;
+  let inputPayload;
+  let lambdaStep;
+  let newGranuleId;
   let pdrModel;
-  let testSuffix;
+  let provider;
   let testDataFolder;
+  let testSuffix;
+  let workflowExecution;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -89,7 +90,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    const newGranuleId = inputPayload.granules[0].granuleId;
+    newGranuleId = inputPayload.granules[0].granuleId;
 
     const templatedOutputPayloadFilename = templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
@@ -129,6 +130,10 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: newGranuleId,
+    })
     await granulesApiTestUtils.deleteGranule({
       prefix: config.stackName,
       granuleId: testGranuleId,
