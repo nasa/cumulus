@@ -14,7 +14,7 @@ const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
 const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
-const { dynamodb } = require('@cumulus/aws-client/services');
+const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
@@ -153,9 +153,15 @@ function buildErrorOutput(error) {
 }
 
 const writeAsyncOperationToPostgres = async (params) => {
-  const { trx, env, dbOutput, status, updatedTime } = params;
+  const {
+    trx,
+    env,
+    dbOutput,
+    status,
+    updatedTime,
+    asyncOperationPgModel,
+  } = params;
   const id = env.asyncOperationId;
-  const asyncOperationPgModel = new AsyncOperationPgModel();
   return await asyncOperationPgModel
     .update(
       trx,
@@ -169,8 +175,14 @@ const writeAsyncOperationToPostgres = async (params) => {
 };
 
 const writeAsyncOperationToDynamoDb = async (params) => {
-  const { env, status, dbOutput, updatedTime } = params;
-  return await dynamodb().updateItem({
+  const {
+    env,
+    status,
+    dbOutput,
+    updatedTime,
+    dynamoDbClient,
+  } = params;
+  return await dynamoDbClient.updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
     ExpressionAttributeNames: {
@@ -187,13 +199,34 @@ const writeAsyncOperationToDynamoDb = async (params) => {
   }).promise();
 };
 
+const revertAsyncOperationWriteToDynamoDb = async (params) => {
+  const { env, status } = params;
+  return await dynamodbDocClient().update({
+    TableName: env.asyncOperationsTable,
+    Key: { id: env.asyncOperationId },
+    AttributeUpdates: {
+      status: {
+        Action: 'PUT',
+        Value: status,
+      },
+      output: {
+        Action: 'DELETE',
+      },
+      updatedAt: {
+        Action: 'DELETE',
+      },
+    },
+    ReturnValues: 'ALL_NEW',
+  }).promise();
+};
+
 const writeAsyncOperationToEs = async (params) => {
   const {
     env,
     status,
     dbOutput,
     updatedTime,
-    esClient = await Search.es(),
+    esClient,
   } = params;
 
   await indexer.updateAsyncOperation(
@@ -214,12 +247,22 @@ const writeAsyncOperationToEs = async (params) => {
  * For help with parameters, see:
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
  *
- * @param {string} status - the new AsyncOperation status
- * @param {Object} output - the new output to store.  Must be parsable JSON
- * @param {Object} envOverride - Object to override/extend environment variables
+ * @param {Object} params
+ * @param {string} params.status - the new AsyncOperation status
+ * @param {Object} params.output - the new output to store.  Must be parsable JSON
+ * @param {Object} params.envOverride - Object to override/extend environment variables
  * @returns {Promise} resolves when the item has been updated
  */
-const updateAsyncOperation = async (status, output, envOverride = {}) => {
+const updateAsyncOperation = async (params) => {
+  const {
+    status,
+    output,
+    envOverride = {},
+    esClient = await Search.es(),
+    dynamoDbClient = dynamodb(),
+    asyncOperationPgModel = new AsyncOperationPgModel(),
+  } = params;
+
   logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
 
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
@@ -228,18 +271,36 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const env = { ...process.env, ...envOverride };
 
   const knex = await getKnexClient({ env });
-  return knex.transaction(async (trx) => {
-    await writeAsyncOperationToPostgres({
-      dbOutput,
-      env,
-      status,
-      trx,
-      updatedTime,
+
+  try {
+    return await knex.transaction(async (trx) => {
+      await writeAsyncOperationToPostgres({
+        dbOutput,
+        env,
+        status,
+        trx,
+        updatedTime,
+        asyncOperationPgModel,
+      });
+      const result = await writeAsyncOperationToDynamoDb({
+        env,
+        status,
+        dbOutput,
+        updatedTime,
+        dynamoDbClient,
+      });
+      await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
+      return result;
     });
-    const result = await writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
-    await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime });
-    return result;
-  });
+  } catch (error) {
+    await revertAsyncOperationWriteToDynamoDb({
+      env,
+      // Can we get away with hardcoding here instead of looking up
+      // the existing record?
+      status: 'RUNNING',
+    });
+    throw error;
+  }
 };
 
 /**
@@ -260,7 +321,10 @@ async function runTask() {
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   } catch (error) {
     logger.error('Failed to fetch lambda function:', error);
-    await updateAsyncOperation('RUNNER_FAILED', error);
+    await updateAsyncOperation({
+      status: 'RUNNER_FAILED',
+      output: error,
+    });
     return;
   }
 
@@ -270,9 +334,15 @@ async function runTask() {
   } catch (error) {
     logger.error('Failed to fetch payload:', error);
     if (error.name === 'JSONParsingError') {
-      await updateAsyncOperation('TASK_FAILED', error);
+      await updateAsyncOperation({
+        status: 'TASK_FAILED',
+        output: error,
+      });
     } else {
-      await updateAsyncOperation('RUNNER_FAILED', error);
+      await updateAsyncOperation({
+        status: 'RUNNER_FAILED',
+        output: error,
+      });
     }
 
     return;
@@ -287,13 +357,19 @@ async function runTask() {
     result = await task[lambdaInfo.moduleFunctionName](payload);
   } catch (error) {
     logger.error('Failed to execute the lambda function:', error);
-    await updateAsyncOperation('TASK_FAILED', error);
+    await updateAsyncOperation({
+      status: 'TASK_FAILED',
+      output: error,
+    });
     return;
   }
 
   // Write the result out to databases
   try {
-    await updateAsyncOperation('SUCCEEDED', result);
+    await updateAsyncOperation({
+      status: 'SUCCEEDED',
+      output: result,
+    });
   } catch (error) {
     logger.error('Failed to update record', error);
     throw error;
