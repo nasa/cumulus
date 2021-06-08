@@ -1095,7 +1095,7 @@ describe('The S3 Ingest Granules workflow', () => {
         let file;
         let destinationKey;
         let destinations;
-        let subTestSetupError;
+        let moveGranuleSetupError;
 
         beforeAll(() => {
           try {
@@ -1120,10 +1120,11 @@ describe('The S3 Ingest Granules workflow', () => {
         beforeEach(() => {
           if (beforeAllError) fail(beforeAllError);
           if (subTestSetupError) fail(subTestSetupError);
+          if (moveGranuleSetupError) fail(moveGranuleSetupError);
         });
 
         it('rejects moving a granule to a location that already exists', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
+          if (beforeAllError || subTestSetupError || moveGranuleSetupError) throw SetupError;
           await s3CopyObject({
             Bucket: config.bucket,
             CopySource: `${file.bucket}/${file.key}`,
@@ -1145,7 +1146,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         it('when the file is deleted and the move retried, the move completes successfully', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
+          if (beforeAllError || subTestSetupError || moveGranuleSetupError) throw SetupError;
           await deleteS3Object(config.bucket, destinationKey);
 
           // Sanity check
@@ -1166,6 +1167,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('can delete the ingested granule from the API', async () => {
+        if (beforeAllError || subTestSetupError || moveGranuleSetupError) throw SetupError;
         // pre-delete: Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
