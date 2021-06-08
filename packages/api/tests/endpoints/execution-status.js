@@ -352,5 +352,5 @@ test('when execution not found in step function API nor database, returns not fo
 
   const executionStatus = response.body;
   t.is(executionStatus.error, 'Not Found');
-  t.is(executionStatus.message, 'Execution not found in API or database');
+  t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
 });
