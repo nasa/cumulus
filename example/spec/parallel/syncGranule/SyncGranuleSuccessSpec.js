@@ -273,6 +273,13 @@ describe('The Sync Granules workflow', () => {
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
 
+    afterAll(async () => {
+      await granulesApiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: reingestResponse.granuleId,
+      });
+    });
+
     it('executes successfully', () => {
       expect(reingestResponse.status).toEqual('SUCCESS');
     });
