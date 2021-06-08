@@ -56,12 +56,12 @@ function getBucketDynamicPath(pathList, bucketMap) {
     const headers = mappingObject.headers || {};
 
     const path = mapping.join('/');
-    const key = pathList.join('/').replace(`${path}/`);
+    const key = pathList.join('/').replace(`${path}/`, '');
     log.info(`Bucket mapping was ${path}, object was ${key}`);
     return { bucket: prependBucketname(bucketname), path, key, headers };
   }
 
-  log.warning(`Unable to find bucket in bucket map for path ${pathList.join('/')}`);
+  log.warn(`Unable to find bucket in bucket map for path ${pathList.join('/')}`);
   return {};
 }
 
@@ -92,7 +92,7 @@ function processRequest(uriPath, bucketMap) {
  */
 function bucketPrefixMatch(bucketToCheck, bucketFromMap, key = '') {
   log.debug(`bucket_prefix_match(): checking if ${bucketToCheck} matches ${bucketFromMap} w/ optional obj ${key}`);
-  if (bucketToCheck === bucketFromMap.split('/')[0] && key.startswith(bucketFromMap.split('/').slice(1).join('/'))) {
+  if (bucketToCheck === bucketFromMap.split('/')[0] && key.startsWith(bucketFromMap.split('/').slice(1).join('/'))) {
     log.debug(`Prefixed Bucket Map matched: s3://${bucketToCheck}/{object_name} => ${bucketFromMap}`);
     return true;
   }
@@ -101,8 +101,8 @@ function bucketPrefixMatch(bucketToCheck, bucketFromMap, key = '') {
 
 // Sort public/private buckets such that object-prefixes are processed FIRST
 function getSortedBucketList(bucketMap, bucketGroup) {
-  if (bucketMap.bucket_group === undefined) {
-    log.warning(`Bucket map does not contain bucket group '${bucketGroup}`);
+  if (bucketMap[bucketGroup] === undefined) {
+    log.warn(`Bucket map does not contain bucket group '${bucketGroup}`);
     return [];
   }
 
@@ -124,12 +124,12 @@ function checkPrivateBucket(bucket, bucketMap, object_name = '') {
   if (bucketMap.PRIVATE_BUCKETS) {
     // Prioritize prefixed buckets first, the deeper the better!
     const sortedBuckets = getSortedBucketList(bucketMap, 'PRIVATE_BUCKETS');
-    log.debug(`Sorted PRIVATE buckets are ${sortedBuckets}`);
+    //log.debug(`Sorted PRIVATE buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
       const privBucket = sortedBuckets[i];
       if (bucketPrefixMatch(bucket, prependBucketname(privBucket), object_name)) {
         // This bucket is PRIVATE, return group!
-        return bucketMap.PRIVATE_BUCKETS.privBucket;
+        return bucketMap.PRIVATE_BUCKETS[privBucket];
       }
     }
   }
@@ -141,7 +141,7 @@ function checkPublicBucket(bucket, bucketMap, object_name = '') {
   // Check for PUBLIC_BUCKETS in bucket map file
   if (bucketMap.PUBLIC_BUCKETS) {
     const sortedBuckets = getSortedBucketList(bucketMap, 'PUBLIC_BUCKETS');
-    log.debug(`Sorted PUBLIC buckets are ${sortedBuckets}`);
+    //log.debug(`Sorted PUBLIC buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
       if (bucketPrefixMatch(bucket, prependBucketname(sortedBuckets[i]), object_name)) {
         // This bucket is public!
