@@ -7,6 +7,36 @@ const {
   translatePostgresExecutionToApiExecution,
 } = require('../../dist/translate/executions');
 
+const {
+  fakeExecutionRecordFactory,
+} = require('../../dist');
+
+// Response to https://github.com/nasa/cumulus/pull/2263#discussion_r646632487
+test('translatePostgresExecutionToApiExecution with no FKs does not call external model ".get" methods', async (t) => {
+  const dbCallThrow = () => {
+    throw new Error('External Model Should Not Be Called');
+  };
+
+  const fakeCollectionPgModel = {
+    get: dbCallThrow,
+  };
+  const fakeAsyncOperationPgModel = {
+    get: dbCallThrow,
+  };
+  const fakeExecutionPgModel = {
+    get: dbCallThrow,
+  };
+
+  const executionRecord = fakeExecutionRecordFactory();
+  await t.notThrowsAsync(translatePostgresExecutionToApiExecution(
+    executionRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  ));
+});
+
 test('translatePostgresExecutionToApiExecution translates a Postgres execution to an API record', async (t) => {
   const collectionId = 'name___version';
 
