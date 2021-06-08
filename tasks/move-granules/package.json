@@ -40,6 +40,7 @@
     "@cumulus/cmrjs": "9.1.0",
     "@cumulus/common": "9.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.0",
+    "@cumulus/distribution-utils": "9.1.0",    
     "@cumulus/errors": "9.1.0",
     "@cumulus/ingest": "9.1.0",
     "lodash": "^4.17.20"

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v9.1.0] 2021-06-03
 
 ### BREAKING CHANGES
+
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -28,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
+- **CUMULUS-2442**
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
 - **CUMULUS-2471**
   - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
@@ -36,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
 - **CUMULUS-2479**
@@ -104,6 +109,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
 
+
+### Removed
+
+- **CUMULUS-2502**
+  - Removed outdated documenation regarding Kibana index patterns for metrics.
 
 ## [v9.0.1] 2021-05-07
 

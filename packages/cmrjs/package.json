@@ -36,6 +36,7 @@
     "@cumulus/aws-client": "9.1.0",
     "@cumulus/cmr-client": "9.1.0",
     "@cumulus/common": "9.1.0",
+    "@cumulus/distribution-utils": "9.1.0",
     "@cumulus/errors": "9.1.0",
     "@cumulus/launchpad-auth": "9.1.0",
     "got": "^11.8.1",
