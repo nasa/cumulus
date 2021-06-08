@@ -63,7 +63,7 @@ const deleteGranuleAndFiles = async ({
   granuleModelClient: typeof Granule
 }) => {
   if (pgGranule === undefined) {
-    logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${dynamoGranule}`);
+    logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
