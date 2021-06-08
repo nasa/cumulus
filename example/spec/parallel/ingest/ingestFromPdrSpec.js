@@ -259,7 +259,7 @@ describe('Ingesting from PDR', () => {
         await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: testDataGranuleId,
-        })
+        });
         await Promise.all(parseLambdaOutput.payload.granules.map(
           (granule) => granulesApiTestUtils.deleteGranule({
             prefix: config.stackName,
