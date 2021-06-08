@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const isEmpty = require('lodash/isEmpty');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   checkPrivateBucket,
   checkPublicBucket,
@@ -9,7 +10,8 @@ const {
   getBucketDynamicPath,
   processRequest,
 } = require('../../lib/bucketMapUtils');
-const { randomId } = require('@cumulus/common/test-utils');
+
+process.env.BUCKETNAME_PREFIX = 'bucketMap-prefix-';
 
 const bucketMap = {
   MAP: {
@@ -49,7 +51,7 @@ const bucketMap = {
 test('getBucketDynamicPath finds the bucket when path exists in bucket map and there are no additional bucket and header fields', (t) => {
   const pathParts = ['path2', 'path2b', 'morepath', 'fileid'];
   const { bucket, path, key, headers } = getBucketDynamicPath(pathParts, bucketMap);
-  t.is(bucket, 'bucket-path-2b');
+  t.is(bucket, `${process.env.BUCKETNAME_PREFIX}bucket-path-2b`);
   t.is(path, 'path2/path2b');
   t.is(key, 'morepath/fileid');
   t.true(isEmpty(headers));
@@ -58,7 +60,7 @@ test('getBucketDynamicPath finds the bucket when path exists in bucket map and t
 test('getBucketDynamicPath finds the bucket when path exists in bucket map and there are bucket and header fields', (t) => {
   const pathParts = ['path1', 'path1a', 'morepath', 'fileid'];
   const { bucket, path, key, headers } = getBucketDynamicPath(pathParts, bucketMap);
-  t.is(bucket, 'bucket-path-1');
+  t.is(bucket, `${process.env.BUCKETNAME_PREFIX}bucket-path-1`);
   t.is(path, 'path1');
   t.is(key, 'path1a/morepath/fileid');
   t.deepEqual(headers, { 'Content-Type': 'text/plain' });
@@ -80,7 +82,7 @@ test('getBucketDynamicPath matches the longest path when there are multiple matc
   };
   const pathParts = ['path2', 'path2a', 'morepath', 'fileid'];
   const { bucket, path, key, headers } = getBucketDynamicPath(pathParts, fakeBucketMap);
-  t.is(bucket, 'bucket-path-2a');
+  t.is(bucket, `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`);
   t.is(path, 'path2/path2a');
   t.is(key, 'morepath/fileid');
   t.true(isEmpty(headers));
@@ -99,56 +101,56 @@ test('getBucketDynamicPath returns empty object when there is no mapping defined
 });
 
 test('checkPrivateBucket returns usergroups when the bucket is listed as private ', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'pre-commission-data/morepath/fileid';
   const userGroups = checkPrivateBucket(bucket, bucketMap, object);
   t.deepEqual(userGroups, ['internal_users', 'external_team']);
 });
 
 test('checkPrivateBucket matches the bucket with longest path', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'pre-commission-data/critialdata/fileid';
   const userGroups = checkPrivateBucket(bucket, bucketMap, object);
   t.deepEqual(userGroups, ['internal_users']);
 });
 
 test('checkPrivateBucket returns empty array when there is no matching bucket found', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'post-commission-data/morepath/fileid';
   const userGroups = checkPrivateBucket(bucket, bucketMap, object);
   t.true(isEmpty(userGroups));
 });
 
 test('checkPrivateBucket returns empty array when there are no private buckets in bucket map', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'post-commission-data/morepath/fileid';
   const userGroups = checkPrivateBucket(bucket, {}, object);
   t.true(isEmpty(userGroups));
 });
 
 test('checkPublicBucket returns true when the bucket is listed as public ', (t) => {
-  const bucket = 'bucket-path-2a';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`;
   const object = 'morepath/fileid';
   const isPublic = checkPublicBucket(bucket, bucketMap, object);
   t.true(isPublic);
 });
 
 test('checkPublicBucket matches the bucket with longest path ', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'browse/jpg/fileid';
   const isPublic = checkPublicBucket(bucket, bucketMap, object);
   t.true(isPublic);
 });
 
 test('checkPublicBucket returns empty array when there is no matching bucket found', (t) => {
-  const bucket = 'data-bucket';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'qa/morepath/fileid';
   const isPublic = checkPublicBucket(bucket, bucketMap, object);
   t.false(isPublic);
 });
 
 test('checkPublicBucket returns empty array when there are public buckets in bucket map', (t) => {
-  const bucket = 'bucket-path-2a';
+  const bucket = `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`;
   const object = 'morepath/fileid';
   const isPublic = checkPublicBucket(bucket, {}, object);
   t.false(isPublic);
