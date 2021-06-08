@@ -56,7 +56,7 @@
     "node": ">=12.18.0"
   },
   "bin": {
-    "build-tasks-doc": "bin/build-tasks-doc.js"
+    "build-tasks-doc": "./bin/build-tasks-doc.js"
   },
   "keywords": [
     "GIBS",
