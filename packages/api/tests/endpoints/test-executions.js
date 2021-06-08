@@ -249,7 +249,10 @@ test('GET returns an existing execution without any foreign keys', async (t) => 
     t.context.knex,
     executionRecord
   );
-  t.teardown(async () => await executionPgModel.delete(t.context.knex, executionRecord));
+  t.teardown(async () => await executionPgModel.delete(
+    t.context.knex,
+    { arn: executionRecord.arn }
+  ));
   const response = await request(t.context.app)
     .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
@@ -267,7 +270,6 @@ test('GET fails if execution is not found', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
-
   t.is(response.status, 404);
-  t.true(response.body.message.includes('No record found for'));
+  t.true(response.body.message.includes(`Execution record with identifiers ${JSON.stringify({ arn: 'unknown' })} does not exist`));
 });
