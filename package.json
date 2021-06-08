@@ -157,6 +157,5 @@
     "webpack-cli": "^3.3.5",
     "xml2js": "^0.4.19"
   },
-  "private": true,
-  "_id": "@cumulus/core@1.0.0"
+  "private": true
 }
