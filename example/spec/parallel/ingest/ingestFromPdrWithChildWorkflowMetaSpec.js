@@ -34,6 +34,7 @@ const {
   cleanupProviders,
   cleanupCollections,
   getExecutionInputObject,
+  granulesApi: granulesApiTestUtils,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -145,6 +146,10 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await granulesApiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
