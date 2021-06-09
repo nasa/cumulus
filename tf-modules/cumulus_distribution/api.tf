@@ -8,7 +8,6 @@ locals {
       BUCKET_MAP_FILE                = var.bucket_map_file
       CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
       CMR_ENVIRONMENT                = var.cmr_environment
-      CONFIG_BUCKET                  = var.config_bucket
       DISTRIBUTION_ENDPOINT          = local.api_uri
       DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
       OAUTH_CLIENT_ID                = var.oauth_client_id
@@ -20,6 +19,7 @@ locals {
       cmr_provider                   = var.cmr_provider
       public_buckets                 = join(",", var.public_buckets)
       stackName                      = var.prefix
+      system_bucket                  = var.system_bucket
   }
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }

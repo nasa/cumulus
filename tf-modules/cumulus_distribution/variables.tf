@@ -13,11 +13,6 @@ variable "bucketname_prefix" {
   description = "all data buckets should have names prefixed with this. Must be compatible with S3 naming conventions (lower case only, etc). An empty string can be used to indicate no prefix"
 }
 
-variable "config_bucket" {
-  type        = string
-  description = "the bucket where config files can be found"
-}
-
 variable "oauth_client_id" {
   type        = string
   description = "oauth_client_id"
@@ -31,6 +26,11 @@ variable "oauth_client_password" {
 variable "oauth_host_url" {
   type        = string
   description = "oauth_host_url"
+}
+
+variable "system_bucket" {
+  description = "The name of the S3 bucket to be used for staging deployment files"
+  type        = string
 }
 
 # Optional
@@ -50,7 +50,7 @@ variable "api_gateway_stage" {
 variable "bucket_map_file" {
   type        = string
   default     = "bucket_map.yaml"
-  description = "path and file of bucketmap file's location in the config_bucket"
+  description = "path and file of bucketmap file's location in the system_bucket"
 }
 
 variable "cmr_acl_based_credentials" {

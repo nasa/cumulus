@@ -43,10 +43,11 @@ function getBucketDynamicPath(pathList, bucketMap) {
   // get bucket map paths which matches the path list,
   // and sort from longest path to shortest one
   const allMapPaths = paths(bucketMap.MAP, { pathFormat: 'array' });
-  const mappings = allMapPaths.filter((p) => {
-    if (p[p.length - 1] === 'bucket') p.pop();
-    return pathList.join('/').startsWith(`${p.join('/')}/`);
-  })
+  const mappings = allMapPaths
+    .filter((p) => {
+      if (p[p.length - 1] === 'bucket') p.pop();
+      return pathList.join('/').startsWith(`${p.join('/')}/`);
+    })
     .sort((a1, a2) => a2.length - a1.length);
 
   if (mappings.length >= 1) {
@@ -156,10 +157,22 @@ function checkPublicBucket(bucket, bucketMap, object_name = '') {
   return false;
 }
 
+function getPathsByBucketName(bucket, bucketMap) {
+  const allMapPaths = paths(bucketMap.MAP, { pathFormat: 'array' });
+  const pathStrings = allMapPaths
+    .filter((p) => (get(bucketMap.MAP, p.join('.')) === bucket))
+    .map((p) => {
+      if (p[p.length - 1] === 'bucket') p.pop();
+      return p.join('/');
+    });
+  return pathStrings;
+}
+
 module.exports = {
   checkPrivateBucket,
   checkPublicBucket,
   getBucketMap,
   getBucketDynamicPath,
+  getPathsByBucketName,
   processRequest,
 };

@@ -2,16 +2,22 @@
 
 const test = require('ava');
 const isEmpty = require('lodash/isEmpty');
-const { randomId } = require('@cumulus/common/test-utils');
+const jsyaml = require('js-yaml');
+const cryptoRandomString = require('crypto-random-string');
+// const { randomId } = require('@cumulus/common/test-utils');
+const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   checkPrivateBucket,
   checkPublicBucket,
   getBucketMap,
   getBucketDynamicPath,
-  processRequest,
+  getPathsByBucketName,
 } = require('../../lib/bucketMapUtils');
 
 process.env.BUCKETNAME_PREFIX = 'bucketMap-prefix-';
+process.env.stackName = cryptoRandomString({ length: 10 });
+process.env.system_bucket = cryptoRandomString({ length: 10 });
+const bucketMapKey = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
 
 const bucketMap = {
   MAP: {
@@ -23,11 +29,14 @@ const bucketMap = {
     },
     path2: {
       path2a: 'bucket-path-2a',
-      path2b: 'bucket-path-2b',
+      path2b: 'bucket-has-2-paths',
     },
     path3: {
       path3a: {
         path3ai: 'bucket-path-3ai',
+        path3aj: {
+          bucket: 'bucket-has-2-paths',
+        },
       },
     },
     'data-bucket': 'data-bucket',
@@ -48,11 +57,29 @@ const bucketMap = {
   },
 };
 
+test.before(async () => {
+  await createBucket(process.env.system_bucket);
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: bucketMapKey,
+    Body: jsyaml.dump(bucketMap),
+  });
+});
+
+test.after.always(async () => {
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+});
+
+test('getBucketMap reads bucketMap from s3', async (t) => {
+  const s3BucketMap = await getBucketMap(process.env.system_bucket, bucketMapKey);
+  t.deepEqual(s3BucketMap, bucketMap);
+});
+
 test('getBucketDynamicPath finds the bucket when path exists in bucket map and there are no additional bucket and header fields', (t) => {
-  const pathParts = ['path2', 'path2b', 'morepath', 'fileid'];
+  const pathParts = ['path2', 'path2a', 'morepath', 'fileid'];
   const { bucket, path, key, headers } = getBucketDynamicPath(pathParts, bucketMap);
-  t.is(bucket, `${process.env.BUCKETNAME_PREFIX}bucket-path-2b`);
-  t.is(path, 'path2/path2b');
+  t.is(bucket, `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`);
+  t.is(path, 'path2/path2a');
   t.is(key, 'morepath/fileid');
   t.true(isEmpty(headers));
 });
@@ -76,7 +103,6 @@ test('getBucketDynamicPath matches the longest path when there are multiple matc
           'Content-Type': 'text/plain',
         },
         path2a: 'bucket-path-2a',
-        path2b: 'bucket-path-2b',
       },
     },
   };
@@ -154,4 +180,15 @@ test('checkPublicBucket returns empty array when there are public buckets in buc
   const object = 'morepath/fileid';
   const isPublic = checkPublicBucket(bucket, {}, object);
   t.false(isPublic);
+});
+
+test('getPathsByBucketName returns list of paths from bucket map', (t) => {
+  const pathsFound = getPathsByBucketName('bucket-has-2-paths', bucketMap);
+  const expectedPaths = ['path2/path2b', 'path3/path3a/path3aj'];
+  t.deepEqual(pathsFound, expectedPaths);
+});
+
+test('getPathsByBucketName returns empty array when bucket is not found in bucket map', (t) => {
+  const pathsFound = getPathsByBucketName('nonexistbucket', bucketMap);
+  t.true(isEmpty(pathsFound));
 });

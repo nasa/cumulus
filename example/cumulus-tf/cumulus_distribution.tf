@@ -25,20 +25,20 @@ module "cumulus_distribution" {
   api_url                  = var.cumulus_distribution_url
   bucket_map_file          = aws_s3_bucket_object.bucket_map_yaml.id
   bucketname_prefix        = ""
-  config_bucket            = var.system_bucket
+  cmr_acl_based_credentials = true
+  cmr_environment           = var.cmr_environment
+  cmr_provider              = var.cmr_provider
   lambda_subnet_ids        = var.lambda_subnet_ids
   oauth_client_id          = var.csdap_client_id
   oauth_client_password    = var.csdap_client_password
   oauth_host_url           = var.csdap_host_url
   oauth_provider           = "cognito"
-  cmr_acl_based_credentials = true
-  cmr_environment           = var.cmr_environment
-  cmr_provider              = var.cmr_provider
   permissions_boundary_arn = var.permissions_boundary_arn
   protected_buckets        = local.protected_bucket_names
   public_buckets           = local.public_bucket_names
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
   sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
+  system_bucket            = var.system_bucket
   tags                     = local.tags
   vpc_id                   = var.vpc_id
 }
