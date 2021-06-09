@@ -16,11 +16,11 @@ const {
   ValidationError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+const { Search } = require('@cumulus/es-client/search');
+const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-const { Search } = require('../es/search');
-const { addToLocalES, indexProvider } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 

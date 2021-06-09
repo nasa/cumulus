@@ -1,0 +1,49 @@
+{
+  "name": "@cumulus/es-client",
+  "version": "9.0.1-alpha.1",
+  "description": "Utilities for working with Elasticsearch",
+  "keywords": [
+    "CUMULUS",
+    "NASA"
+  ],
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/es-client/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "scripts": {
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "verbose": true
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-elasticsearch-connector": "8.2.0",
+    "aws-sdk": "^2.585.0",
+    "@cumulus/common": "9.0.1",
+    "@cumulus/errors": "9.0.1",
+    "@cumulus/logger": "9.0.1",
+    "@cumulus/message": "9.0.1",
+    "@elastic/elasticsearch": "^5.6.20",
+    "lodash": "~4.17.20",
+    "moment": "2.24.0",
+    "p-limit": "^1.2.0"
+  },
+  "devDependencies": {
+    "@cumulus/aws-client": "9.0.1",
+    "@cumulus/test-data": "9.0.1",
+    "p-each-series": "^2.1.0"
+  }
+}

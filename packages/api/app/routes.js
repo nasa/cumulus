@@ -65,7 +65,7 @@ router.use('/executions/status', ensureAuthorized, executionStatus);
 router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/asyncOperations', ensureAuthorized, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
@@ -112,7 +112,7 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);
