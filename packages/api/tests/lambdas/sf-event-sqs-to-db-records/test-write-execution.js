@@ -4,6 +4,8 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
+const { removeNilProperties } = require('@cumulus/common/util');
+
 
 const {
   ExecutionPgModel,
@@ -37,6 +39,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.postRDSDeploymentVersion = '9.0.0';
 });
 
 test.beforeEach((t) => {
@@ -160,7 +163,6 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       url: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
       workflow_name: workflowName,
       error: {},
-      final_payload: undefined,
       async_operation_cumulus_id: 1,
       collection_cumulus_id: 2,
       parent_cumulus_id: 3,
