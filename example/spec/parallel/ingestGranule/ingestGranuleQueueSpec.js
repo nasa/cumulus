@@ -38,7 +38,9 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -241,9 +243,12 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('triggers a running execution record being added to DynamoDB', async () => {
-    const record = await waitForModelStatus(
-      executionModel,
-      { arn: workflowExecutionArn },
+    const record = await waitForApiStatus(
+      getExecution,
+      {
+        prefix: config.stackName,
+        arn: workflowExecutionArn,
+      },
       'running'
     );
     expect(record.status).toEqual('running');

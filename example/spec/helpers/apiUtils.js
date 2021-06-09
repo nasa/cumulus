@@ -12,6 +12,24 @@ function setDistributionApiEnvVars() {
   }
 }
 
+async function waitForApiStatus(getMethod, params, status, config) {
+  return await pRetry(
+    async () => {
+      const record = await getMethod(params);
+
+      if (record.status !== status) {
+        console.log((`Record status ${record.status}. Expect status ${status}`));
+        throw new Error(`Record status ${record.status}. Expect status ${status}`);
+      }
+      return record;
+    },
+    {
+      maxTimeout: 60 * 1000,
+      ...config,
+    }
+  );
+}
+
 /**
  * Check a record for a particular status and retry until the record gets that status
  * This is to mitigate issues where a workflow completes, but there is a lag between
@@ -41,4 +59,5 @@ async function waitForModelStatus(model, params, status) {
 module.exports = {
   setDistributionApiEnvVars,
   waitForModelStatus,
+  waitForApiStatus,
 };
