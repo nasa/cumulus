@@ -2,6 +2,7 @@
 
 const isNumber = require('lodash/isNumber');
 const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { postMigrationCounts } = require('@cumulus/api-client/migrationCounts');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const cryptoRandomString = require('crypto-random-string');
@@ -14,6 +15,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   let beforeAllFailed = false;
   let config;
   let s3ReportObject;
+  let migrationCountResponseBody;
 
   beforeAll(async () => {
     try {
@@ -26,13 +28,14 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         dbConcurrency: 1,
       };
 
-      const response = await postMigrationCounts({
+      const migrationCountResponse = await postMigrationCounts({
         prefix: config.stackName,
         payload,
       });
+      migrationCountResponseBody = JSON.parse(migrationCountResponse.body);
 
       asyncOperation = await waitForAsyncOperationStatus({
-        id: JSON.parse(response.body).id,
+        id: migrationCountResponseBody.id,
         status: 'SUCCEEDED',
         stackName: config.stackName,
         retryOptions: {
@@ -46,6 +49,12 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     } catch (error) {
       beforeAllFailed = true;
       throw error;
+    }
+  });
+
+  afterAll(async () => {
+    if (migrationCountResponseBody.id) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id });
     }
   });
 
