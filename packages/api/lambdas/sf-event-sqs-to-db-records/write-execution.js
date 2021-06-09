@@ -4,11 +4,16 @@ const {
   ExecutionPgModel,
 } = require('@cumulus/db');
 const {
+  indexExecution,
+} = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
   getMessageCumulusVersion,
   getMessageExecutionOriginalPayload,
   getMessageExecutionFinalPayload,
+  generateExecutionApiRecordFromMessage,
 } = require('@cumulus/message/Executions');
 const {
   getMetaStatus,
@@ -93,6 +98,25 @@ const writeExecutionViaTransaction = async ({
   return await executionPgModel.upsert(trx, executionRecord);
 };
 
+const writeExecutionToDynamoAndES = async (params) => {
+  const {
+    cumulusMessage,
+    executionModel,
+    updatedAt = Date.now(),
+    esClient = await Search.es(),
+  } = params;
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
+  try {
+    await executionModel.storeExecution(executionApiRecord);
+    await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+  } catch (error) {
+    // On error, delete the Dynamo record to ensure that all systems
+    // stay in sync
+    await executionModel.delete({ arn: executionApiRecord.arn });
+    throw error;
+  }
+};
+
 const writeExecution = async ({
   cumulusMessage,
   knex,
@@ -101,6 +125,7 @@ const writeExecution = async ({
   parentExecutionCumulusId,
   executionModel = new Execution(),
   updatedAt = Date.now(),
+  esClient,
 }) =>
   await knex.transaction(async (trx) => {
     const [executionCumulusId] = await writeExecutionViaTransaction({
@@ -111,13 +136,19 @@ const writeExecution = async ({
       trx,
       updatedAt,
     });
-    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage, updatedAt);
+    await writeExecutionToDynamoAndES({
+      cumulusMessage,
+      updatedAt,
+      executionModel,
+      esClient,
+    });
     return executionCumulusId;
   });
 
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
+  writeExecutionToDynamoAndES,
   writeExecutionViaTransaction,
   writeExecution,
 };

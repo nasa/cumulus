@@ -35,6 +35,7 @@ const {
 const {
   shouldWriteExecutionToPostgres,
   writeExecution,
+  writeExecutionToDynamoAndES,
 } = require('./write-execution');
 
 const {
@@ -52,7 +53,10 @@ const writeRecordsToDynamoDb = async ({
   pdrModel = new Pdr(),
 }) => {
   const results = await Promise.allSettled([
-    executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
+    writeExecutionToDynamoAndES({
+      cumulusMessage,
+      executionModel,
+    }),
     pdrModel.storePdrFromCumulusMessage(cumulusMessage),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);

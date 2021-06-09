@@ -10,6 +10,11 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
@@ -37,6 +42,15 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.executionPgModel = new ExecutionPgModel();
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esExecutionsClient = new Search(
+    {},
+    'execution',
+    t.context.esIndex
+  );
 });
 
 test.beforeEach((t) => {
@@ -87,6 +101,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {
@@ -222,7 +237,7 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enabled', async (t) => {
+test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -235,9 +250,10 @@ test('writeExecution() saves execution to Dynamo and RDS if write to RDS is enab
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await executionPgModel.exists(knex, { arn: executionArn }));
+  t.true(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test('writeExecution() saves execution to Dynamo and RDS with same timestamps', async (t) => {
+test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -250,11 +266,15 @@ test('writeExecution() saves execution to Dynamo and RDS with same timestamps', 
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  const esRecord = await t.context.esExecutionsClient.get(executionArn);
+
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -264,9 +284,10 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynam
   } = t.context;
 
   const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
+    storeExecution: () => {
       throw new Error('execution Dynamo error');
     },
+    delete: () => Promise.resolve(true),
   };
 
   await t.throwsAsync(
@@ -279,9 +300,10 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynam
   );
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
+  t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -307,4 +329,33 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS w
   );
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
+  t.false(await t.context.esExecutionsClient.exists(executionArn));
+});
+
+test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Elasticsearch write fails', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const fakeEsClient = {
+    index: () => {
+      throw new Error('ES error');
+    },
+  };
+
+  await t.throwsAsync(
+    writeExecution({
+      cumulusMessage,
+      knex,
+      esClient: fakeEsClient,
+    }),
+    { message: 'ES error' }
+  );
+  t.false(await executionModel.exists({ arn: executionArn }));
+  t.false(await executionPgModel.exists(knex, { arn: executionArn }));
+  t.false(await t.context.esExecutionsClient.exists(executionArn));
 });

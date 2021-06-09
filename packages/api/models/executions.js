@@ -150,15 +150,12 @@ class Execution extends Manager {
   }
 
   /**
-   * Generate and store an execution record from a Cumulus message.
+   * Store an execution record.
    *
-   * @param {Object} cumulusMessage - Cumulus workflow message
-   * @param {number} [updatedAt] - Optional updated timestamp for record
+   * @param {Object} executionItem - Execution item
    * @returns {Promise}
    */
-  async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
-    const executionItem = Execution.generateRecord(cumulusMessage, updatedAt);
-
+  async storeExecution(executionItem) {
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
