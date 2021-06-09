@@ -266,6 +266,12 @@ describe('Ingesting from PDR', () => {
             granuleId: granule.granuleId,
           })
         ));
+        await Promise.all(expectedParsePdrOutput.granules.map(
+          (granule) => granulesApiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          })
+        ));
       });
 
       it('executes successfully', async () => {
