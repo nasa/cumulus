@@ -451,6 +451,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           });
         } catch (error) {
           beforeAllFailed = true;
+          console.log('CnmResponse Lambda error:::', error);
           throw error;
         }
       });
