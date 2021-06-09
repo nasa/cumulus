@@ -50,15 +50,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-  - Updated logic for collections API POST/PUT/DELETE to created/update/delete records directly in Elasticsearch
-  - Updated logic for rules API POST/PUT/DELETE to created/update/delete records directly in Elasticsearch
-  - Updated logic for providers API POST/PUT/DELETE to created/update/delete records directly in Elasticsearch
-  - Updated logic for PDRs API DELETE to created/update/delete records directly in Elasticsearch
-  - Removed trigger for `dbIndexer` Lambda from DynamoDB table streams:
-    - collections
-    - providers
-    - rules
-    - pdrs
+  - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+  - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+  - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+  - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
@@ -113,6 +108,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- **CUMULUS-2208**
+  - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+    - `<prefix>-CollectionsTable`
+    - `<prefix>-PdrsTable`
+    - `<prefix>-ProvidersTable`
+    - `<prefix>-RulesTable`
 - **CUMULUS-2502**
   - Removed outdated documenation regarding Kibana index patterns for metrics.
 
