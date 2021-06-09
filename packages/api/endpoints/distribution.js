@@ -173,6 +173,8 @@ async function handleLogoutRequest(req, res) {
 async function handleFileRequest(req, res) {
   const objectStore = new S3ObjectStore();
   let signedS3Url;
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   try {
     signedS3Url = await objectStore.signGetObject(
@@ -180,7 +182,15 @@ async function handleFileRequest(req, res) {
       { 'A-userid': req.authorizedMetadata.userName }
     );
   } catch (error) {
-    return res.sendStatus(404);
+    log.error('Error occurred when signing URL:', error);
+    const vars = {
+      contentstring: `Could not find file, ${error.message}`,
+      title: 'File not found',
+      statusCode: 404,
+      requestid,
+    };
+    const rendered = render(errorTemplate, vars);
+    return res.status(404).send(rendered);
   }
   return res
     .status(307)
