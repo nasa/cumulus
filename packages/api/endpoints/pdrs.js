@@ -7,6 +7,7 @@ const {
 const {
   getKnexClient,
   PdrPgModel,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -40,10 +41,12 @@ async function list(req, res) {
 async function get(req, res) {
   const pdrName = req.params.pdrName;
 
-  const pdrModel = new models.Pdr();
+  const knex = await getKnexClient({ env: process.env });
+  const pdrPgModel = new PdrPgModel();
 
   try {
-    const result = await pdrModel.get({ pdrName });
+    const pgPdr = await pdrPgModel.get(knex, { name: pdrName });
+    const result = await translatePostgresPdrToApiPdr(pgPdr, knex);
     return res.send(result);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {

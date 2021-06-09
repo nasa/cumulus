@@ -60,6 +60,7 @@ export {
   translateApiFiletoPostgresFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
+export { translatePostgresPdrToApiPdr } from './translate/pdrs';
 export {
   translateApiProviderToPostgresProvider,
 } from './translate/providers';

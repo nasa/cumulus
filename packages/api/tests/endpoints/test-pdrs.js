@@ -10,15 +10,17 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   localStackConnectionEnv,
   CollectionPgModel,
+  ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const {
-  fakePdrRecordFactory,
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
+  fakePdrRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
@@ -121,6 +123,16 @@ test.before(async (t) => {
     t.context.knex,
     t.context.testPgProvider
   );
+
+  // Create an execution
+  t.context.testPgExecution = fakeExecutionRecordFactory({
+    collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+  });
+  const executionPgModel = new ExecutionPgModel();
+  [t.context.executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    t.context.testPgExecution
+  );
 });
 
 test.after.always(async (t) => {
@@ -215,14 +227,25 @@ test('default returns list of pdrs', async (t) => {
 });
 
 test('GET returns an existing pdr', async (t) => {
+  const pdrName = `${randomString()}.PDR`;
+  const newPGPdr = fakePdrRecordFactory({
+    name: pdrName,
+    status: 'completed',
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+    execution_cumulus_id: t.context.executionCumulusId,
+  });
+
+  // create a new PDR in RDS
+  await pdrPgModel.create(t.context.knex, newPGPdr);
+
   const response = await request(app)
-    .get(`/pdrs/${fakePdrs[0].pdrName}`)
+    .get(`/pdrs/${pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { pdrName } = response.body;
-  t.is(pdrName, fakePdrs[0].pdrName);
+  t.is(pdrName, response.body.pdrName);
 });
 
 test('GET fails if pdr is not found', async (t) => {
