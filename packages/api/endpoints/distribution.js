@@ -11,7 +11,7 @@ const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { S3ObjectStore } = require('@cumulus/aws-client');
+const { objectStoreForProtocol } = require('@cumulus/object-store');
 const { buildErrorTemplateVars, getConfigurations, useSecureCookies, ensureAuthorizedOrRedirect } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
@@ -171,14 +171,15 @@ async function handleLogoutRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const objectStore = new S3ObjectStore();
+  const url = `s3://${req.params[0]}`;
+  const objectStore = objectStoreForProtocol('s3');
   let signedS3Url;
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   try {
     signedS3Url = await objectStore.signGetObject(
-      req.params[0],
+      url,
       { 'A-userid': req.authorizedMetadata.userName }
     );
   } catch (error) {

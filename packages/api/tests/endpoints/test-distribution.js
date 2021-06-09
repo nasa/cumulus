@@ -175,7 +175,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   } = context;
 
   const response = await request(distributionApp)
-    .get(`/s3://${fileLocation}`)
+    .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
@@ -192,7 +192,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
 test('A request for a public file without an access token returns a redirect to S3', async (t) => {
   const { fileKey, signedFileUrl } = context;
   const response = await request(distributionApp)
-    .get(`/s3://${process.env.public_buckets}/${fileKey}`)
+    .get(`/${process.env.public_buckets}/${fileKey}`)
     .set('Accept', 'application/json')
     .expect(307);
 

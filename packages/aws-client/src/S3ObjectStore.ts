@@ -1,7 +1,7 @@
 import { URL } from 'url';
 import isEmpty from 'lodash/isEmpty';
 import { s3 } from './services';
-import { headObject, parseS3Uri } from './S3';
+import { parseS3Uri } from './S3';
 
 // Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
 
@@ -25,10 +25,10 @@ class S3ObjectStore {
    * @returns {Promise<string>} a signed URL
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
-  async signGetObject(
+  signGetObject(
     objectUrl: string,
     params: { [key: string]: string }
-  ): Promise<string> {
+  ): string {
     const url = new URL(objectUrl);
     if (url.protocol.toLowerCase() !== 's3:') {
       throw new TypeError(`Invalid S3 URL: ${objectUrl}`);
@@ -37,7 +37,7 @@ class S3ObjectStore {
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
     // Verifies that the object exists, or throws NotFound
-    await headObject(Bucket, Key);
+    // await headObject(Bucket, Key);
 
     const signedUrl = this.s3.getSignedUrl('getObject', { Bucket, Key });
     const parsedSignedUrl = new URL(signedUrl);

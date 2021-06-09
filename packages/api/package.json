@@ -65,6 +65,7 @@
     "@cumulus/launchpad-auth": "9.0.1",
     "@cumulus/logger": "9.0.1",
     "@cumulus/message": "9.0.1",
+    "@cumulus/object-store": "9.0.1-alpha.0",
     "@cumulus/pvl": "9.0.1",
     "@cumulus/sftp-client": "9.0.1",
     "@cumulus/types": "9.0.1",
