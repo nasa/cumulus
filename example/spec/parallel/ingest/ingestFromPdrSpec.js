@@ -266,12 +266,6 @@ describe('Ingesting from PDR', () => {
             granuleId: granule.granuleId,
           })
         ));
-        await Promise.all(expectedParsePdrOutput.granules.map(
-          (granule) => granulesApiTestUtils.deleteGranule({
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          })
-        ));
       });
 
       it('executes successfully', async () => {
@@ -400,15 +394,27 @@ describe('Ingesting from PDR', () => {
         });
 
         describe('SyncGranule lambda function', () => {
+          let syncGranuleLambdaOutput;
+
+          afterAll(async () => {
+            await Promise.all(
+              syncGranuleLambdaOutput.payload.granules.map((g) =>
+                granulesApiTestUtils.deleteGranule({
+                  prefix: config.stackName,
+                  granuleId: g.granuleId,
+                }))
+            );
+          });
+
           it('outputs 1 granule and pdr', async () => {
             if (beforeAllFailed) fail('beforeAll() failed');
             else {
-              const lambdaOutput = await lambdaStep.getStepOutput(
+              syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
                 ingestGranuleWorkflowArn,
                 'SyncGranule'
               );
-              expect(lambdaOutput.payload.granules.length).toEqual(1);
-              expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
+              expect(syncGranuleLambdaOutput.payload.granules.length).toEqual(1);
+              expect(syncGranuleLambdaOutput.payload.pdr).toEqual(syncGranuleLambdaOutput.payload.pdr);
             }
           });
         });
