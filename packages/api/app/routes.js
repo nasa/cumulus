@@ -65,7 +65,7 @@ router.use('/executions/status', ensureAuthorized, executionStatus);
 router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/asyncOperations', ensureAuthorized, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
