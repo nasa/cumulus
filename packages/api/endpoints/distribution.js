@@ -193,6 +193,7 @@ async function handleFileRequest(req, res) {
     const rendered = render(errorTemplate, vars);
     return res.status(404).send(rendered);
   }
+  res.append('Cache-Control', 'private, max-age=600');
   return res
     .status(307)
     .set({ Location: signedS3Url })
