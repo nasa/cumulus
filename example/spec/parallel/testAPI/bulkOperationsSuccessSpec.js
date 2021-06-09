@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -188,6 +189,10 @@ describe('POST /granules/bulk', () => {
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
       await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
       await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
+
+      if (postBulkOperationsBody.id) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkOperationsBody.id });
+      }
 
       await pAll(
         [
