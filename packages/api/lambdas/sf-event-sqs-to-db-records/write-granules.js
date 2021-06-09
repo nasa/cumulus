@@ -36,6 +36,7 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const { parseException } = require('@cumulus/message/utils');
 
 const FileUtils = require('../../lib/FileUtils');
 const {
@@ -44,9 +45,6 @@ const {
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
 } = require('../../lib/granules');
-const {
-  parseException,
-} = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
 /**

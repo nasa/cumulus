@@ -13,21 +13,6 @@ function filenamify(fileName) {
 }
 
 /**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {string} an stringified exception
- */
-function parseException(exception) {
-  if (isNil(exception)) return {};
-  if (isObject(exception)) return exception;
-  return {
-    Error: 'Unknown Error',
-    Cause: exception,
-  };
-}
-
-/**
  * Returns the name and version of a collection based on
  * the collectionId used in elasticsearch indexing
  *

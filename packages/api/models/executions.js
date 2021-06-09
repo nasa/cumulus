@@ -2,33 +2,8 @@
 
 const pLimit = require('p-limit');
 
-const {
-  getMessageAsyncOperationId,
-} = require('@cumulus/message/AsyncOperations');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const {
-  getMessageExecutionArn,
-  getMessageExecutionName,
-  getMessageExecutionParentArn,
-  getMessageCumulusVersion,
-  getExecutionUrlFromArn,
-  getMessageExecutionOriginalPayload,
-  getMessageExecutionFinalPayload,
-} = require('@cumulus/message/Executions');
-const {
-  getMetaStatus,
-  getMessageWorkflowTasks,
-  getMessageWorkflowStartTime,
-  getMessageWorkflowStopTime,
-  getMessageWorkflowName,
-  getWorkflowDuration,
-} = require('@cumulus/message/workflows');
-const isNil = require('lodash/isNil');
-const { removeNilProperties } = require('@cumulus/common/util');
-
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
-const { parseException } = require('../lib/utils');
 
 class Execution extends Manager {
   constructor() {
@@ -37,49 +12,6 @@ class Execution extends Manager {
       tableHash: { name: 'arn', type: 'S' },
       schema: executionSchema,
     });
-  }
-
-  /**
-   * Generate an execution record from a Cumulus message.
-   *
-   * @param {Object} cumulusMessage - A Cumulus message
-   * @param {number} [updatedAt] - Optional updated timestamp for record
-   * @returns {Object} An execution record
-   */
-  static generateRecord(cumulusMessage, updatedAt = Date.now()) {
-    const arn = getMessageExecutionArn(cumulusMessage);
-    if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
-
-    const status = getMetaStatus(cumulusMessage);
-    if (!status) throw new Error('Unable to determine status from Cumulus message');
-
-    const now = Date.now();
-    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
-    const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
-
-    const collectionId = getCollectionIdFromMessage(cumulusMessage);
-
-    const record = {
-      name: getMessageExecutionName(cumulusMessage),
-      cumulusVersion: getMessageCumulusVersion(cumulusMessage),
-      arn,
-      asyncOperationId: getMessageAsyncOperationId(cumulusMessage),
-      parentArn: getMessageExecutionParentArn(cumulusMessage),
-      execution: getExecutionUrlFromArn(arn),
-      tasks: getMessageWorkflowTasks(cumulusMessage),
-      error: parseException(cumulusMessage.exception),
-      type: getMessageWorkflowName(cumulusMessage),
-      collectionId,
-      status,
-      createdAt: workflowStartTime,
-      timestamp: now,
-      updatedAt,
-      originalPayload: getMessageExecutionOriginalPayload(cumulusMessage),
-      finalPayload: getMessageExecutionFinalPayload(cumulusMessage),
-      duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
-    };
-
-    return removeNilProperties(record);
   }
 
   /**

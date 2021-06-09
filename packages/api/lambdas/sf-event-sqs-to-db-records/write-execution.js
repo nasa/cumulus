@@ -23,8 +23,8 @@ const {
   getMessageWorkflowStopTime,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const { parseException } = require('@cumulus/message/utils');
 
-const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
 const shouldWriteExecutionToPostgres = ({
