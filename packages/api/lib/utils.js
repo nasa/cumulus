@@ -1,8 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const isObject = require('lodash/isObject');
-const isNil = require('lodash/isNil');
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
@@ -77,5 +75,4 @@ module.exports = {
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  parseException,
 };
