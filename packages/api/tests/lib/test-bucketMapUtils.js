@@ -17,7 +17,7 @@ const {
 process.env.BUCKETNAME_PREFIX = 'bucketMap-prefix-';
 process.env.stackName = cryptoRandomString({ length: 10 });
 process.env.system_bucket = cryptoRandomString({ length: 10 });
-const bucketMapKey = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
+process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
 
 const bucketMap = {
   MAP: {
@@ -61,7 +61,7 @@ test.before(async () => {
   await createBucket(process.env.system_bucket);
   await s3PutObject({
     Bucket: process.env.system_bucket,
-    Key: bucketMapKey,
+    Key: process.env.BUCKET_MAP_FILE,
     Body: jsyaml.dump(bucketMap),
   });
 });
@@ -71,7 +71,7 @@ test.after.always(async () => {
 });
 
 test('getBucketMap reads bucketMap from s3', async (t) => {
-  const s3BucketMap = await getBucketMap(process.env.system_bucket, bucketMapKey);
+  const s3BucketMap = await getBucketMap();
   t.deepEqual(s3BucketMap, bucketMap);
 });
 

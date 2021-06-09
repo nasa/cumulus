@@ -2,11 +2,14 @@
 
 const test = require('ava');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
+const jsyaml = require('js-yaml');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 const moment = require('moment');
 
+const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -22,6 +25,24 @@ process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('pat
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
 process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
+process.env.stackName = cryptoRandomString({ length: 10 });
+process.env.system_bucket = cryptoRandomString({ length: 10 });
+process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
+
+const bucketMap = {
+  MAP: {
+    path1: {
+      bucket: 'bucket-path-1',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    },
+    path2: {
+      path2a: 'bucket-path-2a',
+    },
+  },
+};
+
 let context;
 
 // import the express app after setting the env variables
@@ -45,6 +66,13 @@ function validateRedirectToGetAuthorizationCode(t, response) {
 }
 
 test.before(async () => {
+  await createBucket(process.env.system_bucket);
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: process.env.BUCKET_MAP_FILE,
+    Body: jsyaml.dump(bucketMap),
+  });
+
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
@@ -107,8 +135,9 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  const { accessTokenModel } = context;
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
+  const { accessTokenModel } = context;
   await accessTokenModel.deleteTable();
   sinon.reset();
 });
@@ -298,4 +327,32 @@ test('A / request without an access token displays login page', async (t) => {
   t.true(response.text.includes('Log In'));
   t.false(response.text.includes('Log Out'));
   t.false(response.text.includes('Welcome user'));
+});
+
+test('A sucessful /locate request for a bucket returns matching paths', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate?bucket_name=bucket-path-1')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', 'application/json')
+    .expect(200);
+  t.is(response.status, 200);
+  t.deepEqual(response.body, ['path1']);
+});
+
+test('A /locate request returns error when no matching bucket found', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate?bucket_name=nonexistbucket')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /text\/plain/)
+    .expect(404);
+  t.true(JSON.stringify(response.error).includes('No route defined for nonexistbucket'));
+});
+
+test('A /locate request returns error when request parameter is missing', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /text\/plain/)
+    .expect(400);
+  t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
 });

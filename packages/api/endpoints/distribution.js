@@ -11,7 +11,8 @@ const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { buildErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { getBucketMap, getPathsByBucketName } = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -95,7 +96,7 @@ async function handleLoginRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   log.debug('the query params:', req.query);
-  const templateVars = buildErrorTemplateVars(req.query);
+  const templateVars = buildLoginErrorTemplateVars(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);
@@ -180,6 +181,28 @@ async function handleLogoutRequest(req, res) {
   return res.send(rendered);
 }
 
+async function handleLocateBucketRequest(req, res) {
+  const { bucket_name: bucket } = req.query;
+  if (bucket === undefined) {
+    return res
+      .set({ 'Content-Type': 'text/plain' })
+      .status(400)
+      .send('Required "bucket_name" query paramater not specified');
+  }
+
+  const bucketMap = await getBucketMap();
+  const matchingPaths = getPathsByBucketName(bucket, bucketMap);
+  if (matchingPaths.length === 0) {
+    log.debug(`No route defined for ${bucket}`);
+    return res
+      .set({ 'Content-Type': 'text/plain' })
+      .status(404)
+      .send(`No route defined for ${bucket}`);
+  }
+
+  return res.status(200).json(matchingPaths);
+}
+
 /**
  * Responds to a file request
  *
@@ -215,6 +238,7 @@ async function handleFileRequest(req, res) {
 }
 
 module.exports = {
+  handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
   handleRootRequest,

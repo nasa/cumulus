@@ -2,6 +2,7 @@ const router = require('express-promise-router')();
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
+  handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
   handleFileRequest,
@@ -66,14 +67,12 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   return next();
 }
 
-const locate = (req, res) => res.status(501).end();
-
 const profile = (req, res) => res.send('Profile not available.');
 
 const pubkey = (req, res) => res.status(501).end();
 
 router.get('/', handleRootRequest);
-router.get('/locate', locate);
+router.get('/locate', handleLocateBucketRequest);
 router.get('/login', handleLoginRequest);
 router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);

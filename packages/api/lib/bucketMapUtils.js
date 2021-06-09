@@ -5,7 +5,7 @@ const paths = require('deepdash/paths');
 const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
 
-async function getBucketMap(bucket, key) {
+async function getYamlFile(bucket, key) {
   if (isNil(bucket) || isNil(key)) {
     return {};
   }
@@ -23,6 +23,10 @@ async function getBucketMap(bucket, key) {
     log.error('Had trouble getting yaml file', error);
     throw new Error('Could not get yaml');
   }
+}
+
+function getBucketMap() {
+  return getYamlFile(process.env.system_bucket, process.env.BUCKET_MAP_FILE);
 }
 
 function prependBucketname(name) {
