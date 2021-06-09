@@ -29,6 +29,9 @@ process.env.stackName = cryptoRandomString({ length: 10 });
 process.env.system_bucket = cryptoRandomString({ length: 10 });
 process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
 
+// import the express app after setting the env variables
+const { distributionApp } = require('../../app/distribution');
+
 const bucketMap = {
   MAP: {
     path1: {
@@ -37,16 +40,10 @@ const bucketMap = {
         'Content-Type': 'text/plain',
       },
     },
-    path2: {
-      path2a: 'bucket-path-2a',
-    },
   },
 };
 
 let context;
-
-// import the express app after setting the env variables
-const { distributionApp } = require('../../app/distribution');
 
 function headerIs(headers, name, value) {
   return headers[name.toLowerCase()] === value;
@@ -333,9 +330,8 @@ test('A sucessful /locate request for a bucket returns matching paths', async (t
   const response = await request(distributionApp)
     .get('/locate?bucket_name=bucket-path-1')
     .set('Accept', 'application/json')
-    .expect('Content-Type', 'application/json')
+    .expect('Content-Type', /application\/json/)
     .expect(200);
-  t.is(response.status, 200);
   t.deepEqual(response.body, ['path1']);
 });
 
