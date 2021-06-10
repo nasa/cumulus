@@ -18,7 +18,6 @@ async function waitForApiStatus(getMethod, params, status, config) {
       const record = await getMethod(params);
 
       if (record.status !== status) {
-        console.log((`Record status ${record.status}. Expect status ${status}`));
         throw new Error(`Record status ${record.status}. Expect status ${status}`);
       }
       return record;

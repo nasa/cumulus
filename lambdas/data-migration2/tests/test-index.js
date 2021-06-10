@@ -116,7 +116,7 @@ test.after.always(async (t) => {
 
 test.serial('handler migrates executions, granules, files, and PDRs by default', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -137,7 +137,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -174,7 +174,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
     granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionModel.delete({ arn: fakeExecution.arn }),
     t.context.executionPgModel.delete(
       t.context.knex,
       { cumulus_id: executionRecords[0].cumulus_id }
@@ -186,7 +186,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
 
 test.serial('handler migrates only executions if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -207,7 +207,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -247,7 +247,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
     granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionModel.delete({ arn: fakeExecution.arn }),
     t.context.executionPgModel.delete(
       t.context.knex,
       { cumulus_id: executionRecords[0].cumulus_id }
@@ -257,7 +257,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
 
 test.serial('handler migrates only granules if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -283,7 +283,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -328,7 +328,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
     granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionModel.delete({ arn: fakeExecution.arn }),
     t.context.executionPgModel.delete(
       t.context.knex,
       { cumulus_id: executionCumulusId }
@@ -342,7 +342,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
 
 test.serial('handler migrates only PDRs if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -364,7 +364,7 @@ test.serial('handler migrates only PDRs if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -404,7 +404,7 @@ test.serial('handler migrates only PDRs if configured', async (t) => {
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
     granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
+    executionModel.delete({ arn: fakeExecution.arn }),
     t.context.pdrPgModel.delete(
       t.context.knex,
       { cumulus_id: pdrRecords[0].cumulus_id }
