@@ -8,7 +8,7 @@ mkdir -p dist
 
 cp ../../packages/s3-credentials-endpoint/dist/lambda.zip lambda.zip
 
-zip dist/terraform-aws-cumulus-distribution.zip \
+zip dist/terraform-aws-tea-distribution.zip \
   *.tf \
   bucket_map.yaml.tmpl \
   lambda.zip

@@ -4,7 +4,8 @@ set -ex
 
 ## Build TF modules that require source building
 
-(cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
+(cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-tea-distribution.zip ../../terraform-aws-tea-distribution.zip)
+(cd tf-modules/cumulus_distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
 (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-replicator.zip ../../terraform-aws-cumulus-s3-replicator.zip)
 (cd tf-modules/cumulus-rds-tf && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-rds.zip ../../terraform-aws-cumulus-rds.zip)
 (cd lambdas/data-migration1 && ./bin/build-tf-module.sh && cp ./tf-module/terraform-aws-cumulus-data-migrations1.zip ../../terraform-aws-cumulus-data-migrations1.zip)

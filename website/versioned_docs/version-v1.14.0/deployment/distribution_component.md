@@ -49,7 +49,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 
 ```hcl
 module "distribution" {
-  source = "https://github.com/nasa/cumulus/archive/terraform-aws-cumulus-distribution-1.13.1.zip"
+  source = "https://github.com/nasa/cumulus/archive/terraform-aws-tea-distribution-1.13.1.zip"
 
   prefix        = "my-prefix"
   system_bucket = "my-internal-bucket"
