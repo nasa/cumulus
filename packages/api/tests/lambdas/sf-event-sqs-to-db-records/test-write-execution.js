@@ -308,3 +308,27 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS w
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
 });
+
+test.serial('writeExecution() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const finalPayload = { final: 'payload' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload = originalPayload;
+  await writeExecution({ cumulusMessage, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  await writeExecution({ cumulusMessage, knex });
+
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+});
