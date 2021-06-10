@@ -11,6 +11,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
+const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 
 const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
@@ -18,8 +19,8 @@ const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 process.env.OAUTH_CLIENT_ID = randomId('edlId');
 process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
-process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('disthost')}/${randomId('distpath')}`;
-process.env.OAUTH_HOST_URL = `https://${randomId('oauthhost')}/${randomId('oauthpath')}`;
+process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
+process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
 process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
 let context;
@@ -48,11 +49,11 @@ test.before(async () => {
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
-  const authorizationUrl = `https://${randomId('authhost')}.com/${randomId('authpath')}`;
+  const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
   const fileBucket = randomId('bucket');
   const fileKey = randomId('key');
   const fileLocation = `${fileBucket}/${fileKey}`;
-  const signedFileUrl = new URL(`https://${randomId('signedhost2')}.com/${randomId('path2')}`);
+  const s3Endpoint = getLocalstackEndpoint('s3');
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const getUserInfoResponse = { foo: 'bar' };
@@ -75,22 +76,6 @@ test.before(async () => {
   const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
 
-  sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
-    if (operation !== 'getObject') {
-      throw new Error(`Unexpected operation: ${operation}`);
-    }
-
-    if (params.Bucket !== fileBucket && params.Bucket !== process.env.public_buckets) {
-      throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
-    }
-
-    if (params.Key !== fileKey) {
-      throw new Error(`Unexpected params.Key: ${params.Key}`);
-    }
-
-    return signedFileUrl.toString();
-  });
-
   sinon.stub(s3(), 'headObject').returns({
     promise: sinon.stub().resolves(),
   });
@@ -104,9 +89,9 @@ test.before(async () => {
     fileKey,
     fileLocation,
     authorizationUrl,
-    signedFileUrl,
     authorizationCode: randomId('code'),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
+    s3Endpoint,
   };
 });
 
@@ -171,7 +156,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
     accessTokenCookie,
     accessTokenRecord,
     fileLocation,
-    signedFileUrl,
+    s3Endpoint,
   } = context;
 
   const response = await request(distributionApp)
@@ -184,15 +169,18 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
+
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
 test('A request for a public file without an access token returns a redirect to S3', async (t) => {
-  const { fileKey, signedFileUrl } = context;
+  const { fileKey, s3Endpoint } = context;
+  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
   const response = await request(distributionApp)
-    .get(`/${process.env.public_buckets}/${fileKey}`)
+    .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
     .expect(307);
 
@@ -200,6 +188,8 @@ test('A request for a public file without an access token returns a redirect to 
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
+
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
