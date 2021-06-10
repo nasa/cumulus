@@ -37,6 +37,7 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.postRDSDeploymentVersion = '9.0.0';
 });
 
 test.beforeEach((t) => {
@@ -160,7 +161,6 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       url: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
       workflow_name: workflowName,
       error: {},
-      final_payload: undefined,
       async_operation_cumulus_id: 1,
       collection_cumulus_id: 2,
       parent_cumulus_id: 3,
@@ -307,4 +307,28 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if RDS w
   );
   t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await executionPgModel.exists(knex, { arn: executionArn }));
+});
+
+test.serial('writeExecution() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const finalPayload = { final: 'payload' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload = originalPayload;
+  await writeExecution({ cumulusMessage, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  await writeExecution({ cumulusMessage, knex });
+
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
 });
