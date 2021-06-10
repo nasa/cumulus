@@ -102,7 +102,7 @@ describe('Ingesting from PDR', () => {
 
       executionModel = new Execution();
 
-      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
+      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
@@ -123,7 +123,6 @@ describe('Ingesting from PDR', () => {
           host: nodeName,
         },
       });
-      console.log(createProviderResponse);
 
       const createProviderResponseBody = JSON.parse(
         createProviderResponse.body

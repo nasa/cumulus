@@ -86,7 +86,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
-      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
+      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithExecutionNamePrefix');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
