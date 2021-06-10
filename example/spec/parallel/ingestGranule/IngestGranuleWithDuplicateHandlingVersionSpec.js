@@ -14,6 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -25,23 +26,26 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The IngestGranule workflow with DuplicateHandling="version" and a granule re-ingested with one new file, one unchanged existing file, and one modified file', () => {
   let beforeAllFailed = false;
   let collection;
+  let config;
   let differentChecksumFilename;
   let differentChecksumKey;
-  let firstIngestGranuleRule;
   let granuleId;
+  let ingestGranuleExecution1Arn;
+  let ingestGranuleExecution2;
+  let ingestGranuleExecution2Arn;
+  let ingestGranuleRule1;
+  let ingestGranuleRule2;
   let newFileFilename;
   let newFileKey;
   let prefix;
   let provider;
   let sameChecksumFilename;
   let sameChecksumKey;
-  let secondIngestGranuleExecution;
-  let secondIngestGranuleRule;
   let sourceBucket;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
@@ -82,7 +86,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       const ingestTime = Date.now() - 1000 * 30;
 
       // Ingest the granule the first time
-      firstIngestGranuleRule = await createOneTimeRule(
+      ingestGranuleRule1 = await createOneTimeRule(
         prefix,
         {
           workflow: 'IngestGranule',
@@ -112,11 +116,11 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       );
 
       // Find the execution ARN
-      const firstIngestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecution1Arn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
-          return executionId === firstIngestGranuleRule.payload.testExecutionId;
+          return executionId === ingestGranuleRule1.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
         { timeout: 30 }
@@ -125,7 +129,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       // Wait for the execution to be completed
       await getExecutionWithStatus({
         prefix,
-        arn: firstIngestGranuleExecutionArn,
+        arn: ingestGranuleExecution1Arn,
         status: 'completed',
       });
 
@@ -149,7 +153,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       });
 
       // Re-ingest the updated granule
-      secondIngestGranuleRule = await createOneTimeRule(
+      ingestGranuleRule2 = await createOneTimeRule(
         prefix,
         {
           workflow: 'IngestGranule',
@@ -183,20 +187,20 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       );
 
       // Find the execution ARN
-      const secondIngestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecution2Arn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
-          return executionId === secondIngestGranuleRule.payload.testExecutionId;
+          return executionId === ingestGranuleRule2.payload.testExecutionId;
         },
         { timestamp__from: ingestTime },
         { timeout: 30 }
       );
 
       // Wait for the execution to be completed
-      secondIngestGranuleExecution = await getExecutionWithStatus({
+      ingestGranuleExecution2 = await getExecutionWithStatus({
         prefix,
-        arn: secondIngestGranuleExecutionArn,
+        arn: ingestGranuleExecution2Arn,
         status: 'completed',
       });
     } catch (error) {
@@ -208,7 +212,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
   it('returns the expected files', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const files = secondIngestGranuleExecution.finalPayload.granules[0].files;
+      const files = ingestGranuleExecution2.finalPayload.granules[0].files;
 
       // Make sure we got the expected number of files
       expect(files.length).toBe(5);
@@ -232,13 +236,18 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
     // Must delete rules before deleting associated collection and provider
     await pAll(
       [
-        () => deleteRule({ prefix, ruleName: get(firstIngestGranuleRule, 'name') }),
-        () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule1, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule2, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
 
     await deleteGranule({ prefix, granuleId });
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),
+    ]);
+
     await pAll(
       [
         () => deleteS3Object(sourceBucket, differentChecksumKey),

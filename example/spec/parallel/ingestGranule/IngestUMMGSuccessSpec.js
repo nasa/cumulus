@@ -10,7 +10,6 @@ const {
 } = require('url');
 const mime = require('mime-types');
 
-const Execution = require('@cumulus/api/models/executions');
 const {
   getS3Object,
   s3ObjectExists,
@@ -27,6 +26,7 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const providersApi = require('@cumulus/api-client/providers');
 const {
@@ -110,9 +110,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let workflowExecution;
   let inputPayload;
   let expectedPayload;
+  let pdrFilename;
   let postToCmrOutput;
   let granule;
-  let executionModel;
   let config;
   let testDataFolder;
   let collection;
@@ -134,7 +134,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
 
       const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
@@ -154,6 +153,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
 
       const templatedOutputPayloadFilename = templateFile({
@@ -213,12 +213,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await Promise.all(inputPayload.granules.map(
-      (g) => granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: g.granuleId,
-      })
-    ));
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await granulesApiTestUtils.removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -230,7 +233,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         prefix: config.stackName,
         provider: { id: provider.id },
       }),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
     ]);
   });
 

@@ -31,6 +31,7 @@ const {
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -87,11 +88,12 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let pdrModel;
   let postToCmrOutput;
-  let publishGranuleExecutionArn;
   let provider;
   let providerModel;
+  let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
 
@@ -133,6 +135,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -232,6 +235,13 @@ describe('The S3 Ingest Granules workflow', () => {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -240,10 +250,6 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionVersion: collection.version,
       }),
       providerModel.delete(provider),
-      executionModel.delete({ arn: workflowExecutionArn }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
-      }),
     ]);
   });
 

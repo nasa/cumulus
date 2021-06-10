@@ -26,6 +26,7 @@ const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -70,11 +71,13 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   let config;
   let executionArn;
   let executionNamePrefix;
+  let ingestGranuleExecutionArn;
+  let ingestPdrExecutionArn;
   let pdrFilename;
   let provider;
+  let queuePdrsOutput;
   let testDataFolder;
   let testSuffix;
-  let queuePdrsOutput;
   let workflowExecution;
 
   beforeAll(async () => {
@@ -137,6 +140,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         }
       );
 
+      ingestPdrExecutionArn = workflowExecution.executionArn;
+
       queuePdrsOutput = await lambdaStep.getStepOutput(
         workflowExecution.executionArn,
         'QueuePdrs'
@@ -156,14 +161,19 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
     });
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]);
   });
 
@@ -186,7 +196,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('results in an IngestGranule workflow execution', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      await expectAsync(waitForStartedExecution(executionArn)).toBeResolved();
+      ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
+      await expectAsync(waitForStartedExecution(ingestGranuleExecutionArn)).toBeResolved();
     }
   });
 });
