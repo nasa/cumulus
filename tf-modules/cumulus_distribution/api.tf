@@ -18,6 +18,10 @@ locals {
       cmr_provider                   = var.cmr_provider
       public_buckets                 = join(",", var.public_buckets)
   }
+  all_buckets = compact(flatten([
+    var.public_buckets,
+    var.protected_buckets
+  ]))
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }
 

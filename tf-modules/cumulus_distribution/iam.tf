@@ -47,6 +47,17 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
   }
 
   statement {
+    actions = [
+      "s3:GetObject*",
+      "s3:PutObject*",
+      "s3:ListMultipartUploadParts",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion"
+    ]
+    resources = [for b in local.all_buckets: "arn:aws:s3:::${b}/*"]
+  }
+
+  statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
       aws_secretsmanager_secret.api_oauth_client_password.arn

@@ -171,16 +171,21 @@ async function handleLogoutRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
+  let signedS3Url;
   const url = `s3://${req.params[0]}`;
   const objectStore = objectStoreForProtocol('s3');
-  let signedS3Url;
+  const range = req.range();
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   try {
     signedS3Url = await objectStore.signGetObject(
       url,
-      { 'A-userid': req.authorizedMetadata.userName }
+      {
+        'A-userid': req.authorizedMetadata.userName,
+        ResponseCacheControl: 'private, max-age=600',
+        ...range ? { Range: range } : {},
+      }
     );
   } catch (error) {
     log.error('Error occurred when signing URL:', error);
@@ -193,7 +198,6 @@ async function handleFileRequest(req, res) {
     const rendered = render(errorTemplate, vars);
     return res.status(404).send(rendered);
   }
-  res.append('Cache-Control', 'private, max-age=600');
   return res
     .status(307)
     .set({ Location: signedS3Url })
