@@ -4,8 +4,6 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
-const { removeNilProperties } = require('@cumulus/common/util');
-
 
 const {
   ExecutionPgModel,
