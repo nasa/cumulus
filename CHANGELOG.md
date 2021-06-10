@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2472**
   - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
   - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
+- **CUMULUS-2494**
+  - Renamed release artifact `terraform-aws-cumulus-distribution.zip` to `terraform-aws-tea-distribution.zip`
+  - Created new `terraform-aws-cumulus-distribution.zip` for the new distribution API
+  - Publish the new distribution API release artifact to GitHub
 
 ### Added
 
