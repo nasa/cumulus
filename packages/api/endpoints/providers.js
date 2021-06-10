@@ -7,6 +7,7 @@ const {
   ProviderPgModel,
   tableNames,
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
   validateProviderHost,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -55,18 +56,20 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const id = req.params.id;
+  const knex = await getKnexClient({ env: process.env });
+  const providerPgModel = new ProviderPgModel();
 
-  const providerModel = new Provider();
   let result;
   try {
-    result = await providerModel.get({ id });
+    const providerRecord = providerPgModel.get(knex, { id });
+    result = translatePostgresProviderToApiProvider(providerRecord);
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${JSON.stringify(id)} not found.`);
   }
-  delete result.password;
   return res.send(result);
 }
 
+// TODO remove this Phase 3/Dynamo removal
 async function throwIfDynamoRecordExists(providerModel, id) {
   try {
     await providerModel.get({ id });

@@ -1,7 +1,7 @@
 import { envUtils } from '@cumulus/common';
 import { KMS } from '@cumulus/aws-client';
 import { ApiProvider } from '@cumulus/types';
-import { PostgresProvider } from '../types/provider';
+import { PostgresProvider, PostgresProviderRecord } from '../types/provider';
 
 export const encryptValueWithKMS = (
   value: string,
@@ -10,6 +10,21 @@ export const encryptValueWithKMS = (
   const providerKmsKeyId = envUtils.getRequiredEnvVar('provider_kms_key_id');
   return encryptFunction(providerKmsKeyId, value);
 };
+
+export const translatePostgresProviderToApiProvider = (
+  record: PostgresProviderRecord
+): ApiProvider => ({
+  id: record.name,
+  cmKeyId: record.cm_key_id,
+  certificateUri: record.certificate_uri,
+  privateKey: record?.private_key,
+  globalConnectionLimit: record.global_connection_limit,
+  port: record.port,
+  host: record.host,
+  protocol: record.protocol,
+  createdAt: record.created_at.getTime(),
+  updatedAt: record.updated_at.getTime(),
+});
 
 /**
 * Translates API Provider record to Postgres Provider record
