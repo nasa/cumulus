@@ -1,6 +1,4 @@
 const router = require('express-promise-router')();
-const { randomId } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   handleLoginRequest,
   handleLogoutRequest,
@@ -9,60 +7,7 @@ const {
 const { handleCredentialRequest } = require('../endpoints/s3credentials');
 const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
 const version = require('../endpoints/version');
-const { isAccessTokenExpired } = require('../lib/token');
-const {
-  getConfigurations,
-  isPublicRequest,
-} = require('../lib/distribution');
-
-/**
- * Ensure request is authorized through EarthdataLogin or redirect to become so.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @param {Function} next - express middleware callback function
- * @returns {Promise<Object>} - promise of an express response object
- */
-async function ensureAuthorizedOrRedirect(req, res, next) {
-  // Skip authentication for debugging purposes.
-  if (process.env.FAKE_AUTH) {
-    req.authorizedMetadata = { userName: randomId('username') };
-    return next();
-  }
-
-  if (isPublicRequest(req.path)) {
-    req.authorizedMetadata = { userName: 'unauthenticated user' };
-    return next();
-  }
-
-  const {
-    accessTokenModel,
-    oauthClient,
-  } = await getConfigurations();
-
-  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
-  const accessToken = req.cookies.accessToken;
-
-  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.redirect(307, redirectURLForAuthorizationCode);
-    }
-
-    throw error;
-  }
-
-  if (isAccessTokenExpired(accessTokenRecord)) {
-    return res.redirect(307, redirectURLForAuthorizationCode);
-  }
-
-  req.authorizedMetadata = { userName: accessTokenRecord.username };
-  return next();
-}
+const { ensureAuthorizedOrRedirect } = require('../lib/distribution');
 
 const locate = (req, res) => res.status(501).end();
 
