@@ -12,8 +12,9 @@ const {
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
-const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -108,7 +109,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
     afterAll(async () => {
       // clean up granule
-      await granulesApiTestUtils.deleteGranule({
+      await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });

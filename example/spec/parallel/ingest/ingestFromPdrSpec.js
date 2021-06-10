@@ -27,6 +27,7 @@ const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -36,7 +37,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -258,12 +258,12 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await granulesApiTestUtils.deleteGranule({
+        await deleteGranule({
           prefix: config.stackName,
           granuleId: testDataGranuleId,
         });
         await Promise.all(parseLambdaOutput.payload.granules.map(
-          (granule) => granulesApiTestUtils.deleteGranule({
+          (granule) => deleteGranule({
             prefix: config.stackName,
             granuleId: granule.granuleId,
           })
@@ -381,7 +381,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              granulesApiTestUtils.deleteGranule({
+              deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
               }))
@@ -401,7 +401,7 @@ describe('Ingesting from PDR', () => {
           afterAll(async () => {
             await Promise.all(
               syncGranuleLambdaOutput.payload.granules.map((g) =>
-                granulesApiTestUtils.deleteGranule({
+                deleteGranule({
                   prefix: config.stackName,
                   granuleId: g.granuleId,
                 }))

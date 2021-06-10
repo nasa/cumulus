@@ -2,6 +2,7 @@
 
 const fs = require('fs-extra');
 const { models: { Execution, Granule } } = require('@cumulus/api');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
@@ -105,7 +106,7 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await granulesApiTestUtils.deleteGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });

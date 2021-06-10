@@ -1,12 +1,12 @@
-const { deleteProvider } = require('@cumulus/api-client/providers');
 const { Execution } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
   buildAndExecuteWorkflow,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -74,7 +74,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-      (granule) => granulesApiTestUtils.deleteGranule({
+      (granule) => deleteGranule({
         prefix: config.stackName,
         granuleId: granule.granuleId,
       })
@@ -110,7 +110,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-        (granule) => granulesApiTestUtils.deleteGranule({
+        (granule) => deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -167,7 +167,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => granulesApiTestUtils.deleteGranule({
+        (granule) => deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
         })
@@ -181,7 +181,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
     describe('SyncGranule lambda function', () => {
       afterAll(async () => {
         await Promise.all(lambdaOutput.payload.granules.map(
-          (granule) => granulesApiTestUtils.deleteGranule({
+          (granule) => deleteGranule({
             prefix: config.stackName,
             granuleId: granule.granuleId,
           })

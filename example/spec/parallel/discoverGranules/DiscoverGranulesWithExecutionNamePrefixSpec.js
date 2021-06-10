@@ -5,9 +5,9 @@ const pAll = require('p-all');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   buildAndExecuteWorkflow,
-  granulesApi: granulesApiTestUtils,
   loadCollection,
   loadProvider,
   waitForStartedExecution,
@@ -108,7 +108,7 @@ describe('The DiscoverGranules workflow', () => {
 
   afterAll(async () => {
     await waitForCompletedExecution(workflowExecution.executionArn);
-    await granulesApiTestUtils.deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
+    await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
 
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });

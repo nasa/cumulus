@@ -26,6 +26,7 @@ const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -35,7 +36,6 @@ const {
   cleanupProviders,
   cleanupCollections,
   getExecutionInputObject,
-  granulesApi: granulesApiTestUtils,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -151,7 +151,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await granulesApiTestUtils.deleteGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
     });

@@ -45,11 +45,12 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/api-client/collections');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
-const providersApi = require('@cumulus/api-client/providers');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const providersApi = require('@cumulus/api-client/providers');
+const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -1195,7 +1196,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Delete the granule
-        await granulesApiTestUtils.deleteGranule({
+        await deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });

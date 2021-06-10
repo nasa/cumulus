@@ -29,6 +29,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -38,7 +39,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -174,7 +174,7 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await granulesApiTestUtils.deleteGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: testDataGranuleId,
     });
@@ -308,7 +308,7 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await granulesApiTestUtils.deleteGranule({
+        await deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId,
         });
@@ -428,7 +428,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              granulesApiTestUtils.deleteGranule({
+              deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
               }))
