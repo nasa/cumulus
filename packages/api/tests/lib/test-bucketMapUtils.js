@@ -8,10 +8,10 @@ const cryptoRandomString = require('crypto-random-string');
 const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
   checkPrivateBucket,
-  checkPublicBucket,
   getBucketMap,
   getBucketDynamicPath,
   getPathsByBucketName,
+  isPublicBucket,
 } = require('../../lib/bucketMapUtils');
 
 process.env.BUCKETNAME_PREFIX = 'bucketMap-prefix-';
@@ -154,31 +154,31 @@ test('checkPrivateBucket returns empty array when there are no private buckets i
   t.true(isEmpty(userGroups));
 });
 
-test('checkPublicBucket returns true when the bucket is listed as public ', (t) => {
+test('isPublicBucket returns true when the bucket is listed as public ', (t) => {
   const bucket = `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`;
   const object = 'morepath/fileid';
-  const isPublic = checkPublicBucket(bucket, bucketMap, object);
+  const isPublic = isPublicBucket(bucket, bucketMap, object);
   t.true(isPublic);
 });
 
-test('checkPublicBucket matches the bucket with longest path ', (t) => {
+test('isPublicBucket matches the bucket with longest path ', (t) => {
   const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'browse/jpg/fileid';
-  const isPublic = checkPublicBucket(bucket, bucketMap, object);
+  const isPublic = isPublicBucket(bucket, bucketMap, object);
   t.true(isPublic);
 });
 
-test('checkPublicBucket returns empty array when there is no matching bucket found', (t) => {
+test('isPublicBucket returns empty array when there is no matching bucket found', (t) => {
   const bucket = `${process.env.BUCKETNAME_PREFIX}data-bucket`;
   const object = 'qa/morepath/fileid';
-  const isPublic = checkPublicBucket(bucket, bucketMap, object);
+  const isPublic = isPublicBucket(bucket, bucketMap, object);
   t.false(isPublic);
 });
 
-test('checkPublicBucket returns empty array when there are public buckets in bucket map', (t) => {
+test('isPublicBucket returns empty array when there are public buckets in bucket map', (t) => {
   const bucket = `${process.env.BUCKETNAME_PREFIX}bucket-path-2a`;
   const object = 'morepath/fileid';
-  const isPublic = checkPublicBucket(bucket, {}, object);
+  const isPublic = isPublicBucket(bucket, {}, object);
   t.false(isPublic);
 });
 

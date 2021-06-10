@@ -37,7 +37,7 @@ function prependBucketname(name) {
 /**
  * locate the bucket name and path from bucket map for the given paths
  *
- * @param {Array} pathList - paths specified in the uri parameters e.g. path1/path2/file
+ * @param {Array<string>} pathList - paths specified in the uri parameters e.g. path1/path2/file
  * @param {Object} bucketMap - bucket map object
  * @returns {Object} TODO
  */
@@ -142,7 +142,7 @@ function checkPrivateBucket(bucket, bucketMap, object_name = '') {
   return [];
 }
 
-function checkPublicBucket(bucket, bucketMap, object_name = '') {
+function isPublicBucket(bucket, bucketMap, object_name = '') {
   // Check for PUBLIC_BUCKETS in bucket map file
   if (bucketMap.PUBLIC_BUCKETS) {
     const sortedBuckets = getSortedBucketList(bucketMap, 'PUBLIC_BUCKETS');
@@ -174,9 +174,9 @@ function getPathsByBucketName(bucket, bucketMap) {
 
 module.exports = {
   checkPrivateBucket,
-  checkPublicBucket,
   getBucketMap,
   getBucketDynamicPath,
   getPathsByBucketName,
+  isPublicBucket,
   processRequest,
 };
