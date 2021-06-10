@@ -11,6 +11,7 @@ const pWaitFor = require('p-wait-for');
 
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
@@ -89,6 +90,9 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   ]);
 }
 
+let ingestGranuleExecutionArn;
+const ingestAndPublishGranuleExecutionArns = [];
+
 /**
  * Creates a new test collection with associated granule for testing.
  *
@@ -139,9 +143,11 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     ],
   };
 
-  const { executionArn: ingestGranuleExecutionArn } = await buildAndExecuteWorkflow(
+  const workflowExecution = await buildAndExecuteWorkflow(
     prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
   );
+
+  ingestGranuleExecutionArn = workflowExecution.executionArn;
 
   await waitForModelStatus(
     new Granule(),
@@ -194,9 +200,9 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     testDataFolder
   );
 
-  await buildAndExecuteWorkflow(
+  ingestAndPublishGranuleExecutionArns.push(await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-  );
+  ));
 
   await waitForModelStatus(
     new Granule(),
@@ -754,6 +760,10 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
+
+    // TODO there may be another execution to delete here
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await Promise.all(ingestAndPublishGranuleExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
 
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
