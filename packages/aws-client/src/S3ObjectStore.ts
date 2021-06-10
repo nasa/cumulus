@@ -1,5 +1,5 @@
+import * as querystring from 'querystring';
 import { URL } from 'url';
-import isEmpty from 'lodash/isEmpty';
 import { s3 } from './services';
 import { headObject, parseS3Uri } from './S3';
 
@@ -39,12 +39,15 @@ class S3ObjectStore {
     // Verifies that the object exists, or throws NotFound
     await headObject(Bucket, Key);
 
-    const signedUrl = this.s3.getSignedUrl('getObject', { Bucket, Key });
-    const parsedSignedUrl = new URL(signedUrl);
-    if (!isEmpty(params)) {
-      Object.entries(params).map(([key, value]) => parsedSignedUrl.searchParams.set(key, value));
+    const req = this.s3.getObject({ Bucket, Key });
+
+    if (params && req.on) {
+      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(params)}`; }));
     }
-    return parsedSignedUrl.toString();
+
+    // TypeScript doesn't recognize that req has a presign method.  It does.
+    const result = await (req as any).presign();
+    return result;
   }
 }
 
