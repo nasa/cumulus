@@ -9,19 +9,29 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
 
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  localStackConnectionEnv,
+  fakeExecutionRecordFactory,
+} = require('@cumulus/db');
+
+const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  fakeExecutionFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-process.env.AccessTokensTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = cryptoRandomString({ length: 10 });
+process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+process.env.TOKEN_SECRET = cryptoRandomString({ length: 10 });
+
+const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -47,7 +57,6 @@ const cumulusMetaOutput = () => ({
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
-const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -156,12 +165,11 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let executionModel;
 let mockedSF;
 let mockedSFExecution;
 
-test.before(async () => {
-  process.env.system_bucket = randomString();
+test.before(async (t) => {
+  process.env.system_bucket = cryptoRandomString({ length: 10 });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await putJsonS3Object(
@@ -181,24 +189,49 @@ test.before(async () => {
     .stub(awsServices.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);
 
-  const username = randomString();
+  const username = cryptoRandomString({ length: 10 });
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  executionModel = new models.Execution();
-  await executionModel.createTable();
-  await executionModel.create(fakeExpiredExecution);
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName };
+
+  const originalPayload = {
+    original: 'payload',
+  };
+  const finalPayload = {
+    final: 'payload',
+  };
+  t.context.fakeExecutionRecord = fakeExecutionRecordFactory({
+    arn: expiredExecutionArn,
+    original_payload: originalPayload,
+    final_payload: finalPayload,
+  });
+  const executionPgModel = new ExecutionPgModel();
+  await executionPgModel.create(
+    t.context.knex,
+    t.context.fakeExecutionRecord
+  );
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();
-  await executionModel.deleteTable();
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -298,10 +331,16 @@ test('when execution is no longer in step function API, returns status from data
   const executionStatus = response.body;
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
-  t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
-  t.is(executionStatus.execution.name, fakeExpiredExecution.name);
-  t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
-  t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
+  t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
+  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.name);
+  t.is(
+    executionStatus.execution.input,
+    JSON.stringify(t.context.fakeExecutionRecord.original_payload)
+  );
+  t.is(
+    executionStatus.execution.output,
+    JSON.stringify(t.context.fakeExecutionRecord.final_payload)
+  );
 });
 
 test('when execution not found in step function API nor database, returns not found', async (t) => {
@@ -313,5 +352,5 @@ test('when execution not found in step function API nor database, returns not fo
 
   const executionStatus = response.body;
   t.is(executionStatus.error, 'Not Found');
-  t.is(executionStatus.message, 'Execution not found in API or database');
+  t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
 });
