@@ -11,7 +11,10 @@ const {
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
+const Logger = require('@cumulus/logger');
 const models = require('../models');
+
+const log = new Logger({ sender: '@cumulus/api/pdrs' });
 
 /**
  * List and search pdrs
@@ -87,6 +90,7 @@ async function del(req, res) {
       }, { ignore: [404] });
     }
   } catch (error) {
+    log.debug(`Failed to delete PDR with name ${pdrName}`);
     if (!isRecordDoesNotExistError(error)) throw error;
   }
   return res.send({ detail: 'Record deleted' });

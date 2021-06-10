@@ -3,8 +3,8 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
