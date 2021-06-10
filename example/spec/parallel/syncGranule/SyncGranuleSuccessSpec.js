@@ -3,6 +3,7 @@ const difference = require('lodash/difference');
 const {
   buildAndExecuteWorkflow,
   addProviders,
+  api: apiTestUtils,
   cleanupProviders,
   addCollections,
   cleanupCollections,
@@ -12,6 +13,8 @@ const {
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -55,6 +58,9 @@ describe('The Sync Granules workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let syncGranuleExecutionArn;
+  let reingestGranuleExecutionArn;
+  let failingExecutionArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -141,18 +147,32 @@ describe('The Sync Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: inputPayload.pdr.name,
+    });
+
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+    ]);
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -290,12 +310,14 @@ describe('The Sync Granules workflow', () => {
         startTask: 'SyncGranule',
       });
 
-      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+      reingestGranuleExecutionArn = reingestGranuleExecution.executionArn;
 
-      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+      console.log(`Wait for completed execution ${reingestGranuleExecutionArn}`);
+
+      await waitForCompletedExecution(reingestGranuleExecutionArn);
 
       const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
-        reingestGranuleExecution.executionArn,
+        reingestGranuleExecutionArn,
         'SyncGranule'
       );
 
@@ -341,6 +363,8 @@ describe('The Sync Granules workflow', () => {
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
+
+      failingExecutionArn = failingExecution.executionArn;
     });
 
     it('completes execution with failure status', () => {

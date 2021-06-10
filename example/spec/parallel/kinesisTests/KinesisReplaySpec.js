@@ -8,6 +8,7 @@ const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const { invokeApi } = require('@cumulus/api-client');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -215,6 +216,12 @@ describe('The Kinesis Replay API', () => {
         console.log('Waiting to ensure workflows expected not to start do not start...');
         await Promise.all(tooOldToExpectWorkflows);
         await Promise.all(tooNewToExpectWorkflows);
+
+        console.log('Cleaning up executions...');
+        await Promise.all([
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[0].executionArn }),
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[1].executionArn }),
+        ]);
       });
     });
   });
