@@ -3,7 +3,7 @@ locals {
   bucket_map_file_name = fileexists("${path.module}/cumulus_distribution/bucket_map.yaml") ? "${path.module}/cumulus_distribution/bucket_map.yaml" : "${path.module}/cumulus_distribution/bucket_map.yaml.tmpl"
 }
 
-resource "aws_s3_bucket_object" "bucket_map_yaml_file" {
+resource "aws_s3_bucket_object" "bucket_map_yaml_distribution" {
   bucket  = var.system_bucket
   key     = "${var.prefix}/cumulus_distribution/bucket_map.yaml"
   content = templatefile(local.bucket_map_file_name, {
@@ -23,7 +23,7 @@ module "cumulus_distribution" {
   prefix                   = var.prefix
   api_gateway_stage        = local.distribution_api_gateway_stage
   api_url                  = var.cumulus_distribution_url
-  bucket_map_file          = aws_s3_bucket_object.bucket_map_yaml.id
+  bucket_map_file          = aws_s3_bucket_object.bucket_map_yaml_distribution.id
   bucketname_prefix        = ""
   cmr_acl_based_credentials = true
   cmr_environment           = var.cmr_environment
