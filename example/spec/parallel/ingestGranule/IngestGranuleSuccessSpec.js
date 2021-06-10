@@ -298,6 +298,7 @@ describe('The S3 Ingest Granules workflow', () => {
         arn: workflowExecutionArn,
       },
       'running'
+    );
     expect(record.status).toEqual('running');
   });
 
