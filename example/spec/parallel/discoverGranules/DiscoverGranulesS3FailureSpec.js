@@ -13,6 +13,7 @@ const {
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
@@ -65,15 +66,17 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await Promise.all([
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: stackName, providerId: provider.id }),
-    ]));
+    ]);
+  });
 
   it('fails', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
