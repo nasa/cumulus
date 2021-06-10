@@ -69,6 +69,7 @@ const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
@@ -140,6 +141,10 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: testDataGranuleId,
+    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -231,7 +236,6 @@ describe('Ingesting from PDR', () => {
       let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
-      const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(() => {
@@ -258,10 +262,6 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await deleteGranule({
-          prefix: config.stackName,
-          granuleId: testDataGranuleId,
-        });
         await Promise.all(parseLambdaOutput.payload.granules.map(
           (granule) => deleteGranule({
             prefix: config.stackName,
