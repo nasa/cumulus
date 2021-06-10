@@ -1,5 +1,6 @@
 const { Execution } = require('@cumulus/api/models');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
@@ -29,6 +30,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
   let queueGranulesOutput;
   let testId;
   let testSuffix;
+  let httpsWorkflowExecutionArn;
+  let ingestGranuleWorkflowArns;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -57,16 +60,23 @@ describe('The Discover Granules workflow with https Protocol', () => {
       { provider_path: 'granules/fake_granules' }
     );
 
+    httpsWorkflowExecutionArn = httpsWorkflowExecution.executionArn;
+
     lambdaStep = new LambdaStep();
 
     queueGranulesOutput = await lambdaStep.getStepOutput(
-      httpsWorkflowExecution.executionArn,
+      httpsWorkflowExecutionArn,
       'QueueGranules'
     );
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(ingestGranuleWorkflowArns.map((executionArn) =>
+      deleteExecution({ prefix: config.stackName, executionArn })));
+
+    await deleteExecution({ prefix: config.stackName, executionArn: httpsWorkflowExecutionArn });
+
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       deleteProvider({ prefix: config.stackName, providerId: provider.id }),
@@ -135,13 +145,17 @@ describe('The Discover Granules workflow with https Protocol', () => {
    * granule ingest workflow completes successfully.
    */
   describe('IngestGranule workflow', () => {
-    let ingestGranuleWorkflowArn;
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
-      ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+      ingestGranuleWorkflowArns = [
+        queueGranulesOutput.payload.running[0],
+        queueGranulesOutput.payload.running[1],
+        queueGranulesOutput.payload.running[2],
+      ];
+
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArns[0]);
+      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArns[0]);
     });
 
     it('executes successfully', () => {
@@ -149,9 +163,20 @@ describe('The Discover Granules workflow with https Protocol', () => {
     });
 
     describe('SyncGranule lambda function', () => {
+      let lambdaOutput;
+
+      afterAll(async () => {
+        await Promise.all(lambdaOutput.payload.granules.map(
+          (granule) => granulesApiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          })
+        ));
+      });
+
       it('outputs 1 granule', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(
-          ingestGranuleWorkflowArn,
+        lambdaOutput = await lambdaStep.getStepOutput(
+          ingestGranuleWorkflowArns[0],
           'SyncGranule'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);

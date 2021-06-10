@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -97,6 +98,12 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
     } catch (error) {
       beforeAllFailed = true;
       throw error;
+    }
+  });
+
+  afterAll(async () => {
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
     }
   });
 

@@ -325,14 +325,14 @@ const loadCollection = async (params = {}) =>
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} collections - List of collections to delete
  * @param {string} postfix - string that was appended to collection name
- * @returns {Promise.<number>} number of deleted collections
+ * @returns {Array<Object>} a list of the http responses
  */
 async function deleteCollections(stackName, bucketName, collections, postfix) {
   // setProcessEnvironment is not needed by this function, but other code
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
 
-  await Promise.all(
+  return await Promise.all(
     collections.map(
       ({ name, version }) => {
         const realName = postfix ? `${name}${postfix}` : name;
@@ -344,7 +344,6 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
       }
     )
   );
-  return collections.length;
 }
 
 /**

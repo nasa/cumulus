@@ -5,21 +5,19 @@ const hasha = require('hasha');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 
-const {
-  Execution,
-  Pdr,
-} = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   addCollections,
+  api: apiTestUtils,
   buildAndStartWorkflow,
   getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteProvider, createProvider,
 } = require('@cumulus/api-client/providers');
@@ -56,11 +54,10 @@ describe('The TestPythonProcessing workflow', () => {
   let beforeAllError;
   let collection;
   let config;
-  let executionModel;
   let expectedS3TagSet;
   let granuleResult;
   let inputPayload;
-  let pdrModel;
+  let pdrFilename;
   let provider;
   let providerData;
   let testDataFolder;
@@ -78,12 +75,9 @@ describe('The TestPythonProcessing workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       providerData = {
@@ -101,6 +95,7 @@ describe('The TestPythonProcessing workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -129,21 +124,22 @@ describe('The TestPythonProcessing workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+    await deleteProvider({ prefix: config.stackName, providerId: provider.id });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
-      }),
-      deleteProvider({ prefix: config.stackName, providerId: provider.id }),
-      executionModel.delete({ arn: workflowExecutionArn }),
-      removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
       }),
     ]);
   });

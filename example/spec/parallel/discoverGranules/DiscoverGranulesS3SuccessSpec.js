@@ -13,7 +13,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
-const { getExecution } = require('@cumulus/api-client/executions');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
@@ -30,6 +30,7 @@ describe('The DiscoverGranules workflow', () => {
   let stackName;
   let bucket;
   let providerPath;
+  let parentExecutionArn;
 
   beforeAll(async () => {
     ({ stackName, bucket } = await loadConfig());
@@ -91,8 +92,11 @@ describe('The DiscoverGranules workflow', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });
+    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
         prefix: stackName,
@@ -103,7 +107,8 @@ describe('The DiscoverGranules workflow', () => {
         prefix: stackName,
         provider: provider.id,
       }),
-    ]));
+    ]);
+  });
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
@@ -165,6 +170,7 @@ describe('The DiscoverGranules workflow', () => {
     });
 
     it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
+      parentExecutionArn = queueGranulesOutput.payload.running[0];
       const executionInput = await getExecutionInputObject(queueGranulesOutput.payload.running[0]);
       expect(executionInput.meta.staticValue).toEqual('aStaticValue');
       expect(executionInput.meta.interpolatedValueStackName).toEqual(queueGranulesOutput.meta.stack);
