@@ -211,15 +211,6 @@ describe('The Sync Granules workflow', () => {
       }));
     });
 
-    afterAll(async () => {
-      await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-    });
-
     it('receives payload with file objects updated to include file staging location', () => {
       const thisExpectedPayload = {
         ...expectedPayload,
