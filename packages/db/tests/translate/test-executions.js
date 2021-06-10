@@ -2,7 +2,109 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { translateApiExecutionToPostgresExecution } = require('../../dist/translate/executions');
+const {
+  translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
+} = require('../../dist/translate/executions');
+
+const {
+  fakeExecutionRecordFactory,
+} = require('../../dist');
+
+// Response to https://github.com/nasa/cumulus/pull/2263#discussion_r646632487
+test('translatePostgresExecutionToApiExecution with no FKs does not call external model ".get" methods', async (t) => {
+  const dbCallThrow = () => {
+    throw new Error('External Model Should Not Be Called');
+  };
+
+  const fakeCollectionPgModel = {
+    get: dbCallThrow,
+  };
+  const fakeAsyncOperationPgModel = {
+    get: dbCallThrow,
+  };
+  const fakeExecutionPgModel = {
+    get: dbCallThrow,
+  };
+
+  const executionRecord = fakeExecutionRecordFactory();
+  await t.notThrowsAsync(translatePostgresExecutionToApiExecution(
+    executionRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  ));
+});
+
+test('translatePostgresExecutionToApiExecution translates a Postgres execution to an API record', async (t) => {
+  const collectionId = 'name___version';
+
+  const fakeCollectionPgModel = {
+    get: () => Promise.resolve({ name: 'name', version: 'version' }),
+  };
+  const fakeAsyncOperationPgModel = {
+    get: () => Promise.resolve({ id: 'asyncOperationCumulusId' }),
+  };
+  const fakeExecutionPgModel = {
+    get: () => Promise.resolve({ arn: 'executionCumulusId' }),
+  };
+
+  const executionRecord = {
+    arn: 'arn:aws:lambda:us-east-1:1234:1234',
+    async_operation_cumulus_id: 1,
+    collection_cumulus_id: 1,
+    created_at: new Date(),
+    cumulus_id: 2,
+    cumulus_version: '1.0.0',
+    duration: 2,
+    error: { test: 'error' },
+    execution: 'https://test',
+    final_payload: { testOutput: 'finalPayloadValue' },
+    original_payload: { testInput: 'originalPayloadValue' },
+    parent_cumulus_id: 1,
+    status: 'running',
+    tasks: {},
+    timestamp: new Date(),
+    type: 'IngestGranule',
+    updated_at: new Date(),
+    url: 'https://test',
+    workflow_name: 'TestWorkflow',
+  };
+
+  const expectedApiExecution = {
+    arn: executionRecord.arn,
+    asyncOperationId: 'asyncOperationCumulusId',
+    collectionId,
+    createdAt: executionRecord.created_at.getTime(),
+    cumulusVersion: executionRecord.cumulus_version,
+    duration: executionRecord.duration,
+    error: executionRecord.error,
+    execution: executionRecord.url,
+    finalPayload: executionRecord.final_payload,
+    name: executionRecord.arn.split(':').pop(),
+    originalPayload: executionRecord.original_payload,
+    parentArn: 'executionCumulusId',
+    status: executionRecord.status,
+    tasks: executionRecord.tasks,
+    timestamp: executionRecord.timestamp.getTime(),
+    type: executionRecord.workflow_name,
+    updatedAt: executionRecord.updated_at.getTime(),
+  };
+
+  const result = await translatePostgresExecutionToApiExecution(
+    executionRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    result,
+    expectedApiExecution
+  );
+});
 
 test('translateApiExecutionToPostgresExecution converts API execution to Postgres', async (t) => {
   const now = Date.now();

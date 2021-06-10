@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### BREAKING CHANGES
+
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -21,6 +22,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
@@ -36,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
   - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
 - **CUMULUS-2479**
@@ -45,6 +54,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2306**
+    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
+    related records
+    - Updated @cumulus/db/models/granules-executions to add a delete method in
+      support of local cleanup
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
 - **CUMULUS-2208**
@@ -98,6 +113,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+
+### Removed
+
+- **CUMULUS-2502**
+  - Removed outdated documenation regarding Kibana index patterns for metrics.
 
 ## [v9.0.1] 2021-05-07
 
