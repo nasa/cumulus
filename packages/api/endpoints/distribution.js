@@ -179,7 +179,6 @@ async function handleFileRequest(req, res) {
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   const options = {
-    ResponseCacheControl: 'private, max-age=600',
     ...range ? { Range: range } : {},
   };
   const queryParams = { 'A-userid': req.authorizedMetadata.userName };
@@ -187,6 +186,7 @@ async function handleFileRequest(req, res) {
   try {
     switch (req.method) {
     case 'GET':
+      options.ResponseCacheControl = 'private, max-age=600';
       signedS3Url = await objectStore.signGetObject(url, options, queryParams);
       break;
     case 'HEAD':
