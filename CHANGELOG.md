@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
+  
 ### BREAKING CHANGES
 
 - **CUMULUS-2434**

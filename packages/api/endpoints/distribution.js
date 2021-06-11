@@ -174,7 +174,7 @@ async function handleFileRequest(req, res) {
   let signedS3Url;
   const url = `s3://${req.params[0]}`;
   const objectStore = objectStoreForProtocol('s3');
-  const range = req.range();
+  const range = req.get('Range');
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
@@ -204,11 +204,65 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
-function head() {}
+/**
+ * Responds to a HEAD file request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function handleFileRequestHead(req, res) {
+  let signedS3Url;
+  const url = `s3://${req.params[0]}`;
+  const objectStore = objectStoreForProtocol('s3');
+  const range = req.get('Range');
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+
+  try {
+    signedS3Url = await objectStore.signHeadObject(
+      url,
+      {
+        'A-userid': req.authorizedMetadata.userName,
+        ResponseCacheControl: 'private, max-age=600',
+        ...range ? { Range: range } : {},
+      }
+    );
+  } catch (error) {
+    log.error('Error occurred when signing URL:', error);
+
+    let vars = {};
+    let statusCode = 400;
+    if (error.name.toLowerCase() === 'forbidden') {
+      statusCode = 403;
+      vars = {
+        contentstring: `Cannot access requested bucket: ${error.message}`,
+        title: 'Forbidden',
+        statusCode: statusCode,
+        requestid,
+      };
+    } else {
+      statusCode = 404
+      vars = {
+        contentstring: `Could not find file, ${error.message}`,
+        title: 'File not found',
+        statusCode: statusCode,
+        requestid,
+      };
+    }
+
+    const rendered = render(errorTemplate, vars);
+    return res.status(statusCode).send(rendered);
+  }
+  return res
+    .status(307)
+    .set({ Location: signedS3Url })
+    .send('Redirecting');
+}
 
 rootRouter.get('/', handleRootRequest);
+rootRouter.head('/*', ensureAuthorizedOrRedirect, handleFileRequestHead);
 rootRouter.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
-rootRouter.head('/*', ensureAuthorizedOrRedirect, head);
 
 module.exports = {
   handleLoginRequest,
