@@ -98,6 +98,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    // ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       (granule) => deleteGranule({
         prefix: config.stackName,
@@ -189,6 +190,26 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
+      const ingestGranuleOutput2 = await lambdaStep.getStepOutput(
+        ingestGranuleWorkflowArn1,
+        'SyncGranule'
+      );
+      const ingestGranuleOutput3 = await lambdaStep.getStepOutput(
+        ingestGranuleWorkflowArn1,
+        'SyncGranule'
+      );
+      await Promise.all(ingestGranuleOutput2.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
+      await Promise.all(ingestGranuleOutput3.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
       await Promise.all(syncGranuleLambdaOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
