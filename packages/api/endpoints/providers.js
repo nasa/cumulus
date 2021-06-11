@@ -8,7 +8,6 @@ const {
   translateApiProviderToPostgresProvider,
   validateProviderHost,
 } = require('@cumulus/db');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   ApiCollisionError,
   RecordDoesNotExist,
@@ -16,7 +15,7 @@ const {
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
-const { indexProvider } = require('@cumulus/es-client/indexer');
+const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -222,12 +221,13 @@ async function del(req, res) {
       await knex.transaction(async (trx) => {
         await providerPgModel.delete(trx, { name: id });
         await providerModel.delete({ id });
-        await esClient.delete({
+        await deleteProvider({
+          esClient,
           id,
           type: 'provider',
           index: process.env.ES_INDEX,
-          refresh: inTestMode(),
-        }, { ignore: [404] });
+          ignore: [404],
+        });
       });
     } catch (innerError) {
       // Delete is idempotent, so there may not be a DynamoDB

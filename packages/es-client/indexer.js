@@ -292,6 +292,33 @@ function deleteCollection({
 }
 
 /**
+ * Deletes the provider in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.id - the provider ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: provider)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteProvider({
+  esClient,
+  id,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'provider',
+}) {
+  return deleteRecord({
+    esClient,
+    id,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -316,4 +343,5 @@ module.exports = {
   indexAsyncOperation,
   deleteRecord,
   deleteCollection,
+  deleteProvider,
 };
