@@ -296,6 +296,16 @@ test('generatePdrApiRecordFromMessage() throws error if message.meta.provider is
   );
 });
 
+test('generatePdrApiRecordFromMessage() throws error if execution ARN cannot be determined', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+  delete cumulusMessage.meta.provider;
+  t.throws(
+    () => generatePdrApiRecordFromMessage(cumulusMessage)
+  );
+});
+
 test('generatePdrApiRecordFromMessage() generates a completed PDR record', (t) => {
   const {
     cumulusMessage,

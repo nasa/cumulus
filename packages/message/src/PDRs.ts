@@ -225,7 +225,10 @@ export const generatePdrApiRecordFromMessage = (
   }
 
   const arn = getMessageExecutionArn(message);
-  const execution = arn ? getExecutionUrlFromArn(arn) : undefined;
+  if (!arn) {
+    throw new CumulusMessageError('cumulus_meta.state_machine and cumulus_meta.execution_name required to generate a PDR record');
+  }
+  const execution = getExecutionUrlFromArn(arn);
 
   const stats = getMessagePdrStats(message);
   const progress = getPdrPercentCompletion(stats);
