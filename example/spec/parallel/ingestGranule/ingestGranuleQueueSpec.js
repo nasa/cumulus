@@ -250,9 +250,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('triggers a running execution record being added to DynamoDB', async () => {
-    beforeEach(() => {
-      if (beforeAllError) fail(beforeAllError);
-    });
+    if (beforeAllError) throw SetupError;
     const record = await waitForApiStatus(
       getExecution,
       {
