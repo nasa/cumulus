@@ -235,6 +235,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   describe('the DiscoverGranules Lambda with no files config', () => {
     let noFilesConfigExecution;
     let noFilesConfigQueueGranulesOutput;
+    let noFilesConfigDiscoverGranulesOutput;
 
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
@@ -270,6 +271,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
           granuleId: granule.granuleId,
         })
       ));
+
+      await Promise.all(noFilesConfigDiscoverGranulesOutput.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
     });
 
     it('encounters a collection without a files configuration', async () => {
@@ -285,12 +293,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('discovers granules, but output has no files', async () => {
-      noFilesConfigQueueGranulesOutput = await lambdaStep.getStepOutput(
+      noFilesConfigDiscoverGranulesOutput = await lambdaStep.getStepOutput(
         noFilesConfigExecutionArn, 'DiscoverGranules'
       );
 
-      expect(noFilesConfigQueueGranulesOutput.payload.granules.length).toEqual(3);
-      noFilesConfigQueueGranulesOutput.payload.granules.forEach((granule, i) => {
+      expect(noFilesConfigDiscoverGranulesOutput.payload.granules.length).toEqual(3);
+      noFilesConfigDiscoverGranulesOutput.payload.granules.forEach((granule, i) => {
         expect(granule.granuleId).toEqual(`granule-${i + 1}`);
         expect(granule.files.length).toEqual(0);
       });
