@@ -14,7 +14,7 @@ const {
   getMessagePdrFailedExecutions,
   getMessagePdrStats,
   getPdrPercentCompletion,
-  generateApiRecordFromMessage,
+  generatePdrApiRecordFromMessage,
 } = require('../PDRs');
 
 test.beforeEach((t) => {
@@ -249,13 +249,13 @@ test('getPdrPercentCompletion returns correct percentage', (t) => {
   );
 });
 
-test('generateApiRecordFromMessage() returns undefined if message.payload.pdr is not set', (t) => {
-  const pdrRecord = generateApiRecordFromMessage({});
+test('generatePdrApiRecordFromMessage() returns undefined if message.payload.pdr is not set', (t) => {
+  const pdrRecord = generatePdrApiRecordFromMessage({});
   t.is(pdrRecord, undefined);
 });
 
-test('generateApiRecordFromMessage() throws error if message.payload.pdr.name is not set', (t) => {
-  t.throws(() => generateApiRecordFromMessage({
+test('generatePdrApiRecordFromMessage() throws error if message.payload.pdr.name is not set', (t) => {
+  t.throws(() => generatePdrApiRecordFromMessage({
     payload: {
       pdr: {},
     },
@@ -263,40 +263,40 @@ test('generateApiRecordFromMessage() throws error if message.payload.pdr.name is
   { message: 'Could not find name on PDR object {}' });
 });
 
-test('generateApiRecordFromMessage() throws error if message.meta.status is not set', (t) => {
+test('generatePdrApiRecordFromMessage() throws error if message.meta.status is not set', (t) => {
   const {
     cumulusMessage,
   } = t.context;
   delete cumulusMessage.meta.status;
   t.throws(
-    () => generateApiRecordFromMessage(cumulusMessage),
+    () => generatePdrApiRecordFromMessage(cumulusMessage),
     { message: 'meta.status required to generate a PDR record' }
   );
 });
 
-test('generateApiRecordFromMessage() throws error if message.meta.collection is not set', (t) => {
+test('generatePdrApiRecordFromMessage() throws error if message.meta.collection is not set', (t) => {
   const {
     cumulusMessage,
   } = t.context;
   delete cumulusMessage.meta.collection;
   t.throws(
-    () => generateApiRecordFromMessage(cumulusMessage),
+    () => generatePdrApiRecordFromMessage(cumulusMessage),
     { message: 'meta.collection required to generate a PDR record' }
   );
 });
 
-test('generateApiRecordFromMessage() throws error if message.meta.provider is not set', (t) => {
+test('generatePdrApiRecordFromMessage() throws error if message.meta.provider is not set', (t) => {
   const {
     cumulusMessage,
   } = t.context;
   delete cumulusMessage.meta.provider;
   t.throws(
-    () => generateApiRecordFromMessage(cumulusMessage),
+    () => generatePdrApiRecordFromMessage(cumulusMessage),
     { message: 'meta.provider required to generate a PDR record' }
   );
 });
 
-test('generateApiRecordFromMessage() generates a completed PDR record', (t) => {
+test('generatePdrApiRecordFromMessage() generates a completed PDR record', (t) => {
   const {
     cumulusMessage,
     collectionId,
@@ -316,7 +316,7 @@ test('generateApiRecordFromMessage() generates a completed PDR record', (t) => {
     completed: ['arn1'],
   };
 
-  const record = generateApiRecordFromMessage(cumulusMessage);
+  const record = generatePdrApiRecordFromMessage(cumulusMessage);
 
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
@@ -330,7 +330,7 @@ test('generateApiRecordFromMessage() generates a completed PDR record', (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generateApiRecordFromMessage() generates a failed PDR record', (t) => {
+test('generatePdrApiRecordFromMessage() generates a failed PDR record', (t) => {
   const {
     cumulusMessage,
     collectionId,
@@ -350,7 +350,7 @@ test('generateApiRecordFromMessage() generates a failed PDR record', (t) => {
     failed: ['arn1'],
   };
 
-  const record = generateApiRecordFromMessage(cumulusMessage);
+  const record = generatePdrApiRecordFromMessage(cumulusMessage);
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
@@ -365,7 +365,7 @@ test('generateApiRecordFromMessage() generates a failed PDR record', (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generateApiRecordFromMessage() sets PDR properties when included', (t) => {
+test('generatePdrApiRecordFromMessage() sets PDR properties when included', (t) => {
   const {
     cumulusMessage,
   } = t.context;
@@ -382,7 +382,7 @@ test('generateApiRecordFromMessage() sets PDR properties when included', (t) => 
     pdr,
   };
 
-  const record = generateApiRecordFromMessage(cumulusMessage);
+  const record = generatePdrApiRecordFromMessage(cumulusMessage);
 
   t.true(record.PANSent);
   t.is(record.PANmessage, PANmessage);

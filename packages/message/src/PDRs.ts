@@ -192,7 +192,7 @@ export const getPdrPercentCompletion = (
  *
  * @alias module:Executions
  */
-export const generateApiRecordFromMessage = (
+export const generatePdrApiRecordFromMessage = (
   message: MessageWithOptionalPayloadPdr,
   updatedAt = Date.now()
 ): ApiPdr | undefined => {
