@@ -7,7 +7,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { models: { Granule } } = require('@cumulus/api');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
@@ -16,7 +16,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
@@ -286,7 +285,7 @@ describe('When the Sync Granule workflow is configured', () => {
         );
         expect(record.status).toEqual('completed');
 
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
@@ -339,7 +338,7 @@ describe('When the Sync Granule workflow is configured', () => {
         );
         expect(record.status).toEqual('completed');
 
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });

@@ -7,14 +7,13 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -277,7 +276,7 @@ describe('The Sync Granules workflow', () => {
     let granule;
 
     beforeAll(async () => {
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
@@ -285,7 +284,7 @@ describe('The Sync Granules workflow', () => {
 
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
-      const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
+      const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
@@ -346,7 +345,7 @@ describe('The Sync Granules workflow', () => {
         'completed'
       );
 
-      const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
+      const updatedGranuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });

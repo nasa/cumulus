@@ -78,6 +78,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed
+    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 
@@ -96,9 +99,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update "eslint-plugin-import" to be pinned to 2.22.1
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
-
-### Fixed
-
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
 
@@ -1189,8 +1192,6 @@ the [release page](https://github.com/nasa/cumulus/releases)
 
 - **CUMULUS-2116**
   - Fixed a race condition with bulk granule delete causing deleted granules to still appear in Elasticsearch. Granules removed via bulk delete should now be removed from Elasticsearch.
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and collection deletion in test cleanup.
 
 ## [v2.0.1] 2020-07-28
 

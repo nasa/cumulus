@@ -32,7 +32,6 @@ const {
   cleanupCollections,
   cleanupProviders,
   generateCmrXml,
-  granulesApi: granulesApiTestUtils,
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
 
@@ -40,7 +39,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
-const { deleteGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -376,20 +375,20 @@ describe('When there are granule differences and granule reconciliation is run',
       await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
 
       // update one of the granule files in database so that that file won't match with CMR
-      console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
-      granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
+      console.log('XXXXX Waiting for getGranule()');
+      granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
       });
-      console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
+      console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleBeforeUpdate.body));
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
-        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([

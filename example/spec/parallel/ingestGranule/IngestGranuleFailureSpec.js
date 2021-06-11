@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const { models: { Execution, Granule } } = require('@cumulus/api');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
@@ -11,7 +11,6 @@ const {
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -218,7 +217,7 @@ describe('The Ingest Granule failure workflow', () => {
         'failed'
       );
 
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });

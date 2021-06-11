@@ -342,7 +342,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
+        // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
         it('has expected output message', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else if (lambdaOutput) {
@@ -377,6 +377,10 @@ describe('Ingesting from PDR', () => {
 
         afterAll(async () => {
           // cleanup
+          await Promise.all(
+            queueGranulesOutput.payload.running
+              .map((arn) => waitForCompletedExecution(arn))
+          );
           const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
           // delete ingested granule(s)
           await Promise.all(
