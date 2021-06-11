@@ -70,6 +70,7 @@ export {
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export { translateApiPdrToPostgresPdr } from './translate/pdr';
 
 export {
   upsertGranuleWithExecutionJoinRecord,
