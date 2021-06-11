@@ -159,7 +159,7 @@ describe('The Sync Granules workflow', () => {
         granuleId: granule.granuleId,
       })
     ));
-
+;
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: inputPayload.pdr.name,
@@ -260,7 +260,7 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+  describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await waitForModelStatus(
         executionModel,
@@ -275,6 +275,7 @@ describe('The Sync Granules workflow', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
+    let syncGranuleTaskOutput;
     let granule;
 
     beforeAll(async () => {
@@ -298,6 +299,13 @@ describe('The Sync Granules workflow', () => {
         prefix: config.stackName,
         granuleId: reingestResponse.granuleId,
       });
+
+      await Promise.all(syncGranuleTaskOutput.payload.granules.map(
+        (g) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: g.granuleId,
+        })
+      ));
     });
 
     it('executes successfully', () => {
@@ -325,7 +333,7 @@ describe('The Sync Granules workflow', () => {
 
       await waitForCompletedExecution(reingestGranuleExecutionArn);
 
-      const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
+      syncGranuleTaskOutput = await lambdaStep.getStepOutput(
         reingestGranuleExecutionArn,
         'SyncGranule'
       );

@@ -427,6 +427,12 @@ describe('Ingesting from PDR', () => {
         let ingestGranuleExecution;
 
         afterAll(async () => {
+          await Promise.all(ingestGranuleExecution.originalPayload.granules.map(
+            (granule) => deleteGranule({
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            })
+          ));
           await Promise.all(ingestGranuleExecution.finalPayload.granules.map(
             (granule) => deleteGranule({
               prefix: config.stackName,
