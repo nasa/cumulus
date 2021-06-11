@@ -210,18 +210,21 @@ describe('The Discover Granules workflow with http Protocol', () => {
           granuleId: granule.granuleId,
         })
       ));
-      await Promise.all(syncGranuleLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
     it('executes successfully', () => {
       expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
     });
 
     describe('SyncGranule lambda function', () => {
+      afterAll(async () => {
+        await Promise.all(syncGranuleLambdaOutput.payload.granules.map(
+          (granule) => deleteGranule({
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          })
+        ));
+      });
+
       it('outputs the expected granule', async () => {
         syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArn1,

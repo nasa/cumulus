@@ -154,6 +154,10 @@ describe('The DiscoverGranules workflow', () => {
     let discoverGranulesOutput;
 
     afterAll(async () => {
+      await Promise.all(
+        queueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
       await Promise.all(discoverGranulesOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: stackName,

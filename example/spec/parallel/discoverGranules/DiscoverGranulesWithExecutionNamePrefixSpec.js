@@ -107,6 +107,10 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   afterAll(async () => {
+    await Promise.all(
+      queueGranulesOutput.payload.running
+        .map((arn) => waitForCompletedExecution(arn))
+    );
     await waitForCompletedExecution(workflowExecution.executionArn);
     await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
 
