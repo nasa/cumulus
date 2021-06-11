@@ -7,7 +7,6 @@ const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
 const {
-  Execution,
   Granule,
   Pdr,
   Provider,
@@ -39,7 +38,9 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -82,7 +83,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let beforeAllError = false;
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
@@ -110,8 +110,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       providerModel = new Provider();
@@ -253,16 +251,14 @@ describe('The S3 Ingest Granules workflow', () => {
     ]);
   });
 
-  beforeEach(() => {
-    if (beforeAllError) fail(beforeAllError);
-  });
-
-  it('triggers a execution record being added to DynamoDB', async () => {
+  it('triggers a running execution record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
-
-    const record = await waitForModelStatus(
-      executionModel,
-      { arn: workflowExecutionArn },
+    const record = await waitForApiStatus(
+      getExecution,
+      {
+        prefix: config.stackName,
+        arn: workflowExecutionArn,
+      },
       ['running', 'completed']
     );
     expect(['running', 'completed'].includes(record.status)).toBeTrue();

@@ -1,4 +1,3 @@
-const { Execution } = require('@cumulus/api/models');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -9,10 +8,11 @@ const {
   granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -20,11 +20,10 @@ const workflowName = 'DiscoverGranules';
 
 describe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
-  let httpsWorkflowExecution = null;
+  let httpsWorkflowExecution;
 
   let collection;
   let config;
-  let executionModel;
   let lambdaStep;
   let provider;
   let queueGranulesOutput;
@@ -37,7 +36,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
     config = await loadConfig();
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
 
     testId = createTimestampedTestId(config.stackName, 'DiscoverGranulesHttps');
     testSuffix = createTestSuffix(testId);
@@ -88,8 +86,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaInput = null;
-    let lambdaOutput = null;
+    let lambdaInput;
+    let lambdaOutput;
 
     beforeAll(async () => {
       lambdaInput = await lambdaStep.getStepInput(
@@ -125,9 +123,12 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: httpsWorkflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: httpsWorkflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');

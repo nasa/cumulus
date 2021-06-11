@@ -15,7 +15,7 @@
  * pdr status check
  * This will kick off the ingest workflow
  *
- * Ingest worklow:
+ * Ingest workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
@@ -41,6 +41,9 @@ const {
   granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
+
+const { getExecution } = require('@cumulus/api-client/executions');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const {
   createTestDataPath,
@@ -382,7 +385,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
+        // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
         it('has expected output message', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else if (lambdaOutput) {
@@ -459,9 +462,12 @@ describe('Ingesting from PDR', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else {
-            await waitForModelStatus(
-              executionModel,
-              { arn: ingestGranuleWorkflowArn },
+            await waitForApiStatus(
+              getExecution,
+              {
+                prefix: config.stackName,
+                arn: ingestGranuleWorkflowArn,
+              },
               'completed'
             );
 
@@ -556,13 +562,16 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+    describe('the reporting lambda has received the cloudwatch step function event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {
-          const record = await waitForModelStatus(
-            executionModel,
-            { arn: parsePdrExecutionArn },
+          const record = await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn: parsePdrExecutionArn,
+            },
             'completed'
           );
           expect(record.status).toEqual('completed');

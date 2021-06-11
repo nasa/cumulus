@@ -1,10 +1,16 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { getKnexClient, ExecutionPgModel } = require('@cumulus/db');
-const Search = require('@cumulus/es-client/search').Search;
-const models = require('../models');
+const {
+  getKnexClient,
+  ExecutionPgModel,
+  translatePostgresExecutionToApiExecution,
+} = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+
+const Execution = require('../models/executions');
 
 /**
  * List and search executions
@@ -32,18 +38,20 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-
-  const e = new models.Execution();
-
+  const knex = await getKnexClient({ env: process.env });
+  const executionPgModel = new ExecutionPgModel();
+  let executionRecord;
   try {
-    const response = await e.get({ arn });
-    return res.send(response);
+    executionRecord = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`No record found for ${arn}`);
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
     }
     throw error;
   }
+
+  const translatedRecord = await translatePostgresExecutionToApiExecution(executionRecord, knex);
+  return res.send(translatedRecord);
 }
 
 /**
@@ -55,7 +63,7 @@ async function get(req, res) {
  */
 async function del(req, res) {
   const {
-    executionModel = new models.Execution(),
+    executionModel = new Execution(),
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};

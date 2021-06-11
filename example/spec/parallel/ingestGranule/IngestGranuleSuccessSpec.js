@@ -13,7 +13,6 @@ const intersection = require('lodash/intersection');
 const isObject = require('lodash/isObject');
 
 const {
-  Execution,
   Granule,
   Pdr,
 } = require('@cumulus/api/models');
@@ -57,7 +56,9 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -108,7 +109,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let beforeAllError;
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
@@ -139,8 +139,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
@@ -290,11 +288,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('triggers a running execution record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
-
-    const record = await waitForModelStatus(
-      executionModel,
-      { arn: workflowExecutionArn },
-      ['running', 'completed']
+    const record = await waitForApiStatus(
+      getExecution,
+      {
+        prefix: config.stackName,
+        arn: workflowExecutionArn,
+      },
+      ['running']
     );
     expect(record.status).toEqual('running');
   });
@@ -718,9 +718,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('triggers the successful execution record being added to DynamoDB', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecutionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: workflowExecutionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -728,9 +731,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('triggers the failed execution record being added to DynamoDB', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: failingWorkflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: failingWorkflowExecution.executionArn,
+        },
         'failed'
       );
       expect(record.status).toEqual('failed');
@@ -818,7 +824,6 @@ describe('The S3 Ingest Granules workflow', () => {
       let cmrLink;
       let publishGranuleExecution;
       let updateCmrAccessConstraintsExecutionArn;
-
       let subTestSetupError;
 
       beforeAll(async () => {
@@ -995,10 +1000,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
         it('saves asyncOperationId to execution record', async () => {
           if (beforeAllError || subTestSetupError) throw SetupError;
-
-          const reingestExecution = await waitForModelStatus(
-            executionModel,
-            { arn: reingestExecutionArn },
+          const reingestExecution = await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn: reingestExecutionArn,
+            },
             'completed'
           );
           expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);

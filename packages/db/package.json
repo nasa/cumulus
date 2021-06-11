@@ -33,6 +33,7 @@
     "@cumulus/common": "9.0.1",
     "@cumulus/errors": "9.0.1",
     "@cumulus/logger": "9.0.1",
+    "@cumulus/message": "9.0.1",
     "@cumulus/types": "9.0.1",
     "is-valid-hostname": "0.0.1",
     "knex": "0.21.13",
