@@ -424,7 +424,15 @@ describe('Ingesting from PDR', () => {
 
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
+        let ingestGranuleExecution;
+
         afterAll(async () => {
+          await Promise.all(ingestGranuleExecution.finalPayload.granules.map(
+            (granule) => deleteGranule({
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            })
+          ));
           await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
         });
 
@@ -437,7 +445,7 @@ describe('Ingesting from PDR', () => {
               'completed'
             );
 
-            const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
+            ingestGranuleExecution = await executionsApiTestUtils.getExecution({
               prefix: config.stackName,
               arn: ingestGranuleWorkflowArn,
             });
