@@ -243,7 +243,7 @@ async function deleteRecord({
 
   const actualEsClient = esClient || (await Search.es());
 
-  const getResponse = await actualEsClient.get(params, options);
+  const getResponse = type === 'granule' ? await actualEsClient.get(params, options) : undefined;
   const deleteResponse = await actualEsClient.delete(params, options);
 
   if (type === 'granule' && getResponse.body.found) {
@@ -262,6 +262,33 @@ async function deleteRecord({
     );
   }
   return deleteResponse.body;
+}
+
+/**
+ * Deletes the collection in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.collectionId - the collection ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: collection)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteCollection({
+  esClient,
+  collectionId,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'collection',
+}) {
+  return deleteRecord({
+    esClient,
+    id: collectionId,
+    index,
+    type,
+    ignore,
+  });
 }
 
 /**
@@ -288,4 +315,5 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
+  deleteCollection,
 };

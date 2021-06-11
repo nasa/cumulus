@@ -2,7 +2,6 @@
 
 const omit = require('lodash/omit');
 const router = require('express-promise-router')();
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
@@ -19,6 +18,7 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 const {
   indexCollection,
+  deleteCollection,
 } = require('@cumulus/es-client/indexer');
 const Collection = require('@cumulus/es-client/collections');
 const models = require('../models');
@@ -250,12 +250,12 @@ async function del(req, res) {
         await collectionPgModel.delete(trx, { name, version });
         await collectionsModel.delete({ name, version });
         const collectionId = constructCollectionId(name, version);
-        await esClient.delete({
-          id: collectionId,
+        await deleteCollection({
+          esClient,
+          collectionId,
           index: process.env.ES_INDEX,
-          type: 'collection',
-          refresh: inTestMode(),
-        }, { ignore: [404] });
+          ignore: [404],
+        });
       });
     } catch (innerError) {
       // Delete is idempotent, so there may not be a DynamoDB
