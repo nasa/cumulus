@@ -265,13 +265,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
-      await Promise.all(noFilesConfigQueueGranulesOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-
       await Promise.all(noFilesConfigDiscoverGranulesOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
