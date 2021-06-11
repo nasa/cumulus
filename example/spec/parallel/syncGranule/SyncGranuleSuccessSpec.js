@@ -159,7 +159,7 @@ describe('The Sync Granules workflow', () => {
         granuleId: granule.granuleId,
       })
     ));
-;
+
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: inputPayload.pdr.name,
