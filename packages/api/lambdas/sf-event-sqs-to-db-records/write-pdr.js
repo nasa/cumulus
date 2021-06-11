@@ -180,4 +180,5 @@ module.exports = {
   getPdrCumulusIdFromQueryResultOrLookup,
   writePdrViaTransaction,
   writePdr,
+  writePdrToDynamoAndEs,
 };

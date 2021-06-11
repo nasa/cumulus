@@ -39,6 +39,7 @@ const {
 
 const {
   writePdr,
+  writePdrToDynamoAndEs,
 } = require('./write-pdr');
 
 const {
@@ -53,7 +54,10 @@ const writeRecordsToDynamoDb = async ({
 }) => {
   const results = await Promise.allSettled([
     executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
-    pdrModel.storePdrFromCumulusMessage(cumulusMessage),
+    writePdrToDynamoAndEs({
+      cumulusMessage,
+      pdrModel,
+    }),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);
   const failures = results.filter((result) => result.status === 'rejected');
