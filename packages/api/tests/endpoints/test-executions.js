@@ -2,14 +2,29 @@
 
 const test = require('ava');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
+
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  AsyncOperationPgModel,
+  CollectionPgModel,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeAsyncOperationRecordFactory,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  translatePostgresExecutionToApiExecution,
+} = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const models = require('../../models');
 const {
@@ -18,6 +33,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
+const { migrationDir } = require('../../../../lambdas/db-migration');
 
 // create all the variables needed across this test
 let esClient;
@@ -29,14 +45,13 @@ process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-// import the express app after setting the env variables
-const { app } = require('../../app');
+const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
 
 let jwtAuthToken;
 let accessTokenModel;
 let executionModel;
 
-test.before(async () => {
+test.before(async (t) => {
   esIndex = randomString();
   // create esClient
   esClient = await Search.es('fakehost');
@@ -57,6 +72,7 @@ test.before(async () => {
   // create fake execution records
   fakeExecutions.push(fakeExecutionFactory('completed'));
   fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
+  // TODO - this needs updated after postgres->ES work
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
     .then((record) => indexer.indexExecution(esClient, record, esAlias))));
 
@@ -67,17 +83,34 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+  // eslint-disable-next-line global-require
+  const { app } = require('../../app');
+  t.context.app = app;
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .expect(401);
@@ -86,7 +119,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
     .expect(401);
@@ -95,7 +128,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
 });
 
 test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .expect(401);
@@ -104,7 +137,7 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
 });
 
 test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
     .expect(401);
@@ -113,7 +146,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('default returns list of executions', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -131,7 +164,7 @@ test('default returns list of executions', async (t) => {
 });
 
 test('executions can be filtered by workflow', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions')
     .query({ type: 'workflow2' })
     .set('Accept', 'application/json')
@@ -147,26 +180,96 @@ test('executions can be filtered by workflow', async (t) => {
 });
 
 test('GET returns an existing execution', async (t) => {
-  const response = await request(app)
-    .get(`/executions/${fakeExecutions[0].arn}`)
+  const collectionRecord = fakeCollectionRecordFactory();
+  const asyncRecord = fakeAsyncOperationRecordFactory();
+  const parentExecutionRecord = fakeExecutionRecordFactory();
+
+  const executionPgModel = new ExecutionPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const asyncOperationsPgModel = new AsyncOperationPgModel();
+
+  const [collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    collectionRecord
+  );
+
+  const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
+    t.context.knex,
+    asyncRecord
+  );
+
+  const [parentExecutionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    parentExecutionRecord
+  );
+
+  const executionRecord = await fakeExecutionRecordFactory({
+    async_operation_cumulus_id: asyncOperationCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    parent_cumulus_id: parentExecutionCumulusId,
+  });
+
+  await executionPgModel.create(
+    t.context.knex,
+    executionRecord
+  );
+  t.teardown(async () => {
+    await executionPgModel.delete(t.context.knex, executionRecord);
+    await executionPgModel.delete(t.context.knex, parentExecutionRecord);
+    await collectionPgModel.delete(t.context.knex, collectionRecord);
+    await asyncOperationsPgModel.delete(t.context.knex, asyncRecord);
+  });
+
+  const response = await request(t.context.app)
+    .get(`/executions/${executionRecord.arn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const executionResult = response.body;
-  t.is(executionResult.arn, fakeExecutions[0].arn);
-  t.is(executionResult.name, fakeExecutions[0].name);
-  t.truthy(executionResult.duration);
-  t.is(executionResult.status, 'completed');
+  const expectedRecord = await translatePostgresExecutionToApiExecution(
+    executionRecord,
+    t.context.knex
+  );
+
+  t.is(executionResult.arn, executionRecord.arn);
+  t.is(executionResult.asyncOperationId, asyncRecord.id);
+  t.is(executionResult.collectionId, constructCollectionId(
+    collectionRecord.name,
+    collectionRecord.version
+  ));
+  t.is(executionResult.parentArn, parentExecutionRecord.arn);
+  t.like(executionResult, expectedRecord);
+});
+
+test('GET returns an existing execution without any foreign keys', async (t) => {
+  const executionPgModel = new ExecutionPgModel();
+  const executionRecord = await fakeExecutionRecordFactory();
+  await executionPgModel.create(
+    t.context.knex,
+    executionRecord
+  );
+  t.teardown(async () => await executionPgModel.delete(
+    t.context.knex,
+    { arn: executionRecord.arn }
+  ));
+  const response = await request(t.context.app)
+    .get(`/executions/${executionRecord.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionResult = response.body;
+  const expectedRecord = await translatePostgresExecutionToApiExecution(executionRecord);
+  t.deepEqual(executionResult, expectedRecord);
 });
 
 test('GET fails if execution is not found', async (t) => {
-  const response = await request(app)
+  const response = await request(t.context.app)
     .get('/executions/unknown')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
-
   t.is(response.status, 404);
-  t.true(response.body.message.includes('No record found for'));
+  t.true(response.body.message.includes(`Execution record with identifiers ${JSON.stringify({ arn: 'unknown' })} does not exist`));
 });

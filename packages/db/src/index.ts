@@ -3,6 +3,7 @@ export {
   createTestDatabase,
   deleteTestDatabase,
   destroyLocalTestDb,
+  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -65,7 +66,10 @@ export {
   translatePostgresProviderToApiProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
-export { translateApiExecutionToPostgresExecution } from './translate/executions';
+export {
+  translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
+} from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
