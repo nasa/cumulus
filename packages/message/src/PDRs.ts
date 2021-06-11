@@ -248,6 +248,5 @@ export const generateApiRecordFromMessage = (
     duration: getWorkflowDuration(workflowStartTime, now),
   };
 
-  // this.constructor.recordIsValid(record, this.schema);
   return record;
 };
