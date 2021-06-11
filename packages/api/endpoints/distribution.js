@@ -174,7 +174,7 @@ async function handleFileRequest(req, res) {
   let signedS3Url;
   const url = `s3://${req.params[0]}`;
   const objectStore = objectStoreForProtocol('s3');
-  const range = req.range();
+  const range = req.get('Range');
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
@@ -204,11 +204,18 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
+/**
+ * Responds to a HEAD file request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
 async function handleFileRequestHead(req, res) {
   let signedS3Url;
   const url = `s3://${req.params[0]}`;
   const objectStore = objectStoreForProtocol('s3');
-  const range = req.range();
+  const range = req.get('Range');
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
 
