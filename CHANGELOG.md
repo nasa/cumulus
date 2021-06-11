@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+
 ## [v9.1.0] 2021-06-03
 
 ### BREAKING CHANGES
@@ -103,8 +108,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **CUMULUS-2558**
-  - Fixed issue where executions original_payload would not be retained on successful execution
 - **CUMULUS-2519**
   - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
 - **CUMULUS-2518**
