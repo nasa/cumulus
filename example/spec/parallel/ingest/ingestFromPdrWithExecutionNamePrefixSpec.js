@@ -73,6 +73,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   let executionNamePrefix;
   let ingestGranuleExecutionArn;
   let ingestPdrExecutionArn;
+  let ingestWorkflowExecution;
   let pdrFilename;
   let provider;
   let queuePdrsOutput;
@@ -197,7 +198,8 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
-      await expectAsync(waitForStartedExecution(ingestGranuleExecutionArn)).toBeResolved();
+      ingestWorkflowExecution = waitForStartedExecution(ingestGranuleExecutionArn);
+      await expectAsync(ingestWorkflowExecution).toBeResolved();
     }
   });
 });

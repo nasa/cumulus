@@ -528,7 +528,7 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+    describe('the reporting lambda has received the CloudWatch step function event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {
