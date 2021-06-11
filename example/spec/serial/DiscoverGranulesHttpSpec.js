@@ -98,7 +98,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    // ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
+    await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       (granule) => deleteGranule({
         prefix: config.stackName,
