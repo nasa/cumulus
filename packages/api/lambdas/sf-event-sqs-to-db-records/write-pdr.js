@@ -124,12 +124,12 @@ const writePdrToDynamoAndEs = async (params) => {
   } = params;
   const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
-    await pdrModel.storeExecution(pdrApiRecord, cumulusMessage);
+    await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
     await indexPdr(esClient, pdrApiRecord, process.env.ES_INDEX);
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
-    await pdrModel.delete({ arn: pdrApiRecord.arn });
+    await pdrModel.delete({ pdrName: pdrApiRecord.pdrName });
     throw error;
   }
 };
@@ -142,6 +142,7 @@ const writePdr = async ({
   knex,
   pdrModel = new Pdr(),
   updatedAt = Date.now(),
+  esClient,
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
@@ -163,7 +164,12 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    await pdrModel.storePdrFromCumulusMessage(cumulusMessage, updatedAt);
+    await writePdrToDynamoAndEs({
+      cumulusMessage,
+      pdrModel,
+      updatedAt,
+      esClient,
+    });
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });
