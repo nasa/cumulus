@@ -24,6 +24,7 @@ export const translatePostgresProviderToApiProvider = (
   protocol: record.protocol,
   createdAt: record.created_at.getTime(),
   updatedAt: record.updated_at.getTime(),
+  username: record.username,
 });
 
 /**

@@ -3,10 +3,45 @@ const test = require('ava');
 const {
   encryptValueWithKMS,
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
 } = require('../../dist/translate/providers');
 
 test.beforeEach(() => {
   process.env.provider_kms_key_id = 'fakeKeyId';
+});
+
+test('translatePostgresProviderToApiProvider', (t) => {
+  const postgresProviderObject = {
+    certificate_uri: 'fakeUri',
+    cm_key_id: 'fakecmId',
+    created_at: new Date(1234),
+    global_connection_limit: 1,
+    host: 'fakeHost',
+    name: 'testId',
+    password: 'fakeEncryptedString',
+    port: 1234,
+    private_key: 'fakeKey',
+    protocol: 'fakeProtocol',
+    updated_at: new Date(5678),
+    username: 'fakeEncryptedString',
+    encrypted: true,
+  };
+
+  const expected = {
+    id: 'testId',
+    globalConnectionLimit: 1,
+    protocol: 'fakeProtocol',
+    host: 'fakeHost',
+    port: 1234,
+    createdAt: 1234,
+    updatedAt: 5678,
+    privateKey: 'fakeKey',
+    cmKeyId: 'fakecmId',
+    certificateUri: 'fakeUri',
+  };
+
+  const result = translatePostgresProviderToApiProvider(postgresProviderObject);
+  t.deepEqual(result, expected);
 });
 
 test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
