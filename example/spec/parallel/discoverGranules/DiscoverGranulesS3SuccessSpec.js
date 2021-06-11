@@ -151,10 +151,21 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   describe('DiscoverGranules task', () => {
+    let discoverGranulesOutput;
+
+    afterAll(async () => {
+      await Promise.all(discoverGranulesOutput.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
+    });
+
     it('outputs the list of discovered granules', async () => {
       if (!beforeAllCompleted) fail('beforeAll() failed');
       else {
-        const discoverGranulesOutput = await (new LambdaStep()).getStepOutput(
+        discoverGranulesOutput = await (new LambdaStep()).getStepOutput(
           workflowExecution.executionArn,
           'DiscoverGranules'
         );
