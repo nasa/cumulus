@@ -7,9 +7,8 @@ const {
   PdrPgModel,
 } = require('@cumulus/db');
 const log = require('@cumulus/common/log');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { indexPdr } = require('@cumulus/es-client/indexer');
+const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const models = require('../models');
 
@@ -99,12 +98,12 @@ async function del(req, res) {
         await pdrPgModel.delete(trx, { name: pdrName });
         await pdrModel.delete({ pdrName });
         dynamoPdrDeleted = true;
-        await esClient.delete({
-          id: pdrName,
+        await deletePdr({
+          esClient,
+          name: pdrName,
           index: process.env.ES_INDEX,
-          type: 'pdr',
-          refresh: inTestMode(),
-        }, { ignore: [404] });
+          ignore: [404],
+        });
         esPdrDeleted = true;
         await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
       });

@@ -346,6 +346,33 @@ function deleteRule({
 }
 
 /**
+ * Deletes the PDR in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.name - the PDR name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: PDR)
+ * @returns {Promise} Elasticsearch response
+ */
+function deletePdr({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'pdr',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -372,4 +399,5 @@ module.exports = {
   deleteCollection,
   deleteProvider,
   deleteRule,
+  deletePdr,
 };
