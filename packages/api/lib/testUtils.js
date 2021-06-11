@@ -5,9 +5,19 @@ const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
 
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
-const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
+const {
+  translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
+  translateApiPdrToPostgresPdr,
+} = require('@cumulus/db');
+const { indexCollection, indexProvider, indexRule, indexPdr } = require('@cumulus/es-client/indexer');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -393,6 +403,128 @@ async function getSqsQueueMessageCounts(queueUrl) {
   };
 }
 
+const createCollectionTestRecords = async (context, collectionParams) => {
+  const {
+    testKnex,
+    collectionModel,
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+  } = context;
+  const originalCollection = fakeCollectionFactory(collectionParams);
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await collectionPgModel.get(
+    testKnex, { cumulus_id: collectionCumulusId }
+  );
+  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
+  const originalEsRecord = await esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+  return {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createProviderTestRecords = async (context, providerParams) => {
+  const {
+    testKnex,
+    providerModel,
+    providerPgModel,
+    esClient,
+    esProviderClient,
+  } = context;
+  const originalProvider = fakeProviderFactory(providerParams);
+
+  const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
+  await providerModel.create(originalProvider);
+  const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await providerPgModel.get(
+    testKnex, { cumulus_id: providerCumulusId }
+  );
+  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
+  const originalEsRecord = await esProviderClient.get(
+    originalProvider.id
+  );
+  return {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createRuleTestRecords = async (context, ruleParams) => {
+  const {
+    testKnex,
+    ruleModel,
+    rulePgModel,
+    esClient,
+    esRulesClient,
+  } = context;
+  const originalRule = fakeRuleFactoryV2(ruleParams);
+
+  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
+  const originalDynamoRule = await ruleModel.create(originalRule);
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await rulePgModel.get(
+    testKnex, { cumulus_id: ruleCumulusId }
+  );
+  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  const originalEsRecord = await esRulesClient.get(
+    originalRule.name
+  );
+  return {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createPdrTestRecords = async (context, pdrParams = {}) => {
+  const {
+    knex,
+    pdrModel,
+    pdrPgModel,
+    esClient,
+    esPdrsClient,
+    testPgCollection,
+    testPgProvider,
+  } = context;
+
+  const originalPdr = fakePdrFactoryV2({
+    ...pdrParams,
+    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
+    provider: testPgProvider.name,
+  });
+
+  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: pdrS3Key,
+    Body: randomString(),
+  });
+
+  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
+  const originalDynamoPdr = await pdrModel.create(originalPdr);
+  const [ruleCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await pdrPgModel.get(
+    knex, { cumulus_id: ruleCumulusId }
+  );
+  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
+  const originalEsRecord = await esPdrsClient.get(
+    originalPdr.pdrName
+  );
+  return {
+    originalDynamoPdr,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -416,4 +548,8 @@ module.exports = {
   isLocalApi,
   testEndpoint,
   setAuthorizedOAuthUsers,
+  createCollectionTestRecords,
+  createProviderTestRecords,
+  createRuleTestRecords,
+  createPdrTestRecords,
 };

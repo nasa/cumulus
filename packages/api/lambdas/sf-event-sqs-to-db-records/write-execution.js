@@ -25,6 +25,8 @@ const {
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
 
+const { removeNilProperties } = require('@cumulus/common/util');
+
 const Execution = require('../../models/executions');
 
 const shouldWriteExecutionToPostgres = ({
@@ -59,7 +61,7 @@ const buildExecutionRecord = ({
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
-  return {
+  return removeNilProperties({
     arn,
     status: getMetaStatus(cumulusMessage),
     url: getExecutionUrlFromArn(arn),
@@ -76,7 +78,7 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
-  };
+  });
 };
 
 const writeExecutionViaTransaction = async ({

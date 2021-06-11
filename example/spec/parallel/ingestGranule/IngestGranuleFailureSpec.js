@@ -11,7 +11,9 @@ const {
   executionsApi: executionsApiTestUtils,
   granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
@@ -138,9 +140,13 @@ describe('The Ingest Granule failure workflow', () => {
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status
-      await waitForModelStatus(
-        executionModel,
-        { arn: executionArn },
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: executionArn,
+        },
         'failed'
       );
       execution = await executionsApiTestUtils.getExecution({
