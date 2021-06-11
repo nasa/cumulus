@@ -268,6 +268,10 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
+      await Promise.all(
+        noFilesConfigQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
       await Promise.all(noFilesConfigDiscoverGranulesOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
@@ -304,6 +308,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   describe('the DiscoverGranules Lambda with partial files config', () => {
     let discoverGranulesPartialFilesConfigLambdaOutput;
     let partialFilesConfigExecution;
+    let partialFilesQueueGranulesOutput;
 
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
@@ -324,7 +329,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
       partialFilesConfigExecutionArn = partialFilesConfigExecution.executionArn;
 
-      const partialFilesQueueGranulesOutput = await lambdaStep.getStepOutput(
+      partialFilesQueueGranulesOutput = await lambdaStep.getStepOutput(
         partialFilesConfigExecutionArn,
         'QueueGranules'
       );
@@ -333,6 +338,10 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
+      await Promise.all(
+        partialFilesQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
       await Promise.all(discoverGranulesPartialFilesConfigLambdaOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
@@ -402,6 +411,10 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
+      await Promise.all(
+        ignoringFilesQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
       await Promise.all(discoverGranulesIgnoringFilesConfigLambdaOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
