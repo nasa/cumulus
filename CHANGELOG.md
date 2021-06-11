@@ -66,8 +66,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     related records
     - Updated @cumulus/db/models/granules-executions to add a delete method in
       support of local cleanup
+    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
+      record retrievals on status in lieu of using `waitForModelStatus`
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
-  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
+  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
+  timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2489**
