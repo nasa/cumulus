@@ -21,13 +21,15 @@ class S3ObjectStore {
    * store URL
    *
    * @param {string} objectUrl - the URL of the object to sign
-   * @param {string} params - an optional mapping of parameter key/values to put in the URL
+   * @param {string} [options] - options to pass to S3.getObject
+   * @param {string} [queryParams] - a mapping of parameter key/values to put in the URL
    * @returns {Promise<string>} a signed URL
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
   async signGetObject(
     objectUrl: string,
-    params: { [key: string]: string }
+    options: { [key: string]: string } = {},
+    queryParams: { [key: string]: string }
   ): Promise<string> {
     const url = new URL(objectUrl);
     if (url.protocol.toLowerCase() !== 's3:') {
@@ -39,15 +41,10 @@ class S3ObjectStore {
     // Verifies that the object exists, or throws NotFound
     await headObject(Bucket, Key);
 
-    let req: any;
-    if (params && params.Range) {
-      req = this.s3.getObject({ Bucket, Key, Range: params.Range });
-    } else {
-      req = this.s3.getObject({ Bucket, Key });
-    }
+    const req = this.s3.getObject({ Bucket, Key, ...options });
 
-    if (params && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(params)}`; }));
+    if (queryParams && req.on) {
+      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
     }
 
     // TypeScript doesn't recognize that req has a presign method.  It does.
@@ -60,13 +57,15 @@ class S3ObjectStore {
    * store URL
    *
    * @param {string} objectUrl - the URL of the object to sign
-   * @param {string} params - an optional mapping of parameter key/values to put in the URL
+   * @param {string} [options] - options to pass to S3.getObject
+   * @param {string} [queryParams] - a mapping of parameter key/values to put in the URL
    * @returns {Promise<string>} a signed URL
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
   async signHeadObject(
     objectUrl: string,
-    params: { [key: string]: string }
+    options: { [key: string]: string } = {},
+    queryParams: { [key: string]: string }
   ): Promise<string> {
     const url = new URL(objectUrl);
     if (url.protocol.toLowerCase() !== 's3:') {
@@ -75,15 +74,10 @@ class S3ObjectStore {
 
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
-    let req: any;
-    if (params && params.Range) {
-      req = this.s3.headObject({ Bucket, Key, Range: params.Range });
-    } else {
-      req = this.s3.headObject({ Bucket, Key });
-    }
+    const req = this.s3.headObject({ Bucket, Key, ...options });
 
-    if (params && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(params)}`; }));
+    if (queryParams && req.on) {
+      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
     }
 
     // TypeScript doesn't recognize that req has a presign method.  It does.
