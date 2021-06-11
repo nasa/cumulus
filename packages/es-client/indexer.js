@@ -319,6 +319,33 @@ function deleteProvider({
 }
 
 /**
+ * Deletes the rule in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.name - the rule name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: rule)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteRule({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'rule',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -344,4 +371,5 @@ module.exports = {
   deleteRecord,
   deleteCollection,
   deleteProvider,
+  deleteRule,
 };

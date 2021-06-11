@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
@@ -11,7 +10,7 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
-const { indexRule } = require('@cumulus/es-client/indexer');
+const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
@@ -206,12 +205,12 @@ async function del(req, res) {
     await knex.transaction(async (trx) => {
       await rulePgModel.delete(trx, { name });
       await ruleModel.delete(apiRule);
-      await esClient.delete({
-        id: name,
+      await deleteRule({
+        esClient,
+        name,
         index: process.env.ES_INDEX,
-        type: 'rule',
-        refresh: inTestMode(),
-      }, { ignore: [404] });
+        ignore: [404],
+      });
     });
   } catch (error) {
     // Delete is idempotent, so there may not be a DynamoDB

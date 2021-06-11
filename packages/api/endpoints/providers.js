@@ -224,7 +224,6 @@ async function del(req, res) {
         await deleteProvider({
           esClient,
           id,
-          type: 'provider',
           index: process.env.ES_INDEX,
           ignore: [404],
         });
