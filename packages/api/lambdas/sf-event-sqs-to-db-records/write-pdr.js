@@ -4,12 +4,19 @@ const {
   PdrPgModel,
 } = require('@cumulus/db');
 const {
+  indexPdr,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
+const {
   getMessagePdrName,
   messageHasPdr,
   getMessagePdrStats,
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
   getPdrPercentCompletion,
+  generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
@@ -106,6 +113,25 @@ const writePdrViaTransaction = async ({
     pdrRecord,
   });
   return [pdrCumulusId];
+};
+
+const writePdrToDynamoAndEs = async (params) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    updatedAt = Date.now(),
+    esClient = await Search.es(),
+  } = params;
+  const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
+  try {
+    await pdrModel.storeExecution(pdrApiRecord, cumulusMessage);
+    await indexPdr(esClient, pdrApiRecord, process.env.ES_INDEX);
+  } catch (error) {
+    // On error, delete the Dynamo record to ensure that all systems
+    // stay in sync
+    await pdrModel.delete({ arn: pdrApiRecord.arn });
+    throw error;
+  }
 };
 
 const writePdr = async ({
