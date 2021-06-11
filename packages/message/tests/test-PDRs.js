@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { constructCollectionId } = require('../Collections');
 
 const {
   getMessagePdr,
@@ -13,6 +14,7 @@ const {
   getMessagePdrFailedExecutions,
   getMessagePdrStats,
   getPdrPercentCompletion,
+  generateApiRecordFromMessage,
 } = require('../PDRs');
 
 test.beforeEach((t) => {
@@ -20,6 +22,37 @@ test.beforeEach((t) => {
     name: `pdr${cryptoRandomString({ length: 5 })}`,
     PANSent: true,
     PANmessage: 'message',
+  };
+
+  const collectionName = cryptoRandomString({ length: 5 });
+  const collectionVersion = '1';
+  t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
+
+  t.context.providerId = cryptoRandomString({ length: 5 });
+
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'state-machine',
+      execution_name: 'execution1',
+      workflow_start_time: Date.now(),
+    },
+    meta: {
+      status: 'running',
+      collection: {
+        name: collectionName,
+        version: collectionVersion,
+      },
+      provider: {
+        id: t.context.providerId,
+        protocol: 's3',
+        host: 'random-bucket',
+      },
+    },
+    payload: {
+      pdr: {
+        name: cryptoRandomString({ length: 5 }),
+      },
+    },
   };
 });
 
@@ -214,4 +247,143 @@ test('getPdrPercentCompletion returns correct percentage', (t) => {
     }),
     100
   );
+});
+
+test('generateApiRecordFromMessage() returns undefined if message.payload.pdr is not set', (t) => {
+  const pdrRecord = generateApiRecordFromMessage({});
+  t.is(pdrRecord, undefined);
+});
+
+test('generateApiRecordFromMessage() throws error if message.payload.pdr.name is not set', (t) => {
+  t.throws(() => generateApiRecordFromMessage({
+    payload: {
+      pdr: {},
+    },
+  }),
+  { message: 'Could not find name on PDR object {}' });
+});
+
+test('generateApiRecordFromMessage() throws error if message.meta.status is not set', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+  delete cumulusMessage.meta.status;
+  t.throws(
+    () => generateApiRecordFromMessage(cumulusMessage),
+    { message: 'meta.status required to generate a PDR record' }
+  );
+});
+
+test('generateApiRecordFromMessage() throws error if message.meta.collection is not set', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+  delete cumulusMessage.meta.collection;
+  t.throws(
+    () => generateApiRecordFromMessage(cumulusMessage),
+    { message: 'meta.collection required to generate a PDR record' }
+  );
+});
+
+test('generateApiRecordFromMessage() throws error if message.meta.provider is not set', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+  delete cumulusMessage.meta.provider;
+  t.throws(
+    () => generateApiRecordFromMessage(cumulusMessage),
+    { message: 'meta.provider required to generate a PDR record' }
+  );
+});
+
+test('generateApiRecordFromMessage() generates a completed PDR record', (t) => {
+  const {
+    cumulusMessage,
+    collectionId,
+    providerId,
+  } = t.context;
+
+  const pdrName = cryptoRandomString({ length: 5 });
+  cumulusMessage.meta.status = 'completed';
+  const workflowStartTime = Date.now();
+  cumulusMessage.cumulus_meta.workflow_start_time = workflowStartTime;
+
+  const pdr = {
+    name: pdrName,
+  };
+  cumulusMessage.payload = {
+    pdr,
+    completed: ['arn1'],
+  };
+
+  const record = generateApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.status, 'completed');
+  t.is(record.collectionId, collectionId);
+  t.is(record.createdAt, workflowStartTime);
+  t.is(record.provider, providerId);
+  t.is(record.stats.failed, 0);
+  t.is(record.stats.processing, 0);
+  t.is(record.stats.completed, 1);
+  t.is(record.stats.total, 1);
+  t.is(record.progress, 100);
+  t.is(typeof record.duration, 'number');
+});
+
+test('generateApiRecordFromMessage() generates a failed PDR record', (t) => {
+  const {
+    cumulusMessage,
+    collectionId,
+    providerId,
+  } = t.context;
+
+  const pdrName = cryptoRandomString({ length: 5 });
+  cumulusMessage.meta.status = 'failed';
+  const workflowStartTime = Date.now();
+  cumulusMessage.cumulus_meta.workflow_start_time = workflowStartTime;
+
+  const pdr = {
+    name: pdrName,
+  };
+  cumulusMessage.payload = {
+    pdr,
+    failed: ['arn1'],
+  };
+
+  const record = generateApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.status, 'failed');
+  t.is(record.collectionId, collectionId);
+  t.is(record.createdAt, workflowStartTime);
+  t.is(record.provider, providerId);
+  const stats = record.stats;
+  t.is(stats.total, 1);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 0);
+  t.is(stats.completed, 0);
+  t.is(record.progress, 100);
+  t.is(typeof record.duration, 'number');
+});
+
+test('generateApiRecordFromMessage() sets PDR properties when included', (t) => {
+  const {
+    cumulusMessage,
+  } = t.context;
+  const pdrName = cryptoRandomString({ length: 5 });
+  const PANmessage = 'test message';
+
+  const pdr = {
+    name: pdrName,
+    PANSent: true,
+    PANmessage,
+  };
+
+  cumulusMessage.payload = {
+    pdr,
+  };
+
+  const record = generateApiRecordFromMessage(cumulusMessage);
+
+  t.true(record.PANSent);
+  t.is(record.PANmessage, PANmessage);
 });
