@@ -158,12 +158,10 @@ describe('The Sync Granules workflow', () => {
         prefix: config.stackName,
         granuleId: granule.granuleId,
       })
-    ));
-
-    await apiTestUtils.deletePdr({
+    )).then(() => apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: inputPayload.pdr.name,
-    });
+    }));
 
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
