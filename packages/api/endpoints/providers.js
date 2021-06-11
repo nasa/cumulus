@@ -22,6 +22,7 @@ const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -61,12 +62,13 @@ async function get(req, res) {
 
   let result;
   try {
-    const providerRecord = providerPgModel.get(knex, { id });
+    const providerRecord = await providerPgModel.get(knex, { name: id });
     result = translatePostgresProviderToApiProvider(providerRecord);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${JSON.stringify(id)} not found.`);
+    throw error;
   }
-  return res.send(result);
+  return res.send(removeNilProperties(result));
 }
 
 // TODO remove this Phase 3/Dynamo removal
