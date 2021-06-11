@@ -90,7 +90,7 @@ async function del(req, res) {
       }, { ignore: [404] });
     }
   } catch (error) {
-    log.debug(`Failed to delete PDR with name ${pdrName}`);
+    log.debug(`Failed to delete PDR with name ${pdrName}. Error ${JSON.stringify(error)}.`);
     if (!isRecordDoesNotExistError(error)) throw error;
   }
   return res.send({ detail: 'Record deleted' });
