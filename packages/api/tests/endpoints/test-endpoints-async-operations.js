@@ -36,6 +36,7 @@ const {
   setAuthorizedOAuthUsers,
   createAsyncOperationTestRecords,
 } = require('../../lib/testUtils');
+const { buildFakeExpressResponse } = require('./utils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -287,4 +288,141 @@ test('DELETE deletes the async operation from all data stores', async (t) => {
   const dbRecords = await t.context.asyncOperationPgModel
     .search(t.context.knex, { id });
   t.is(dbRecords.length, 0);
+});
+
+test('del() does not remove from PostgreSQL/Elasticsearch if removing from DynamoDB fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeAsyncOperationModel = {
+    get: () => Promise.resolve(fakeAsyncOperationModel),
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: () => Promise.resolve(true),
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      asyncOperationModel: fakeAsyncOperationModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
+});
+
+test('del() does not remove from DynamoDB/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeAsyncOperationPgModel = {
+    delete: () => {
+      throw new Error('PG something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      asyncOperationPgModel: fakeAsyncOperationPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'PG something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
+});
+
+test('del() does not remove from DynamoDB/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('ES something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'ES something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
 });
