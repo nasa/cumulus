@@ -22,7 +22,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
+const { Pdr } = require('@cumulus/api/models');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -82,7 +82,6 @@ describe('Ingesting from PDR', () => {
 
   let beforeAllFailed;
   let config;
-  let executionModel;
   let nodeNameProvider;
   let parsePdrExecutionArn;
   let pdrFilename;
@@ -99,10 +98,7 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);

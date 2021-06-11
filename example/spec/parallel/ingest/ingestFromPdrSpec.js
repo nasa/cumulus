@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
+const { Pdr } = require('@cumulus/api/models');
 
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -79,7 +79,6 @@ describe('Ingesting from PDR', () => {
 
   let beforeAllFailed;
   let config;
-  let executionModel;
   let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
@@ -92,10 +91,7 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
