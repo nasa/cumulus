@@ -44,7 +44,7 @@ class S3ObjectStore {
     const req = this.s3.getObject({ Bucket, Key, ...options });
 
     if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
+      (req.on('build', () => { req.httpRequest.path += `${options ? '' : '?'}${querystring.stringify(queryParams)}`; }));
     }
 
     // TypeScript doesn't recognize that req has a presign method.  It does.
