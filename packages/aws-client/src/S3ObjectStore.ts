@@ -40,7 +40,7 @@ class S3ObjectStore {
     await headObject(Bucket, Key);
 
     let req: any;
-    if(params && params.Range) {
+    if(params?.Range) {
       req = this.s3.getObject({ Bucket, Key, Range: params.Range });
     } else {
       req = this.s3.getObject({ Bucket, Key });
@@ -76,7 +76,7 @@ class S3ObjectStore {
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
     let req: any;
-    if(params && params.Range) {
+    if(params?.Range) {
       req = this.s3.headObject({ Bucket, Key, Range: params.Range });
     } else {
       req = this.s3.headObject({ Bucket, Key });
