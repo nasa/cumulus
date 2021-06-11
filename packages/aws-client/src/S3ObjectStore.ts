@@ -49,6 +49,28 @@ class S3ObjectStore {
     const result = await (req as any).presign();
     return result;
   }
+
+  async signHeadObject(
+    objectUrl: string,
+    params: { [key: string]: string }
+  ): Promise<string> {
+    const url = new URL(objectUrl);
+    if (url.protocol.toLowerCase() !== 's3:') {
+      throw new TypeError(`Invalid S3 URL: ${objectUrl}`);
+    }
+
+    const { Bucket, Key } = parseS3Uri(objectUrl);
+
+    const req = await this.s3.headObject({Bucket, Key});
+
+    if (params && req.on) {
+      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(params)}`; }));
+    }
+
+    // TypeScript doesn't recognize that req has a presign method.  It does.
+    const result = await (req as any).presign();
+    return result;
+  }
 }
 
 export = S3ObjectStore;
