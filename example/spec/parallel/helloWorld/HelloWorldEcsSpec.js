@@ -1,22 +1,23 @@
-const { Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 const { loadConfig } = require('../../helpers/testUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const activityStep = new ActivityStep();
 
 describe('The Hello World workflow using ECS and CMA Layers', () => {
   let workflowExecution;
+  let config;
 
   beforeAll(async () => {
-    const awsConfig = await loadConfig();
+    config = await loadConfig();
 
-    process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 
     workflowExecution = await buildAndExecuteWorkflow(
-      awsConfig.stackName,
-      awsConfig.bucket,
+      config.stackName,
+      config.bucket,
       'EcsHelloWorldWorkflow'
     );
   });
@@ -26,7 +27,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   });
 
   describe('the HelloWorld ECS', () => {
-    let activityOutput = null;
+    let activityOutput;
 
     beforeAll(async () => {
       activityOutput = await activityStep.getStepOutput(
@@ -42,9 +43,12 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        new Execution(),
-        { arn: workflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: workflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');

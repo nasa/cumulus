@@ -5,11 +5,9 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
-  tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
 } = require('@cumulus/db');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   ApiCollisionError,
   RecordDoesNotExist,
@@ -17,7 +15,7 @@ const {
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
-const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
+const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
@@ -86,15 +84,20 @@ async function throwIfDynamoRecordExists(providerModel, id) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const apiProvider = req.body;
 
   apiProvider.updatedAt = Date.now();
   apiProvider.createdAt = Date.now();
 
   const id = apiProvider.id;
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
-  const providerPgModel = new ProviderPgModel();
+
   try {
     let record;
     if (!apiProvider.id) {
@@ -104,14 +107,18 @@ async function post(req, res) {
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    await knex.transaction(async (trx) => {
-      await providerPgModel.create(trx, postgresProvider);
-      record = await providerModel.create(apiProvider);
-    });
-
-    if (inTestMode()) {
-      await addToLocalES(record, indexProvider);
+    try {
+      await knex.transaction(async (trx) => {
+        await providerPgModel.create(trx, postgresProvider);
+        record = await providerModel.create(apiProvider);
+        await indexProvider(esClient, record, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB record in case of any failure
+      await providerModel.delete(apiProvider);
+      throw innerError;
     }
+
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
@@ -133,7 +140,16 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put({ params: { id }, body }, res) {
+async function put(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { id }, body } = req;
+
   const apiProvider = body;
 
   if (id !== apiProvider.id) {
@@ -141,10 +157,6 @@ async function put({ params: { id }, body }, res) {
       `Expected provider ID to be '${id}', but found '${body.id}' in payload`
     );
   }
-
-  const knex = await getKnexClient();
-  const providerModel = new Provider();
-  const providerPgModel = new ProviderPgModel();
 
   let oldProvider;
   try {
@@ -163,13 +175,16 @@ async function put({ params: { id }, body }, res) {
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  await knex.transaction(async (trx) => {
-    await providerPgModel.upsert(trx, postgresProvider);
-    record = await providerModel.create(apiProvider);
-  });
-
-  if (inTestMode()) {
-    await addToLocalES(record, indexProvider);
+  try {
+    await knex.transaction(async (trx) => {
+      await providerPgModel.upsert(trx, postgresProvider);
+      record = await providerModel.create(apiProvider);
+      await indexProvider(esClient, record, process.env.ES_INDEX);
+    });
+  } catch (innerError) {
+    // Revert Dynamo record update if any write fails
+    await providerModel.create(oldProvider);
+    throw innerError;
   }
 
   return res.send(record);
@@ -183,22 +198,44 @@ async function put({ params: { id }, body }, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { id } = req.params;
+
+  let existingProvider;
+  try {
+    existingProvider = await providerModel.get({ id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
 
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
-      await providerModel.delete({ id: req.params.id });
-      if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: req.params.id,
-          type: 'provider',
+    try {
+      await knex.transaction(async (trx) => {
+        await providerPgModel.delete(trx, { name: id });
+        await providerModel.delete({ id });
+        await deleteProvider({
+          esClient,
+          id,
           index: process.env.ES_INDEX,
-        }, { ignore: [404] });
+          ignore: [404],
+        });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingProvider) {
+        await providerModel.create(existingProvider);
       }
-    });
+      throw innerError;
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
@@ -217,4 +254,9 @@ router.delete('/:id', del);
 router.post('/', post);
 router.get('/', list);
 
-module.exports = router;
+module.exports = {
+  del,
+  post,
+  put,
+  router,
+};
