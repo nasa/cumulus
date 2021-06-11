@@ -33,11 +33,12 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [provider, collection] = await Promise.all([
+  const [providerRecord, collection] = await Promise.all([
     getApiProvider(event.provider),
     getCollection(event.collection),
   ]);
 
+  const provider = JSON.parse(providerRecord.body);
   const messageTemplate = get(event, 'template');
   const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
