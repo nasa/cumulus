@@ -132,8 +132,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-<<<<<<< HEAD
-=======
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2208**
     - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
@@ -141,7 +139,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `<prefix>-PdrsTable`
       - `<prefix>-ProvidersTable`
       - `<prefix>-RulesTable`
->>>>>>> feature/rds-phase-2
 - **CUMULUS-2502**
   - Removed outdated documenation regarding Kibana index patterns for metrics.
 
