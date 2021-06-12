@@ -166,6 +166,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
     });
 
     afterAll(async () => {
+      await Promise.all(ingestGranuleWorkflowArns.map((execution) => waitForCompletedExecution(execution)));
       await Promise.all(lambdaOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
