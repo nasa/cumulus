@@ -98,6 +98,10 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   afterAll(async () => {
+    await Promise.all(
+      queueGranulesOutput.payload.running
+        .map((arn) => waitForCompletedExecution(arn))
+    );
     await deleteGranule({ prefix: stackName, granuleId: expectedGranuleId });
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });
@@ -154,10 +158,6 @@ describe('The DiscoverGranules workflow', () => {
     let discoverGranulesOutput;
 
     afterAll(async () => {
-      await Promise.all(
-        queueGranulesOutput.payload.running
-          .map((arn) => waitForCompletedExecution(arn))
-      );
       await Promise.all(discoverGranulesOutput.payload.granules.map(
         (granule) => deleteGranule({
           prefix: stackName,

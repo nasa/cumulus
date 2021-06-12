@@ -111,7 +111,7 @@ describe('The DiscoverGranules workflow', () => {
       queueGranulesOutput.payload.running
         .map((arn) => waitForCompletedExecution(arn))
     );
-    await waitForCompletedExecution(workflowExecution.executionArn);
+    await waitForCompletedExecution(parentExecutionArn);
     await deleteGranule({ prefix: stackName, granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606' });
 
     // The order of execution deletes matters. Parents must be deleted before children.
