@@ -98,7 +98,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await waitForCompletedExecution(ingestGranuleWorkflowArn1);
+    await Promise.all(queueGranulesOutput.payload.running
+      .map((execution) => waitForCompletedExecution(execution)));
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       (granule) => deleteGranule({
         prefix: config.stackName,
@@ -190,14 +191,25 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     afterAll(async () => {
-      const ingestGranuleOutput2 = await lambdaStep.getStepOutput(
+      const ingestGranuleOutput1 = await lambdaStep.getStepOutput(
         ingestGranuleWorkflowArn1,
+        'SyncGranule'
+      );
+      const ingestGranuleOutput2 = await lambdaStep.getStepOutput(
+        ingestGranuleWorkflowArn2,
         'SyncGranule'
       );
       const ingestGranuleOutput3 = await lambdaStep.getStepOutput(
-        ingestGranuleWorkflowArn1,
+        ingestGranuleWorkflowArn3,
         'SyncGranule'
       );
+
+      await Promise.all(ingestGranuleOutput1.payload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
       await Promise.all(ingestGranuleOutput2.payload.granules.map(
         (granule) => deleteGranule({
           prefix: config.stackName,
@@ -211,6 +223,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         })
       ));
     });
+
     it('executes successfully', () => {
       expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
     });
@@ -412,8 +425,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(
-        ignoringFilesQueueGranulesOutput.payload.running
-          .map((arn) => waitForCompletedExecution(arn))
+        ignoringFilesIngestExecutionArns.map((arn) => waitForCompletedExecution(arn))
       );
       await Promise.all(discoverGranulesIgnoringFilesConfigLambdaOutput.payload.granules.map(
         (granule) => deleteGranule({
