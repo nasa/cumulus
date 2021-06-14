@@ -19,11 +19,10 @@ const {
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
 const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-const { removeNilProperties } = require('@cumulus/common/util');
-
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
 // Postgres error codes:
