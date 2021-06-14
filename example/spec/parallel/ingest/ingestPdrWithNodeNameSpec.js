@@ -28,6 +28,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -169,12 +170,19 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: parsePdrExecutionArn }),
       apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename,
@@ -445,7 +453,7 @@ describe('Ingesting from PDR', () => {
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         afterAll(async () => {
-          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
+          await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
         });
 
         it('displays a link to the parent', async () => {

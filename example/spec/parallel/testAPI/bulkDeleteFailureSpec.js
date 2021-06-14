@@ -2,6 +2,7 @@
 
 const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const Granule = require('@cumulus/api/models/granules');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
@@ -49,6 +50,12 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
 
     beforeAllSucceeded = true;
+  });
+
+  afterAll(async () => {
+    if (postBulkDeleteBody.id) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+    }
   });
 
   it('returns a status code of 202', () => {

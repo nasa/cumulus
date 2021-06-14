@@ -78,14 +78,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
 const profile = (req, res) => res.send('Profile not available.');
 
-const pubkey = (req, res) => res.status(501).end();
-
 router.get('/', handleRootRequest);
 router.get('/locate', handleLocateBucketRequest);
 router.get('/login', handleLoginRequest);
 router.get('/logout', handleLogoutRequest);
 router.get('/profile', profile);
-router.get('/pubkey', pubkey);
 router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
 router.get('/s3credentialsREADME', displayS3CredentialInstructions);
 // Use router.use to leverage custom version middleware
