@@ -1,10 +1,16 @@
+const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
+const log = require('@cumulus/common/log');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { CognitoClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const { isLocalApi } = require('./testUtils');
 const { AccessToken } = require('../models');
+const { getBucketMap, isPublicBucket, processFileRequestPath } = require('./bucketMapUtils');
+
+const BEARER_TOKEN_REGEX = new RegExp('^Bearer ([-a-zA-Z0-9._~+/]+)$', 'i');
 
 // Running API locally will be on http, not https, so cookies
 // should not be set to secure for local runs of the API.
@@ -38,30 +44,17 @@ const buildOAuthClient = async () => {
 };
 
 /**
- * Helper function to pull bucket out of a path string.
- * Will ignore leading slash.
- * "/bucket/key" -> "bucket"
- * "bucket/key" -> "bucket"
- *
- * @param {string} path - express request path parameter
- * @returns {string} the first part of a path which is our bucket name
- */
-function bucketNameFromPath(path) {
-  return path.split('/').filter((d) => d).shift();
-}
-
-/**
  * Reads the input path and determines if this is a request for public data
  * or not.
  *
  * @param {string} path - req.path paramater
  * @returns {boolean} - whether this request goes to a public bucket
  */
-function isPublicRequest(path) {
+async function isPublicData(path) {
   try {
-    const publicBuckets = process.env.public_buckets.split(',');
-    const requestedBucket = bucketNameFromPath(path);
-    return publicBuckets.includes(requestedBucket);
+    const bucketMap = await getBucketMap();
+    const { bucket, key } = processFileRequestPath(path, bucketMap);
+    return bucket && await isPublicBucket(bucketMap, bucket, key);
   } catch (error) {
     return false;
   }
@@ -113,10 +106,60 @@ function buildLoginErrorTemplateVars(query) {
   return templateVars;
 }
 
+function isAuthBearTokenRequest(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const match = authHeader.match(BEARER_TOKEN_REGEX);
+    if (match.length >= 2) return true;
+  }
+  return false;
+}
+
+async function handleAuthBearerToken(req, res, next) {
+  const { oauthClient } = await getConfigurations();
+  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+  // Parse the Authorization header
+  const authHeader = req.headers.authorization;
+
+  const match = authHeader.match(BEARER_TOKEN_REGEX);
+  if (match) {
+    const userToken = match[1];
+    try {
+      let username;
+      if (process.env.OAUTH_PROVIDER === 'earthdata') {
+        username = await oauthClient.getTokenUsername({
+          onBehalfOf: 'OAuth-Client-Id',
+          token: userToken,
+        });
+      }
+
+      const params = {
+        token: userToken,
+        username,
+        xRequestId: requestid,
+      };
+      const userInfo = await oauthClient.getUserInfo(removeNilProperties(params));
+      req.authorizedMetadata = {
+        userName: username || userInfo.username,
+        ...{ userGroups: userInfo.user_groups },
+      };
+      return next();
+    } catch (error) {
+      log.error('handleAuthBearerToken', error);
+      return res.redirect(307, redirectURLForAuthorizationCode);
+    }
+  }
+
+  log.debug('Unable to get bearer token from authorization header');
+  return res.redirect(307, redirectURLForAuthorizationCode);
+}
+
 module.exports = {
   buildLoginErrorTemplateVars,
   getConfigurations,
+  handleAuthBearerToken,
+  isAuthBearTokenRequest,
+  isPublicData,
   useSecureCookies,
-  bucketNameFromPath,
-  isPublicRequest,
 };

@@ -17,11 +17,9 @@ locals {
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
       STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
       cmr_provider                   = var.cmr_provider
-      public_buckets                 = join(",", var.public_buckets)
       stackName                      = var.prefix
       system_bucket                  = var.system_bucket
   }
-  lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }
 
 resource "aws_secretsmanager_secret" "api_oauth_client_password" {

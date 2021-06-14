@@ -23,7 +23,6 @@ process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
-process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = cryptoRandomString({ length: 10 });
 process.env.system_bucket = cryptoRandomString({ length: 10 });
@@ -31,6 +30,10 @@ process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/buc
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');
+
+const publicBucket = randomId('publicbucket');
+const publicBucketPath = randomId('publicpath');
+const protectedBucket = randomId('protectedbucket');
 
 const bucketMap = {
   MAP: {
@@ -40,8 +43,15 @@ const bucketMap = {
         'Content-Type': 'text/plain',
       },
     },
+    [protectedBucket]: protectedBucket,
+    [publicBucketPath]: publicBucket,
+  },
+  PUBLIC_BUCKETS: {
+    [publicBucket]: 'public bucket',
   },
 };
+
+const invalidToken = randomId('invalidToken');
 
 let context;
 
@@ -74,13 +84,12 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
-  const fileBucket = randomId('bucket');
   const fileKey = randomId('key');
-  const fileLocation = `${fileBucket}/${fileKey}`;
+  const fileLocation = `${protectedBucket}/${fileKey}`;
   const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
-  const getUserInfoResponse = { foo: 'bar' };
+  const getUserInfoResponse = { foo: 'bar', username: getAccessTokenResponse.username };
 
   sinon.stub(
     OAuthClient.prototype,
@@ -95,7 +104,10 @@ test.before(async () => {
   sinon.stub(
     CognitoClient.prototype,
     'getUserInfo'
-  ).callsFake(() => getUserInfoResponse);
+  ).callsFake(({ token }) => {
+    if (token === invalidToken) throw new Error('Invalid token');
+    return getUserInfoResponse;
+  });
 
   const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
@@ -105,7 +117,7 @@ test.before(async () => {
       throw new Error(`Unexpected operation: ${operation}`);
     }
 
-    if (params.Bucket !== fileBucket && params.Bucket !== process.env.public_buckets) {
+    if (![publicBucket, protectedBucket].includes(params.Bucket)) {
       throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
     }
 
@@ -121,7 +133,7 @@ test.before(async () => {
     accessTokenRecord,
     accessTokenCookie: accessTokenRecord.accessToken,
     getAccessTokenResponse,
-    fileBucket,
+    getUserInfoResponse,
     fileKey,
     fileLocation,
     authorizationUrl,
@@ -211,10 +223,44 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
+test('A request for a file with a valid bearer token returns a redirect to S3', async (t) => {
+  const {
+    fileLocation,
+    getUserInfoResponse,
+    signedFileUrl,
+  } = context;
+
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${randomId('token')}`)
+    .expect(307);
+
+  t.is(response.status, 307);
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), getUserInfoResponse.username);
+});
+
+test('A request for a file with an invalid bearer token returns a redirect to an OAuth2 provider', async (t) => {
+  const { fileLocation } = context;
+
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${invalidToken}`)
+    .expect(307);
+
+  validateRedirectToGetAuthorizationCode(t, response);
+});
+
 test('A request for a public file without an access token returns a redirect to S3', async (t) => {
   const { fileKey, signedFileUrl } = context;
   const response = await request(distributionApp)
-    .get(`/${process.env.public_buckets}/${fileKey}`)
+    .get(`/${publicBucketPath}/${fileKey}`)
     .set('Accept', 'application/json')
     .expect(307);
 

@@ -6,13 +6,12 @@ const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
 const { URL } = require('url');
-const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
-const { getBucketMap, getPathsByBucketName } = require('../lib/bucketMapUtils');
+const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -106,7 +105,6 @@ async function handleLoginRequest(req, res) {
   try {
     log.debug('pre getAccessToken() with query params:', req.query);
     const accessTokenResponse = await oauthClient.getAccessToken(code);
-    log.debug('getAccessToken:', accessTokenResponse);
 
     // getAccessToken returns username only for EDL
     const params = {
@@ -181,6 +179,13 @@ async function handleLogoutRequest(req, res) {
   return res.send(rendered);
 }
 
+/**
+ * Responds to a locate bucket request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} - promise of an express response object
+ */
 async function handleLocateBucketRequest(req, res) {
   const { bucket_name: bucket } = req.query;
   if (bucket === undefined) {
@@ -191,7 +196,7 @@ async function handleLocateBucketRequest(req, res) {
   }
 
   const bucketMap = await getBucketMap();
-  const matchingPaths = getPathsByBucketName(bucket, bucketMap);
+  const matchingPaths = getPathsByBucketName(bucketMap, bucket);
   if (matchingPaths.length === 0) {
     log.debug(`No route defined for ${bucket}`);
     return res
@@ -213,21 +218,39 @@ async function handleLocateBucketRequest(req, res) {
 
 async function handleFileRequest(req, res) {
   const { s3Client } = await getConfigurations();
-  let fileBucket;
-  let fileKey;
-  try {
-    [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  } catch (error) {
-    if (error instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(error.message);
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+  const bucketMap = await getBucketMap();
+  const { bucket, key } = processFileRequestPath(req.params[0], bucketMap);
+  if (bucket === undefined) {
+    const error = `Unable to locate bucket from bucket map for ${req.params[0]}`;
+    return res.boom.notFound(error);
+  }
+
+  // check private buckets' user groups for earthdata only
+  if (process.env.OAUTH_PROVIDER === 'earthdata') {
+    const allowedUserGroups = checkPrivateBucket(bucketMap, bucket, key);
+    log.debug(`checkPrivateBucket for ${bucket} ${key} returns: ${allowedUserGroups.join(',')}`);
+    const allowed = allowedUserGroups.length === 0
+      || (req.authorizedMetadata.userGroups || [])
+        .some((group) => allowedUserGroups.includes(group));
+    if (!allowed) {
+      const statusCode = 404;
+      const vars = {
+        contentstring: 'This data is not currently available.',
+        title: 'Could not access data',
+        statusCode,
+        requestid,
+      };
+      const rendered = render(errorTemplate, vars);
+      return res.status(statusCode).send(rendered);
     }
-    throw error;
   }
 
   const signedS3Url = getSignedS3Url(
     s3Client,
-    fileBucket,
-    fileKey,
+    bucket,
+    key,
     req.authorizedMetadata.userName
   );
 

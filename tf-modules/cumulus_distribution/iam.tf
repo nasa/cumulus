@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     actions = [
       "s3:GetObject*"
     ]
-    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {

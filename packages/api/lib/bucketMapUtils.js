@@ -5,6 +5,13 @@ const paths = require('deepdash/paths');
 const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
 
+/**
+ * get the bucket map yaml file from s3
+ *
+ * @param {string} bucket - bucket
+ * @param {string} key - key
+ * @returns {Promise<Object>} - bucket map object
+ */
 async function getYamlFile(bucket, key) {
   if (isNil(bucket) || isNil(key)) {
     return {};
@@ -25,6 +32,11 @@ async function getYamlFile(bucket, key) {
   }
 }
 
+/**
+ * get the bucket map yaml file from configured s3 location
+ *
+ * @returns {Promise<Object>} - bucket map object
+ */
 function getBucketMap() {
   return getYamlFile(process.env.system_bucket, process.env.BUCKET_MAP_FILE);
 }
@@ -37,9 +49,10 @@ function prependBucketname(name) {
 /**
  * locate the bucket name and path from bucket map for the given paths
  *
- * @param {Array<string>} pathList - paths specified in the uri parameters e.g. path1/path2/file
+ * @param {Array<string>} pathList - paths specified in the uri parameters
+ *   e.g. ['path1', 'path2', 'filename']
  * @param {Object} bucketMap - bucket map object
- * @returns {Object} TODO
+ * @returns {Object} - file object information { bucket, path, key, headers }
  */
 function getBucketDynamicPath(pathList, bucketMap) {
   log.debug(`Pathparts is ${pathList.join(',')}`);
@@ -70,9 +83,15 @@ function getBucketDynamicPath(pathList, bucketMap) {
   return {};
 }
 
-// path, bucket, object_name, headers
-function processRequest(uriPath, bucketMap) {
-  const pathParts = uriPath.split('/');
+/**
+ * process file request path by looking up the path in bucket map
+ *
+ * @param {string} uriPath - request path
+ * @param {Object} bucketMap - bucket map object
+ * @returns {Object} - file object information { bucket, path, key, headers }
+ */
+function processFileRequestPath(uriPath, bucketMap) {
+  const pathParts = uriPath.replace(/^\//, '').split('/');
   // Make sure we got at least 1 path, and 1 file name
   if (pathParts.length < 2) {
     return { path: pathParts };
@@ -96,22 +115,28 @@ function processRequest(uriPath, bucketMap) {
  * @returns {boolean} - whether the bucket matches the one from bucket map
  */
 function bucketPrefixMatch(bucketToCheck, bucketFromMap, key = '') {
-  log.debug(`bucket_prefix_match(): checking if ${bucketToCheck} matches ${bucketFromMap} w/ optional obj ${key}`);
   if (bucketToCheck === bucketFromMap.split('/')[0] && key.startsWith(bucketFromMap.split('/').slice(1).join('/'))) {
-    log.debug(`Prefixed Bucket Map matched: s3://${bucketToCheck}/{object_name} => ${bucketFromMap}`);
+    log.debug(`Prefixed Bucket Map matched: s3://${bucketToCheck}/${key} => ${bucketFromMap}`);
     return true;
   }
   return false;
 }
 
-// Sort public/private buckets such that object-prefixes are processed FIRST
+/**
+ * get the buckets for a given bucket group, and sort them so that
+ * the buckets with object-prefixes are processed FIRST
+ *
+ * @param {Object} bucketMap - bucket map object
+ * @param {string} bucketGroup - bucket group e.g. PUBLIC_BUCKETS
+ * @returns {boolean} - whether the bucket matches the one from bucket map
+ */
 function getSortedBucketList(bucketMap, bucketGroup) {
   if (bucketMap[bucketGroup] === undefined) {
     log.warn(`Bucket map does not contain bucket group '${bucketGroup}`);
     return [];
   }
 
-  // b_map[bucket_group] SHOULD be a dict, but list actually works too.
+  // bucketMap[bucket_group] SHOULD be a dict, but list actually works too.
   if (Array.isArray(bucketMap[bucketGroup])) {
     return bucketMap[bucketGroup].sort((a1, a2) => a2.split('/').length - a1.split('/').length);
   }
@@ -122,7 +147,16 @@ function getSortedBucketList(bucketMap, bucketGroup) {
   return [];
 }
 
-function checkPrivateBucket(bucket, bucketMap, object_name = '') {
+/**
+ * check if a bucket/object is private and returns the user groups which have access to this
+ * bucket/object
+ *
+ * @param {Object} bucketMap - bucket map object
+ * @param {string} bucket - bucket
+ * @param {string} key - optinal, object key
+ * @returns {Array<string>} - user groups for the given bucket and key
+ */
+function checkPrivateBucket(bucketMap, bucket, key = '') {
   log.debug(`check_private_buckets(): bucket: ${bucket}`);
 
   // Check private bucket file
@@ -132,7 +166,7 @@ function checkPrivateBucket(bucket, bucketMap, object_name = '') {
     //log.debug(`Sorted PRIVATE buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
       const privBucket = sortedBuckets[i];
-      if (bucketPrefixMatch(bucket, prependBucketname(privBucket), object_name)) {
+      if (bucketPrefixMatch(bucket, prependBucketname(privBucket), key)) {
         // This bucket is PRIVATE, return group!
         return bucketMap.PRIVATE_BUCKETS[privBucket];
       }
@@ -142,13 +176,21 @@ function checkPrivateBucket(bucket, bucketMap, object_name = '') {
   return [];
 }
 
-function isPublicBucket(bucket, bucketMap, object_name = '') {
+/**
+ * check if a bucket/object is public
+ *
+ * @param {Object} bucketMap - bucket map object
+ * @param {string} bucket - bucket
+ * @param {string} key - optinal, object key
+ * @returns {boolean} - whether the bucket/object is public
+ */
+function isPublicBucket(bucketMap, bucket, key = '') {
   // Check for PUBLIC_BUCKETS in bucket map file
   if (bucketMap.PUBLIC_BUCKETS) {
     const sortedBuckets = getSortedBucketList(bucketMap, 'PUBLIC_BUCKETS');
     //log.debug(`Sorted PUBLIC buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
-      if (bucketPrefixMatch(bucket, prependBucketname(sortedBuckets[i]), object_name)) {
+      if (bucketPrefixMatch(bucket, prependBucketname(sortedBuckets[i]), key)) {
         // This bucket is public!
         log.debug('found a public, we will take it');
         return true;
@@ -161,7 +203,14 @@ function isPublicBucket(bucket, bucketMap, object_name = '') {
   return false;
 }
 
-function getPathsByBucketName(bucket, bucketMap) {
+/**
+ * get all paths from bucket map for a given bucket
+ *
+ * @param {Object} bucketMap - bucket map object
+ * @param {string} bucket - bucket
+ * @returns {Array<string>} - list of paths
+ */
+function getPathsByBucketName(bucketMap, bucket) {
   const allMapPaths = paths(bucketMap.MAP, { pathFormat: 'array' });
   const pathStrings = allMapPaths
     .filter((p) => (get(bucketMap.MAP, p.join('.')) === bucket))
@@ -178,5 +227,5 @@ module.exports = {
   getBucketDynamicPath,
   getPathsByBucketName,
   isPublicBucket,
-  processRequest,
+  processFileRequestPath,
 };

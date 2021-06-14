@@ -13,7 +13,9 @@ const { isAccessTokenExpired } = require('../lib/token');
 const { handleCredentialRequest } = require('../endpoints/s3credentials');
 const {
   getConfigurations,
-  isPublicRequest,
+  handleAuthBearerToken,
+  isAuthBearTokenRequest,
+  isPublicData,
 } = require('../lib/distribution');
 
 const version = require('../endpoints/version');
@@ -33,9 +35,13 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
-  if (isPublicRequest(req.path)) {
+  if (await isPublicData(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
+  }
+
+  if (isAuthBearTokenRequest(req)) {
+    return handleAuthBearerToken(req, res, next);
   }
 
   const {
@@ -63,7 +69,10 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
 
-  req.authorizedMetadata = { userName: accessTokenRecord.username };
+  req.authorizedMetadata = {
+    userName: accessTokenRecord.username,
+    userGroups: accessTokenRecord.tokenInfo.user_groups,
+  };
   return next();
 }
 

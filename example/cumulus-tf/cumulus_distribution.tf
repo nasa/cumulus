@@ -34,8 +34,7 @@ module "cumulus_distribution" {
   oauth_host_url           = var.csdap_host_url
   oauth_provider           = "cognito"
   permissions_boundary_arn = var.permissions_boundary_arn
-  protected_buckets        = local.protected_bucket_names
-  public_buckets           = local.public_bucket_names
+  buckets                  = var.buckets
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
   sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
   system_bucket            = var.system_bucket

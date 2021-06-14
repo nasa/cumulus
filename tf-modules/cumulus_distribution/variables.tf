@@ -8,6 +8,12 @@ variable "prefix" {
   description = "Resource prefix unique to this deployment"
 }
 
+variable "buckets" {
+  description = "Map identifying the buckets for the deployment"
+  type        = map(object({ name = string, type = string }))
+  default     = {}
+}
+
 variable "bucketname_prefix" {
   type        = string
   description = "all data buckets should have names prefixed with this. Must be compatible with S3 naming conventions (lower case only, etc). An empty string can be used to indicate no prefix"
@@ -99,18 +105,6 @@ variable "sts_policy_helper_lambda_function_arn" {
   type        = string
   default     = null
   description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
-}
-
-variable "protected_buckets" {
-  type        = list(string)
-  default     = []
-  description = "A list of protected buckets"
-}
-
-variable "public_buckets" {
-  type        = list(string)
-  default     = []
-  description = "A list of public buckets"
 }
 
 variable "tags" {
