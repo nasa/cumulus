@@ -3,7 +3,46 @@ import { RuleRecord } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
-import { PostgresRule } from '../types/rule';
+import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+
+export const translatePostgresRuleToApiRule = async (
+  pgRule: PostgresRuleRecord,
+  knex: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  providerPgModel = new ProviderPgModel(),
+): Promise<RuleRecord> => {
+  const provider = pgRule.provider_cumulus_id ?
+    await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id }) :
+    undefined;
+  const collection = pgRule.collection_cumulus_id ?
+    await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id }) :
+    undefined;
+  const apiRule: RuleRecord = {
+    name: pgRule.name,
+    workflow: pgRule.workflow,
+    provider: provider ? provider.name : undefined,
+    collection: collection ? {
+      name: collection.name,
+      version: collection.version,
+    } : undefined,
+    rule: {
+      type: pgRule.type,
+      arn: pgRule.arn,
+      logEventArn: pgRule.log_event_arn,
+      value: pgRule.value,
+    },
+    state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
+    meta: pgRule.meta,
+    payload: pgRule.payload,
+    queueName: pgRule.queue_url ? pgRule.queue_url.split('/').pop() : undefined,
+    executionNamePrefix: pgRule.execution_name_prefix,
+    queueUrl: pgRule.queue_url,
+    tags: pgRule.tags ? JSON.parse(pgRule.tags) : undefined,
+    createdAt: pgRule.created_at.getTime(),
+    updatedAt: pgRule.updated_at.getTime(),
+  };
+  return apiRule;
+};
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
