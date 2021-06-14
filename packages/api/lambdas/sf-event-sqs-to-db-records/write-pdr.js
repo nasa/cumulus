@@ -16,8 +16,11 @@ const {
   getMessageWorkflowStartTime,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const Logger = require('@cumulus/logger');
 
 const Pdr = require('../../models/pdrs');
+
+const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-pdr' });
 
 const generatePdrRecord = ({
   cumulusMessage,
@@ -31,6 +34,7 @@ const generatePdrRecord = ({
   const progress = getPdrPercentCompletion(stats);
   const timestamp = now;
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+
   return {
     name: getMessagePdrName(cumulusMessage),
     status: getMetaStatus(cumulusMessage),
@@ -94,6 +98,8 @@ const writePdrViaTransaction = async ({
     updatedAt,
   });
 
+  logger.info(`About to write PDR ${pdrRecord.name} to PostgreSQL`);
+
   const queryResult = await pdrPgModel.upsert(trx, pdrRecord);
 
   // If the WHERE clause of the upsert query is not met, then the
@@ -105,6 +111,8 @@ const writePdrViaTransaction = async ({
     queryResult,
     pdrRecord,
   });
+
+  logger.info(`Successfully upserted PDR ${pdrRecord.name} to PostgreSQL with cumulus_id ${pdrCumulusId}`);
   return [pdrCumulusId];
 };
 
