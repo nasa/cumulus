@@ -52,6 +52,11 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
       aws_secretsmanager_secret.api_oauth_client_password.arn
     ]
   }
+
+  statement {
+    actions   = ["lambda:InvokeFunction"]
+    resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_distribution_api_gateway" {

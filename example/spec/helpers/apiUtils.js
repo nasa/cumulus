@@ -12,22 +12,40 @@ function setDistributionApiEnvVars() {
   }
 }
 
+async function waitForApiStatus(getMethod, params, status, config) {
+  return await pRetry(
+    async () => {
+      const record = await getMethod(params);
+
+      const checkStatus = [status].flat();
+      if (!checkStatus.includes(record.status)) {
+        throw new Error(`Record status ${record.status}. Expect status ${status}`);
+      }
+      return record;
+    },
+    {
+      maxTimeout: 60 * 1000,
+      ...config,
+    }
+  );
+}
+
 /**
- * Check a record for a particular status and retry until the record gets that status
+ * Check a record for a particular set of statuses and retry until the record gets that status
  * This is to mitigate issues where a workflow completes, but there is a lag between
- * the workflow end, cloudwatch event sqs message, and dynamo update
+ * the workflow end, cloudwatch event sqs message, and database update
  *
  * @param {Object} model - model from api/models
  * @param {Object} params - params to pass to model.get
- * @param {string} status - status to wait for
+ * @param {string[] | string} status - status to wait for
  */
 async function waitForModelStatus(model, params, status) {
   return await pRetry(
     async () => {
       const record = await model.get(params);
-
-      if (record.status !== status) {
-        throw new Error(`Record status ${record.status}. Expect status ${status}`);
+      const checkStatus = [status].flat();
+      if (!checkStatus.includes(record.status)) {
+        throw new Error(`Record status ${record.status}. Expect status ${checkStatus}`);
       }
 
       return record;
@@ -41,4 +59,5 @@ async function waitForModelStatus(model, params, status) {
 module.exports = {
   setDistributionApiEnvVars,
   waitForModelStatus,
+  waitForApiStatus,
 };

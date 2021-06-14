@@ -25,17 +25,47 @@ const buildOAuthClient = async () => {
     const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRETE_NAME);
     process.env.OAUTH_CLIENT_PASSWORD = clientPassword;
   }
-  const oauthClientConnfig = {
+  const oauthClientConfig = {
     clientId: process.env.OAUTH_CLIENT_ID,
     clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
     loginUrl: process.env.OAUTH_HOST_URL,
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   };
   if (process.env.OAUTH_PROVIDER === 'earthdata') {
-    return new EarthdataLoginClient(oauthClientConnfig);
+    return new EarthdataLoginClient(oauthClientConfig);
   }
-  return new CognitoClient(oauthClientConnfig);
+  return new CognitoClient(oauthClientConfig);
 };
+
+/**
+ * Helper function to pull bucket out of a path string.
+ * Will ignore leading slash.
+ * "/bucket/key" -> "bucket"
+ * "bucket/key" -> "bucket"
+ *
+ * @param {string} path - express request path parameter
+ * @returns {string} the first part of a path which is our bucket name
+ */
+function bucketNameFromPath(path) {
+  return path.split('/').filter((d) => d).shift();
+}
+
+/**
+ * Reads the input path and determines if this is a request for public data
+ * or not.
+ *
+ * @param {string} path - req.path paramater
+ * @returns {boolean} - whether this request goes to a public bucket
+ */
+function isPublicRequest(path) {
+  try {
+    const publicBuckets = process.env.public_buckets.split(',');
+    const requestedBucket = bucketNameFromPath(path);
+    return publicBuckets.includes(requestedBucket);
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Returns a configuration object
@@ -87,4 +117,6 @@ module.exports = {
   buildErrorTemplateVars,
   getConfigurations,
   useSecureCookies,
+  bucketNameFromPath,
+  isPublicRequest,
 };

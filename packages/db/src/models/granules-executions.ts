@@ -38,6 +38,15 @@ export default class GranulesExecutionsPgModel {
       .merge();
   }
 
+  async delete(
+    knexTransaction: Knex.Transaction,
+    params: Partial<PostgresGranuleExecution>
+  ): Promise<number> {
+    return await knexTransaction(this.tableName)
+      .where(params)
+      .del();
+  }
+
   search(
     knexTransaction: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>

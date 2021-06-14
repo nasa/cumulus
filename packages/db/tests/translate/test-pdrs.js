@@ -2,7 +2,7 @@
 
 const test = require('ava');
 
-const { translatePostgresPdrToApiPdr } = require('../../dist/translate/pdrs');
+const { translateApiPdrToPostgresPdr, translatePostgresPdrToApiPdr } = require('../../dist/translate/pdrs');
 
 test('translatePostgresPdrToApiPdr translates postgres record to PDR record', async (t) => {
   const fakeCollection = { name: 'abc', version: '123' };
@@ -73,5 +73,118 @@ test('translatePostgresPdrToApiPdr translates postgres record to PDR record', as
   t.deepEqual(
     translatedPdrRecord,
     expectedPdr
+  );
+});
+
+test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
+  const record = {
+    pdrName: 'name',
+    status: 'running',
+    provider: 'fake-provider',
+    collectionId: 'fake-collection___000',
+    progress: 50,
+    stats: {
+      running: ['arn3', 'arn4'],
+      completed: ['arn1', 'arn2'],
+    },
+    address: 'address',
+    PANsent: true,
+    PANmessage: 'message',
+    originalUrl: 'url',
+    execution: 'execution',
+    timestamp: Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  const fakeKnex = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(1),
+  };
+  const fakeExecutionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(2),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(3),
+  };
+
+  const expectedPostgresPdr = {
+    name: record.pdrName,
+    status: record.status,
+    address: record.address,
+    progress: record.progress,
+    pan_sent: record.PANSent,
+    pan_message: record.PANmessage,
+    original_url: record.originalUrl,
+    duration: record.duration,
+    stats: record.stats,
+    created_at: new Date(record.createdAt),
+    updated_at: new Date(record.updatedAt),
+    timestamp: new Date(record.timestamp),
+    collection_cumulus_id: 1,
+    execution_cumulus_id: 2,
+    provider_cumulus_id: 3,
+  };
+
+  const result = await translateApiPdrToPostgresPdr(
+    record,
+    fakeKnex,
+    fakeCollectionPgModel,
+    fakeProviderPgModel,
+    fakeExecutionPgModel
+  );
+  t.deepEqual(
+    result,
+    expectedPostgresPdr
+  );
+});
+
+test('translateApiPdrToPostgresPdr handles optional fields', async (t) => {
+  const record = {
+    pdrName: 'name',
+    status: 'running',
+    provider: 'fake-provider',
+    collectionId: 'fake-collection___000',
+  };
+
+  const fakeKnex = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(1),
+  };
+  const fakeExecutionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(2),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(3),
+  };
+
+  const expectedPostgresPdr = {
+    name: record.pdrName,
+    status: record.status,
+    address: undefined,
+    progress: undefined,
+    pan_sent: undefined,
+    pan_message: undefined,
+    original_url: undefined,
+    duration: undefined,
+    stats: undefined,
+    created_at: undefined,
+    updated_at: undefined,
+    timestamp: undefined,
+    collection_cumulus_id: 1,
+    execution_cumulus_id: undefined,
+    provider_cumulus_id: 3,
+  };
+
+  const result = await translateApiPdrToPostgresPdr(
+    record,
+    fakeKnex,
+    fakeCollectionPgModel,
+    fakeProviderPgModel,
+    fakeExecutionPgModel
+  );
+  t.deepEqual(
+    result,
+    expectedPostgresPdr
   );
 });
