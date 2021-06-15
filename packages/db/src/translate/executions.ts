@@ -10,7 +10,6 @@ import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
 
-
 export const translatePostgresExecutionToApiExecution = async (
   executionRecord: PostgresExecutionRecord,
   knex: Knex,
