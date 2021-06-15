@@ -1,8 +1,8 @@
 # API outputs
 
-output "distribution_bucket_map" {
-  value = module.distribution.distribution_bucket_map
-}
+# output "distribution_bucket_map" {
+#   value = module.distribution.distribution_bucket_map
+# }
 
 output "archive_api_uri" {
   value = module.archive.api_uri
@@ -12,9 +12,9 @@ output "archive_api_redirect_uri" {
   value = module.archive.api_redirect_uri
 }
 
-output "s3_credentials_redirect_uri" {
-  value = module.distribution.s3_credentials_redirect_uri
-}
+# output "s3_credentials_redirect_uri" {
+#   value = module.distribution.s3_credentials_redirect_uri
+# }
 
 output "provider_kms_key_id" {
   value = module.archive.provider_kms_key_id
