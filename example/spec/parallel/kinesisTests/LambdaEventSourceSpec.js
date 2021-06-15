@@ -20,6 +20,8 @@ const {
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
+const { deleteExecution } = require('@cumulus/api-client/executions');
+
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -60,6 +62,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
   let testConfig;
   let testDataFolder;
   let testSuffix;
+  let executionArn;
 
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
@@ -68,6 +71,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);
+    await deleteExecution({ prefix: testConfig.stackName, executionArn: executionArn });
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
@@ -152,8 +156,9 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
 
     it('runs the HelloWorldWorkflow for L2_HR_PIXC and not MOD09GQ', async () => {
       expect(workflowExecutions.length).toEqual(1);
+      executionArn = workflowExecutions[0].executionArn;
 
-      const taskInput = await lambdaStep.getStepInput(workflowExecutions[0].executionArn, 'HelloWorld');
+      const taskInput = await lambdaStep.getStepInput(executionArn, 'HelloWorld');
 
       expect(taskInput.meta.collection.name).toEqual(`L2_HR_PIXC${testSuffix}`);
     });
