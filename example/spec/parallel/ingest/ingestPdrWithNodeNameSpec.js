@@ -29,6 +29,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -38,7 +39,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -80,18 +80,19 @@ describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let addedCollection;
   let beforeAllFailed;
   let config;
+  let nodeName;
   let nodeNameProvider;
+  let nodeNameProviderId;
   let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
   let testDataFolder;
+  let testDataGranuleId;
   let testSuffix;
   let workflowExecution;
-  let addedCollection;
-  let nodeName;
-  let nodeNameProviderId;
   const ingestTime = Date.now() - 1000 * 30;
 
   beforeAll(async () => {
@@ -100,7 +101,7 @@ describe('Ingesting from PDR', () => {
 
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
-      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
+      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
@@ -111,7 +112,7 @@ describe('Ingesting from PDR', () => {
       nodeName = config.pdrNodeNameProviderBucket;
       await deleteProvidersByHost(config.stackName, nodeName);
 
-      nodeNameProviderId = `provider-${randomString(4)}`;
+      nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
 
       const createProviderResponse = await providersApi.createProvider({
         prefix: config.stackName,
@@ -129,6 +130,8 @@ describe('Ingesting from PDR', () => {
       nodeNameProvider = createProviderResponseBody.record;
 
       await waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime });
+
+      testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
@@ -169,6 +172,10 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: testDataGranuleId,
+    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -271,7 +278,6 @@ describe('Ingesting from PDR', () => {
       let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
-      const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(() => {
@@ -300,7 +306,7 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await granulesApiTestUtils.deleteGranule({
+        await deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId,
         });
@@ -420,7 +426,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              granulesApiTestUtils.deleteGranule({
+              deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
               }))

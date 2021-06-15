@@ -26,10 +26,10 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
   let collection;
   let config;
-  let ingestGranuleRule;
   let granuleId;
   let ingestGranuleExecution;
   let ingestGranuleExecutionArn;
+  let ingestGranuleRule;
   let prefix;
   let provider;
 

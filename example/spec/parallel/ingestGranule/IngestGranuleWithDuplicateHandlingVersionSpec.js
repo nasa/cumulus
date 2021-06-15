@@ -29,12 +29,12 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
   let config;
   let differentChecksumFilename;
   let differentChecksumKey;
-  let ingestGranuleRule1;
-  let ingestGranuleRule2;
+  let granuleId;
   let ingestGranuleExecution1Arn;
   let ingestGranuleExecution2;
   let ingestGranuleExecution2Arn;
-  let granuleId;
+  let ingestGranuleRule1;
+  let ingestGranuleRule2;
   let newFileFilename;
   let newFileKey;
   let prefix;
@@ -242,6 +242,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),
@@ -252,7 +253,6 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         () => deleteS3Object(sourceBucket, differentChecksumKey),
         () => deleteS3Object(sourceBucket, newFileKey),
         () => deleteS3Object(sourceBucket, sameChecksumKey),
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
