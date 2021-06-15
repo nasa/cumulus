@@ -19,6 +19,13 @@ const {
   destroyLocalTestDb,
   tableNames,
 } = require('@cumulus/db');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const {
   generateFilePgRecord,
@@ -62,6 +69,15 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esRulesClient = new Search(
+    {},
+    'rule',
+    t.context.esIndex
+  );
 });
 
 test.beforeEach(async (t) => {
@@ -134,6 +150,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test('generateGranuleRecord() generates the correct granule record', async (t) => {
@@ -565,6 +582,7 @@ test.serial('writeGranules() does not persist records to Dynamo or Postgres if D
       throw new Error('Granules dynamo error');
     },
     describeGranuleExecution: () => Promise.resolve({}),
+    delete: () => Promise.resolve(),
   };
 
   const [error] = await t.throwsAsync(

@@ -14,6 +14,12 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
+const {
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -370,6 +376,51 @@ const _generateFilesFromGranule = async ({
   });
 };
 
+const writeGranuleToDynamoAndEs = async (params) => {
+  const {
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
+    processingTimeInfo,
+    queryFields,
+    granuleModel,
+    cmrUtils = CmrUtils,
+    updatedAt = Date.now(),
+    esClient = await Search.es(),
+  } = params;
+  const granuleApiRecord = await generateGranuleApiRecord({
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
+    processingTimeInfo,
+    queryFields,
+    updatedAt,
+    cmrUtils,
+  });
+  try {
+    await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
+    await indexGranule(esClient, granuleApiRecord, process.env.ES_INDEX);
+  } catch (writeError) {
+    // On error, delete the Dynamo record to ensure that all systems
+    // stay in sync
+    await granuleModel.delete({
+      granuleId: granuleApiRecord.granuleId,
+      collectionId: granuleApiRecord.collectionId,
+    });
+    throw writeError;
+  }
+};
+
 /**
  * Write a granule to DynamoDB and Postgres
  *
@@ -416,25 +467,10 @@ const _writeGranule = async ({
   pdrCumulusId,
   granuleModel,
   updatedAt = Date.now(),
-  cmrUtils = CmrUtils,
+  esClient,
 }) => {
   let granuleCumulusId;
   const files = await _generateFilesFromGranule({ granule, provider });
-
-  const granuleRecord = await generateGranuleApiRecord({
-    granule,
-    executionUrl,
-    collectionId,
-    provider,
-    workflowStartTime,
-    error,
-    pdrName,
-    workflowStatus,
-    processingTimeInfo,
-    queryFields,
-    updatedAt,
-    cmrUtils,
-  });
 
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writeGranuleViaTransaction({
@@ -454,7 +490,21 @@ const _writeGranule = async ({
       files,
     });
 
-    return granuleModel.storeGranuleFromCumulusMessage(granuleRecord);
+    return writeGranuleToDynamoAndEs({
+      granule,
+      executionUrl,
+      collectionId,
+      provider,
+      workflowStartTime,
+      error,
+      pdrName,
+      workflowStatus,
+      processingTimeInfo,
+      queryFields,
+      granuleModel,
+      esClient,
+      updatedAt,
+    });
   });
 
   await _writeGranuleFiles({
