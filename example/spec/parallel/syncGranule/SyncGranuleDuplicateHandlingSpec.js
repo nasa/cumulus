@@ -6,7 +6,8 @@ const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { models: { Granule, Pdr } } = require('@cumulus/api');
+const { models: { Granule } } = require('@cumulus/api');
+const { deletePdr } = require('@cumulus/api-client/pdrs');
 const {
   addCollections,
   addProviders,
@@ -55,7 +56,6 @@ describe('When the Sync Granule workflow is configured', () => {
   let inputPayload;
   let granuleModel;
   let expectedPayload;
-  let pdrModel;
   let testSuffix;
   let testDataFolder;
 
@@ -73,9 +73,6 @@ describe('When the Sync Granule workflow is configured', () => {
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     granuleModel = new Granule();
-
-    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-    pdrModel = new Pdr();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -136,7 +133,8 @@ describe('When the Sync Granule workflow is configured', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       }),
-      pdrModel.delete({ // TODO: CUMULUS-2307 fix this
+      deletePdr({
+        prefix: config.stackName,
         pdrName: inputPayload.pdr.name,
       }),
     ]);

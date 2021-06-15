@@ -15,7 +15,6 @@ const isObject = require('lodash/isObject');
 const {
   Execution,
   Granule,
-  Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -57,7 +56,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
-const { getPdr } = require('@cumulus/api-client/pdrs');
+const { getPdr, deletePdr } = require('@cumulus/api-client/pdrs');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -116,7 +115,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let granuleModel;
   let inputPayload;
-  let pdrModel;
   let postToCmrOutput;
   let provider;
   let testDataFolder;
@@ -144,8 +142,6 @@ describe('The S3 Ingest Granules workflow', () => {
       executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -274,7 +270,8 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       }),
-      pdrModel.delete({ // TODO: CUMULUS-2307 fix this
+      deletePdr({
+        prefix: config.stackName,
         pdrName: inputPayload.pdr.name,
       }),
       deleteS3Object(config.bucket, granuleCompletedMessageKey),

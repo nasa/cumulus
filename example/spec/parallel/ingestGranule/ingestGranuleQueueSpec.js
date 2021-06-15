@@ -9,7 +9,6 @@ const { URL, resolve } = require('url');
 const {
   Execution,
   Granule,
-  Pdr,
   Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
@@ -30,8 +29,9 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { getExecution } = require('@cumulus/api-client/executions');
 const granulesApiTestUtils = require('@cumulus/api-client/granules');
-const { getPdr } = require('@cumulus/api-client/pdrs');
+const { getPdr, deletePdr } = require('@cumulus/api-client/pdrs');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -39,7 +39,6 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { getExecution } = require('@cumulus/api-client/executions');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -90,7 +89,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let granuleModel;
   let inputPayload;
-  let pdrModel;
   let postToCmrOutput;
   let publishGranuleExecutionArn;
   let provider;
@@ -116,8 +114,6 @@ describe('The S3 Ingest Granules workflow', () => {
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       providerModel = new Provider();
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -244,7 +240,8 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       }),
-      pdrModel.delete({ // TODO: CUMULUS-2307 fix this
+      deletePdr({
+        prefix: config.stackName,
         pdrName: inputPayload.pdr.name,
       }),
     ]);
