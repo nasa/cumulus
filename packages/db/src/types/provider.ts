@@ -5,7 +5,6 @@
  * is ready for write to Cumulus's postgres database instance
  */
 
-
 export interface PostgresProvider {
   certificate_uri?: string | null,
   cm_key_id?: string | null,

@@ -16,7 +16,7 @@ const {
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
-const { addToLocalES, indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
+const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
 const Provider = require('../models/providers');
