@@ -22,7 +22,6 @@ resource "aws_lambda_function" "db_indexer" {
     variables = {
       CMR_ENVIRONMENT            = var.cmr_environment
       CMR_HOST                   = var.cmr_custom_host
-      CollectionsTable           = var.dynamo_tables.collections.name
       ExecutionsTable            = var.dynamo_tables.executions.name
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
       FilesTable                 = var.dynamo_tables.files.name
@@ -45,17 +44,6 @@ resource "aws_lambda_function" "db_indexer" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
-}
-
-data "aws_dynamodb_table" "collections" {
-  name = var.dynamo_tables.collections.name
-}
-
-resource "aws_lambda_event_source_mapping" "collections_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.collections.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
 }
 
 data "aws_dynamodb_table" "executions" {
@@ -91,45 +79,12 @@ resource "aws_lambda_event_source_mapping" "granules_table_db_indexer" {
   batch_size        = 10
 }
 
-data "aws_dynamodb_table" "pdrs" {
-  name = var.dynamo_tables.pdrs.name
-}
-
-resource "aws_lambda_event_source_mapping" "pdrs_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
-data "aws_dynamodb_table" "providers" {
-  name = var.dynamo_tables.providers.name
-}
-
-resource "aws_lambda_event_source_mapping" "providers_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.providers.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
 data "aws_dynamodb_table" "reconciliation_reports" {
   name = var.dynamo_tables.reconciliation_reports.name
 }
 
 resource "aws_lambda_event_source_mapping" "reconciliation_reports_table_db_indexer" {
   event_source_arn  = data.aws_dynamodb_table.reconciliation_reports.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
-data "aws_dynamodb_table" "rules" {
-  name = var.dynamo_tables.rules.name
-}
-
-resource "aws_lambda_event_source_mapping" "rules_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.rules.stream_arn
   function_name     = aws_lambda_function.db_indexer.arn
   starting_position = "TRIM_HORIZON"
   batch_size        = 10

@@ -1,6 +1,5 @@
 'use strict';
 
-const { Execution } = require('@cumulus/api/models');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
@@ -10,7 +9,9 @@ const {
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
   loadConfig,
   createTimestampedTestId,
@@ -18,7 +19,6 @@ const {
 } = require('../helpers/testUtils');
 
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
-const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -27,7 +27,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   let beforeAllFailed = false;
   let config;
-  let executionModel;
   let httpWorkflowExecution;
   let lambdaStep;
   let queueGranulesOutput;
@@ -41,7 +40,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
       config = await loadConfig();
 
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
 
       testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
       testSuffix = createTestSuffix(testId);
@@ -115,9 +113,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: httpWorkflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: httpWorkflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');

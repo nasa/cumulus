@@ -39,6 +39,9 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { getExecution } = require('@cumulus/api-client/executions');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
+
 const {
   createTestDataPath,
   createTestSuffix,
@@ -302,7 +305,7 @@ describe('Ingesting from PDR', () => {
       });
 
       describe('PdrStatusCheck lambda function', () => {
-        let lambdaOutput = null;
+        let lambdaOutput;
 
         beforeAll(async () => {
           lambdaOutput = await lambdaStep.getStepOutput(
@@ -411,9 +414,12 @@ describe('Ingesting from PDR', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else {
-            await waitForModelStatus(
-              executionModel,
-              { arn: ingestGranuleWorkflowArn },
+            await waitForApiStatus(
+              getExecution,
+              {
+                prefix: config.stackName,
+                arn: workflowExecution.executionArn,
+              },
               'completed'
             );
 
@@ -512,9 +518,12 @@ describe('Ingesting from PDR', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {
-          const record = await waitForModelStatus(
-            executionModel,
-            { arn: parsePdrExecutionArn },
+          const record = await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn: workflowExecution.executionArn,
+            },
             'completed'
           );
           expect(record.status).toEqual('completed');
