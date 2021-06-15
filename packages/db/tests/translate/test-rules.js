@@ -15,6 +15,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     executionNamePrefix: 'prefix',
     meta: { key: 'value' },
     queueName: 'queue_url',
+    queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
     payload: { result: { key: 'value' } },
     tags: ['tag1', 'tag2'],
     createdAt: Date.now(),
@@ -46,6 +47,41 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     updated_at: new Date(record.updatedAt),
     collection_cumulus_id: 1,
     provider_cumulus_id: 2,
+  };
+
+  const result = await translateApiRuleToPostgresRule(
+    record,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeProviderPgModel
+  );
+  t.deepEqual(
+    result,
+    expectedPostgresRule
+  );
+});
+
+test('translateApiRuleToPostgresRule handles optional fields', async (t) => {
+  const record = {
+    name: 'name',
+    workflow: 'workflow_name',
+    state: 'ENABLED',
+    rule: { type: 'onetime' },
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(1),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(2),
+  };
+
+  const expectedPostgresRule = {
+    name: record.name,
+    workflow: record.workflow,
+    type: record.rule.type,
+    enabled: true,
   };
 
   const result = await translateApiRuleToPostgresRule(
@@ -112,6 +148,46 @@ test('translatePostgresRuleToApiRule converts Postgres rule to API rule', async 
     },
     executionNamePrefix: pgRecord.execution_name_prefix,
     tags: [],
+    createdAt: pgRecord.created_at.getTime(),
+    updatedAt: pgRecord.updated_at.getTime(),
+  };
+
+  t.deepEqual(
+    await translatePostgresRuleToApiRule(
+      pgRecord,
+      fakeDbClient,
+      fakeCollectionPgModel,
+      fakeProviderPgModel
+    ),
+    expectedRule
+  );
+});
+
+test('translatePostgresRuleToApiRule handles optional fields', async (t) => {
+  const pgRecord = {
+    name: 'testRule',
+    workflow: 'testWorkflow',
+    type: 'onetime',
+    enabled: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  const fakeDbClient = {};
+  const fakeCollection = { name: 'abc', version: '123' };
+  const fakeCollectionPgModel = {
+    get: () => Promise.resolve(fakeCollection),
+  };
+  const fakeProvider = { name: 'abc' };
+  const fakeProviderPgModel = {
+    get: () => Promise.resolve(fakeProvider),
+  };
+
+  const expectedRule = {
+    name: pgRecord.name,
+    state: 'ENABLED',
+    workflow: pgRecord.workflow,
+    rule: { type: pgRecord.type },
     createdAt: pgRecord.created_at.getTime(),
     updatedAt: pgRecord.updated_at.getTime(),
   };

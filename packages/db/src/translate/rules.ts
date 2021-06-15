@@ -1,5 +1,6 @@
 import Knex from 'knex';
-import { RuleRecord } from '@cumulus/types/api/rules';
+import { Rule, RuleRecord } from '@cumulus/types/api/rules';
+import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
@@ -25,12 +26,12 @@ export const translatePostgresRuleToApiRule = async (
       name: collection.name,
       version: collection.version,
     } : undefined,
-    rule: {
+    rule: <Rule>removeNilProperties({
       type: pgRule.type,
       arn: pgRule.arn,
       logEventArn: pgRule.log_event_arn,
       value: pgRule.value,
-    },
+    }),
     state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
     meta: pgRule.meta,
     payload: pgRule.payload,
@@ -41,7 +42,7 @@ export const translatePostgresRuleToApiRule = async (
     createdAt: pgRule.created_at.getTime(),
     updatedAt: pgRule.updated_at.getTime(),
   };
-  return apiRule;
+  return <RuleRecord>removeNilProperties(apiRule);
 };
 
 /**
@@ -84,5 +85,5 @@ export const translateApiRuleToPostgresRule = async (
     updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
   };
 
-  return ruleRecord;
+  return <PostgresRule>removeNilProperties(ruleRecord);
 };
