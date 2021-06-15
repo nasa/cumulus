@@ -27,15 +27,15 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
   let beforeAllFailed = false;
   let collection;
   let config;
-  let ingestGranuleRule1;
-  let ingestGranuleExecutionArn1;
   let granuleId;
+  let ingestGranuleExecution2;
+  let ingestGranuleExecution2Arn;
+  let ingestGranuleExecutionArn1;
+  let ingestGranuleRule1;
   let prefix;
   let provider;
   let sameChecksumFilename;
   let sameChecksumKey;
-  let ingestGranuleExecution2;
-  let ingestGranuleExecution2Arn;
   let secondIngestGranuleRule;
   let sourceBucket;
 
@@ -208,6 +208,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn1 }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
@@ -216,7 +217,6 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     await pAll(
       [
         () => deleteS3Object(sourceBucket, sameChecksumKey),
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
