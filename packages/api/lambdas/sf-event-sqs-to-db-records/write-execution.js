@@ -19,6 +19,8 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
+const { removeNilProperties } = require('@cumulus/common/util');
+
 const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
@@ -54,7 +56,7 @@ const buildExecutionRecord = ({
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
-  return {
+  return removeNilProperties({
     arn,
     status: getMetaStatus(cumulusMessage),
     url: getExecutionUrlFromArn(arn),
@@ -71,7 +73,7 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
-  };
+  });
 };
 
 const writeExecutionViaTransaction = async ({
