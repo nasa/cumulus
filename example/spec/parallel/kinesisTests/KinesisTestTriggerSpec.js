@@ -31,9 +31,9 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const granulesApi = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getExecution } = require('@cumulus/api-client/executions');
 
-const { waitForModelStatus } = require('../../helpers/apiUtils');
-
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -317,9 +317,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('records both the original and the final payload', async () => {
-        const executionRecord = await waitForModelStatus(
-          executionModel,
-          { arn: workflowExecution.executionArn },
+        const executionRecord = await waitForApiStatus(
+          getExecution,
+          {
+            prefix: testConfig.stackName,
+            arn: workflowExecution.executionArn,
+          },
           'completed'
         );
         expect(executionRecord.originalPayload).toEqual(startStep.payload);
