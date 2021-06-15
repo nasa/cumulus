@@ -28,6 +28,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
+    - Add translatePostgresExecutionToApiProvider method to `@cumulus/db/translate/executions`
+  - **CUMULUS-2303**
+    - Update API provider GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
