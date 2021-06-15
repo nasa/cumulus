@@ -173,6 +173,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId: existingGranuleId });
     await Promise.all([
       deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn }),
       deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn }),
@@ -181,7 +182,6 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
     await pAll(
       [
         () => deleteS3Object(sourceBucket, existingGranuleKey),
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

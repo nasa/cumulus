@@ -2,6 +2,7 @@
 
 const fs = require('fs-extra');
 const { models: { Execution, Granule } } = require('@cumulus/api');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
@@ -10,7 +11,6 @@ const {
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -19,12 +19,12 @@ const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
-  loadConfig,
-  uploadTestDataToBucket,
-  deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
+  deleteFolder,
+  loadConfig,
+  uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -42,6 +42,7 @@ describe('The Ingest Granule failure workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let beforeAllFailed = false;
   let config;
   let executionModel;
   let granuleModel;
@@ -50,7 +51,6 @@ describe('The Ingest Granule failure workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
-  let beforeAllFailed = false;
 
   beforeAll(async () => {
     try {
@@ -89,9 +89,6 @@ describe('The Ingest Granule failure workflow', () => {
         },
       ];
 
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
-
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -108,7 +105,7 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await granulesApiTestUtils.deleteGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
@@ -220,7 +217,7 @@ describe('The Ingest Granule failure workflow', () => {
         'failed'
       );
 
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
