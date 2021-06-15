@@ -382,7 +382,7 @@ test.serial('writeGranules() throws an error if collection is not provided', asy
   );
 });
 
-test.serial('writeGranules() saves granule records to Dynamo and Postgres if Postgres write is enabled', async (t) => {
+test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -406,7 +406,7 @@ test.serial('writeGranules() saves granule records to Dynamo and Postgres if Pos
   t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
 });
 
-test.serial('writeGranules() saves granule records to Dynamo and Postgres with same timestamps', async (t) => {
+test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL with same timestamps', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -432,7 +432,7 @@ test.serial('writeGranules() saves granule records to Dynamo and Postgres with s
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
-test.serial('writeGranules() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
+test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -469,7 +469,7 @@ test.serial('writeGranules() saves file records to Postgres if Postgres write is
   );
 });
 
-test.serial('writeGranules() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
+test.serial('writeGranules() does not persist file records to PostgreSQL if the worflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -566,7 +566,7 @@ test.serial('writeGranules() throws error if any granule writes fail', async (t)
   }));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -603,7 +603,7 @@ test.serial('writeGranules() does not persist records to Dynamo or Postgres if D
   );
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if PostgreSQL write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -617,7 +617,7 @@ test.serial('writeGranules() does not persist records to Dynamo or Postgres if P
   const fakeTrxCallback = (cb) => {
     const fakeTrx = sinon.stub().returns({
       insert: () => {
-        throw new Error('Granules Postgres error');
+        throw new Error('Granules PostgreSQL error');
       },
     });
     return cb(fakeTrx);
@@ -634,7 +634,7 @@ test.serial('writeGranules() does not persist records to Dynamo or Postgres if P
     granuleModel,
   }));
 
-  t.true(error.message.includes('Granules Postgres error'));
+  t.true(error.message.includes('Granules PostgreSQL error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
@@ -668,14 +668,14 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
 
   const dynamoGranule = await granuleModel.get({ granuleId });
   t.is(dynamoGranule.status, 'failed');
-  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to Postgres.');
+  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to PostgreSQL.');
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
 });
 
 test.serial('writeGranules() writes all valid files if any non-valid file fails', async (t) => {
@@ -757,6 +757,6 @@ test.serial('writeGranules() stores error on granule if any file fails', async (
   });
 
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
-  t.is(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });

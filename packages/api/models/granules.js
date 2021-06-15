@@ -12,6 +12,12 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
+const {
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -577,6 +583,7 @@ class Granule extends Manager {
     const error = parseException(cumulusMessage.exception);
     const workflowStatus = getMetaStatus(cumulusMessage);
     const queryFields = getGranuleQueryFields(cumulusMessage);
+    const esClient = await Search.es();
 
     return await Promise.all(granules.map(
       async (granule) => {
@@ -600,6 +607,7 @@ class Granule extends Manager {
           granuleFiles,
         }).catch(log.error);
         await this.storeGranuleFromCumulusMessage(granuleRecord).catch(log.error);
+        await indexGranule(esClient, granuleRecord, process.env.ES_INDEX);
       }
     ));
   }
