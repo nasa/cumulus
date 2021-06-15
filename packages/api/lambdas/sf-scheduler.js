@@ -38,7 +38,7 @@ async function handleScheduleEvent(event) {
     getCollection(event.collection),
   ]);
 
-  const provider = providerRecord.body ? JSON.parse(providerRecord.body) : undefined;
+  const provider = providerRecord ? JSON.parse(providerRecord.body) : undefined;
   const messageTemplate = get(event, 'template');
   const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
