@@ -21,11 +21,12 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
+const { Execution } = require('@cumulus/api/models');
 
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const {
   addCollections,
@@ -56,8 +57,6 @@ const {
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
-
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -530,13 +529,16 @@ describe('Ingesting from PDR', () => {
         }
       });
 
-      it('the pdr record is added to DynamoDB', async () => {
+      it('the pdr record is added to the API', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {
-          const record = await waitForModelStatus(
-            new Pdr(),
-            { pdrName: pdrFilename },
-            'completed'
+          const record = await waitForApiStatus(
+            getPdr,
+            {
+              prefix: config.stackName,
+              pdrName: pdrFilename,
+            },
+            ['completed']
           );
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');

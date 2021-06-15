@@ -57,6 +57,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -273,7 +274,7 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       }),
-      pdrModel.delete({
+      pdrModel.delete({ // TODO: CUMULUS-2307 fix this
         pdrName: inputPayload.pdr.name,
       }),
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
@@ -305,9 +306,12 @@ describe('The S3 Ingest Granules workflow', () => {
   it('triggers a running PDR record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
 
-    const record = await waitForModelStatus(
-      pdrModel,
-      { pdrName: inputPayload.pdr.name },
+    const record = await waitForApiStatus(
+      getPdr,
+      {
+        prefix: config.stackName,
+        pdrName: inputPayload.pdr.name,
+      },
       ['running', 'completed']
     );
     expect(record.status).toEqual('running');

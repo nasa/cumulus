@@ -136,7 +136,7 @@ describe('When the Sync Granule workflow is configured', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       }),
-      pdrModel.delete({
+      pdrModel.delete({ // TODO: CUMULUS-2307 fix this
         pdrName: inputPayload.pdr.name,
       }),
     ]);
