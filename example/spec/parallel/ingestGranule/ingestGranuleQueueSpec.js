@@ -10,7 +10,6 @@ const {
   Execution,
   Granule,
   Pdr,
-  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
@@ -39,6 +38,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -93,7 +93,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let postToCmrOutput;
   let publishGranuleExecutionArn;
   let provider;
-  let providerModel;
   let testDataFolder;
   let workflowExecutionArn;
 
@@ -114,7 +113,6 @@ describe('The S3 Ingest Granules workflow', () => {
       executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      providerModel = new Provider();
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
       pdrModel = new Pdr();
 
@@ -237,7 +235,10 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      deleteProvider({
+        prefix: config.stackName,
+        providerId: provider.id,
+      }),
       executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
