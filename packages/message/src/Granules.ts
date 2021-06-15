@@ -146,7 +146,7 @@ export const generateGranuleApiRecord = async ({
   pdrName?: string,
   workflowStatus: GranuleStatus,
   queryFields?: Object,
-  updatedAt: string,
+  updatedAt?: string,
   processingTimeInfo?: ExecutionProcessingTimes,
   granuleFiles?: ApiFile[],
   cmrUtils: CmrUtilsClass

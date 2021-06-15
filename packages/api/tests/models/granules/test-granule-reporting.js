@@ -1,4 +1,5 @@
 const test = require('ava');
+const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -458,7 +459,7 @@ test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus me
   }
 });
 
-test('storeGranulesFromCumulusMessage() handles failing and succcessful granules independently', async (t) => {
+test.only('storeGranulesFromCumulusMessage() handles failing and succcessful granules independently', async (t) => {
   const { granuleModel } = t.context;
 
   const bucket = randomId('bucket-');
@@ -468,10 +469,7 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
   const granule1 = fakeGranuleFactoryV2({
     files: [fakeFileFactory({ bucket })],
   });
-  // Missing files should cause failure to write
-  const granule2 = fakeGranuleFactoryV2({
-    files: undefined,
-  });
+  const granule2 = fakeGranuleFactoryV2();
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
 
@@ -500,6 +498,15 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
     },
   };
 
+  sinon.stub(Granule.prototype, 'storeGranuleFromCumulusMessage')
+    .withArgs({ granuleId: granule2.granuleId })
+    .rejects(new Error('fail'));
+    // .callsFake((granuleRecord) => {
+    //   if (granuleRecord.granuleId === granule1.granuleId) {
+    //     return Promise.resolve();
+    //   }
+    //   return Promise.reject(new Error('fail'));
+    // });
   await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
 
   t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));

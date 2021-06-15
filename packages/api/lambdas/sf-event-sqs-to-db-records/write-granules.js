@@ -24,6 +24,7 @@ const {
   getGranuleStatus,
   getGranuleQueryFields,
   messageHasGranules,
+  generateGranuleApiRecord,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -36,6 +37,9 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const {
+  parseException,
+} = require('@cumulus/message/utils');
 
 const FileUtils = require('../../lib/FileUtils');
 const {
@@ -44,9 +48,6 @@ const {
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
 } = require('../../lib/granules');
-const {
-  parseException,
-} = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
 /**
@@ -415,10 +416,25 @@ const _writeGranule = async ({
   pdrCumulusId,
   granuleModel,
   updatedAt = Date.now(),
+  cmrUtils = CmrUtils,
 }) => {
+  let granuleCumulusId;
   const files = await _generateFilesFromGranule({ granule, provider });
 
-  let granuleCumulusId;
+  const granuleRecord = await generateGranuleApiRecord({
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
+    processingTimeInfo,
+    queryFields,
+    updatedAt,
+    cmrUtils,
+  });
 
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writeGranuleViaTransaction({
