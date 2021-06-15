@@ -73,9 +73,9 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-  t.context.esRulesClient = new Search(
+  t.context.esGranulesClient = new Search(
     {},
-    'rule',
+    'granule',
     t.context.esIndex
   );
 });
@@ -404,9 +404,10 @@ test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elastics
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
+  t.true(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL with same timestamps', async (t) => {
+test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -430,6 +431,10 @@ test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL with sam
   const pgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {
@@ -566,7 +571,7 @@ test.serial('writeGranules() throws error if any granule writes fail', async (t)
   }));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if Dynamo write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -601,9 +606,10 @@ test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if
   t.false(
     await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
+  t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if PostgreSQL write fails', async (t) => {
+test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -639,6 +645,43 @@ test.serial('writeGranules() does not persist records to Dynamo or PostgreSQL if
   t.false(
     await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
   );
+  t.false(await t.context.esGranulesClient.exists(granuleId));
+});
+
+test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const fakeEsClient = {
+    index: () => {
+      throw new Error('Granules ES error');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  const [error] = await t.throwsAsync(writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+    esClient: fakeEsClient,
+  }));
+
+  t.true(error.message.includes('Granules ES error'));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+  );
+  t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
 test.serial('writeGranules() writes a granule and marks as failed if any file writes fail', async (t) => {

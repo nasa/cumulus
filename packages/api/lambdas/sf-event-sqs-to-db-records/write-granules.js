@@ -319,9 +319,9 @@ const _writeGranuleFiles = async ({
     if (!isEmpty(workflowError)) {
       log.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
     }
-    log.error('Failed writing files to Postgres, updating granule with error', error);
+    log.error('Failed writing files to PostgreSQL, updating granule with error', error);
     const errorObject = {
-      Error: 'Failed writing files to Postgres.',
+      Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
     };
     await knex.transaction(async (trx) => {
@@ -548,6 +548,7 @@ const writeGranules = async ({
   providerCumulusId,
   pdrCumulusId,
   granuleModel = new Granule(),
+  esClient,
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
     log.info('No granules to write, skipping writeGranules');
@@ -593,6 +594,7 @@ const writeGranules = async ({
       pdrCumulusId,
       knex,
       granuleModel,
+      esClient,
     })
   ));
   const failures = results.filter((result) => result.status === 'rejected');
