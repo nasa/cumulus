@@ -48,7 +48,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
       console.log(`Creating rule for HelloWorldWorkflow with testExecutionId ${testExecutionId}`);
 
-      const oneTimeRuleName = timestampedName('OneTimeExecutionNamePrefix');
+      const oneTimeRuleName = timestampedName('OneTimeRule');
       console.log('created one time rule with name: %s', oneTimeRuleName);
       rule = await createOneTimeRule(
         prefix,
@@ -103,19 +103,21 @@ describe('Creating a one-time rule via the Cumulus API', () => {
       prefix: config.stackName,
       ruleName: rule.name,
       updateParams: {
-        // ...postRule.record,
+        ...rule,
         meta: {
           triggerRule: updatedCheck,
         },
       },
     });
-
-    const updatedRule = JSON.parse(updatingRuleResponse.body);
+    const updatedRuleResponseBody = JSON.parse(updatingRuleResponse.body);
+    if (updatedRuleResponseBody.error) {
+      fail(`failure updating rule: ${updatedRuleResponseBody.message}`);
+    }
 
     await rulesApi.rerunRule({
       prefix: config.stackName,
       ruleName: rule.name,
-      updateParams: { ...updatedRule },
+      updateParams: { ...updatedRuleResponseBody },
     });
 
     console.log(`Waiting for new execution of ${rule.workflow} triggered by rerun of rule`);

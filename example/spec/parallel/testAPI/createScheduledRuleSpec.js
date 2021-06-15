@@ -49,7 +49,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     await addCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix, testId);
     // Create a scheduled rule
-    console.log(`post rule ${scheduledRuleName}`);
+    console.log(`creating rule ${scheduledRuleName}`);
     await rulesApi.postRule({
       prefix: config.stackName,
       rule: scheduledHelloWorldRule,

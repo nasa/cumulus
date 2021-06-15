@@ -40,7 +40,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
 
       const testId = createTimestampedTestId(config.stackName, 'Rule');
       testSuffix = createTestSuffix(testId);
-      scheduledRuleName = timestampedName('SchedHelloWorldTest');
+      scheduledRuleName = timestampedName('SchedRuleWithExecutionPrefix');
       scheduledHelloWorldRule = {
         name: scheduledRuleName,
         collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
@@ -58,7 +58,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
       // Create a scheduled rule
-      console.log(`post rule ${scheduledRuleName}`);
+      console.log(`creating rule ${scheduledRuleName}`);
       await rulesApi.postRule({
         prefix: config.stackName,
         rule: scheduledHelloWorldRule,
