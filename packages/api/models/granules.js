@@ -682,7 +682,7 @@ class Granule extends Manager {
           cmrUtils: this.cmrUtils,
           granuleFiles,
         }).catch(log.error);
-        return await this.storeGranuleFromCumulusMessage(granuleRecord).catch(log.error);
+        await this.storeGranuleFromCumulusMessage(granuleRecord).catch(log.error);
       }
     ));
   }
