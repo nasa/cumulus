@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2307**
+    - Updated API PDR GET endpoint to read individual PDR records from
+      PostgreSQL database instead of DynamoDB
+    - Added `deletePdr` to `@cumulus/api-client/pdrs`
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
