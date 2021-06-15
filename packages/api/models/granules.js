@@ -19,7 +19,6 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
-  getGranuleStatus,
   getGranuleQueryFields,
   generateGranuleApiRecord,
 } = require('@cumulus/message/Granules');
@@ -31,7 +30,6 @@ const {
 } = require('@cumulus/message/Providers');
 const {
   getMessageWorkflowStartTime,
-  getWorkflowDuration,
   getMetaStatus,
 } = require('@cumulus/message/workflows');
 const { buildURL } = require('@cumulus/common/URLUtils');
@@ -49,10 +47,7 @@ const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
   getExecutionProcessingTimeInfo,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
   translateGranule,
-  getGranuleProductVolume,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
@@ -285,84 +280,6 @@ class Granule extends Manager {
     const existingFiles = await Promise.all(fileExistsPromises);
 
     return existingFiles.filter((file) => file);
-  }
-
-  /**
-   * Build a granule record.
-   *
-   * @param {Object} params
-   * @param {AWS.S3} params.s3 - an AWS.S3 instance
-   * @param {Object} params.granule - A granule object
-   * @param {string} params.executionUrl - A Step Function execution URL
-   * @param {Object} params.provider - Provider object
-   * @param {string} params.workflowStatus - Workflow status
-   * @param {string} params.collectionId - Collection ID for the workflow
-   * @param {string} [params.pdrName] - PDR name for the workflow, if any
-   * @param {Object} [params.error] - Workflow error, if any
-   * @param {Object} [params.processingTimeInfo={}]
-   *   Info describing the processing time for the granule
-   * @returns {Promise<Object>} A granule record
-   */
-  async generateGranuleRecord({
-    s3,
-    granule,
-    executionUrl,
-    collectionId,
-    provider,
-    workflowStartTime,
-    error,
-    pdrName,
-    workflowStatus,
-    queryFields,
-    processingTimeInfo = {},
-    updatedAt,
-  }) {
-    if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
-
-    if (!collectionId) {
-      throw new CumulusModelError('collection required to generate a granule record');
-    }
-
-    const {
-      files,
-      granuleId,
-      cmrLink,
-      published = false,
-    } = granule;
-
-    const granuleFiles = await this.fileUtils.buildDatabaseFiles({
-      s3,
-      providerURL: buildURL(provider),
-      files,
-    });
-
-    const now = Date.now();
-    const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
-
-    const record = {
-      granuleId,
-      pdrName,
-      collectionId,
-      status: getGranuleStatus(workflowStatus, granule),
-      provider: provider.id,
-      execution: executionUrl,
-      cmrLink: cmrLink,
-      files: granuleFiles,
-      error,
-      published,
-      createdAt: workflowStartTime,
-      timestamp: now,
-      updatedAt: updatedAt || now,
-      duration: getWorkflowDuration(workflowStartTime, now),
-      productVolume: getGranuleProductVolume(granuleFiles),
-      timeToPreprocess: getGranuleTimeToPreprocess(granule),
-      timeToArchive: getGranuleTimeToArchive(granule),
-      ...processingTimeInfo,
-      ...temporalInfo,
-      queryFields,
-    };
-
-    return removeNilProperties(record);
   }
 
   /**
