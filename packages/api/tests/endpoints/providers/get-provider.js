@@ -11,8 +11,6 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
-
 const {
   ProviderPgModel,
   destroyLocalTestDb,
@@ -22,6 +20,7 @@ const {
   translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
