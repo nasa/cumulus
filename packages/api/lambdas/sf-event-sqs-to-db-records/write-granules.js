@@ -25,6 +25,9 @@ const {
   getGranuleQueryFields,
   messageHasGranules,
   generateGranuleApiRecord,
+  getGranuleProductVolume,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -44,9 +47,6 @@ const {
 const FileUtils = require('../../lib/FileUtils');
 const {
   getExecutionProcessingTimeInfo,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
 } = require('../../lib/granules');
 const Granule = require('../../models/granules');
 
@@ -454,19 +454,7 @@ const _writeGranule = async ({
       files,
     });
 
-    return granuleModel.storeGranuleFromCumulusMessage({
-      granule,
-      executionUrl,
-      collectionId,
-      provider,
-      workflowStartTime,
-      error,
-      pdrName,
-      workflowStatus,
-      processingTimeInfo,
-      queryFields,
-      updatedAt,
-    });
+    return granuleModel.storeGranuleFromCumulusMessage(granuleRecord);
   });
 
   await _writeGranuleFiles({
