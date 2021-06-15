@@ -50,7 +50,7 @@ const fakeGetProvider = ({ providerId }) => {
   if (providerId !== fakeProvider.id) {
     return Promise.reject(new Error('Provider could not be found'));
   }
-  return Promise.resolve(fakeProvider);
+  return Promise.resolve({ body: JSON.stringify(fakeProvider) });
 };
 
 const getApiProvider = schedule.__get__('getApiProvider');
@@ -80,7 +80,7 @@ test.serial('getApiProvider returns undefined when input is falsey', async (t) =
 
 test.serial('getApiProvider returns provider when input is a valid provider ID', async (t) => {
   const response = await getApiProvider(fakeProvider.id);
-  t.deepEqual(response, fakeProvider);
+  t.deepEqual(JSON.parse(response.body), fakeProvider);
 });
 
 test.serial('getCollection returns undefined when input is falsey', async (t) => {
