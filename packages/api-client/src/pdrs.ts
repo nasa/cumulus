@@ -63,7 +63,6 @@ export const getPdrs = async (params: {
   });
 };
 
-
 /**
  * Delete a PDR via the Cumulus API
  *

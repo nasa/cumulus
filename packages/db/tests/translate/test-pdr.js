@@ -2,7 +2,8 @@
 
 const test = require('ava');
 
-const { translateApiPdrToPostgresPdr, translatePostgresPdrToApiPdr } = require('../../dist/translate/pdrs');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { translateApiPdrToPostgresPdr, translatePostgresPdrToApiPdr } = require('../../dist/translate/pdr');
 
 test('translatePostgresPdrToApiPdr translates postgres record to PDR record', async (t) => {
   const fakeCollection = { name: 'abc', version: '123' };
@@ -30,6 +31,7 @@ test('translatePostgresPdrToApiPdr translates postgres record to PDR record', as
     execution_cumulus_id: 1,
     progress: 100,
     pan_sent: false,
+    pan_message: 'N/A',
     stats: {
       total: 2,
       completed: 1,
@@ -47,13 +49,13 @@ test('translatePostgresPdrToApiPdr translates postgres record to PDR record', as
   const expectedPdr = {
     pdrName: postgresPdr.name,
     provider: fakeProvider.name,
-    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
     status: postgresPdr.status,
     createdAt: timestamp.getTime(),
     progress: postgresPdr.progress,
     execution: fakeExecution.arn,
     PANSent: postgresPdr.pan_sent,
-    PANmessage: undefined,
+    PANmessage: 'N/A',
     stats: postgresPdr.stats,
     address: postgresPdr.address,
     originalUrl: postgresPdr.original_url,
@@ -66,8 +68,52 @@ test('translatePostgresPdrToApiPdr translates postgres record to PDR record', as
     postgresPdr,
     {},
     fakeCollectionPgModel,
-    fakeExecutionPgModel,
-    fakeProviderPgModel
+    fakeProviderPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    translatedPdrRecord,
+    expectedPdr
+  );
+});
+
+test('translatePostgresPdrToApiPdr handles optional fields', async (t) => {
+  const fakeCollection = { name: 'abc', version: '123' };
+  const fakeCollectionPgModel = {
+    get: () => Promise.resolve(fakeCollection),
+  };
+
+  const fakeExecution = { arn: 'arn:aws:execution:1234abcd' };
+  const fakeExecutionPgModel = {
+    get: () => Promise.resolve(fakeExecution),
+  };
+
+  const fakeProvider = { name: 'ABCprov' };
+  const fakeProviderPgModel = {
+    get: () => Promise.resolve(fakeProvider),
+  };
+
+  const postgresPdr = {
+    status: 'completed',
+    name: 'acbd1234.PDR',
+    collection_cumulus_id: 1,
+    provider_cumulus_id: 1,
+  };
+
+  const expectedPdr = {
+    pdrName: postgresPdr.name,
+    provider: fakeProvider.name,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
+    status: postgresPdr.status,
+  };
+
+  const translatedPdrRecord = await translatePostgresPdrToApiPdr(
+    postgresPdr,
+    {},
+    fakeCollectionPgModel,
+    fakeProviderPgModel,
+    fakeExecutionPgModel
   );
 
   t.deepEqual(
@@ -88,11 +134,12 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
       completed: ['arn1', 'arn2'],
     },
     address: 'address',
-    PANsent: true,
+    PANSent: true,
     PANmessage: 'message',
     originalUrl: 'url',
     execution: 'execution',
     timestamp: Date.now(),
+    duration: 10000,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -161,18 +208,7 @@ test('translateApiPdrToPostgresPdr handles optional fields', async (t) => {
   const expectedPostgresPdr = {
     name: record.pdrName,
     status: record.status,
-    address: undefined,
-    progress: undefined,
-    pan_sent: undefined,
-    pan_message: undefined,
-    original_url: undefined,
-    duration: undefined,
-    stats: undefined,
-    created_at: undefined,
-    updated_at: undefined,
-    timestamp: undefined,
     collection_cumulus_id: 1,
-    execution_cumulus_id: undefined,
     provider_cumulus_id: 3,
   };
 
