@@ -31,6 +31,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   createFakeJwtAuthToken,
@@ -234,25 +235,40 @@ test('default returns list of pdrs', async (t) => {
 });
 
 test('GET returns an existing pdr', async (t) => {
-  const pdrName = `${randomString()}.PDR`;
-  const newPGPdr = fakePdrRecordFactory({
-    name: pdrName,
+  const newPGPdr = {
     status: 'completed',
+    name: `${randomString()}.PDR`,
     collection_cumulus_id: t.context.collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
-    execution_cumulus_id: t.context.executionCumulusId,
-  });
+  };
+
+  const expectedPdr = {
+    status: newPGPdr.status,
+    pdrName: newPGPdr.name,
+    provider: t.context.testPgProvider.name,
+    collectionId: constructCollectionId(
+      t.context.testPgCollection.name,
+      t.context.testPgCollection.version
+    ),
+  };
 
   // create a new PDR in RDS
   await t.context.pdrPgModel.create(t.context.knex, newPGPdr);
 
   const response = await request(app)
-    .get(`/pdrs/${pdrName}`)
+    .get(`/pdrs/${newPGPdr.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(pdrName, response.body.pdrName);
+  t.deepEqual(
+    response.body,
+    {
+      ...expectedPdr,
+      updatedAt: response.body.updatedAt,
+      createdAt: response.body.createdAt,
+    }
+  );
 });
 
 test('GET fails if pdr is not found', async (t) => {

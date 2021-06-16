@@ -84,11 +84,6 @@ test('translatePostgresPdrToApiPdr handles optional fields', async (t) => {
     get: () => Promise.resolve(fakeCollection),
   };
 
-  const fakeExecution = { arn: 'arn:aws:execution:1234abcd' };
-  const fakeExecutionPgModel = {
-    get: () => Promise.resolve(fakeExecution),
-  };
-
   const fakeProvider = { name: 'ABCprov' };
   const fakeProviderPgModel = {
     get: () => Promise.resolve(fakeProvider),
@@ -112,8 +107,7 @@ test('translatePostgresPdrToApiPdr handles optional fields', async (t) => {
     postgresPdr,
     {},
     fakeCollectionPgModel,
-    fakeProviderPgModel,
-    fakeExecutionPgModel
+    fakeProviderPgModel
   );
 
   t.deepEqual(
@@ -198,9 +192,6 @@ test('translateApiPdrToPostgresPdr handles optional fields', async (t) => {
   const fakeCollectionPgModel = {
     getRecordCumulusId: () => Promise.resolve(1),
   };
-  const fakeExecutionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(2),
-  };
   const fakeProviderPgModel = {
     getRecordCumulusId: () => Promise.resolve(3),
   };
@@ -216,8 +207,7 @@ test('translateApiPdrToPostgresPdr handles optional fields', async (t) => {
     record,
     fakeKnex,
     fakeCollectionPgModel,
-    fakeProviderPgModel,
-    fakeExecutionPgModel
+    fakeProviderPgModel
   );
   t.deepEqual(
     result,

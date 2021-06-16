@@ -40,7 +40,7 @@ async function list(req, res) {
 async function get(req, res) {
   const pdrName = req.params.pdrName;
 
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
   const pdrPgModel = new PdrPgModel();
 
   try {

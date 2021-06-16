@@ -99,7 +99,6 @@ describe('Ingesting from PDR', () => {
       config = await loadConfig();
 
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       executionModel = new Execution();
 

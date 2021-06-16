@@ -61,7 +61,6 @@ export {
   translateApiFiletoPostgresFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
-export { translatePostgresPdrToApiPdr } from './translate/pdr';
 export {
   translateApiProviderToPostgresProvider,
 } from './translate/providers';
@@ -71,7 +70,10 @@ export {
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
-export { translateApiPdrToPostgresPdr } from './translate/pdr';
+export {
+  translateApiPdrToPostgresPdr,
+  translatePostgresPdrToApiPdr,
+} from './translate/pdr';
 
 export {
   upsertGranuleWithExecutionJoinRecord,

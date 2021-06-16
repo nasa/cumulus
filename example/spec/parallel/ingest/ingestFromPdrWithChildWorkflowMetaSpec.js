@@ -79,8 +79,6 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     try {
       config = await loadConfig();
 
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
