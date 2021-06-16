@@ -11,6 +11,7 @@ const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { createProvider, deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -25,10 +26,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../../helpers/testUtils');
+const {
+  createTimestampedTestId,
+  loadConfig,
+} = require('../../helpers/testUtils');
 
 describe('A dead letter record archive processing operation', () => {
   let beforeAllFailed = false;
+  let executionArn;
   let stackName;
   let systemBucket;
   let testCollection;
@@ -47,7 +52,7 @@ describe('A dead letter record archive processing operation', () => {
       systemBucket = config.bucket;
 
       let response;
-      const testId = randomString();
+      const testId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessing');
 
       testCollection = await loadCollection({
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
@@ -78,6 +83,7 @@ describe('A dead letter record archive processing operation', () => {
         granuleId: `MOD09GQ.${randomString()}.hdf`,
         collectionId: constructCollectionId(testCollection.name, testCollection.version),
         files: testFiles,
+        published: false,
       });
 
       testRule = await createOneTimeRule(
@@ -90,7 +96,7 @@ describe('A dead letter record archive processing operation', () => {
         }
       );
 
-      const executionArn = await findExecutionArn(
+      executionArn = await findExecutionArn(
         stackName,
         (execution) =>
           get(execution, 'originalPayload.testId') === testId,
@@ -139,6 +145,9 @@ describe('A dead letter record archive processing operation', () => {
     const ruleName = get(testRule, 'name');
     if (testGranule) await deleteGranule({ prefix: stackName, granuleId: testGranule.granuleId });
     if (ruleName) await deleteRule({ prefix: stackName, ruleName });
+
+    await deleteExecution({ prefix: stackName, executionArn });
+
     if (testCollection) {
       await deleteCollection({
         prefix: stackName,

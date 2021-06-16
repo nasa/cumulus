@@ -18,6 +18,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
@@ -30,6 +31,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
   let discoverGranulesRule;
   let existingGranuleId;
   let existingGranuleKey;
+  let ingestGranuleExecutionArn;
   let ingestGranuleRule;
   let prefix;
   let provider;
@@ -93,7 +95,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       );
 
       // Find the "IngestGranule" execution ARN
-      const ingestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
@@ -171,10 +173,15 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId: existingGranuleId });
+    await Promise.all([
+      deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn }),
+      deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn }),
+    ]);
+
     await pAll(
       [
         () => deleteS3Object(sourceBucket, existingGranuleKey),
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

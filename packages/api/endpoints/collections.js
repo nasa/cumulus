@@ -267,6 +267,7 @@ async function del(req, res) {
     }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
+    log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
     if (error instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
       return res.boom.conflict(message);

@@ -650,14 +650,14 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
 
   const dynamoGranule = await granuleModel.get({ granuleId });
   t.is(dynamoGranule.status, 'failed');
-  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to Postgres.');
+  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to PostgreSQL.');
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  t.deepEqual(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
 });
 
 test.serial('writeGranules() writes all valid files if any non-valid file fails', async (t) => {
@@ -739,6 +739,6 @@ test.serial('writeGranules() stores error on granule if any file fails', async (
   });
 
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
-  t.is(pgGranule.error.Error, 'Failed writing files to Postgres.');
+  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
