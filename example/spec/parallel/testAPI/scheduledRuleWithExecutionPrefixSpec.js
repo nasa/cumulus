@@ -18,6 +18,8 @@ const {
   timestampedName,
 } = require('../../helpers/testUtils');
 
+const SetupError = new Error('Test setup failed');
+
 describe('When I create a scheduled rule with an executionNamePrefix via the Cumulus API', () => {
   let config;
   let execution;
@@ -27,7 +29,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
   let scheduledHelloWorldRule;
   let testSuffix;
   let executionArn;
-  let beforeAllFailed;
+  let beforeAllError;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -77,8 +79,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       executionArn = execution.executionArn;
       executionName = execution.executionArn.split(':').reverse()[0];
     } catch (error) {
-      beforeAllFailed = true;
-      throw error;
+      beforeAllError = error;
     }
   });
 
@@ -95,8 +96,12 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       testSuffix);
   });
 
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
+  });
+
   it('the triggered execution has the requested prefix', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(SetupError);
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });

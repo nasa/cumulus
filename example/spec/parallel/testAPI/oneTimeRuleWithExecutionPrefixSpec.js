@@ -15,6 +15,8 @@ const {
   timestampedName,
 } = require('../../helpers/testUtils');
 
+const SetupError = new Error('Test setup failed');
+
 describe('When I create a one-time rule with an executionNamePrefix via the Cumulus API', () => {
   let config;
   let createdCheck;
@@ -23,46 +25,55 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
   let executionNamePrefix;
   let executionArn;
   let helloWorldRule;
+  let beforeAllError;
 
   beforeAll(async () => {
-    config = await loadConfig();
-    process.env.stackName = config.stackName;
+    try {
+      config = await loadConfig();
+      process.env.stackName = config.stackName;
 
-    const oneTimeRuleName = timestampedName('OneTimeExecutionNamePrefix');
-    createdCheck = timestampedName('Created');
+      const oneTimeRuleName = timestampedName('OneTimeExecutionNamePrefix');
+      createdCheck = timestampedName('Created');
 
-    executionNamePrefix = randomId('prefix');
+      executionNamePrefix = randomId('prefix');
 
-    helloWorldRule = {
-      name: oneTimeRuleName,
-      workflow: 'HelloWorldWorkflow',
-      rule: {
-        type: 'onetime',
-      },
-      meta: {
-        triggerRule: createdCheck, // used to detect that we're looking at the correct execution
-      },
-      executionNamePrefix,
-    };
+      helloWorldRule = {
+        name: oneTimeRuleName,
+        workflow: 'HelloWorldWorkflow',
+        rule: {
+          type: 'onetime',
+        },
+        meta: {
+          triggerRule: createdCheck, // used to detect that we're looking at the correct execution
+        },
+        executionNamePrefix,
+      };
 
-    // Create a one-time rule
-    await rulesApi.postRule({
-      prefix: config.stackName,
-      rule: helloWorldRule,
-    });
+      // Create a one-time rule
+      await rulesApi.postRule({
+        prefix: config.stackName,
+        rule: helloWorldRule,
+      });
 
-    console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
+      console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
 
-    execution = await waitForTestExecutionStart({
-      workflowName: helloWorldRule.workflow,
-      stackName: config.stackName,
-      bucket: config.bucket,
-      findExecutionFn: isWorkflowTriggeredByRule,
-      findExecutionFnParams: { rule: createdCheck },
-      startTask: 'HelloWorld',
-    });
-    executionArn = execution.executionArn;
-    executionName = executionArn.split(':').reverse()[0];
+      execution = await waitForTestExecutionStart({
+        workflowName: helloWorldRule.workflow,
+        stackName: config.stackName,
+        bucket: config.bucket,
+        findExecutionFn: isWorkflowTriggeredByRule,
+        findExecutionFnParams: { rule: createdCheck },
+        startTask: 'HelloWorld',
+      });
+      executionArn = execution.executionArn;
+      executionName = executionArn.split(':').reverse()[0];
+    } catch (error) {
+      beforeAllError = error;
+    }
+  });
+
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
   });
 
   afterAll(async () => {
@@ -75,6 +86,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
   });
 
   it('the triggered execution has the requested prefix', () => {
+    if (beforeAllError) throw SetupError;
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });

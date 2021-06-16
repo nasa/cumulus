@@ -23,10 +23,11 @@ const {
   timestampedName,
 } = require('../../helpers/testUtils');
 
-let ingestTime;
+const SetupError = new Error('Test setup failed');
 
 describe('Creating a one-time rule via the Cumulus API', () => {
-  let beforeAllFailed = false;
+  let beforeAllError;
+  let ingestTime;
   let collection;
   let config;
   let executionArn;
@@ -60,8 +61,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
         }
       );
     } catch (error) {
-      beforeAllFailed = true;
-      throw error;
+      beforeAllError = error;
     }
   });
 
@@ -82,21 +82,26 @@ describe('Creating a one-time rule via the Cumulus API', () => {
     }
   });
 
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
+  });
+
   it('starts a workflow execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      executionArn = await findExecutionArn(
-        prefix,
-        (execution) =>
-          get(execution, 'originalPayload.testExecutionId') === testExecutionId,
-        { timestamp__from: ingestTime },
-        { timeout: 60 }
-      );
-      expect(executionArn).toContain('arn:aws');
-    }
+    if (beforeAllError) throw SetupError;
+
+    executionArn = await findExecutionArn(
+      prefix,
+      (execution) =>
+        get(execution, 'originalPayload.testExecutionId') === testExecutionId,
+      { timestamp__from: ingestTime },
+      { timeout: 60 }
+    );
+    expect(executionArn).toContain('arn:aws');
   });
 
   it('the rule can be updated', async () => {
+    if (beforeAllError) throw SetupError;
+
     const updatedCheck = timestampedName('Updated');
 
     const updatingRuleResponse = await rulesApi.updateRule({
@@ -139,6 +144,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
   });
 
   it('the rule is returned with the listed rules', async () => {
+    if (beforeAllError) throw SetupError;
+
     await expectAsync(
       pWaitFor(
         async () => {
