@@ -173,7 +173,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  // t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
 test('A request for a public file without an access token returns a redirect to S3', async (t) => {
@@ -192,7 +192,7 @@ test('A request for a public file without an access token returns a redirect to 
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  // t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
+  t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
 });
 
 test('A /login request with a good authorization code returns a correct response', async (t) => {
