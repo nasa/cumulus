@@ -106,6 +106,12 @@ function buildLoginErrorTemplateVars(query) {
   return templateVars;
 }
 
+/**
+ * check if a shared token is used as an Authorization method
+ *
+ * @param {Object} req - express request object
+ * @returns {boolean} - return true if a Bearer token is present in the request header
+ */
 function isAuthBearTokenRequest(req) {
   const authHeader = req.headers.authorization;
   if (authHeader) {
@@ -115,6 +121,23 @@ function isAuthBearTokenRequest(req) {
   return false;
 }
 
+/**
+ * Responds to a file request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+
+/**
+ * Validates authorization token and retrieves token information from OAuth provider.
+ * If the token is not valid, redirects to the authorization url.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
+ */
 async function handleAuthBearerToken(req, res, next) {
   const { oauthClient } = await getConfigurations();
   const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
@@ -142,7 +165,7 @@ async function handleAuthBearerToken(req, res, next) {
       const userInfo = await oauthClient.getUserInfo(removeNilProperties(params));
       req.authorizedMetadata = {
         userName: username || userInfo.username,
-        ...{ userGroups: userInfo.user_groups },
+        ...{ userGroups: userInfo.user_groups || [] },
       };
       return next();
     } catch (error) {

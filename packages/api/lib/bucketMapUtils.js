@@ -154,7 +154,8 @@ function getSortedBucketList(bucketMap, bucketGroup) {
  * @param {Object} bucketMap - bucket map object
  * @param {string} bucket - bucket
  * @param {string} key - optinal, object key
- * @returns {Array<string>} - user groups for the given bucket and key
+ * @returns {Array<string>} - user groups for private bucket/object,
+ *   undefined for non-private bucket/object
  */
 function checkPrivateBucket(bucketMap, bucket, key = '') {
   log.debug(`check_private_buckets(): bucket: ${bucket}`);
@@ -173,7 +174,7 @@ function checkPrivateBucket(bucketMap, bucket, key = '') {
     }
   }
 
-  return [];
+  return undefined;
 }
 
 /**

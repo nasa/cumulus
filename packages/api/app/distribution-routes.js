@@ -1,4 +1,5 @@
 const router = require('express-promise-router')();
+const get = require('lodash/get');
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
@@ -35,15 +36,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
-  if (await isPublicData(req.path)) {
-    req.authorizedMetadata = { userName: 'unauthenticated user' };
-    return next();
-  }
-
-  if (isAuthBearTokenRequest(req)) {
-    return handleAuthBearerToken(req, res, next);
-  }
-
   const {
     accessTokenModel,
     oauthClient,
@@ -52,27 +44,39 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
 
-  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
+  let authorizedMetadata;
   let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.redirect(307, redirectURLForAuthorizationCode);
+  if (accessToken) {
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+      authorizedMetadata = {
+        userName: accessTokenRecord.username,
+        ...{ userGroups: get(accessTokenRecord, 'tokenInfo.user_groups', []) },
+      };
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
     }
-
-    throw error;
   }
 
-  if (isAccessTokenExpired(accessTokenRecord)) {
+  if (await isPublicData(req.path)) {
+    req.authorizedMetadata = {
+      userName: 'unauthenticated user',
+      ...authorizedMetadata,
+    };
+    return next();
+  }
+
+  if (isAuthBearTokenRequest(req)) {
+    return handleAuthBearerToken(req, res, next);
+  }
+
+  if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
 
-  req.authorizedMetadata = {
-    userName: accessTokenRecord.username,
-    userGroups: accessTokenRecord.tokenInfo.user_groups,
-  };
+  req.authorizedMetadata = { ...authorizedMetadata };
   return next();
 }
 

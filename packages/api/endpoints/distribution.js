@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
+const isNil = require('lodash/isNil');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
@@ -215,7 +216,6 @@ async function handleLocateBucketRequest(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-
 async function handleFileRequest(req, res) {
   const { s3Client } = await getConfigurations();
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
@@ -230,8 +230,8 @@ async function handleFileRequest(req, res) {
   // check private buckets' user groups for earthdata only
   if (process.env.OAUTH_PROVIDER === 'earthdata') {
     const allowedUserGroups = checkPrivateBucket(bucketMap, bucket, key);
-    log.debug(`checkPrivateBucket for ${bucket} ${key} returns: ${allowedUserGroups.join(',')}`);
-    const allowed = allowedUserGroups.length === 0
+    log.debug(`checkPrivateBucket for ${bucket} ${key} returns: ${allowedUserGroups && allowedUserGroups.join(',')}`);
+    const allowed = isNil(allowedUserGroups)
       || (req.authorizedMetadata.userGroups || [])
         .some((group) => allowedUserGroups.includes(group));
     if (!allowed) {

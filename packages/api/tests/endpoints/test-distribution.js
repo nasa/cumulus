@@ -273,6 +273,22 @@ test('A request for a public file without an access token returns a redirect to 
   t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
 });
 
+test('A request for a public file with an access token returns a redirect to S3', async (t) => {
+  const { accessTokenCookie, accessTokenRecord, fileKey, signedFileUrl } = context;
+  const response = await request(distributionApp)
+    .get(`/${publicBucketPath}/${fileKey}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
+    .expect(307);
+
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+});
+
 test('A /login request with a good authorization code returns a correct response', async (t) => {
   const {
     authorizationCode,
