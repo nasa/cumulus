@@ -104,10 +104,10 @@ describe('The SyncGranule task', () => {
 
       expect(stagedFileTags.TagSet).toEqual(expectedTagSet);
     } finally {
+      await deleteGranule({ prefix, granuleId });
       await pAll(
         [
           () => deleteS3Object(sourceBucket, sourceKey),
-          () => deleteGranule({ prefix, granuleId }),
           () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
           () => deleteCollection({
             prefix,

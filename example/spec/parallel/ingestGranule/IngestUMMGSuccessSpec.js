@@ -27,7 +27,7 @@ const {
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { moveGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const providersApi = require('@cumulus/api-client/providers');
 const {
   getDistributionFileUrl,
@@ -218,7 +218,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       pdr: pdrFilename,
     });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-    await granulesApiTestUtils.removePublishedGranule({
+    await removePublishedGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
@@ -512,7 +512,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('returns success upon move', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+      const moveGranuleResponse = await moveGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
         destinations,

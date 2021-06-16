@@ -14,7 +14,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
-const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { getGranule, listGranules } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   addCollections,
@@ -135,6 +135,10 @@ describe('The S3 Ingest Granules workflow', () => {
     if (!isOrcaIncluded) return;
 
     // clean up stack state added by test
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -143,10 +147,6 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: config.stackName, providerId: get(provider, 'id') }),
-      removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -258,7 +258,7 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
       if (!isOrcaIncluded) pending();
-      const response = await granulesApiTestUtils.listGranules({
+      const response = await listGranules({
         prefix: config.stackName,
         query: {
           granuleId,
@@ -274,7 +274,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('returns granule information with recovery status', async () => {
       if (!isOrcaIncluded) pending();
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId,
         query: { getRecoveryStatus: true },
