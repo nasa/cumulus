@@ -1,7 +1,7 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
 import { s3 } from './services';
-import { headObject, parseS3Uri } from './S3';
+import { parseS3Uri } from './S3';
 
 // Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
 
@@ -38,13 +38,10 @@ class S3ObjectStore {
 
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
-    // Verifies that the object exists, or throws NotFound
-    await headObject(Bucket, Key);
-
     const req = this.s3.getObject({ Bucket, Key, ...options });
 
     if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `${options ? '' : '?'}${querystring.stringify(queryParams)}`; }));
+      (req.on('build', () => { req.httpRequest.path += `${options ? '&' : '?'}${querystring.stringify(queryParams)}`; }));
     }
 
     // TypeScript doesn't recognize that req has a presign method.  It does.
@@ -64,7 +61,8 @@ class S3ObjectStore {
    */
   async signHeadObject(
     objectUrl: string,
-    options: { [key: string]: string } = {}
+    options: { [key: string]: string } = {},
+    queryParams: { [key: string]: string }
   ): Promise<string> {
 
     const url = new URL(objectUrl);
@@ -75,11 +73,15 @@ class S3ObjectStore {
 
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
-    let presignedS3Url = s3().getSignedUrl('headObject', {
-      Bucket, Key, ...options
-    });
+    const req = this.s3.headObject({ Bucket, Key, ...options });
 
-    return presignedS3Url;
+    if (queryParams && req.on) {
+      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
+    }
+
+    // TypeScript doesn't recognize that req has a presign method.  It does.
+    const result = await (req as any).presign();
+    return result;
   }
 }
 

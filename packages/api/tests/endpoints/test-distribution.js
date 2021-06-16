@@ -76,10 +76,6 @@ test.before(async () => {
   const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
 
-  sinon.stub(s3(), 'headObject').returns({
-    promise: sinon.stub().resolves(),
-  });
-
   context = {
     accessTokenModel,
     accessTokenRecord,
@@ -310,16 +306,16 @@ test('A HEAD request for a public file without an access token redirects to S3',
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
 });
 
-test('An authenticated HEAD request for a public file returns a redirect to S3', async (t) => {
-  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord } = context;
-  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
+test('An authenticated HEAD request for a file returns a redirect to S3', async (t) => {
+  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
 
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
     .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
 
   t.is(response.status, 307);
@@ -328,9 +324,33 @@ test('An authenticated HEAD request for a public file returns a redirect to S3',
   const redirectLocation = new URL(response.headers.location);
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
 
-  console.log(JSON.stringify(redirectLocation));
-  console.log(JSON.stringify(redirectLocation.searchParams));
+  console.log(redirectLocation);
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+});
+
+test('An authenticated HEAD request containing a range header for a file returns a redirect to S3 and passes the range request on', async (t) => {
+  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
+
+  const response = await request(distributionApp)
+    .head(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
+    .set('Range', 'bytes=0-2048')
+    .expect(307);
+
+  t.is(response.status, 307);
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
+
+  console.log(redirectLocation);
+
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+  t.true(redirectLocation.searchParams.get('X-Amz-SignedHeaders').includes('range'));
 });
