@@ -4,16 +4,17 @@ const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
 const noop = require('lodash/noop');
+const { v4: uuidv4 } = require('uuid');
+
 const { s3 } = require('@cumulus/aws-client/services');
-const {
-  recursivelyDeleteS3Bucket,
-} = require('@cumulus/aws-client/S3');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -108,8 +109,9 @@ test.after.always(async (t) => {
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
+  const { esAlias, esClient } = t.context;
   const asyncOperation1 = {
-    id: 'abc-789',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
@@ -117,7 +119,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
     output: JSON.stringify({ age: 59 }),
   };
   const asyncOperation2 = {
-    id: 'abc-456',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
@@ -126,9 +128,14 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   };
 
   await asyncOperationModel.create(asyncOperation1);
-  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation1, t.context.esIndex);
+  const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+
   await asyncOperationModel.create(asyncOperation2);
-  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation2, t.context.esIndex);
+  const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
 
   const response = await request(app)
     .get('/asyncOperations')
@@ -156,9 +163,10 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
 });
 
 test.serial('GET /asyncOperations with a timestamp parameter returns a list of filtered results', async (t) => {
+  const { esAlias, esClient } = t.context;
   const firstDate = Date.now();
   const asyncOperation1 = {
-    id: 'abc-6295',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
@@ -166,7 +174,7 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
     output: JSON.stringify({ age: 59 }),
   };
   const asyncOperation2 = {
-    id: 'abc-294',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
@@ -175,12 +183,16 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
   };
 
   await asyncOperationModel.create(asyncOperation1);
-  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation1, t.context.esIndex);
+  const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
 
   const secondDate = Date.now();
 
   await asyncOperationModel.create(asyncOperation2);
-  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation2, t.context.esIndex);
+  const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
 
   const response1 = await request(app)
     .get(`/asyncOperations?timestamp__from=${firstDate}`)
@@ -211,8 +223,9 @@ test.serial('GET /asyncOperations/{:id} returns a 401 status code if valid autho
 });
 
 test.serial('GET /asyncOperations/{:id} returns a 404 status code if the requested async-operation does not exist', async (t) => {
+  const id = uuidv4();
   const response = await request(app)
-    .get('/asyncOperations/abc-123')
+    .get(`/asyncOperations/${id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
@@ -222,15 +235,16 @@ test.serial('GET /asyncOperations/{:id} returns a 404 status code if the request
 
 test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
-    id: 'abc-123',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     description: 'Some async run',
     operationType: 'ES Index',
     output: JSON.stringify({ age: 37 }),
   };
-
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
+  const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
+  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOperationPgRecord);
 
   const response = await request(app)
     .get(`/asyncOperations/${createdAsyncOperation.id}`)

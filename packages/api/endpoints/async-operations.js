@@ -6,6 +6,7 @@ const pick = require('lodash/pick');
 const {
   AsyncOperationPgModel,
   getKnexClient,
+  translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
@@ -31,17 +32,15 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function getAsyncOperation(req, res) {
-  const asyncOperationModel = new AsyncOperationModel({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
+  const knex = await getKnexClient({ env: process.env });
+  const asyncOperationPgModel = new AsyncOperationPgModel();
 
   let asyncOperation;
   try {
-    asyncOperation = await asyncOperationModel.get({ id: req.params.id });
+    const asyncOperationRecord = await asyncOperationPgModel.get(knex, { id: req.params.id });
+    asyncOperation = translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationRecord);
   } catch (error) {
-    if (error.message.startsWith('No record found')) return res.boom.notFound('Record Not Found');
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Async Operation Record ${req.params.id} Not Found`);
     throw error;
   }
 
