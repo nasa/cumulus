@@ -92,7 +92,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrModel;
   let postToCmrOutput;
   let provider;
-  let providerModel;
   let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
