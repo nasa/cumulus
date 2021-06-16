@@ -1,17 +1,19 @@
 const fs = require('fs');
 const difference = require('lodash/difference');
 const {
-  buildAndExecuteWorkflow,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
+  api: apiTestUtils,
+  buildAndExecuteWorkflow,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
-  waitForTestExecutionStart,
+  cleanupProviders,
   waitForCompletedExecution,
+  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule, getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -50,10 +52,13 @@ describe('The Sync Granules workflow', () => {
   let config;
   let expectedPayload;
   let expectedS3TagSet;
+  let failingExecutionArn;
   let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
+  let reingestGranuleExecutionArn;
+  let syncGranuleExecutionArn;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
@@ -142,18 +147,32 @@ describe('The Sync Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(inputPayload.granules.map(
+      (granule) => deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      })
+    )).then(() => apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: inputPayload.pdr.name,
+    }));
+
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+    ]);
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -239,7 +258,7 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+  describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await waitForApiStatus(
         getExecution,
@@ -257,10 +276,11 @@ describe('The Sync Granules workflow', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
+    let syncGranuleTaskOutput;
     let granule;
 
     beforeAll(async () => {
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
@@ -268,11 +288,25 @@ describe('The Sync Granules workflow', () => {
 
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
-      const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
+      const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
+    });
+
+    afterAll(async () => {
+      await deleteGranule({
+        prefix: config.stackName,
+        granuleId: reingestResponse.granuleId,
+      });
+
+      await Promise.all(syncGranuleTaskOutput.payload.granules.map(
+        (g) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: g.granuleId,
+        })
+      ));
     });
 
     it('executes successfully', () => {
@@ -294,12 +328,14 @@ describe('The Sync Granules workflow', () => {
         startTask: 'SyncGranule',
       });
 
-      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+      reingestGranuleExecutionArn = reingestGranuleExecution.executionArn;
 
-      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+      console.log(`Wait for completed execution ${reingestGranuleExecutionArn}`);
 
-      const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
-        reingestGranuleExecution.executionArn,
+      await waitForCompletedExecution(reingestGranuleExecutionArn);
+
+      syncGranuleTaskOutput = await lambdaStep.getStepOutput(
+        reingestGranuleExecutionArn,
         'SyncGranule'
       );
 
@@ -313,7 +349,7 @@ describe('The Sync Granules workflow', () => {
         'completed'
       );
 
-      const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
+      const updatedGranuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
@@ -344,7 +380,17 @@ describe('The Sync Granules workflow', () => {
       failingExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+      failingExecutionArn = failingExecution.executionArn;
+
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
+
+      // Immediately clean up granules
+      await Promise.all(inputPayload.granules.map(
+        (granule) => deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        })
+      ));
     });
 
     it('completes execution with failure status', () => {

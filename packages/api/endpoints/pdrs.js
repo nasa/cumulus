@@ -6,11 +6,13 @@ const {
   getKnexClient,
   PdrPgModel,
 } = require('@cumulus/db');
-const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const Logger = require('@cumulus/logger');
 const models = require('../models');
+
+const log = new Logger({ sender: '@cumulus/api/pdrs' });
 
 /**
  * List and search pdrs
@@ -120,6 +122,7 @@ async function del(req, res) {
       throw innerError;
     }
   } catch (error) {
+    log.debug(`Failed to delete PDR with name ${pdrName}. Error ${JSON.stringify(error)}.`);
     if (!isRecordDoesNotExistError(error)) throw error;
   }
   return res.send({ detail: 'Record deleted' });
