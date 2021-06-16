@@ -534,7 +534,7 @@ test.serial('createAsyncOperation() does not write to DynamoDB/PostgreSQL if wri
   );
 
   t.true(t.context.createSpy.called);
-  t.true(t.context.deleteSpy.calledWith(createObject));
+  t.true(t.context.deleteSpy.calledWith({ id: createObject.id }));
   const dbRecords = await t.context.asyncOperationPgModel
     .search(t.context.testKnex, { id });
   t.is(dbRecords.length, 0);

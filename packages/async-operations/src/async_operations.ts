@@ -133,7 +133,7 @@ export const createAsyncOperation = async (
   });
 
   const knex = await getKnexClient({ env: knexConfig });
-  let createdAsyncOperation;
+  let createdAsyncOperation: ApiAsyncOperation | undefined;
 
   try {
     return await knex.transaction(async (trx) => {
@@ -145,7 +145,7 @@ export const createAsyncOperation = async (
     });
   } catch (error) {
     if (createdAsyncOperation) {
-      await asyncOperationModel.delete(createdAsyncOperation);
+      await asyncOperationModel.delete({ id: createdAsyncOperation.id });
     }
     throw error;
   }
