@@ -2,6 +2,12 @@ import { toSnake } from 'snake-camel';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import { PostgresAsyncOperation } from '../types/async_operation';
 
+/**
+ * Generate a PostgreSQL Async Operation record from an API record.
+ *
+ * @param {Object} record - An API Async Operation record
+ * @returns {Object} A PostgreSQL Async Operation record
+ */
 export const translateApiAsyncOperationToPostgresAsyncOperation = (
   record: ApiAsyncOperation
 ): PostgresAsyncOperation => {
@@ -21,6 +27,12 @@ export const translateApiAsyncOperationToPostgresAsyncOperation = (
   return translatedRecord;
 };
 
+/**
+ * Generate an API Async Operation record from a PostgreSQL record.
+ *
+ * @param {Object} pgAsyncOperation - A Postgres PDR record
+ * @returns {Object} An Async Operation API record
+ */
 export const translatePostgresAsyncOperationToApiAsyncOperation = (
   pgAsyncOperation: PostgresAsyncOperation
 ): ApiAsyncOperation => {
