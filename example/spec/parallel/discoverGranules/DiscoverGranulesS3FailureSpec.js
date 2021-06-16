@@ -17,7 +17,10 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
-const { loadConfig } = require('../../helpers/testUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+} = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   let beforeAllCompleted = false;
@@ -35,7 +38,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
 
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = randomString();
+    const testId = createTimestampedTestId(stackName, 'DiscoverGranulesS3Failure');
 
     // Create the provider
     provider = await loadProvider({

@@ -30,8 +30,8 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const granulesApiTestUtils = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -91,9 +91,9 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrFilename;
   let pdrModel;
   let postToCmrOutput;
-  let publishGranuleExecutionArn;
   let provider;
   let providerModel;
+  let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
 
@@ -231,6 +231,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -246,10 +250,6 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionVersion: collection.version,
       }),
       providerModel.delete(provider),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -286,7 +286,7 @@ describe('The S3 Ingest Granules workflow', () => {
       ['completed']
     );
 
-    const granuleResponse = await granulesApiTestUtils.getGranule({
+    const granuleResponse = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });

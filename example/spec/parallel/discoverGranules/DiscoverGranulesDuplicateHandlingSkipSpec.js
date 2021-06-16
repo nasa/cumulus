@@ -206,10 +206,16 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
 
     await pAll(
       [
-        () => deleteS3Object(sourceBucket, existingGranuleKey),
-        () => deleteS3Object(sourceBucket, newGranuleKey),
         () => deleteGranule({ prefix, granuleId: existingGranuleId }),
         () => deleteGranule({ prefix, granuleId: newGranuleId }),
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
+
+    await pAll(
+      [
+        () => deleteS3Object(sourceBucket, existingGranuleKey),
+        () => deleteS3Object(sourceBucket, newGranuleKey),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
