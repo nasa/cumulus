@@ -26,6 +26,7 @@ const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -65,18 +66,18 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let addedCollection;
   let beforeAllFailed;
   let config;
+  let executionNamePrefix;
+  let ingestGranuleExecutionArn;
+  let ingestPdrExecutionArn;
   let pdrFilename;
   let provider;
+  let queuePdrsOutput;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
-  let addedCollection;
-  let executionNamePrefix;
-  let queuePdrsOutput;
-  let ingestPdrExecutionArn;
-  let ingestGranuleExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -84,7 +85,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
-      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
+      const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithChildWorkflowMeta');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
 
@@ -150,6 +151,10 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
