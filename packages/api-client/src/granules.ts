@@ -1,13 +1,45 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
-import { GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
 /**
- * GET /granules/{granuleName}
+ * GET raw response from /granules/{granuleName}
+ *
+ * @param {Object} params             - params
+ * @param {string} params.prefix      - the prefix configured for the stack
+ * @param {string} params.granuleId   - a granule ID
+ * @param {Object} [params.query]     - query to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the granule fetched by the API
+ */
+export const getGranuleResponse = async (params: {
+  prefix: string,
+  granuleId: GranuleId,
+  query?: { [key: string]: string },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, granuleId, query, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${granuleId}`,
+      ...(query && { queryStringParameters: query }),
+    },
+  });
+};
+
+/**
+ * GET granule record from /granules/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -24,19 +56,8 @@ export const getGranule = async (params: {
   granuleId: GranuleId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
-}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, query, callback = invokeApi } = params;
-
-  const response = await callback({
-    prefix: prefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
-      ...(query && { queryStringParameters: query }),
-    },
-  });
-
+}): Promise<ApiGranule> => {
+  const response = await getGranuleResponse(params);
   return JSON.parse(response.body);
 };
 
@@ -70,7 +91,7 @@ export const waitForGranule = async (params: {
 
   await pRetry(
     async () => {
-      const apiResult = await getGranule({ prefix, granuleId, callback });
+      const apiResult = await getGranuleResponse({ prefix, granuleId, callback });
 
       if (apiResult.statusCode === 500) {
         throw new pRetry.AbortError('API misconfigured/down/etc, failing test');
