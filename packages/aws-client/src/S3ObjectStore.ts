@@ -66,7 +66,6 @@ class S3ObjectStore {
     options: { [key: string]: string } = {},
     queryParams: { [key: string]: string }
   ): Promise<string> {
-
     const url = new URL(objectUrl);
 
     if (url.protocol.toLowerCase() !== 's3:') {

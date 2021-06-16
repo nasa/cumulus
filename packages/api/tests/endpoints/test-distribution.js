@@ -48,7 +48,7 @@ function validateRedirectToGetAuthorizationCode(t, response) {
 }
 
 function stubHeadObject() {
-  headObjectStub = sinon.stub(s3(), 'headObject').returns({promise: () => Promise.resolve()});
+  headObjectStub = sinon.stub(s3(), 'headObject').returns({ promise: () => Promise.resolve() });
 }
 
 function restoreHeadObjectStub() {
@@ -308,7 +308,7 @@ test.serial('A / request without an access token displays login page', async (t)
 });
 
 test.serial('A HEAD request for a public file without an access token redirects to S3', async (t) => {
-  const { fileKey, s3Endpoint, accessTokenRecord } = context;
+  const { fileKey, s3Endpoint } = context;
   const fileLocation = `${process.env.public_buckets}/${fileKey}`;
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
@@ -327,8 +327,7 @@ test.serial('A HEAD request for a public file without an access token redirects 
 });
 
 test.serial('An authenticated HEAD request for a file returns a redirect to S3', async (t) => {
-
-  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
+  const { s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
 
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
@@ -350,7 +349,7 @@ test.serial('An authenticated HEAD request for a file returns a redirect to S3',
 });
 
 test.serial('An authenticated HEAD request containing a range header for a file returns a redirect to S3 and passes the range request on', async (t) => {
-  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
+  const { s3Endpoint, accessTokenCookie, accessTokenRecord, fileLocation } = context;
 
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
