@@ -27,7 +27,7 @@ export const getGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, query, callback = invokeApi } = params;
 
-  return await callback({
+  const response = await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
@@ -36,6 +36,8 @@ export const getGranule = async (params: {
       ...(query && { queryStringParameters: query }),
     },
   });
+
+  return JSON.parse(response.body);
 };
 
 /**
