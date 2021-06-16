@@ -271,8 +271,6 @@ test.serial('Reindex request returns 400 with the expected message when source i
     index: defaultIndexName,
     body: { mappings },
   });
-  t.teardown(() => esClient.indices.delete({ index: defaultIndexName }));
-
   t.teardown(async () => {
     await esClient.indices.delete({ index: defaultIndexName });
   });
