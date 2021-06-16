@@ -46,6 +46,7 @@ const {
 } = require('../../helpers/testUtils');
 
 let config;
+let inputPayload;
 let testId;
 let testSuffix;
 let testDataFolder;
@@ -92,6 +93,9 @@ async function cleanUp() {
 
   // TODO there may be another execution to delete here
   await deleteExecution({ prefix: config.stackName, executionArn });
+  await Promise.all(inputPayload.granules.map(
+    (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
+  ));
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
@@ -105,7 +109,7 @@ async function cleanUp() {
 async function sendIngestGranuleMessage(queueUrl) {
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
-  const inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+  inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
   pdrFilename = inputPayload.pdr.name;
   const granuleId = inputPayload.granules[0].granuleId;
   await sendSQSMessage(queueUrl, inputPayload);

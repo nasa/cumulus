@@ -7,6 +7,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { models: { Granule } } = require('@cumulus/api');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
@@ -15,7 +16,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
@@ -41,6 +41,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
+const testGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
@@ -48,22 +49,23 @@ const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
 describe('When the Sync Granule workflow is configured', () => {
-  let config;
-  let lambdaStep;
-  let workflowExecution;
+  let caughtDuplicateErrorExecutionArn;
   let collection;
-  let provider;
-  let inputPayload;
-  let granuleModel;
-  let expectedPayload;
-  let testSuffix;
-  let testDataFolder;
-  let syncGranuleExecutionArn;
+  let config;
   let duplicateChecksumExecutionArn;
   let duplicateFilenameExecutionArn;
   let existingVersionedFileExecutionArn;
+  let expectedPayload;
+  let granuleModel;
+  let inputPayload;
+  let lambdaStep;
+  let newGranuleId;
+  let provider;
+  let syncGranuleExecutionArn;
+  let testDataFolder;
+  let testSuffix;
   let uncaughtDuplicateErrorExecutionArn;
-  let caughtDuplicateErrorExecutionArn;
+  let workflowExecution;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -93,7 +95,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    const newGranuleId = inputPayload.granules[0].granuleId;
+    newGranuleId = inputPayload.granules[0].granuleId;
 
     const templatedOutputPayloadFilename = templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
@@ -135,7 +137,15 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await granulesApiTestUtils.deleteGranule({
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: newGranuleId,
+    });
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: testGranuleId,
+    });
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
@@ -275,7 +285,7 @@ describe('When the Sync Granule workflow is configured', () => {
         );
         expect(record.status).toEqual('completed');
 
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
@@ -328,7 +338,7 @@ describe('When the Sync Granule workflow is configured', () => {
         );
         expect(record.status).toEqual('completed');
 
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
