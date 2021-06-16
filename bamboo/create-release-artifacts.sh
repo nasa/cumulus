@@ -4,7 +4,9 @@ set -ex
 
 ## Build TF modules that require source building
 
-(cd tf-modules/distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-tea-distribution.zip ../../terraform-aws-tea-distribution.zip)
+## The tf-modules/distribution might have an older aftifact called terraform-aws-cumulus-distribution.zip created in a previous release.
+## Remove that before adding the new one.
+(cd tf-modules/distribution && rm -f ./dist/terraform-aws-cumulus-distribution.zip && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-tea-distribution.zip ../../terraform-aws-tea-distribution.zip)
 (cd tf-modules/cumulus_distribution && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-distribution.zip ../../terraform-aws-cumulus-distribution.zip)
 (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-s3-replicator.zip ../../terraform-aws-cumulus-s3-replicator.zip)
 (cd tf-modules/cumulus-rds-tf && ./bin/build-tf-module.sh && cp ./dist/terraform-aws-cumulus-rds.zip ../../terraform-aws-cumulus-rds.zip)
