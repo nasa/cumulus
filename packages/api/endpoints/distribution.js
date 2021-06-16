@@ -190,7 +190,7 @@ async function handleFileRequest(req, res) {
       signedS3Url = await objectStore.signGetObject(url, options, queryParams);
       break;
     case 'HEAD':
-      signedS3Url = await objectStore.signHeadObject(url, options, queryParams);
+      signedS3Url = await objectStore.signHeadObject(url, options);
       break;
     default:
       break;

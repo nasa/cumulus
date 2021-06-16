@@ -294,30 +294,12 @@ test('A / request without an access token displays login page', async (t) => {
   t.false(response.text.includes('Welcome user'));
 });
 
-test('A HEAD request for a public file without an access token does not redirect to S3', async (t) => {
-  const { fileKey, s3Endpoint } = context;
+test('A HEAD request for a public file without an access token redirects to S3', async (t) => {
+  const { fileKey, s3Endpoint, accessTokenRecord } = context;
   const fileLocation = `${process.env.public_buckets}/${fileKey}`;
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
     .set('Accept', 'application/json')
-    .expect(404);
-
-  t.is(response.status, 404);
-  validateDefaultHeaders(t, response);
-});
-
-test('An authenticated HEAD request for a public file returns a redirect to S3', async (t) => {
-  const {
-    accessTokenCookie,
-    accessTokenRecord,
-    fileLocation,
-    s3Endpoint,
-  } = context;
-
-  const response = await request(distributionApp)
-    .head(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
 
   t.is(response.status, 307);
@@ -328,5 +310,27 @@ test('An authenticated HEAD request for a public file returns a redirect to S3',
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  // t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+});
+
+test('An authenticated HEAD request for a public file returns a redirect to S3', async (t) => {
+  const { fileKey, s3Endpoint, accessTokenCookie, accessTokenRecord } = context;
+  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
+
+  const response = await request(distributionApp)
+    .head(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(307);
+
+  t.is(response.status, 307);
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
+
+  console.log(JSON.stringify(redirectLocation));
+  console.log(JSON.stringify(redirectLocation.searchParams));
+
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
 });
