@@ -197,7 +197,7 @@ const buildGranule = curry(
  *
  */
 const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
-  const response = await granules.getGranule({
+  const response = await granules.getGranuleResponse({
     prefix: process.env.STACKNAME,
     granuleId,
   });
