@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Added helpers to `@cumulus/es-client/indexer`:
+      - `deleteAsyncOperation` to delete async operation records from Elasticsearch
+      - `updateAsyncOperation` to update an async operation record in Elasticsearch
   - **CUMULUS-2306**
     - Updated API execution GET endpoint to read individual execution records
       from PostgreSQL database instead of DynamoDB
