@@ -21,11 +21,13 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
+const { Pdr } = require('@cumulus/api/models');
 
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -35,7 +37,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
@@ -71,6 +72,7 @@ const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 describe('Ingesting from PDR', () => {
   const providersDir = './data/providers/s3/';
@@ -78,7 +80,6 @@ describe('Ingesting from PDR', () => {
 
   let beforeAllFailed;
   let config;
-  let executionModel;
   let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
@@ -91,10 +92,7 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
@@ -142,16 +140,21 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: testDataGranuleId,
+    });
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: parsePdrExecutionArn }),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]);
   });
 
@@ -232,7 +235,6 @@ describe('Ingesting from PDR', () => {
       let ingestGranuleWorkflowArn;
 
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
-      const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(() => {
@@ -259,10 +261,12 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await granulesApiTestUtils.deleteGranule({
-          prefix: config.stackName,
-          granuleId: parseLambdaOutput.payload.granules[0].granuleId,
-        });
+        await Promise.all(parseLambdaOutput.payload.granules.map(
+          (granule) => deleteGranule({
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          })
+        ));
       });
 
       it('executes successfully', async () => {
@@ -337,7 +341,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
+        // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
         it('has expected output message', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else if (lambdaOutput) {
@@ -372,11 +376,15 @@ describe('Ingesting from PDR', () => {
 
         afterAll(async () => {
           // cleanup
+          await Promise.all(
+            queueGranulesOutput.payload.running
+              .map((arn) => waitForCompletedExecution(arn))
+          );
           const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              granulesApiTestUtils.deleteGranule({
+              deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
               }))
@@ -391,15 +399,27 @@ describe('Ingesting from PDR', () => {
         });
 
         describe('SyncGranule lambda function', () => {
+          let syncGranuleLambdaOutput;
+
+          afterAll(async () => {
+            await Promise.all(
+              syncGranuleLambdaOutput.payload.granules.map((g) =>
+                deleteGranule({
+                  prefix: config.stackName,
+                  granuleId: g.granuleId,
+                }))
+            );
+          });
+
           it('outputs 1 granule and pdr', async () => {
             if (beforeAllFailed) fail('beforeAll() failed');
             else {
-              const lambdaOutput = await lambdaStep.getStepOutput(
+              syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
                 ingestGranuleWorkflowArn,
                 'SyncGranule'
               );
-              expect(lambdaOutput.payload.granules.length).toEqual(1);
-              expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
+              expect(syncGranuleLambdaOutput.payload.granules.length).toEqual(1);
+              expect(syncGranuleLambdaOutput.payload.pdr).toEqual(syncGranuleLambdaOutput.payload.pdr);
             }
           });
         });
@@ -407,8 +427,22 @@ describe('Ingesting from PDR', () => {
 
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
+        let ingestGranuleExecution;
+
         afterAll(async () => {
-          await executionModel.delete({ arn: ingestGranuleWorkflowArn });
+          await Promise.all(ingestGranuleExecution.originalPayload.granules.map(
+            (granule) => deleteGranule({
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            })
+          ));
+          await Promise.all(ingestGranuleExecution.finalPayload.granules.map(
+            (granule) => deleteGranule({
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            })
+          ));
+          await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
         });
 
         it('displays a link to the parent', async () => {
@@ -423,7 +457,7 @@ describe('Ingesting from PDR', () => {
               'completed'
             );
 
-            const ingestGranuleExecution = await executionsApiTestUtils.getExecution({
+            ingestGranuleExecution = await executionsApiTestUtils.getExecution({
               prefix: config.stackName,
               arn: ingestGranuleWorkflowArn,
             });
@@ -514,7 +548,7 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+    describe('the reporting lambda has received the CloudWatch step function event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {

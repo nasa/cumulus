@@ -9,7 +9,6 @@ const {
   getQueueUrlByName,
 } = require('@cumulus/aws-client/SQS');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
-const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
@@ -29,7 +28,8 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
-const granulesApi = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteGranule, removeFromCMR } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecution } = require('@cumulus/api-client/executions');
 
@@ -68,7 +68,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
 
   let cnmResponseStreamName;
-  let executionModel;
   let executionNamePrefix;
   let executionStatus;
   let expectedSyncGranulesPayload;
@@ -92,6 +91,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let workflowArn;
   let workflowExecution;
   let scheduleQueueUrl;
+  let failingWorkflowExecution;
 
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
@@ -101,6 +101,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
+
+    await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
+    await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
+    await removeFromCMR({ prefix: testConfig.stackName, granuleId });
+    await deleteGranule({ prefix: testConfig.stackName, granuleId });
+
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
@@ -204,14 +210,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
-    process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
-
     streamName = `${testId}-KinesisTestTriggerStream`;
     cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
     testConfig.streamName = streamName;
     testConfig.cnmResponseStream = cnmResponseStreamName;
-
-    executionModel = new Execution();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -261,12 +263,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
-    });
-
-    afterAll(async () => {
-      await executionModel.delete({ arn: workflowExecution.executionArn });
-      await granulesApi.removeFromCMR({ prefix: testConfig.stackName, granuleId });
-      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
     });
 
     it('executes successfully', () => {
@@ -407,7 +403,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow fails because SyncGranule fails', () => {
-    let failingWorkflowExecution;
     let badRecord;
 
     beforeAll(async () => {
@@ -426,11 +421,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Waiting for completed execution of ${failingWorkflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(failingWorkflowExecution.executionArn, maxWaitForExecutionSecs);
       });
-    });
-
-    afterAll(async () => {
-      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
-      await granulesApi.deleteGranule({ prefix: testConfig.stackName, granuleId });
     });
 
     it('executes but fails', () => {
@@ -458,6 +448,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           });
         } catch (error) {
           beforeAllFailed = true;
+          console.log('CnmResponse Lambda error:::', error);
           throw error;
         }
       });
