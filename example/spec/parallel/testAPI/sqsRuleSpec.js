@@ -7,6 +7,7 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
@@ -20,6 +21,7 @@ const {
   addCollections,
   addRules,
   addProviders,
+  api: apiTestUtils,
   cleanupProviders,
   cleanupCollections,
   readJsonFilesFromDir,
@@ -44,11 +46,14 @@ const {
 } = require('../../helpers/testUtils');
 
 let config;
+let inputPayload;
 let testId;
 let testSuffix;
 let testDataFolder;
 let ruleSuffix;
 let ruleOverride;
+let executionArn;
+let pdrFilename;
 
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 const providersDir = './data/providers/s3/';
@@ -80,6 +85,18 @@ async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
+
+  await apiTestUtils.deletePdr({
+    prefix: config.stackName,
+    pdr: pdrFilename,
+  });
+
+  // TODO there may be another execution to delete here
+  await deleteExecution({ prefix: config.stackName, executionArn });
+  await Promise.all(inputPayload.granules.map(
+    (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
+  ));
+
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -92,7 +109,8 @@ async function cleanUp() {
 async function sendIngestGranuleMessage(queueUrl) {
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
-  const inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+  inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+  pdrFilename = inputPayload.pdr.name;
   const granuleId = inputPayload.granules[0].granuleId;
   await sendSQSMessage(queueUrl, inputPayload);
   return granuleId;
@@ -216,7 +234,7 @@ describe('The SQS rule', () => {
       });
 
       it('references the correct queue URL in the execution message', async () => {
-        const executionArn = record.execution.split('/').reverse()[0];
+        executionArn = record.execution.split('/').reverse()[0];
         const executionInput = await getExecutionInputObject(executionArn);
         expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
       });

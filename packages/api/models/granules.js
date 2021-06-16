@@ -11,13 +11,13 @@ const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const log = require('@cumulus/common/log');
 const {
   indexGranule,
 } = require('@cumulus/es-client/indexer');
 const {
   Search,
 } = require('@cumulus/es-client/search');
+const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -63,6 +63,9 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
+
+const logger = new Logger({ sender: '@cumulus/api/models/granules' });
+
 class Granule extends Manager {
   constructor({
     fileUtils = FileUtils,
@@ -148,7 +151,7 @@ class Granule extends Manager {
    * @private
    */
   async _removeGranuleFromCmr(granule) {
-    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
+    logger.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
       throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
@@ -516,7 +519,7 @@ class Granule extends Manager {
       return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-        log.info(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution})`);
+        logger.info(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution})`);
         return undefined;
       }
       throw error;
@@ -544,7 +547,10 @@ class Granule extends Manager {
    * @throws
    */
   async storeGranuleFromCumulusMessage(granuleRecord) {
-    return await this._validateAndStoreGranuleRecord(granuleRecord);
+    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
+    logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    return response;
   }
 
   async describeGranuleExecution(executionArn) {
@@ -554,7 +560,7 @@ class Granule extends Manager {
         executionArn,
       });
     } catch (error) {
-      log.error(`Could not describe execution ${executionArn}`, error);
+      logger.error(`Could not describe execution ${executionArn}`, error);
     }
     return executionDescription;
   }
@@ -568,7 +574,7 @@ class Granule extends Manager {
   async storeGranulesFromCumulusMessage(cumulusMessage) {
     const granules = getMessageGranules(cumulusMessage);
     if (granules.length === 0) {
-      log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+      logger.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
       return granules;
     }
 
@@ -591,7 +597,7 @@ class Granule extends Manager {
           s3: awsClients.s3(),
           providerURL: buildURL(provider),
           files: granule.files || [],
-        }).catch(log.error);
+        }).catch((filesError) => logger.error(filesError));
         const granuleRecord = await generateGranuleApiRecord({
           granule,
           executionUrl,
@@ -605,9 +611,11 @@ class Granule extends Manager {
           queryFields,
           cmrUtils: this.cmrUtils,
           granuleFiles,
-        }).catch(log.error);
-        await this.storeGranuleFromCumulusMessage(granuleRecord).catch(log.error);
-        await indexGranule(esClient, granuleRecord, process.env.ES_INDEX);
+        }).catch((writeError) => logger.error(writeError));
+        await this.storeGranuleFromCumulusMessage(granuleRecord)
+          .catch((writeError) => logger.error(writeError));
+        await indexGranule(esClient, granuleRecord, process.env.ES_INDEX)
+          .catch((esError) => logger.error(esError));
       }
     ));
   }

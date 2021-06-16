@@ -1,8 +1,11 @@
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { loadConfig } = require('../../helpers/testUtils');
 
 const lambdaStep = new LambdaStep();
+
+let config;
 
 /**
  * For multiple executions of a step, get the time intervals at which retries
@@ -33,25 +36,25 @@ describe('When a task is configured', () => {
   let retryFailLambdaExecutions = null;
 
   beforeAll(async () => {
-    const awsConfig = await loadConfig();
+    config = await loadConfig();
 
-    process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 
     const retryPassPromise = buildAndExecuteWorkflow(
-      awsConfig.stackName,
-      awsConfig.bucket,
+      config.stackName,
+      config.bucket,
       'RetryPassWorkflow'
     );
 
     const noRetryPromise = buildAndExecuteWorkflow(
-      awsConfig.stackName,
-      awsConfig.bucket,
+      config.stackName,
+      config.bucket,
       'HelloWorldFailWorkflow'
     );
 
     const retryFailPromise = buildAndExecuteWorkflow(
-      awsConfig.stackName,
-      awsConfig.bucket,
+      config.stackName,
+      config.bucket,
       'RetryFailWorkflow'
     );
 
@@ -75,6 +78,14 @@ describe('When a task is configured', () => {
 
     retryPassLambdaExecutions = lambdaExecutions[0];
     retryFailLambdaExecutions = lambdaExecutions[1];
+  });
+
+  afterAll(async () => {
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: retryPassWorkflowExecution.executionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: noRetryWorkflowExecution.executionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: retryFailWorkflowExecution.executionArn }),
+    ]);
   });
 
   describe('to retry', () => {
