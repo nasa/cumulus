@@ -393,7 +393,7 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([
         waitForGranuleRecordUpdatedInList(config.stackName, dbGranule),
-        waitForGranuleRecordUpdatedInList(config.stackName, granuleAfterUpdate.body),
+        waitForGranuleRecordUpdatedInList(config.stackName, granuleAfterUpdate),
       ]);
     } catch (error) {
       console.log(error);
