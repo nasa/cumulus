@@ -75,7 +75,7 @@ function getBucketDynamicPath(pathList, bucketMap) {
 
     const path = mapping.join('/');
     const key = pathList.join('/').replace(`${path}/`, '');
-    log.info(`Bucket mapping was ${path}, object was ${key}`);
+    log.info(`Bucket mapping was ${bucketname} ${path}, object was ${key}`);
     return { bucket: prependBucketname(bucketname), path, key, headers };
   }
 
