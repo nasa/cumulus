@@ -10,7 +10,7 @@ export const translatePostgresRuleToApiRule = async (
   pgRule: PostgresRuleRecord,
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
-  providerPgModel = new ProviderPgModel(),
+  providerPgModel = new ProviderPgModel()
 ): Promise<RuleRecord> => {
   const provider = pgRule.provider_cumulus_id ?
     await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id }) :
