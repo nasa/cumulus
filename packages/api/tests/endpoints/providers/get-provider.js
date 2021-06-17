@@ -12,13 +12,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
 const {
-  ProviderPgModel,
-  destroyLocalTestDb,
-  fakeProviderRecordFactory,
-  generateLocalTestDb,
-  localStackConnectionEnv,
-  translateApiProviderToPostgresProvider,
-const {
   destroyLocalTestDb,
   fakeProviderRecordFactory,
   generateLocalTestDb,
