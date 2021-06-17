@@ -18,7 +18,8 @@ const {
  * @param {string|undefined} [executionArn] - exection arn to use for reingest
  * @param {string|undefined} [workflowName] - workflow name to use for reingest
  * @returns {Promise<string>|Promise<undefined>} - executionArn used in a
- *             granule reingest call to determine correct workflow to run or undefined.
+ *             granule reingest call to determine correct workflow to run or
+ *             undefined.
  */
 const chooseTargetExecution = async (
   granuleId,

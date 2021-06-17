@@ -1,23 +1,38 @@
 import Knex from 'knex';
 
+import { tableNames } from '../tables';
 
+export interface arnRecord {
+  arn: string;
+}
 
+/**
+ * Returns the executionArns for an input list of granuleIds and workflowNames.
+ *
+ * @param {Knex} knex - DB Client
+ * @param {string[]} granuleIds - Array of granuleIds
+ * @param workflowNames - Array of workflow names
+ * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ */
 export const executionArnsFromGranuleIdsAndWorkflowNames = async (
-    knex: Knex,
-    granuleIds: string[],
-    workflowNames: string[]
-): Promise<string[]> => {
-    return knex.select('executions.arn').from('executions')
-	.join('granules_executions', 'executions.cumulus_id', 'granules_executions.execution_cumulus_id')
-	.join('granules', 'granules.cumulus_id', 'granules_executions.granule_cumulus_id')
-	.whereIn('granules.granule_id', granuleIds)
-	.whereIn('executions.workflow_name', workflowNames)
-	.orderBy('executions.timestamp', 'desc')
+  knex: Knex,
+  granuleIds: string[],
+  workflowNames: string[],
+): Promise<arnRecord[]> => {
+  return knex
+    .select(`${tableNames.executions}.arn`)
+    .from(tableNames.executions)
+    .join(
+      tableNames.granulesExecutions,
+      `${tableNames.executions}.cumulus_id`,
+      `${tableNames.granulesExecutions}.execution_cumulus_id`,
+    )
+    .join(
+      tableNames.granules,
+      `${tableNames.granules}.cumulus_id`,
+      `${tableNames.granulesExecutions}.granule_cumulus_id`,
+    )
+    .whereIn(`${tableNames.granules}.granule_id`, granuleIds)
+    .whereIn(`${tableNames.executions}.workflow_name`, workflowNames)
+    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
 };
-
-// knex.select(['executions.arn', 'executions.timestamp', 'executions.workflow_name']).from('executions')
-// .join('granules_executions', 'executions.cumulus_id', 'granules_executions.execution_cumulus_id')
-// .join('granules', 'granules.cumulus_id', 'granules_executions.granule_cumulus_id')
-// .whereIn('granules.granule_id', ['YUM88OK.A2016358.h13v04.006.2016360104606'])
-// .whereIn('executions.workflow_name', ['IngestGranule', 'DiscoverGranules'])
-// .orderBy('executions.timestamp', 'desc')
