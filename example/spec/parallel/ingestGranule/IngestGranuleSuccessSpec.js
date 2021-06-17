@@ -13,7 +13,6 @@ const intersection = require('lodash/intersection');
 const isObject = require('lodash/isObject');
 
 const {
-  Execution,
   Granule,
   Pdr,
 } = require('@cumulus/api/models');
@@ -45,10 +44,19 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
-const { deleteCollection } = require('@cumulus/api-client/collections');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
 const providersApi = require('@cumulus/api-client/providers');
-const granulesApiTestUtils = require('@cumulus/api-client/granules');
+const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const {
+  applyWorkflow,
+  bulkReingestGranules,
+  deleteGranule,
+  getGranule,
+  moveGranule,
+  removeFromCMR,
+  removePublishedGranule,
+} = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -109,21 +117,21 @@ describe('The S3 Ingest Granules workflow', () => {
   let beforeAllError;
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
+  let failingWorkflowExecution;
+  let granuleCompletedMessageKey;
   let granuleModel;
+  let granuleRunningMessageKey;
   let inputPayload;
+  let opendapFilePath;
+  let pdrFilename;
   let pdrModel;
   let postToCmrOutput;
   let provider;
   let testDataFolder;
   let workflowExecutionArn;
-  let failingWorkflowExecution;
-  let granuleCompletedMessageKey;
-  let granuleRunningMessageKey;
-  let opendapFilePath;
 
   beforeAll(async () => {
     try {
@@ -139,8 +147,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
@@ -161,8 +167,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ]);
 
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -257,24 +265,25 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+    await providersApi.deleteProvider({
+      prefix: config.stackName,
+      provider: { id: provider.id },
+    });
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
-      }),
-      providersApi.deleteProvider({
-        prefix: config.stackName,
-        provider: { id: provider.id },
-      }),
-      executionModel.delete({ arn: workflowExecutionArn }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
       }),
       deleteS3Object(config.bucket, granuleCompletedMessageKey),
       deleteS3Object(config.bucket, granuleRunningMessageKey),
@@ -322,7 +331,7 @@ describe('The S3 Ingest Granules workflow', () => {
       ['running', 'completed']
     );
 
-    const granuleResponse = await granulesApiTestUtils.getGranule({
+    const granuleResponse = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
@@ -767,8 +776,9 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: failedExecutionArn });
+
       await Promise.all([
-        executionModel.delete({ arn: failedExecutionArn }),
         deleteS3Object(config.bucket, executionCompletedKey),
         deleteS3Object(config.bucket, executionFailedKey),
       ]);
@@ -825,14 +835,14 @@ describe('The S3 Ingest Granules workflow', () => {
       let granule;
       let cmrLink;
       let publishGranuleExecution;
-
+      let updateCmrAccessConstraintsExecutionArn;
       let subTestSetupError;
 
       beforeAll(async () => {
         try {
           if (beforeAllError) throw SetupError;
 
-          const granuleResponse = await granulesApiTestUtils.getGranule({
+          const granuleResponse = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
           });
@@ -845,6 +855,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
       afterAll(async () => {
         const publishExecutionName = publishGranuleExecution.executionArn.split(':').pop();
+        await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecution.executionArn });
+        await deleteExecution({ prefix: config.stackName, executionArn: updateCmrAccessConstraintsExecutionArn });
         await deleteS3Object(config.bucket, `${config.stackName}/test-output/${publishExecutionName}.output`);
       });
 
@@ -900,9 +912,18 @@ describe('The S3 Ingest Granules workflow', () => {
           fakeGranuleId = randomId('fakeGranuleId');
         });
 
+        afterAll(async () => {
+          await apiTestUtils.deletePdr({
+            prefix: config.stackName,
+            pdr: pdrFilename,
+          });
+
+          await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
+        });
+
         it('generates an async operation through the Cumulus API', async () => {
           if (beforeAllError || subTestSetupError) throw SetupError;
-          const response = await granulesApiTestUtils.bulkReingestGranules({
+          const response = await bulkReingestGranules({
             prefix: config.stackName,
             body: {
               ids: [reingestGranuleId, fakeGranuleId],
@@ -968,7 +989,7 @@ describe('The S3 Ingest Granules workflow', () => {
             'completed'
           );
 
-          const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
+          const updatedGranuleResponse = await getGranule({
             prefix: config.stackName,
             granuleId: reingestGranuleId,
           });
@@ -1011,7 +1032,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(true);
 
         // Remove the granule from CMR
-        await granulesApiTestUtils.removeFromCMR({
+        await removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
@@ -1029,7 +1050,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(false);
 
         // Publish the granule to CMR
-        await granulesApiTestUtils.applyWorkflow({
+        await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
           workflow: 'PublishGranule',
@@ -1064,7 +1085,7 @@ describe('The S3 Ingest Granules workflow', () => {
           description: 'Test-UpdateCmrAccessConstraints',
         };
         // Publish the granule to CMR
-        await granulesApiTestUtils.applyWorkflow({
+        await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
           workflow: 'UpdateCmrAccessConstraints',
@@ -1082,16 +1103,18 @@ describe('The S3 Ingest Granules workflow', () => {
           startTask: 'UpdateCmrAccessConstraints',
         });
 
-        console.log(`Wait for completed execution ${updateCmrAccessConstraintsExecution.executionArn}`);
+        updateCmrAccessConstraintsExecutionArn = updateCmrAccessConstraintsExecution.executionArn;
 
-        await waitForCompletedExecution(updateCmrAccessConstraintsExecution.executionArn);
+        console.log(`Wait for completed execution ${updateCmrAccessConstraintsExecutionArn}`);
+
+        await waitForCompletedExecution(updateCmrAccessConstraintsExecutionArn);
         await waitForModelStatus(
           granuleModel,
           { granuleId: granule.granuleId },
           'completed'
         );
 
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
@@ -1143,7 +1166,7 @@ describe('The S3 Ingest Granules workflow', () => {
             Key: destinationKey,
           });
 
-          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+          const moveGranuleResponse = await moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
             destinations,
@@ -1165,7 +1188,7 @@ describe('The S3 Ingest Granules workflow', () => {
           let fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
           expect(fileExists).toBe(false);
 
-          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+          const moveGranuleResponse = await moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
             destinations,
@@ -1181,19 +1204,19 @@ describe('The S3 Ingest Granules workflow', () => {
       it('can delete the ingested granule from the API', async () => {
         if (beforeAllError || subTestSetupError) throw SetupError;
         // pre-delete: Remove the granule from CMR
-        await granulesApiTestUtils.removeFromCMR({
+        await removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Delete the granule
-        await granulesApiTestUtils.deleteGranule({
+        await deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Verify deletion
-        const granuleResponse = await granulesApiTestUtils.getGranule({
+        const granuleResponse = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
