@@ -18,6 +18,13 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiProviderToPostgresProvider,
+const {
+  destroyLocalTestDb,
+  fakeProviderRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  ProviderPgModel,
+  translateApiProviderToPostgresProvider,
 } = require('@cumulus/db');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
