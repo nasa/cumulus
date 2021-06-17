@@ -1,12 +1,15 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
 } = require('@cumulus/message/Executions');
+const Logger = require('@cumulus/logger');
 const pvl = require('@cumulus/pvl');
+
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
+
+const logger = new Logger({ sender: '@cumulus/api/models/pdrs' });
 
 class Pdr extends Manager {
   constructor() {
@@ -56,6 +59,9 @@ class Pdr extends Manager {
   async storePdr(pdrRecord, cumulusMessage) {
     if (!pdrRecord) return undefined;
     this.constructor.recordIsValid(pdrRecord, this.schema);
+
+    logger.info(`About to write PDR ${pdrRecord.pdrName} to DynamoDB`);
+
     const updateParams = this.generatePdrUpdateParamsFromRecord(pdrRecord);
 
     // createdAt comes from cumulus_meta.workflow_start_time
@@ -66,11 +72,13 @@ class Pdr extends Manager {
       updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
     try {
-      return await this.dynamodbDocClient.update(updateParams).promise();
+      const updateResponse = await this.dynamodbDocClient.update(updateParams).promise();
+      logger.info(`Successfully wrote PDR ${pdrRecord.pdrName} to DynamoDB`);
+      return updateResponse;
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
-        log.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        logger.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
         return undefined;
       }
       throw error;
