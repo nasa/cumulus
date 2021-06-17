@@ -68,6 +68,10 @@ export { translateApiExecutionToPostgresExecution } from './translate/executions
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
+    executionArnsFromGranuleIdsAndWorkflowNames
+} from './lib/execution';
+
+export {
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 

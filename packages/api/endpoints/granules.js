@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
@@ -21,12 +21,15 @@ const Search = require('@cumulus/es-client/search').Search;
 const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { chooseTargetExecution } = require('../lib/executions');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+
+const log = new Logger({sender: '@cumulus/api'});
 
 /**
  * List all granules for a given collection.
@@ -76,8 +79,14 @@ async function put(req, res) {
     const collectionModelClient = new models.Collection();
     const collection = await collectionModelClient.get({ name, version });
 
+    const targetExecution = await chooseTargetExecution(
+      granuleId, body.execution, body.workflowName
+    );
+    if (targetExecution) log.info(`targetExecution for reingest: ${targetExecution}`);
+
     await granuleModelClient.reingest({
       ...granule,
+      ...(targetExecution && { execution: targetExecution }),
       queueUrl: process.env.backgroundQueueUrl,
     });
 
