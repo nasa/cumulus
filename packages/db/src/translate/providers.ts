@@ -19,7 +19,7 @@ export const translatePostgresProviderToApiProvider = (
     id: record.name,
     cmKeyId: record.cm_key_id,
     certificateUri: record.certificate_uri,
-    privateKey: record?.private_key,
+    privateKey: record.private_key,
     globalConnectionLimit: record.global_connection_limit,
     port: record.port,
     host: record.host,
