@@ -70,6 +70,7 @@ test(
         completed: 3,
         total: 3,
       },
+      execution: randomId('exec'),
     });
 
     await pdrsModel.storePdr(pdr);
@@ -149,6 +150,7 @@ test(
     });
     await pdrsModel.storePdr(pdr);
 
+    const updatedExecution = randomId('exec');
     const updatedPdr = {
       ...pdr,
       status: 'failed',
@@ -157,12 +159,14 @@ test(
         total: 2,
       },
       createdAt: Date.now(),
+      execution: updatedExecution,
     };
     const response = await pdrsModel.storePdr(updatedPdr);
     t.is(response, undefined);
 
     const record = await pdrsModel.get({ pdrName: pdr.pdrName });
     t.is(record.status, 'completed');
+    t.is(record.execution, execution);
     t.is(record.stats.completed, 3);
     t.falsy(record.stats.failed);
   }
