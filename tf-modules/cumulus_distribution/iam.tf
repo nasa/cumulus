@@ -48,11 +48,7 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
 
   statement {
     actions = [
-      "s3:GetObject*",
-      "s3:PutObject*",
-      "s3:ListMultipartUploadParts",
-      "s3:DeleteObject",
-      "s3:DeleteObjectVersion"
+      "s3:GetObject*"
     ]
     resources = [for b in local.all_buckets: "arn:aws:s3:::${b}/*"]
   }
