@@ -35,7 +35,6 @@ export const translatePostgresRuleToApiRule = async (
     state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
     meta: pgRule.meta,
     payload: pgRule.payload,
-    queueName: pgRule.queue_url ? pgRule.queue_url.split('/').pop() : undefined,
     executionNamePrefix: pgRule.execution_name_prefix,
     queueUrl: pgRule.queue_url,
     tags: pgRule.tags ? JSON.parse(pgRule.tags) : undefined,

@@ -14,7 +14,6 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     rule: { type: 'onetime', value: 'value', arn: 'arn', logEventArn: 'event_arn' },
     executionNamePrefix: 'prefix',
     meta: { key: 'value' },
-    queueName: 'queue_url',
     queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
     payload: { result: { key: 'value' } },
     tags: ['tag1', 'tag2'],
@@ -138,7 +137,6 @@ test('translatePostgresRuleToApiRule converts Postgres rule to API rule', async 
     provider: fakeProvider.name,
     meta: pgRecord.meta,
     payload: pgRecord.payload,
-    queueName: 'my-queue',
     queueUrl: pgRecord.queue_url,
     rule: {
       type: pgRecord.type,

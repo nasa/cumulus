@@ -27,7 +27,6 @@ export interface PartialRuleRecord {
   meta?: RuleMeta,
   payload?: unknown,
   provider?: string,
-  queueName?: string,
   executionNamePrefix?: string,
   queueUrl?: string,
   tags?: string[],
