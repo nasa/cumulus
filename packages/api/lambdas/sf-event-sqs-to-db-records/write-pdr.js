@@ -1,5 +1,6 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const {
   PdrPgModel,
 } = require('@cumulus/db');
@@ -139,8 +140,12 @@ const writePdrToDynamoAndEs = async (params) => {
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
-    // do 3 retries
-    await pdrModel.delete({ pdrName: pdrApiRecord.pdrName });
+    await pRetry(
+      pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
+      {
+        retries: 3,
+      }
+    );
     throw error;
   }
 };
