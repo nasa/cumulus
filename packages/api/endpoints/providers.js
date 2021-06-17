@@ -62,7 +62,7 @@ async function get(req, res) {
     const providerRecord = await providerPgModel.get(knex, { name: id });
     result = translatePostgresProviderToApiProvider(providerRecord);
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${JSON.stringify(id)} not found.`);
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${id} not found.`);
     throw error;
   }
   return res.send(removeNilProperties(result));
