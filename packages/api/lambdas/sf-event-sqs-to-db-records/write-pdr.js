@@ -132,11 +132,14 @@ const writePdrToDynamoAndEs = async (params) => {
   } = params;
   const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
-    await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
-    await indexPdr(esClient, pdrApiRecord, process.env.ES_INDEX);
+    const dynamoResponse = await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
+    if (dynamoResponse) {
+      await indexPdr(esClient, pdrApiRecord, process.env.ES_INDEX);
+    }
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
+    // do 3 retries
     await pdrModel.delete({ pdrName: pdrApiRecord.pdrName });
     throw error;
   }

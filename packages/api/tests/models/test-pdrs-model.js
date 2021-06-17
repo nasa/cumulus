@@ -84,7 +84,8 @@ test(
       },
     };
 
-    await pdrsModel.storePdr(updatedPdr);
+    const response = await pdrsModel.storePdr(updatedPdr);
+    t.is(response, undefined);
 
     const record = await pdrsModel.get({ pdrName: pdr.pdrName });
     t.is(record.status, 'completed');
@@ -123,7 +124,8 @@ test(
       progress: 0,
     };
 
-    await pdrsModel.storePdr(updatedPdr);
+    const response = await pdrsModel.storePdr(updatedPdr);
+    t.is(response, undefined);
 
     const record = await pdrsModel.get({ pdrName: pdr.pdrName });
     t.is(record.status, 'completed');
@@ -156,7 +158,8 @@ test(
       },
       createdAt: Date.now(),
     };
-    await pdrsModel.storePdr(updatedPdr);
+    const response = await pdrsModel.storePdr(updatedPdr);
+    t.is(response, undefined);
 
     const record = await pdrsModel.get({ pdrName: pdr.pdrName });
     t.is(record.status, 'completed');
@@ -190,7 +193,8 @@ test(
       },
       createdAt: Date.now(),
     };
-    await pdrsModel.storePdr(updatedPdr);
+    const response = await pdrsModel.storePdr(updatedPdr);
+    t.is(response, undefined);
 
     const record = await pdrsModel.get({ pdrName: pdr.pdrName });
     t.is(record.status, 'completed');
