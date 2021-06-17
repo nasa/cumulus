@@ -274,8 +274,8 @@ describe('When the Sync Granule workflow is configured', () => {
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
-      it('captures both files', async () => {
-        // This assertion is to check that the granule has been updated in dynamo
+      it('captures the additional file', async () => {
+        // This assertion is to check that the granule has been updated in the API
         // before performing further checks
         const granule = await waitForApiRecord(
           getGranule,
