@@ -29,7 +29,7 @@ const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 
-const log = new Logger({sender: '@cumulus/api'});
+const log = new Logger({ sender: '@cumulus/api' });
 
 /**
  * List all granules for a given collection.
@@ -82,7 +82,10 @@ async function put(req, res) {
     const targetExecution = await chooseTargetExecution(
       granuleId, body.execution, body.workflowName
     );
-    if (targetExecution) log.info(`targetExecution for reingest: ${targetExecution}`);
+
+    if (targetExecution) {
+      log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
+    }
 
     await granuleModelClient.reingest({
       ...granule,

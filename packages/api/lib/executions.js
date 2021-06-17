@@ -24,7 +24,7 @@ const {
 const chooseTargetExecution = async (
   granuleId,
   executionArn = undefined,
-  workflowName = undefined,
+  workflowName = undefined
 ) => {
   // if a user specified an executionArn, use that always
   if (executionArn !== undefined) return executionArn;
@@ -35,7 +35,7 @@ const chooseTargetExecution = async (
   const executions = await executionArnsFromGranuleIdsAndWorkflowNames(
     knex,
     [granuleId],
-    [workflowName],
+    [workflowName]
   );
   return executions[0].arn;
 };
