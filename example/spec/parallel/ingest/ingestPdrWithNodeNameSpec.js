@@ -580,6 +580,7 @@ describe('Ingesting from PDR', () => {
       it('the pdr record is added to the API', async () => {
         if (beforeAllFailed) fail('beforeAll() failed');
         else {
+          console.log('awaiting status of PDR', pdrFilename);
           const record = await waitForApiStatus(
             getPdr,
             {

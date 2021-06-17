@@ -25,7 +25,7 @@ export const getPdr = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/pdr/${pdrName}`,
+      path: `/pdrs/${pdrName}`,
     },
   });
 
@@ -86,7 +86,7 @@ export const deletePdr = async (params: {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/pdr/${pdrName}`,
+      path: `/pdrs/${pdrName}`,
     },
   });
 };
