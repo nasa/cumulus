@@ -5,7 +5,7 @@ const test = require('ava');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { translateApiPdrToPostgresPdr, translatePostgresPdrToApiPdr } = require('../../dist/translate/pdr');
 
-test('translatePostgresPdrToApiPdr translates postgres record to PDR record', async (t) => {
+test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR record', async (t) => {
   const fakeCollection = { name: 'abc', version: '123' };
   const fakeCollectionPgModel = {
     get: () => Promise.resolve(fakeCollection),
@@ -89,22 +89,28 @@ test('translatePostgresPdrToApiPdr handles optional fields', async (t) => {
     get: () => Promise.resolve(fakeProvider),
   };
 
-  const postgresPdr = {
+  const timestamp = new Date();
+
+  const postgresPdrRecord = {
     status: 'completed',
     name: 'acbd1234.PDR',
     collection_cumulus_id: 1,
     provider_cumulus_id: 1,
+    created_at: timestamp,
+    updated_at: timestamp,
   };
 
   const expectedPdr = {
-    pdrName: postgresPdr.name,
+    pdrName: postgresPdrRecord.name,
     provider: fakeProvider.name,
     collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
-    status: postgresPdr.status,
+    status: postgresPdrRecord.status,
+    createdAt: timestamp.getTime(),
+    updatedAt: timestamp.getTime(),
   };
 
   const translatedPdrRecord = await translatePostgresPdrToApiPdr(
-    postgresPdr,
+    postgresPdrRecord,
     {},
     fakeCollectionPgModel,
     fakeProviderPgModel

@@ -235,11 +235,15 @@ test('default returns list of pdrs', async (t) => {
 });
 
 test('GET returns an existing pdr', async (t) => {
+  const timestamp = new Date();
+
   const newPGPdr = {
     status: 'completed',
     name: `${randomString()}.PDR`,
     collection_cumulus_id: t.context.collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
+    created_at: timestamp,
+    updated_at: timestamp,
   };
 
   const expectedPdr = {
@@ -250,6 +254,8 @@ test('GET returns an existing pdr', async (t) => {
       t.context.testPgCollection.name,
       t.context.testPgCollection.version
     ),
+    createdAt: timestamp.getTime(),
+    updatedAt: timestamp.getTime(),
   };
 
   // create a new PDR in RDS

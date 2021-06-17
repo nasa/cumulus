@@ -7,7 +7,7 @@ import { ApiPdr } from '@cumulus/types/api/pdrs';
 import { CollectionPgModel } from '../models/collection';
 import { ExecutionPgModel } from '../models/execution';
 import { ProviderPgModel } from '../models/provider';
-import { PostgresPdr } from '../types/pdr';
+import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 
 /**
  * Generate a Postgres PDR record from a DynamoDB record.
@@ -67,7 +67,7 @@ export const translateApiPdrToPostgresPdr = async (
  * @returns {Object} A PDR record
  */
 export const translatePostgresPdrToApiPdr = async (
-  postgresPDR: PostgresPdr,
+  postgresPDR: PostgresPdrRecord,
   knex: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel(),
@@ -89,7 +89,7 @@ export const translatePostgresPdrToApiPdr = async (
     provider: provider.name,
     collectionId: constructCollectionId(collection.name, collection.version),
     status: postgresPDR.status,
-    createdAt: (postgresPDR.created_at ? postgresPDR.created_at.getTime() : undefined),
+    createdAt: postgresPDR.created_at.getTime(),
     progress: postgresPDR.progress,
     execution: execution ? execution.arn : undefined,
     PANSent: postgresPDR.pan_sent,
@@ -99,7 +99,7 @@ export const translatePostgresPdrToApiPdr = async (
     originalUrl: postgresPDR.original_url,
     timestamp: (postgresPDR.timestamp ? postgresPDR.timestamp.getTime() : undefined),
     duration: postgresPDR.duration,
-    updatedAt: (postgresPDR.updated_at ? postgresPDR.updated_at.getTime() : undefined),
+    updatedAt: postgresPDR.updated_at.getTime(),
   };
 
   return <ApiPdr>removeNilProperties(apiPdr);
