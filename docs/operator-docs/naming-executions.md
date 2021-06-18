@@ -26,13 +26,19 @@ In the following excerpt, the `QueueGranules` `config.executionNamePrefix`
 property is set using the value configured in the workflow's
 `meta.executionNamePrefix`.
 
+**Please note**: This `meta` property should not be confused with the rule's `executionNamePrefix` from the previous section.
+
 ### Setting executionNamePrefix config for QueueGranules using rule.meta
 
 If you wanted to use a prefix of "my-prefix", you would create a rule with a `meta` property similar to this:
 
 ```json
-{
-  "executionNamePrefix": "my-prefix"
+"rule": {
+  "meta": {
+    {
+      "executionNamePrefix": "my-prefix"
+    }
+  }
 }
 ```
 
