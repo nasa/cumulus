@@ -34,11 +34,10 @@ If you wanted to use a prefix of "my-prefix", you would create a rule with a `me
 
 ```json
 "rule": {
-  "meta": {
+  "meta":
     {
       "executionNamePrefix": "my-prefix"
     }
-  }
 }
 ```
 
