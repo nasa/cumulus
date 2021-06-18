@@ -51,7 +51,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
       accessTokenRecord = await accessTokenModel.get({ accessToken });
       authorizedMetadata = {
         userName: accessTokenRecord.username,
-        ...{ userGroups: get(accessTokenRecord, 'tokenInfo.user_groups', []) },
+        userGroups: get(accessTokenRecord, 'tokenInfo.user_groups', []),
       };
     } catch (error) {
       if (!(error instanceof RecordDoesNotExist)) {

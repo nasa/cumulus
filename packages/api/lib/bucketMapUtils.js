@@ -13,9 +13,7 @@ const { s3 } = require('@cumulus/aws-client/services');
  * @returns {Promise<Object>} - bucket map object
  */
 async function getYamlFile(bucket, key) {
-  if (isNil(bucket) || isNil(key)) {
-    return {};
-  }
+  if (isNil(bucket) || isNil(key)) return {};
 
   try {
     log.info(`Attempting to download yaml ${bucket} ${key}`);
@@ -24,8 +22,7 @@ async function getYamlFile(bucket, key) {
       Key: key,
     }).promise();
 
-    const bucketMap = jsyaml.load(mapFile.Body.toString());
-    return bucketMap;
+    return jsyaml.load(mapFile.Body.toString());
   } catch (error) {
     log.error('Had trouble getting yaml file', error);
     throw new Error('Could not get yaml');
@@ -37,9 +34,7 @@ async function getYamlFile(bucket, key) {
  *
  * @returns {Promise<Object>} - bucket map object
  */
-function getBucketMap() {
-  return getYamlFile(process.env.system_bucket, process.env.BUCKET_MAP_FILE);
-}
+const getBucketMap = () => getYamlFile(process.env.system_bucket, process.env.BUCKET_MAP_FILE);
 
 function prependBucketname(name) {
   const prefix = process.env.BUCKETNAME_PREFIX || '';
@@ -93,9 +88,7 @@ function getBucketDynamicPath(pathList, bucketMap) {
 function processFileRequestPath(uriPath, bucketMap) {
   const pathParts = uriPath.replace(/^\//, '').split('/');
   // Make sure we got at least 1 path, and 1 file name
-  if (pathParts.length < 2) {
-    return { path: pathParts };
-  }
+  if (pathParts.length < 2) return { path: pathParts };
 
   // Look up the bucket from path parts
   const { bucket, path, key, headers } = getBucketDynamicPath(pathParts, bucketMap);
@@ -109,7 +102,7 @@ function processFileRequestPath(uriPath, bucketMap) {
 /**
  * Check if a given bucket matches the bucket from bucket map
  *
- * @param {string} bucketToCheck - bucket to check
+ * @param {string} bucketToCheck - prefixed bucket to check
  * @param {string} bucketFromMap - bucket from the bucket map
  * @param {string} key - optional, object key
  * @returns {boolean} - whether the bucket matches the one from bucket map
@@ -181,7 +174,7 @@ function checkPrivateBucket(bucketMap, bucket, key = '') {
  * check if a bucket/object is public
  *
  * @param {Object} bucketMap - bucket map object
- * @param {string} bucket - bucket
+ * @param {string} bucket - prefixed bucket to check
  * @param {string} key - optinal, object key
  * @returns {boolean} - whether the bucket/object is public
  */
@@ -208,7 +201,7 @@ function isPublicBucket(bucketMap, bucket, key = '') {
  * get all paths from bucket map for a given bucket
  *
  * @param {Object} bucketMap - bucket map object
- * @param {string} bucket - bucket
+ * @param {string} bucket - bucket name w/o prefix
  * @returns {Array<string>} - list of paths
  */
 function getPathsByBucketName(bucketMap, bucket) {

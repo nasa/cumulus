@@ -24,7 +24,7 @@ const useSecureCookies = () => {
 /**
  * build OAuth client based on environment variables
  *
- * @returns {Object} - OAuthClient object
+ * @returns {Promise<Object>} - OAuthClient object
  */
 const buildOAuthClient = async () => {
   if (process.env.OAUTH_CLIENT_PASSWORD === undefined) {
@@ -48,7 +48,7 @@ const buildOAuthClient = async () => {
  * or not.
  *
  * @param {string} path - req.path paramater
- * @returns {boolean} - whether this request goes to a public bucket
+ * @returns {Promise<boolean>} - whether this request goes to a public bucket
  */
 async function isPublicData(path) {
   try {
@@ -63,7 +63,7 @@ async function isPublicData(path) {
 /**
  * Returns a configuration object
  *
- * @returns {Object} the configuration object needed to handle requests
+ * @returns {Promise<Object>} the configuration object needed to handle requests
  */
 async function getConfigurations() {
   const oauthClient = await buildOAuthClient();
@@ -80,7 +80,7 @@ async function getConfigurations() {
  * checks the login query and build error messages
  *
  * @param {Object} query - request query parameters
- * @returns {Object} template variables for building response html, empty if no errors
+ * @returns {Object} - template variables for building response html, empty if no errors
  */
 function buildLoginErrorTemplateVars(query) {
   let templateVars = {};
@@ -122,14 +122,6 @@ function isAuthBearTokenRequest(req) {
 }
 
 /**
- * Responds to a file request
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
- */
-
-/**
  * Validates authorization token and retrieves token information from OAuth provider.
  * If the token is not valid, redirects to the authorization url.
  *
@@ -165,7 +157,7 @@ async function handleAuthBearerToken(req, res, next) {
       const userInfo = await oauthClient.getUserInfo(removeNilProperties(params));
       req.authorizedMetadata = {
         userName: username || userInfo.username,
-        ...{ userGroups: userInfo.user_groups || [] },
+        userGroups: userInfo.user_groups || [],
       };
       return next();
     } catch (error) {
