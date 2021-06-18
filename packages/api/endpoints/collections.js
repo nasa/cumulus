@@ -86,9 +86,9 @@ async function get(req, res) {
   const version = req.params.version;
 
   try {
-    const c = new models.Collection();
-    const result = await c.get({ name, version });
-    // const stats = await collection.getStats([res], [res.name]);
+    const collectionPgModel = new CollectionPgModel();
+    const knex = await getKnexClient();
+    const result = await collectionPgModel.get(knex, { name, version });
     return res.send(result);
   } catch (error) {
     return res.boom.notFound(error.message);
