@@ -184,7 +184,9 @@ module "cumulus" {
   # tea_rest_api_id               = module.cumulus_distribution.rest_api.id
   # tea_rest_api_root_resource_id = module.cumulus_distribution.rest_api.root_resource_id
   # tea_internal_api_endpoint     = module.cumulus_distribution.internal_api_endpoint
-  # tea_external_api_endpoint     = module.cumulus_distribution.api_endpoint
+
+  # TODO this isn't passed to the message_template.tf after ingest.tf
+  tea_external_api_endpoint     = module.cumulus_distribution.api_uri
 
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
