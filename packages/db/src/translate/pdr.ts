@@ -2,6 +2,7 @@ import Knex from 'knex';
 
 import { removeNilProperties } from '@cumulus/common/util';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
+import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { ApiPdr } from '@cumulus/types/api/pdrs';
 
 import { CollectionPgModel } from '../models/collection';
@@ -91,7 +92,7 @@ export const translatePostgresPdrToApiPdr = async (
     status: postgresPDR.status,
     createdAt: postgresPDR.created_at.getTime(),
     progress: postgresPDR.progress,
-    execution: execution ? execution.arn : undefined,
+    execution: execution ? getExecutionUrlFromArn(execution.arn) : undefined,
     PANSent: postgresPDR.pan_sent,
     PANmessage: postgresPDR.pan_message,
     stats: postgresPDR.stats,

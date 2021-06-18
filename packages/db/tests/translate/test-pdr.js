@@ -53,7 +53,7 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
     status: postgresPdr.status,
     createdAt: timestamp.getTime(),
     progress: postgresPdr.progress,
-    execution: fakeExecution.arn,
+    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${fakeExecution.arn}`,
     PANSent: postgresPdr.pan_sent,
     PANmessage: 'N/A',
     stats: postgresPdr.stats,
