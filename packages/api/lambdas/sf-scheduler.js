@@ -2,10 +2,11 @@
 
 const get = require('lodash/get');
 
+const { getCollections } = require('@cumulus/api-client/collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const isNil = require('lodash/isNil');
-const Collection = require('../models/collections');
+
 const Provider = require('../models/providers');
 
 const getProvider = (id) => {
@@ -13,11 +14,9 @@ const getProvider = (id) => {
   return (new Provider()).get({ id });
 };
 
-const getCollection = (collection) => {
+const getApiCollection = (collection) => {
   if (isNil(collection)) return undefined;
-
-  const c = new Collection();
-  return c.get({ name: collection.name, version: collection.version });
+  return getCollections({ name: collection.name, version: collection.version });
 };
 
 /**
@@ -32,7 +31,7 @@ const getCollection = (collection) => {
 async function handleScheduleEvent(event) {
   const [provider, collection] = await Promise.all([
     getProvider(event.provider),
-    getCollection(event.collection),
+    getApiCollection(event.collection),
   ]);
 
   const messageTemplate = get(event, 'template');
