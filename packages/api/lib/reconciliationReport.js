@@ -58,9 +58,17 @@ function convertToESCollectionSearchParams(params) {
 }
 
 /**
- *
+ * convertToDBCollectionSearchParams - Creates Dynamo Search Parameters from
+ *                                     InternalRecReport Parameters
  * @param {Object} params - request params to convert to database params
- * @returns {Object} object of desired parameters formated for database collection search
+ * @param {Object} params.reportType - the report type
+ * @param {moment} params.createStartTime - when the report creation was begun
+ * @param {moment} params.endTimestamp - ending report datetime ISO Timestamp
+ * @param {string} params.reportKey - the s3 report key
+ * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {moment} params.startTimestamp - beginning report datetime ISO timestamp
+ * @param {string} params.systemBucket - the name of the CUMULUS system bucket
+ * @returns {Object} object of desired parameters formatted for database collection search
  */
 function convertToDBCollectionSearchParams(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
