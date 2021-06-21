@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const omit = require('lodash/omit');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
 
@@ -326,7 +327,7 @@ test.serial('DELETE deletes an execution', async (t) => {
   );
 });
 
-test.serial.only('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
   const {
     originalDynamoExecution,
   } = await createExecutionTestRecords(
@@ -349,7 +350,7 @@ test.serial.only('del() does not remove from PostgreSQL/Elasticsearch if removin
       arn,
     },
     testContext: {
-      knex: t.context.testKnex,
+      knex: t.context.knex,
       executionModel: fakeExecutionModel,
     },
   };
@@ -365,10 +366,10 @@ test.serial.only('del() does not remove from PostgreSQL/Elasticsearch if removin
     await t.context.executionModel.get({
       arn,
     }),
-    originalDynamoExecution
+    omit(originalDynamoExecution, 'parentArn')
   );
   t.true(
-    await t.context.executionPgModel.exists(t.context.testKnex, {
+    await t.context.executionPgModel.exists(t.context.knex, {
       arn,
     })
   );
@@ -386,6 +387,8 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
     t.context,
     { parentArn: undefined }
   );
+  const { arn } = originalDynamoExecution;
+  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeExecutionPgModel = {
     delete: () => {
@@ -395,10 +398,10 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
 
   const expressRequest = {
     params: {
-      arn: originalDynamoExecution.arn,
+      arn,
     },
     testContext: {
-      knex: t.context.testKnex,
+      knex: t.context.knex,
       executionPgModel: fakeExecutionPgModel,
     },
   };
@@ -412,18 +415,18 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
 
   t.deepEqual(
     await t.context.executionModel.get({
-      arn: originalDynamoExecution.arn,
+      arn,
     }),
-    originalDynamoExecution
+    omit(originalDynamoExecution, 'parentArn')
   );
   t.true(
-    await t.context.executionPgModel.exists(t.context.testKnex, {
-      arn: originalDynamoExecution.arn,
+    await t.context.executionPgModel.exists(t.context.knex, {
+      arn,
     })
   );
   t.true(
     await t.context.esExecutionsClient.exists(
-      originalDynamoExecution.arn
+      arn
     )
   );
 });
@@ -435,6 +438,8 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
     t.context,
     { parentArn: undefined }
   );
+  const { arn } = originalDynamoExecution;
+  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
     delete: () => {
@@ -444,10 +449,10 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
 
   const expressRequest = {
     params: {
-      arn: originalDynamoExecution.arn,
+      arn,
     },
     testContext: {
-      knex: t.context.testKnex,
+      knex: t.context.knex,
       esClient: fakeEsClient,
     },
   };
@@ -461,18 +466,18 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
 
   t.deepEqual(
     await t.context.executionModel.get({
-      arn: originalDynamoExecution.arn,
+      arn,
     }),
-    originalDynamoExecution
+    omit(originalDynamoExecution, 'parentArn')
   );
   t.true(
-    await t.context.executionPgModel.exists(t.context.testKnex, {
-      arn: originalDynamoExecution.arn,
+    await t.context.executionPgModel.exists(t.context.knex, {
+      arn,
     })
   );
   t.true(
     await t.context.esExecutionsClient.exists(
-      originalDynamoExecution.arn
+      arn
     )
   );
 });
