@@ -95,3 +95,34 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
     callback,
   }));
 });
+
+test('deleteExecution calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
+  const executionArn = 'id-1234';
+
+  const expected = {
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/executions/${executionArn}`,
+    },
+  };
+  const resultBody = {
+    foo: 'bar',
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+
+    return { body: JSON.stringify(resultBody) };
+  };
+
+  const result = await executionsApi.deleteExecution({
+    prefix,
+    executionArn,
+    callback,
+  });
+
+  t.deepEqual(JSON.parse(result.body), resultBody);
+});

@@ -2,8 +2,12 @@
 
 const pLimit = require('p-limit');
 
+const Logger = require('@cumulus/logger');
+
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
+
+const logger = new Logger({ sender: '@cumulus/api/models/executions' });
 
 class Execution extends Manager {
   constructor() {
@@ -100,6 +104,7 @@ class Execution extends Manager {
     });
 
     await this.dynamodbDocClient.update(updateParams).promise();
+    logger.info(`Successfully wrote execution ${executionItem.arn} to DynamoDB`);
   }
 }
 

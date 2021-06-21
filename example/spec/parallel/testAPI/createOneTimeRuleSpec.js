@@ -7,6 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 
 const { loadConfig } = require('../../helpers/testUtils');
@@ -16,13 +17,15 @@ let ingestTime;
 describe('Creating a one-time rule via the Cumulus API', () => {
   let beforeAllFailed = false;
   let collection;
+  let config;
+  let executionArn;
   let prefix;
   let rule;
   let testExecutionId;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
 
       collection = await createCollection(prefix);
@@ -38,7 +41,6 @@ describe('Creating a one-time rule via the Cumulus API', () => {
         {
           workflow: 'HelloWorldWorkflow',
           collection: pick(collection, ['name', 'version']),
-          // provider: provider.id,
           payload: { testExecutionId },
         }
       );
@@ -53,6 +55,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
     if (ruleName) await deleteRule({ prefix, ruleName });
 
+    await deleteExecution({ prefix: config.stackName, executionArn });
+
     if (collection) {
       await deleteCollection({
         prefix,
@@ -65,15 +69,14 @@ describe('Creating a one-time rule via the Cumulus API', () => {
   it('starts a workflow execution', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      await expectAsync(
-        findExecutionArn(
-          prefix,
-          (execution) =>
-            get(execution, 'originalPayload.testExecutionId') === testExecutionId,
-          { timestamp__from: ingestTime },
-          { timeout: 60 }
-        )
-      ).withContext('Could not find started execution').toBeResolved();
+      executionArn = await findExecutionArn(
+        prefix,
+        (execution) =>
+          get(execution, 'originalPayload.testExecutionId') === testExecutionId,
+        { timestamp__from: ingestTime },
+        { timeout: 60 }
+      );
+      expect(executionArn).toContain('arn:aws');
     }
   });
 });

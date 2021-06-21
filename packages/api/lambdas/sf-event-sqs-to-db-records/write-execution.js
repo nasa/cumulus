@@ -26,8 +26,11 @@ const {
 const { parseException } = require('@cumulus/message/utils');
 
 const { removeNilProperties } = require('@cumulus/common/util');
+const Logger = require('@cumulus/logger');
 
 const Execution = require('../../models/executions');
+
+const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-execution' });
 
 const shouldWriteExecutionToPostgres = ({
   messageCollectionNameVersion,
@@ -97,7 +100,10 @@ const writeExecutionViaTransaction = async ({
     parentExecutionCumulusId,
     updatedAt,
   });
-  return await executionPgModel.upsert(trx, executionRecord);
+  logger.info(`About to write execution ${executionRecord.arn} to PostgreSQL`);
+  const upsertResponse = await executionPgModel.upsert(trx, executionRecord);
+  logger.info(`Successfully wrote execution ${executionRecord.arn} to PostgreSQL with cumulus_id ${upsertResponse[0]}`);
+  return upsertResponse;
 };
 
 const writeExecutionToDynamoAndES = async (params) => {
