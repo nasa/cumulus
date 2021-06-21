@@ -382,9 +382,9 @@ describe('When there are granule differences and granule reconciliation is run',
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
-      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
+      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, 'jpg2'));
-      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
+      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
         getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
@@ -758,8 +758,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
-    await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
-    await deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId });
+    await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
     await removePublishedGranule({
       prefix: config.stackName,
       granuleId: publishedGranuleId,
