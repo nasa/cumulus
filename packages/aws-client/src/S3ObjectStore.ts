@@ -1,6 +1,5 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
-// import { s3 } from './services';
 import * as AWS from 'aws-sdk';
 import { headObject, parseS3Uri } from './S3';
 import awsClient from './client';
