@@ -15,7 +15,7 @@ const {
   translateApiPdrToPostgresPdr,
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
-const { indexCollection, indexProvider, indexRule, indexPdr, indexExecution } = require('@cumulus/es-client/indexer');
+const { indexCollection, indexProvider, indexRule, indexPdr, indexExecution, deleteExecution } = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -553,6 +553,24 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   };
 };
 
+const cleanupExecutionTestRecords = async (context, { arn }) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esIndex,
+  } = context;
+
+  await executionModel.delete({ arn });
+  await executionPgModel.delete(knex, { arn });
+  await deleteExecution({
+    esClient,
+    arn,
+    index: esIndex,
+  });
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -581,4 +599,5 @@ module.exports = {
   createRuleTestRecords,
   createPdrTestRecords,
   createExecutionTestRecords,
+  cleanupExecutionTestRecords,
 };

@@ -35,6 +35,7 @@ const {
   fakeExecutionFactory,
   setAuthorizedOAuthUsers,
   createExecutionTestRecords,
+  cleanupExecutionTestRecords,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const { migrationDir } = require('../../../../lambdas/db-migration');
@@ -46,7 +47,9 @@ process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
+const { del } = require('../../endpoints/executions');
 const { app } = require('../../app');
+const { buildFakeExpressResponse } = require('./utils');
 
 // create all the variables needed across this test
 const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
@@ -319,6 +322,157 @@ test.serial('DELETE deletes an execution', async (t) => {
   t.false(
     await t.context.esExecutionsClient.exists(
       arn
+    )
+  );
+});
+
+test.serial.only('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+  const {
+    originalDynamoExecution,
+  } = await createExecutionTestRecords(
+    t.context,
+    { parentArn: undefined }
+  );
+  const { arn } = originalDynamoExecution;
+  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
+
+  const fakeExecutionModel = {
+    get: () => Promise.resolve(originalDynamoExecution),
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: () => Promise.resolve(true),
+  };
+
+  const expressRequest = {
+    params: {
+      arn,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      executionModel: fakeExecutionModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.executionModel.get({
+      arn,
+    }),
+    originalDynamoExecution
+  );
+  t.true(
+    await t.context.executionPgModel.exists(t.context.testKnex, {
+      arn,
+    })
+  );
+  t.true(
+    await t.context.esExecutionsClient.exists(
+      arn
+    )
+  );
+});
+
+test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalDynamoExecution,
+  } = await createExecutionTestRecords(
+    t.context,
+    { parentArn: undefined }
+  );
+
+  const fakeExecutionPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      arn: originalDynamoExecution.arn,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      executionPgModel: fakeExecutionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.executionModel.get({
+      arn: originalDynamoExecution.arn,
+    }),
+    originalDynamoExecution
+  );
+  t.true(
+    await t.context.executionPgModel.exists(t.context.testKnex, {
+      arn: originalDynamoExecution.arn,
+    })
+  );
+  t.true(
+    await t.context.esExecutionsClient.exists(
+      originalDynamoExecution.arn
+    )
+  );
+});
+
+test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalDynamoExecution,
+  } = await createExecutionTestRecords(
+    t.context,
+    { parentArn: undefined }
+  );
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      arn: originalDynamoExecution.arn,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.executionModel.get({
+      arn: originalDynamoExecution.arn,
+    }),
+    originalDynamoExecution
+  );
+  t.true(
+    await t.context.executionPgModel.exists(t.context.testKnex, {
+      arn: originalDynamoExecution.arn,
+    })
+  );
+  t.true(
+    await t.context.esExecutionsClient.exists(
+      originalDynamoExecution.arn
     )
   );
 });

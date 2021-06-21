@@ -118,4 +118,7 @@ router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);
 
-module.exports = router;
+module.exports = {
+  del,
+  router,
+};
