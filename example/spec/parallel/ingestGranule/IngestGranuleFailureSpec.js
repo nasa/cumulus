@@ -2,26 +2,29 @@
 
 const fs = require('fs-extra');
 const { models: { Execution, Granule } } = require('@cumulus/api');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
+
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
-  loadConfig,
-  uploadTestDataToBucket,
-  deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
+  deleteFolder,
+  loadConfig,
+  uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -39,14 +42,15 @@ describe('The Ingest Granule failure workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let beforeAllFailed = false;
   let config;
   let executionModel;
   let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
-  let beforeAllFailed = false;
 
   beforeAll(async () => {
     try {
@@ -74,6 +78,7 @@ describe('The Ingest Granule failure workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
 
       // add a non-existent file to input payload to cause lambda error
       inputPayload.granules[0].files = [
@@ -83,9 +88,6 @@ describe('The Ingest Granule failure workflow', () => {
           bucket: 'non-existent-bucket',
         },
       ];
-
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
@@ -103,15 +105,21 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    });
+
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -209,7 +217,7 @@ describe('The Ingest Granule failure workflow', () => {
         'failed'
       );
 
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granuleResponse = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });

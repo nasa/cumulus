@@ -9,7 +9,9 @@ const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
@@ -30,7 +32,6 @@ const {
   cleanupCollections,
   cleanupProviders,
   generateCmrXml,
-  granulesApi: granulesApiTestUtils,
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
 
@@ -38,7 +39,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -87,6 +88,9 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
   ]);
 }
+
+let ingestGranuleExecutionArn;
+const ingestAndPublishGranuleExecutionArns = [];
 
 /**
  * Creates a new test collection with associated granule for testing.
@@ -138,9 +142,11 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     ],
   };
 
-  const { executionArn: ingestGranuleExecutionArn } = await buildAndExecuteWorkflow(
+  const workflowExecution = await buildAndExecuteWorkflow(
     prefix, sourceBucket, 'IngestGranule', newCollection, provider, inputPayload
   );
+
+  ingestGranuleExecutionArn = workflowExecution.executionArn;
 
   await waitForModelStatus(
     new Granule(),
@@ -158,10 +164,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
   await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
   const cleanupFunction = async () => {
+    await deleteGranule({ prefix, granuleId });
     await Promise.allSettled(
       [
         deleteS3Object(sourceBucket, granFileKey),
-        deleteGranule({ prefix, granuleId }),
         deleteProvider({ prefix, providerId: get(provider, 'id') }),
         deleteCollection({
           prefix,
@@ -193,9 +199,9 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     testDataFolder
   );
 
-  await buildAndExecuteWorkflow(
+  ingestAndPublishGranuleExecutionArns.push(await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-  );
+  ));
 
   await waitForModelStatus(
     new Granule(),
@@ -288,7 +294,6 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 };
 
 describe('When there are granule differences and granule reconciliation is run', () => {
-  let asyncOperationId;
   let beforeAllFailed = false;
   let cmrClient;
   let cmrGranule;
@@ -370,20 +375,20 @@ describe('When there are granule differences and granule reconciliation is run',
       await waitForCollectionRecordsInList(config.stackName, collectionIds, { timestamp__from: ingestTime });
 
       // update one of the granule files in database so that that file won't match with CMR
-      console.log('XXXXX Waiting for granulesApiTestUtils.getGranule()');
-      granuleBeforeUpdate = await granulesApiTestUtils.getGranule({
+      console.log('XXXXX Waiting for getGranule()');
+      granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
       });
-      console.log('XXXXX Completed for granulesApiTestUtils.getGranule()');
+      console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, JSON.parse(granuleBeforeUpdate.body));
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, 'jpg2'));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, JSON.parse(granuleBeforeUpdate.body).files, /jpg$/, \'jpg2\'))');
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
-        granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([
@@ -405,6 +410,14 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
+    let inventoryReportAsyncOperationId;
+
+    afterAll(async () => {
+      if (inventoryReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: inventoryReportAsyncOperationId });
+      }
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const response = await reconciliationReportsApi.createReconciliationReport({
         prefix: config.stackName,
@@ -419,7 +432,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      inventoryReportAsyncOperationId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -427,7 +440,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: inventoryReportAsyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
@@ -554,6 +567,14 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
+    let internalReportAsyncOperationId;
+
+    afterAll(async () => {
+      if (internalReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: internalReportAsyncOperationId });
+      }
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Internal',
@@ -569,7 +590,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      internalReportAsyncOperationId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -577,7 +598,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: internalReportAsyncOperationId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
@@ -638,6 +659,14 @@ describe('When there are granule differences and granule reconciliation is run',
   describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
+    let granuleInventoryAsyncOpId;
+
+    afterAll(async () => {
+      if (granuleInventoryAsyncOpId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: granuleInventoryAsyncOpId });
+      }
+    });
+
     it('generates an async operation through the Cumulus API', async () => {
       const request = {
         reportType: 'Granule Inventory',
@@ -654,7 +683,7 @@ describe('When there are granule differences and granule reconciliation is run',
       });
 
       const responseBody = JSON.parse(response.body);
-      asyncOperationId = responseBody.id;
+      granuleInventoryAsyncOpId = responseBody.id;
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -662,7 +691,7 @@ describe('When there are granule differences and granule reconciliation is run',
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
-          id: asyncOperationId,
+          id: granuleInventoryAsyncOpId,
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
@@ -730,6 +759,15 @@ describe('When there are granule differences and granule reconciliation is run',
   afterAll(async () => {
     console.log(`update granule files back ${publishedGranuleId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleBeforeUpdate.body).files });
+    await deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId });
+    await removePublishedGranule({
+      prefix: config.stackName,
+      granuleId: publishedGranuleId,
+    });
+
+    // TODO there may be another execution to delete here
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await Promise.all(ingestAndPublishGranuleExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
 
     await Promise.all([
       s3().deleteObject(extraS3Object).promise(),
@@ -737,12 +775,8 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
       extraCumulusCollectionCleanup(),
       cmrClient.deleteGranule(cmrGranule),
     ]);
-
-    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });

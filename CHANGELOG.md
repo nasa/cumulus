@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+
+## [v9.1.0] 2021-06-03
+
 ### BREAKING CHANGES
 
 - **CUMULUS-2434**
@@ -17,8 +29,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed all EMS reporting including lambdas, endpoints, params, etc as all
     reporting is now handled through Cloud Metrics
 - **CUMULUS-2472**
-  - Moved existing `EarthdataLoginClient` to `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in Cumulus Core.
-  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to `loginUrl` for consistency with new OAuth clients. See example in [oauth-client README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
+  - Moved existing `EarthdataLoginClient` to
+    `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in
+    Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to
+    `loginUrl for consistency with new OAuth clients. See example in
+    [oauth-client
+    README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
 
 ### Added
 
@@ -28,7 +45,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
 - **CUMULUS-2442**
-  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+  - Adds option to generate cloudfront URL to lzards-backup task. This will
+    require a few new task config options that have been documented in the
+    [task
+    README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
 - **CUMULUS-2471**
   - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
@@ -36,7 +56,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
-  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+  - Add `object-store` package which contains abstracted object store functions
+    for working with various  cloud providers
 - **CUMULUS-2470**
   - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2477**
@@ -45,14 +66,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds /version endpoint to distribution API
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+- **CUMULUS-2371**
+  - Added helpers to `@cumulus/ingest/sqs`:
+    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
+    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
 
 ### Changed
 
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
-  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
+  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
+    timeout for Knex library to acquire dataase connections
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match timeout for Knex library to acquire database connections
+- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
+  timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 
@@ -70,7 +101,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
-  - Renamed `@cumulus/earthdata-login-client` to more generic `@cumulus/oauth-client` as a parent class for new OAuth clients.
+  - Renamed `@cumulus/earthdata-login-client` to more generic
+    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
@@ -78,6 +110,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed
+    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 
@@ -94,13 +129,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     added `remoteAltBucket`to allow for an override of the passed in provider
     bucket for the source file
   - Update "eslint-plugin-import" to be pinned to 2.22.1
-- **[2231](https://github.com/nasa/cumulus/issues/2231)**
-  - Fixes broken relative path links in `docs/README.md`
-
-### Fixed
-
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
 
 ### Removed
 
@@ -157,15 +189,6 @@ correct a failure in our build script and push out corrected release artifacts. 
       accessible via the Core API.
 
 ### Added
-
-- **CUMULUS-2371**
-  - Added helpers to `@cumulus/ingest/sqs`:
-    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
-    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
-  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
-    archives all incoming SQS messages to S3.
-  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
-    deletes archived SQS message from S3 once it has been processed.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
@@ -4403,7 +4426,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.1.0...HEAD
+[v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
 [v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0

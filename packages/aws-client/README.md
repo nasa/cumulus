@@ -64,6 +64,9 @@ memory at once.  Handles paging.</p>
 <dd><p>Class to efficiently list all of the objects in an S3 bucket, without loading
 them all into memory at once.  Handles paging of listS3ObjectsV2 requests.</p>
 </dd>
+<dt><a href="#S3ObjectStore">S3ObjectStore</a></dt>
+<dd><p>Class to use when interacting with S3</p>
+</dd>
 </dl>
 
 <a name="module_CloudFormation"></a>
@@ -1115,6 +1118,30 @@ When there are no more items in the queue, returns 'null'.
 
 **Kind**: instance method of [<code>S3ListObjectsV2Queue</code>](#S3ListObjectsV2Queue)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - an S3 object description  
+<a name="S3ObjectStore"></a>
+
+## S3ObjectStore
+Class to use when interacting with S3
+
+**Kind**: global class  
+<a name="S3ObjectStore+signGetObject"></a>
+
+### s3ObjectStore.signGetObject(objectUrl, params) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a GET on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| params | <code>string</code> | an optional mapping of parameter key/values to put in the URL |
+
 
 ## About Cumulus
 

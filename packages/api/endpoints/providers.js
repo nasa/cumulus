@@ -206,6 +206,10 @@ async function del(req, res) {
       const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
       return res.boom.conflict(message);
     }
+    if (error.constraint === 'granules_provider_cumulus_id_foreign') {
+      const message = `Cannot delete provider ${req.params.id} with associated granules.`;
+      return res.boom.conflict(message);
+    }
     throw error;
   }
 }
