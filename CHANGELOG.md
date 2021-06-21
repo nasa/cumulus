@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
+  
 ### Fixed
 
 - **CUMULUS-2520**
@@ -47,10 +53,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
 - **CUMULUS-2442**
-  - Adds option to generate cloudfront URL to lzards-backup task. This will
-    require a few new task config options that have been documented in the
-    [task
-    README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2471**
   - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
@@ -58,10 +63,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
-  - Add `object-store` package which contains abstracted object store functions
-    for working with various  cloud providers
-- **CUMULUS-2470**
-  - Added `/s3credentials` endpoint for distribution API
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
 - **CUMULUS-2479**
