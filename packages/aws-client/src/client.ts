@@ -26,6 +26,7 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
  *
  * @param {AWS.Service} Service - an AWS service object constructor function
  * @param {string} [version] - the API version to use
+ * @param {string} [serviceOptions] - additional options to pass to the service
  *
  * @returns {Function} a function which, when called, will return an instance of an AWS service
  * object
@@ -34,10 +35,12 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
  */
 const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   Service: new (params: object) => T,
-  version?: string
+  version?: string,
+  serviceOptions?: object
 ): (options?: object) => T => {
   const options: { region: string, apiVersion?: string } = {
     region: getRegion(),
+    ...serviceOptions,
   };
   if (version) options.apiVersion = version;
 

@@ -331,11 +331,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ['running', 'completed']
     );
 
-    const granuleResponse = await getGranule({
+    const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(['running', 'completed'].includes(granule.status)).toBeTrue();
@@ -837,11 +836,10 @@ describe('The S3 Ingest Granules workflow', () => {
         try {
           if (beforeAllError) throw SetupError;
 
-          const granuleResponse = await getGranule({
+          granule = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
           });
-          granule = JSON.parse(granuleResponse.body);
           cmrLink = granule.cmrLink;
         } catch (error) {
           subTestSetupError = error;
@@ -984,12 +982,11 @@ describe('The S3 Ingest Granules workflow', () => {
             'completed'
           );
 
-          const updatedGranuleResponse = await getGranule({
+          const updatedGranule = await getGranule({
             prefix: config.stackName,
             granuleId: reingestGranuleId,
           });
 
-          const updatedGranule = JSON.parse(updatedGranuleResponse.body);
           expect(updatedGranule.status).toEqual('completed');
           expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
           expect(updatedGranule.execution).not.toEqual(oldExecution);
@@ -1107,11 +1104,10 @@ describe('The S3 Ingest Granules workflow', () => {
           'completed'
         );
 
-        const granuleResponse = await getGranule({
+        const updatedGranuleRecord = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
-        const updatedGranuleRecord = JSON.parse(granuleResponse.body);
         const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
 
         const granuleCmrMetadata = await metadataObjectFromCMRFile(`s3://${updatedGranuleCmrFile.bucket}/${updatedGranuleCmrFile.key}`);
@@ -1213,9 +1209,7 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
-        const resp = JSON.parse(granuleResponse.body);
-
-        expect(resp.message).toEqual('Granule not found');
+        expect(granuleResponse.message).toEqual('Granule not found');
       });
     });
 
