@@ -149,22 +149,6 @@ variable "urs_client_password" {
   description = "The client password for your Earthdata login (URS) application"
 }
 
-# Cumulus Distribution
-# variable "oauth_client_id" {
-#   type        = string
-#   description = "oauth_client_id"
-# }
-
-# variable "oauth_client_password" {
-#   type        = string
-#   description = "oauth_client_password"
-# }
-
-# variable "oauth_host_url" {
-#   type        = string
-#   description = "oauth_host_url"
-# }
-
 # Optional
 
 variable "api_gateway_stage" {
@@ -497,24 +481,6 @@ variable "vpc_id" {
   type        = string
   default     = null
 }
-
-# variable "api_url" {
-#   type        = string
-#   default     = null
-#   description = "If not specified, the value of the API Gateway endpoint is used"
-# }
-
-# variable "protected_buckets" {
-#   type        = list(string)
-#   default     = []
-#   description = "A list of protected buckets"
-# }
-
-# variable "public_buckets" {
-#   type        = list(string)
-#   default     = []
-#   description = "A list of public buckets"
-# }
 
 # archive module clean_executions lambda configuration
 
