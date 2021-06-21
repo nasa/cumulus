@@ -184,19 +184,20 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   );
 });
 
-test('Collection.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtFrom is specified', async (t) => {
+test.serial('Collection.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtFrom is specified', async (t) => {
   const {
     knex,
     collectionPgModel,
   } = t.context;
 
+  const nowDateValue = new Date().valueOf();
   const collectionName = cryptoRandomString({ length: 10 });
   const records = times(3, (i) => fakeCollectionRecordFactory({
     name: collectionName,
     version: i,
+    updated_at: new Date(nowDateValue - 10000),
   }));
 
-  const nowDateValue = new Date().valueOf();
   const searchRecord = fakeCollectionRecordFactory({
     updated_at: new Date(nowDateValue),
     name: collectionName,

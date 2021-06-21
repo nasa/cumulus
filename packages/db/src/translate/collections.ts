@@ -14,12 +14,12 @@ export const translatePostgresCollectionToApiCollection = (
   duplicateHandling: collectionRecord.duplicate_handling,
   granuleId: collectionRecord.granule_id_validation_regex,
   granuleIdExtraction: collectionRecord.granule_id_extraction_regex,
-  files: (JSON.parse(collectionRecord.files)),
+  files: collectionRecord.files,
   reportToEms: collectionRecord.report_to_ems,
   sampleFileName: collectionRecord.sample_file_name,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
-  meta: (collectionRecord.meta ? JSON.parse(collectionRecord.meta) : undefined),
-  tags: (collectionRecord.tags ? JSON.parse(collectionRecord.tags) : undefined),
+  meta: collectionRecord.meta ?? undefined,
+  tags: collectionRecord.tags ?? undefined,
 }));
 
 export const translateApiCollectionToPostgresCollection = (

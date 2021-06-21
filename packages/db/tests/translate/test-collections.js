@@ -21,13 +21,13 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
   const expected = {
     createdAt: collectionRecord.created_at.getTime(),
     updatedAt: collectionRecord.updated_at.getTime(),
-    files: JSON.parse(collectionRecord.files),
+    files: collectionRecord.files,
     granuleId: collectionRecord.granule_id_validation_regex,
     granuleIdExtraction: collectionRecord.granule_id_validation_regex,
-    meta: JSON.parse(collectionRecord.meta),
+    meta: collectionRecord.meta,
     name: collectionRecord.name,
     sampleFileName: collectionRecord.sample_file_name,
-    tags: JSON.parse(collectionRecord.tags),
+    tags: collectionRecord.tags,
     version: collectionRecord.version,
   };
   const actual = translatePostgresCollectionToApiCollection(collectionRecord);
