@@ -13,8 +13,9 @@ const {
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
   translateApiPdrToPostgresPdr,
+  translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
-const { indexCollection, indexProvider, indexRule, indexPdr } = require('@cumulus/es-client/indexer');
+const { indexCollection, indexProvider, indexRule, indexPdr, indexExecution } = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -525,6 +526,33 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   };
 };
 
+const createExecutionTestRecords = async (context, executionParams = {}) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esExecutionsClient,
+  } = context;
+
+  const originalExecution = fakeExecutionFactoryV2(executionParams);
+  const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
+  const originalDynamoExecution = await executionModel.create(originalExecution);
+  const [executionCumulusId] = await executionPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await executionPgModel.get(
+    knex, { cumulus_id: executionCumulusId }
+  );
+  await indexExecution(esClient, originalExecution, process.env.ES_INDEX);
+  const originalEsRecord = await esExecutionsClient.get(
+    originalExecution.arn
+  );
+  return {
+    originalDynamoExecution,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -552,4 +580,5 @@ module.exports = {
   createProviderTestRecords,
   createRuleTestRecords,
   createPdrTestRecords,
+  createExecutionTestRecords,
 };

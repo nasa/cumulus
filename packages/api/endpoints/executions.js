@@ -8,6 +8,7 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
+const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
 const Execution = require('../models/executions');
@@ -66,6 +67,7 @@ async function del(req, res) {
     executionModel = new Execution(),
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const { arn } = req.params;
@@ -79,10 +81,35 @@ async function del(req, res) {
     throw error;
   }
 
-  await knex.transaction(async (trx) => {
-    await executionPgModel.delete(trx, { arn });
-    await executionModel.delete({ arn });
-  });
+  let apiExecution;
+  try {
+    apiExecution = await executionModel.get({ arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw error;
+  }
+
+  try {
+    await knex.transaction(async (trx) => {
+      await executionPgModel.delete(trx, { arn });
+      await executionModel.delete({ arn });
+      await deleteExecution({
+        esClient,
+        arn,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+  } catch (error) {
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (apiExecution) {
+      await executionModel.create(apiExecution);
+    }
+    throw error;
+  }
 
   return res.send({ message: 'Record deleted' });
 }
