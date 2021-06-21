@@ -163,10 +163,9 @@ module "cumulus" {
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
 
-  # Thin Egress App settings
+  # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
-  # tea_api_gateway_stage = local.tea_stage_name
-
+  # tea_api_gateway_stage         = local.tea_stage_name
   # tea_rest_api_id               = module.thin_egress_app.rest_api.id
   # tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
   # tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
@@ -174,19 +173,8 @@ module "cumulus" {
 
   log_destination_arn = var.log_destination_arn
 
-  # Cumulus Distribution settings
-  # TODO was this just for the distribution module?
-  # oauth_client_id               = module.cumulus_distribution.oauth_client_id
-  # oauth_client_password         = module.cumulus_distribution.oauth_client_password
-  # oauth_host_url                = module.cumulus_distribution.oauth_host_url
-
-  # # TODO Maybe we don't need this
-  # tea_rest_api_id               = module.cumulus_distribution.rest_api.id
-  # tea_rest_api_root_resource_id = module.cumulus_distribution.rest_api.root_resource_id
-  # tea_internal_api_endpoint     = module.cumulus_distribution.internal_api_endpoint
-
-  # TODO this isn't passed to the message_template.tf after ingest.tf
-  tea_external_api_endpoint     = module.cumulus_distribution.api_uri
+  # Cumulus Distribution settings. Remove/comment if not using Cognito.
+  tea_external_api_endpoint = var.cumulus_distribution_url
 
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
