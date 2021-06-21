@@ -1,7 +1,9 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
-import { s3 } from './services';
+// import { s3 } from './services';
+import * as AWS from 'aws-sdk';
 import { headObject, parseS3Uri } from './S3';
+import awsClient from './client';
 
 // Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
 
@@ -13,7 +15,7 @@ class S3ObjectStore {
   private readonly s3: AWS.S3;
 
   constructor() {
-    this.s3 = s3();
+    this.s3 = awsClient(AWS.S3, '2006-03-01', { signatureVersion: 'v4' })();
   }
 
   /**
