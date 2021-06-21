@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { models: { Execution, Granule } } = require('@cumulus/api');
+const { models: { Granule } } = require('@cumulus/api');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
@@ -12,9 +12,11 @@ const {
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
@@ -44,7 +46,6 @@ describe('The Ingest Granule failure workflow', () => {
 
   let beforeAllFailed = false;
   let config;
-  let executionModel;
   let granuleModel;
   let inputPayload;
   let pdrFilename;
@@ -64,9 +65,6 @@ describe('The Ingest Granule failure workflow', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
-
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
 
       // populate collections, providers and test data
       await Promise.all([
@@ -146,9 +144,13 @@ describe('The Ingest Granule failure workflow', () => {
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status
-      await waitForModelStatus(
-        executionModel,
-        { arn: executionArn },
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: executionArn,
+        },
         'failed'
       );
       execution = await executionsApiTestUtils.getExecution({

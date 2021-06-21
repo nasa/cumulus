@@ -230,6 +230,11 @@ class BaseSearch {
     return resp;
   }
 
+  async exists(id) {
+    const response = await this.get(id);
+    return response.detail !== 'Record not found';
+  }
+
   async granulesStats(key, value) {
     const body = {
       query: {

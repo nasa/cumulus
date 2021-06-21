@@ -26,6 +26,25 @@ async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}
       if (!isMatch(record, matchParams)) {
         throw new Error(`Record ${JSON.stringify(record)} did not match expected ${JSON.stringify(matchParams)}`);
       }
+
+      return record;
+    },
+    {
+      maxTimeout: 60 * 1000,
+      ...retryConfig,
+    }
+  );
+}
+
+async function waitForApiStatus(getMethod, params, status, retryConfig = {}) {
+  return await pRetry(
+    async () => {
+      const record = await getMethod(params);
+
+      const checkStatus = [status].flat();
+      if (!checkStatus.includes(record.status)) {
+        throw new Error(`Record status ${record.status}. Expect status ${status}`);
+      }
       return record;
     },
     {
@@ -75,4 +94,5 @@ module.exports = {
   waitForApiRecord,
   waitForModelStatus,
   throwIfApiError,
+  waitForApiStatus,
 };

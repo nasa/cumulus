@@ -188,3 +188,20 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
     );
   });
 });
+
+test('GranulesExecutionsPgModel.delete() correctly deletes records', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    joinRecord,
+  } = t.context;
+
+  let actual;
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    await granulesExecutionsPgModel.delete(trx, joinRecord);
+    actual = await granulesExecutionsPgModel.search(trx, joinRecord);
+  });
+
+  t.deepEqual(actual, []);
+});

@@ -11,7 +11,7 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Execution, Granule } = require('@cumulus/api/models');
+const { Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -23,6 +23,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
+
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -47,7 +50,6 @@ const collectionsDir = './data/collections/s3_MOD09GQ_006';
 describe('The Sync Granules workflow', () => {
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let failingExecutionArn;
@@ -86,7 +88,6 @@ describe('The Sync Granules workflow', () => {
     const newCollectionId = constructCollectionId(collection.name, collection.version);
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
     process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
@@ -185,7 +186,7 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('the SyncGranule Lambda function', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
     let files;
     let key1;
     let key2;
@@ -259,9 +260,12 @@ describe('The Sync Granules workflow', () => {
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: workflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -365,8 +369,8 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('when a bad checksum is provided', () => {
-    let lambdaOutput = null;
-    let failingExecution = null;
+    let lambdaOutput;
+    let failingExecution;
 
     beforeAll(async () => {
       inputPayload.granules[0].files[0].checksum = 'badCheckSum01';

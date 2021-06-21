@@ -34,8 +34,8 @@ const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const {
   waitForApiRecord,
+  waitForApiStatus,
 } = require('../../helpers/apiUtils');
-
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -315,15 +315,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('records both the original and the final payload', async () => {
-        const executionRecord = await waitForApiRecord(
+        const executionRecord = await waitForApiStatus(
           getExecution,
           {
             prefix: testConfig.stackName,
             arn: workflowExecution.executionArn,
           },
-          {
-            status: 'completed',
-          }
+          'completed'
         );
         expect(executionRecord.originalPayload).toEqual(startStep.payload);
         expect(executionRecord.finalPayload).toEqual(endStep.payload);
