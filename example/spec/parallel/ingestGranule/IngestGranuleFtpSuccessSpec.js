@@ -88,7 +88,6 @@ describe('The FTP Ingest Granules workflow', () => {
 
   describe('the execution', () => {
     let granule;
-    let granuleResponse;
 
     beforeAll(async () => {
       // Check that the granule has been updated in dynamo
@@ -99,11 +98,10 @@ describe('The FTP Ingest Granules workflow', () => {
         'completed'
       );
 
-      granuleResponse = await getGranule({
+      granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-      granule = JSON.parse(granuleResponse.body);
     });
 
     afterAll(async () => {

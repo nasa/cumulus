@@ -1,10 +1,15 @@
+const { cloudwatchevents } = require('@cumulus/aws-client/services');
 const { deleteS3Files, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('Cleans up Test Resources', () => {
-  it('removes the test output', async () => {
-    const testConfig = await loadConfig();
+  let testConfig;
 
+  beforeAll(async () => {
+    testConfig = await loadConfig();
+  });
+
+  it('removes the test output', async () => {
     const params = {
       Bucket: testConfig.bucket,
       Prefix: `${testConfig.stackName}/test-output/`,
@@ -13,5 +18,31 @@ describe('Cleans up Test Resources', () => {
     const s3objects = s3list.map((obj) => ({ Bucket: testConfig.bucket, Key: obj.Key }));
     console.log(`\nDeleting ${s3objects.length} objects`);
     await deleteS3Files(s3objects);
+  });
+
+  it('cleans up the scheduled rules', async () => {
+    const response = await cloudwatchevents().listRules({
+      NamePrefix: `${testConfig.stackName}-custom`,
+    }).promise();
+    await Promise.all(response.Rules.map(
+      async (rule) => {
+        const targetsResponse = await cloudwatchevents().listTargetsByRule({
+          Rule: rule.Name,
+          EventBusName: rule.EventBusName,
+        }).promise();
+        const targetIds = targetsResponse.Targets.map(
+          (target) => target.Id
+        );
+        await cloudwatchevents().removeTargets({
+          Ids: targetIds,
+          Rule: rule.Name,
+          EventBusName: rule.EventBusName,
+        }).promise();
+        await cloudwatchevents().deleteRule({
+          Name: rule.Name,
+          EventBusName: rule.EventBusName,
+        }).promise();
+      }
+    ));
   });
 });
