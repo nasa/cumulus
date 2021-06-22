@@ -65,21 +65,18 @@ function convertToESCollectionSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
-// TODO - make this docstring better
 /**
- * convertToDBCollectionSearchObject - Creates Postgres search object from
- *                                     InternalRecReport Parameters
- * @param {Object} params - request params to convert to database params
- * @param {Object} params.collectionIds
- * @param {Object} params.reportType - the report type
- * @param {moment} params.createStartTime - when the report creation was begun
- * @param {moment} params.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} params.reportKey - the s3 report key
- * @param {string} params.stackName - the name of the CUMULUS stack
- * @param {moment} params.startTimestamp - beginning report datetime ISO timestamp
- * @param {string} params.systemBucket - the name of the CUMULUS system bucket
- * @returns {[Object]} array of objects of desired
- * parameters formatted for database collection search
+ * convertToDBCollectionSearchObject      - Creates Postgres search object from
+ *                                          InternalRecReport Parameters
+ * @param {Object} params                 - request params to convert to database params
+ * @param {[Object]} params.collectionIds - List containing single Collection object
+ *                                          multiple or no collections will result in a
+ *                                          search object without a collection object
+ * @param {moment} params.endTimestamp    - ending report datetime ISO Timestamp
+ * @param {moment} params.startTimestamp  - beginning report datetime ISO timestamp
+ * @returns {[Object]}                    - array of objects of desired
+ *                                          parameters formatted for database collection
+ *                                          search
  */
 function convertToDBCollectionSearchObject(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
