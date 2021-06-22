@@ -228,8 +228,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
-
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
 
