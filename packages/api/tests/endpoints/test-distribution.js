@@ -442,8 +442,6 @@ test.serial('An authenticated HEAD request for a file returns a redirect to S3',
   const redirectLocation = new URL(response.headers.location);
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
 
-  console.log(redirectLocation);
-
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
@@ -464,8 +462,6 @@ test.serial('An authenticated HEAD request containing a range header for a file 
 
   const redirectLocation = new URL(response.headers.location);
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-
-  console.log(redirectLocation);
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
