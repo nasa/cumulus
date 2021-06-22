@@ -115,6 +115,7 @@ test('GET with pathParameters and with an invalid access token returns an unauth
 });
 
 test('GET returns an existing collection', async (t) => {
+  const { testCollection } = t.context;
   const response = await request(app)
     .get(`/collections/${t.context.testCollection.name}/${t.context.testCollection.version}`)
     .set('Accept', 'application/json')
@@ -122,8 +123,12 @@ test('GET returns an existing collection', async (t) => {
     .expect(200);
 
   const expected = {
-    ...t.context.testCollection,
-    files: JSON.parse(t.context.testCollection.files),
+    granuleId: testCollection.granule_id_validation_regex,
+    granuleIdExtraction: testCollection.granule_id_extraction_regex,
+    sampleFileName: testCollection.sample_file_name,
+    files: JSON.parse(testCollection.files),
+    name: testCollection.name,
+    version: testCollection.version,
   };
   t.like(response.body, expected);
 });

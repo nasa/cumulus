@@ -14,6 +14,7 @@ const {
   CollectionPgModel,
   getKnexClient,
   translateApiCollectionToPostgresCollection,
+  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -89,7 +90,7 @@ async function get(req, res) {
     const collectionPgModel = new CollectionPgModel();
     const knex = await getKnexClient();
     const result = await collectionPgModel.get(knex, { name, version });
-    return res.send(result);
+    return res.send(translatePostgresCollectionToApiCollection(result));
   } catch (error) {
     return res.boom.notFound(error.message);
   }
