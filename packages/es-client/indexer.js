@@ -72,6 +72,8 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   if (parent) params.parent = parent;
 
+  logger.debug(`indexing ${type} ${id} to ${index}`);
+
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
   const indexResponse = await actualEsClient.index(params);
@@ -243,48 +245,9 @@ async function deleteRecord({
 
   const actualEsClient = esClient || (await Search.es());
 
-  // const getResponse = type === 'granule' ? await actualEsClient.get(params, options) : undefined;
+  logger.debug(`deleting ${type} ${id} to ${index}`);
   const deleteResponse = await actualEsClient.delete(params, options);
-  // if (type === 'granule' && getResponse.body.found) {
-  //   const doc = getResponse.body._source;
-  //   doc.timestamp = Date.now();
-  //   doc.deletedAt = Date.now();
-
-  //   // When a 'granule' record is deleted, the record is added to 'deletedgranule' type
-  //   await genericRecordUpdate(
-  //     actualEsClient,
-  //     doc.granuleId,
-  //     doc,
-  //     index,
-  //     'deletedgranule',
-  //     parent
-  //   );
-  // }
   return deleteResponse.body;
-}
-
-async function getRecord({
-  esClient,
-  id,
-  type,
-  parent,
-  index = defaultIndexAlias,
-  ignore,
-}) {
-  const params = {
-    index,
-    type,
-    id,
-    refresh: inTestMode(),
-  };
-
-  let options = {};
-
-  if (parent) params.parent = parent;
-  if (ignore) options = { ignore };
-
-  const actualEsClient = esClient || (await Search.es());
-  return await actualEsClient.get(params, options);
 }
 
 /**
@@ -415,17 +378,16 @@ async function deleteGranule({
   index = defaultIndexAlias,
   type = 'granule',
 }) {
-  const granuleEsRecord = await getRecord({
-    esClient,
+  const esGranulesClient = new Search(
+    {},
     type,
-    id: granuleId,
-    index,
-    parent: collectionId,
-    ignore,
-  });
+    index
+  );
+  const granuleEsRecord = await esGranulesClient.get(granuleId, collectionId);
 
   // When a 'granule' record is deleted, the record is added to 'deletedgranule' type
-  const deletedGranuleDoc = granuleEsRecord.body._source;
+  const deletedGranuleDoc = granuleEsRecord;
+  delete deletedGranuleDoc._id;
   deletedGranuleDoc.timestamp = Date.now();
   deletedGranuleDoc.deletedAt = Date.now();
   await genericRecordUpdate(
