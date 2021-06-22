@@ -27,6 +27,9 @@ const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
 const {
+  throwIfApiError,
+} = require('../../helpers/apiUtils');
+const {
   createTimestampedTestId,
   loadConfig,
 } = require('../../helpers/testUtils');
@@ -51,17 +54,16 @@ describe('A dead letter record archive processing operation', () => {
       stackName = config.stackName;
       systemBucket = config.bucket;
 
-      let response;
       const testId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessing');
 
       testCollection = await loadCollection({
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
         postfix: testId,
       });
-      response = await createCollection({ prefix: stackName, collection: testCollection });
-      if (response.statusCode !== 200) {
-        throw new Error(`createCollection failed: ${JSON.stringify(response)}`);
-      }
+      await throwIfApiError(
+        createCollection,
+        { prefix: stackName, collection: testCollection }
+      );
 
       testProvider = {
         id: `s3_provider_${testId}`,
@@ -69,10 +71,10 @@ describe('A dead letter record archive processing operation', () => {
         protocol: 's3',
         globalConnectionLimit: 1000,
       };
-      response = await createProvider({ prefix: stackName, provider: testProvider });
-      if (response.statusCode !== 200) {
-        throw new Error(`createProvider failed: ${JSON.stringify(response)}`);
-      }
+      await throwIfApiError(
+        createProvider,
+        { prefix: stackName, provider: testProvider }
+      );
 
       const testFiles = [
         fakeFileFactory({ bucket: systemBucket }),
@@ -125,16 +127,17 @@ describe('A dead letter record archive processing operation', () => {
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
       await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
 
-      response = await postRecoverCumulusMessages({
-        prefix: stackName,
-        payload: {
-          bucket: systemBucket,
-          path: archivePath,
+      await throwIfApiError(
+        postRecoverCumulusMessages,
+        {
+          prefix: stackName,
+          payload: {
+            bucket: systemBucket,
+            path: archivePath,
+          },
         },
-      });
-      if (response.statusCode !== 202) {
-        throw new Error(`postRecoverCumulusMessages failed: ${JSON.stringify(response)}`);
-      }
+        202
+      );
     } catch (error) {
       beforeAllFailed = true;
       console.log('beforeAll() failed, error:', error);
@@ -143,19 +146,34 @@ describe('A dead letter record archive processing operation', () => {
 
   afterAll(async () => {
     const ruleName = get(testRule, 'name');
-    if (testGranule) await deleteGranule({ prefix: stackName, granuleId: testGranule.granuleId });
-    if (ruleName) await deleteRule({ prefix: stackName, ruleName });
+    if (testGranule) {
+      await throwIfApiError(
+        deleteGranule,
+        { prefix: stackName, granuleId: testGranule.granuleId }
+      );
+    }
+    if (ruleName) {
+      await throwIfApiError(deleteRule, { prefix: stackName, ruleName });
+    }
 
-    await deleteExecution({ prefix: stackName, executionArn });
+    await throwIfApiError(deleteExecution, { prefix: stackName, executionArn });
 
     if (testCollection) {
-      await deleteCollection({
-        prefix: stackName,
-        collectionName: testCollection.name,
-        collectionVersion: testCollection.version,
-      });
+      await throwIfApiError(
+        deleteCollection,
+        {
+          prefix: stackName,
+          collectionName: testCollection.name,
+          collectionVersion: testCollection.version,
+        }
+      );
     }
-    if (testProvider) await deleteProvider({ prefix: stackName, providerId: testProvider.id });
+    if (testProvider) {
+      await throwIfApiError(
+        deleteProvider,
+        { prefix: stackName, providerId: testProvider.id }
+      );
+    }
   });
 
   it('processes a message to create records', async () => {

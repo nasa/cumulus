@@ -35,13 +35,12 @@ async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}
   );
 }
 
-async function throwIfApiError(apiFunction, apiFuncParams) {
+async function throwIfApiError(apiFunction, apiFuncParams, acceptedStatusCode = 200) {
   const response = await apiFunction(apiFuncParams);
-  const parsedResponse = JSON.parse(response.body);
-  if (parsedResponse.error) {
-    throw new Error(parsedResponse.message);
+  if (response.statusCode !== acceptedStatusCode) {
+    throw new Error(`${apiFunction} failed: ${JSON.stringify(response)}`);
   }
-  return parsedResponse;
+  return response;
 }
 
 /**

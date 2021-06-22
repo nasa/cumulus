@@ -19,6 +19,9 @@ const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const {
+  throwIfApiError,
+} = require('../../helpers/apiUtils');
+const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
@@ -68,13 +71,13 @@ describe('Creating a one-time rule via the Cumulus API', () => {
   afterAll(async () => {
     const ruleName = get(rule, 'name');
 
-    if (ruleName) await deleteRule({ prefix, ruleName });
+    if (ruleName) await throwIfApiError(deleteRule, { prefix, ruleName });
 
-    await deleteExecution({ prefix: config.stackName, executionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: executionArn2 });
+    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn });
+    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: executionArn2 });
 
     if (collection) {
-      await deleteCollection({
+      await throwIfApiError(deleteCollection, {
         prefix,
         collectionName: collection.name,
         collectionVersion: collection.version,
