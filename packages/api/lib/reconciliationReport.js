@@ -78,7 +78,8 @@ function convertToESCollectionSearchParams(params) {
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {moment} params.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
- * @returns {[Object]} array of objects of desired parameters formatted for database collection search
+ * @returns {[Object]} array of objects of desired
+ * parameters formatted for database collection search
  */
 function convertToDBCollectionSearchObject(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;

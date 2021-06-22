@@ -267,6 +267,12 @@ test.serial('Reindex request returns 400 with the expected message when source i
 test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
   const date = new Date();
   const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+  try {
+    await esClient.indices.delete({ index: defaultIndexName });
+  } catch (error) {
+    console.log(`Warning -- error pre-deleting index ${error.message}`);
+  }
   await esClient.indices.create({
     index: defaultIndexName,
     body: { mappings },

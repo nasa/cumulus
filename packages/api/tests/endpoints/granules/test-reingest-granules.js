@@ -25,13 +25,10 @@ const { app } = require('../../../app');
 
 process.env.AccessTokensTable = randomString();
 process.env.backgroundQueueUrl = randomString();
-process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 const fakeCollectionId = 'FakeCollection___006';
-const fakeCollection = { duplicateHandling: 'replace' };
-
 let accessTokenModel;
 let jwtAuthToken;
 

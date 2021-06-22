@@ -39,7 +39,6 @@ let esIndex;
 let esClient;
 
 test.beforeEach(async (t) => {
-  process.env.CollectionsTable = randomId('collectionTable');
   process.env.GranulesTable = randomId('granulesTable');
   process.env.ReconciliationReportsTable = randomId('reconciliationTable');
 

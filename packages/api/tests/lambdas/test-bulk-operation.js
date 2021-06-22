@@ -31,8 +31,6 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   },
 });
 
-const models = require('../../models');
-
 let applyWorkflowStub;
 let reingestStub;
 
@@ -64,14 +62,12 @@ test.before(async (t) => {
     METRICS_ES_USER: randomId('user'),
     METRICS_ES_PASS: randomId('pass'),
     GranulesTable: randomId('granule'),
-    CollectionsTable: randomId('collection'),
     ...envVars,
   };
 
   // create a fake bucket
   await createBucket(envVars.system_bucket);
 
-  await new models.Collection().createTable();
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');

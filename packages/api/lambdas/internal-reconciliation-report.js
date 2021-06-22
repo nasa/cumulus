@@ -20,7 +20,7 @@ const {
   getKnexClient,
 } = require('@cumulus/db');
 
-const { Collection, Granule } = require('../models');
+const { Granule } = require('../models');
 const {
   convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
