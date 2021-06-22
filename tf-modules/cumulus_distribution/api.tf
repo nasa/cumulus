@@ -9,7 +9,7 @@ locals {
       DISTRIBUTION_ENDPOINT          = local.api_uri
       DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
       OAUTH_CLIENT_ID                = var.oauth_client_id
-      OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      OAUTH_CLIENT_PASSWORD_SECRET_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
       OAUTH_HOST_URL                 = var.oauth_host_url
       OAUTH_PROVIDER                 = var.oauth_provider
       stackName                      = var.prefix
@@ -18,6 +18,10 @@ locals {
       cmr_provider                   = var.cmr_provider
       public_buckets                 = join(",", var.public_buckets)
   }
+  all_buckets = compact(flatten([
+    var.public_buckets,
+    var.protected_buckets
+  ]))
   lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
 }
 
