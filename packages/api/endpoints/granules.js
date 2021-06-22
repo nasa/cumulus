@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
   RecordDoesNotExist,
@@ -20,8 +19,7 @@ const {
   deconstructCollectionId,
 } = require('@cumulus/message/Collections');
 
-const Search = require('@cumulus/es-client/search').Search;
-const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -164,14 +162,16 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    granuleModelClient = new Granule(),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const granuleId = req.params.granuleName;
   logger.info(`granules.del ${granuleId}`);
-
-  const granuleModelClient = new Granule();
-  const collectionPgModel = new CollectionPgModel();
-  const granulePgModel = new GranulePgModel();
-
-  const knex = await getKnexClient({ env: process.env });
 
   let dynamoGranule;
   let pgGranule;
@@ -218,19 +218,8 @@ async function del(req, res) {
     knex,
     dynamoGranule,
     pgGranule,
+    esClient,
   });
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await indexer.deleteRecord({
-      esClient,
-      id: granuleId,
-      type: 'granule',
-      parent: dynamoGranule.collectionId,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  }
 
   return res.send({ detail: 'Record deleted' });
 }
