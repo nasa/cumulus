@@ -20,6 +20,11 @@ test('getGranule calls the callback with the expected object', async (t) => {
 
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
   };
 
   await t.notThrowsAsync(granulesApi.getGranule({
@@ -43,6 +48,11 @@ test('getGranule calls the callback with the expected object when there is query
 
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
   };
 
   await t.notThrowsAsync(granulesApi.getGranule({

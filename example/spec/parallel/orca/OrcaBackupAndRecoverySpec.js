@@ -274,12 +274,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('returns granule information with recovery status', async () => {
       if (!isOrcaIncluded) pending();
-      const granuleResponse = await getGranule({
+      const granule = await getGranule({
         prefix: config.stackName,
         granuleId,
         query: { getRecoveryStatus: true },
       });
-      const granule = JSON.parse(granuleResponse.body);
 
       expect(granule.granuleId).toEqual(granuleId);
       expect((granule.recoveryStatus === 'running') || (granule.recoveryStatus === 'completed')).toBeTrue();
