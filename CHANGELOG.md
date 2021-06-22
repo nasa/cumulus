@@ -10,8 +10,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
-  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
-  
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+
+### Changed
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
 ### Fixed
 
 - **CUMULUS-2520**
