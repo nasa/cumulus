@@ -157,6 +157,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2208**
     - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
       - `<prefix>-CollectionsTable`
+      - `<prefix>-GranulesTable`
       - `<prefix>-PdrsTable`
       - `<prefix>-ProvidersTable`
       - `<prefix>-RulesTable`
