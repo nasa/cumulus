@@ -16,8 +16,10 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/object-store",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nasa/cumulus.git"
+    "url": "git+https://github.com/nasa/cumulus.git",
+    "directory": "packages/object-store"
   },
+  "main": "dist/index.js",
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
