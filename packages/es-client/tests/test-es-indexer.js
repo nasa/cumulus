@@ -51,16 +51,16 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
   const collectionId = constructCollectionId(collection.name, collection.version);
   granule.collectionId = collectionId;
 
+  // create granule record
+  let r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
+  t.is(r.result, 'created');
+
   const esGranulesClient = new Search(
     {},
     granuleType,
     esAlias
   );
-
-  // create granule record
-  let r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
-  t.is(r.result, 'created');
-  t.true(await esGranulesClient.exists(granule.granuleId));
+  t.true(await esGranulesClient.exists(granule.granuleId, collectionId, granuleType));
 
   r = await indexer.deleteGranule({
     esClient,
@@ -70,7 +70,7 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
     index: esAlias,
   });
   t.is(r.result, 'deleted');
-  t.false(await esGranulesClient.exists(granule.granuleId));
+  t.false(await esGranulesClient.exists(granule.granuleId, collectionId, granuleType));
 
   // the deletedgranule record is added
   const deletedGranParams = {
@@ -80,20 +80,20 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
     parent: collectionId,
   };
 
-  let record = await esClient.get(deletedGranParams)
+  let deletedRecord = await esClient.get(deletedGranParams)
     .then((response) => response.body);
-  t.true(record.found);
-  t.deepEqual(record._source.files, granule.files);
-  t.is(record._parent, collectionId);
-  t.is(record._id, granule.granuleId);
-  t.truthy(record._source.deletedAt);
+  t.true(deletedRecord.found);
+  t.deepEqual(deletedRecord._source.files, granule.files);
+  t.is(deletedRecord._parent, collectionId);
+  t.is(deletedRecord._id, granule.granuleId);
+  t.truthy(deletedRecord._source.deletedAt);
 
-  // the deletedgranule record is removed if the granule is ingested again
+  // the deletedgranule deletedRecord is removed if the granule is ingested again
   r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
   t.is(r.result, 'created');
-  record = await esClient.get(deletedGranParams, { ignore: [404] })
+  deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
-  t.false(record.found);
+  t.false(deletedRecord.found);
 });
 
 test.serial('creating multiple deletedgranule records and retrieving them', async (t) => {
