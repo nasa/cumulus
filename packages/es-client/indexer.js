@@ -72,8 +72,6 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   if (parent) params.parent = parent;
 
-  logger.debug(`indexing ${type} ${id} to ${index}`);
-
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
   const indexResponse = await actualEsClient.index(params);
@@ -244,8 +242,6 @@ async function deleteRecord({
   if (ignore) options = { ignore };
 
   const actualEsClient = esClient || (await Search.es());
-
-  logger.debug(`deleting ${type} ${id} to ${index}`);
   const deleteResponse = await actualEsClient.delete(params, options);
   return deleteResponse.body;
 }
