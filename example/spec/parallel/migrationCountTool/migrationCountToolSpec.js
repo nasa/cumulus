@@ -6,6 +6,10 @@ const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { postMigrationCounts } = require('@cumulus/api-client/migrationCounts');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const cryptoRandomString = require('crypto-random-string');
+
+const {
+  throwIfApiError,
+} = require('../../helpers/apiUtils');
 const {
   loadConfig,
 } = require('../../helpers/testUtils');
@@ -28,10 +32,14 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         dbConcurrency: 1,
       };
 
-      const migrationCountResponse = await postMigrationCounts({
-        prefix: config.stackName,
-        payload,
-      });
+      const migrationCountResponse = await throwIfApiError(
+        postMigrationCounts,
+        {
+          prefix: config.stackName,
+          payload,
+        },
+        202
+      );
       migrationCountResponseBody = JSON.parse(migrationCountResponse.body);
 
       asyncOperation = await waitForAsyncOperationStatus({
@@ -54,7 +62,10 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
   afterAll(async () => {
     if (migrationCountResponseBody.id) {
-      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id });
+      await throwIfApiError(
+        deleteAsyncOperation,
+        { prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id }
+      );
     }
   });
 

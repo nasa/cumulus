@@ -25,6 +25,9 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const {
+  throwIfApiError,
+} = require('../../helpers/apiUtils');
+const {
   createTimestampedTestId,
   createTestSuffix,
   loadConfig,
@@ -152,21 +155,28 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
-        postBulkDeleteResponse = await granules.bulkDeleteGranules({
-          prefix,
-          body: {
-            ids: [granuleId],
-            // required to force removal of granules from CMR before deletion
-            forceRemoveFromCmr: true,
+        postBulkDeleteResponse = await throwIfApiError(
+          granules.bulkDeleteGranules,
+          {
+            prefix,
+            body: {
+              ids: [granuleId],
+              // required to force removal of granules from CMR before deletion
+              forceRemoveFromCmr: true,
+            },
           },
-        });
+          202
+        );
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-          prefix,
-          id: postBulkDeleteBody.id,
-        });
+        const getAsyncOperationResponse = await throwIfApiError(
+          apiTestUtils.getAsyncOperation,
+          {
+            prefix,
+            id: postBulkDeleteBody.id,
+          }
+        );
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
       } catch (error) {
@@ -176,21 +186,36 @@ describe('POST /granules/bulkDelete', () => {
 
     afterAll(async () => {
       // Must delete rules and executions before deleting associated collection and provider
-      await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
-      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
+      await throwIfApiError(
+        deleteRule,
+        { prefix, ruleName: get(ingestGranuleRule, 'name') }
+      );
+      await throwIfApiError(
+        deleteExecution,
+        { prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }
+      );
 
       if (postBulkDeleteBody.id) {
-        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+        await throwIfApiError(
+          deleteAsyncOperation,
+          { prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id }
+        );
       }
 
       await pAll(
         [
-          () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
-          () => deleteCollection({
-            prefix,
-            collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version'),
-          }),
+          () => throwIfApiError(
+            deleteProvider,
+            { prefix, providerId: get(provider, 'id') }
+          ),
+          () => throwIfApiError(
+            deleteCollection,
+            {
+              prefix,
+              collectionName: get(collection, 'name'),
+              collectionVersion: get(collection, 'version'),
+            }
+          ),
         ],
         { stopOnError: false }
       ).catch(console.error);
