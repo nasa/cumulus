@@ -37,8 +37,8 @@ const fakeProvider = {
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 const fakeGetCollection = (item) => {
-  if (item.name !== fakeCollection.name
-      || item.version !== fakeCollection.version) {
+  if (item.collectionName !== fakeCollection.name
+      || item.collectionVersion !== fakeCollection.version) {
     return Promise.reject(new Error('Collection could not be found'));
   }
   return Promise.resolve(fakeCollection);
@@ -57,7 +57,7 @@ const getProvider = schedule.__get__('getProvider');
 const getApiCollection = schedule.__get__('getApiCollection');
 
 const resetProvider = schedule.__set__('Provider', FakeProvider);
-const resetCollection = schedule.__set__('getCollections', fakeGetCollection);
+const resetCollection = schedule.__set__('getCollection', fakeGetCollection);
 
 test.before(() => {
   process.env.defaultSchedulerQueueUrl = defaultQueueUrl;
