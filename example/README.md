@@ -155,6 +155,21 @@ Run `terraform apply`.
 
 This will deploy your data-migration resources.
 
+## Choosing a distribution API
+
+The steps below assume you will be using the [Cumulus Distribution API](./cumulus-tf/cumulus_distribution.tf). If you would prefer
+to use the Thin Egress App (TEA), uncomment the TEA-specific resources in the following files:
+
+[example/cumulus-tf/main.tf](./cumulus-tf/main.tf)
+
+[example/cumulus-tf/outputs.tf](./cumulus-tf/outputs.tf)
+
+[example/cumulus-tf/this_egress_app.tf](./cumulus-tf/thin_egress_app.tf)
+
+[tf-modules/cumulus/outputs.tf](../tf-modules/cumulus/outputs.tf)
+
+[tf-modules/cumulus/distribution.tf](../tf-modules/cumulus/distribution.tf)
+
 ## Configure and deploy the `cumulus-tf` root module
 
 These steps should be executed in the `example/cumulus-tf` directory.
