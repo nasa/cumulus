@@ -1,4 +1,5 @@
-# // TODO: Remove if not using TEA
+# Uncomment if using TEA for distribution
+
 # locals {
 #   tea_stack_name = "${var.prefix}-thin-egress-app"
 #   tea_stage_name = "DEV"

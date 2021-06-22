@@ -6,6 +6,8 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
+# TEA-Specific outputs. Uncomment to use TEA distribution
+
 # output "distribution_url" {
 #   value = module.thin_egress_app.api_endpoint
 # }
@@ -17,6 +19,8 @@ output "archive_api_redirect_uri" {
 # output "distribution_redirect_uri" {
 #   value = module.thin_egress_app.urs_redirect_uri
 # }
+
+# End TEA-Specific outputs.
 
 # Workflow reporting SQS queue and SNS topics
 

@@ -1,5 +1,5 @@
-// TODO replace as default with cumulus distribution?
-// TODO maybe don't deploy if users don't need TEA
+# Uncomment if using TEA for distribution
+
 # module "distribution" {
 #   source = "../distribution"
 
