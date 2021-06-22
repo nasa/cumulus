@@ -6,7 +6,6 @@ const isNil = require('lodash/isNil');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
-const rootRouter = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -14,7 +13,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { objectStoreForProtocol } = require('@cumulus/object-store');
 
-const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies, ensureAuthorizedOrRedirect } = require('../lib/distribution');
+const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
 const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
@@ -202,7 +201,6 @@ async function handleLocateBucketRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const { s3Client } = await getConfigurations();
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   const bucketMap = await getBucketMap();
@@ -233,11 +231,9 @@ async function handleFileRequest(req, res) {
   }
 
   let signedS3Url;
-  const url = `s3://${req.params[0]}`;
+  const url = `s3://${bucket}/${key}`;
   const objectStore = objectStoreForProtocol('s3');
   const range = req.get('Range');
-  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
-  const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   const options = {
     ...range ? { Range: range } : {},
@@ -287,16 +283,10 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
-rootRouter.get('/', handleRootRequest);
-rootRouter.head('/*', ensureAuthorizedOrRedirect, handleFileRequest);
-rootRouter.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
-
 module.exports = {
   handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
   handleRootRequest,
   handleFileRequest,
-  useSecureCookies,
-  rootRouter,
 };

@@ -48,6 +48,7 @@ const bucketMap = {
     },
     [protectedBucket]: protectedBucket,
     [publicBucketPath]: publicBucket,
+    [publicBucket]: publicBucket,
   },
   PUBLIC_BUCKETS: {
     [publicBucket]: 'public bucket',
@@ -98,7 +99,6 @@ test.before(async () => {
   const fileKey = randomId('key');
 
   const fileLocation = `${protectedBucket}/${fileKey}`;
-  const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
   const s3Endpoint = getLocalstackEndpoint('s3');
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
@@ -124,22 +124,6 @@ test.before(async () => {
 
   const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
-
-  sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
-    if (operation !== 'getObject') {
-      throw new Error(`Unexpected operation: ${operation}`);
-    }
-
-    if (![publicBucket, protectedBucket].includes(params.Bucket)) {
-      throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
-    }
-
-    if (params.Key !== fileKey) {
-      throw new Error(`Unexpected params.Key: ${params.Key}`);
-    }
-
-    return signedFileUrl.toString();
-  });
 
   context = {
     accessTokenModel,
@@ -242,11 +226,13 @@ test.serial('An authenticated request for a file returns a redirect to S3', asyn
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
-test('A request for a file with a valid bearer token returns a redirect to S3', async (t) => {
+test.serial('A request for a file with a valid bearer token returns a redirect to S3', async (t) => {
+  stubHeadObject();
+
   const {
     fileLocation,
     getUserInfoResponse,
-    signedFileUrl,
+    s3Endpoint,
   } = context;
 
   const response = await request(distributionApp)
@@ -255,16 +241,19 @@ test('A request for a file with a valid bearer token returns a redirect to S3', 
     .set('Authorization', `Bearer ${randomId('token')}`)
     .expect(307);
 
+  restoreHeadObjectStub();
+
   t.is(response.status, 307);
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), getUserInfoResponse.username);
 });
 
-test('A request for a file with an invalid bearer token returns a redirect to an OAuth2 provider', async (t) => {
+test.serial('A request for a file with an invalid bearer token returns a redirect to an OAuth2 provider', async (t) => {
   const { fileLocation } = context;
 
   const response = await request(distributionApp)
@@ -278,7 +267,8 @@ test('A request for a file with an invalid bearer token returns a redirect to an
 
 test.serial('A request for a public file without an access token returns a redirect to S3', async (t) => {
   stubHeadObject();
-  const { fileKey, signedFileUrl } = context;
+  const { fileKey, s3Endpoint } = context;
+  const fileLocation = `${publicBucket}/${fileKey}`;
   const response = await request(distributionApp)
     .get(`/${publicBucketPath}/${fileKey}`)
     .set('Accept', 'application/json')
@@ -297,17 +287,23 @@ test.serial('A request for a public file without an access token returns a redir
   t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
 });
 
-test('A request for a public file with an access token returns a redirect to S3', async (t) => {
-  const { accessTokenCookie, accessTokenRecord, fileKey, signedFileUrl } = context;
+test.serial('A request for a public file with an access token returns a redirect to S3', async (t) => {
+  stubHeadObject();
+
+  const { accessTokenCookie, accessTokenRecord, fileKey, s3Endpoint } = context;
+  const fileLocation = `${publicBucket}/${fileKey}`;
   const response = await request(distributionApp)
     .get(`/${publicBucketPath}/${fileKey}`)
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
 
+  restoreHeadObjectStub();
+
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
@@ -412,36 +408,9 @@ test.serial('A / request without an access token displays login page', async (t)
   t.false(response.text.includes('Welcome user'));
 });
 
-test('A sucessful /locate request for a bucket returns matching paths', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate?bucket_name=bucket-path-1')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /application\/json/)
-    .expect(200);
-  t.deepEqual(response.body, ['path1']);
-});
-
-test('A /locate request returns error when no matching bucket found', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate?bucket_name=nonexistbucket')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /text\/plain/)
-    .expect(404);
-  t.true(JSON.stringify(response.error).includes('No route defined for nonexistbucket'));
-});
-
-test('A /locate request returns error when request parameter is missing', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /text\/plain/)
-    .expect(400);
-  t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
-});
-
 test.serial('A HEAD request for a public file without an access token redirects to S3', async (t) => {
   const { fileKey, s3Endpoint } = context;
-  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
+  const fileLocation = `${publicBucket}/${fileKey}`;
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
     .set('Accept', 'application/json')
@@ -502,4 +471,31 @@ test.serial('An authenticated HEAD request containing a range header for a file 
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
   t.true(redirectLocation.searchParams.get('X-Amz-SignedHeaders').includes('range'));
+});
+
+test('A sucessful /locate request for a bucket returns matching paths', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate?bucket_name=bucket-path-1')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /application\/json/)
+    .expect(200);
+  t.deepEqual(response.body, ['path1']);
+});
+
+test('A /locate request returns error when no matching bucket found', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate?bucket_name=nonexistbucket')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /text\/plain/)
+    .expect(404);
+  t.true(JSON.stringify(response.error).includes('No route defined for nonexistbucket'));
+});
+
+test('A /locate request returns error when request parameter is missing', async (t) => {
+  const response = await request(distributionApp)
+    .get('/locate')
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /text\/plain/)
+    .expect(400);
+  t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
 });
