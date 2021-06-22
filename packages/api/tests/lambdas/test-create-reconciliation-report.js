@@ -27,10 +27,10 @@ const { Search } = require('@cumulus/es-client/search');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const {
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  localStackConnectionEnv,
   CollectionPgModel,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 
