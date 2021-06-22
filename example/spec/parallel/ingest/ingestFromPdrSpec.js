@@ -184,7 +184,7 @@ describe('Ingesting from PDR', () => {
     });
 
     it('executes successfully', () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
+      if (beforeAllFailed) fail(beforeAllFailed);
       else {
         expect(workflowExecution.status).toEqual('SUCCEEDED');
       }
@@ -203,7 +203,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('has expected path and name output', () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
           expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
@@ -212,7 +212,7 @@ describe('Ingesting from PDR', () => {
     });
 
     describe('the QueuePdrs Lambda', () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
+      if (beforeAllFailed) fail(beforeAllFailed);
       else {
         it('has expected output', () => {
           expect(queuePdrsOutput.payload.pdrs_queued).toEqual(1);
@@ -270,7 +270,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('executes successfully', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           console.log(`Wait for execution ${parsePdrExecutionArn}`);
           parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
@@ -279,7 +279,7 @@ describe('Ingesting from PDR', () => {
       });
 
       describe('ParsePdr lambda function', () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           it('successfully parses a granule from the PDR', async () => {
             parseLambdaOutput = await lambdaStep.getStepOutput(
@@ -293,7 +293,7 @@ describe('Ingesting from PDR', () => {
 
       describe('QueueGranules lambda function', () => {
         it('has expected pdr and arns output', async () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
             queueGranulesOutput = await lambdaStep.getStepOutput(
               parsePdrExecutionArn,
@@ -319,7 +319,7 @@ describe('Ingesting from PDR', () => {
         });
 
         it('has expected output', () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
             const payload = lambdaOutput.payload;
             expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
@@ -343,9 +343,9 @@ describe('Ingesting from PDR', () => {
 
         // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
         it('has expected output message', () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else if (lambdaOutput) {
-            // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
+            // Sometimes PDR ingestion comp[letes before this step is reached, so it is never invoked
             // and there is no Lambda output to check.
             expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
             expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
@@ -392,7 +392,7 @@ describe('Ingesting from PDR', () => {
         });
 
         it('executes successfully', () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
             expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
           }
@@ -412,7 +412,7 @@ describe('Ingesting from PDR', () => {
           });
 
           it('outputs 1 granule and pdr', async () => {
-            if (beforeAllFailed) fail('beforeAll() failed');
+            if (beforeAllFailed) fail(beforeAllFailed);
             else {
               syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
                 ingestGranuleWorkflowArn,
@@ -446,7 +446,7 @@ describe('Ingesting from PDR', () => {
         });
 
         it('displays a link to the parent', async () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
             await waitForApiStatus(
               getExecution,
@@ -457,7 +457,7 @@ describe('Ingesting from PDR', () => {
               'completed'
             );
 
-            ingestGranuleExecution = await executionsApiTestUtils.getExecution({
+            ingestGranuleExecution = await getExecution({
               prefix: config.stackName,
               arn: ingestGranuleWorkflowArn,
             });
@@ -469,9 +469,9 @@ describe('Ingesting from PDR', () => {
 
       describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
         it('does not display a parent link', async () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
-            const parsePdrExecution = await executionsApiTestUtils.getExecution({
+            const parsePdrExecution = await getExecution({
               prefix: config.stackName,
               arn: workflowExecution.executionArn,
             });
@@ -495,13 +495,13 @@ describe('Ingesting from PDR', () => {
             executionStatus = JSON.parse(executionStatusResponse.body);
           } catch (error) {
             console.log(`Error parsing JSON ${executionStatusResponse}`);
-            beforeAllFailed = true;
+            beforeAllFailed = error;
             throw error;
           }
         });
 
         it('branches according to the CMA output', () => {
-          if (beforeAllFailed) fail('beforeAll() failed');
+          if (beforeAllFailed) fail(beforeAllFailed);
           else {
             expect(executionStatus.executionHistory).toBeTruthy();
             const events = executionStatus.executionHistory.events;
@@ -550,7 +550,7 @@ describe('Ingesting from PDR', () => {
 
     describe('the reporting lambda has received the CloudWatch step function event and', () => {
       it('the execution record is added to DynamoDB', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const record = await waitForApiStatus(
             getExecution,
@@ -565,7 +565,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('the pdr record is added to DynamoDB', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const record = await waitForModelStatus(
             new Pdr(),
@@ -581,7 +581,7 @@ describe('Ingesting from PDR', () => {
     /** This test relies on the previous 'ParsePdr workflow' to complete */
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
           const parsePdrExecution = await executionsApiTestUtils.getExecution({
@@ -596,7 +596,7 @@ describe('Ingesting from PDR', () => {
 
     describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
       it('does not display a parent link', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const queuePdrsExecution = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
@@ -636,7 +636,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('is published for a running PDR', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
@@ -647,7 +647,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('is published for an execution on a successful workflow completion', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const executionExists = await s3ObjectExists({
             Bucket: config.bucket,
@@ -658,7 +658,7 @@ describe('Ingesting from PDR', () => {
       });
 
       it('is published for a PDR on a successful workflow completion', async () => {
-        if (beforeAllFailed) fail('beforeAll() failed');
+        if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const pdrExists = await s3ObjectExists({
             Bucket: config.bucket,
