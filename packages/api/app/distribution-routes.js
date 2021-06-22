@@ -1,9 +1,9 @@
 const router = require('express-promise-router')();
 const {
+  handleFileRequest,
   handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
-  handleFileRequest,
   handleRootRequest,
 } = require('../endpoints/distribution');
 const displayS3CredentialInstructions = require('../endpoints/s3credentials-readme');
