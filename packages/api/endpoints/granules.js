@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
@@ -16,17 +15,24 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
+const Logger = require('@cumulus/logger');
+const {
+  deconstructCollectionId,
+} = require('@cumulus/message/Collections');
 
 const Search = require('@cumulus/es-client/search').Search;
 const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const models = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const AsyncOperation = require('../models/async-operation');
+const Collection = require('../models/collections');
+const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+
+const logger = new Logger({ sender: '@cumulus/api/granules' });
 
 /**
  * List all granules for a given collection.
@@ -68,12 +74,12 @@ async function put(req, res) {
     return res.boom.badRequest('Action is missing');
   }
 
-  const granuleModelClient = new models.Granule();
+  const granuleModelClient = new Granule();
   const granule = await granuleModelClient.get({ granuleId });
 
   if (action === 'reingest') {
     const { name, version } = deconstructCollectionId(granule.collectionId);
-    const collectionModelClient = new models.Collection();
+    const collectionModelClient = new Collection();
     const collection = await collectionModelClient.get({ name, version });
 
     await granuleModelClient.reingest({
@@ -159,9 +165,9 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const granuleId = req.params.granuleName;
-  log.info(`granules.del ${granuleId}`);
+  logger.info(`granules.del ${granuleId}`);
 
-  const granuleModelClient = new models.Granule();
+  const granuleModelClient = new Granule();
   const collectionPgModel = new CollectionPgModel();
   const granulePgModel = new GranulePgModel();
 
@@ -198,7 +204,7 @@ async function del(req, res) {
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+      logger.info(`Postgres Granule with ID ${granuleId} does not exist`);
     } else {
       throw error;
     }
@@ -241,7 +247,7 @@ async function get(req, res) {
   const granuleId = req.params.granuleName;
   let result;
   try {
-    result = await (new models.Granule()).get({ granuleId });
+    result = await (new Granule()).get({ granuleId });
   } catch (error) {
     if (error.message.startsWith('No record found')) {
       return res.boom.notFound('Granule not found');
@@ -329,7 +335,7 @@ async function bulkOperations(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -383,7 +389,7 @@ async function bulkDelete(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -422,7 +428,7 @@ async function bulkReingest(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }

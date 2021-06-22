@@ -13,17 +13,18 @@ const {
   CollectionPgModel,
   FilePgModel,
   generateLocalTestDb,
+  destroyLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
-} = require('@cumulus/db');
-
-const { DeletePublishedGranule } = require('@cumulus/errors');
-
-// Postgres mock data factories
-const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
-} = require('@cumulus/db/dist/test-utils');
+} = require('@cumulus/db');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
+
+const { DeletePublishedGranule } = require('@cumulus/errors');
 
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
@@ -79,6 +80,10 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
   // Create a Dynamo collection
   // we need this because a granule has a fk referring to collections
   t.context.testCollection = fakeCollectionFactory({
@@ -95,6 +100,15 @@ test.before(async (t) => {
     t.context.knex,
     testPgCollection
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('deleteGranuleAndFiles() throws an error if the granule is published', async (t) => {
@@ -124,7 +138,7 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() removes granule and files from Postgres, Dynamo, and S3', async (t) => {
+test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/Dynamo/Elasticsearch and files from PostgreSQL/S3', async (t) => {
   const {
     newPgGranule,
     newDynamoGranule,
