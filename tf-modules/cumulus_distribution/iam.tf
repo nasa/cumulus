@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     actions = [
       "s3:GetObject*"
     ]
-    resources = [for b in local.all_buckets: "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -58,13 +58,6 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     resources = [
       aws_secretsmanager_secret.api_oauth_client_password.arn
     ]
-  }
-
-    statement {
-    actions = [
-      "s3:GetObject*"
-    ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {

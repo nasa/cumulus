@@ -218,7 +218,7 @@ async function handleFileRequest(req, res) {
       || (req.authorizedMetadata.userGroups || [])
         .some((group) => allowedUserGroups.includes(group));
     if (!allowed) {
-      const statusCode = 404;
+      const statusCode = 403;
       const vars = {
         contentstring: 'This data is not currently available.',
         title: 'Could not access data',

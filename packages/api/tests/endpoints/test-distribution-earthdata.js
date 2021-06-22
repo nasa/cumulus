@@ -267,7 +267,7 @@ test.serial('An authenticated request for a file from private bucket returns err
     .get(`/${privateBucket}/sc/${fileKey}`)
     .set('Accept', 'application/json')
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(404);
+    .expect(403);
 
   restoreHeadObjectStub();
 
