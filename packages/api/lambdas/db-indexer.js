@@ -4,10 +4,12 @@ const get = require('lodash/get');
 const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const unwrap = AttributeValue.unwrap;
+
+const logger = new Logger({ sender: '@cumulus/dbIndexer' });
 
 /**
  * Get the index details to use for indexing data from the given
@@ -140,6 +142,7 @@ function performIndex(indexFnName, esClient, data) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performDelete(esClient, type, id, parentId) {
+  logger.debug(`deleting ${type} ${id}`);
   return indexer
     .deleteRecord({
       esClient,
@@ -185,6 +188,7 @@ async function indexRecord(esClient, record) {
     return deletedObject;
   }
 
+  logger.debug(`indexing ${indexType} ${id}`);
   const response = await performIndex(indexFnName, esClient, data);
   return response;
 }
@@ -200,7 +204,7 @@ async function indexRecords(records) {
 
   return pEachSeries(
     records,
-    (record) => indexRecord(esClient, record).catch(log.error)
+    (record) => indexRecord(esClient, record).catch((error) => logger.error(error))
   );
 }
 
