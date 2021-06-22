@@ -197,7 +197,7 @@ class BaseSearch {
     };
   }
 
-  async get(id, parentId, type) {
+  async get(id, parentId) {
     const body = {
       query: {
         bool: {
@@ -210,12 +210,12 @@ class BaseSearch {
       },
     };
 
-    if (type && parentId) {
+    if (parentId) {
       body.query.bool.must.push(
         {
           parent_id: {
             id: parentId,
-            type,
+            type: this.type,
           },
         }
       );
@@ -245,8 +245,8 @@ class BaseSearch {
     return resp;
   }
 
-  async exists(id, parentId, type) {
-    const response = await this.get(id, parentId, type);
+  async exists(id, parentId) {
+    const response = await this.get(id, parentId);
     return response.detail !== 'Record not found';
   }
 
