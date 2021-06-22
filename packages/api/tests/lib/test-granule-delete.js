@@ -19,6 +19,7 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -83,6 +84,7 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  t.context.esGranulesClient = new Search({}, 'granule', t.context.esIndex);
 
   // Create a Dynamo collection
   // we need this because a granule has a fk referring to collections
@@ -149,17 +151,40 @@ test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/Dynamo/Elasticse
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     published: false,
+    esClient: t.context.esClient,
   });
+
+  t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
+  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(
+    await t.context.esGranulesClient.exists(
+      newDynamoGranule.granuleId,
+      newDynamoGranule.collectionId
+    )
+  );
+  await Promise.all(
+    files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
 
   await deleteGranuleAndFiles({
     knex: t.context.knex,
     dynamoGranule: newDynamoGranule,
     pgGranule: newPgGranule,
+    esClient: t.context.esClient,
   });
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.false(
+    await t.context.esGranulesClient.exists(
+      newDynamoGranule.granuleId,
+      newDynamoGranule.collectionId
+    )
+  );
 
   // Verify files were deleted from S3 and Postgres
   await Promise.all(
