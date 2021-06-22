@@ -12,6 +12,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
@@ -62,11 +63,11 @@ describe('The Discover Granules workflow with http Protocol', () => {
         createProvider(config.stackName, provider),
       ]);
 
-      collection = JSON.parse((await apiTestUtils.getCollection({
+      collection = removeNilProperties(JSON.parse((await apiTestUtils.getCollection({
         prefix: config.stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
-      })).body);
+      })).body));
 
       discoverGranulesExecution = await buildAndExecuteWorkflow(
         config.stackName,

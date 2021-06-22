@@ -26,6 +26,7 @@ const {
   templateKey,
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
@@ -662,7 +663,7 @@ async function buildWorkflow(
     if (collectionsApiResponse.statusCode) {
       throw new Error(`Collections API responded with error on buildWorkflow ${JSON.stringify(collectionsApiResponse)}`);
     }
-    template.meta.collection = collectionsApiResponse;
+    template.meta.collection = removeNilProperties(collectionsApiResponse);
   } else {
     template.meta.collection = {};
   }
