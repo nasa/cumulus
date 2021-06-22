@@ -36,7 +36,7 @@ const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 

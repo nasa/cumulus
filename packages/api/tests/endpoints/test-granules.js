@@ -54,7 +54,7 @@ const {
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
 // Dynamo mock data factories
 const {

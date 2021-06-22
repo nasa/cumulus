@@ -8,7 +8,7 @@ const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const Granule = require('../../models/granules');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 

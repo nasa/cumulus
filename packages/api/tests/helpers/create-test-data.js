@@ -23,9 +23,9 @@ const {
 // Dynamo mock data factories
 const {
   fakeGranuleFactoryV2,
-} = require('./testUtils');
+} = require('../../lib/testUtils');
 
-const models = require('../models');
+const models = require('../../models');
 
 /**
  * Helper for creating a granule, a parent collection,

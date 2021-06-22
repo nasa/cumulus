@@ -7,7 +7,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const Granule = require('../../models/granules');
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
