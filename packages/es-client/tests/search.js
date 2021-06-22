@@ -7,7 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const {
   createTestIndex,
-  cleanupTestIndex
+  cleanupTestIndex,
 } = require('../testUtils');
 const esSearch = rewire('../search');
 
