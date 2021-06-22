@@ -37,10 +37,10 @@ test.after.always(async () => {
   await s3Utils.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.serial('indexing a deletedgranule record', async (t) => {
+test.serial('deleteGranule deletes granule record and creates deletedgranule record', async (t) => {
   const { esAlias } = t.context;
 
-  const granuletype = 'granule';
+  const granuleType = 'granule';
   const granule = {
     granuleId: randomString(),
   };
@@ -51,18 +51,26 @@ test.serial('indexing a deletedgranule record', async (t) => {
   const collectionId = constructCollectionId(collection.name, collection.version);
   granule.collectionId = collectionId;
 
-  // create granule record
-  let r = await indexer.indexGranule(esClient, granule, esAlias, granuletype);
-  t.is(r.result, 'created');
+  const esGranulesClient = new Search(
+    {},
+    granuleType,
+    esAlias
+  );
 
-  r = await indexer.deleteRecord({
+  // create granule record
+  let r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
+  t.is(r.result, 'created');
+  t.true(await esGranulesClient.exists(granule.granuleId));
+
+  r = await indexer.deleteGranule({
     esClient,
-    id: granule.granuleId,
-    type: granuletype,
-    parent: collectionId,
+    granuleId: granule.granuleId,
+    type: granuleType,
+    collectionId,
     index: esAlias,
   });
   t.is(r.result, 'deleted');
+  t.false(await esGranulesClient.exists(granule.granuleId));
 
   // the deletedgranule record is added
   const deletedGranParams = {
@@ -81,7 +89,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
   t.truthy(record._source.deletedAt);
 
   // the deletedgranule record is removed if the granule is ingested again
-  r = await indexer.indexGranule(esClient, granule, esAlias, granuletype);
+  r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
   t.is(r.result, 'created');
   record = await esClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
@@ -112,11 +120,11 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // now delete the records
   response = await Promise.all(granules
     .map((g) => indexer
-      .deleteRecord({
+      .deleteGranule({
         esClient,
-        id: g.granuleId,
+        granuleId: g.granuleId,
         type: 'granule',
-        parent: g.collectionId,
+        collectionId: g.collectionId,
         index: esAlias,
       })));
   t.is(response.length, 11);
