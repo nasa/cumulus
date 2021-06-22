@@ -2,7 +2,10 @@
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const Logger = require('@cumulus/logger');
+
 const { deconstructCollectionId } = require('./utils');
+const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /**
  * Extra search params to add to the cmrGranules searchConceptQueue
@@ -39,6 +42,11 @@ function dateToValue(dateable) {
   return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
 }
 
+function dateStringToDateOrNull(dateable) {
+  const date = new Date(dateable);
+  return !Number.isNaN(date.valueOf()) ? date : undefined;
+}
+
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
@@ -57,10 +65,12 @@ function convertToESCollectionSearchParams(params) {
   return removeNilProperties(searchParams);
 }
 
+// TODO - make this docstring better
 /**
- * convertToDBCollectionSearchParams - Creates Dynamo Search Parameters from
+ * convertToDBCollectionSearchObject - Creates Postgres search object from
  *                                     InternalRecReport Parameters
  * @param {Object} params - request params to convert to database params
+ * @param {Object} params.collectionIds
  * @param {Object} params.reportType - the report type
  * @param {moment} params.createStartTime - when the report creation was begun
  * @param {moment} params.endTimestamp - ending report datetime ISO Timestamp
@@ -68,19 +78,25 @@ function convertToESCollectionSearchParams(params) {
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {moment} params.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
- * @returns {Object} object of desired parameters formatted for database collection search
+ * @returns {[Object]} array of objects of desired parameters formatted for database collection search
  */
-function convertToDBCollectionSearchParams(params) {
+function convertToDBCollectionSearchObject(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
   // doesn't support search with multiple collections
-  const collection = collectionIds && collectionIds.length === 1
-    ? deconstructCollectionId(collectionIds[0]) : {};
-  const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
-    ...collection,
-  };
-  return removeNilProperties(searchParams);
+  let collection = {};
+  if (collectionIds && collectionIds.length === 1) {
+    collection = deconstructCollectionId(collectionIds[0]);
+  } else {
+    log.info(`Multiple or no collections passed to convertToDBCollectionSearchObject ${JSON.stringify(params)}`);
+  }
+  const searchParams = [
+    {
+      updatedAtFrom: dateStringToDateOrNull(startTimestamp),
+      updatedAtTo: dateStringToDateOrNull(endTimestamp),
+    },
+    removeNilProperties(collection),
+  ];
+  return searchParams;
 }
 
 /**
@@ -236,11 +252,11 @@ function filterDBCollections(collections, recReportParams) {
 
 module.exports = {
   cmrGranuleSearchParams,
-  convertToDBCollectionSearchParams,
-  convertToESCollectionSearchParams,
-  convertToESGranuleSearchParams,
+  convertToDBCollectionSearchObject,
   convertToDBGranuleSearchParams,
   convertToDBScanGranuleSearchParams,
+  convertToESCollectionSearchParams,
+  convertToESGranuleSearchParams,
   filterCMRCollections,
   filterDBCollections,
   initialReportHeader,
