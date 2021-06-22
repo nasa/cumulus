@@ -12,9 +12,9 @@ const moment = require('moment');
 const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
+const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
-const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 
 const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
