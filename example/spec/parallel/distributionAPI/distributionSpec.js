@@ -71,7 +71,8 @@ describe('Distribution API', () => {
     ]);
   });
 
-  describe('handles requests for files over HTTPS', () => {
+  // These tests assume TEA is deployed. The default for example/cumulus-tf is Cumulus Distribution
+  xdescribe('handles requests for files over HTTPS', () => {
     let fileChecksum;
     let protectedFilePath;
     let publicFilePath;
