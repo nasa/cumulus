@@ -44,7 +44,6 @@ async function invokeDistributionApiLambda(path, headers) {
   }).promise();
 
   const payload = JSON.parse(data.Payload);
-  console.log(data);
 
   return payload;
 }
@@ -283,5 +282,6 @@ module.exports = {
   getTEADistributionApiFileStream,
   getTEADistributionApiRedirect,
   getTEARequestHeaders,
+  invokeDistributionApiLambda,
   invokeS3CredentialsLambda,
 };

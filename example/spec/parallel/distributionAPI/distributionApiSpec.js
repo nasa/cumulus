@@ -8,6 +8,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   getDistributionApiRedirect,
+  invokeDistributionApiLambda,
 } = require('@cumulus/integration-tests/api/distribution');
 
 const { getEarthdataAccessToken } = require('@cumulus/integration-tests/api/EarthdataLogin');
@@ -83,17 +84,16 @@ describe('Distribution API', () => {
     ]);
   });
 
-  describe('handles requests for files over HTTPS', () => {
+  describe('handles requests over HTTPS', () => {
     let fileChecksum;
     let protectedFilePath;
-    let publicFilePath;
 
     beforeAll(async () => {
       fileChecksum = await generateChecksumFromStream(
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
       );
-      publicFilePath = `/${publicBucketName}/${fileKey}`;
+
       protectedFilePath = `/${protectedBucketName}/${fileKey}`;
     });
 
@@ -112,7 +112,8 @@ describe('Distribution API', () => {
         expect(downloadChecksum).toEqual(fileChecksum);
       });
 
-      it('downloads a public science file', async () => {
+      it('downloads a public science file with the bucket map path', async () => {
+        const publicFilePath = `/cumulus-daac/public-data/browse/${fileKey}`;
         const s3SignedUrl = await getDistributionApiRedirect(
           publicFilePath,
           headers
@@ -126,7 +127,29 @@ describe('Distribution API', () => {
         expect(downloadChecksum).toEqual(fileChecksum);
       });
     });
-    //TODO logout
-    // bearer token
+
+    describe('an unauthenticated user', () => {
+      it('downloads a public science file as an unauthenticated user', async () => {
+        const publicFilePath = `/${publicBucketName}/${fileKey}`;
+        const s3SignedUrl = await getDistributionApiRedirect(
+          publicFilePath
+        );
+        const parts = new URL(s3SignedUrl);
+        const userName = parts.searchParams.get('A-userid');
+        expect(userName).toEqual('unauthenticated user');
+
+        const fileStream = got.stream(s3SignedUrl);
+        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+        expect(downloadChecksum).toEqual(fileChecksum);
+      });
+    });
+  });
+
+  it('logs out successfully', async () => {
+    const payload = await invokeDistributionApiLambda(
+      '/logout', headers
+    );
+    expect(payload.statusCode).toBe(200);
+    expect(payload.body.includes('You are logged out')).toBe(true);
   });
 });
