@@ -150,11 +150,10 @@ describe('The TestPythonProcessing workflow', () => {
       granuleId: inputPayload.granules[0].granuleId,
       status: 'completed',
     });
-    const granuleResponse = await getGranule({
+    granuleResult = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    granuleResult = JSON.parse(granuleResponse.body);
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(granuleResult.status).toEqual('completed');
   });
