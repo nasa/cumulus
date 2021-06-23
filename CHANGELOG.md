@@ -8,6 +8,65 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+
+### Fixed
+
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+
+### Added
+
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
+
+### Changed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
+  - **CUMULUS-2306**
+    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
+    related records
+    - Updated @cumulus/db/models/granules-executions to add a delete method in
+      support of local cleanup
+    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
+      record retrievals on status in lieu of using `waitForModelStatus`
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed
+    to `granulesApi` from `@cumulus/integration-tests`.
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+      - `<prefix>-CollectionsTable`
+      - `<prefix>-ExecutionsTable`
+      - `<prefix>-PdrsTable`
+      - `<prefix>-ProvidersTable`
+      - `<prefix>-RulesTable`
+
+## [v9.1.0] 2021-06-03
+
+### BREAKING CHANGES
+
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -27,12 +86,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2306**
-    - Updated API execution GET endpoint to read individual execution records
-      from PostgreSQL database instead of DynamoDB
-    - Updated API execution-status endpoint to read execution records from
-      PostgreSQL database instead of DynamoDB
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
@@ -60,25 +113,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds /version endpoint to distribution API
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+- **CUMULUS-2371**
+  - Added helpers to `@cumulus/ingest/sqs`:
+    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
+    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
 
 ### Changed
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2208**
-    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
-      - executions
-  - **CUMULUS-2306**
-    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
-    related records
-    - Updated @cumulus/db/models/granules-executions to add a delete method in
-      support of local cleanup
-    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
-      record retrievals on status in lieu of using `waitForModelStatus`
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
     timeout for Knex library to acquire dataase connections
@@ -106,14 +151,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
-- **CUMULUS-2532**
-  - Changed integration tests to use `api-client/granules` functions as opposed
-    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 
-- **CUMULUS-2558**
-  - Fixed issue where executions original_payload would not be retained on successful execution
 - **CUMULUS-2519**
   - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
 - **CUMULUS-2518**
@@ -127,24 +167,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     added `remoteAltBucket`to allow for an override of the passed in provider
     bucket for the source file
   - Update "eslint-plugin-import" to be pinned to 2.22.1
-- **[2231](https://github.com/nasa/cumulus/issues/2231)**
-  - Fixes broken relative path links in `docs/README.md`
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and
-    collection deletion in test cleanup.
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
 
 ### Removed
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2208**
-    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
-      - `<prefix>-CollectionsTable`
-      - `<prefix>-ExecutionsTable`
-      - `<prefix>-PdrsTable`
-      - `<prefix>-ProvidersTable`
-      - `<prefix>-RulesTable`
 - **CUMULUS-2502**
   - Removed outdated documenation regarding Kibana index patterns for metrics.
 
@@ -198,15 +227,6 @@ correct a failure in our build script and push out corrected release artifacts. 
       accessible via the Core API.
 
 ### Added
-
-- **CUMULUS-2371**
-  - Added helpers to `@cumulus/ingest/sqs`:
-    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
-    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
-  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
-    archives all incoming SQS messages to S3.
-  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
-    deletes archived SQS message from S3 once it has been processed.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
@@ -4444,7 +4464,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.1.0...HEAD
+[v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
 [v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
