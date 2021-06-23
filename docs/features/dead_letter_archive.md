@@ -18,4 +18,4 @@ In addition to the above, as of Cumulus v9+, the Cumulus API also contains a new
 
 Sending a POST request to this endpoint will trigger a Cumulus AsyncOperation that will attempt to reprocess (and if successful delete) all Cumulus messages in the dead letter archive, using the same underlying logic as the existing `sfEventSqsToDbRecords`.
 
-This endpoint may prove particularly useful when recovering from extended or unexpected database outage, where there is no essential malformation of the Cumulus message, but messages fail to process due to external outage.
+This endpoint may prove particularly useful when recovering from extended or unexpected database outage, where messages failed to process due to external outage and there is no essential malformation of each Cumulus message.
