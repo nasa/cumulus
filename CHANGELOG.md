@@ -7,11 +7,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
-  
+- **CUMULUS-2478**
+  - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
+  - Implemented /locate endpoint
+  - Cumulus distribution api checks the file request against bucket map:
+    - retrieves the bucket and key from file path
+    - determines if the file request is public based on the bucket map rather than the bucket type
+    - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
+    - bucket prefix and object prefix are supported
+  - Add 'Bearer token' support as an authorization method
+
 ### Fixed
 
 - **CUMULUS-2520**

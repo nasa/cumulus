@@ -137,7 +137,7 @@ const getExecutionWithStatus = async (params) =>
     },
     {
       retries: get(params, 'timeout', 30),
-      maxTimeout: 1000,
+      maxTimeout: 2000,
     }
   );
 
