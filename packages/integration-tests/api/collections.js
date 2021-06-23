@@ -16,7 +16,7 @@ const collectionsApi = require('@cumulus/api-client/collections');
  */
 const createCollection = (params) => {
   deprecate('@cumulus/integration-tests/collections.createCollection', '1.21.0', '@cumulus/api-client/collections.createCollection');
-  return collectionsApi.getGranule(params);
+  return collectionsApi.createCollection(params);
 };
 
 /*
