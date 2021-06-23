@@ -11,9 +11,6 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
-  throwIfApiError,
-} = require('../../helpers/apiUtils');
-const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
@@ -53,7 +50,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
       };
 
       // Create a one-time rule
-      await throwIfApiError(rulesApi.postRule, {
+      await rulesApi.postRule({
         prefix: config.stackName,
         rule: helloWorldRule,
       });
@@ -81,8 +78,8 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn });
-    await throwIfApiError(rulesApi.deleteRule, {
+    await deleteExecution({ prefix: config.stackName, executionArn });
+    await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name,
     });

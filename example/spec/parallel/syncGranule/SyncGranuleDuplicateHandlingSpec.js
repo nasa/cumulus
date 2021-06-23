@@ -33,7 +33,6 @@ const {
   setupTestGranuleForIngest,
 } = require('../../helpers/granuleUtils');
 const {
-  throwIfApiError,
   waitForApiRecord,
 } = require('../../helpers/apiUtils');
 
@@ -137,31 +136,31 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await throwIfApiError(deleteGranule, {
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: newGranuleId,
     });
-    await throwIfApiError(deleteGranule, {
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: testGranuleId,
     });
-    await throwIfApiError(deleteGranule, {
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
 
-    await throwIfApiError(apiTestUtils.deletePdr, {
+    await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: inputPayload.pdr.name,
     });
 
     // Executions must be deleted in a specific order due to foreign key relationships
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),

@@ -27,9 +27,6 @@ const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
 const {
-  throwIfApiError,
-} = require('../../helpers/apiUtils');
-const {
   createTimestampedTestId,
   loadConfig,
 } = require('../../helpers/testUtils');
@@ -60,8 +57,7 @@ describe('A dead letter record archive processing operation', () => {
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
         postfix: testId,
       });
-      await throwIfApiError(
-        createCollection,
+      await createCollection(
         { prefix: stackName, collection: testCollection }
       );
 
@@ -71,8 +67,7 @@ describe('A dead letter record archive processing operation', () => {
         protocol: 's3',
         globalConnectionLimit: 1000,
       };
-      await throwIfApiError(
-        createProvider,
+      await createProvider(
         { prefix: stackName, provider: testProvider }
       );
 
@@ -127,8 +122,7 @@ describe('A dead letter record archive processing operation', () => {
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
       await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
 
-      await throwIfApiError(
-        postRecoverCumulusMessages,
+      await postRecoverCumulusMessages(
         {
           prefix: stackName,
           payload: {
@@ -147,20 +141,18 @@ describe('A dead letter record archive processing operation', () => {
   afterAll(async () => {
     const ruleName = get(testRule, 'name');
     if (testGranule) {
-      await throwIfApiError(
-        deleteGranule,
+      await deleteGranule(
         { prefix: stackName, granuleId: testGranule.granuleId }
       );
     }
     if (ruleName) {
-      await throwIfApiError(deleteRule, { prefix: stackName, ruleName });
+      await deleteRule({ prefix: stackName, ruleName });
     }
 
-    await throwIfApiError(deleteExecution, { prefix: stackName, executionArn });
+    await deleteExecution({ prefix: stackName, executionArn });
 
     if (testCollection) {
-      await throwIfApiError(
-        deleteCollection,
+      await deleteCollection(
         {
           prefix: stackName,
           collectionName: testCollection.name,
@@ -169,8 +161,7 @@ describe('A dead letter record archive processing operation', () => {
       );
     }
     if (testProvider) {
-      await throwIfApiError(
-        deleteProvider,
+      await deleteProvider(
         { prefix: stackName, providerId: testProvider.id }
       );
     }

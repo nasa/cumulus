@@ -8,9 +8,6 @@ const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
-  throwIfApiError,
-} = require('../../helpers/apiUtils');
-const {
   loadConfig,
 } = require('../../helpers/testUtils');
 
@@ -32,8 +29,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         dbConcurrency: 1,
       };
 
-      const migrationCountResponse = await throwIfApiError(
-        postMigrationCounts,
+      const migrationCountResponse = await postMigrationCounts(
         {
           prefix: config.stackName,
           payload,
@@ -62,8 +58,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
   afterAll(async () => {
     if (migrationCountResponseBody.id) {
-      await throwIfApiError(
-        deleteAsyncOperation,
+      await deleteAsyncOperation(
         { prefix: config.stackName, asyncOperationId: migrationCountResponseBody.id }
       );
     }

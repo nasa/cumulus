@@ -35,14 +35,6 @@ async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}
   );
 }
 
-async function throwIfApiError(apiFunction, apiFuncParams, acceptedStatusCode = 200) {
-  const response = await apiFunction(apiFuncParams);
-  if (response.statusCode !== acceptedStatusCode) {
-    throw new Error(`${apiFunction} failed: ${JSON.stringify(response)}`);
-  }
-  return response;
-}
-
 /**
  * Check a record for a particular set of statuses and retry until the record gets that status
  * This is to mitigate issues where a workflow completes, but there is a lag between
@@ -73,5 +65,4 @@ module.exports = {
   setDistributionApiEnvVars,
   waitForApiRecord,
   waitForModelStatus,
-  throwIfApiError,
 };

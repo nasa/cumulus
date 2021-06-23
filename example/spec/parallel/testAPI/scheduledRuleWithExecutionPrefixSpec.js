@@ -12,9 +12,6 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
-  throwIfApiError,
-} = require('../../helpers/apiUtils');
-const {
   createTestSuffix,
   createTimestampedTestId,
   loadConfig,
@@ -64,7 +61,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
         testSuffix, testId);
       // Create a scheduled rule
       console.log(`creating rule ${scheduledRuleName}`);
-      await throwIfApiError(rulesApi.postRule, {
+      await rulesApi.postRule({
         prefix: config.stackName,
         rule: scheduledHelloWorldRule,
       });
@@ -89,11 +86,11 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
   afterAll(async () => {
     console.log(`deleting rule ${scheduledRuleName}`);
 
-    await throwIfApiError(rulesApi.deleteRule, {
+    await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
-    await throwIfApiError(deleteExecution, { prefix: config.stackName, executionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn });
 
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
