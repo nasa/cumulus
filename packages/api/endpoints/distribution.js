@@ -6,35 +6,20 @@ const isNil = require('lodash/isNil');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
-const { URL } = require('url');
+
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { objectStoreForProtocol } = require('@cumulus/object-store');
+
 const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
 const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
   : pathresolve(__dirname, 'templates');
-
-/**
- * Return a signed URL to an S3 object
- *
- * @param {Object} s3Client - an AWS S3 Service Object
- * @param {string} Bucket - the bucket of the requested object
- * @param {string} Key - the key of the requested object
- * @param {string} username - the username to add to the redirect url
- * @returns {string} a URL
- */
-function getSignedS3Url(s3Client, Bucket, Key, username) {
-  const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
-
-  const parsedSignedUrl = new URL(signedUrl);
-  parsedSignedUrl.searchParams.set('A-userid', username);
-
-  return parsedSignedUrl.toString();
-}
 
 /**
  * Sends a welcome page
@@ -217,7 +202,6 @@ async function handleLocateBucketRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const { s3Client } = await getConfigurations();
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   const bucketMap = await getBucketMap();
@@ -235,7 +219,7 @@ async function handleFileRequest(req, res) {
       || (req.authorizedMetadata.userGroups || [])
         .some((group) => allowedUserGroups.includes(group));
     if (!allowed) {
-      const statusCode = 404;
+      const statusCode = 403;
       const vars = {
         contentstring: 'This data is not currently available.',
         title: 'Could not access data',
@@ -247,13 +231,53 @@ async function handleFileRequest(req, res) {
     }
   }
 
-  const signedS3Url = getSignedS3Url(
-    s3Client,
-    bucket,
-    key,
-    req.authorizedMetadata.userName
-  );
+  let signedS3Url;
+  const url = buildS3Uri(bucket, key);
+  const objectStore = objectStoreForProtocol('s3');
+  const range = req.get('Range');
 
+  const options = {
+    ...range ? { Range: range } : {},
+  };
+  const queryParams = { 'A-userid': req.authorizedMetadata.userName };
+
+  try {
+    switch (req.method) {
+    case 'GET':
+      options.ResponseCacheControl = 'private, max-age=600';
+      signedS3Url = await objectStore.signGetObject(url, options, queryParams);
+      break;
+    case 'HEAD':
+      signedS3Url = await objectStore.signHeadObject(url, options, queryParams);
+      break;
+    default:
+      break;
+    }
+  } catch (error) {
+    log.error('Error occurred when signing URL:', error);
+    let vars = {};
+    let statusCode;
+    if (error.name.toLowerCase() === 'forbidden') {
+      statusCode = 403;
+      vars = {
+        contentstring: `Cannot access requested bucket: ${error.message}`,
+        title: 'Forbidden',
+        statusCode,
+        requestid,
+      };
+    } else {
+      statusCode = 404;
+      vars = {
+        contentstring: `Could not find file, ${error.message}`,
+        title: 'File not found',
+        statusCode,
+        requestid,
+      };
+    }
+
+    const rendered = render(errorTemplate, vars);
+    return res.status(statusCode).send(rendered);
+  }
   return res
     .status(307)
     .set({ Location: signedS3Url })
@@ -266,5 +290,4 @@ module.exports = {
   handleLogoutRequest,
   handleRootRequest,
   handleFileRequest,
-  useSecureCookies,
 };

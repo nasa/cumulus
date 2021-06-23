@@ -47,17 +47,17 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
   }
 
   statement {
-    actions = ["secretsmanager:GetSecretValue"]
-    resources = [
-      aws_secretsmanager_secret.api_oauth_client_password.arn
-    ]
-  }
-
-    statement {
     actions = [
       "s3:GetObject*"
     ]
     resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
+  }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.api_oauth_client_password.arn
+    ]
   }
 
   statement {

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
 - **CUMULUS-2478**
   - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
   - Implemented /locate endpoint
@@ -32,6 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -51,16 +56,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
 - **CUMULUS-2442**
-  - Adds option to generate cloudfront URL to lzards-backup task. This will
-    require a few new task config options that have been documented in the
-    [task
-    README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2471**
   - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
@@ -68,10 +73,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
-  - Add `object-store` package which contains abstracted object store functions
-    for working with various  cloud providers
-- **CUMULUS-2470**
-  - Added `/s3credentials` endpoint for distribution API
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
 - **CUMULUS-2479**

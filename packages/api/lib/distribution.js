@@ -5,8 +5,11 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { CognitoClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { s3 } = require('@cumulus/aws-client/services');
+const { randomId } = require('@cumulus/common/test-utils');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { isLocalApi } = require('./testUtils');
+const { isAccessTokenExpired } = require('./token');
 const { AccessToken } = require('../models');
 const { getBucketMap, isPublicBucket, processFileRequestPath } = require('./bucketMapUtils');
 
@@ -28,7 +31,7 @@ const useSecureCookies = () => {
  */
 const buildOAuthClient = async () => {
   if (process.env.OAUTH_CLIENT_PASSWORD === undefined) {
-    const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRETE_NAME);
+    const clientPassword = await getSecretString(process.env.OAUTH_CLIENT_PASSWORD_SECRET_NAME);
     process.env.OAUTH_CLIENT_PASSWORD = clientPassword;
   }
   const oauthClientConfig = {
@@ -170,11 +173,68 @@ async function handleAuthBearerToken(req, res, next) {
   return res.redirect(307, redirectURLForAuthorizationCode);
 }
 
+/**
+ * Ensure request is authorized through OAuth provider or redirect to become so.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
+ */
+async function ensureAuthorizedOrRedirect(req, res, next) {
+  // Skip authentication for debugging purposes.
+  if (process.env.FAKE_AUTH) {
+    req.authorizedMetadata = { userName: randomId('username') };
+    return next();
+  }
+
+  const {
+    accessTokenModel,
+    oauthClient,
+  } = await getConfigurations();
+
+  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
+  const accessToken = req.cookies.accessToken;
+
+  let authorizedMetadata;
+  let accessTokenRecord;
+  if (accessToken) {
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+      authorizedMetadata = {
+        userName: accessTokenRecord.username,
+        userGroups: get(accessTokenRecord, 'tokenInfo.user_groups', []),
+      };
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
+    }
+  }
+
+  if (await isPublicData(req.path)) {
+    req.authorizedMetadata = {
+      userName: 'unauthenticated user',
+      ...authorizedMetadata,
+    };
+    return next();
+  }
+
+  if (isAuthBearTokenRequest(req)) {
+    return handleAuthBearerToken(req, res, next);
+  }
+
+  if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
+    return res.redirect(307, redirectURLForAuthorizationCode);
+  }
+
+  req.authorizedMetadata = { ...authorizedMetadata };
+  return next();
+}
+
 module.exports = {
   buildLoginErrorTemplateVars,
+  ensureAuthorizedOrRedirect,
   getConfigurations,
-  handleAuthBearerToken,
-  isAuthBearTokenRequest,
-  isPublicData,
   useSecureCookies,
 };

@@ -11,7 +11,7 @@ locals {
       DISTRIBUTION_ENDPOINT          = local.api_uri
       DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
       OAUTH_CLIENT_ID                = var.oauth_client_id
-      OAUTH_CLIENT_PASSWORD_SECRETE_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      OAUTH_CLIENT_PASSWORD_SECRET_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
       OAUTH_HOST_URL                 = var.oauth_host_url
       OAUTH_PROVIDER                 = var.oauth_provider
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
