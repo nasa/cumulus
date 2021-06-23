@@ -21,7 +21,12 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
 export async function invokeApi(
   params: types.InvokeApiFunctionParams
 ): Promise<types.ApiGatewayLambdaHttpProxyResponse> {
-  const { prefix, payload, pRetryOptions = {} } = params;
+  const {
+    prefix,
+    payload,
+    expectedStatusCode = 200,
+    pRetryOptions = {},
+  } = params;
 
   return await pRetry(
     async () => {
@@ -39,6 +44,12 @@ export async function invokeApi(
       if (parsedPayload?.errorMessage?.includes('Task timed out')) {
         throw new CumulusApiClientError(
           `Error calling ${payload.path}: ${parsedPayload.errorMessage}`
+        );
+      }
+
+      if (parsedPayload?.statusCode !== expectedStatusCode) {
+        throw new CumulusApiClientError(
+          `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`
         );
       }
 
