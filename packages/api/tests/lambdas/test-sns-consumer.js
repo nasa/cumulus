@@ -8,7 +8,6 @@ const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
-const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const sandbox = sinon.createSandbox();
@@ -90,7 +89,6 @@ test.before(async () => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition,
   }));
-  sandbox.stub(Provider.prototype, 'get').resolves(provider);
   sandbox.stub(Collection.prototype, 'get').resolves(collection);
 });
 
