@@ -61,7 +61,6 @@ let ruleModel;
 
 test.before(async () => {
   process.env.CollectionsTable = randomString();
-  process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
