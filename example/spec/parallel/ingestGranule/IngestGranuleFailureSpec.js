@@ -219,11 +219,10 @@ describe('The Ingest Granule failure workflow', () => {
         'failed'
       );
 
-      const granuleResponse = await getGranule({
+      const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-      const granule = JSON.parse(granuleResponse.body);
 
       expect(granule.status).toBe('failed');
       expect(granule.error.Error).toBeDefined();

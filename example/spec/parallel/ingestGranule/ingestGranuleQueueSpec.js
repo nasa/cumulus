@@ -282,12 +282,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ['completed']
     );
 
-    const granuleResponse = await getGranule({
+    const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    const granule = JSON.parse(granuleResponse.body);
-
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();
   });
