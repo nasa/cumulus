@@ -1,4 +1,7 @@
+const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
+const log = require('@cumulus/common/log');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { CognitoClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -6,8 +9,11 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { isLocalApi } = require('./testUtils');
-const { AccessToken } = require('../models');
 const { isAccessTokenExpired } = require('./token');
+const { AccessToken } = require('../models');
+const { getBucketMap, isPublicBucket, processFileRequestPath } = require('./bucketMapUtils');
+
+const BEARER_TOKEN_REGEX = new RegExp('^Bearer ([-a-zA-Z0-9._~+/]+)$', 'i');
 
 // Running API locally will be on http, not https, so cookies
 // should not be set to secure for local runs of the API.
@@ -21,7 +27,7 @@ const useSecureCookies = () => {
 /**
  * build OAuth client based on environment variables
  *
- * @returns {Object} - OAuthClient object
+ * @returns {Promise<Object>} - OAuthClient object
  */
 const buildOAuthClient = async () => {
   if (process.env.OAUTH_CLIENT_PASSWORD === undefined) {
@@ -41,9 +47,26 @@ const buildOAuthClient = async () => {
 };
 
 /**
+ * Reads the input path and determines if this is a request for public data
+ * or not.
+ *
+ * @param {string} path - req.path paramater
+ * @returns {Promise<boolean>} - whether this request goes to a public bucket
+ */
+async function isPublicData(path) {
+  try {
+    const bucketMap = await getBucketMap();
+    const { bucket, key } = processFileRequestPath(path, bucketMap);
+    return bucket && await isPublicBucket(bucketMap, bucket, key);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Returns a configuration object
  *
- * @returns {Object} the configuration object needed to handle requests
+ * @returns {Promise<Object>} the configuration object needed to handle requests
  */
 async function getConfigurations() {
   const oauthClient = await buildOAuthClient();
@@ -60,9 +83,9 @@ async function getConfigurations() {
  * checks the login query and build error messages
  *
  * @param {Object} query - request query parameters
- * @returns {Object} template variables for building response html, empty if no errors
+ * @returns {Object} - template variables for building response html, empty if no errors
  */
-function buildErrorTemplateVars(query) {
+function buildLoginErrorTemplateVars(query) {
   let templateVars = {};
   if (isEmpty(query)) {
     templateVars = {
@@ -87,37 +110,71 @@ function buildErrorTemplateVars(query) {
 }
 
 /**
- * Helper function to pull bucket out of a path string.
- * Will ignore leading slash.
- * "/bucket/key" -> "bucket"
- * "bucket/key" -> "bucket"
+ * check if a shared token is used as an Authorization method
  *
- * @param {string} path - express request path parameter
- * @returns {string} the first part of a path which is our bucket name
+ * @param {Object} req - express request object
+ * @returns {boolean} - return true if a Bearer token is present in the request header
  */
-function bucketNameFromPath(path) {
-  return path.split('/').filter((d) => d).shift();
-}
-
-/**
- * Reads the input path and determines if this is a request for public data
- * or not.
- *
- * @param {string} path - req.path paramater
- * @returns {boolean} - whether this request goes to a public bucket
- */
-function isPublicRequest(path) {
-  try {
-    const publicBuckets = process.env.public_buckets.split(',');
-    const requestedBucket = bucketNameFromPath(path);
-    return publicBuckets.includes(requestedBucket);
-  } catch (error) {
-    return false;
+function isAuthBearTokenRequest(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const match = authHeader.match(BEARER_TOKEN_REGEX);
+    if (match.length >= 2) return true;
   }
+  return false;
 }
 
 /**
- * Ensure request is authorized through EarthdataLogin or redirect to become so.
+ * Validates authorization token and retrieves token information from OAuth provider.
+ * If the token is not valid, redirects to the authorization url.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
+ */
+async function handleAuthBearerToken(req, res, next) {
+  const { oauthClient } = await getConfigurations();
+  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+  // Parse the Authorization header
+  const authHeader = req.headers.authorization;
+
+  const match = authHeader.match(BEARER_TOKEN_REGEX);
+  if (match) {
+    const userToken = match[1];
+    try {
+      let username;
+      if (process.env.OAUTH_PROVIDER === 'earthdata') {
+        username = await oauthClient.getTokenUsername({
+          onBehalfOf: 'OAuth-Client-Id',
+          token: userToken,
+        });
+      }
+
+      const params = {
+        token: userToken,
+        username,
+        xRequestId: requestid,
+      };
+      const userInfo = await oauthClient.getUserInfo(removeNilProperties(params));
+      req.authorizedMetadata = {
+        userName: username || userInfo.username,
+        userGroups: userInfo.user_groups || [],
+      };
+      return next();
+    } catch (error) {
+      log.error('handleAuthBearerToken', error);
+      return res.redirect(307, redirectURLForAuthorizationCode);
+    }
+  }
+
+  log.debug('Unable to get bearer token from authorization header');
+  return res.redirect(307, redirectURLForAuthorizationCode);
+}
+
+/**
+ * Ensure request is authorized through OAuth provider or redirect to become so.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -131,11 +188,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
-  if (isPublicRequest(req.path)) {
-    req.authorizedMetadata = { userName: 'unauthenticated user' };
-    return next();
-  }
-
   const {
     accessTokenModel,
     oauthClient,
@@ -144,32 +196,45 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
 
-  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
+  let authorizedMetadata;
   let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.redirect(307, redirectURLForAuthorizationCode);
+  if (accessToken) {
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+      authorizedMetadata = {
+        userName: accessTokenRecord.username,
+        userGroups: get(accessTokenRecord, 'tokenInfo.user_groups', []),
+      };
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
     }
-
-    throw error;
   }
 
-  if (isAccessTokenExpired(accessTokenRecord)) {
+  if (await isPublicData(req.path)) {
+    req.authorizedMetadata = {
+      userName: 'unauthenticated user',
+      ...authorizedMetadata,
+    };
+    return next();
+  }
+
+  if (isAuthBearTokenRequest(req)) {
+    return handleAuthBearerToken(req, res, next);
+  }
+
+  if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
 
-  req.authorizedMetadata = { userName: accessTokenRecord.username };
+  req.authorizedMetadata = { ...authorizedMetadata };
   return next();
 }
 
 module.exports = {
-  buildErrorTemplateVars,
+  buildLoginErrorTemplateVars,
   ensureAuthorizedOrRedirect,
   getConfigurations,
   useSecureCookies,
-  bucketNameFromPath,
-  isPublicRequest,
 };
