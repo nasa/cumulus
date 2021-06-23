@@ -33,6 +33,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2302**
+    - Added translatePostgresCollectionToApiCollection method to
+      `@cumulus/db/translate/collections`
+    - Added `searchWithUpdatedAtRange` method to
+      `@cumulus/db/models/collections`
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
@@ -64,6 +69,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2302**
+    - Update API collection GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+    - Update API granule `reingest` endpoint to read collection from PostgreSQL
+      database instead of DynamoDB
+    - Update internal-reconciliation report to base report Collection comparison
+      on PostgreSQL instead of DynamoDB
+    - Moved createGranuleAndFiles `@cumulus/api` unit helper from `./lib` to
+      `.test/helpers`
   - **CUMULUS-2208**
     - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
     - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL

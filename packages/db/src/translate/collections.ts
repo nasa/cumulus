@@ -1,10 +1,15 @@
-import { NewCollectionRecord } from '@cumulus/types/api/collections';
+import { NewCollectionRecord, CollectionRecord } from '@cumulus/types/api/collections';
 import { PostgresCollection, PostgresCollectionRecord } from '../types/collection';
 const { removeNilProperties } = require('@cumulus/common/util');
 
+/**
+* Translates a PostgresCollectionRecord object to a `NewCollectionRecord` API collection object
+* @param {PostgresCollectionRecord} collectionRecord - PostgreSQL collection record to translate
+* @returns {CollectionRecord} - Translated record
+*/
 export const translatePostgresCollectionToApiCollection = (
   collectionRecord: PostgresCollectionRecord
-): NewCollectionRecord => removeNilProperties(({
+): CollectionRecord => removeNilProperties(({
   createdAt: collectionRecord.created_at.getTime(),
   updatedAt: collectionRecord.updated_at.getTime(),
   name: collectionRecord.name,
@@ -22,6 +27,11 @@ export const translatePostgresCollectionToApiCollection = (
   tags: collectionRecord.tags ?? undefined,
 }));
 
+/**
+* Translates a NewCollectionRecord API collection object to a `PostgresCollectionRecord` object
+* @param {NewCollectionRecord} record - API collection record to translate
+* @returns {PostgresCollectionRecord} - Translated record
+*/
 export const translateApiCollectionToPostgresCollection = (
   record: NewCollectionRecord
 ): PostgresCollection => {
