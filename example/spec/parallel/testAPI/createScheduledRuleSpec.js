@@ -10,10 +10,6 @@ const rulesApi = require('@cumulus/api-client/rules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
-  throwIfApiError,
-} = require('../../helpers/apiUtils');
-
-const {
   createTestSuffix,
   createTimestampedTestId,
   loadConfig,
@@ -58,7 +54,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         testSuffix, testId);
       // Create a scheduled rule
       console.log(`creating rule ${scheduledRuleName}`);
-      await throwIfApiError(rulesApi.postRule, {
+      await rulesApi.postRule({
         prefix: config.stackName,
         rule: scheduledHelloWorldRule,
       });
@@ -107,7 +103,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       try {
         console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
 
-        await throwIfApiError(rulesApi.deleteRule, {
+        await rulesApi.deleteRule({
           prefix: config.stackName,
           ruleName: scheduledHelloWorldRule.name,
         });

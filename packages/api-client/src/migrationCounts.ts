@@ -32,5 +32,6 @@ export const postMigrationCounts = async (params: {
       path: '/migrationCounts',
       body: JSON.stringify(payload),
     },
+    expectedStatusCode: 202,
   });
 };

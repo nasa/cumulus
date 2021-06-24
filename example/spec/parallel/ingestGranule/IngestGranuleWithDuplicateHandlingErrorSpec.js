@@ -169,6 +169,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       });
     } catch (error) {
       beforeAllFailed = true;
+      console.log('beforeAllFailed with error:::', error);
       throw error;
     }
   });
