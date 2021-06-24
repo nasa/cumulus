@@ -355,6 +355,87 @@ function deletePdr({
 }
 
 /**
+ * Deletes the execution in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.arn - the execution ARN
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: execution)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteExecution({
+  esClient,
+  arn,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'execution',
+}) {
+  return deleteRecord({
+    esClient,
+    id: arn,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the async operation in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.id - the async operation ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteAsyncOperation({
+  esClient,
+  id,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'asyncOperation',
+}) {
+  return deleteRecord({
+    esClient,
+    id,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the reconciliation report from ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.name - reconciliation report name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: reconciliationReport)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteReconciliationReport({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'reconciliationReport',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
  * Deletes the granule in ElasticSearch
  *
  * @param  {Object} params
@@ -429,9 +510,12 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
+  deleteAsyncOperation,
   deleteCollection,
   deleteProvider,
   deleteRule,
   deletePdr,
   deleteGranule,
+  deleteExecution,
+  deleteReconciliationReport,
 };

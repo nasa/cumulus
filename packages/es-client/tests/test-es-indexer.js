@@ -361,6 +361,93 @@ test.serial('delete a provider record', async (t) => {
   );
 });
 
+test.serial('delete an async operation record', async (t) => {
+  const { esAlias } = t.context;
+
+  const testRecord = {
+    id: randomString(),
+  };
+  const type = 'asyncOperation';
+
+  let r = await indexer.indexAsyncOperation(esClient, testRecord, esAlias, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+  t.is(r._id, testRecord.id);
+
+  r = await indexer.deleteAsyncOperation({
+    esClient,
+    id: testRecord.id,
+    type,
+    index: esAlias,
+  });
+
+  t.is(r.result, 'deleted');
+
+  await t.throwsAsync(
+    () => esClient.get({ index: esAlias, type, id: testRecord.id }),
+    { message: 'Response Error' }
+  );
+});
+
+test.serial('delete an execution record', async (t) => {
+  const { esAlias } = t.context;
+
+  const testRecord = {
+    arn: randomString(),
+  };
+  const type = 'execution';
+
+  let r = await indexer.indexExecution(esClient, testRecord, esAlias, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+  t.is(r._id, testRecord.arn);
+
+  r = await indexer.deleteExecution({
+    esClient,
+    arn: testRecord.arn,
+    type,
+    index: esAlias,
+  });
+
+  t.is(r.result, 'deleted');
+
+  await t.throwsAsync(
+    () => esClient.get({ index: esAlias, type, id: testRecord.arn }),
+    { message: 'Response Error' }
+  );
+});
+
+test.serial('delete a reconciliation report record', async (t) => {
+  const { esAlias } = t.context;
+
+  const testRecord = {
+    name: randomString(),
+  };
+  const type = 'reconciliationReport';
+
+  let r = await indexer.indexReconciliationReport(esClient, testRecord, esAlias, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+  t.is(r._id, testRecord.name);
+
+  r = await indexer.deleteReconciliationReport({
+    esClient,
+    name: testRecord.name,
+    type,
+    index: esAlias,
+  });
+
+  t.is(r.result, 'deleted');
+
+  await t.throwsAsync(
+    () => esClient.get({ index: esAlias, type, id: testRecord.name }),
+    { message: 'Response Error' }
+  );
+});
+
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
