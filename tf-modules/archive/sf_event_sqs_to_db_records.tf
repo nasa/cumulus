@@ -183,6 +183,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
+      ES_HOST = var.elasticsearch_hostname
     }
   }
 
