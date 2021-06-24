@@ -129,8 +129,7 @@ describe('A dead letter record archive processing operation', () => {
             bucket: systemBucket,
             path: archivePath,
           },
-        },
-        202
+        }
       );
     } catch (error) {
       beforeAllFailed = true;

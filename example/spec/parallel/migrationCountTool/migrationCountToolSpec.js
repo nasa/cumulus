@@ -33,8 +33,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         {
           prefix: config.stackName,
           payload,
-        },
-        202
+        }
       );
       migrationCountResponseBody = JSON.parse(migrationCountResponse.body);
 

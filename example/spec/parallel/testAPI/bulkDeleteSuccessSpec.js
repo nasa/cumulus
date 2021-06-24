@@ -160,8 +160,7 @@ describe('POST /granules/bulkDelete', () => {
               // required to force removal of granules from CMR before deletion
               forceRemoveFromCmr: true,
             },
-          },
-          202
+          }
         );
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
