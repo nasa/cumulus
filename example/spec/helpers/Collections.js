@@ -27,6 +27,7 @@ const removeCollectionAndAllDependencies = async (params) => {
   );
 
   console.log('Granule Cleanup Complete:');
+  console.log(granulesForDeletion);
   console.log(granuleDeletionResult);
 
   const pdrResponse = await getPdrs({
@@ -47,6 +48,7 @@ const removeCollectionAndAllDependencies = async (params) => {
       deletePdr({ prefix: config.stackName, pdrName: pdr.pdrName }))
   );
   console.log('Pdr Cleanup Complete:');
+  console.log(pdrsForDeletion);
   console.log(pdrsDeletionResult);
 
   const executionsResponse = await getExecutions({
@@ -63,6 +65,7 @@ const removeCollectionAndAllDependencies = async (params) => {
       deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
   );
   console.log('Execution Cleanup Complete:');
+  console.log(executionsForDeletion);
   console.log(executionDeletionResult);
 
   const deleteCollectionResult = await deleteCollection({ prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version });
