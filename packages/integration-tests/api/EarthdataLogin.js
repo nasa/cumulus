@@ -82,7 +82,12 @@ async function getEarthdataAccessToken({
 
   let accessTokenResponse = await earthdataLoginClient.getAccessToken(authorizationCode);
 
-  accessTokenResponse = { ...accessTokenResponse, ...userParams };
+  const userInfo = await earthdataLoginClient.getUserInfo({
+    token: accessTokenResponse.accessToken,
+    username: accessTokenResponse.username,
+  });
+
+  accessTokenResponse = { ...accessTokenResponse, tokenInfo: userInfo, ...userParams };
 
   if (storeAccessToken) {
     const accessTokenModel = new AccessToken();
