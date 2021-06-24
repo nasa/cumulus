@@ -228,6 +228,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       noFilesIngestExecutionArns = noFilesConfigQueueGranulesOutput.payload.running;
     });
 
+    afterAll(async () => {
+      await Promise.all(
+        noFilesConfigQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
+    });
+
     it('encounters a collection without a files configuration', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
         noFilesConfigExecutionArn, 'DiscoverGranules'
@@ -283,6 +290,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       partialFilesIngestExecutionArns = partialFilesQueueGranulesOutput.payload.running;
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        partialFilesQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -343,6 +357,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       ignoringFilesIngestExecutionArns = ignoringFilesQueueGranulesOutput.payload.running;
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        ignoringFilesIngestExecutionArns.map((arn) => waitForCompletedExecution(arn))
+      );
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {
