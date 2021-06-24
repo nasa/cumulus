@@ -8,10 +8,9 @@ const got = require('got');
 const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
-
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject, deleteS3Object,
 } = require('@cumulus/aws-client/S3');
@@ -39,9 +38,10 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection, getCollections } = require('@cumulus/api-client/collections');
-const { deleteGranule, getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule, listGranules, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 
 const {
   loadConfig,
@@ -55,7 +55,6 @@ const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
@@ -81,6 +80,72 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
 
+  // Check for existing collection, *if exists* clean granules and remove
+
+  const collectionGranuleResponse = await listGranules({
+    prefix: config.stackName,
+    query: {
+      fields: ['granuleId'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  });
+
+  if (collectionGranuleResponse.statusCode !== 200) {
+    throw new Error('Invalid listGranules response');
+  }
+  const granulesForDeletion = JSON.parse(collectionGranuleResponse.body).results;
+  const granuleDeletionResult = await Promise.all(
+    granulesForDeletion.map((granule) =>
+      removePublishedGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      }))
+  );
+
+  console.log('Granule Cleanup Complete:');
+  console.log(granuleDeletionResult);
+
+  const pdrResponse = await getPdrs({
+    prefix: config.stackName,
+    query: {
+      fields: ['pdrName'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  });
+
+  if (pdrResponse.statusCode !== 200) {
+    throw new Error('Invalid listGranules response');
+  }
+
+  const pdrsForDeletion = JSON.parse(pdrResponse.body).results;
+  const pdrsDeletionResult = await Promise.all(
+    pdrsForDeletion.map((pdr) =>
+      deletePdr({ prefix: config.stackName, pdrName: pdr.pdrName }))
+  );
+  console.log('Pdr Cleanup Complete:');
+  console.log(pdrsDeletionResult);
+
+  const executionsResponse = await getExecutions({
+    prefix: config.stackName,
+    query: {
+      fields: ['arn'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  });
+  const executionsForDeletion = JSON.parse(executionsResponse.body).results;
+
+  const executionDeletionResult = await Promise.all(
+    executionsForDeletion.map((execution) =>
+      deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
+  );
+  console.log('Execution Cleanup Complete:');
+  console.log(executionDeletionResult);
+
+  const deleteCollectionResult = await deleteCollection({ prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version });
+  if (deleteCollectionResult.statusCode !== 200) {
+    throw new Error('Invalid deleteCollection response');
+  }
+
   // populate collections, providers and test data
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -92,6 +157,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
 let ingestGranuleExecutionArn;
 const ingestAndPublishGranuleExecutionArns = [];
 
+// TODO: [CUMULUS-2567] These should be in a helper, possibly unit tested.
 /**
  * Creates a new test collection with associated granule for testing.
  *
@@ -344,7 +410,7 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      const activeCollectionPromise = createActiveCollection(config.stackName, config.bucket);
+      const activeCollectionPromise = await createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
@@ -765,7 +831,8 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     // TODO there may be another execution to delete here
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    const executionDeletionResult = await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    console.log(executionDeletionResult);
     await Promise.all(ingestAndPublishGranuleExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
 
     await Promise.all([
