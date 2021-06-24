@@ -71,3 +71,67 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
 
   t.is(4, lambdaInvocations);
 });
+
+test.serial('invokeApi retries on status code failure, then throws error on failure', async (t) => {
+  let lambdaInvocations = 0;
+
+  fakeServices.lambda = () => ({
+    invoke: () => {
+      lambdaInvocations += 1;
+      return {
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({
+            statusCode: 500,
+            body: JSON.stringify({
+              message: 'API failure',
+            }),
+          }),
+        }),
+      };
+    },
+  });
+
+  await t.throwsAsync(apiClient.invokeApi({
+    prefix: t.context.testPrefix,
+    payload: t.context.testPayload,
+    pRetryOptions: {
+      retries: 4,
+      minTimeout: 1,
+      maxTimeout: 1,
+    },
+  }));
+
+  t.is(5, lambdaInvocations);
+});
+
+test.serial('invokeApi respects expected non-200 status code', async (t) => {
+  let lambdaInvocations = 0;
+
+  fakeServices.lambda = () => ({
+    invoke: () => {
+      lambdaInvocations += 1;
+      return {
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({
+            statusCode: 202,
+            body: JSON.stringify({
+              message: 'success',
+            }),
+          }),
+        }),
+      };
+    },
+  });
+
+  await t.notThrowsAsync(apiClient.invokeApi({
+    prefix: t.context.testPrefix,
+    payload: t.context.testPayload,
+    pRetryOptions: {
+      minTimeout: 1,
+      maxTimeout: 1,
+    },
+    expectedStatusCode: 202,
+  }));
+
+  t.is(1, lambdaInvocations);
+});

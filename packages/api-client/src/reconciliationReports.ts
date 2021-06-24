@@ -90,5 +90,6 @@ export async function createReconciliationReport(params: {
       path: '/reconciliationReports',
       body: JSON.stringify(request),
     },
+    expectedStatusCode: 202,
   });
 }

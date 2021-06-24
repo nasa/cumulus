@@ -6,12 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- All API requests made by `@cumulus/api-client` will now throw an error if the status code
+does not match the expected response (200 for most requests and 202 for a few requests that
+trigger async operations). Previously the helpers in this package would return the response
+regardless of the status code, so you may need to update any code using helpers from this
+package to catch or to otherwise handle errors that you may encounter.
+
 ### Added
 
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
-  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA 
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
 - **CUMULUS-2478**
   - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
   - Implemented /locate endpoint
