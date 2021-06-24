@@ -14,6 +14,7 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
     actions = [
+      "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem"
@@ -168,7 +169,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   handler          = "index.handler"
   runtime          = "nodejs12.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 256
+  memory_size      = 512
 
   dead_letter_config {
     target_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
