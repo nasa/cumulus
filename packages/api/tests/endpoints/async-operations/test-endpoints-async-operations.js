@@ -23,21 +23,21 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   del,
-} = require('../../endpoints/async-operations');
+} = require('../../../endpoints/async-operations');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
-} = require('../../models');
+} = require('../../../models');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   createAsyncOperationTestRecords,
-} = require('../../lib/testUtils');
-const { buildFakeExpressResponse } = require('./utils');
+} = require('../../../lib/testUtils');
+const { buildFakeExpressResponse } = require('../../../lib/utils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -46,7 +46,7 @@ process.env.AccessTokensTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
-const { app } = require('../../app');
+const { app } = require('../../../app');
 
 let jwtAuthToken;
 let asyncOperationModel;

@@ -6,12 +6,25 @@ const pick = require('lodash/pick');
 const {
   AsyncOperationPgModel,
   getKnexClient,
+  translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('@cumulus/db');
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const {
+  RecordDoesNotExist,
+  ValidationError,
+} = require('@cumulus/errors');
+const {
+  indexAsyncOperation,
+} = require('@cumulus/es-client/indexer');
+
+const Logger = require('@cumulus/logger');
+
 const { Search } = require('@cumulus/es-client/search');
 const { deleteAsyncOperation } = require('@cumulus/es-client/indexer');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
+const { isBadRequestError } = require('../lib/errors');
+
+const logger = new Logger({ sender: '@cumulus/api/asyncOperations' });
 
 async function list(req, res) {
   const search = new Search(
@@ -105,11 +118,68 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+/**
+ * Creates a new async operatioin
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function post(req, res) {
+  const {
+    asyncOperationModel = new AsyncOperationModel({
+      stackName: process.env.stackName,
+      systemBucket: process.env.system_bucket,
+      tableName: process.env.AsyncOperationsTable,
+    }),
+    asyncOperationPgModel = new AsyncOperationPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const apiAsyncOperation = req.body;
+  apiAsyncOperation.createdAt = Date.now();
+  apiAsyncOperation.updatedAt = Date.now();
+  try {
+    if (!apiAsyncOperation.id) {
+      throw new ValidationError('Async Operations require an ID');
+    }
+    if (await asyncOperationModel.exists({ id: apiAsyncOperation.id })) {
+      return res.boom.conflict(`A DynamoDb record already exists for async operation ID ${apiAsyncOperation.id}`);
+    }
+    const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
+    let dynamoDbRecord;
+    try {
+      await knex.transaction(async (trx) => {
+        await asyncOperationPgModel.create(trx, dbRecord);
+        dynamoDbRecord = await asyncOperationModel.create(apiAsyncOperation);
+        await indexAsyncOperation(esClient, dynamoDbRecord, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB async operation record in case of any failure
+      await asyncOperationModel.delete(apiAsyncOperation);
+      throw innerError;
+    }
+    return res.send({
+      message: 'Record saved',
+      record: dynamoDbRecord,
+    });
+  } catch (error) {
+    if (isBadRequestError(error)) {
+      return res.boom.badRequest(error.message);
+    }
+
+    logger.error('Error occurred while trying to create async operation:', error);
+    return res.boom.badImplementation(error.message);
+  }
+}
+
 router.get('/', list);
 router.get('/:id', getAsyncOperation);
 router.delete('/:id', del);
 
 module.exports = {
-  router,
   del,
+  post,
+  router,
 };
