@@ -140,15 +140,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
     });
 
-    afterAll(async () => {
-      await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-    });
-
     it('has expected granules output', () => {
       expect(discoverGranulesLambdaOutput.payload.granules.length).toEqual(3);
       expect(discoverGranulesLambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
@@ -190,54 +181,11 @@ describe('The Discover Granules workflow with http Protocol', () => {
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     });
 
-    afterAll(async () => {
-      const ingestGranuleOutput1 = await lambdaStep.getStepOutput(
-        ingestGranuleWorkflowArn1,
-        'SyncGranule'
-      );
-      const ingestGranuleOutput2 = await lambdaStep.getStepOutput(
-        ingestGranuleWorkflowArn2,
-        'SyncGranule'
-      );
-      const ingestGranuleOutput3 = await lambdaStep.getStepOutput(
-        ingestGranuleWorkflowArn3,
-        'SyncGranule'
-      );
-
-      await Promise.all(ingestGranuleOutput1.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-      await Promise.all(ingestGranuleOutput2.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-      await Promise.all(ingestGranuleOutput3.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-    });
-
     it('executes successfully', () => {
       expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
     });
 
     describe('SyncGranule lambda function', () => {
-      afterAll(async () => {
-        await Promise.all(syncGranuleLambdaOutput.payload.granules.map(
-          (granule) => deleteGranule({
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          })
-        ));
-      });
-
       it('outputs the expected granule', async () => {
         syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArn1,
@@ -278,19 +226,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       noFilesIngestExecutionArns = noFilesConfigQueueGranulesOutput.payload.running;
-    });
-
-    afterAll(async () => {
-      await Promise.all(
-        noFilesConfigQueueGranulesOutput.payload.running
-          .map((arn) => waitForCompletedExecution(arn))
-      );
-      await Promise.all(noFilesConfigDiscoverGranulesOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('encounters a collection without a files configuration', async () => {
@@ -348,19 +283,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       partialFilesIngestExecutionArns = partialFilesQueueGranulesOutput.payload.running;
-    });
-
-    afterAll(async () => {
-      await Promise.all(
-        partialFilesQueueGranulesOutput.payload.running
-          .map((arn) => waitForCompletedExecution(arn))
-      );
-      await Promise.all(discoverGranulesPartialFilesConfigLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -421,18 +343,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       ignoringFilesIngestExecutionArns = ignoringFilesQueueGranulesOutput.payload.running;
-    });
-
-    afterAll(async () => {
-      await Promise.all(
-        ignoringFilesIngestExecutionArns.map((arn) => waitForCompletedExecution(arn))
-      );
-      await Promise.all(discoverGranulesIgnoringFilesConfigLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {
