@@ -26,14 +26,14 @@ const {
   getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
-  getMessageGranules,
-  getGranuleStatus,
-  getGranuleQueryFields,
-  messageHasGranules,
   generateGranuleApiRecord,
   getGranuleProductVolume,
+  getGranuleQueryFields,
+  getGranuleStatus,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
+  getMessageGranules,
+  messageHasGranules,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
