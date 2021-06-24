@@ -353,7 +353,7 @@ test.serial('delete a provider record', async (t) => {
   );
 });
 
-test.serial('delete a execution record', async (t) => {
+test.serial('delete an execution record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
