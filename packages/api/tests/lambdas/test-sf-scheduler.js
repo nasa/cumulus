@@ -83,12 +83,12 @@ test.serial('getProvider returns provider when input is a valid provider ID', as
   t.deepEqual(response, fakeProvider);
 });
 
-test.serial('getCollection returns undefined when input is falsey', async (t) => {
+test.serial('getApiCollection returns undefined when input is falsey', async (t) => {
   const response = await getApiCollection(undefined);
   t.is(response, undefined);
 });
 
-test.serial('getCollection returns collection when input is a valid collection name/version', async (t) => {
+test.serial('getApiCollection returns collection when input is a valid collection name/version', async (t) => {
   const collectionInput = {
     name: fakeCollection.name,
     version: fakeCollection.version,
