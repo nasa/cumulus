@@ -1,4 +1,4 @@
-const { listGranules, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { listGranules, removePublishedGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -9,21 +9,25 @@ const removeCollectionAndAllDependencies = async (params) => {
   const collectionGranuleResponse = await listGranules({
     prefix: config.stackName,
     query: {
-      fields: ['granuleId'],
+      fields: ['granuleId', 'published'],
       collectionId: constructCollectionId(collection.name, collection.version),
     },
   });
 
-  if (collectionGranuleResponse.statusCode !== 200) {
-    throw new Error('Invalid listGranules response');
-  }
   const granulesForDeletion = JSON.parse(collectionGranuleResponse.body).results;
   const granuleDeletionResult = await Promise.all(
-    granulesForDeletion.map((granule) =>
-      removePublishedGranule({
+    granulesForDeletion.map((granule) => {
+      if (granule.published === true) {
+        return removePublishedGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        });
+      }
+      return deleteGranule({
         prefix: config.stackName,
         granuleId: granule.granuleId,
-      }))
+      });
+    })
   );
 
   console.log('Granule Cleanup Complete:');
@@ -37,10 +41,6 @@ const removeCollectionAndAllDependencies = async (params) => {
       collectionId: constructCollectionId(collection.name, collection.version),
     },
   });
-
-  if (pdrResponse.statusCode !== 200) {
-    throw new Error('Invalid listGranules response');
-  }
 
   const pdrsForDeletion = JSON.parse(pdrResponse.body).results;
   const pdrsDeletionResult = await Promise.all(
@@ -68,10 +68,7 @@ const removeCollectionAndAllDependencies = async (params) => {
   console.log(executionsForDeletion);
   console.log(executionDeletionResult);
 
-  const deleteCollectionResult = await deleteCollection({ prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version });
-  if (deleteCollectionResult.statusCode !== 200) {
-    throw new Error('Invalid deleteCollection response');
-  }
+  await deleteCollection({ prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version });
 };
 
 module.exports = { removeCollectionAndAllDependencies };
