@@ -95,9 +95,9 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await Promise.allSettled(queueGranulesOutput.payload.running
+    await Promise.all(queueGranulesOutput.payload.running
       .map((execution) => waitForCompletedExecution(execution)));
-    await Promise.allSettled(discoverGranulesLambdaOutput.payload.granules.map(
+    await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
         await waitForApiStatus(
           getGranule,
