@@ -4,7 +4,7 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
 
-const { deconstructCollectionId } = require('./utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /**
