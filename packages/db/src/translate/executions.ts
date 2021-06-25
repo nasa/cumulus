@@ -3,12 +3,12 @@ import Knex from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
+import { removeNilProperties } from '@cumulus/common/util';
+import { constructCollectionId } from '@cumulus/message/Collections';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
-const { removeNilProperties } = require('@cumulus/common/util');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 export const translatePostgresExecutionToApiExecution = async (
   executionRecord: PostgresExecutionRecord,
@@ -64,7 +64,7 @@ export const translatePostgresExecutionToApiExecution = async (
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
   };
-  return removeNilProperties(translatedRecord);
+  return <ExecutionRecord>removeNilProperties(translatedRecord);
 };
 
 /**

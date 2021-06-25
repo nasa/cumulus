@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
+   - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
 
 ### Changed
 
@@ -46,6 +48,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       support of local cleanup
     - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
       record retrievals on status in lieu of using `waitForModelStatus`
+  - **CUMULUS-2303**
+    - Update API provider GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+      
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
     to `granulesApi` from `@cumulus/integration-tests`.
