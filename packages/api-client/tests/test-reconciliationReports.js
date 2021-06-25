@@ -13,7 +13,6 @@ test('getReconciliationReport calls the callback with the expected object', asyn
       resource: '/{proxy+}',
       path: `/reconciliationReports/${name}`,
     },
-    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
@@ -23,29 +22,5 @@ test('getReconciliationReport calls the callback with the expected object', asyn
     prefix: expected.prefix,
     name,
     callback,
-  }));
-});
-
-test('getReconciliationReport calls the callback with the expected status code', async (t) => {
-  const expectedStatusCode = 404;
-  const name = 'recReport2';
-  const expected = {
-    prefix: 'recReportTest',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/reconciliationReports/${name}`,
-    },
-    expectedStatusCode,
-  };
-
-  const callback = (configObject) => {
-    t.deepEqual(expected, configObject);
-  };
-  await t.notThrowsAsync(reconciliationReportApi.getReconciliationReport({
-    prefix: expected.prefix,
-    name,
-    callback,
-    expectedStatusCode,
   }));
 });

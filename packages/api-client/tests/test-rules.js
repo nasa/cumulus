@@ -92,7 +92,6 @@ test('getRule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/rules/${t.context.testName}`,
     },
-    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
@@ -103,30 +102,6 @@ test('getRule calls the callback with the expected object', async (t) => {
     prefix: t.context.testPrefix,
     ruleName: t.context.testName,
     callback,
-  }));
-});
-
-test('getRule calls the callback with the expected status code', async (t) => {
-  const expectedStatusCode = 404;
-  const expected = {
-    prefix: t.context.testPrefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
-      path: `/rules/${t.context.testName}`,
-    },
-    expectedStatusCode,
-  };
-
-  const callback = (configObject) => {
-    t.deepEqual(configObject, expected);
-  };
-
-  await t.notThrowsAsync(rulesApi.getRule({
-    prefix: t.context.testPrefix,
-    ruleName: t.context.testName,
-    callback,
-    expectedStatusCode,
   }));
 });
 
