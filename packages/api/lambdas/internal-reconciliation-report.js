@@ -66,7 +66,6 @@ async function internalRecReportForCollections(recReportParams) {
     updatedAtRangeParams
   );
 
-  // TODO: This should work, but will return *postgres* collections.
   const dbCollectionItems = sortBy(
     filterDBCollections(dbCollectionsSearched, recReportParams),
     ['name', 'version']
