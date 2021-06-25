@@ -267,6 +267,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
     },
+    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
@@ -278,6 +279,36 @@ test('moveGranule calls the callback with the expected object', async (t) => {
     granuleId: t.context.granuleId,
     destinations,
     callback,
+  }));
+});
+
+test('moveGranule calls the callback with expected status code', async (t) => {
+  const destinations = 'test destination';
+  const expectedStatusCode = 409;
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: `/granules/${t.context.granuleId}`,
+      body: JSON.stringify({ action: 'move', destinations }),
+    },
+    expectedStatusCode,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.moveGranule({
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    destinations,
+    callback,
+    expectedStatusCode,
   }));
 });
 

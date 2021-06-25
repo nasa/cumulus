@@ -293,13 +293,15 @@ export const moveGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   destinations: unknown[],
-  callback?: InvokeApiFunction
+  callback?: InvokeApiFunction,
+  expectedStatusCode: number
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
     destinations,
     callback = invokeApi,
+    expectedStatusCode = 200,
   } = params;
 
   return await callback({
@@ -313,6 +315,7 @@ export const moveGranule = async (params: {
       path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
     },
+    expectedStatusCode,
   });
 };
 
