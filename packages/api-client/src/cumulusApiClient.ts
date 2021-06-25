@@ -46,16 +46,19 @@ export async function invokeApi(
 
       if (parsedPayload?.errorMessage?.includes('Task timed out')) {
         throw new CumulusApiClientError(
-          `Error calling ${payload.path}: ${parsedPayload.errorMessage}`
+          `Error calling ${payload.path}: ${parsedPayload.errorMessage}`,
+          parsedPayload?.statusCode,
+          undefined
         );
       }
 
       if (throwOnApiFailure && parsedPayload?.statusCode !== expectedStatusCode) {
         throw new CumulusApiClientError(
-          `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`
+          `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`,
+          parsedPayload?.statusCode,
+          parsedPayload.body
         );
       }
-
       return parsedPayload;
     },
     {
