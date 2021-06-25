@@ -11,6 +11,43 @@ const SecretsManager = require('@cumulus/aws-client/SecretsManager');
 
 const { getEarthdataAccessToken } = require('./EarthdataLogin');
 
+async function invokeDistributionApiLambda(path, headers) {
+  const lambda = new Lambda();
+  const FunctionName = `${process.env.stackName}-DistributionApiEndpoints`;
+
+  const event = {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path,
+    headers,
+    // All of these properties are necessary for the distribution api request to succeed
+    requestContext: {
+      resourcePath: '/{proxy+}',
+      operationName: 'proxy',
+      httpMethod: 'GET',
+      path: '/{proxy+}',
+      identity: {
+        sourceIp: '127.0.0.1',
+      },
+    },
+    multiValueQueryStringParameters: null,
+    pathParameters: {
+      proxy: path.replace(/\/+/, ''),
+    },
+    body: null,
+    stageVariables: null,
+  };
+
+  const data = await lambda.invoke({
+    FunctionName,
+    Payload: JSON.stringify(event),
+  }).promise();
+
+  const payload = JSON.parse(data.Payload);
+
+  return payload;
+}
+
 /**
  * Invoke Thin Egress App API lambda directly to get a response payload.
  *
@@ -231,10 +268,20 @@ async function getTEARequestHeaders(stackName) {
   return buildTeaRequestHeaders(accessTokenResponse.accessToken, jwtToken);
 }
 
+async function getDistributionApiRedirect(filepath, headers) {
+  const payload = await invokeDistributionApiLambda(
+    filepath,
+    headers
+  );
+  return payload.headers.location || payload.headers.Location;
+}
+
 module.exports = {
+  getDistributionApiRedirect,
   getDistributionFileUrl,
   getTEADistributionApiFileStream,
   getTEADistributionApiRedirect,
   getTEARequestHeaders,
+  invokeDistributionApiLambda,
   invokeS3CredentialsLambda,
 };
