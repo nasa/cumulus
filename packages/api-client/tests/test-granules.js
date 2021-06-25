@@ -25,6 +25,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
     },
     throwOnApiFailure: true,
+    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
@@ -43,6 +44,36 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('getGranule calls the callback with the expected status code', async (t) => {
+  const expectedStatusCode = 404;
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+    },
+    throwOnApiFailure: true,
+    expectedStatusCode,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    expectedStatusCode,
+  }));
+});
+
 test('getGranule calls the callback with the expected object when there is query param', async (t) => {
   const query = { getRecoveryStatus: true };
   const expected = {
@@ -54,6 +85,7 @@ test('getGranule calls the callback with the expected object when there is query
       queryStringParameters: query,
     },
     throwOnApiFailure: true,
+    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
@@ -70,14 +102,6 @@ test('getGranule calls the callback with the expected object when there is query
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     query,
-  }));
-});
-
-test('getGranule throws error on unexpected status code', async (t) => {
-  await t.throwsAsync(granulesApi.getGranule({
-    callback: () => Promise.resolve({ statusCode: 500 }),
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId,
   }));
 });
 
