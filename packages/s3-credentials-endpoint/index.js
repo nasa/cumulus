@@ -17,10 +17,7 @@ const urljoin = require('url-join');
 
 const { AccessToken } = require('@cumulus/api/models');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
-const {
-  useSecureCookies,
-  isPublicRequest,
-} = require('@cumulus/api/lib/distribution');
+const { useSecureCookies } = require('@cumulus/api/lib/distribution');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
 const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -51,6 +48,36 @@ function getConfigurations() {
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: awsServices.s3(),
   };
+}
+
+/**
+ * Helper function to pull bucket out of a path string.
+ * Will ignore leading slash.
+ * "/bucket/key" -> "bucket"
+ * "bucket/key" -> "bucket"
+ *
+ * @param {string} path - express request path parameter
+ * @returns {string} the first part of a path which is our bucket name
+ */
+function bucketNameFromPath(path) {
+  return path.split('/').filter((d) => d).shift();
+}
+
+/**
+ * Reads the input path and determines if this is a request for public data
+ * or not.
+ *
+ * @param {string} path - req.path paramater
+ * @returns {boolean} - whether this request goes to a public bucket
+ */
+function isPublicRequest(path) {
+  try {
+    const publicBuckets = process.env.public_buckets.split(',');
+    const requestedBucket = bucketNameFromPath(path);
+    return publicBuckets.includes(requestedBucket);
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
