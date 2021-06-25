@@ -8,14 +8,6 @@ test.before((t) => {
   t.context.granuleId = 'granule-1';
 });
 
-test('getGranuleResponse does not throw error on unexpected status code', async (t) => {
-  await t.notThrowsAsync(granulesApi.getGranuleResponse({
-    callback: () => Promise.resolve({ statusCode: 500 }),
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId,
-  }));
-});
-
 test('getGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
