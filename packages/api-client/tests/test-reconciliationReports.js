@@ -4,49 +4,37 @@ const test = require('ava');
 
 const reconciliationReportApi = require('../reconciliationReports');
 
-test('createReconciliationReport calls the callback with the expected object', async (t) => {
-  const request = {
-    foo: 'bar',
-  };
+test('getReconciliationReport calls the callback with the expected object', async (t) => {
+  const name = 'recReport1';
   const expected = {
-    prefix: 'deadLetterArchiveTest',
+    prefix: 'recReportTest',
     payload: {
-      httpMethod: 'POST',
+      httpMethod: 'GET',
       resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      path: '/reconciliationReports',
-      body: JSON.stringify(request),
+      path: `/reconciliationReports/${name}`,
     },
-    expectedStatusCode: 202,
+    expectedStatusCode: 200,
   };
 
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  await t.notThrowsAsync(reconciliationReportApi.createReconciliationReport({
+  await t.notThrowsAsync(reconciliationReportApi.getReconciliationReport({
     prefix: expected.prefix,
-    request,
+    name,
     callback,
   }));
 });
 
-test('createReconciliationReport calls the callback with the expected status code', async (t) => {
+test('getReconciliationReport calls the callback with the expected status code', async (t) => {
   const expectedStatusCode = 404;
-  const request = {
-    foo: 'bar',
-  };
+  const name = 'recReport2';
   const expected = {
-    prefix: 'deadLetterArchiveTest',
+    prefix: 'recReportTest',
     payload: {
-      httpMethod: 'POST',
+      httpMethod: 'GET',
       resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      path: '/reconciliationReports',
-      body: JSON.stringify(request),
+      path: `/reconciliationReports/${name}`,
     },
     expectedStatusCode,
   };
@@ -54,9 +42,9 @@ test('createReconciliationReport calls the callback with the expected status cod
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
-  await t.notThrowsAsync(reconciliationReportApi.createReconciliationReport({
+  await t.notThrowsAsync(reconciliationReportApi.getReconciliationReport({
     prefix: expected.prefix,
-    request,
+    name,
     callback,
     expectedStatusCode,
   }));
