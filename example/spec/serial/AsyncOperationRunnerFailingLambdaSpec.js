@@ -10,6 +10,7 @@ const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ec
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner executing a failing lambda function', () => {
+  let asyncOperation;
   let asyncOperationId;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
