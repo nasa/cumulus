@@ -220,6 +220,6 @@ test.serial('Collection.searchWithUpdatedAtRange() returns a filtered array of r
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, ...{ files: JSON.parse(searchRecord.files) } }
+    { ...searchRecord, files: JSON.parse(searchRecord.files) }
   );
 });
