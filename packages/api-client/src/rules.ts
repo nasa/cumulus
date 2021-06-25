@@ -116,9 +116,15 @@ export const listRules = async (params: {
 export const getRule = async (params: {
   prefix: string,
   ruleName: string,
-  callback: InvokeApiFunction
+  callback: InvokeApiFunction,
+  expectedStatusCode: number
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, ruleName, callback = invokeApi } = params;
+  const {
+    prefix,
+    ruleName,
+    callback = invokeApi,
+    expectedStatusCode = 200,
+  } = params;
 
   return await callback({
     prefix,
@@ -127,6 +133,7 @@ export const getRule = async (params: {
       resource: '/{proxy+}',
       path: `/rules/${ruleName}`,
     },
+    expectedStatusCode,
   });
 };
 
