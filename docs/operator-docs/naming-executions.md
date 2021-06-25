@@ -33,7 +33,7 @@ property is set using the value configured in the workflow's
 If you wanted to use a prefix of "my-prefix", you would create a rule with a `meta` property similar to the following Rule snippet:
 
 ```json
-"rule": {
+{
   ...other rule keys here...
   "meta":
     {
