@@ -1173,17 +1173,19 @@ describe('The S3 Ingest Granules workflow', () => {
             Key: destinationKey,
           });
 
-          const moveGranuleResponse = await moveGranule({
-            prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId,
-            destinations,
-            expectedStatusCode: 409,
-          });
+          let moveGranuleResponseError;
+          try {
+            await moveGranule({
+              prefix: config.stackName,
+              granuleId: inputPayload.granules[0].granuleId,
+              destinations,
+            });
+          } catch (error) {
+            moveGranuleResponseError = error;
+          }
 
-          const responseBody = JSON.parse(moveGranuleResponse.body);
-
-          expect(moveGranuleResponse.statusCode).toEqual(409);
-          expect(responseBody.message).toEqual(
+          expect(moveGranuleResponseError.statusCode).toEqual(409);
+          expect(moveGranuleResponseError.apiMessage).toEqual(
             `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
@@ -1224,12 +1226,17 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Verify deletion
-        const granuleResponse = await getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          expectedStatusCode: 404,
-        });
-        expect(granuleResponse.message).toEqual('Granule not found');
+        let granuleResponseError;
+        try {
+          await getGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            expectedStatusCode: 404,
+          });
+        } catch (error) {
+          granuleResponseError = error;
+        }
+        expect(granuleResponseError).toEqual('Granule not found');
       });
     });
 

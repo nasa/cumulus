@@ -555,14 +555,18 @@ describe('When there are granule differences and granule reconciliation is run',
       const exists = await fileExists(parsed.Bucket, parsed.Key);
       expect(exists).toBeFalse();
 
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-        expectedStatusCode: 404,
-      });
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
 
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+      expect(responseError.statusCode).toBe(404);
+      expect(responseError.apiMessage).toBe(`No record found for ${reportRecord.name}`);
     });
   });
 
@@ -649,14 +653,18 @@ describe('When there are granule differences and granule reconciliation is run',
       const exists = await fileExists(parsed.Bucket, parsed.Key);
       expect(exists).toBeFalse();
 
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-        expectedStatusCode: 404,
-      });
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
 
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+      expect(responseError.statusCode).toBe(404);
+      expect(responseError.apiMessage).toBe(`No record found for ${reportRecord.name}`);
     });
   });
 
@@ -750,14 +758,18 @@ describe('When there are granule differences and granule reconciliation is run',
       const exists = await fileExists(parsed.Bucket, parsed.Key);
       expect(exists).toBeFalse();
 
-      const response = await reconciliationReportsApi.getReconciliationReport({
-        prefix: config.stackName,
-        name: reportRecord.name,
-        expectedStatusCode: 404,
-      });
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
 
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.body).message).toBe(`No record found for ${reportRecord.name}`);
+      expect(responseError.statusCode).toBe(404);
+      expect(responseError.apiMessage).toBe(`No record found for ${reportRecord.name}`);
     });
   });
 

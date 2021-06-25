@@ -305,17 +305,20 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on deletion', () => {
-    let getRule;
+    let responseError;
 
     beforeAll(async () => {
       console.log(`deleting rule ${snsRuleDefinition.name}`);
       await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
-      const getRuleResponse = await rulesApiTestUtils.getRule({
-        prefix: config.stackName,
-        ruleName,
-        expectedStatusCode: 404,
-      });
-      getRule = JSON.parse(getRuleResponse.body);
+
+      try {
+        await rulesApiTestUtils.getRule({
+          prefix: config.stackName,
+          ruleName,
+        });
+      } catch (error) {
+        responseError = error;
+      }
     });
 
     afterAll(async () => {
@@ -323,7 +326,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('is removed from the rules API', () => {
-      expect(getRule.message).toContain('No record found');
+      expect(responseError.apiMessage).toContain('No record found');
     });
 
     it('deletes the policy and subscription', async () => {
