@@ -111,12 +111,6 @@ describe('The SNS-type rule', () => {
     }
 
     await deleteExecution({ prefix: config.stackName, executionArn: hellowWorldExecutionArn });
-
-    console.log(`deleting rule ${snsRuleDefinition.name}`);
-    await rulesApiTestUtils.deleteRule({
-      prefix: config.stackName,
-      ruleName: snsRuleDefinition.name,
-    });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -316,7 +310,11 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${snsRuleDefinition.name}`);
       await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
-      const getRuleResponse = await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
+      const getRuleResponse = await rulesApiTestUtils.getRule({
+        prefix: config.stackName,
+        ruleName,
+        expectedStatusCode: 404,
+      });
       getRule = JSON.parse(getRuleResponse.body);
     });
 
