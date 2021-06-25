@@ -156,6 +156,7 @@ resource "aws_lambda_function" "api" {
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs12.x"
   timeout          = 100
+  publish          = true
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
@@ -169,6 +170,14 @@ resource "aws_lambda_function" "api" {
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "api_provisioned_concurrency" {
+  function_name = aws_lambda_function.api.function_name
+  provisioned_concurrent_executions = 5
+  qualifier = aws_lambda_function.api.version
+
+  depends_on = [aws_lambda_function.api]
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {
