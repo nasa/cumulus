@@ -789,9 +789,9 @@ describe('When there are granule differences and granule reconciliation is run',
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       cmrClient.deleteGranule(cmrGranule),
     ]);
+    await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix);
     console.log(result);
   });
 });
