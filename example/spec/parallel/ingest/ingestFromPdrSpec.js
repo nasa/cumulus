@@ -345,7 +345,7 @@ describe('Ingesting from PDR', () => {
         it('has expected output message', () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else if (lambdaOutput) {
-            // Sometimes PDR ingestion comp[letes before this step is reached, so it is never invoked
+            // Sometimes PDR ingestion completes before this step is reached, so it is never invoked
             // and there is no Lambda output to check.
             expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
             expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
