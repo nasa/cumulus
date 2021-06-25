@@ -566,7 +566,7 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  xdescribe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
+  describe('Create an Internal Reconciliation Report to monitor internal discrepancies', () => {
     // report record in db and report in s3
     let reportRecord;
     let report;
@@ -660,7 +660,7 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
-  xdescribe('Creates \'Granule Inventory\' reports.', () => {
+  describe('Creates \'Granule Inventory\' reports.', () => {
     let reportRecord;
     let reportArray;
     let granuleInventoryAsyncOpId;
