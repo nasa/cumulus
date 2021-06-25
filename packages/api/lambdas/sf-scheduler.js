@@ -17,6 +17,7 @@ const getProvider = (id) => {
 };
 
 const getApiCollection = (collection) => {
+  logger.debug(`Getting collection from API that matches ${JSON.stringify(collection)}`);
   if (isNil(collection)) return undefined;
   return getCollection({
     prefix: process.env.stackName,
@@ -35,7 +36,6 @@ const getApiCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  logger.debug(`Getting collection from API that matches ${JSON.stringify(event.collection)}`);
   const [provider, collection] = await Promise.all([
     getProvider(event.provider),
     getApiCollection(event.collection),
