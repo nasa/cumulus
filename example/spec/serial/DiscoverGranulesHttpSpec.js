@@ -1,9 +1,8 @@
 'use strict';
 
-const { Execution } = require('@cumulus/api/models');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
@@ -19,7 +18,9 @@ const {
   createTestSuffix,
 } = require('../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
-const { waitForModelStatus } = require('../helpers/apiUtils');
+const {
+  waitForApiStatus,
+} = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -32,7 +33,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let discoverGranulesExecution;
   let discoverGranulesExecutionArn;
   let discoverGranulesLambdaOutput;
-  let executionModel;
   let ignoringFilesConfigExecutionArn;
   let ignoringFilesIngestExecutionArns;
   let ingestGranuleWorkflowArn1;
@@ -51,9 +51,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
 
       testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
       testSuffix = createTestSuffix(testId);
@@ -101,12 +98,22 @@ describe('The Discover Granules workflow with http Protocol', () => {
     await Promise.all(queueGranulesOutput.payload.running
       .map((execution) => waitForCompletedExecution(execution)));
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
+      async (granule) => {
+        await waitForApiStatus(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          },
+          'completed'
+        );
+        await deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        });
+      }
     ));
-    // Order matters. Parent executions must be deleted before children.
+    // Order matters. Child executions must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn3 });
@@ -150,9 +157,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: discoverGranulesExecutionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: discoverGranulesExecutionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -228,6 +238,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       noFilesIngestExecutionArns = noFilesConfigQueueGranulesOutput.payload.running;
     });
 
+    afterAll(async () => {
+      await Promise.all(
+        noFilesConfigQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
+    });
+
     it('encounters a collection without a files configuration', async () => {
       const lambdaInput = await lambdaStep.getStepInput(
         noFilesConfigExecutionArn, 'DiscoverGranules'
@@ -283,6 +300,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       partialFilesIngestExecutionArns = partialFilesQueueGranulesOutput.payload.running;
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        partialFilesQueueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
     });
 
     it('encounters a collection with a files configuration that does not match all files', async () => {
@@ -343,6 +367,12 @@ describe('The Discover Granules workflow with http Protocol', () => {
       );
 
       ignoringFilesIngestExecutionArns = ignoringFilesQueueGranulesOutput.payload.running;
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        ignoringFilesIngestExecutionArns.map((arn) => waitForCompletedExecution(arn))
+      );
     });
 
     it('encounters a collection that has no files config, but should ignore files config', async () => {

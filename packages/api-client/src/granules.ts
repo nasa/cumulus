@@ -1,6 +1,8 @@
 import pRetry from 'p-retry';
-import Logger from '@cumulus/logger';
+
 import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import Logger from '@cumulus/logger';
+
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
@@ -23,9 +25,16 @@ export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
   query?: { [key: string]: string },
-  callback?: InvokeApiFunction
+  callback?: InvokeApiFunction,
+  throwOnApiFailure?: boolean
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, query, callback = invokeApi } = params;
+  const {
+    prefix,
+    granuleId,
+    query,
+    callback = invokeApi,
+    throwOnApiFailure = false,
+  } = params;
 
   return await callback({
     prefix: prefix,
@@ -35,6 +44,7 @@ export const getGranuleResponse = async (params: {
       path: `/granules/${granuleId}`,
       ...(query && { queryStringParameters: query }),
     },
+    throwOnApiFailure,
   });
 };
 
@@ -57,7 +67,10 @@ export const getGranule = async (params: {
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {
-  const response = await getGranuleResponse(params);
+  const response = await getGranuleResponse({
+    ...params,
+    throwOnApiFailure: true,
+  });
   return JSON.parse(response.body);
 };
 
