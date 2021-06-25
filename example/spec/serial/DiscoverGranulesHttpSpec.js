@@ -3,7 +3,7 @@
 const { Execution } = require('@cumulus/api/models');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
@@ -19,7 +19,10 @@ const {
   createTestSuffix,
 } = require('../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
-const { waitForModelStatus } = require('../helpers/apiUtils');
+const {
+  waitForApiRecord,
+  waitForModelStatus
+} = require('../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -98,15 +101,27 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await Promise.all(queueGranulesOutput.payload.running
+    await Promise.allSettled(queueGranulesOutput.payload.running
       .map((execution) => waitForCompletedExecution(execution)));
-    await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
+    await Promise.allSettled(discoverGranulesLambdaOutput.payload.granules.map(
+      async (granule) => {
+        await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          },
+          {
+            status: 'completed',
+          }
+        );
+        await deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        });
+      }
     ));
-    // Order matters. Parent executions must be deleted before children.
+    // Order matters. Child executions must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn3 });
