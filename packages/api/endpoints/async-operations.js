@@ -160,6 +160,7 @@ async function post(req, res) {
       await asyncOperationModel.delete(apiAsyncOperation);
       throw innerError;
     }
+    logger.info(`Successfully created async operation ${dbRecord.id}:`);
     return res.send({
       message: 'Record saved',
       record: dynamoDbRecord,

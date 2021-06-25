@@ -88,3 +88,32 @@ export const listAsyncOperations = async (params: {
     },
   });
 };
+
+/**
+ * Create an async operation via the API
+ *
+ * @param {Object} params                  - params
+ * @param {string} params.prefix           - the prefix configured for the stack
+ * @param {string} params.asyncOperation   - asyncOperation object
+ * @param {Function} params.callback       - function to invoke the api lambda
+ *                                           that takes a prefix / user payload
+ * @returns {Promise<Object>}              - promise that resolves to the output of the callback
+ */
+export const createAsyncOperation = async (params: {
+  prefix: string,
+  asyncOperation: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, asyncOperation, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/asyncOperations',
+      body: JSON.stringify(asyncOperation),
+    },
+  });
+};
