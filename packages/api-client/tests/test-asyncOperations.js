@@ -116,7 +116,6 @@ test('createAsyncOperation calls the callback with the expected object', async (
       body: JSON.stringify(asyncOperation),
     },
   };
-  console.log(expected);
 
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);

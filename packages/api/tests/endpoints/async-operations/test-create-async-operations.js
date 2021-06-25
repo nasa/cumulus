@@ -10,11 +10,11 @@ const { v4: uuidv4 } = require('uuid');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-const { Search } = require('@cumulus/es-client/search');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -23,19 +23,19 @@ const {
   translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+
 const assertions = require('../../../lib/assertions');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration/dist/lambda');
+const { migrationDir } = require('../../../../../lambdas/db-migration');
 const { buildFakeExpressResponse } = require('../utils');
-
+const { post } = require('../../../endpoints/async-operations');
 const {
-  post,
-} = require('../../../endpoints/async-operations');
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+} = require('../../../lib/testUtils');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
 } = require('../../../models');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
