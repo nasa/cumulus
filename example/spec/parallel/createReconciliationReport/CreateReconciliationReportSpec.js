@@ -783,7 +783,7 @@ describe('When there are granule differences and granule reconciliation is run',
     const activeCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
-    const result = await Promise.allSettled([
+    const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ config, collection: extraCumulusCollection }),
       removeCollectionAndAllDependencies({ config, collection: collection }),
       s3().deleteObject(extraS3Object).promise(),
@@ -791,7 +791,12 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
     ]);
+    cleanupResults.forEach((result) => {
+      if (result.status === 'rejected') {
+        console.log(`***Cleanup failed ${JSON.stringify(result)}`);
+        throw new Error(JSON.stringify(result));
+      }
+    });
     await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix);
-    console.log(result);
   });
 });
