@@ -77,7 +77,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
 
-  await removeCollectionAndAllDependencies({ config, collection });
+  await removeCollectionAndAllDependencies({ prefix: config.stackName, collection });
   // populate collections, providers and test data
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -784,8 +784,8 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
     const cleanupResults = await Promise.allSettled([
-      removeCollectionAndAllDependencies({ config, collection: extraCumulusCollection }),
-      removeCollectionAndAllDependencies({ config, collection: collection }),
+      removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
+      removeCollectionAndAllDependencies({ prefix: config.stackName, collection: collection }),
       s3().deleteObject(extraS3Object).promise(),
       GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
