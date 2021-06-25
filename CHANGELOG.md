@@ -29,11 +29,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
-  - **CUMULUS-2306**
-    - Updated API execution GET endpoint to read individual execution records
-      from PostgreSQL database instead of DynamoDB
-    - Updated API execution-status endpoint to read execution records from
-      PostgreSQL database instead of DynamoDB
   - **CUMULUS-2302**
     - Added translatePostgresCollectionToApiCollection method to
       `@cumulus/db/translate/collections`
@@ -42,7 +37,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2302**
     - Update API collection GET endpoint to read individual provider records from
@@ -68,6 +62,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       support of local cleanup
     - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
       record retrievals on status in lieu of using `waitForModelStatus`
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
     to `granulesApi` from `@cumulus/integration-tests`.
