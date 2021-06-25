@@ -1,6 +1,8 @@
 import pRetry from 'p-retry';
-import Logger from '@cumulus/logger';
+
 import { lambda } from '@cumulus/aws-client/services';
+import Logger from '@cumulus/logger';
+
 import { CumulusApiClientError } from './CumulusApiClientError';
 import * as types from './types';
 
@@ -26,6 +28,7 @@ export async function invokeApi(
     payload,
     expectedStatusCode = 200,
     pRetryOptions = {},
+    throwOnApiFailure = true,
   } = params;
 
   return await pRetry(
@@ -49,7 +52,7 @@ export async function invokeApi(
         );
       }
 
-      if (parsedPayload?.statusCode !== expectedStatusCode) {
+      if (throwOnApiFailure && parsedPayload?.statusCode !== expectedStatusCode) {
         throw new CumulusApiClientError(
           `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`,
           parsedPayload?.statusCode,
