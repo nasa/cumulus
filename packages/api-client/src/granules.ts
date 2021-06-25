@@ -25,17 +25,13 @@ export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
   query?: { [key: string]: string },
-  callback?: InvokeApiFunction,
-  throwOnApiFailure?: boolean,
-  expectedStatusCode?: number
+  callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
     query,
     callback = invokeApi,
-    throwOnApiFailure = false,
-    expectedStatusCode = 200,
   } = params;
 
   return await callback({
@@ -46,8 +42,6 @@ export const getGranuleResponse = async (params: {
       path: `/granules/${granuleId}`,
       ...(query && { queryStringParameters: query }),
     },
-    expectedStatusCode,
-    throwOnApiFailure,
   });
 };
 
@@ -68,13 +62,9 @@ export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   query?: { [key: string]: string },
-  callback?: InvokeApiFunction,
-  expectedStatusCode?: number
+  callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {
-  const response = await getGranuleResponse({
-    ...params,
-    throwOnApiFailure: true,
-  });
+  const response = await getGranuleResponse(params);
   return JSON.parse(response.body);
 };
 
@@ -297,15 +287,13 @@ export const moveGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
   destinations: unknown[],
-  callback?: InvokeApiFunction,
-  expectedStatusCode: number
+  callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
     destinations,
     callback = invokeApi,
-    expectedStatusCode = 200,
   } = params;
 
   return await callback({
@@ -319,7 +307,6 @@ export const moveGranule = async (params: {
       path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
     },
-    expectedStatusCode,
   });
 };
 

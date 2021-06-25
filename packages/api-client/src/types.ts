@@ -30,7 +30,6 @@ export interface InvokeApiFunctionParams {
   payload: ApiGatewayLambdaProxyPayload,
   pRetryOptions?: pRetry.Options,
   expectedStatusCode?: number
-  throwOnApiFailure?: boolean
 }
 
 export type InvokeApiFunction = (

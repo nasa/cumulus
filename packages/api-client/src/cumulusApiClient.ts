@@ -28,7 +28,6 @@ export async function invokeApi(
     payload,
     expectedStatusCode = 200,
     pRetryOptions = {},
-    throwOnApiFailure = true,
   } = params;
 
   return await pRetry(
@@ -50,7 +49,7 @@ export async function invokeApi(
         );
       }
 
-      if (throwOnApiFailure && parsedPayload?.statusCode !== expectedStatusCode) {
+      if (parsedPayload?.statusCode !== expectedStatusCode) {
         throw new CumulusApiClientError(
           `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`
         );
