@@ -382,7 +382,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('prepares the test suite successfully', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
-    if (beforeAllFailed) fail('beforeAll() failed to prepare test suite');
   });
 
   describe('Create an Inventory Reconciliation Report to monitor inventory discrepancies', () => {
