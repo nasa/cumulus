@@ -129,8 +129,10 @@ test('GET returns an existing collection', async (t) => {
     files: JSON.parse(testCollection.files),
     name: testCollection.name,
     version: testCollection.version,
+    createdAt: response.body.createdAt,
+    updatedAt: response.body.updatedAt,
   };
-  t.like(response.body, expected);
+  t.deepEqual(response.body, expected);
 });
 
 test('CUMULUS-176 GET without a version returns a 404', async (t) => {
