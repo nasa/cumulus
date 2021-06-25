@@ -75,9 +75,15 @@ export const deleteReconciliationReport = async (params: {
 export async function createReconciliationReport(params: {
   prefix: string,
   request: unknown,
-  callback?: InvokeApiFunction
+  callback?: InvokeApiFunction,
+  expectedStatusCode?: number
 }): Promise<ApiGatewayLambdaHttpProxyResponse> {
-  const { prefix, request, callback = invokeApi } = params;
+  const {
+    prefix,
+    request,
+    callback = invokeApi,
+    expectedStatusCode = 202,
+  } = params;
 
   return await callback({
     prefix: prefix,
@@ -90,6 +96,6 @@ export async function createReconciliationReport(params: {
       path: '/reconciliationReports',
       body: JSON.stringify(request),
     },
-    expectedStatusCode: 202,
+    expectedStatusCode,
   });
 }
