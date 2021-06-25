@@ -29,9 +29,15 @@ package to catch or to otherwise handle errors that you may encounter.
     - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
     - bucket prefix and object prefix are supported
   - Add 'Bearer token' support as an authorization method
+- **CUMULUS-2568**
+  - Add `deletePdr`/PDR deletion functionality to `@cumulus/api-client/pdrs`
+  - Add `removeCollectionAndAllDependencies` to integration test helpers
 
 ### Fixed
 
+- **CUMULUS-2568**
+  - Update reconciliation report integration test to have better cleanup/failure
+    behavior
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
 - **CUMULUS-2532**
