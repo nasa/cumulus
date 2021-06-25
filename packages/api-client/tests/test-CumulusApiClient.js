@@ -72,7 +72,7 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
   t.is(4, lambdaInvocations);
 });
 
-test.serial('invokeApi retries on status code failure, then throws error on failure', async (t) => {
+test.serial('invokeApi retries on status code failure, then throws expected error on failure', async (t) => {
   let lambdaInvocations = 0;
 
   fakeServices.lambda = () => ({
@@ -91,7 +91,7 @@ test.serial('invokeApi retries on status code failure, then throws error on fail
     },
   });
 
-  await t.throwsAsync(apiClient.invokeApi({
+  const actualError = await t.throwsAsync(apiClient.invokeApi({
     prefix: t.context.testPrefix,
     payload: t.context.testPayload,
     pRetryOptions: {
@@ -102,6 +102,8 @@ test.serial('invokeApi retries on status code failure, then throws error on fail
   }));
 
   t.is(5, lambdaInvocations);
+  t.is(actualError.statusCode, 500);
+  t.is(actualError.apiMessage, '{"message":"API failure"}');
 });
 
 test.serial('invokeApi respects expected non-200 status code', async (t) => {
