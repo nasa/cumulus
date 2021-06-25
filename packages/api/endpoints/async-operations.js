@@ -150,6 +150,7 @@ async function post(req, res) {
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
     let dynamoDbRecord;
     try {
+      logger.debug(`Attempting to create async operation ${dbRecord.id}`);
       await knex.transaction(async (trx) => {
         await asyncOperationPgModel.create(trx, dbRecord);
         dynamoDbRecord = await asyncOperationModel.create(apiAsyncOperation);
