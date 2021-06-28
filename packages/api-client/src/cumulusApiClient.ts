@@ -58,7 +58,6 @@ export async function invokeApi(
           parsedPayload.body
         );
       }
-
       return parsedPayload;
     },
     {

@@ -1185,7 +1185,7 @@ describe('The S3 Ingest Granules workflow', () => {
           }
 
           expect(moveGranuleResponseError.statusCode).toEqual(409);
-          expect(moveGranuleResponseError.apiMessage).toEqual(
+          expect(JSON.parse(moveGranuleResponseError.apiMessage).message).toEqual(
             `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
@@ -1236,7 +1236,7 @@ describe('The S3 Ingest Granules workflow', () => {
         } catch (error) {
           granuleResponseError = error;
         }
-        expect(granuleResponseError).toEqual('Granule not found');
+        expect(JSON.parse(granuleResponseError.apiMessage).message).toEqual('Granule not found');
       });
     });
 
