@@ -29,7 +29,7 @@ describe('The DiscoverGranules workflow', () => {
   let bucket;
   let collection;
   let expectedGranuleId;
-  let parentExecutionArn;
+  let ingestGranuleExecutionArn;
   let provider;
   let providerPath;
   let discoverGranulesOutput;
@@ -114,7 +114,7 @@ describe('The DiscoverGranules workflow', () => {
     ));
 
     // The order of execution deletes matters. Parents must be deleted before children.
-    await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });
+    await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(bucket, providerPath),
@@ -192,7 +192,7 @@ describe('The DiscoverGranules workflow', () => {
     });
 
     it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
-      parentExecutionArn = queueGranulesOutput.payload.running[0];
+      ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
       const executionInput = await getExecutionInputObject(queueGranulesOutput.payload.running[0]);
       expect(executionInput.meta.staticValue).toEqual('aStaticValue');
       expect(executionInput.meta.interpolatedValueStackName).toEqual(queueGranulesOutput.meta.stack);
