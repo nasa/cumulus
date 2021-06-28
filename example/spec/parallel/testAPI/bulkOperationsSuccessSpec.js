@@ -297,8 +297,7 @@ describe('POST /granules/bulk', () => {
       }
     });
 
-    // xit comment: https://github.com/nasa/cumulus/pull/2146/files
-    xit('starts a workflow with an execution message referencing the correct queue URL', async () => {
+    it('starts a workflow with an execution message referencing the correct queue URL', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         // Find the execution ARN
