@@ -15,6 +15,7 @@ const { objectStoreForProtocol } = require('@cumulus/object-store');
 
 const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
 const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
+const Logger = require('@cumulus/logger');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -204,7 +205,7 @@ async function handleFileRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   const bucketMap = await getBucketMap();
-  const { bucket, key } = processFileRequestPath(req.params[0], bucketMap);
+  const { bucket, key, headers } = processFileRequestPath(req.params[0], bucketMap);
   if (bucket === undefined) {
     const error = `Unable to locate bucket from bucket map for ${req.params[0]}`;
     return res.boom.notFound(error);
@@ -235,6 +236,15 @@ async function handleFileRequest(req, res) {
   const objectStore = objectStoreForProtocol('s3');
   const range = req.get('Range');
 
+  // Read custom headers from bucket_map.yaml
+  log.debug(`Bucket map headers for ${bucket}/${key}: ${JSON.stringify(headers)}`);
+  const contentType = headers['Content-Type'];
+  const contentDisposition = headers['Content-Disposition'];
+  const contentLanguage = headers['Content-Language'];
+  const expires = headers['Expires'];
+  const contentEncoding = headers['Content-Encoding'];
+  const cacheControl = headers['Cache-Control'];
+
   const options = {
     ...range ? { Range: range } : {},
   };
@@ -242,15 +252,21 @@ async function handleFileRequest(req, res) {
 
   try {
     switch (req.method) {
-    case 'GET':
-      options.ResponseCacheControl = 'private, max-age=600';
-      signedS3Url = await objectStore.signGetObject(url, options, queryParams);
-      break;
-    case 'HEAD':
-      signedS3Url = await objectStore.signHeadObject(url, options, queryParams);
-      break;
-    default:
-      break;
+      case 'GET':
+        options.ResponseCacheControl = cacheControl ? cacheControl : 'private, max-age=600';
+        options.ResponseContentType = contentType ? contentType : undefined;
+        options.ResponseContentDisposition = contentDisposition ? contentDisposition : undefined;
+        options.ResponseContentLanguage = contentLanguage ? contentLanguage : undefined;
+        options.ResponseExpires = expires ? expires : undefined;
+        options.ResponseContentEncoding = contentEncoding ? contentEncoding : undefined;
+
+        signedS3Url = await objectStore.signGetObject(url, options, queryParams);
+        break;
+      case 'HEAD':
+        signedS3Url = await objectStore.signHeadObject(url, options, queryParams);
+        break;
+      default:
+        break;
     }
   } catch (error) {
     log.error('Error occurred when signing URL:', error);

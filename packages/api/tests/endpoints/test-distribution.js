@@ -38,6 +38,14 @@ const publicBucket = randomId('publicbucket');
 const publicBucketPath = randomId('publicpath');
 const protectedBucket = randomId('protectedbucket');
 
+const headerContentTypeTextPlain = 'text/plain';
+const headerContentDispositionInline = 'inlin';
+const headerContentLanguage = 'de-DE, en-CA';
+const headerContentEncoding = 'compress';
+const headerExpires = '2021-06-26T14:48:00.000Z';
+const headerCacheControl = 'max-age=31536000';
+const headerCustomHeaderVal = 'example-custom-header-value';
+
 const bucketMap = {
   MAP: {
     path1: {
@@ -45,6 +53,18 @@ const bucketMap = {
       headers: {
         'Content-Type': 'text/plain',
       },
+    },
+    path2: {
+      bucket: 'bucket-path-2',
+      headers: {
+        'Content-Type': headerContentTypeTextPlain,
+        'Content-Disposition': headerContentDispositionInline,
+        'Content-Language': headerContentLanguage,
+        'Content-Encoding': headerContentEncoding,
+        'Expires': headerExpires,
+        'Cache-Control': headerCacheControl,
+        'Custom-Header': headerCustomHeaderVal
+      }
     },
     [protectedBucket]: protectedBucket,
     [publicBucketPath]: publicBucket,
@@ -307,6 +327,37 @@ test.serial('A request for a public file with an access token returns a redirect
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+});
+
+test.serial('A request for a public file with an access token in the bucket-map with headers defined in the bucket map returns a redirect to S3 containing the expected parameters to override the response headers', async (t) => {
+  stubHeadObject();
+
+  const { accessTokenCookie, accessTokenRecord, fileKey, s3Endpoint } = context;
+  const fileLocation = `bucket-path-2/${fileKey}`;
+  const response = await request(distributionApp)
+    .get(`/path2/${fileKey}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
+    .expect(307);
+
+  restoreHeadObjectStub();
+
+  validateDefaultHeaders(t, response);
+
+  const redirectLocation = new URL(response.headers.location);
+  console.log(`Redirect URL: ${redirectLocation}`);
+
+  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
+  t.is(redirectLocation.origin, signedFileUrl.origin);
+  t.is(redirectLocation.pathname, signedFileUrl.pathname);
+  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
+  t.is(redirectLocation.searchParams.get('response-content-type'), headerContentTypeTextPlain);                               // Content-Type Override
+  t.is(redirectLocation.searchParams.get('response-content-disposition'), headerContentDispositionInline);                    // Content-Disposition Override
+  t.is(redirectLocation.searchParams.get('response-content-language'), headerContentLanguage);                                // Content-Language Override
+  t.is(redirectLocation.searchParams.get('response-content-encoding'), headerContentEncoding);                                // Content-Encoding Override
+  t.is(new Date(redirectLocation.searchParams.get('response-expires')).toISOString(), new Date(headerExpires).toISOString()); // Expires Override
+  t.is(redirectLocation.searchParams.get('response-cache-control'), headerCacheControl);                                      // Cache-Control Override
+  t.is(redirectLocation.searchParams.get('custom-header'), null);                                                             // Any Header other than the six above are ignored
 });
 
 test.serial('A /login request with a good authorization code returns a correct response', async (t) => {
