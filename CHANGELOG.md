@@ -41,7 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2302**
     - Update API collection GET endpoint to read individual provider records from
       PostgreSQL database instead of DynamoDB
-    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+    - Update sf-scheduler lambda to utilize API endpoint to get provider and
+      collection records
       from database via Private API lambda
     - Update API granule `reingest` endpoint to read collection from PostgreSQL
       database instead of DynamoDB
