@@ -173,10 +173,6 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: testDataGranuleId,
-    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -307,10 +303,6 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await deleteGranule({
-          prefix: config.stackName,
-          granuleId: parseLambdaOutput.payload.granules[0].granuleId,
-        });
       });
 
       it('executes successfully', async () => {
@@ -437,6 +429,7 @@ describe('Ingesting from PDR', () => {
         it('executes successfully', () => {
           if (beforeAllFailed) fail('beforeAll() failed');
           else {
+            console.log('\nINGEST GRANULE STATUS', ingestGranuleExecutionStatus);
             expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
           }
         });
