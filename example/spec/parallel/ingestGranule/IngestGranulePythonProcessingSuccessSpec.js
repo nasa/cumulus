@@ -16,7 +16,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteProvider, createProvider,
@@ -128,7 +128,7 @@ describe('The TestPythonProcessing workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-    await removePublishedGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
