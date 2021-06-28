@@ -44,8 +44,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
-const testGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-
 const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
 const providersDir = './data/providers/s3/';
@@ -136,14 +134,6 @@ describe('When the Sync Granule workflow is configured', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: newGranuleId,
-    });
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: testGranuleId,
-    });
     await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
