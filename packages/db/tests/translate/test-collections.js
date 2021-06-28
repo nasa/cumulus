@@ -24,7 +24,7 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
     files: collectionRecord.files,
     granuleId: collectionRecord.granule_id_validation_regex,
     granuleIdExtraction: collectionRecord.granule_id_validation_regex,
-    meta: JSON.parse(collectionRecord.meta),
+    meta: collectionRecord.meta,
     name: collectionRecord.name,
     sampleFileName: collectionRecord.sample_file_name,
     tags: collectionRecord.tags,
