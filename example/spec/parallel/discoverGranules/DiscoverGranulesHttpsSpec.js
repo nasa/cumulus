@@ -108,15 +108,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
       );
     });
 
-    afterAll(async () => {
-      await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
-    });
-
     it('has correctly configured provider', () => {
       expect(lambdaInput.meta.provider.protocol).toEqual('https');
     });
@@ -167,12 +158,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(ingestGranuleWorkflowArns.map((execution) => waitForCompletedExecution(execution)));
-      await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('executes successfully', () => {
@@ -180,15 +165,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
     });
 
     describe('SyncGranule lambda function', () => {
-      afterAll(async () => {
-        await Promise.all(lambdaOutput.payload.granules.map(
-          (granule) => deleteGranule({
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          })
-        ));
-      });
-
       it('outputs the expected granule', async () => {
         lambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArns[0],
