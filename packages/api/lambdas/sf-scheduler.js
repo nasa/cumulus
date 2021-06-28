@@ -4,16 +4,19 @@ const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 
 const { getCollection } = require('@cumulus/api-client/collections');
+const { getProvider } = require('@cumulus/api-client/providers');
 const SQS = require('@cumulus/aws-client/SQS');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
-const Provider = require('../models/providers');
 
-const getProvider = (id) => {
+const getApiProvider = (id) => {
   if (isNil(id)) return undefined;
-  return (new Provider()).get({ id });
+  return getProvider({
+    prefix: process.env.stackName,
+    providerId: id,
+  });
 };
 
 const getApiCollection = (collection) => {
@@ -37,7 +40,7 @@ const getApiCollection = (collection) => {
  */
 async function handleScheduleEvent(event) {
   const [provider, collection] = await Promise.all([
-    getProvider(event.provider),
+    getApiProvider(event.provider),
     getApiCollection(event.collection),
   ]);
 

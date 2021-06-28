@@ -44,19 +44,17 @@ const fakeGetCollection = (item) => {
   return Promise.resolve(fakeCollection);
 };
 
-class FakeProvider {
-  get({ id }) {
-    if (id !== fakeProvider.id) {
-      return Promise.reject(new Error('Provider could not be found'));
-    }
-    return Promise.resolve(fakeProvider);
+const fakeGetProvider = ({ providerId }) => {
+  if (providerId !== fakeProvider.id) {
+    return Promise.reject(new Error('Provider could not be found'));
   }
-}
+  return Promise.resolve(fakeProvider);
+};
 
-const getProvider = schedule.__get__('getProvider');
+const getApiProvider = schedule.__get__('getApiProvider');
 const getApiCollection = schedule.__get__('getApiCollection');
 
-const resetProvider = schedule.__set__('Provider', FakeProvider);
+const resetProvider = schedule.__set__('getProvider', fakeGetProvider);
 const resetCollection = schedule.__set__('getCollection', fakeGetCollection);
 
 test.before(() => {
@@ -74,12 +72,12 @@ test.after.always(() => {
 });
 
 test.serial('getProvider returns undefined when input is falsey', async (t) => {
-  const response = await getProvider(undefined);
+  const response = await getApiProvider(undefined);
   t.is(response, undefined);
 });
 
 test.serial('getProvider returns provider when input is a valid provider ID', async (t) => {
-  const response = await getProvider(fakeProvider.id);
+  const response = await getApiProvider(fakeProvider.id);
   t.deepEqual(response, fakeProvider);
 });
 
