@@ -51,6 +51,7 @@ test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
     {
       ...collectionRecord,
       files: JSON.parse(collectionRecord.files),
+      meta: JSON.parse(collectionRecord.meta),
     }
   );
 });
@@ -79,6 +80,7 @@ test.serial('CollectionPgModel.upsert() overwrites a collection record', async (
     {
       ...updatedCollection,
       files: JSON.parse(updatedCollection.files),
+      meta: JSON.parse(collectionRecord.meta),
     }
   );
 });
@@ -141,7 +143,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, files: JSON.parse(searchRecord.files) }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
   );
 });
 
@@ -180,7 +182,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, ...{ files: JSON.parse(searchRecord.files) } }
+    { ...searchRecord, ...{ files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) } }
   );
 });
 
@@ -220,6 +222,6 @@ test.serial('Collection.searchWithUpdatedAtRange() returns a filtered array of r
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, files: JSON.parse(searchRecord.files) }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
   );
 });
