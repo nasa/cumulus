@@ -16,7 +16,10 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const {
   createTimestampedTestId,
   deleteFolder,
@@ -107,10 +110,20 @@ describe('The DiscoverGranules workflow', () => {
 
   afterAll(async () => {
     await Promise.all(discoverGranulesOutput.payload.granules.map(
-      (granule) => deleteGranule({
-        prefix: stackName,
-        granuleId: granule.granuleId,
-      })
+      async (granule) => {
+        await waitForApiStatus(
+          getGranule,
+          {
+            prefix: stackName,
+            granuleId: granule.granuleId,
+          },
+          'completed'
+        );
+        await deleteGranule({
+          prefix: stackName,
+          granuleId: granule.granuleId,
+        });
+      }
     ));
 
     // The order of execution deletes matters. Parents must be deleted before children.

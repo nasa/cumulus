@@ -142,12 +142,10 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await Promise.all(ingestGranuleExecution.originalPayload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
-    ));
+    await deleteGranule({
+      prefix: config.stackName,
+      granuleId: testDataGranuleId,
+    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
