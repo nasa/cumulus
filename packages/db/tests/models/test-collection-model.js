@@ -158,6 +158,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   const records = times(3, (i) => fakeCollectionRecordFactory({
     name: collectionName,
     version: i,
+    updated_at: new Date(),
   }));
 
   const searchRecord = fakeCollectionRecordFactory({
