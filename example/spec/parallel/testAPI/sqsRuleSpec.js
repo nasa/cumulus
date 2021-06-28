@@ -207,7 +207,6 @@ describe('The SQS rule', () => {
     afterAll(async () => {
       const key = getS3KeyForArchivedMessage(config.stackName, messageId);
       await deleteS3Object(config.bucket, key);
-      await deleteGranule({ prefix: config.stackName, granuleId });
     });
 
     describe('If the message is processable by the workflow', () => {

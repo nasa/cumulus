@@ -290,20 +290,6 @@ describe('The Sync Granules workflow', () => {
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
 
-    afterAll(async () => {
-      await deleteGranule({
-        prefix: config.stackName,
-        granuleId: reingestResponse.granuleId,
-      });
-
-      await Promise.all(syncGranuleTaskOutput.payload.granules.map(
-        (g) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: g.granuleId,
-        })
-      ));
-    });
-
     it('executes successfully', () => {
       expect(reingestResponse.status).toEqual('SUCCESS');
     });
@@ -376,14 +362,6 @@ describe('The Sync Granules workflow', () => {
       failingExecutionArn = failingExecution.executionArn;
 
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
-
-      // Immediately clean up granules
-      await Promise.all(inputPayload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('completes execution with failure status', () => {
