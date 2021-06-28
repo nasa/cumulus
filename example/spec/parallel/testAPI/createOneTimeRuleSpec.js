@@ -60,6 +60,14 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           payload: { testExecutionId },
         }
       );
+
+      executionArn = await findExecutionArn(
+        prefix,
+        (execution) =>
+          get(execution, 'originalPayload.testExecutionId') === testExecutionId,
+        { timestamp__from: ingestTime },
+        { timeout: 60 }
+      );
     } catch (error) {
       beforeAllError = error;
     }
@@ -86,16 +94,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
     if (beforeAllError) fail(beforeAllError);
   });
 
-  it('starts a workflow execution', async () => {
+  it('starts a workflow execution', () => {
     if (beforeAllError) throw SetupError;
-
-    executionArn = await findExecutionArn(
-      prefix,
-      (execution) =>
-        get(execution, 'originalPayload.testExecutionId') === testExecutionId,
-      { timestamp__from: ingestTime },
-      { timeout: 60 }
-    );
     expect(executionArn).toContain('arn:aws');
   });
 
