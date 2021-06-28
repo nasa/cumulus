@@ -7,6 +7,7 @@ const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
 
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -232,7 +233,7 @@ async function handleFileRequest(req, res) {
   }
 
   let signedS3Url;
-  const url = `s3://${bucket}/${key}`;
+  const url = buildS3Uri(bucket, key);
   const objectStore = objectStoreForProtocol('s3');
   const range = req.get('Range');
 
