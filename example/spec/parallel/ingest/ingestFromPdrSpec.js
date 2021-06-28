@@ -85,6 +85,7 @@ describe('Ingesting from PDR', () => {
   let testSuffix;
   let workflowExecution;
   let addedCollection;
+  let ingestGranuleExecution;
 
   beforeAll(async () => {
     try {
@@ -141,10 +142,12 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: testDataGranuleId,
-    });
+    await Promise.all(ingestGranuleExecution.originalPayload.granules.map(
+      (granule) => deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId,
+      })
+    ));
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -262,12 +265,6 @@ describe('Ingesting from PDR', () => {
           queueGranulesOutput.payload.running
             .map((arn) => waitForCompletedExecution(arn))
         );
-        await Promise.all(parseLambdaOutput.payload.granules.map(
-          (granule) => deleteGranule({
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          })
-        ));
       });
 
       it('executes successfully', async () => {
@@ -381,15 +378,6 @@ describe('Ingesting from PDR', () => {
             queueGranulesOutput.payload.running
               .map((arn) => waitForCompletedExecution(arn))
           );
-          const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
-          // delete ingested granule(s)
-          await Promise.all(
-            finalOutput.payload.granules.map((g) =>
-              deleteGranule({
-                prefix: config.stackName,
-                granuleId: g.granuleId,
-              }))
-          );
         });
 
         it('executes successfully', () => {
@@ -401,16 +389,6 @@ describe('Ingesting from PDR', () => {
 
         describe('SyncGranule lambda function', () => {
           let syncGranuleLambdaOutput;
-
-          afterAll(async () => {
-            await Promise.all(
-              syncGranuleLambdaOutput.payload.granules.map((g) =>
-                deleteGranule({
-                  prefix: config.stackName,
-                  granuleId: g.granuleId,
-                }))
-            );
-          });
 
           it('outputs 1 granule and pdr', async () => {
             if (beforeAllFailed) fail('beforeAll() failed');
@@ -428,21 +406,7 @@ describe('Ingesting from PDR', () => {
 
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
-        let ingestGranuleExecution;
-
         afterAll(async () => {
-          await Promise.all(ingestGranuleExecution.originalPayload.granules.map(
-            (granule) => deleteGranule({
-              prefix: config.stackName,
-              granuleId: granule.granuleId,
-            })
-          ));
-          await Promise.all(ingestGranuleExecution.finalPayload.granules.map(
-            (granule) => deleteGranule({
-              prefix: config.stackName,
-              granuleId: granule.granuleId,
-            })
-          ));
           await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn });
         });
 

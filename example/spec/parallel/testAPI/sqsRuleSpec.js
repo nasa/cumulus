@@ -28,6 +28,7 @@ const {
   deleteRules,
   setProcessEnvironment,
   getExecutionInputObject,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -92,6 +93,7 @@ async function cleanUp() {
   });
 
   // TODO there may be another execution to delete here
+  await waitForCompletedExecution(executionArn);
   await deleteExecution({ prefix: config.stackName, executionArn });
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
