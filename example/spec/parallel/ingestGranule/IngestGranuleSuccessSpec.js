@@ -52,10 +52,10 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   applyWorkflow,
   bulkReingestGranules,
-  deleteGranule,
   getGranule,
   moveGranule,
   removeFromCMR,
+  removePublishedGranule,
 } = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
@@ -265,6 +265,20 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
+    // granule may already have been deleted by
+    // granule deletion spec. but in case that spec
+    // wasn't reached, make sure granule is deleted
+    try {
+      await removePublishedGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+      });
+    } catch (error) {
+      if (error.statusCode !== 404) {
+        throw error;
+      }
+    }
+
     // clean up stack state added by test
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
@@ -1213,14 +1227,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         if (beforeAllError || subTestSetupError) throw SetupError;
-        // pre-delete: Remove the granule from CMR
-        await removeFromCMR({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-
-        // Delete the granule
-        await deleteGranule({
+        await removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
