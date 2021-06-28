@@ -183,7 +183,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, ...{ files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) } }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
   );
 });
 
