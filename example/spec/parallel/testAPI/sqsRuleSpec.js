@@ -28,6 +28,7 @@ const {
   deleteRules,
   setProcessEnvironment,
   getExecutionInputObject,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -92,6 +93,7 @@ async function cleanUp() {
   });
 
   // TODO there may be another execution to delete here
+  await waitForCompletedExecution(executionArn);
   await deleteExecution({ prefix: config.stackName, executionArn });
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
@@ -207,7 +209,6 @@ describe('The SQS rule', () => {
     afterAll(async () => {
       const key = getS3KeyForArchivedMessage(config.stackName, messageId);
       await deleteS3Object(config.bucket, key);
-      await deleteGranule({ prefix: config.stackName, granuleId });
     });
 
     describe('If the message is processable by the workflow', () => {

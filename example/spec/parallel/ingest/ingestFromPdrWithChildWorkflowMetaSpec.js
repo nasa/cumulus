@@ -37,6 +37,7 @@ const {
   cleanupCollections,
   getExecutionInputObject,
   waitForStartedExecution,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const {
@@ -70,8 +71,9 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   let beforeAllFailed;
   let config;
   let executionNamePrefix;
+  let discoverPdrsExecutionArn;
   let ingestGranuleExecutionArn;
-  let ingestPdrExecutionArn;
+  let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
   let queuePdrsOutput;
@@ -137,14 +139,22 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         }
       );
 
-      ingestPdrExecutionArn = workflowExecution.executionArn;
+      discoverPdrsExecutionArn = workflowExecution.executionArn;
 
       queuePdrsOutput = await lambdaStep.getStepOutput(
         workflowExecution.executionArn,
         'QueuePdrs'
       );
+      parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+
+      await waitForCompletedExecution(parsePdrExecutionArn);
+      const queueGranulesOutput = await lambdaStep.getStepOutput(
+        parsePdrExecutionArn,
+        'QueueGranules'
+      );
+      ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
       throw error;
     }
   });
@@ -159,9 +169,11 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-    // The order of execution deletes matters. Parents must be deleted before children.
+
+    // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: discoverPdrsExecutionArn });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -171,23 +183,22 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   });
 
   it('executes successfully', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     }
   });
 
   it('results in an IngestGranule workflow execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
       await expectAsync(waitForStartedExecution(ingestGranuleExecutionArn)).toBeResolved();
     }
   });
 
   it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    const executionInput = await getExecutionInputObject(queuePdrsOutput.payload.running[0]);
+    if (beforeAllFailed) fail(beforeAllFailed);
+    const executionInput = await getExecutionInputObject(parsePdrExecutionArn);
     expect(executionInput.meta.staticValue).toEqual('aStaticValue');
     expect(executionInput.meta.interpolatedValueStackName).toEqual(queuePdrsOutput.meta.stack);
   });

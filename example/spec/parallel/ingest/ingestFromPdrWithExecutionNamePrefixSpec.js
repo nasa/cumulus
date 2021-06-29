@@ -69,10 +69,10 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   let addedCollection;
   let beforeAllFailed;
   let config;
-  let executionArn;
   let executionNamePrefix;
+  let discoverPdrsExecutionArn;
   let ingestGranuleExecutionArn;
-  let ingestPdrExecutionArn;
+  let parsePdrExecutionArn;
   let ingestWorkflowExecution;
   let pdrFilename;
   let provider;
@@ -141,22 +141,29 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         }
       );
 
-      ingestPdrExecutionArn = workflowExecution.executionArn;
+      discoverPdrsExecutionArn = workflowExecution.executionArn;
 
       queuePdrsOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn,
+        discoverPdrsExecutionArn,
         'QueuePdrs'
       );
-      executionArn = queuePdrsOutput.payload.running[0];
+      parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+
+      await waitForCompletedExecution(parsePdrExecutionArn);
+      const queueGranulesOutput = await lambdaStep.getStepOutput(
+        parsePdrExecutionArn,
+        'QueueGranules'
+      );
+      ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
       throw error;
     }
   });
 
   afterAll(async () => {
     // wait for execution to complete before deleting granule
-    await waitForCompletedExecution(executionArn);
+    await waitForCompletedExecution(ingestGranuleExecutionArn);
     await deleteGranule({
       prefix: config.stackName,
       granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
@@ -167,9 +174,10 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       pdr: pdrFilename,
     });
 
-    // The order of execution deletes matters. Parents must be deleted before children.
+    // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: discoverPdrsExecutionArn });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -179,25 +187,24 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   });
 
   it('executes successfully', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     }
   });
 
   it('properly sets the name of the queued execution', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      const executionName = executionArn.split(':').reverse()[0];
+      const executionName = parsePdrExecutionArn.split(':').reverse()[0];
 
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     }
   });
 
   it('results in an IngestGranule workflow execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
       ingestWorkflowExecution = waitForStartedExecution(ingestGranuleExecutionArn);
       await expectAsync(ingestWorkflowExecution).toBeResolved();
     }

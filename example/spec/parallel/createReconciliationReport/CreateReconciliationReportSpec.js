@@ -181,9 +181,11 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     testDataFolder
   );
 
-  ingestAndPublishGranuleExecutionArns.push(await buildAndExecuteWorkflow(
+  const { executionArn } = await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-  ));
+  );
+
+  ingestAndPublishGranuleExecutionArns.push(executionArn);
 
   await waitForModelStatus(
     new Granule(),

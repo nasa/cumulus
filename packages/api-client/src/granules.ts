@@ -25,15 +25,13 @@ export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
   query?: { [key: string]: string },
-  callback?: InvokeApiFunction,
-  throwOnApiFailure?: boolean
+  callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
     query,
     callback = invokeApi,
-    throwOnApiFailure = false,
   } = params;
 
   return await callback({
@@ -44,7 +42,6 @@ export const getGranuleResponse = async (params: {
       path: `/granules/${granuleId}`,
       ...(query && { queryStringParameters: query }),
     },
-    throwOnApiFailure,
   });
 };
 
@@ -67,10 +64,7 @@ export const getGranule = async (params: {
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {
-  const response = await getGranuleResponse({
-    ...params,
-    throwOnApiFailure: true,
-  });
+  const response = await getGranuleResponse(params);
   return JSON.parse(response.body);
 };
 
