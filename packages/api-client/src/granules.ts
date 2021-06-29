@@ -243,22 +243,28 @@ export const applyWorkflow = async (params: {
  * Delete a granule from Cumulus via the API lambda
  * DELETE /granules/${granuleId}
  *
- * @param {Object} params             - params
- * @param {string} params.prefix      - the prefix configured for the stack
- * @param {string} params.granuleId   - a granule ID
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the delete confirmation from the API
+ * @param {Object} params                      - params
+ * @param {pRetry.Options} params.pRetryObject - pRetry options object
+ * @param {string} params.prefix               - the prefix configured for the stack
+ * @param {string} params.granuleId            - a granule ID
+ * @param {Function} params.callback           - async function to invoke the api lambda
+ *                                               that takes a prefix / user payload.  Defaults
+ *                                               to cumulusApiClient.invokeApifunction to invoke the
+ *                                               api lambda
+ * @returns {Promise<Object>}                  - the delete confirmation from the API
  */
 export const deleteGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  pRetryOptions?: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
-
+  const {
+    pRetryOptions,
+    prefix,
+    granuleId,
+    callback = invokeApi,
+  } = params;
   return await callback({
     prefix: prefix,
     payload: {
@@ -266,6 +272,7 @@ export const deleteGranule = async (params: {
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
     },
+    pRetryOptions,
   });
 };
 
