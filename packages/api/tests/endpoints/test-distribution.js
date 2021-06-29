@@ -61,10 +61,10 @@ const bucketMap = {
         'Content-Disposition': headerContentDispositionInline,
         'Content-Language': headerContentLanguage,
         'Content-Encoding': headerContentEncoding,
-        'Expires': headerExpires,
+        Expires: headerExpires,
         'Cache-Control': headerCacheControl,
-        'Custom-Header': headerCustomHeaderVal
-      }
+        'Custom-Header': headerCustomHeaderVal,
+      },
     },
     [protectedBucket]: protectedBucket,
     [publicBucketPath]: publicBucket,
@@ -351,13 +351,13 @@ test.serial('A request for a public file with an access token in the bucket-map 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
-  t.is(redirectLocation.searchParams.get('response-content-type'), headerContentTypeTextPlain);                               // Content-Type Override
-  t.is(redirectLocation.searchParams.get('response-content-disposition'), headerContentDispositionInline);                    // Content-Disposition Override
-  t.is(redirectLocation.searchParams.get('response-content-language'), headerContentLanguage);                                // Content-Language Override
-  t.is(redirectLocation.searchParams.get('response-content-encoding'), headerContentEncoding);                                // Content-Encoding Override
+  t.is(redirectLocation.searchParams.get('response-content-type'), headerContentTypeTextPlain); // Content-Type Override
+  t.is(redirectLocation.searchParams.get('response-content-disposition'), headerContentDispositionInline); // Content-Disposition Override
+  t.is(redirectLocation.searchParams.get('response-content-language'), headerContentLanguage); // Content-Language Override
+  t.is(redirectLocation.searchParams.get('response-content-encoding'), headerContentEncoding); // Content-Encoding Override
   t.is(new Date(redirectLocation.searchParams.get('response-expires')).toISOString(), new Date(headerExpires).toISOString()); // Expires Override
-  t.is(redirectLocation.searchParams.get('response-cache-control'), headerCacheControl);                                      // Cache-Control Override
-  t.is(redirectLocation.searchParams.get('custom-header'), null);                                                             // Any Header other than the six above are ignored
+  t.is(redirectLocation.searchParams.get('response-cache-control'), headerCacheControl); // Cache-Control Override
+  t.is(redirectLocation.searchParams.get('custom-header'), null); // Any Header other than the six above are ignored
 });
 
 test.serial('A /login request with a good authorization code returns a correct response', async (t) => {

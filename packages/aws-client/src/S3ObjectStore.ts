@@ -1,9 +1,9 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
 import * as AWS from 'aws-sdk';
+import Logger from '@cumulus/logger';
 import { headObject, parseS3Uri } from './S3';
 import awsClient from './client';
-import Logger from '@cumulus/logger';
 
 // Code modified from https://github.com/nasa/harmony/blob/main/app/util/object-store.ts
 
