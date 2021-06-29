@@ -16,6 +16,7 @@ package to catch or to otherwise handle errors that you may encounter.
 
 ### Added
 
+- Added user doc describing new features related to the Cumulus dead letter archive.
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
