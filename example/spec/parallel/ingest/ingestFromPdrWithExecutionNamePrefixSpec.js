@@ -69,7 +69,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  let addedCollection;
+  let addedCollections;
   let beforeAllFailed;
   let config;
   let executionNamePrefix;
@@ -99,7 +99,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      [addedCollection] = await Promise.all(
+      [addedCollections] = await Promise.all(
         flatten([
           addCollections(
             config.stackName,
@@ -156,7 +156,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
         config.stackName,
         config.bucket,
         workflowName,
-        { name: addedCollection.name, version: addedCollection.version },
+        { name: addedCollections[0].name, version: addedCollections[0].version },
         provider,
         undefined,
         {

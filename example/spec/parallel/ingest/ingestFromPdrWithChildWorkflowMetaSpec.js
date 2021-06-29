@@ -70,7 +70,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  let addedCollection;
+  let addedCollections;
   let beforeAllFailed;
   let config;
   let executionNamePrefix;
@@ -99,7 +99,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      [addedCollection] = await Promise.all([
+      [addedCollections] = await Promise.all([
         addCollections(
           config.stackName,
           config.bucket,
@@ -143,7 +143,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         config.stackName,
         config.bucket,
         workflowName,
-        { name: addedCollection[0].name, version: addedCollection[0].version },
+        { name: addedCollections[0].name, version: addedCollections[0].version },
         provider,
         undefined,
         {

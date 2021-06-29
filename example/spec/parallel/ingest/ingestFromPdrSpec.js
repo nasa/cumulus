@@ -14,7 +14,7 @@
  * pdr status check
  * This will kick off the ingest workflow
  *
- * Ingest worklow:
+ * Ingest workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
@@ -89,7 +89,7 @@ describe('Ingesting from PDR', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
-  let addedCollection;
+  let addedCollections;
   let ingestGranuleExecution;
 
   beforeAll(async () => {
@@ -110,7 +110,7 @@ describe('Ingesting from PDR', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      [addedCollection] = await Promise.all(
+      [addedCollections] = await Promise.all(
         flatten([
           addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
           updateAndUploadTestDataToBucket(
@@ -176,7 +176,7 @@ describe('Ingesting from PDR', () => {
           config.stackName,
           config.bucket,
           workflowName,
-          { name: addedCollection.name, version: addedCollection.version },
+          { name: addedCollections[0].name, version: addedCollections[0].version },
           provider,
           undefined,
           { provider_path: testDataFolder }
