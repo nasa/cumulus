@@ -257,12 +257,10 @@ export const applyWorkflow = async (params: {
 export const deleteGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  expectedStatusCode?: number,
   pRetryOptions?: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
-    expectedStatusCode = 200,
     pRetryOptions,
     prefix,
     granuleId,
@@ -276,7 +274,6 @@ export const deleteGranule = async (params: {
       path: `/granules/${granuleId}`,
     },
     pRetryOptions,
-    expectedStatusCode,
   });
 };
 

@@ -106,16 +106,19 @@ describe('The Ingest Granule failure workflow', () => {
   afterAll(async () => {
     // The granule provided cannot clean up the
     // fake S3 objects, so we expect it to fail
-    const granuleResponse = await deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId,
-      pRetryOptions: {
-        retries: 0,
-      },
-      expectedStatusCode: 400,
-    });
-    if (JSON.parse(granuleResponse.body).code !== 'NoSuchBucket') {
-      throw new Error(`Could not complete test cleanup ${granuleResponse.body}`);
+    try {
+      await deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+        pRetryOptions: {
+          retries: 0,
+        },
+      });
+    } catch (error) {
+      const apiMessage = JSON.parse(error.apiMessage);
+      if (apiMessage.code !== 'NoSuchBucket') {
+        throw new Error(`Could not complete test cleanup ${error.apiMessage}`);
+      }
     }
 
     await apiTestUtils.deletePdr({
