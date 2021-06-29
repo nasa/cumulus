@@ -34,6 +34,9 @@ const {
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { getExecutions } = require('@cumulus/api-client/executions');
+
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -65,6 +68,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const ruleDirectory = './spec/parallel/testAPI/data/rules/sqs';
 
 let queues = {};
+let collectionResult;
 
 async function setupCollectionAndTestData() {
   const s3data = [
@@ -74,7 +78,7 @@ async function setupCollectionAndTestData() {
   ];
 
   // populate collections, providers and test data
-  await Promise.all([
+  [, collectionResult] = await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
@@ -92,9 +96,20 @@ async function cleanUp() {
     pdr: pdrFilename,
   });
 
-  // TODO there may be another execution to delete here
-  await waitForCompletedExecution(executionArn);
-  await deleteExecution({ prefix: config.stackName, executionArn });
+  const collection = collectionResult[0];
+  // Delete successful execution and 2 failed executions
+  const executions = JSON.parse((await getExecutions({
+    prefix: config.stackName,
+    query: {
+      fields: ['arn'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  })).body).results;
+  await Promise.all(executions.map(
+    (execution) => waitForCompletedExecution(execution.arn)
+      .then(deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
+  ));
+
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
   ));
