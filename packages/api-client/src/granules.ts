@@ -245,7 +245,6 @@ export const applyWorkflow = async (params: {
  *
  * @param {Object} params                      - params
  * @param {pRetry.Options} params.pRetryObject - pRetry options object
- * @param {number} params.expectedStatusCode   - expected API status code
  * @param {string} params.prefix               - the prefix configured for the stack
  * @param {string} params.granuleId            - a granule ID
  * @param {Function} params.callback           - async function to invoke the api lambda
