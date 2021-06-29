@@ -50,26 +50,46 @@ function templateFile({ inputTemplateFilename, config }) {
  * Upload a file from the test-data package to the S3 test data
  * and update contents with replacements
  *
- * @param {string} file - filename of data to upload
- * @param {string} bucket - bucket to upload to
- * @param {string} prefix - S3 folder prefix
- * @param {Array<StringReplacement>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
+ * @param {Object} params                         - parameters
+ * @param {string} params.file                    - filename of data to upload
+ * @param {string} params.bucket                  - bucket to upload to
+ * @param {string} params.prefix                  - S3 folder prefix
+ * @param {string} params.targetReplacementRegex  - regexp to allow file copy target to target
+ *                                                  a different s3 key from the original file
+ *                                                  if specified will replace matches with
+ *                                                  targetReplacementString
+ * @param {string} params.targetReplacementString - replacement value for targetReplacementRegex match
+ * @param {Array<StringReplacement>} params.replacements - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-async function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
+async function updateAndUploadTestFileToBucket(params) {
+  const {
+    file,
+    bucket,
+    prefix,
+    replacements = [],
+    targetReplacementRegex,
+    targetReplacementString,
+  } = params;
   let data;
   if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replacement) => {
       data = replace(data, new RegExp(replacement.old, 'g'), replacement.new);
     });
-  } else data = fs.readFileSync(require.resolve(file));
-  const key = path.basename(file);
+  } else {
+    data = fs.readFileSync(require.resolve(file));
+  }
+  let key = path.basename(file);
+  if (targetReplacementRegex) {
+    key = key.replace(targetReplacementRegex, targetReplacementString);
+  }
+
   return await s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
     Body: data,
-    ContentType: mime.lookup(key) || null,
+    ContentType: mime.lookup(key) || undefined,
   }).promise();
 }
 
@@ -84,7 +104,7 @@ async function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-t
  * @returns {Array<Promise>} - responses from S3 upload
  */
 async function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
-  return await Promise.all(data.map((file) => updateAndUploadTestFileToBucket(file, bucket, prefix, replacements)));
+  return await Promise.all(data.map((file) => updateAndUploadTestFileToBucket({ file, bucket, prefix, replacements })));
 }
 
 /**
@@ -186,6 +206,7 @@ module.exports = {
   templateFile,
   timestampedName,
   updateAndUploadTestDataToBucket,
+  updateAndUploadTestFileToBucket,
   uploadTestDataToBucket,
   isValidAsyncOperationId,
 };

@@ -14,14 +14,14 @@
  * pdr status check
  * This will kick off the ingest workflow
  *
- * Ingest worklow:
+ * Ingest workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
  */
-
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
+const flatten = require('lodash/flatten');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -45,13 +45,16 @@ const {
   createTimestampedTestId,
   deleteFolder,
   loadConfig,
-  uploadTestDataToBucket,
   updateAndUploadTestDataToBucket,
+  updateAndUploadTestFileToBucket,
 } = require('../../helpers/testUtils');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrsExecutionPrefix';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
+const granuleDateString = '2016360104606';
+const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606'.replace(granuleDateString, granuleIdReplacement);
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
@@ -96,26 +99,44 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      const populatePromises = await Promise.all([
-        updateAndUploadTestDataToBucket(
-          config.bucket,
-          s3data,
-          testDataFolder,
-          [
-            { old: 'cumulus-test-data/pdrs', new: testDataFolder },
-            { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
-          ]
-        ),
-        uploadTestDataToBucket(
-          config.bucket,
-          unmodifiedS3Data,
-          testDataFolder
-        ),
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
-      ]);
-
-      addedCollection = populatePromises[2][0];
+      [addedCollection] = await Promise.all(
+        flatten([
+          addCollections(
+            config.stackName,
+            config.bucket,
+            collectionsDir,
+            testSuffix,
+            testId
+          ),
+          updateAndUploadTestDataToBucket(
+            config.bucket,
+            s3data,
+            testDataFolder,
+            [
+              { old: 'cumulus-test-data/pdrs', new: testDataFolder },
+              {
+                old: 'DATA_TYPE = MOD09GQ;',
+                new: `DATA_TYPE = MOD09GQ${testSuffix};`,
+              },
+              { old: granuleDateString, new: granuleIdReplacement },
+            ]
+          ),
+          unmodifiedS3Data.map((file) => updateAndUploadTestFileToBucket({
+            file,
+            bucket: config.bucket,
+            prefix: testDataFolder,
+            targetReplacementRegex: granuleDateString,
+            targetReplacementString: granuleIdReplacement,
+          })),
+          addProviders(
+            config.stackName,
+            config.bucket,
+            providersDir,
+            config.bucket,
+            testSuffix
+          ),
+        ])
+      );
 
       // Rename the PDR to avoid race conditions
       await s3().copyObject({
@@ -126,7 +147,10 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
 
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
 
-      executionNamePrefix = randomString(3);
+      executionNamePrefix = cryptoRandomString({
+        length: 3,
+        type: 'alphanumeric',
+      });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
@@ -166,7 +190,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
     await waitForCompletedExecution(ingestGranuleExecutionArn);
     await deleteGranule({
       prefix: config.stackName,
-      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+      granuleId: testDataGranuleId,
     });
     // clean up stack state added by test
     await apiTestUtils.deletePdr({
