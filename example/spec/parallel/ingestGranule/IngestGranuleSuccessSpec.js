@@ -274,7 +274,9 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId,
       });
     } catch (error) {
-      if (error.statusCode !== 404) {
+      if (error.statusCode !== 404 &&
+          // remove from CMR throws a 400 when granule is missing
+          (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
         throw error;
       }
     }
