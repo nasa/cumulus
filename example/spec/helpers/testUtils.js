@@ -56,8 +56,7 @@ function templateFile({ inputTemplateFilename, config }) {
  * @param {string} params.prefix                  - S3 folder prefix
  * @param {string} params.targetReplacementRegex  - regexp to allow file copy target to target
  *                                                  a different s3 key from the original file
- *                                                  if specified will replace matches with
- *                                                  targetReplacementString
+ *                                                  if specified
  * @param {string} params.targetReplacementString - replacement value for targetReplacementRegex match
  * @param {Array<StringReplacement>} params.replacements - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
