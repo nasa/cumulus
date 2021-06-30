@@ -7,18 +7,19 @@ const {
 } = require('@cumulus/integration-tests');
 
 const rulesApi = require('@cumulus/api-client/rules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const {
   createTestSuffix,
   createTimestampedTestId,
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
-
-const SetupError = new Error('Test setup failed');
 
 describe('When I create a scheduled rule with an executionNamePrefix via the Cumulus API', () => {
   let config;
@@ -90,6 +91,12 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       prefix: config.stackName,
       ruleName: scheduledRuleName,
     });
+
+    await waitForApiStatus(
+      getExecution,
+      { prefix: config.stackName, arn: executionArn },
+      'completed'
+    );
     await deleteExecution({ prefix: config.stackName, executionArn });
 
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
@@ -101,7 +108,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
   });
 
   it('the triggered execution has the requested prefix', () => {
-    if (beforeAllError) fail(SetupError);
+    if (beforeAllError) fail(beforeAllError);
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });
 });
