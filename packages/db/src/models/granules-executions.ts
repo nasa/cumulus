@@ -38,6 +38,18 @@ export default class GranulesExecutionsPgModel {
       .merge();
   }
 
+  async getExecutionCumulusIdsFromGranuleCumulusIds(
+    knexOrTransaction: Knex | Knex.Transaction,
+    granuleCumulusIds: Array<string> | string
+  ): Promise<Array<string>> {
+    const granuleCumulusIdsArray
+      = (typeof granuleCumulusIds === 'string') ? [granuleCumulusIds] : granuleCumulusIds;
+    const granuleExecutions = await knexOrTransaction(this.tableName)
+      .select('execution_cumulus_id')
+      .whereIn('granule_cumulus_id', granuleCumulusIdsArray);
+    return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
+  }
+
   search(
     knexTransaction: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>

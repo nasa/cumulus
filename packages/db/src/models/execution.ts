@@ -34,6 +34,19 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
       .merge()
       .returning('cumulus_id');
   }
+
+  async getWorkflowNamesFromExecutionCumulusIds(
+    knexOrTrx: Knex | Knex.Transaction,
+    executionCumulusIds: Array<string> | string
+  ): Promise<Array<string>> {
+    const executionCumulusIdsArray
+      = (typeof executionCumulusIds === 'string') ? [executionCumulusIds] : executionCumulusIds;
+    const executionWorkflowNames = await knexOrTrx(this.tableName)
+      .select('workflow_name')
+      .whereIn('cumulus_id', executionCumulusIdsArray);
+    return executionWorkflowNames
+      .map((executionWorkflowName) => executionWorkflowName.workflow_name);
+  }
 }
 
 export { ExecutionPgModel };

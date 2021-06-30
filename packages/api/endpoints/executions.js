@@ -2,9 +2,15 @@
 
 const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { getKnexClient, ExecutionPgModel } = require('@cumulus/db');
+const {
+  getKnexClient,
+  ExecutionPgModel,
+  GranulesExecutionsPgModel,
+  GranulePgModel,
+} = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
+const { getGranuleIdsForPayload } = require('../lambdas/bulk-operation');
 
 /**
  * List and search executions
@@ -79,6 +85,31 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+async function granuleHistory(req, res) {
+  const { granuleId } = req.params;
+  const payload = req.body;
+  const granuleIds = granuleId ? [granuleId] : await getGranuleIdsForPayload(payload);
+
+  const knex = await getKnexClient({ env: process.env });
+
+  const executionPgModel = new ExecutionPgModel();
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+
+  const granuleCumulusIds = await granulePgModel
+    .getRecordsCumulusIds(knex, (builder) => builder.whereIn('granule_id', granuleIds));
+
+  const executionCumulusIds = await granulesExecutionsPgModel
+    .getExecutionCumulusIdsFromGranuleCumulusIds(knex, granuleCumulusIds);
+
+  const workflowNames = await executionPgModel
+    .getWorkflowNamesFromExecutionCumulusIds(knex, executionCumulusIds);
+
+  return res.send(workflowNames);
+}
+
+router.post('/granuleHistory', granuleHistory);
+router.get('/granuleHistory/:granuleId', granuleHistory);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);
