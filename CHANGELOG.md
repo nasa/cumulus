@@ -21,9 +21,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - determines if the file request is public based on the bucket map rather than the bucket type
     - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
     - bucket prefix and object prefix are supported
-  - Add 'Bearer token' support as an authorization method
+  - Added 'Bearer token' support as an authorization method
 - **CUMULUS-2487**
-  - Add integration test for cumulus distribution API
+  - Added integration test for cumulus distribution API
+- **CUMULUS-2569**
+  - Created bucket map cache for cumulus distribution API
 
 ### Fixed
 
