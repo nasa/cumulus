@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -53,6 +53,9 @@ const {
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrsChildWorkflowMeta';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
+const granuleDateString = '2016360104606';
+const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606'.replace(granuleDateString, granuleIdReplacement);
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
@@ -67,7 +70,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  let addedCollection;
+  let addedCollections;
   let beforeAllFailed;
   let config;
   let executionNamePrefix;
@@ -96,23 +99,30 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      [addedCollection] = await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        updateAndUploadTestDataToBucket(
+      [addedCollections] = await Promise.all([
+        addCollections(
+          config.stackName,
           config.bucket,
-          s3data,
-          testDataFolder,
-          [
-            { old: 'cumulus-test-data/pdrs', new: testDataFolder },
-            { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
-          ]
+          collectionsDir,
+          testSuffix,
+          testId
         ),
-        uploadTestDataToBucket(
+        updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [
+          { old: 'cumulus-test-data/pdrs', new: testDataFolder },
+          {
+            old: 'DATA_TYPE = MOD09GQ;',
+            new: `DATA_TYPE = MOD09GQ${testSuffix};`,
+          },
+          { old: granuleDateString, new: granuleIdReplacement },
+        ]),
+        uploadTestDataToBucket(config.bucket, unmodifiedS3Data, testDataFolder),
+        addProviders(
+          config.stackName,
           config.bucket,
-          unmodifiedS3Data,
-          testDataFolder
+          providersDir,
+          config.bucket,
+          testSuffix
         ),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
       ]);
 
       // Rename the PDR to avoid race conditions
@@ -124,13 +134,16 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
 
-      executionNamePrefix = randomString(3);
+      executionNamePrefix = cryptoRandomString({
+        length: 3,
+        type: 'alphanumeric',
+      });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
         workflowName,
-        { name: addedCollection[0].name, version: addedCollection[0].version },
+        { name: addedCollections[0].name, version: addedCollections[0].version },
         provider,
         undefined,
         {
@@ -163,7 +176,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     // clean up stack state added by test
     await deleteGranule({
       prefix: config.stackName,
-      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+      granuleId: testDataGranuleId,
     });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
