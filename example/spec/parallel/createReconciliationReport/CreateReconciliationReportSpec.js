@@ -426,7 +426,7 @@ describe('When there are granule differences and granule reconciliation is run',
           status: 'SUCCEEDED',
           stackName: config.stackName,
           retryOptions: {
-            retries: 70,
+            retries: 80,
             factor: 1.041,
           },
         });
