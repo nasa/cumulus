@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added user doc describing new features related to the Cumulus dead letter archive.
 - **CUMULUS-2478**
   - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
   - Implemented /locate endpoint
