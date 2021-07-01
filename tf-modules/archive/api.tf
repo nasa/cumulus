@@ -172,12 +172,21 @@ resource "aws_lambda_function" "api" {
   }
 }
 
-resource "aws_lambda_provisioned_concurrency_config" "api_provisioned_concurrency" {
-  function_name = aws_lambda_function.api.function_name
-  provisioned_concurrent_executions = 5
-  qualifier = aws_lambda_function.api.version
+resource "aws_lambda_alias" "provisioned_api" {
+  name             = "provisioned-api"
+  description      = "Cumulus API with provisioned concurrency"
+  function_name    = aws_lambda_function.api.function_name
+  function_version = aws_lambda_function.api.version
 
   depends_on = [aws_lambda_function.api]
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "api_provisioned_concurrency" {
+  function_name = aws_lambda_alias.provisioned_api.function_name
+  provisioned_concurrent_executions = 5
+  qualifier = aws_lambda_alias.provisioned_api.function_version
+
+  depends_on = [aws_lambda_alias.provisioned_api]
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {
@@ -227,7 +236,7 @@ resource "aws_api_gateway_rest_api" "api_outside_ngap" {
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api.arn
+  function_name = aws_lambda_alias.provisioned_api.arn
   principal     = "apigateway.amazonaws.com"
 }
 
@@ -250,7 +259,7 @@ resource "aws_api_gateway_integration" "any_proxy" {
   http_method             = aws_api_gateway_method.any_proxy.http_method
   type                    = "AWS_PROXY"
   integration_http_method = "POST"
-  uri                     = aws_lambda_function.api.invoke_arn
+  uri                     = aws_lambda_alias.provisioned_api.invoke_arn
 }
 
 resource "aws_api_gateway_deployment" "api" {
