@@ -96,7 +96,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(queueGranulesOutput.payload.running
-      .map((execution) => waitForCompletedExecution(execution)));
+      .map((arn) => waitForApiStatus(
+        getExecution,
+        {
+          prefix,
+          arn,
+        },
+        'completed'
+      )));
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
         await waitForApiStatus(
@@ -113,6 +120,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         });
       }
     ));
+
     // Order matters. Child executions must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
