@@ -76,7 +76,6 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
-
   await removeCollectionAndAllDependencies({ prefix: config.stackName, collection });
   // populate collections, providers and test data
   await Promise.all([
