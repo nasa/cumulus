@@ -14,7 +14,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 * @param {Object} params     - params
 * @param {string} prefix  - Config object containing stackName
 * @param {Object} collection - Cumulus API collection object to delete
-* @return {Promise<undefined>}
+* @returns {Promise<undefined>}
 */
 const removeCollectionAndAllDependencies = async (params) => {
   const { prefix, collection } = params;
