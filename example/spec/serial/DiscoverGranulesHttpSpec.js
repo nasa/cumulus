@@ -35,9 +35,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let discoverGranulesLambdaOutput;
   let ignoringFilesConfigExecutionArn;
   let ignoringFilesIngestExecutionArns;
-  let ingestGranuleWorkflowArn1;
-  let ingestGranuleWorkflowArn2;
-  let ingestGranuleWorkflowArn3;
+  let runningWorkflows;
+  let ingestExecutionStatuses;
   let lambdaStep;
   let noFilesConfigExecutionArn;
   let noFilesIngestExecutionArns;
@@ -48,29 +47,31 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let testId;
   let testSuffix;
 
+  let prefix;
+
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+      prefix = config.stackName;
+      testId = createTimestampedTestId(prefix, 'DiscoverGranules');
       testSuffix = createTestSuffix(testId);
       collection = { name: `http_testcollection${testSuffix}`, version: '001' };
       provider = await buildHttpOrHttpsProvider(testSuffix);
 
       // populate collections and providers
       await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-        createProvider(config.stackName, provider),
+        addCollections(prefix, config.bucket, collectionsDir, testSuffix),
+        createProvider(prefix, provider),
       ]);
 
       collection = JSON.parse((await apiTestUtils.getCollection({
-        prefix: config.stackName,
+        prefix,
         collectionName: collection.name,
         collectionVersion: collection.version,
       })).body);
 
       discoverGranulesExecution = await buildAndExecuteWorkflow(
-        config.stackName,
+        prefix,
         config.bucket,
         workflowName,
         collection,
@@ -102,34 +103,60 @@ describe('The Discover Granules workflow with http Protocol', () => {
         await waitForApiStatus(
           getGranule,
           {
-            prefix: config.stackName,
+            prefix,
             granuleId: granule.granuleId,
           },
           'completed'
         );
         await deleteGranule({
-          prefix: config.stackName,
+          prefix,
           granuleId: granule.granuleId,
         });
       }
     ));
     // Order matters. Child executions must be deleted before parents.
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn3 });
-    await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn });
+    await Promise.allSettled(
+      runningWorkflows.map((executionArn) =>
+        deleteExecution({
+          prefix,
+          executionArn,
+        }))
+    );
 
-    await Promise.all(noFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
-    await Promise.all(partialFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
-    await Promise.all(ignoringFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
+    await deleteExecution({
+      prefix,
+      executionArn: discoverGranulesExecutionArn,
+    });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ignoringFilesConfigExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: partialFilesConfigExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: noFilesConfigExecutionArn });
+    await Promise.all(
+      noFilesIngestExecutionArns.map((executionArn) =>
+        deleteExecution({ prefix, executionArn }))
+    );
+    await Promise.all(
+      partialFilesIngestExecutionArns.map((executionArn) =>
+        deleteExecution({ prefix, executionArn }))
+    );
+    await Promise.all(
+      ignoringFilesIngestExecutionArns.map((executionArn) =>
+        deleteExecution({ prefix, executionArn }))
+    );
+
+    await deleteExecution({
+      prefix,
+      executionArn: ignoringFilesConfigExecutionArn,
+    });
+    await deleteExecution({
+      prefix,
+      executionArn: partialFilesConfigExecutionArn,
+    });
+    await deleteExecution({
+      prefix,
+      executionArn: noFilesConfigExecutionArn,
+    });
 
     await Promise.all([
-      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      deleteProvider({ prefix: config.stackName, providerId: provider.id }),
+      cleanupCollections(prefix, config.bucket, collectionsDir, testSuffix),
+      deleteProvider({ prefix, providerId: provider.id }),
     ]);
   });
 
@@ -160,7 +187,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       const record = await waitForApiStatus(
         getExecution,
         {
-          prefix: config.stackName,
+          prefix,
           arn: discoverGranulesExecutionArn,
         },
         'completed'
@@ -179,29 +206,32 @@ describe('The Discover Granules workflow with http Protocol', () => {
    * The DiscoverGranules workflow queues granule ingest workflows, so check that one of the
    * granule ingest workflow completes successfully.
    */
-  describe('IngestGranule workflow', () => {
-    let ingestGranuleExecutionStatus;
-    let syncGranuleLambdaOutput;
-
+  describe('IngestGranule workflows', () => {
     beforeAll(async () => {
-      ingestGranuleWorkflowArn1 = queueGranulesOutput.payload.running[0];
-      ingestGranuleWorkflowArn2 = queueGranulesOutput.payload.running[1];
-      ingestGranuleWorkflowArn3 = queueGranulesOutput.payload.running[2];
-      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
+      runningWorkflows = queueGranulesOutput.payload.running;
+      ingestExecutionStatuses = await Promise.all(
+        runningWorkflows.map((arn) => {
+          console.log(`Wait for ingestGranuleWorkflow: ${arn}`);
+          return waitForCompletedExecution(arn);
+        })
+      );
     });
 
-    it('executes successfully', () => {
-      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    it('execute successfully', () => {
+      ingestExecutionStatuses.forEach((status) => {
+        expect(status).toEqual('SUCCEEDED');
+      });
     });
 
-    describe('SyncGranule lambda function', () => {
-      it('outputs the expected granule', async () => {
-        syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
-          ingestGranuleWorkflowArn1,
-          'SyncGranule'
-        );
-        expect(syncGranuleLambdaOutput.payload.granules.length).toEqual(1);
+    describe('SyncGranule lambda functions', () => {
+      it('output the expected granules', async () => {
+        await Promise.all(runningWorkflows.map(async (arn) => {
+          const syncGranuleLambdaOutput = await lambdaStep.getStepOutput(
+            arn,
+            'SyncGranule'
+          );
+          expect(syncGranuleLambdaOutput.payload.granules.length).toEqual(1);
+        }));
       });
     });
   });
@@ -213,13 +243,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
-        prefix: config.stackName,
+        prefix,
         collection,
         updateParams: { files: [] },
       });
 
       noFilesConfigExecution = await buildAndExecuteWorkflow(
-        config.stackName,
+        prefix,
         config.bucket,
         workflowName,
         collection,
@@ -277,13 +307,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
-        prefix: config.stackName,
+        prefix,
         collection,
         updateParams: { files: [collection.files[0]] },
       });
 
       partialFilesConfigExecution = await buildAndExecuteWorkflow(
-        config.stackName,
+        prefix,
         config.bucket,
         workflowName,
         collection,
@@ -341,7 +371,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       await apiTestUtils.updateCollection({
-        prefix: config.stackName,
+        prefix,
         collection,
         updateParams: {
           files: [],
@@ -350,7 +380,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       });
 
       ignoringFilesConfigExecution = await buildAndExecuteWorkflow(
-        config.stackName,
+        prefix,
         config.bucket,
         workflowName,
         collection,
