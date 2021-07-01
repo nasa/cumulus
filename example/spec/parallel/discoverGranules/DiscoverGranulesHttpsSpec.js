@@ -15,11 +15,9 @@ const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
 
-// Note: This test runs in serial due to the logs endpoint tests
-
 describe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
-  let httpsWorkflowExecution = null;
+  let httpsWorkflowExecution;
 
   let collection;
   let config;
@@ -100,7 +98,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaInput = null;
+    let lambdaInput;
 
     beforeAll(async () => {
       lambdaInput = await lambdaStep.getStepInput(
