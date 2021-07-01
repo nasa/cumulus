@@ -25,7 +25,7 @@ const cryptoRandomString = require('crypto-random-string');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
@@ -46,6 +46,7 @@ const {
   createTimestampedTestId,
   deleteFolder,
   loadConfig,
+  waitForApiStatus,
   uploadTestDataToBucket,
   updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
@@ -182,7 +183,11 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-
+    await waitForApiStatus(
+      getExecution,
+      { prefix: config.stackName, arn: ingestGranuleExecutionArn },
+      'completed'
+    );
     // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });

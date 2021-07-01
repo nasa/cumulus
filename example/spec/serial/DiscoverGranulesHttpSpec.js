@@ -191,17 +191,23 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     it('executes successfully', async () => {
       console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
-      await waitForApiStatus(
+      ingestGranuleExecutionStatus = await waitForApiStatus(
         getExecution,
-        { prefix: config.stackName, arn: ingestGranuleWorkflowArn2 },
+        { prefix: config.stackName, arn: ingestGranuleWorkflowArn1 },
         'completed'
       );
-      await waitForApiStatus(
-        getExecution,
-        { prefix: config.stackName, arn: ingestGranuleWorkflowArn3 },
-        'completed'
-      );
+      await Promise.all([
+        waitForApiStatus(
+          getExecution,
+          { prefix: config.stackName, arn: ingestGranuleWorkflowArn2 },
+          'completed'
+        ),
+        waitForApiStatus(
+          getExecution,
+          { prefix: config.stackName, arn: ingestGranuleWorkflowArn3 },
+          'completed'
+        ),
+      ]);
       expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
     });
 
