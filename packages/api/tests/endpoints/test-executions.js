@@ -2,78 +2,214 @@
 
 const test = require('ava');
 const request = require('supertest');
-const awsServices = require('@cumulus/aws-client/services');
+const cryptoRandomString = require('crypto-random-string');
 const {
+  // buildS3Uri,
+  createBucket,
+  // createS3Buckets,
+  // deleteS3Buckets,
   recursivelyDeleteS3Bucket,
+  // s3ObjectExists,
+  s3PutObject,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
+const {
+  CollectionPgModel,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
+  generateLocalTestDb,
+  GranulePgModel,
+  localStackConnectionEnv,
+  translateApiExecutionToPostgresExecution,
+} = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
-
-const models = require('../../models');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { migrationDir } = require('../../../../lambdas/db-migration');
+const {
+  AccessToken,
+  Collection,
+  Execution,
+  Granule,
+} = require('../../models');
+// Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
-  fakeExecutionFactory,
+  // fakeAccessTokenFactory,
+  fakeCollectionFactory,
+  fakeGranuleFactoryV2,
+  fakeExecutionFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 // create all the variables needed across this test
+let accessTokenModel;
+let collectionModel;
 let esClient;
 let esIndex;
+let executionModel;
+let executionPgModel;
+let granuleModel;
+let granulePgModel;
+let jwtAuthToken;
 const fakeExecutions = [];
-process.env.AccessTokensTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomId('token');
+process.env.CollectionsTable = randomId('collection');
+process.env.ExecutionsTable = randomId('executions');
+process.env.GranulesTable = randomId('granules');
+process.env.stackName = randomId('stackname');
+process.env.system_bucket = randomId('systembucket');
+process.env.TOKEN_SECRET = randomId('secret');
+
+const testDbName = randomId('execution_test');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-let jwtAuthToken;
-let accessTokenModel;
-let executionModel;
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
 
-test.before(async () => {
-  esIndex = randomString();
+  esIndex = randomId('esindex');
+  t.context.esAlias = randomId('esAlias');
+  process.env.ES_INDEX = t.context.esAlias;
+
   // create esClient
   esClient = await Search.es('fakehost');
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-
   // add fake elasticsearch index
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 
   // create a fake bucket
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await createBucket(process.env.system_bucket);
+
+  // create a workflow template file
+  const tKey = `${process.env.stackName}/workflow_template.json`;
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+
+  // create fake Collections table
+  collectionModel = new Collection();
+  await collectionModel.createTable();
+
+  // create fake Granules table
+  granuleModel = new Granule();
+  await granuleModel.createTable();
 
   // create fake execution table
-  executionModel = new models.Execution();
+  executionModel = new Execution();
   await executionModel.createTable();
 
   // create fake execution records
-  fakeExecutions.push(fakeExecutionFactory('completed'));
-  fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
+  fakeExecutions.push(fakeExecutionFactoryV2({ status: 'completed', asyncOperationId: '0fe6317a-233c-4f19-a551-f0f76071402f', arn: 'arn2' }));
+  fakeExecutions.push(fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2' }));
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
-    .then((record) => indexer.indexExecution(esClient, record, esAlias))));
+    .then((record) => indexer.indexExecution(esClient, record, t.context.esAlias))));
+
+  granulePgModel = new GranulePgModel();
+  executionPgModel = new ExecutionPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+
+  // Generate a local test postGres database
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
+  // Create collections in Dynamo and Postgres
+  // we need this because a granule has a foreign key referring to collections
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+    duplicateHandling: 'error',
+  });
+  const dynamoCollection = await collectionModel.create(t.context.testCollection);
+  t.context.collectionId = constructCollectionId(
+    dynamoCollection.name,
+    dynamoCollection.version
+  );
+
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+  const collectionPgModel = new CollectionPgModel();
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection
+  );
+
+  await esClient.indices.refresh();
 });
 
-test.after.always(async () => {
+test.beforeEach(async (t) => {
+  const { esAlias } = t.context;
+
+  const granuleId1 = cryptoRandomString({ length: 6 });
+  const granuleId2 = cryptoRandomString({ length: 6 });
+
+  // create fake Dynamo granule records
+  t.context.fakeGranules = [
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
+  ];
+
+  await Promise.all(t.context.fakeGranules.map((granule) =>
+    granuleModel.create(granule)
+      .then((record) => indexer.indexGranule(esClient, record, esAlias))));
+
+  // create fake Postgres granule records
+  t.context.fakePGGranules = [
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId1,
+        status: 'completed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId2,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    ),
+  ];
+
+  await Promise.all(t.context.fakePGGranules.map((granule) =>
+    granulePgModel.create(t.context.knex, granule)));
+});
+
+
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
+  await collectionModel.deleteTable();
   await executionModel.deleteTable();
+  await granuleModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -146,6 +282,17 @@ test('executions can be filtered by workflow', async (t) => {
   t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
+test('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
+  const response = await request(app)
+    .get('/executions?asyncOperationId=0fe6317a-233c-4f19-a551-f0f76071402f')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.meta.count, 1);
+  t.is(response.body.results[0].arn, 'arn2');
+});
+
 test('GET returns an existing execution', async (t) => {
   const response = await request(app)
     .get(`/executions/${fakeExecutions[0].arn}`)
@@ -169,4 +316,74 @@ test('GET fails if execution is not found', async (t) => {
 
   t.is(response.status, 404);
   t.true(response.body.message.includes('No record found for'));
+});
+
+
+test('DELETE removes only specified execution from all data stores', async (t) => {
+  const { knex } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    arn: 'arn3',
+    status: 'completed',
+    name: 'test_execution',
+  });
+
+  fakeExecutions.push(newExecution);
+
+  await Promise.all(fakeExecutions.map(async (execution) => {
+    // delete async operation foreign key to avoid needing a valid async operation
+    delete execution.asyncOperationId;
+    await executionModel.create(execution);
+    const executionPgRecord = await translateApiExecutionToPostgresExecution(execution, knex);
+    await executionPgModel.create(knex, executionPgRecord);
+  }));
+
+  t.true(await executionModel.exists({ arn: newExecution.arn }));
+  t.true(
+    await executionPgModel.exists(knex, { arn: newExecution.arn })
+  );
+
+  await request(app)
+    .delete(`/executions/${newExecution.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  // Correct Dynamo and PG execution was deleted
+  t.false(await executionModel.exists({ arn: newExecution.arn }));
+
+  const dbRecords = await executionPgModel
+    .search(t.context.knex, { arn: newExecution.arn });
+
+  t.is(dbRecords.length, 0);
+
+  // Previously created executions still exist
+  t.true(await executionModel.exists({ arn: fakeExecutions[0].arn }));
+  t.true(await executionModel.exists({ arn: fakeExecutions[1].arn }));
+
+  const originalExecution1 = await executionPgModel
+    .search(t.context.knex, { arn: fakeExecutions[0].arn });
+
+  t.is(originalExecution1.length, 1);
+
+  const originalExecution2 = await executionPgModel
+    .search(t.context.knex, { arn: fakeExecutions[1].arn });
+
+  t.is(originalExecution2.length, 1);
+});
+
+test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
+  const nonExistantExecution = {
+    arn: 'arn9',
+    status: 'completed',
+    name: 'test_execution',
+  };
+
+  const response = await request(app)
+    .delete(`/executions/${nonExistantExecution.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.body.message, 'No record found');
 });
