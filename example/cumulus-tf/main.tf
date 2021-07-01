@@ -174,7 +174,7 @@ module "cumulus" {
   log_destination_arn = var.log_destination_arn
 
   # Cumulus Distribution settings. Remove/comment if not using Cognito.
-  tea_external_api_endpoint = var.cumulus_distribution_url
+  tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
