@@ -196,7 +196,6 @@ test.beforeEach(async (t) => {
     granulePgModel.create(t.context.knex, granule)));
 });
 
-
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
