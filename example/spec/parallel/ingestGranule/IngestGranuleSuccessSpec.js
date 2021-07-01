@@ -795,16 +795,6 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('is published for a running granule', async () => {
-      if (beforeAllError) throw SetupError;
-
-      const granuleExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: granuleRunningMessageKey,
-      });
-      expect(granuleExists).toEqual(true);
-    });
-
     it('is published for an execution on a successful workflow completion', async () => {
       if (beforeAllError) throw SetupError;
 
