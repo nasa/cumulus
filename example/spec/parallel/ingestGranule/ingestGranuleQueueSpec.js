@@ -8,7 +8,6 @@ const { URL, resolve } = require('url');
 
 const {
   Granule,
-  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
@@ -31,6 +30,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -90,7 +90,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrFilename;
   let postToCmrOutput;
   let provider;
-  let providerModel;
   let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
@@ -110,7 +109,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      providerModel = new Provider();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -243,7 +241,10 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      deleteProvider({
+        prefix: config.stackName,
+        providerId: provider.id,
+      }),
     ]);
   });
 
@@ -281,12 +282,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ['completed']
     );
 
-    const granuleResponse = await getGranule({
+    const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    const granule = JSON.parse(granuleResponse.body);
-
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();
   });

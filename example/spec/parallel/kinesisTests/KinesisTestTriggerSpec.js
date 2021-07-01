@@ -27,13 +27,15 @@ const {
   setProcessEnvironment,
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
-const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule, removeFromCMR } = require('@cumulus/api-client/granules');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule, deleteGranule, removeFromCMR } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getExecution } = require('@cumulus/api-client/executions');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
-const { waitForApiStatus } = require('../../helpers/apiUtils');
+const {
+  waitForApiRecord,
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -354,11 +356,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
-        granule = await getGranuleWithStatus({
-          prefix: testConfig.stackName,
-          granuleId,
-          status: 'completed',
-        });
+
+        granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: testConfig.stackName,
+            granuleId,
+          },
+          {
+            status: 'completed',
+            execution: getExecutionUrlFromArn(workflowExecution.executionArn),
+          }
+        );
       });
 
       it('outputs the expected object', () => {
@@ -436,16 +445,22 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     describe('the CnmResponse Lambda', () => {
       let beforeAllFailed = false;
       let lambdaOutput;
-      let granule;
+      let failedGranule;
 
       beforeAll(async () => {
         try {
           lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
-          granule = await getGranuleWithStatus({
-            prefix: testConfig.stackName,
-            granuleId,
-            status: 'failed',
-          });
+          failedGranule = await waitForApiRecord(
+            getGranule,
+            {
+              prefix: testConfig.stackName,
+              granuleId,
+            },
+            {
+              status: 'failed',
+              execution: getExecutionUrlFromArn(failingWorkflowExecution.executionArn),
+            }
+          );
         } catch (error) {
           beforeAllFailed = true;
           console.log('CnmResponse Lambda error:::', error);
@@ -480,7 +495,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       it('puts cnm message to cumulus message for granule record', () => {
         const cnm = get(lambdaOutput, 'meta.granule.queryFields.cnm');
         expect(isMatch(cnm, badRecord)).toBe(true);
-        expect(get(granule, 'queryFields.cnm')).toEqual(cnm);
+        expect(get(failedGranule, 'queryFields.cnm')).toEqual(cnm);
       });
     });
   });

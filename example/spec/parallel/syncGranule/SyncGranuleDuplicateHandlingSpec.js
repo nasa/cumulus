@@ -6,7 +6,6 @@ const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { models: { Granule } } = require('@cumulus/api');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
@@ -17,6 +16,8 @@ const {
   cleanupCollections,
   cleanupProviders,
 } = require('@cumulus/integration-tests');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+
 const {
   deleteFolder,
   loadConfig,
@@ -31,7 +32,9 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const {
+  waitForApiRecord,
+} = require('../../helpers/apiUtils');
 
 const workflowName = 'SyncGranule';
 
@@ -56,7 +59,6 @@ describe('When the Sync Granule workflow is configured', () => {
   let duplicateFilenameExecutionArn;
   let existingVersionedFileExecutionArn;
   let expectedPayload;
-  let granuleModel;
   let inputPayload;
   let lambdaStep;
   let newGranuleId;
@@ -78,9 +80,6 @@ describe('When the Sync Granule workflow is configured', () => {
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -273,21 +272,21 @@ describe('When the Sync Granule workflow is configured', () => {
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
-      it('captures both files', async () => {
-        // This assertion is to check that the granule has been updated in dynamo
+      it('captures the additional file', async () => {
+        // This assertion is to check that the granule has been updated in the API
         // before performing further checks
-        const record = await waitForModelStatus(
-          granuleModel,
-          { granuleId: inputPayload.granules[0].granuleId },
-          'completed'
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'completed',
+            execution: getExecutionUrlFromArn(duplicateFilenameExecutionArn),
+          }
         );
-        expect(record.status).toEqual('completed');
-
-        const granuleResponse = await getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-        const granule = JSON.parse(granuleResponse.body);
+        expect(granule.status).toEqual('completed');
         expect(granule.files.length).toEqual(3);
       });
     });
@@ -329,18 +328,18 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures all files', async () => {
-        const record = await waitForModelStatus(
-          granuleModel,
-          { granuleId: inputPayload.granules[0].granuleId },
-          'completed'
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'completed',
+            execution: getExecutionUrlFromArn(existingVersionedFileExecutionArn),
+          }
         );
-        expect(record.status).toEqual('completed');
-
-        const granuleResponse = await getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-        const granule = JSON.parse(granuleResponse.body);
+        expect(granule.status).toEqual('completed');
         expect(granule.files.length).toEqual(4);
       });
     });
