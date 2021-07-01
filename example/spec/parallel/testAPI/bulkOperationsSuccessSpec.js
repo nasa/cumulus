@@ -102,6 +102,7 @@ describe('POST /granules/bulk', () => {
         });
 
         granuleId = randomId('granule-id-');
+        console.log('granuleId', granuleId);
 
         const ingestTime = Date.now() - 1000 * 30;
 
@@ -170,6 +171,8 @@ describe('POST /granules/bulk', () => {
           },
         });
         postBulkOperationsBody = JSON.parse(postBulkGranulesResponse.body);
+
+        console.log(`bulk operations async operation ID: ${postBulkOperationsBody.id}`);
 
         // Query the AsyncOperation API to get the task ARN
         const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
@@ -307,7 +310,10 @@ describe('POST /granules/bulk', () => {
             const asyncOperationId = get(execution, 'asyncOperationId');
             return asyncOperationId === postBulkOperationsBody.id;
           },
-          { timestamp__from: bulkRequestTime },
+          {
+            timestamp__from: bulkRequestTime,
+            asyncOperationId: postBulkOperationsBody.id,
+          },
           { timeout: 60 }
         );
         console.log('bulkOperationExecutionArn', bulkOperationExecutionArn);
