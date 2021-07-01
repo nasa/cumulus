@@ -99,7 +99,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       .map((arn) => waitForApiStatus(
         getExecution,
         {
-          prefix,
+          prefix: config.stackName,
           arn,
         },
         'completed'
