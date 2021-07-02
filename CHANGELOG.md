@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2327**
+  - Added provisioned concurrency config to the API lambda function to ensure continuity of service
+    in the event of Lambda concurrency limitations being reached.
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
