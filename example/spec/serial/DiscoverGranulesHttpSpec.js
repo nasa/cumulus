@@ -208,7 +208,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
           'completed'
         ),
       ]);
-      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+      expect(ingestGranuleExecutionStatus.status).toEqual('completed');
     });
 
     describe('SyncGranule lambda function', () => {
