@@ -21,11 +21,5 @@
         }
       ]
     }
-  ],
-  "pdr": {
-    "path": "cumulus-test-data/pdrs",
-    "size": 596,
-    "name": "MOD09GQ_1granule_v3.PDR",
-    "time": 1520873050000
-  }
+  ]
 }
