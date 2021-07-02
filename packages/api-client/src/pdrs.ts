@@ -53,7 +53,7 @@ export const getPdr = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/pdr/${pdrName}`,
+      path: `/pdrs/${pdrName}`,
     },
   });
 
