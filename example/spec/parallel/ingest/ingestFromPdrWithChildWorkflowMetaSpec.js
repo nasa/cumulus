@@ -182,6 +182,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
+
     // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
