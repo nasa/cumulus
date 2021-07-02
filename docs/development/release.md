@@ -261,9 +261,10 @@ Finally, you need to reproduce the version update changes back to master.
 If this is the latest version, you can simply create a PR to merge the minor version base branch back to master.
 
 Do not merge `master` back into the release branch **until**:
-- the PR is approved, 
-- CI has passed against the release artifacts above, 
-- and you are ready to merge. 
+
+- the PR is approved,
+- CI has passed against the release artifacts above,
+- and you are ready to merge.
 
 Doing so earlier, even just to resolve merge conflicts, might cause headaches if you need to troubleshoot. For example, if CI fails on the release build for any reason and if you have merged master into the release already you will no longer have a branch representing ONLY the release and will need to specify a specific commit SHA.
 
