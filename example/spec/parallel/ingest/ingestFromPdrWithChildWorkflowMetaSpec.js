@@ -32,6 +32,7 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
+  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   getExecutionInputObject,
@@ -49,6 +50,10 @@ const {
   uploadTestDataToBucket,
   updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
+
+const {
+  waitAndDeletePdr,
+} = require('../../helpers/pdrUtils');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrsChildWorkflowMeta';
@@ -87,8 +92,6 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithChildWorkflowMeta');
       testSuffix = createTestSuffix(testId);
@@ -166,6 +169,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         'QueueGranules'
       );
       ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
+      console.log('ingest granule execution ARN:', ingestGranuleExecutionArn);
     } catch (error) {
       beforeAllFailed = error;
       throw error;
@@ -178,10 +182,11 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       prefix: config.stackName,
       granuleId: testDataGranuleId,
     });
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
+    await waitAndDeletePdr(
+      config.stackName,
+      pdrFilename,
+      'completed'
+    );
 
     // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
