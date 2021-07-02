@@ -27,12 +27,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { migrationDir } = require('../../../../lambdas/db-migration');
-const {
-  AccessToken,
-  Collection,
-  Execution,
-  Granule,
-} = require('../../models');
+const { AccessToken, Collection, Execution, Granule } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -92,11 +87,18 @@ test.before(async (t) => {
 
   // create a workflow template file
   const tKey = `${process.env.stackName}/workflow_template.json`;
-  await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: tKey,
+    Body: '{}',
+  });
 
   // Generate a local test postGres database
 
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  const { knex, knexAdmin } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
@@ -113,16 +115,28 @@ test.before(async (t) => {
   await executionModel.createTable();
 
   // create fake execution records
-  fakeExecutions.push(fakeExecutionFactoryV2({ status: 'completed', asyncOperationId: '0fe6317a-233c-4f19-a551-f0f76071402f', arn: 'arn2' }));
-  fakeExecutions.push(fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2' }));
-  await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
-    .then((record) => indexer.indexExecution(esClient, record, t.context.esAlias))));
+  fakeExecutions.push(
+    fakeExecutionFactoryV2({
+      status: 'completed',
+      asyncOperationId: '0fe6317a-233c-4f19-a551-f0f76071402f',
+      arn: 'arn2',
+    })
+  );
+  fakeExecutions.push(
+    fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2' })
+  );
+  await Promise.all(
+    fakeExecutions.map((i) =>
+      executionModel
+        .create(i)
+        .then((record) =>
+          indexer.indexExecution(esClient, record, t.context.esAlias)))
+  );
 
   executionPgModel = new ExecutionPgModel();
   collectionPgModel = new CollectionPgModel();
   granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   granulePgModel = new GranulePgModel();
-
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -142,7 +156,9 @@ test.before(async (t) => {
     version: collectionVersion,
     duplicateHandling: 'error',
   });
-  const dynamoCollection = await collectionModel.create(t.context.testCollection);
+  const dynamoCollection = await collectionModel.create(
+    t.context.testCollection
+  );
   t.context.collectionId = constructCollectionId(
     dynamoCollection.name,
     dynamoCollection.version
@@ -164,7 +180,6 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const { esAlias, knex } = t.context;
 
-
   const workflowName1 = cryptoRandomString({ length: 6 });
   const workflowName2 = cryptoRandomString({ length: 6 });
 
@@ -175,8 +190,10 @@ test.beforeEach(async (t) => {
   ];
 
   [t.context.executionCumulusId1, t.context.executionCumulusId2]
-    = await Promise.all(t.context.fakePGExecutions.map((execution) =>
-      executionPgModel.create(knex, execution)));
+    = await Promise.all(
+      t.context.fakePGExecutions.map((execution) =>
+        executionPgModel.create(knex, execution))
+    );
 
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
@@ -187,41 +204,47 @@ test.beforeEach(async (t) => {
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
   ];
 
-  await Promise.all(t.context.fakeGranules.map((granule) =>
-    granuleModel.create(granule)
-      .then((record) => indexer.indexGranule(esClient, record, esAlias))));
+  await Promise.all(
+    t.context.fakeGranules.map((granule) =>
+      granuleModel
+        .create(granule)
+        .then((record) => indexer.indexGranule(esClient, record, esAlias)))
+  );
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId1,
-        status: 'completed',
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }
-    ),
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId2,
-        status: 'failed',
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }
-    ),
+    fakeGranuleRecordFactory({
+      granule_id: granuleId1,
+      status: 'completed',
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }),
+    fakeGranuleRecordFactory({
+      granule_id: granuleId2,
+      status: 'failed',
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }),
   ];
 
-  [t.context.granuleCumulusId] = await Promise.all(t.context.fakePGGranules.map((granule) =>
-    granulePgModel.create(knex, granule)));
+  [t.context.granuleCumulusId] = await Promise.all(
+    t.context.fakePGGranules.map((granule) =>
+      granulePgModel.create(knex, granule))
+  );
 
-  t.context.joinRecords = [{
-    execution_cumulus_id: t.context.executionCumulusId1[0],
-    granule_cumulus_id: Number(t.context.granuleCumulusId),
-  }, {
-    execution_cumulus_id: t.context.executionCumulusId2[0],
-    granule_cumulus_id: Number(t.context.granuleCumulusId),
-  }];
+  t.context.joinRecords = [
+    {
+      execution_cumulus_id: t.context.executionCumulusId1[0],
+      granule_cumulus_id: Number(t.context.granuleCumulusId),
+    },
+    {
+      execution_cumulus_id: t.context.executionCumulusId2[0],
+      granule_cumulus_id: Number(t.context.granuleCumulusId),
+    },
+  ];
 
-  await Promise.all(t.context.joinRecords.map((joinRecord) =>
-    granulesExecutionsPgModel.create(knex, joinRecord)));
+  await Promise.all(
+    t.context.joinRecords.map((joinRecord) =>
+      granulesExecutionsPgModel.create(knex, joinRecord))
+  );
 });
 
 test.after.always(async (t) => {
@@ -345,7 +368,6 @@ test('GET fails if execution is not found', async (t) => {
   t.true(response.body.message.includes('No record found for'));
 });
 
-
 test('DELETE removes only specified execution from all data stores', async (t) => {
   const { knex } = t.context;
 
@@ -357,18 +379,21 @@ test('DELETE removes only specified execution from all data stores', async (t) =
 
   fakeExecutions.push(newExecution);
 
-  await Promise.all(fakeExecutions.map(async (execution) => {
-    // delete async operation foreign key to avoid needing a valid async operation
-    delete execution.asyncOperationId;
-    await executionModel.create(execution);
-    const executionPgRecord = await translateApiExecutionToPostgresExecution(execution, knex);
-    await executionPgModel.create(knex, executionPgRecord);
-  }));
+  await Promise.all(
+    fakeExecutions.map(async (execution) => {
+      // delete async operation foreign key to avoid needing a valid async operation
+      delete execution.asyncOperationId;
+      await executionModel.create(execution);
+      const executionPgRecord = await translateApiExecutionToPostgresExecution(
+        execution,
+        knex
+      );
+      await executionPgModel.create(knex, executionPgRecord);
+    })
+  );
 
   t.true(await executionModel.exists({ arn: newExecution.arn }));
-  t.true(
-    await executionPgModel.exists(knex, { arn: newExecution.arn })
-  );
+  t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
 
   await request(app)
     .delete(`/executions/${newExecution.arn}`)
@@ -379,8 +404,9 @@ test('DELETE removes only specified execution from all data stores', async (t) =
   // Correct Dynamo and PG execution was deleted
   t.false(await executionModel.exists({ arn: newExecution.arn }));
 
-  const dbRecords = await executionPgModel
-    .search(t.context.knex, { arn: newExecution.arn });
+  const dbRecords = await executionPgModel.search(t.context.knex, {
+    arn: newExecution.arn,
+  });
 
   t.is(dbRecords.length, 0);
 
@@ -388,13 +414,15 @@ test('DELETE removes only specified execution from all data stores', async (t) =
   t.true(await executionModel.exists({ arn: fakeExecutions[0].arn }));
   t.true(await executionModel.exists({ arn: fakeExecutions[1].arn }));
 
-  const originalExecution1 = await executionPgModel
-    .search(t.context.knex, { arn: fakeExecutions[0].arn });
+  const originalExecution1 = await executionPgModel.search(t.context.knex, {
+    arn: fakeExecutions[0].arn,
+  });
 
   t.is(originalExecution1.length, 1);
 
-  const originalExecution2 = await executionPgModel
-    .search(t.context.knex, { arn: fakeExecutions[1].arn });
+  const originalExecution2 = await executionPgModel.search(t.context.knex, {
+    arn: fakeExecutions[1].arn,
+  });
 
   t.is(originalExecution2.length, 1);
 });
