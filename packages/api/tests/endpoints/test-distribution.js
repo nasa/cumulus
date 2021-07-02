@@ -39,11 +39,6 @@ const publicBucketPath = randomId('publicpath');
 const protectedBucket = randomId('protectedbucket');
 
 const headerContentTypeTextPlain = 'text/plain';
-const headerContentDispositionInline = 'inline';
-const headerContentLanguage = 'de-DE, en-CA';
-const headerContentEncoding = 'compress';
-const headerExpires = '2021-06-26T14:48:00.000Z';
-const headerCacheControl = 'max-age=31536000';
 const headerCustomHeaderVal = 'example-custom-header-value';
 
 const bucketMap = {
@@ -58,11 +53,6 @@ const bucketMap = {
       bucket: 'bucket-path-2',
       headers: {
         'Content-Type': headerContentTypeTextPlain,
-        'Content-Disposition': headerContentDispositionInline,
-        'Content-Language': headerContentLanguage,
-        'Content-Encoding': headerContentEncoding,
-        Expires: headerExpires,
-        'Cache-Control': headerCacheControl,
         'Custom-Header': headerCustomHeaderVal,
       },
     },
@@ -351,11 +341,6 @@ test.serial('A request for a public file with an access token in the bucket-map 
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
   t.true(response.headers['content-type'].includes(headerContentTypeTextPlain));
-  t.is(response.headers['content-disposition'], headerContentDispositionInline);
-  t.is(response.headers['content-language'], headerContentLanguage);
-  t.is(response.headers['content-encoding'], headerContentEncoding);
-  t.is(new Date(response.headers.expires).toISOString(), new Date(headerExpires).toISOString());
-  t.is(response.headers['cache-control'], headerCacheControl);
   t.is(response.headers['custom-header'], headerCustomHeaderVal);
 });
 
