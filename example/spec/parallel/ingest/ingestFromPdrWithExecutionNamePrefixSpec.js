@@ -38,7 +38,6 @@ const {
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
-
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,

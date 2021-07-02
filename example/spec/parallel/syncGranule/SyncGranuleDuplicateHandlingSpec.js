@@ -17,7 +17,6 @@ const {
 } = require('@cumulus/integration-tests');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
-
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   deleteFolder,

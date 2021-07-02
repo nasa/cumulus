@@ -12,13 +12,11 @@ const {
   api: apiTestUtils,
   cleanupCollections,
 } = require('@cumulus/integration-tests');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-const { getExecution } = require('@cumulus/api-client/executions');
-const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { buildFtpProvider, createProvider } = require('../../helpers/Providers');

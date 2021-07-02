@@ -31,8 +31,6 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
-  api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   getExecutionInputObject,
