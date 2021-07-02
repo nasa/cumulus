@@ -39,7 +39,7 @@ const publicBucketPath = randomId('publicpath');
 const protectedBucket = randomId('protectedbucket');
 
 const headerContentTypeTextPlain = 'text/plain';
-const headerContentDispositionInline = 'inlin';
+const headerContentDispositionInline = 'inline';
 const headerContentLanguage = 'de-DE, en-CA';
 const headerContentEncoding = 'compress';
 const headerExpires = '2021-06-26T14:48:00.000Z';
@@ -345,19 +345,18 @@ test.serial('A request for a public file with an access token in the bucket-map 
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
-  console.log(`Redirect URL: ${redirectLocation}`);
 
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
-  t.is(redirectLocation.searchParams.get('response-content-type'), headerContentTypeTextPlain); // Content-Type Override
-  t.is(redirectLocation.searchParams.get('response-content-disposition'), headerContentDispositionInline); // Content-Disposition Override
-  t.is(redirectLocation.searchParams.get('response-content-language'), headerContentLanguage); // Content-Language Override
-  t.is(redirectLocation.searchParams.get('response-content-encoding'), headerContentEncoding); // Content-Encoding Override
-  t.is(new Date(redirectLocation.searchParams.get('response-expires')).toISOString(), new Date(headerExpires).toISOString()); // Expires Override
-  t.is(redirectLocation.searchParams.get('response-cache-control'), headerCacheControl); // Cache-Control Override
-  t.is(redirectLocation.searchParams.get('custom-header'), null); // Any Header other than the six above are ignored
+  t.true(response.headers['content-type'].includes(headerContentTypeTextPlain));
+  t.is(response.headers['content-disposition'], headerContentDispositionInline);
+  t.is(response.headers['content-language'], headerContentLanguage);
+  t.is(response.headers['content-encoding'], headerContentEncoding);
+  t.is(new Date(response.headers['expires']).toISOString(), new Date(headerExpires).toISOString());
+  t.is(response.headers['cache-control'], headerCacheControl);
+  t.is(response.headers['custom-header'], headerCustomHeaderVal);
 });
 
 test.serial('A /login request with a good authorization code returns a correct response', async (t) => {

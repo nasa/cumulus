@@ -247,15 +247,7 @@ async function handleFileRequest(req, res) {
   try {
     switch (req.method) {
     case 'GET':
-      ({
-        'Cache-Control': options.ResponseCacheControl = 'private, max-age=600',
-        'Content-Type': options.ResponseContentType,
-        'Content-Disposition': options.ResponseContentDisposition,
-        'Content-Language': options.ResponseContentLanguage,
-        'Content-Encoding': options.ResponseContentEncoding,
-        Expires: options.ResponseExpires,
-      } = headers);
-
+      options.ResponseCacheControl = 'private, max-age=600';
       signedS3Url = await objectStore.signGetObject(url, options, queryParams);
       break;
     case 'HEAD':
@@ -292,6 +284,7 @@ async function handleFileRequest(req, res) {
   return res
     .status(307)
     .set({ Location: signedS3Url })
+    .set({...headers})
     .send('Redirecting');
 }
 
