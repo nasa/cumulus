@@ -7,11 +7,11 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
   addCollections,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   loadConfig,
   createTimestampedTestId,

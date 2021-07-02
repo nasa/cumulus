@@ -34,8 +34,6 @@ const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-uti
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
-  buildAndStartWorkflow,
   conceptExists,
   getExecutionOutput,
   getOnlineResources,
@@ -65,6 +63,10 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const {
+  buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
+} = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   templateFile,

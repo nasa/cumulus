@@ -12,12 +12,13 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
 } = require('@cumulus/integration-tests');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   deleteFolder,
   loadConfig,

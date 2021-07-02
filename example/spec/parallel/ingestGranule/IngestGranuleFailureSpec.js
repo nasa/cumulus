@@ -7,7 +7,6 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
@@ -15,6 +14,7 @@ const {
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');

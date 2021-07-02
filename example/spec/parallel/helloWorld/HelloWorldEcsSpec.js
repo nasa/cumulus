@@ -1,7 +1,7 @@
 const { Execution } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 

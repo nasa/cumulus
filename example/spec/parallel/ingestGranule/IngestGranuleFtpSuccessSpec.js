@@ -2,19 +2,21 @@
 
 const fs = require('fs-extra');
 const pMap = require('p-map');
+const mime = require('mime-types');
+
 const { models: { Granule } } = require('@cumulus/api');
 const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
 } = require('@cumulus/integration-tests');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-const mime = require('mime-types');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const { buildFtpProvider, createProvider } = require('../../helpers/Providers');

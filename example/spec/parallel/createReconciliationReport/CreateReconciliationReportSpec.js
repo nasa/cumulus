@@ -26,7 +26,6 @@ const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   generateCmrXml,
   waitForAsyncOperationStatus,
@@ -39,6 +38,7 @@ const { getCollections } = require('@cumulus/api-client/collections');
 const { getGranule } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,

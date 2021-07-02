@@ -32,13 +32,14 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   waitForCompletedExecution,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,

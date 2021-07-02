@@ -37,7 +37,6 @@ const {
   addProviders,
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   waitForCompletedExecution,
@@ -53,7 +52,7 @@ const {
   updateAndUploadTestFileToBucket,
   updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
-
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');

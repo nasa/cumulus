@@ -4,7 +4,6 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   waitForCompletedExecution,
@@ -23,6 +22,8 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   templateFile,

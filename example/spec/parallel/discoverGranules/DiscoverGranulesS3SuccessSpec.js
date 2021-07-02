@@ -2,7 +2,6 @@
 
 const pWaitFor = require('p-wait-for');
 const {
-  buildAndExecuteWorkflow,
   getExecutionInputObject,
   loadCollection,
   loadProvider,
@@ -20,6 +19,7 @@ const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTimestampedTestId,
   deleteFolder,
