@@ -312,9 +312,8 @@ describe('POST /granules/bulk', () => {
           },
           {
             timestamp__from: bulkRequestTime,
-            asyncOperationId: postBulkOperationsBody.id,
           },
-          { timeout: 60 }
+          { timeout: 120 }
         );
         console.log('bulkOperationExecutionArn', bulkOperationExecutionArn);
 
