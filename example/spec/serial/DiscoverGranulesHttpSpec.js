@@ -196,18 +196,6 @@ describe('The Discover Granules workflow with http Protocol', () => {
         { prefix: config.stackName, arn: ingestGranuleWorkflowArn1 },
         'completed'
       );
-      await Promise.all([
-        waitForApiStatus(
-          getExecution,
-          { prefix: config.stackName, arn: ingestGranuleWorkflowArn2 },
-          'completed'
-        ),
-        waitForApiStatus(
-          getExecution,
-          { prefix: config.stackName, arn: ingestGranuleWorkflowArn3 },
-          'completed'
-        ),
-      ]);
       expect(ingestGranuleExecutionStatus.status).toEqual('completed');
     });
 
