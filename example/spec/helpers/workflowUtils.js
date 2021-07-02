@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const merge = require('lodash/merge');
 const uuidv4 = require('uuid/v4');
+const fs = require('fs-extra');
 
 const {
   templateKey,
@@ -181,6 +182,31 @@ async function buildWorkflow(
 }
 
 /**
+ * Test the given workflow and report whether the workflow failed or succeeded
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {string} inputFile - path to input JSON file
+ * @returns {*} undefined
+ */
+async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
+  try {
+    const rawInput = await fs.readFile(inputFile, 'utf8');
+    const parsedInput = JSON.parse(rawInput);
+    const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, parsedInput);
+
+    if (workflowStatus.status === 'SUCCEEDED') {
+      console.log(`Workflow ${workflowName} execution succeeded.`);
+    } else {
+      console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
+    }
+  } catch (error) {
+    console.log(`Error executing workflow ${workflowName}. Error: ${error}`);
+  }
+}
+
+/**
  * build workflow message and execute the workflow
  *
  * @param {string} stackName - Cloud formation stack name
@@ -218,7 +244,38 @@ async function buildAndExecuteWorkflow(
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
 
+/**
+ * build workflow message and start the workflow. Does not wait
+ * for workflow completion.
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
+ * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
+ * @param {Object} payload - payload information
+ * @param {Object} meta - additional keys to add to meta field
+ * @returns {string} - executionArn
+ */
+async function buildAndStartWorkflow(
+  stackName,
+  bucketName,
+  workflowName,
+  collection,
+  provider,
+  payload,
+  meta = {}
+) {
+  const workflowMsg = await
+  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
+  return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
+}
 module.exports = {
+  testWorkflow,
+  buildAndStartWorkflow,
   buildAndExecuteWorkflow,
   isReingestExecutionForGranuleId,
 };
