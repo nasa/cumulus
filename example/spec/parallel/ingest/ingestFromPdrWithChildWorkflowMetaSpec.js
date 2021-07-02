@@ -31,6 +31,7 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
@@ -39,6 +40,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -201,7 +203,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   it('executes successfully', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     }
   });
 

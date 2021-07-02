@@ -2,18 +2,21 @@
 
 const fs = require('fs-extra');
 const pMap = require('p-map');
+const mime = require('mime-types');
+
 const { models: { Granule } } = require('@cumulus/api');
 const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
 } = require('@cumulus/integration-tests');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { getExecution } = require('@cumulus/api-client/executions');
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
@@ -121,7 +124,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
     it('completes execution with success status', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     });
 
     it('makes the granule available through the Cumulus API', () => {

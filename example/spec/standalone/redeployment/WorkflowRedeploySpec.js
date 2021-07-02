@@ -3,11 +3,11 @@
 const pRetry = require('p-retry');
 
 const {
-  buildAndStartWorkflow,
   waitForCompletedExecution,
   executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
 
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   protectFile,

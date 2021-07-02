@@ -7,7 +7,6 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
@@ -15,6 +14,7 @@ const {
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
@@ -137,7 +137,7 @@ describe('The Ingest Granule failure workflow', () => {
   it('completes execution with failure status', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      expect(workflowExecution.status).toEqual('FAILED');
+      expect(workflowExecution.status).toEqual('failed');
     }
   });
 

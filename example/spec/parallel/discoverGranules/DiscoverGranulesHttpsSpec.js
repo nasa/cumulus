@@ -4,11 +4,11 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
 const { waitForApiStatus } = require('../../helpers/apiUtils');

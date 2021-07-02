@@ -12,12 +12,13 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
 } = require('@cumulus/integration-tests');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   deleteFolder,
   loadConfig,
@@ -161,7 +162,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
   describe('to keep both files when encountering duplicate filenames\n', () => {
     it('the initial workflow completes execution with success status', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     });
 
     describe('and it encounters data with a duplicated filename with duplicate checksum', () => {
@@ -197,7 +198,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('does not create a copy of the file', async () => {
@@ -249,7 +250,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('moves the existing data to a file with a suffix to distinguish it from the new file', async () => {
@@ -307,7 +308,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('moves the existing data to a file with a suffix to distinguish it from the new file and existing versioned file', async () => {
@@ -370,7 +371,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('fails the workflow', () => {
-        expect(workflowExecution.status).toEqual('FAILED');
+        expect(workflowExecution.status).toEqual('failed');
       });
     });
 
@@ -403,7 +404,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('completes execution with success status', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
     });
   });

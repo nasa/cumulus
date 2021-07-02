@@ -2,7 +2,6 @@
 
 const pWaitFor = require('p-wait-for');
 const {
-  buildAndExecuteWorkflow,
   getExecutionInputObject,
   loadCollection,
   loadProvider,
@@ -20,6 +19,7 @@ const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTimestampedTestId,
   deleteFolder,
@@ -157,7 +157,7 @@ describe('The DiscoverGranules workflow', () => {
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('can be fetched from the API', async () => {
