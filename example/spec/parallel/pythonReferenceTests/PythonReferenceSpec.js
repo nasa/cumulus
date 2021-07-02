@@ -37,7 +37,7 @@ describe('The Python Reference workflow', () => {
   });
 
   it('executes successfully', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   it('contains the expected output from the PythonReferenceTask', async () => {

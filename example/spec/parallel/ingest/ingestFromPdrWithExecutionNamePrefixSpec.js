@@ -214,7 +214,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('executes successfully', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     }
   });
 

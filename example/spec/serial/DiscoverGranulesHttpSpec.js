@@ -144,7 +144,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   it('executes successfully', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
-    expect(discoverGranulesExecution.status).toEqual('SUCCEEDED');
+    expect(discoverGranulesExecution.status).toEqual('completed');
   });
 
   describe('the DiscoverGranules Lambda', () => {
@@ -262,7 +262,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(noFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(noFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output has no files', async () => {
@@ -326,7 +326,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(partialFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(partialFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output does not include all files', async () => {
@@ -392,7 +392,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(ignoringFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(ignoringFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output includes all files', async () => {

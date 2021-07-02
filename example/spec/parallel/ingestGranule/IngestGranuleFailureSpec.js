@@ -137,7 +137,7 @@ describe('The Ingest Granule failure workflow', () => {
   it('completes execution with failure status', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      expect(workflowExecution.status).toEqual('FAILED');
+      expect(workflowExecution.status).toEqual('failed');
     }
   });
 

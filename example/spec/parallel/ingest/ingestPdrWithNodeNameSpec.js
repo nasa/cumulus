@@ -226,7 +226,7 @@ describe('Ingesting from PDR', () => {
     it('executes successfully', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       }
     });
 

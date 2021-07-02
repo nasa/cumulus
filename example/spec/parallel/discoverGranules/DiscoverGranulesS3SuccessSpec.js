@@ -145,7 +145,7 @@ describe('The DiscoverGranules workflow', () => {
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('can be fetched from the API', async () => {
@@ -173,7 +173,7 @@ describe('The DiscoverGranules workflow', () => {
       const ingestGranuleExecutionStatus = await waitForCompletedExecution(
         queueGranulesOutput.payload.running[0]
       );
-      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+      expect(ingestGranuleExecutionStatus).toEqual('completed');
     }
   });
 

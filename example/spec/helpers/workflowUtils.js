@@ -196,7 +196,7 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
     const parsedInput = JSON.parse(rawInput);
     const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, parsedInput);
 
-    if (workflowStatus.status === 'SUCCEEDED') {
+    if (workflowStatus.status === 'completed') {
       console.log(`Workflow ${workflowName} execution succeeded.`);
     } else {
       console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);

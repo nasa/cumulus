@@ -84,7 +84,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
 
   it('fails', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('FAILED');
+    else expect(workflowExecution.status).toEqual('failed');
   });
 
   it('records the correct execution failure reason in the API', async () => {

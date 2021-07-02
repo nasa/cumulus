@@ -182,7 +182,7 @@ describe('The Sync Granules workflow', () => {
   });
 
   it('completes execution with success status', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   describe('the SyncGranule Lambda function', () => {
@@ -366,7 +366,7 @@ describe('The Sync Granules workflow', () => {
     });
 
     it('completes execution with failure status', () => {
-      expect(failingExecution.status).toEqual('FAILED');
+      expect(failingExecution.status).toEqual('failed');
     });
 
     it('raises an error', () => {

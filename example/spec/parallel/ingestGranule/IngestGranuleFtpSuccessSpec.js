@@ -115,7 +115,7 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     it('completes execution with success status', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     });
 
     it('makes the granule available through the Cumulus API', () => {

@@ -29,7 +29,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   });
 
   it('executes successfully', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   describe('the HelloWorld ECS', () => {

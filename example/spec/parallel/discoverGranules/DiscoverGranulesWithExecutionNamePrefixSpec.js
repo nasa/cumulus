@@ -138,7 +138,7 @@ describe('The DiscoverGranules workflow', () => {
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('properly sets the name of the queued execution', () => {
