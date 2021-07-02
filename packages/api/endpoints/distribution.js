@@ -284,7 +284,7 @@ async function handleFileRequest(req, res) {
   return res
     .status(307)
     .set({ Location: signedS3Url })
-    .set({...headers})
+    .set({ ...headers })
     .send('Redirecting');
 }
 

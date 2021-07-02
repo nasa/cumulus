@@ -354,7 +354,7 @@ test.serial('A request for a public file with an access token in the bucket-map 
   t.is(response.headers['content-disposition'], headerContentDispositionInline);
   t.is(response.headers['content-language'], headerContentLanguage);
   t.is(response.headers['content-encoding'], headerContentEncoding);
-  t.is(new Date(response.headers['expires']).toISOString(), new Date(headerExpires).toISOString());
+  t.is(new Date(response.headers.expires).toISOString(), new Date(headerExpires).toISOString());
   t.is(response.headers['cache-control'], headerCacheControl);
   t.is(response.headers['custom-header'], headerCustomHeaderVal);
 });
