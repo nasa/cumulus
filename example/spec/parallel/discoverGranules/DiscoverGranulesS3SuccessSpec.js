@@ -126,6 +126,18 @@ describe('The DiscoverGranules workflow', () => {
       }
     ));
 
+    await Promise.all([
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: ingestGranuleExecutionArn },
+        'completed'
+      ),
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: workflowExecution.executionArn },
+        'completed'
+      ),
+    ]);
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });

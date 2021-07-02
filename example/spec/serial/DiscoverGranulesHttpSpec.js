@@ -191,16 +191,20 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let ingestGranuleExecutionStatus;
     let syncGranuleLambdaOutput;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       ingestGranuleWorkflowArn1 = queueGranulesOutput.payload.running[0];
       ingestGranuleWorkflowArn2 = queueGranulesOutput.payload.running[1];
       ingestGranuleWorkflowArn3 = queueGranulesOutput.payload.running[2];
-      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     });
 
-    it('executes successfully', () => {
-      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    it('executes successfully', async () => {
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
+      ingestGranuleExecutionStatus = await waitForApiStatus(
+        getExecution,
+        { prefix: config.stackName, arn: ingestGranuleWorkflowArn1 },
+        'completed'
+      );
+      expect(ingestGranuleExecutionStatus.status).toEqual('completed');
     });
 
     describe('SyncGranule lambda function', () => {
