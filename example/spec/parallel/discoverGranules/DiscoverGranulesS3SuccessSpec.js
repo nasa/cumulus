@@ -173,7 +173,7 @@ describe('The DiscoverGranules workflow', () => {
       const ingestGranuleExecutionStatus = await waitForCompletedExecution(
         queueGranulesOutput.payload.running[0]
       );
-      expect(ingestGranuleExecutionStatus).toEqual('completed');
+      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
     }
   });
 
