@@ -14,9 +14,10 @@ const {
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
+const { getExecution } = require('@cumulus/api-client/executions');
 const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { buildFtpProvider, createProvider } = require('../../helpers/Providers');
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -33,42 +34,65 @@ describe('The FTP Ingest Granules workflow', () => {
   let testSuffix;
   let workflowExecution;
   let ingestGranuleExecutionArn;
+  let beforeAllFailed;
+  let testGranule;
 
   beforeAll(async () => {
-    config = await loadConfig();
+    try {
+      config = await loadConfig();
 
-    const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
-    testSuffix = createTestSuffix(testId);
-    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    provider = await buildFtpProvider(testSuffix);
+      const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
+      testSuffix = createTestSuffix(testId);
+      const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+      provider = await buildFtpProvider(testSuffix);
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      granuleModel = new Granule();
 
-    // populate collections, providers and test data
-    const promiseResults = await Promise.all([
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-      createProvider(config.stackName, provider),
-    ]);
+      // populate collections, providers and test data
+      const promiseResults = await Promise.all([
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
+        createProvider(config.stackName, provider),
+      ]);
 
-    const createdProvider = JSON.parse(promiseResults[1].body).record;
+      const createdProvider = JSON.parse(promiseResults[1].body).record;
 
-    console.log('\nStarting ingest test');
-    inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
-    inputPayload.granules[0].dataType += testSuffix;
-    inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
-    pdrFilename = inputPayload.pdr.name;
+      console.log('\nStarting ingest test');
+      inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+      inputPayload.granules[0].dataType += testSuffix;
+      inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
+      pdrFilename = inputPayload.pdr.name;
 
-    console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
+      console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
-    // delete the granule record from DynamoDB if exists
-    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+      // delete the granule record from DynamoDB if exists
+      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
-    workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, createdProvider, inputPayload
-    );
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, createdProvider, inputPayload
+      );
 
-    ingestGranuleExecutionArn = workflowExecution.executionArn;
+      ingestGranuleExecutionArn = workflowExecution.executionArn;
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: ingestGranuleExecutionArn,
+        },
+        'completed'
+      );
+      testGranule = await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
+        'completed'
+      );
+    } catch (error) {
+      beforeAllFailed = error;
+    }
   });
 
   afterAll(async () => {
@@ -87,23 +111,6 @@ describe('The FTP Ingest Granules workflow', () => {
   });
 
   describe('the execution', () => {
-    let granule;
-
-    beforeAll(async () => {
-      // Check that the granule has been updated in dynamo
-      // before performing further checks
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
-        'completed'
-      );
-
-      granule = await getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      });
-    });
-
     afterAll(async () => {
       // clean up granule
       await deleteGranule({
@@ -113,16 +120,19 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     it('completes execution with success status', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     });
 
     it('makes the granule available through the Cumulus API', () => {
-      expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(testGranule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     });
 
     it('uploaded the granules with correct ContentType', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       const objectTests = await pMap(
-        granule.files,
+        testGranule.files,
         async ({ bucket, key }) => {
           const headObjectResponse = await headObject(
             bucket, key, { retries: 5 }
