@@ -2,20 +2,17 @@
 
 const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
-const isNil = require('lodash/isNil');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
+const rootRouter = require('express-promise-router')();
 
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { objectStoreForProtocol } = require('@cumulus/object-store');
-
-const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
-const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
+const { buildErrorTemplateVars, getConfigurations, useSecureCookies, ensureAuthorizedOrRedirect } = require('../lib/distribution');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -81,7 +78,7 @@ async function handleLoginRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   log.debug('the query params:', req.query);
-  const templateVars = buildLoginErrorTemplateVars(req.query);
+  const templateVars = buildErrorTemplateVars(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);
@@ -91,6 +88,7 @@ async function handleLoginRequest(req, res) {
   try {
     log.debug('pre getAccessToken() with query params:', req.query);
     const accessTokenResponse = await oauthClient.getAccessToken(code);
+    log.debug('getAccessToken:', accessTokenResponse);
 
     // getAccessToken returns username only for EDL
     const params = {
@@ -166,35 +164,6 @@ async function handleLogoutRequest(req, res) {
 }
 
 /**
- * Responds to a locate bucket request
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} - promise of an express response object
- */
-async function handleLocateBucketRequest(req, res) {
-  const { bucket_name: bucket } = req.query;
-  if (bucket === undefined) {
-    return res
-      .set({ 'Content-Type': 'text/plain' })
-      .status(400)
-      .send('Required "bucket_name" query paramater not specified');
-  }
-
-  const bucketMap = await getBucketMap();
-  const matchingPaths = getPathsByBucketName(bucketMap, bucket);
-  if (matchingPaths.length === 0) {
-    log.debug(`No route defined for ${bucket}`);
-    return res
-      .set({ 'Content-Type': 'text/plain' })
-      .status(404)
-      .send(`No route defined for ${bucket}`);
-  }
-
-  return res.status(200).json(matchingPaths);
-}
-
-/**
  * Responds to a file request
  *
  * @param {Object} req - express request object
@@ -202,39 +171,12 @@ async function handleLocateBucketRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
-  const requestid = get(req, 'apiGateway.context.awsRequestId');
-  const bucketMap = await getBucketMap();
-  const { bucket, key } = processFileRequestPath(req.params[0], bucketMap);
-  if (bucket === undefined) {
-    const error = `Unable to locate bucket from bucket map for ${req.params[0]}`;
-    return res.boom.notFound(error);
-  }
-
-  // check private buckets' user groups for earthdata only
-  if (process.env.OAUTH_PROVIDER === 'earthdata') {
-    const allowedUserGroups = checkPrivateBucket(bucketMap, bucket, key);
-    log.debug(`checkPrivateBucket for ${bucket} ${key} returns: ${allowedUserGroups && allowedUserGroups.join(',')}`);
-    const allowed = isNil(allowedUserGroups)
-      || (req.authorizedMetadata.userGroups || [])
-        .some((group) => allowedUserGroups.includes(group));
-    if (!allowed) {
-      const statusCode = 403;
-      const vars = {
-        contentstring: 'This data is not currently available.',
-        title: 'Could not access data',
-        statusCode,
-        requestid,
-      };
-      const rendered = render(errorTemplate, vars);
-      return res.status(statusCode).send(rendered);
-    }
-  }
-
   let signedS3Url;
-  const url = buildS3Uri(bucket, key);
+  const url = `s3://${req.params[0]}`;
   const objectStore = objectStoreForProtocol('s3');
   const range = req.get('Range');
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
 
   const options = {
     ...range ? { Range: range } : {},
@@ -284,10 +226,15 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
+rootRouter.get('/', handleRootRequest);
+rootRouter.head('/*', ensureAuthorizedOrRedirect, handleFileRequest);
+rootRouter.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
+
 module.exports = {
-  handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
   handleRootRequest,
   handleFileRequest,
+  useSecureCookies,
+  rootRouter,
 };

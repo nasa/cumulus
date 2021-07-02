@@ -8,17 +8,6 @@ variable "prefix" {
   description = "Resource prefix unique to this deployment"
 }
 
-variable "buckets" {
-  description = "Map identifying the buckets for the deployment"
-  type        = map(object({ name = string, type = string }))
-  default     = {}
-}
-
-variable "bucketname_prefix" {
-  type        = string
-  description = "all data buckets should have names prefixed with this. Must be compatible with S3 naming conventions (lower case only, etc). An empty string can be used to indicate no prefix"
-}
-
 variable "oauth_client_id" {
   type        = string
   description = "oauth_client_id"
@@ -34,11 +23,6 @@ variable "oauth_host_url" {
   description = "oauth_host_url"
 }
 
-variable "system_bucket" {
-  description = "The name of the S3 bucket to be used for staging deployment files"
-  type        = string
-}
-
 # Optional
 
 variable "api_url" {
@@ -51,12 +35,6 @@ variable "api_gateway_stage" {
   type        = string
   default     = "dev"
   description = "The API Gateway stage name for the distribution App"
-}
-
-variable "bucket_map_file" {
-  type        = string
-  default     = "bucket_map.yaml"
-  description = "path and file of bucketmap file's location in the system_bucket"
 }
 
 variable "cmr_acl_based_credentials" {
@@ -105,6 +83,18 @@ variable "sts_policy_helper_lambda_function_arn" {
   type        = string
   default     = null
   description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
+}
+
+variable "protected_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of protected buckets"
+}
+
+variable "public_buckets" {
+  type        = list(string)
+  default     = []
+  description = "A list of public buckets"
 }
 
 variable "tags" {

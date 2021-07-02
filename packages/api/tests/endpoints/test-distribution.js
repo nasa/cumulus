@@ -2,19 +2,16 @@
 
 const test = require('ava');
 const request = require('supertest');
-const cryptoRandomString = require('crypto-random-string');
-const jsyaml = require('js-yaml');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 const moment = require('moment');
 
-const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
+const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 
 const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
@@ -24,40 +21,14 @@ process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
+process.env.public_buckets = randomId('publicbucket');
 process.env.AccessTokensTable = randomId('tokenTable');
-process.env.stackName = cryptoRandomString({ length: 10 });
-process.env.system_bucket = cryptoRandomString({ length: 10 });
-process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
+let context;
 
 let headObjectStub;
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');
-
-const publicBucket = randomId('publicbucket');
-const publicBucketPath = randomId('publicpath');
-const protectedBucket = randomId('protectedbucket');
-
-const bucketMap = {
-  MAP: {
-    path1: {
-      bucket: 'bucket-path-1',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    },
-    [protectedBucket]: protectedBucket,
-    [publicBucketPath]: publicBucket,
-    [publicBucket]: publicBucket,
-  },
-  PUBLIC_BUCKETS: {
-    [publicBucket]: 'public bucket',
-  },
-};
-
-const invalidToken = randomId('invalidToken');
-
-let context;
 
 function headerIs(headers, name, value) {
   return headers[name.toLowerCase()] === value;
@@ -85,24 +56,17 @@ function restoreHeadObjectStub() {
 }
 
 test.before(async () => {
-  await createBucket(process.env.system_bucket);
-  await s3PutObject({
-    Bucket: process.env.system_bucket,
-    Key: process.env.BUCKET_MAP_FILE,
-    Body: jsyaml.dump(bucketMap),
-  });
-
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
   const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
+  const fileBucket = randomId('bucket');
   const fileKey = randomId('key');
-
-  const fileLocation = `${protectedBucket}/${fileKey}`;
+  const fileLocation = `${fileBucket}/${fileKey}`;
   const s3Endpoint = getLocalstackEndpoint('s3');
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
-  const getUserInfoResponse = { foo: 'bar', username: getAccessTokenResponse.username };
+  const getUserInfoResponse = { foo: 'bar' };
 
   sinon.stub(
     OAuthClient.prototype,
@@ -117,10 +81,7 @@ test.before(async () => {
   sinon.stub(
     CognitoClient.prototype,
     'getUserInfo'
-  ).callsFake(({ token }) => {
-    if (token === invalidToken) throw new Error('Invalid token');
-    return getUserInfoResponse;
-  });
+  ).callsFake(() => getUserInfoResponse);
 
   const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('tokenInfo') } });
   await accessTokenModel.create(accessTokenRecord);
@@ -130,7 +91,7 @@ test.before(async () => {
     accessTokenRecord,
     accessTokenCookie: accessTokenRecord.accessToken,
     getAccessTokenResponse,
-    getUserInfoResponse,
+    fileBucket,
     fileKey,
     fileLocation,
     authorizationUrl,
@@ -141,9 +102,8 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
-
   const { accessTokenModel } = context;
+
   await accessTokenModel.deleteTable();
   sinon.reset();
 });
@@ -226,51 +186,12 @@ test.serial('An authenticated request for a file returns a redirect to S3', asyn
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
-test.serial('A request for a file with a valid bearer token returns a redirect to S3', async (t) => {
-  stubHeadObject();
-
-  const {
-    fileLocation,
-    getUserInfoResponse,
-    s3Endpoint,
-  } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${randomId('token')}`)
-    .expect(307);
-
-  restoreHeadObjectStub();
-
-  t.is(response.status, 307);
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), getUserInfoResponse.username);
-});
-
-test.serial('A request for a file with an invalid bearer token returns a redirect to an OAuth2 provider', async (t) => {
-  const { fileLocation } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${invalidToken}`)
-    .expect(307);
-
-  validateRedirectToGetAuthorizationCode(t, response);
-});
-
 test.serial('A request for a public file without an access token returns a redirect to S3', async (t) => {
   stubHeadObject();
   const { fileKey, s3Endpoint } = context;
-  const fileLocation = `${publicBucket}/${fileKey}`;
+  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
   const response = await request(distributionApp)
-    .get(`/${publicBucketPath}/${fileKey}`)
+    .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
     .expect(307);
 
@@ -285,28 +206,6 @@ test.serial('A request for a public file without an access token returns a redir
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), 'unauthenticated user');
-});
-
-test.serial('A request for a public file with an access token returns a redirect to S3', async (t) => {
-  stubHeadObject();
-
-  const { accessTokenCookie, accessTokenRecord, fileKey, s3Endpoint } = context;
-  const fileLocation = `${publicBucket}/${fileKey}`;
-  const response = await request(distributionApp)
-    .get(`/${publicBucketPath}/${fileKey}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(307);
-
-  restoreHeadObjectStub();
-
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
 });
 
 test.serial('A /login request with a good authorization code returns a correct response', async (t) => {
@@ -410,7 +309,7 @@ test.serial('A / request without an access token displays login page', async (t)
 
 test.serial('A HEAD request for a public file without an access token redirects to S3', async (t) => {
   const { fileKey, s3Endpoint } = context;
-  const fileLocation = `${publicBucket}/${fileKey}`;
+  const fileLocation = `${process.env.public_buckets}/${fileKey}`;
   const response = await request(distributionApp)
     .head(`/${fileLocation}`)
     .set('Accept', 'application/json')
@@ -442,6 +341,8 @@ test.serial('An authenticated HEAD request for a file returns a redirect to S3',
   const redirectLocation = new URL(response.headers.location);
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
 
+  console.log(redirectLocation);
+
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
@@ -463,35 +364,10 @@ test.serial('An authenticated HEAD request containing a range header for a file 
   const redirectLocation = new URL(response.headers.location);
   const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
 
+  console.log(redirectLocation);
+
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
   t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
   t.true(redirectLocation.searchParams.get('X-Amz-SignedHeaders').includes('range'));
-});
-
-test('A sucessful /locate request for a bucket returns matching paths', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate?bucket_name=bucket-path-1')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /application\/json/)
-    .expect(200);
-  t.deepEqual(response.body, ['path1']);
-});
-
-test('A /locate request returns error when no matching bucket found', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate?bucket_name=nonexistbucket')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /text\/plain/)
-    .expect(404);
-  t.true(JSON.stringify(response.error).includes('No route defined for nonexistbucket'));
-});
-
-test('A /locate request returns error when request parameter is missing', async (t) => {
-  const response = await request(distributionApp)
-    .get('/locate')
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /text\/plain/)
-    .expect(400);
-  t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
 });

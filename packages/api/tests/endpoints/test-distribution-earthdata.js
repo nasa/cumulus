@@ -2,15 +2,11 @@
 
 const test = require('ava');
 const request = require('supertest');
-const cryptoRandomString = require('crypto-random-string');
-const jsyaml = require('js-yaml');
 const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 
-const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { OAuthClient, EarthdataLoginClient } = require('@cumulus/oauth-client');
 
@@ -24,44 +20,10 @@ process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('pat
 process.env.OAUTH_HOST_URL = `https://${randomId('host')}/${randomId('path')}`;
 process.env.OAUTH_PROVIDER = 'earthdata';
 process.env.AccessTokensTable = randomId('tokenTable');
-process.env.stackName = cryptoRandomString({ length: 10 });
-process.env.system_bucket = cryptoRandomString({ length: 10 });
-process.env.BUCKET_MAP_FILE = `${process.env.stackName}/cumulus_distribution/bucket_map.yaml`;
-
-let headObjectStub;
+let context;
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');
-
-const publicBucket = randomId('publicbucket');
-const publicBucketPath = randomId('publicpath');
-const protectedBucket = randomId('protectedbucket');
-const privateBucket = randomId('privatebucket');
-
-const bucketMap = {
-  MAP: {
-    path1: {
-      bucket: 'bucket-path-1',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    },
-    [protectedBucket]: protectedBucket,
-    [publicBucketPath]: publicBucket,
-    [privateBucket]: privateBucket,
-  },
-  PUBLIC_BUCKETS: {
-    [publicBucket]: 'public bucket',
-  },
-  PRIVATE_BUCKETS: {
-    [privateBucket]: ['internal_users', 'external_team'],
-    [`${privateBucket}/sc`]: ['internal_users', 'sc_users'],
-  },
-};
-
-const invalidToken = randomId('invalidToken');
-
-let context;
 
 function headerIs(headers, name, value) {
   return headers[name.toLowerCase()] === value;
@@ -80,42 +42,23 @@ function validateRedirectToGetAuthorizationCode(t, response) {
   t.true(headerIs(response.headers, 'Location', authorizationUrl));
 }
 
-function stubHeadObject() {
-  headObjectStub = sinon.stub(s3(), 'headObject').returns({ promise: () => Promise.resolve() });
-}
-
-function restoreHeadObjectStub() {
-  headObjectStub.restore();
-}
-
 test.before(async () => {
-  await createBucket(process.env.system_bucket);
-  await s3PutObject({
-    Bucket: process.env.system_bucket,
-    Key: process.env.BUCKET_MAP_FILE,
-    Body: jsyaml.dump(bucketMap),
-  });
-
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
   const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
+  const fileBucket = randomId('bucket');
   const fileKey = randomId('key');
-  const fileLocation = `${protectedBucket}/${fileKey}`;
-  const s3Endpoint = getLocalstackEndpoint('s3');
+  const fileLocation = `${fileBucket}/${fileKey}`;
+  const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
-  const getUserInfoResponse = { foo: 'bar', uid: getAccessTokenResponse.username };
+  const getUserInfoResponse = { foo: 'bar' };
 
   sinon.stub(
     OAuthClient.prototype,
     'getAccessToken'
   ).callsFake(() => getAccessTokenResponse);
-
-  sinon.stub(
-    EarthdataLoginClient.prototype,
-    'getTokenUsername'
-  ).callsFake(() => getAccessTokenResponse.username);
 
   sinon.stub(
     OAuthClient.prototype,
@@ -125,39 +68,50 @@ test.before(async () => {
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getUserInfo'
-  ).callsFake(({ token }) => {
-    if (token === invalidToken) throw new Error('Invalid token');
-    return getUserInfoResponse;
-  });
+  ).callsFake(() => getUserInfoResponse);
 
-  const accessTokenRecord = fakeAccessTokenFactory({
-    tokenInfo: { anykey: randomId('anyvalue'), user_groups: [randomId('usergroups'), 'external_team'] },
-  });
+  const accessTokenRecord = fakeAccessTokenFactory({ tokenInfo: { anykey: randomId('anyvalue') } });
   await accessTokenModel.create(accessTokenRecord);
+
+  sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
+    if (operation !== 'getObject') {
+      throw new Error(`Unexpected operation: ${operation}`);
+    }
+
+    if (params.Bucket !== fileBucket) {
+      throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
+    }
+
+    if (params.Key !== fileKey) {
+      throw new Error(`Unexpected params.Key: ${params.Key}`);
+    }
+
+    return signedFileUrl.toString();
+  });
 
   context = {
     accessTokenModel,
     accessTokenRecord,
     accessTokenCookie: accessTokenRecord.accessToken,
     getAccessTokenResponse,
+    fileBucket,
     fileKey,
     fileLocation,
     authorizationUrl,
+    signedFileUrl,
     authorizationCode: randomId('code'),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Endpoint,
   };
 });
 
 test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   const { accessTokenModel } = context;
 
   await accessTokenModel.deleteTable();
   sinon.reset();
 });
 
-test.serial('A request for a file without an access token returns a redirect to an OAuth2 provider', async (t) => {
+test('A request for a file without an access token returns a redirect to an OAuth2 provider', async (t) => {
   const { fileLocation } = context;
   const response = await request(distributionApp)
     .get(`/${fileLocation}`)
@@ -165,114 +119,6 @@ test.serial('A request for a file without an access token returns a redirect to 
     .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
-});
-
-test.serial('An authenticated request for a file returns a redirect to S3', async (t) => {
-  stubHeadObject();
-  const {
-    accessTokenCookie,
-    accessTokenRecord,
-    fileLocation,
-    s3Endpoint,
-  } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(307);
-
-  restoreHeadObjectStub();
-
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
-});
-
-test.serial('A request for a file with a valid bearer token returns a redirect to S3', async (t) => {
-  stubHeadObject();
-  const {
-    fileLocation,
-    getAccessTokenResponse,
-    s3Endpoint,
-  } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${randomId('token')}`)
-    .expect(307);
-
-  restoreHeadObjectStub();
-  t.is(response.status, 307);
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), getAccessTokenResponse.username);
-});
-
-test.serial('A request for a file with an invalid bearer token returns a redirect to an OAuth2 provider', async (t) => {
-  const { fileLocation } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${invalidToken}`)
-    .expect(307);
-
-  validateRedirectToGetAuthorizationCode(t, response);
-});
-
-test.serial('An authenticated request for a file from private bucket returns a redirect to S3 when user group is in list', async (t) => {
-  stubHeadObject();
-  const {
-    accessTokenCookie,
-    accessTokenRecord,
-    fileKey,
-    s3Endpoint,
-  } = context;
-
-  const fileLocation = `${privateBucket}/${fileKey}`;
-  const response = await request(distributionApp)
-    .get(`/${fileLocation}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(307);
-
-  restoreHeadObjectStub();
-  validateDefaultHeaders(t, response);
-
-  const redirectLocation = new URL(response.headers.location);
-  const signedFileUrl = new URL(`${s3Endpoint}/${fileLocation}`);
-  t.is(redirectLocation.origin, signedFileUrl.origin);
-  t.is(redirectLocation.pathname, signedFileUrl.pathname);
-  t.is(redirectLocation.searchParams.get('A-userid'), accessTokenRecord.username);
-});
-
-test.serial('An authenticated request for a file from private bucket returns error when user group is not in list', async (t) => {
-  stubHeadObject();
-  const {
-    accessTokenCookie,
-    fileKey,
-  } = context;
-
-  const response = await request(distributionApp)
-    .get(`/${privateBucket}/sc/${fileKey}`)
-    .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${accessTokenCookie}`])
-    .expect(403);
-
-  restoreHeadObjectStub();
-
-  t.true(JSON.stringify(response.error).includes('Could not access data'));
-  t.true(JSON.stringify(response.error).includes('This data is not currently available'));
 });
 
 test('A /login request with a good authorization code returns a correct response', async (t) => {

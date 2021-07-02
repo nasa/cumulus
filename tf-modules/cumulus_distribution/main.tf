@@ -7,15 +7,6 @@ terraform {
   }
 }
 
-locals {
-  all_non_internal_buckets = [for k, v in var.buckets : v.name if v.type != "internal"]
-  lambda_security_group_ids = [aws_security_group.no_ingress_all_egress[0].id]
-  allowed_buckets = compact(flatten([
-    local.all_non_internal_buckets,
-    var.system_bucket
-  ]))
-}
-
 data "aws_region" "current" {}
 
 resource "aws_dynamodb_table" "access_tokens" {
