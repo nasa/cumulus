@@ -35,6 +35,7 @@ describe('The FTP Ingest Granules workflow', () => {
   let workflowExecution;
   let ingestGranuleExecutionArn;
   let beforeAllFailed;
+  let testGranule;
 
   beforeAll(async () => {
     try {
@@ -72,6 +73,23 @@ describe('The FTP Ingest Granules workflow', () => {
       );
 
       ingestGranuleExecutionArn = workflowExecution.executionArn;
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: ingestGranuleExecutionArn,
+        },
+        'completed'
+      );
+      testGranule = await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
+        'completed'
+      );
     } catch (error) {
       beforeAllFailed = error;
     }
@@ -84,15 +102,6 @@ describe('The FTP Ingest Granules workflow', () => {
       pdr: pdrFilename,
     });
 
-    await waitForApiStatus(
-      getExecution,
-      {
-        prefix: config.stackName,
-        arn: ingestGranuleExecutionArn,
-      },
-      'completed'
-    );
-
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
 
     await Promise.all([
@@ -102,26 +111,6 @@ describe('The FTP Ingest Granules workflow', () => {
   });
 
   describe('the execution', () => {
-    let granule;
-
-    beforeAll(async () => {
-      // Check that the granule has been updated in dynamo
-      // before performing further checks
-      try {
-        granule = await waitForApiStatus(
-          getGranule,
-          {
-            prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId,
-          },
-          'completed',
-          { maxTimeout: 120000 }
-        );
-      } catch (error) {
-        beforeAllFailed = error;
-      }
-    });
-
     afterAll(async () => {
       // clean up granule
       await deleteGranule({
@@ -137,13 +126,13 @@ describe('The FTP Ingest Granules workflow', () => {
 
     it('makes the granule available through the Cumulus API', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+      expect(testGranule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     });
 
     it('uploaded the granules with correct ContentType', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const objectTests = await pMap(
-        granule.files,
+        testGranule.files,
         async ({ bucket, key }) => {
           const headObjectResponse = await headObject(
             bucket, key, { retries: 5 }
