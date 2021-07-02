@@ -3,7 +3,6 @@ const difference = require('lodash/difference');
 const {
   addCollections,
   addProviders,
-  api: apiTestUtils,
   cleanupCollections,
   cleanupProviders,
   waitForCompletedExecution,
@@ -12,7 +11,7 @@ const {
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule, getGranule, reingestGranule } = require('@cumulus/api-client/granules');
+const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -37,6 +36,7 @@ const {
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -154,14 +154,14 @@ describe('The Sync Granules workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(inputPayload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
-    )).then(() => apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: inputPayload.pdr.name,
-    }));
+      async (granule) => {
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
+          ['completed', 'failed']
+        );
+      }
+    ));
 
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
