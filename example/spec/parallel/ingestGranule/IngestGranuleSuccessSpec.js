@@ -34,8 +34,6 @@ const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-uti
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
-  buildAndStartWorkflow,
   conceptExists,
   getExecutionOutput,
   getOnlineResources,
@@ -65,6 +63,10 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const {
+  buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
+} = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   templateFile,
@@ -131,6 +133,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let provider;
   let testDataFolder;
   let workflowExecutionArn;
+  let granuleWasDeleted = false;
 
   beforeAll(async () => {
     try {
@@ -268,16 +271,18 @@ describe('The S3 Ingest Granules workflow', () => {
     // granule may already have been deleted by
     // granule deletion spec. but in case that spec
     // wasn't reached, make sure granule is deleted
-    try {
-      await removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      });
-    } catch (error) {
-      if (error.statusCode !== 404 &&
-          // remove from CMR throws a 400 when granule is missing
-          (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
-        throw error;
+    if (!granuleWasDeleted) {
+      try {
+        await removePublishedGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        });
+      } catch (error) {
+        if (error.statusCode !== 404 &&
+            // remove from CMR throws a 400 when granule is missing
+            (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
+          throw error;
+        }
       }
     }
 
@@ -319,7 +324,7 @@ describe('The S3 Ingest Granules workflow', () => {
       { arn: workflowExecutionArn },
       ['running', 'completed']
     );
-    expect(record.status).toEqual('running');
+    expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
@@ -330,7 +335,7 @@ describe('The S3 Ingest Granules workflow', () => {
       { pdrName: inputPayload.pdr.name },
       ['running', 'completed']
     );
-    expect(record.status).toEqual('running');
+    expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
   it('makes the granule available through the Cumulus API', async () => {
@@ -792,16 +797,6 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('is published for a running granule', async () => {
-      if (beforeAllError) throw SetupError;
-
-      const granuleExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: granuleRunningMessageKey,
-      });
-      expect(granuleExists).toEqual(true);
-    });
-
     it('is published for an execution on a successful workflow completion', async () => {
       if (beforeAllError) throw SetupError;
 
@@ -1246,6 +1241,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleResponseError = error;
         }
         expect(JSON.parse(granuleResponseError.apiMessage).message).toEqual('Granule not found');
+        granuleWasDeleted = true;
       });
     });
 

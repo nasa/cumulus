@@ -7,11 +7,11 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
   addCollections,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   loadConfig,
   createTimestampedTestId,
@@ -96,7 +96,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(queueGranulesOutput.payload.running
-      .map((execution) => waitForCompletedExecution(execution)));
+      .map((arn) => waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn,
+        },
+        'completed'
+      )));
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
         await waitForApiStatus(
@@ -113,6 +120,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         });
       }
     ));
+
     // Order matters. Child executions must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
@@ -136,7 +144,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   it('executes successfully', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
-    expect(discoverGranulesExecution.status).toEqual('SUCCEEDED');
+    expect(discoverGranulesExecution.status).toEqual('completed');
   });
 
   describe('the DiscoverGranules Lambda', () => {
@@ -183,16 +191,20 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let ingestGranuleExecutionStatus;
     let syncGranuleLambdaOutput;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       ingestGranuleWorkflowArn1 = queueGranulesOutput.payload.running[0];
       ingestGranuleWorkflowArn2 = queueGranulesOutput.payload.running[1];
       ingestGranuleWorkflowArn3 = queueGranulesOutput.payload.running[2];
-      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn1);
     });
 
-    it('executes successfully', () => {
-      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    it('executes successfully', async () => {
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn1);
+      ingestGranuleExecutionStatus = await waitForApiStatus(
+        getExecution,
+        { prefix: config.stackName, arn: ingestGranuleWorkflowArn1 },
+        'completed'
+      );
+      expect(ingestGranuleExecutionStatus.status).toEqual('completed');
     });
 
     describe('SyncGranule lambda function', () => {
@@ -254,7 +266,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(noFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(noFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output has no files', async () => {
@@ -318,7 +330,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(partialFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(partialFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output does not include all files', async () => {
@@ -384,7 +396,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     });
 
     it('executes successfully', () => {
-      expect(ignoringFilesConfigExecution.status).toEqual('SUCCEEDED');
+      expect(ignoringFilesConfigExecution.status).toEqual('completed');
     });
 
     it('discovers granules, but output includes all files', async () => {

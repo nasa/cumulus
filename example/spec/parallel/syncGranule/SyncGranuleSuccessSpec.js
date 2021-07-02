@@ -3,7 +3,6 @@ const difference = require('lodash/difference');
 const {
   addCollections,
   addProviders,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   waitForCompletedExecution,
@@ -22,6 +21,8 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   templateFile,
@@ -181,7 +182,7 @@ describe('The Sync Granules workflow', () => {
   });
 
   it('completes execution with success status', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   describe('the SyncGranule Lambda function', () => {
@@ -365,7 +366,7 @@ describe('The Sync Granules workflow', () => {
     });
 
     it('completes execution with failure status', () => {
-      expect(failingExecution.status).toEqual('FAILED');
+      expect(failingExecution.status).toEqual('failed');
     });
 
     it('raises an error', () => {

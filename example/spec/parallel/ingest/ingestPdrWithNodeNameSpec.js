@@ -29,19 +29,19 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
   addProviders,
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -57,7 +57,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus, waitForModelStatus } = require('../../helpers/apiUtils');
 const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
@@ -226,7 +226,7 @@ describe('Ingesting from PDR', () => {
     it('executes successfully', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       }
     });
 
@@ -418,11 +418,20 @@ describe('Ingesting from PDR', () => {
           const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'MoveGranules');
           // delete ingested granule(s)
           await Promise.all(
-            finalOutput.payload.granules.map((g) =>
-              deleteGranule({
+            finalOutput.payload.granules.map(async (g) => {
+              await waitForApiStatus(
+                getGranule,
+                {
+                  prefix: config.stackName,
+                  granuleId: g.granuleId,
+                },
+                'completed'
+              );
+              await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
-              }))
+              });
+            })
           );
         });
 

@@ -7,7 +7,6 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
-  buildAndExecuteWorkflow,
   loadCollection,
   loadProvider,
   waitForStartedExecution,
@@ -21,6 +20,8 @@ const {
   createProvider,
   deleteProvider,
 } = require('@cumulus/api-client/providers');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTimestampedTestId,
   deleteFolder,
@@ -137,7 +138,7 @@ describe('The DiscoverGranules workflow', () => {
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('properly sets the name of the queued execution', () => {

@@ -32,13 +32,14 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   waitForCompletedExecution,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -213,7 +214,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
   it('executes successfully', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     }
   });
 

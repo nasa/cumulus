@@ -11,7 +11,6 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   addCollections,
   api: apiTestUtils,
-  buildAndStartWorkflow,
   getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
@@ -23,6 +22,7 @@ const {
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
 const {
   loadConfig,

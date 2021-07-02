@@ -1,3 +1,4 @@
+const { Granule } = require('@cumulus/api/models');
 const { listGranules, removePublishedGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
@@ -14,7 +15,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 * @param {Object} params     - params
 * @param {string} prefix  - Config object containing stackName
 * @param {Object} collection - Cumulus API collection object to delete
-* @return {Promise<undefined>}
+* @returns {Promise<undefined>}
 */
 const removeCollectionAndAllDependencies = async (params) => {
   const { prefix, collection } = params;
@@ -27,18 +28,28 @@ const removeCollectionAndAllDependencies = async (params) => {
   });
 
   const granulesForDeletion = JSON.parse(collectionGranuleResponse.body).results;
+  const granuleModel = new Granule();
   const granuleDeletionResult = await Promise.all(
-    granulesForDeletion.map((granule) => {
-      if (granule.published === true) {
-        return removePublishedGranule({
+    granulesForDeletion.map(async (granule) => {
+      // Temporary fix to handle granules that are in a bad state
+      // and cannot be deleted via the API
+      try {
+        if (granule.published === true) {
+          return await removePublishedGranule({
+            prefix,
+            granuleId: granule.granuleId,
+          });
+        }
+        return await deleteGranule({
           prefix,
           granuleId: granule.granuleId,
         });
+      } catch (error) {
+        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) {
+          return await granuleModel.delete({ granuleId: granule.granuleId });
+        }
+        throw error;
       }
-      return deleteGranule({
-        prefix,
-        granuleId: granule.granuleId,
-      });
     })
   );
 

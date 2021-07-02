@@ -2,7 +2,6 @@
 
 const pWaitFor = require('p-wait-for');
 const {
-  buildAndExecuteWorkflow,
   getExecutionInputObject,
   loadCollection,
   loadProvider,
@@ -20,6 +19,7 @@ const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTimestampedTestId,
   deleteFolder,
@@ -126,6 +126,18 @@ describe('The DiscoverGranules workflow', () => {
       }
     ));
 
+    await Promise.all([
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: ingestGranuleExecutionArn },
+        'completed'
+      ),
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: workflowExecution.executionArn },
+        'completed'
+      ),
+    ]);
     // The order of execution deletes matters. Parents must be deleted before children.
     await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
@@ -145,7 +157,7 @@ describe('The DiscoverGranules workflow', () => {
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('can be fetched from the API', async () => {
