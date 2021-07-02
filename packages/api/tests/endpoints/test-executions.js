@@ -4,12 +4,8 @@ const test = require('ava');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
 const {
-  // buildS3Uri,
   createBucket,
-  // createS3Buckets,
-  // deleteS3Buckets,
   recursivelyDeleteS3Bucket,
-  // s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -18,9 +14,11 @@ const {
   destroyLocalTestDb,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
@@ -49,11 +47,13 @@ const assertions = require('../../lib/assertions');
 // create all the variables needed across this test
 let accessTokenModel;
 let collectionModel;
+let collectionPgModel;
 let esClient;
 let esIndex;
 let executionModel;
 let executionPgModel;
 let granuleModel;
+let granulesExecutionsPgModel;
 let granulePgModel;
 let jwtAuthToken;
 const fakeExecutions = [];
@@ -94,6 +94,12 @@ test.before(async (t) => {
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
+  // Generate a local test postGres database
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
   // create fake Collections table
   collectionModel = new Collection();
   await collectionModel.createTable();
@@ -112,8 +118,11 @@ test.before(async (t) => {
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
     .then((record) => indexer.indexExecution(esClient, record, t.context.esAlias))));
 
-  granulePgModel = new GranulePgModel();
   executionPgModel = new ExecutionPgModel();
+  collectionPgModel = new CollectionPgModel();
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  granulePgModel = new GranulePgModel();
+
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -122,12 +131,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  // Generate a local test postGres database
-
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -149,9 +152,9 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-  const collectionPgModel = new CollectionPgModel();
+
   [t.context.collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
+    knex,
     testPgCollection
   );
 
@@ -159,7 +162,21 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
+  const { esAlias, knex } = t.context;
+
+
+  const workflowName1 = cryptoRandomString({ length: 6 });
+  const workflowName2 = cryptoRandomString({ length: 6 });
+
+  // create fake Postgres executon records
+  t.context.fakePGExecutions = [
+    fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
+    fakeExecutionRecordFactory({ workflow_name: workflowName2 }),
+  ];
+
+  [t.context.executionCumulusId1, t.context.executionCumulusId2]
+    = await Promise.all(t.context.fakePGExecutions.map((execution) =>
+      executionPgModel.create(knex, execution)));
 
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
@@ -192,8 +209,19 @@ test.beforeEach(async (t) => {
     ),
   ];
 
-  await Promise.all(t.context.fakePGGranules.map((granule) =>
-    granulePgModel.create(t.context.knex, granule)));
+  [t.context.granuleCumulusId] = await Promise.all(t.context.fakePGGranules.map((granule) =>
+    granulePgModel.create(knex, granule)));
+
+  t.context.joinRecords = [{
+    execution_cumulus_id: t.context.executionCumulusId1[0],
+    granule_cumulus_id: Number(t.context.granuleCumulusId),
+  }, {
+    execution_cumulus_id: t.context.executionCumulusId2[0],
+    granule_cumulus_id: Number(t.context.granuleCumulusId),
+  }];
+
+  await Promise.all(t.context.joinRecords.map((joinRecord) =>
+    granulesExecutionsPgModel.create(knex, joinRecord)));
 });
 
 test.after.always(async (t) => {
@@ -385,4 +413,37 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
     .expect(404);
 
   t.is(response.body.message, 'No record found');
+});
+
+test('GET /granuleHistory/:granuleId returns all workflow names associated with the granule', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+
+  const expectedResponse = [
+    fakePGExecutions[0].workflow_name,
+    fakePGExecutions[1].workflow_name,
+  ];
+
+  const response = await request(app)
+    .get(`/executions/granuleHistory/${fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.deepEqual(response.body, expectedResponse);
+});
+
+test('POST /granuleHistory with returns all workflow names associated with the granule', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+
+  const expectedResponse = [
+    fakePGExecutions[0].workflow_name,
+    fakePGExecutions[1].workflow_name,
+  ];
+
+  const response = await request(app)
+    .post('/executions/granuleHistory')
+    .send({ ids: [fakeGranules[0].granuleId, fakeGranules[1].granuleId] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.deepEqual(response.body, expectedResponse);
 });
