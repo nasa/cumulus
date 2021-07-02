@@ -17,24 +17,27 @@ const {
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
 
+const { waitForApiStatus } = require('../../helpers/apiUtils');
+
 const SetupError = new Error('Test setup failed');
 
 describe('Creating a one-time rule via the Cumulus API', () => {
   let beforeAllError;
-  let ingestTime;
   let collection;
   let config;
   let executionArn;
+  let executionArn2;
+  let ingestTime;
   let prefix;
   let rule;
   let testExecutionId;
-  let executionArn2;
 
   beforeAll(async () => {
     try {
@@ -94,8 +97,13 @@ describe('Creating a one-time rule via the Cumulus API', () => {
     if (beforeAllError) fail(beforeAllError);
   });
 
-  it('starts a workflow execution', () => {
+  it('starts a workflow execution', async () => {
     if (beforeAllError) throw SetupError;
+    await waitForApiStatus(
+      getExecution,
+      { prefix, arn: executionArn },
+      'completed'
+    );
     expect(executionArn).toContain('arn:aws');
   });
 
@@ -139,6 +147,12 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
     const lambdaStep = new LambdaStep();
     const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
+
+    await waitForApiStatus(
+      getExecution,
+      { prefix, arn: executionArn2 },
+      'completed'
+    );
     expect(updatedExecution).not.toBeNull();
     expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
   });
