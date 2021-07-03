@@ -94,7 +94,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   it('executes successfully', () => {
-    expect(httpsWorkflowExecution.status).toEqual('SUCCEEDED');
+    expect(httpsWorkflowExecution.status).toEqual('completed');
   });
 
   describe('the DiscoverGranules Lambda', () => {
