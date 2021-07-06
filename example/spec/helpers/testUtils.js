@@ -103,7 +103,17 @@ async function updateAndUploadTestFileToBucket(params) {
  * @returns {Array<Promise>} - responses from S3 upload
  */
 async function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
-  return await Promise.all(data.map((file) => updateAndUploadTestFileToBucket({ file, bucket, prefix, replacements })));
+  return await Promise.all(
+    data.map(
+      (file) =>
+        updateAndUploadTestFileToBucket({
+          file,
+          bucket,
+          prefix,
+          replacements,
+        })
+    )
+  );
 }
 
 /**
