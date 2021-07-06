@@ -5,7 +5,7 @@ const { deleteExecution, getExecutions } = require('@cumulus/api-client/executio
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 /**
-* Helper to remove a collection and all it's dependencies
+* Helper to remove a collection and all its dependencies
 * @summary Uses api-client to search for collection dependencies, remove them all and then remove the collection
 *          Cleans up:
 *            - published/unpublished Granules
