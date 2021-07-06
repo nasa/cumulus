@@ -96,24 +96,36 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(queueGranulesOutput.payload.running
-      .map((arn) => waitForApiStatus(
-        getExecution,
-        {
-          prefix: config.stackName,
-          arn,
-        },
-        'completed'
-      )));
+      .map(async (arn) => {
+        try {
+          await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn,
+            },
+            'completed'
+          );
+        } catch (error) {
+          console.log(`Error waiting for execution ${arn}`);
+        }
+      }));
+
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
-        await waitForApiStatus(
-          getGranule,
-          {
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          },
-          'completed'
-        );
+        try {
+          await waitForApiStatus(
+            getGranule,
+            {
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            },
+            'completed'
+          );
+        } catch (error) {
+          console.log(`Error waiting for API status on granule ${JSON.stringify(granule)}`);
+          throw error;
+        }
         await deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId,
