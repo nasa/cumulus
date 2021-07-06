@@ -11,6 +11,7 @@ const {
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
 const { getGranuleIdsForPayload } = require('../lambdas/bulk-operation');
+const { validateBulkGranulesRequest } = require('../lib/request');
 
 /**
  * List and search executions
@@ -108,7 +109,7 @@ async function history(req, res) {
   return res.send(workflowNames);
 }
 
-router.post('/history', history);
+router.post('/history', validateBulkGranulesRequest, history);
 router.get('/history/:granuleId', history);
 router.get('/:arn', get);
 router.get('/', list);

@@ -52,7 +52,10 @@ async function getGranuleIdsForPayload(payload) {
       body.hits.hits.forEach((hit) => {
         granuleIds.push(hit._source.granuleId);
       });
-      if (body.hits.total.value !== granuleIds.length) {
+
+      const totalHits = body.hits.total.value || body.hits.total;
+
+      if (totalHits !== granuleIds.length) {
         responseQueue.push(
           // eslint-disable-next-line no-await-in-loop
           await client.scroll({

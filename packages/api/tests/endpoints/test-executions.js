@@ -8,7 +8,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -31,7 +31,6 @@ const { AccessToken, Collection, Execution, Granule } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
-  // fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeExecutionFactoryV2,
@@ -70,6 +69,9 @@ test.before(async (t) => {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
+    METRICS_ES_HOST: 'fakehost',
+    METRICS_ES_USER: randomId('metricsUser'),
+    METRICS_ES_PASS: randomId('metricsPass'),
   };
 
   esIndex = randomId('esindex');
@@ -77,7 +79,7 @@ test.before(async (t) => {
   process.env.ES_INDEX = t.context.esAlias;
 
   // create esClient
-  esClient = await Search.es('fakehost');
+  esClient = await Search.es();
 
   // add fake elasticsearch index
   await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
@@ -138,7 +140,7 @@ test.before(async (t) => {
   granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   granulePgModel = new GranulePgModel();
 
-  const username = randomString();
+  const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new AccessToken();
@@ -195,8 +197,8 @@ test.beforeEach(async (t) => {
         executionPgModel.create(knex, execution))
     );
 
-  const granuleId1 = cryptoRandomString({ length: 6 });
-  const granuleId2 = cryptoRandomString({ length: 6 });
+  const granuleId1 = randomId('granuleId1');
+  const granuleId2 = randomId('granuleId2');
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
@@ -459,7 +461,7 @@ test('GET /history/:granuleId returns all workflow names associated with the gra
   t.deepEqual(response.body, expectedResponse);
 });
 
-test('POST /history with returns all workflow names associated with the granule', async (t) => {
+test('POST /history returns all workflow names when ids array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const expectedResponse = [
@@ -474,4 +476,143 @@ test('POST /history with returns all workflow names associated with the granule'
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   t.deepEqual(response.body, expectedResponse);
+});
+
+test.serial('POST /history returns all workflow names when query is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+
+  const expectedQuery = {
+    size: 2,
+    query: {
+      bool: {
+        filter: [
+          {
+            bool: {
+              should: [{ match: { granuleId: fakeGranules[0].granuleId } }],
+              minimum_should_match: 1,
+            },
+          },
+          {
+            bool: {
+              should: [{ match: { status: fakeGranules[0].status } }],
+              minimum_should_match: 1,
+            },
+          },
+        ],
+      },
+    },
+  };
+
+  const body = {
+    index: esIndex,
+    query: expectedQuery,
+  };
+
+  console.log('BODY', body);
+
+  const expectedResponse = [
+    fakePGExecutions[0].workflow_name,
+    fakePGExecutions[1].workflow_name,
+  ];
+
+  const response = await request(app)
+    .post('/executions/history')
+    .send(body)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  // console.log('ERROR', response.body.meta.body.error);
+
+  t.deepEqual(response.body, expectedResponse);
+});
+
+test.serial('POST /executions/history returns 400 when a query is provided with no index', async (t) => {
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    query: expectedQuery,
+  };
+
+  const response = await request(app)
+    .post('/executions/history')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, /Index is required if query is sent/);
+});
+
+test.serial('POST /executions/history returns 400 when no IDs or query is provided', async (t) => {
+  const expectedIndex = 'my-index';
+
+  const body = {
+    index: expectedIndex,
+  };
+
+  const response = await request(app)
+    .post('/executions/history')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /One of ids or query is required/);
+
+  t.regex(response.body.message, /One of ids or query is required/);
+});
+
+test.serial('POST /executions/history returns 400 when IDs is not an array', async (t) => {
+  const expectedIndex = 'my-index';
+
+  const body = {
+    index: expectedIndex,
+    ids: 'bad-value',
+  };
+
+  const response = await request(app)
+    .post('/executions/history')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, /ids should be an array of values/);
+});
+
+test.serial('POST /executions/history returns 400 when IDs is an empty array', async (t) => {
+  const expectedIndex = 'my-index';
+
+  const body = {
+    index: expectedIndex,
+    ids: [],
+  };
+
+  const response = await request(app)
+    .post('/executions/history')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, /no values provided for ids/);
+});
+
+test.serial('POST /executions/history returns 400 when the Metrics ELK stack is not configured', async (t) => {
+  const expectedIndex = 'my-index';
+  const expectedQuery = { query: 'fake-query' };
+
+  const body = {
+    index: expectedIndex,
+    query: expectedQuery,
+  };
+
+  process.env.METRICS_ES_USER = undefined;
+
+  const response = await request(app)
+    .post('/executions/history')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, /ELK Metrics stack not configured/);
 });
