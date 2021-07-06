@@ -639,6 +639,8 @@ async function waitForAllTestSf(
   const workflowExecutions = [];
   const startTime = moment();
 
+  console.log('expectedPayload', expectedPayload);
+
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
     await delay(waitPeriodMs);
@@ -649,6 +651,9 @@ async function waitForAllTestSf(
       const execution = executions[ctr];
       if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
         const executionInput = await getExecutionInputObject(execution.executionArn);
+        if (executionInput === null) {
+          console.log(`no execution input for ARN ${execution.executionArn}`);
+        }
         if (executionInput !== null
           && payloadContainsExpected(executionInput.payload, expectedPayload)) {
           workflowExecutions.push(execution);
