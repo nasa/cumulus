@@ -443,7 +443,7 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('GET /granuleHistory/:granuleId returns all workflow names associated with the granule', async (t) => {
+test('GET /history/:granuleId returns all workflow names associated with the granule', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const expectedResponse = [
@@ -452,14 +452,14 @@ test('GET /granuleHistory/:granuleId returns all workflow names associated with 
   ];
 
   const response = await request(app)
-    .get(`/executions/granuleHistory/${fakeGranules[0].granuleId}`)
+    .get(`/executions/history/${fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   t.deepEqual(response.body, expectedResponse);
 });
 
-test('POST /granuleHistory with returns all workflow names associated with the granule', async (t) => {
+test('POST /history with returns all workflow names associated with the granule', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const expectedResponse = [
@@ -468,7 +468,7 @@ test('POST /granuleHistory with returns all workflow names associated with the g
   ];
 
   const response = await request(app)
-    .post('/executions/granuleHistory')
+    .post('/executions/history')
     .send({ ids: [fakeGranules[0].granuleId, fakeGranules[1].granuleId] })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);

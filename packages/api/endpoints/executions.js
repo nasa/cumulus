@@ -85,7 +85,7 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
-async function granuleHistory(req, res) {
+async function history(req, res) {
   const { granuleId } = req.params;
   const payload = req.body;
   const granuleIds = granuleId ? [granuleId] : await getGranuleIdsForPayload(payload);
@@ -108,8 +108,8 @@ async function granuleHistory(req, res) {
   return res.send(workflowNames);
 }
 
-router.post('/granuleHistory', granuleHistory);
-router.get('/granuleHistory/:granuleId', granuleHistory);
+router.post('/history', history);
+router.get('/history/:granuleId', history);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);
