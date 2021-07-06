@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2460**
+  - Adds `GET` and `POST` /executions/history for retriving workflow names from a given granule, list of granules, or granule query
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
