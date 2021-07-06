@@ -108,6 +108,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
           );
         } catch (error) {
           console.log(`Error waiting for execution ${arn}`);
+          throw error;
         }
       }));
 
