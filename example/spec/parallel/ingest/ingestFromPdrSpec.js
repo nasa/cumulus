@@ -30,7 +30,6 @@ const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
   addCollections,
@@ -55,6 +54,7 @@ const {
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -148,10 +148,11 @@ describe('Ingesting from PDR', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: testDataGranuleId,
-    });
+    await waitForGranuleAndDelete(
+      config.stackName,
+      testDataGranuleId,
+      'completed'
+    );
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
