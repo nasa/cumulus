@@ -9,15 +9,15 @@ output "archive_api_redirect_uri" {
 # TEA-Specific outputs
 
 output "distribution_url" {
-  value = try(module.thin_egress_app.api_endpoint, null)
+  value = module.thin_egress_app.api_endpoint
 }
 
 output "s3_credentials_redirect_uri" {
-  value = try(module.cumulus.s3_credentials_redirect_uri, null)
+  value = module.cumulus.s3_credentials_redirect_uri
 }
 
 output "distribution_redirect_uri" {
-  value = try(module.thin_egress_app.urs_redirect_uri, null)
+  value = module.thin_egress_app.urs_redirect_uri
 }
 
 # End TEA-Specific outputs.
