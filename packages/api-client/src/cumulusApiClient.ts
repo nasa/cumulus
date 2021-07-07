@@ -1,6 +1,8 @@
 import pRetry from 'p-retry';
-import Logger from '@cumulus/logger';
+
 import { lambda } from '@cumulus/aws-client/services';
+import Logger from '@cumulus/logger';
+
 import { CumulusApiClientError } from './CumulusApiClientError';
 import * as types from './types';
 
@@ -21,7 +23,12 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
 export async function invokeApi(
   params: types.InvokeApiFunctionParams
 ): Promise<types.ApiGatewayLambdaHttpProxyResponse> {
-  const { prefix, payload, pRetryOptions = {} } = params;
+  const {
+    prefix,
+    payload,
+    expectedStatusCode = 200,
+    pRetryOptions = {},
+  } = params;
 
   return await pRetry(
     async () => {
@@ -38,10 +45,19 @@ export async function invokeApi(
 
       if (parsedPayload?.errorMessage?.includes('Task timed out')) {
         throw new CumulusApiClientError(
-          `Error calling ${payload.path}: ${parsedPayload.errorMessage}`
+          `Error calling ${payload.path}: ${parsedPayload.errorMessage}`,
+          parsedPayload?.statusCode,
+          undefined
         );
       }
 
+      if (parsedPayload?.statusCode !== expectedStatusCode) {
+        throw new CumulusApiClientError(
+          `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`,
+          parsedPayload?.statusCode,
+          parsedPayload.body
+        );
+      }
       return parsedPayload;
     },
     {
