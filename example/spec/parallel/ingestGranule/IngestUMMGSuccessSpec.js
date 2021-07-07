@@ -20,7 +20,6 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
   conceptExists,
   getOnlineResources,
 } = require('@cumulus/integration-tests');
@@ -46,6 +45,7 @@ const {
   createTestSuffix,
   templateFile,
 } = require('../../helpers/testUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   setDistributionApiEnvVars,
 } = require('../../helpers/apiUtils');
@@ -238,7 +238,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   it('completes execution with success status', () => {
     if (beforeAllError) throw beforeAllError;
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   // This is a sanity check to make sure we actually generated UMM and also
