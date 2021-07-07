@@ -48,8 +48,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     knexOrTrx: Knex | Knex.Transaction,
     executionCumulusIds: Array<string> | string
   ): Promise<Array<string>> {
-    const executionCumulusIdsArray
-      = (typeof executionCumulusIds === 'string') ? [executionCumulusIds] : executionCumulusIds;
+    const executionCumulusIdsArray = [executionCumulusIds].flat();
     const executions = await knexOrTrx(this.tableName)
       .whereIn('cumulus_id', executionCumulusIdsArray);
     return executions;
