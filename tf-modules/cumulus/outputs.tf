@@ -1,14 +1,14 @@
 # API outputs
 
-# TEA-Specific outputs. Uncomment to use TEA distribution
+# TEA-Specific outputs.
 
-# output "distribution_bucket_map" {
-#   value = module.distribution.distribution_bucket_map
-# }
+output "distribution_bucket_map" {
+  value = try(module.distribution.distribution_bucket_map, null)
+}
 
-# output "s3_credentials_redirect_uri" {
-#   value = module.distribution.s3_credentials_redirect_uri
-# }
+output "s3_credentials_redirect_uri" {
+  value = try(module.distribution.s3_credentials_redirect_uri, null)
+}
 
 # End TEA-Specific outputs.
 output "archive_api_uri" {

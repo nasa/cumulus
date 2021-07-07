@@ -6,19 +6,19 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
-# TEA-Specific outputs. Uncomment to use TEA distribution
+# TEA-Specific outputs
 
-# output "distribution_url" {
-#   value = module.thin_egress_app.api_endpoint
-# }
+output "distribution_url" {
+  value = try(module.thin_egress_app.api_endpoint, null)
+}
 
-# output "s3_credentials_redirect_uri" {
-#   value = module.cumulus.s3_credentials_redirect_uri
-# }
+output "s3_credentials_redirect_uri" {
+  value = try(module.cumulus.s3_credentials_redirect_uri, null)
+}
 
-# output "distribution_redirect_uri" {
-#   value = module.thin_egress_app.urs_redirect_uri
-# }
+output "distribution_redirect_uri" {
+  value = try(module.thin_egress_app.urs_redirect_uri, null)
+}
 
 # End TEA-Specific outputs.
 
@@ -48,6 +48,7 @@ output "move_granules_task" {
   value = module.cumulus.move_granules_task
 }
 
+# TODO: only if not TEA
 output "distribution_api_uri" {
   value = module.cumulus_distribution.api_uri
 }
