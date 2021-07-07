@@ -276,11 +276,10 @@ describe('The Sync Granules workflow', () => {
     let granule;
 
     beforeAll(async () => {
-      const granuleResponse = await getGranule({
+      granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-      granule = JSON.parse(granuleResponse.body);
 
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
@@ -345,12 +344,10 @@ describe('The Sync Granules workflow', () => {
         'completed'
       );
 
-      const updatedGranuleResponse = await getGranule({
+      const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-
-      const updatedGranule = JSON.parse(updatedGranuleResponse.body);
       expect(updatedGranule.status).toEqual('completed');
       expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
       expect(updatedGranule.execution).not.toEqual(oldExecution);
