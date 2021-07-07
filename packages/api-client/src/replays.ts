@@ -1,9 +1,9 @@
-import { DeadLetterArchivePayload } from '@cumulus/types/api/dead_letters';
+import { MigrationCountsPayload } from '@cumulus/types/api/migrationCounts';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
- * POST a request to start a dead letter processing run
+ * POST a request to start a replay of Kinesis message
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
@@ -14,10 +14,10 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-export const postRecoverCumulusMessages = async (params: {
+export const postKinesisReplays = async (params: {
   prefix: string,
-  payload: DeadLetterArchivePayload,
-  callback?: InvokeApiFunction,
+  payload: MigrationCountsPayload
+  callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, payload, callback = invokeApi } = params;
 
@@ -29,7 +29,7 @@ export const postRecoverCumulusMessages = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/deadLetterArchive/recoverCumulusMessages',
+      path: '/replays',
       body: JSON.stringify(payload),
     },
     expectedStatusCode: 202,
