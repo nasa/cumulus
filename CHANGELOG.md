@@ -35,6 +35,49 @@ package to catch or to otherwise handle errors that you may encounter.
   - Add `removeCollectionAndAllDependencies` to integration test helpers
 - **CUMULUS-2487**
   - Add integration test for cumulus distribution API
+- Added `example/spec/apiUtils.waitForApiStatus` to wait for a
+record to be returned by the API with a specific value for
+`status`
+- Added `example/spec/discoverUtils.uploadS3GranuleDataForDiscovery` to upload granule data fixtures
+to S3 with a randomized granule ID for `discover-granules` based
+integration tests
+- Added `example/spec/Collections.removeCollectionAndAllDependencies` to remove a collection and
+all dependent objects (e.g. PDRs, granules, executions) from the
+database via the API
+- Added helpers to `@cumulus/api-client`:
+  - `pdrs.deletePdr` - Delete a PDR via the API
+  - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
+
+### Changed
+
+- Moved functions from `@cumulus/integration-tests` to `example/spec/helpers/workflowUtils`:
+  - `startWorkflowExecution`
+  - `startWorkflow`
+  - `executeWorkflow`
+  - `buildWorkflow`
+  - `testWorkflow`
+  - `buildAndExecuteWorkflow`
+  - `buildAndStartWorkflow`
+- `example/spec/helpers/workflowUtils.executeWorkflow` now uses
+`waitForApiStatus` to ensure that the execution is `completed` or
+`failed` before resolving
+- `example/spec/helpers/testUtils.updateAndUploadTestFileToBucket`
+now accepts an object of parameters rather than positional
+arguments
+- Removed PDR from the `payload` in the input payload test fixture for reconciliation report integration tests
+- The following integration tests for PDR-based workflows were
+updated to use randomized granule IDs:
+  - `example/spec/parallel/ingest/ingestFromPdrSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithChildWorkflowMetaSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithExecutionNamePrefixSpec.js`
+  - `example/spec/parallel/ingest/ingestPdrWithNodeNameSpec.js`
+- Updated the `@cumulus/api-client/CumulusApiClientError` error class to include new properties that can be accessed directly on
+the error object:
+  - `statusCode` - The HTTP status code of the API response
+  - `apiMessage` - The message from the API response
+- Added `params.pRetryOptions` parameter to
+`@cumulus/api-client/granules.deleteGranule` to control the retry
+behavior
 
 ### Fixed
 
@@ -48,6 +91,8 @@ package to catch or to otherwise handle errors that you may encounter.
     collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
+- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+endpoint for returning a PDR from the API
 
 ## [v9.1.0] 2021-06-03
 

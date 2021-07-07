@@ -24,7 +24,7 @@ const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
-  let beforeAllError = false;
+  let beforeAllError;
   let collection;
   let discoverGranulesRule;
   let existingGranuleId;
