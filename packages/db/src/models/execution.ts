@@ -36,25 +36,23 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
   }
 
   /**
-   * Get workflow_name column values from the execution cumulus_id
+   * Get executions from the execution cumulus_id
    *
    * @param {Knex | Knex.Transaction} knexOrTrx -
    *  DB client or transaction
    * @param {Function} executionCumulusIds -
    * single execution cumulus_id or array of exeuction cumulus_ids
-   * @returns {Promise<Array<number>>} An array of workflow names
+   * @returns {Promise<Array<number>>} An array of exeuctions
    */
-  async getWorkflowNamesFromExecutionCumulusIds(
+  async getExecutionsFromCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     executionCumulusIds: Array<string> | string
   ): Promise<Array<string>> {
     const executionCumulusIdsArray
       = (typeof executionCumulusIds === 'string') ? [executionCumulusIds] : executionCumulusIds;
-    const executionWorkflowNames = await knexOrTrx(this.tableName)
-      .select('workflow_name')
+    const executions = await knexOrTrx(this.tableName)
       .whereIn('cumulus_id', executionCumulusIdsArray);
-    return executionWorkflowNames
-      .map((executionWorkflowName) => executionWorkflowName.workflow_name);
+    return executions;
   }
 }
 

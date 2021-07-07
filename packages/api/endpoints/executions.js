@@ -110,10 +110,10 @@ async function history(req, res) {
   const executionCumulusIds = await granulesExecutionsPgModel
     .getExecutionCumulusIdsFromGranuleCumulusIds(knex, granuleCumulusIds);
 
-  const workflowNames = await executionPgModel
-    .getWorkflowNamesFromExecutionCumulusIds(knex, executionCumulusIds);
+  const executions = await executionPgModel
+    .getExecutionsFromCumulusIds(knex, executionCumulusIds);
 
-  return res.send([...new Set(workflowNames)]);
+  return res.send(executions);
 }
 
 router.post('/history', validateBulkGranulesRequest, history);

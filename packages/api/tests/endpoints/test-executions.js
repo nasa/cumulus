@@ -189,11 +189,9 @@ test.beforeEach(async (t) => {
   t.context.fakePGExecutions = [
     fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
     fakeExecutionRecordFactory({ workflow_name: workflowName2 }),
-    // third execution with same name as workflow1 to verify deduping works
-    fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
   ];
 
-  [t.context.executionCumulusId1, t.context.executionCumulusId2, t.context.executionCumulusId3]
+  [t.context.executionCumulusId1, t.context.executionCumulusId2]
     = await Promise.all(
       t.context.fakePGExecutions.map((execution) =>
         executionPgModel.create(knex, execution))
@@ -241,10 +239,6 @@ test.beforeEach(async (t) => {
     },
     {
       execution_cumulus_id: t.context.executionCumulusId2[0],
-      granule_cumulus_id: Number(t.context.granuleCumulusId),
-    },
-    {
-      execution_cumulus_id: t.context.executionCumulusId3[0],
       granule_cumulus_id: Number(t.context.granuleCumulusId),
     },
   ];
@@ -454,26 +448,19 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
 test('GET /history/:granuleId returns all workflow names associated with the granule', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
-  const expectedResponse = [
-    fakePGExecutions[0].workflow_name,
-    fakePGExecutions[1].workflow_name,
-  ];
-
   const response = await request(app)
     .get(`/executions/history/${fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.deepEqual(response.body, expectedResponse);
+  response.body.forEach((execution, index) => {
+    t.is(execution.arn, fakePGExecutions[index].arn);
+    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
+  });
 });
 
 test('POST /history returns all workflow names when ids array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
-
-  const expectedResponse = [
-    fakePGExecutions[0].workflow_name,
-    fakePGExecutions[1].workflow_name,
-  ];
 
   const response = await request(app)
     .post('/executions/history')
@@ -481,7 +468,10 @@ test('POST /history returns all workflow names when ids array is passed', async 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.deepEqual(response.body, expectedResponse);
+  response.body.forEach((execution, index) => {
+    t.is(execution.arn, fakePGExecutions[index].arn);
+    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
+  });
 });
 
 test.serial('POST /history returns all workflow names when query is passed', async (t) => {
@@ -514,18 +504,16 @@ test.serial('POST /history returns all workflow names when query is passed', asy
     query: expectedQuery,
   };
 
-  const expectedResponse = [
-    fakePGExecutions[0].workflow_name,
-    fakePGExecutions[1].workflow_name,
-  ];
-
   const response = await request(app)
     .post('/executions/history')
     .send(body)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.deepEqual(response.body, expectedResponse);
+  response.body.forEach((execution, index) => {
+    t.is(execution.arn, fakePGExecutions[index].arn);
+    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
+  });
 });
 
 test.serial('POST /executions/history returns 400 when a query is provided with no index', async (t) => {
