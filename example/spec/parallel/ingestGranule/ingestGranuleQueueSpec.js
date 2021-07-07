@@ -7,10 +7,8 @@ const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
 const {
-  Execution,
   Granule,
   Pdr,
-  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
@@ -38,8 +36,11 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -82,7 +83,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let beforeAllError = false;
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
@@ -92,7 +92,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrModel;
   let postToCmrOutput;
   let provider;
-  let providerModel;
   let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
@@ -110,11 +109,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       granuleModel = new Granule();
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      providerModel = new Provider();
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
       pdrModel = new Pdr();
 
@@ -249,20 +245,21 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      deleteProvider({
+        prefix: config.stackName,
+        providerId: provider.id,
+      }),
     ]);
   });
 
-  beforeEach(() => {
-    if (beforeAllError) fail(beforeAllError);
-  });
-
-  it('triggers a execution record being added to DynamoDB', async () => {
+  it('triggers a running execution record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
-
-    const record = await waitForModelStatus(
-      executionModel,
-      { arn: workflowExecutionArn },
+    const record = await waitForApiStatus(
+      getExecution,
+      {
+        prefix: config.stackName,
+        arn: workflowExecutionArn,
+      },
       ['running', 'completed']
     );
     expect(['running', 'completed'].includes(record.status)).toBeTrue();

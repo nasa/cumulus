@@ -193,6 +193,10 @@ describe('POST /granules/bulkDelete', () => {
         );
       }
 
+      if (postBulkDeleteBody.id) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+      }
+
       await pAll(
         [
           () => deleteProvider(

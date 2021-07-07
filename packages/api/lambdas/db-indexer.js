@@ -125,6 +125,8 @@ function getParentId(type, record) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performIndex(indexFnName, esClient, data) {
+  // TODO: I don't think `process.env.ES_INDEX` is ever set and can be
+  // removed
   return indexer[indexFnName](esClient, data, process.env.ES_INDEX);
 }
 

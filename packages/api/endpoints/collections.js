@@ -2,10 +2,10 @@
 
 const omit = require('lodash/omit');
 const router = require('express-promise-router')();
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
+  RecordDoesNotExist,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -13,13 +13,12 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
-  tableNames,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
-  addToLocalES,
   indexCollection,
+  deleteCollection,
 } = require('@cumulus/es-client/indexer');
 const Collection = require('@cumulus/es-client/collections');
 const models = require('../models');
@@ -27,10 +26,6 @@ const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
-
-const dynamoRecordToDbRecord = (
-  dynamoRecord
-) => translateApiCollectionToPostgresCollection(dynamoRecord);
 
 /**
  * List all collections.
@@ -110,7 +105,9 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionsModel = new models.Collection(),
-    dbClient = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -128,27 +125,28 @@ async function post(req, res) {
   collection.createdAt = Date.now();
 
   try {
-    const dynamoRecord = await collectionsModel.create(
-      omit(collection, 'dataType')
-    );
-
-    const dbRecord = dynamoRecordToDbRecord(dynamoRecord);
+    let dynamoRecord;
+    const dbRecord = translateApiCollectionToPostgresCollection(collection);
 
     try {
-      await dbClient('collections').insert(dbRecord, 'cumulus_id');
-    } catch (error) {
-      await collectionsModel.delete({ name, version });
-
-      throw error;
-    }
-
-    if (inTestMode()) {
-      await addToLocalES(collection, indexCollection);
+      await knex.transaction(async (trx) => {
+        await collectionPgModel.create(trx, dbRecord);
+        dynamoRecord = await collectionsModel.create(
+          omit(collection, 'dataType')
+        );
+        // process.env.ES_INDEX is only used to isolate the index for
+        // each unit test suite
+        await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB collection record in case of any failure
+      await collectionsModel.delete(collection);
+      throw innerError;
     }
 
     return res.send({
       message: 'Record saved',
-      record: collection,
+      record: dynamoRecord,
     });
   } catch (error) {
     if (
@@ -171,6 +169,13 @@ async function post(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
+  const {
+    collectionsModel = new models.Collection(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const { name, version } = req.params;
   const collection = req.body;
   let dynamoRecord;
@@ -181,8 +186,6 @@ async function put(req, res) {
       + ` '${name}' and '${version}', respectively, but found '${collection.name}'`
       + ` and '${collection.version}' in payload`);
   }
-  const collectionsModel = new models.Collection();
-  const collectionPgModel = new CollectionPgModel();
 
   try {
     oldCollection = await collectionsModel.get({ name, version });
@@ -196,16 +199,20 @@ async function put(req, res) {
   collection.updatedAt = Date.now();
   collection.createdAt = oldCollection.createdAt;
 
-  const postgresCollection = dynamoRecordToDbRecord(collection);
+  const postgresCollection = translateApiCollectionToPostgresCollection(collection);
 
-  const dbClient = await getKnexClient();
-  await dbClient.transaction(async (trx) => {
-    await collectionPgModel.upsert(trx, postgresCollection);
-    dynamoRecord = await collectionsModel.create(collection);
-  });
-
-  if (inTestMode()) {
-    await addToLocalES(dynamoRecord, indexCollection);
+  try {
+    await knex.transaction(async (trx) => {
+      await collectionPgModel.upsert(trx, postgresCollection);
+      dynamoRecord = await collectionsModel.create(collection);
+      // process.env.ES_INDEX is only used to isolate the index for
+      // each unit test suite
+      await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+    });
+  } catch (error) {
+    // Revert Dynamo record update if any write fails
+    await collectionsModel.create(oldCollection);
+    throw error;
   }
 
   return res.send(dynamoRecord);
@@ -219,24 +226,45 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const { name, version } = req.params;
-  const collectionsModel = new models.Collection();
+  const {
+    collectionsModel = new models.Collection(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
 
-  const knex = await getKnexClient({ env: process.env });
+  const { name, version } = req.params;
+
+  let existingCollection;
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.collections).where({ name, version }).del();
-      await collectionsModel.delete({ name, version });
-      if (inTestMode()) {
+    existingCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  try {
+    try {
+      await knex.transaction(async (trx) => {
+        await collectionPgModel.delete(trx, { name, version });
+        await collectionsModel.delete({ name, version });
         const collectionId = constructCollectionId(name, version);
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: collectionId,
+        await deleteCollection({
+          esClient,
+          collectionId,
           index: process.env.ES_INDEX,
-          type: 'collection',
-        }, { ignore: [404] });
+          ignore: [404],
+        });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingCollection) {
+        await collectionsModel.create(existingCollection);
       }
-    });
+      throw innerError;
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
@@ -258,7 +286,6 @@ router.get('/active', activeList);
 
 module.exports = {
   del,
-  dynamoRecordToDbRecord,
   post,
   put,
   router,
