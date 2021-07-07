@@ -21,7 +21,7 @@ const {
 } = require('../../dist');
 
 /**
- * Create a new execution Record, and link it to the input granuleCumulusId.
+ * Create a new Execution Record, and link it to the input GranuleCumulusId.
  * @param {Object} t - ava context
  * @param {number} granuleCumulusId
  * @param {Object} executionParams - params passed to create fake exectuion.
@@ -45,11 +45,13 @@ const linkNewExecutionToGranule = async (
 };
 
 /**
- * Creates a new Granule record and a new execution record, and a granuleExecution record to associate the two.
+ * Creates and inserts into the database a new Granule record and a new Execution record,
+ * and a GranuleExecution record to associate the two.
  * @param {Object} t - ava context
  * @param {Object} executionParams - params passed to create a fake execution.
  * @param {Object} granuleParams - params passed to create a fake granule.
  * @returns {Promise<Object>} - object containing the executionCumulusId and granuleCumulusId
+ *                              for the new records.
  */
 const newGranuleAssociatedWithExecution = async (
   t,
