@@ -98,7 +98,7 @@ async function history(req, res) {
   const payload = req.body;
   const granuleIds = granuleId ? [granuleId] : await getGranuleIdsForPayload(payload);
 
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
 
   const executionPgModel = new ExecutionPgModel();
   const granulePgModel = new GranulePgModel();
