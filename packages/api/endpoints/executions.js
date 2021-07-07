@@ -4,9 +4,8 @@ const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   getKnexClient,
+  getGranuleExecutionCumulusIds,
   ExecutionPgModel,
-  GranulesExecutionsPgModel,
-  GranulePgModel,
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
@@ -101,14 +100,8 @@ async function history(req, res) {
   const knex = await getKnexClient();
 
   const executionPgModel = new ExecutionPgModel();
-  const granulePgModel = new GranulePgModel();
-  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
-  const granuleCumulusIds = await granulePgModel
-    .getRecordsCumulusIds(knex, (builder) => builder.whereIn('granule_id', granuleIds));
-
-  const executionCumulusIds = await granulesExecutionsPgModel
-    .getExecutionCumulusIdsFromGranuleCumulusIds(knex, granuleCumulusIds);
+  const executionCumulusIds = await getGranuleExecutionCumulusIds(knex, ['granule_id'], granuleIds);
 
   const executions = await executionPgModel
     .getExecutionsFromCumulusIds(knex, executionCumulusIds);

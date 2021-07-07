@@ -49,8 +49,8 @@ export default class GranulesExecutionsPgModel {
    */
   async getExecutionCumulusIdsFromGranuleCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,
-    granuleCumulusIds: Array<string> | string
-  ): Promise<Array<string>> {
+    granuleCumulusIds: Array<number> | number
+  ): Promise<Array<number>> {
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
     const granuleExecutions = await knexOrTransaction(this.tableName)
       .select('execution_cumulus_id')

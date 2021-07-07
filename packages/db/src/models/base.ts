@@ -101,17 +101,18 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction
-   * @param {Function} whereFunction -
-   *  An object or any portion of an object of type RecordType
+   * @param {Array<string>} columnNames - column names for whereIn query
+   * @param {Knex.QueryCallback} values - record values for whereIn query
    * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
    */
   async getRecordsCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,
-    whereFunction: Function
+    columnNames: Array<string>,
+    values: Knex.QueryCallback
   ): Promise<Array<number>> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .select('cumulus_id')
-      .where(whereFunction);
+      .whereIn(columnNames, values);
     return records.map((record) => record.cumulus_id);
   }
 

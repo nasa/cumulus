@@ -40,14 +40,14 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    *
    * @param {Knex | Knex.Transaction} knexOrTrx -
    *  DB client or transaction
-   * @param {Function} executionCumulusIds -
+   * @param {Array<number>} executionCumulusIds -
    * single execution cumulus_id or array of exeuction cumulus_ids
    * @returns {Promise<Array<number>>} An array of exeuctions
    */
   async getExecutionsFromCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
-    executionCumulusIds: Array<string> | string
-  ): Promise<Array<string>> {
+    executionCumulusIds: Array<number> | number
+  ): Promise<Array<number>> {
     const executionCumulusIdsArray = [executionCumulusIds].flat();
     const executions = await knexOrTrx(this.tableName)
       .whereIn('cumulus_id', executionCumulusIdsArray);

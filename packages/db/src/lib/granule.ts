@@ -45,3 +45,31 @@ export const upsertGranuleWithExecutionJoinRecord = async (
   }
   return [granuleCumulusId];
 };
+
+/**
+ * Upsert a granule and a record in the granules/executions join table.
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Array<string>} columnNames - column names for whereIn query
+ * @param {Knex.QueryCallback} values - record values for whereIn query
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {Object} [granulesExecutionsPgModel]
+ *   Granules/executions PG model class instance
+ * @returns {Promise<number[]>}
+ */
+export const getGranuleExecutionCumulusIds = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  columnNames: Array<string>,
+  values: Knex.QueryCallback,
+  granulePgModel = new GranulePgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
+): Promise<Array<number>> => {
+  const granuleCumulusIds: Array<number> = await granulePgModel
+    .getRecordsCumulusIds(knexOrTransaction, columnNames, values);
+
+  const executionCumulusIds = await granulesExecutionsPgModel
+    .getExecutionCumulusIdsFromGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);
+
+  return executionCumulusIds;
+};
