@@ -13,6 +13,7 @@ does not match the expected response (200 for most requests and 202 for a few re
 trigger async operations). Previously the helpers in this package would return the response
 regardless of the status code, so you may need to update any code using helpers from this
 package to catch or to otherwise handle errors that you may encounter.
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 
 ### Added
 
