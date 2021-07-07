@@ -48,7 +48,6 @@ output "move_granules_task" {
   value = module.cumulus.move_granules_task
 }
 
-# TODO: only if not TEA
 output "distribution_api_uri" {
   value = module.cumulus_distribution.api_uri
 }
