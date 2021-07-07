@@ -79,6 +79,12 @@ the error object:
 `@cumulus/api-client/granules.deleteGranule` to control the retry
 behavior
 
+### Fixed
+
+- **CUMULUS-2568**
+  - Update reconciliation report integration test to have better cleanup/failure behavior
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
+
 ## [v9.2.0] 2021-06-22
 
 ### Added
@@ -90,9 +96,6 @@ behavior
 
 ### Fixed
 
-- **CUMULUS-2568**
-  - Update reconciliation report integration test to have better cleanup/failure
-    behavior
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
 - **CUMULUS-2532**
@@ -100,8 +103,6 @@ behavior
     collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
-- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
-endpoint for returning a PDR from the API
 
 ## [v9.1.0] 2021-06-03
 
