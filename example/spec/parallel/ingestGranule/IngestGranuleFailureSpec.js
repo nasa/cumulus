@@ -7,7 +7,6 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
@@ -15,6 +14,7 @@ const {
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   waitForModelStatus,
 } = require('../../helpers/apiUtils');
@@ -104,11 +104,22 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   afterAll(async () => {
-    // clean up stack state added by test
-    await deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId,
-    });
+    // The granule provided cannot clean up the
+    // fake S3 objects, so we expect it to fail
+    try {
+      await deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+        pRetryOptions: {
+          retries: 0,
+        },
+      });
+    } catch (error) {
+      const apiMessage = JSON.parse(error.apiMessage);
+      if (apiMessage.code !== 'NoSuchBucket') {
+        throw new Error(`Could not complete test cleanup ${error.apiMessage}`);
+      }
+    }
 
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
@@ -126,7 +137,7 @@ describe('The Ingest Granule failure workflow', () => {
   it('completes execution with failure status', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      expect(workflowExecution.status).toEqual('FAILED');
+      expect(workflowExecution.status).toEqual('failed');
     }
   });
 
