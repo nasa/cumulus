@@ -1,7 +1,7 @@
 const { Execution } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
@@ -29,7 +29,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   });
 
   it('executes successfully', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   describe('the HelloWorld ECS', () => {
