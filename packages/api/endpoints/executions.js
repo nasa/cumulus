@@ -9,7 +9,7 @@ const {
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
-const { getGranuleIdsForPayload } = require('../lambdas/bulk-operation');
+const { getGranuleIdsForPayload } = require('../lib/granules');
 const { validateBulkGranulesRequest } = require('../lib/request');
 
 /**
