@@ -97,13 +97,13 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   }
 
   /**
-   * Get cumulus_id column value for records in Postgres
+   * Get cumulus_id column value for multiple records in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction
    * @param {Function} whereFunction -
    *  An object or any portion of an object of type RecordType
-   * @returns {Promise<Array<number>>} The cumulus_id of the returned record
+   * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
    */
   async getRecordsCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,

@@ -38,6 +38,15 @@ export default class GranulesExecutionsPgModel {
       .merge();
   }
 
+  /**
+   * Get execution_cumulus_id column values from the granule_cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction -
+   *  DB client or transaction
+   * @param {Function} granuleCumulusIds -
+   * single granule_cumulus_id or array of granule_cumulus_ids
+   * @returns {Promise<Array<number>>} An array of execution_cumulus_ids
+   */
   async getExecutionCumulusIdsFromGranuleCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,
     granuleCumulusIds: Array<string> | string

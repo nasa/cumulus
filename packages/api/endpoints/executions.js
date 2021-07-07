@@ -86,6 +86,13 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+/**
+ * Get execution history for a single granule or multiple granules
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
 async function history(req, res) {
   const { granuleId } = req.params;
   const payload = req.body;
