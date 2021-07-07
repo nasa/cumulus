@@ -48,6 +48,16 @@ database via the API
   - `pdrs.deletePdr` - Delete a PDR via the API
   - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
 
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+
 ### Changed
 
 - Moved functions from `@cumulus/integration-tests` to `example/spec/helpers/workflowUtils`:
@@ -80,35 +90,6 @@ the error object:
 behavior
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 
-### Fixed
-
-- **CUMULUS-2568**
-  - Update reconciliation report integration test to have better cleanup/failure
-    behavior
-- **CUMULUS-2520**
-  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and
-    collection deletion in test cleanup.
-- **CUMULUS-2558**
-  - Fixed issue where executions original_payload would not be retained on successful execution
-- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
-endpoint for returning a PDR from the API
-
-### Added
-
-- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2306**
-    - Updated API execution GET endpoint to read individual execution records
-      from PostgreSQL database instead of DynamoDB
-    - Updated API execution-status endpoint to read execution records from
-      PostgreSQL database instead of DynamoDB
-   - **CUMULUS-2303**
-    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
-
-### Changed
-
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2208**
     - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
@@ -132,6 +113,21 @@ endpoint for returning a PDR from the API
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
     to `granulesApi` from `@cumulus/integration-tests`.
+
+### Fixed
+
+- **CUMULUS-2568**
+  - Update reconciliation report integration test to have better cleanup/failure
+    behavior
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+endpoint for returning a PDR from the API
 
 ### Removed
 
