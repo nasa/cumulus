@@ -189,9 +189,11 @@ test.beforeEach(async (t) => {
   t.context.fakePGExecutions = [
     fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
     fakeExecutionRecordFactory({ workflow_name: workflowName2 }),
+    // third execution with same name as workflow1 to verify deduping works
+    fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
   ];
 
-  [t.context.executionCumulusId1, t.context.executionCumulusId2]
+  [t.context.executionCumulusId1, t.context.executionCumulusId2, t.context.executionCumulusId3]
     = await Promise.all(
       t.context.fakePGExecutions.map((execution) =>
         executionPgModel.create(knex, execution))
@@ -239,6 +241,10 @@ test.beforeEach(async (t) => {
     },
     {
       execution_cumulus_id: t.context.executionCumulusId2[0],
+      granule_cumulus_id: Number(t.context.granuleCumulusId),
+    },
+    {
+      execution_cumulus_id: t.context.executionCumulusId3[0],
       granule_cumulus_id: Number(t.context.granuleCumulusId),
     },
   ];
@@ -508,8 +514,6 @@ test.serial('POST /history returns all workflow names when query is passed', asy
     query: expectedQuery,
   };
 
-  console.log('BODY', body);
-
   const expectedResponse = [
     fakePGExecutions[0].workflow_name,
     fakePGExecutions[1].workflow_name,
@@ -520,8 +524,6 @@ test.serial('POST /history returns all workflow names when query is passed', asy
     .send(body)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
-
-  // console.log('ERROR', response.body.meta.body.error);
 
   t.deepEqual(response.body, expectedResponse);
 });
