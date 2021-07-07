@@ -20,6 +20,13 @@ const {
   executionArnsFromGranuleIdsAndWorkflowNames,
 } = require('../../dist');
 
+/**
+ * Create a new execution Record, and link it to the input granuleCumulusId.
+ * @param {Object} t - ava context
+ * @param {number} granuleCumulusId
+ * @param {Object} executionParams - params passed to create fake exectuion.
+ * @returns {Promise<number>} - the executionCumulusId created.
+ */
 const linkNewExecutionToGranule = async (
   t,
   granuleCumulusId,
@@ -37,6 +44,13 @@ const linkNewExecutionToGranule = async (
   return executionCumulusId;
 };
 
+/**
+ * Creates a new Granule record and a new execution record, and a granuleExecution record to associate the two.
+ * @param {Object} t - ava context
+ * @param {Object} executionParams - params passed to create a fake execution.
+ * @param {Object} granuleParams - params passed to create a fake granule.
+ * @returns {Promise<Object>} - object containing the executionCumulusId and granuleCumulusId
+ */
 const newGranuleAssociatedWithExecution = async (
   t,
   executionParams,
@@ -107,4 +121,205 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and 
   );
 
   t.is(results[0].arn, executionArn);
+});
+
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns correct arn when a granule has multiple workflow executions associated with it.', async (t) => {
+  const granuleId = randomGranuleId();
+  const firstExecutionParams = {
+    workflow_name: randomWorkflow(),
+    arn: randomArn(),
+  };
+  const secondExecutionParams = {
+    workflow_name: randomWorkflow(),
+    arn: randomArn(),
+  };
+  const granuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    firstExecutionParams,
+    {
+      granule_id: granuleId,
+    }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    secondExecutionParams
+  );
+
+  const results = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [granuleId],
+    [firstExecutionParams.workflow_name]
+  );
+
+  t.is(results.length, 1);
+  t.is(results[0].arn, firstExecutionParams.arn);
+
+  const secondResults = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [granuleId],
+    [secondExecutionParams.workflow_name]
+  );
+
+  t.is(secondResults.length, 1);
+  t.is(secondResults[0].arn, secondExecutionParams.arn);
+});
+
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for a granule that has had the same workflow applied multiple times, with the most recent timestamp first.', async (t) => {
+  const granuleId = randomGranuleId();
+  const theWorkflowName = randomWorkflow();
+  const oldestExecution = {
+    workflow_name: theWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('1999-01-26T08:42:00.000Z'),
+  };
+  const mostRecentExecution = {
+    workflow_name: theWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2021-07-26T18:00:00.000Z'),
+  };
+  const granuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    oldestExecution,
+    {
+      granule_id: granuleId,
+    }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    mostRecentExecution
+  );
+
+  const results = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [granuleId],
+    [theWorkflowName]
+  );
+
+  t.is(results.length, 2);
+  t.is(results[0].arn, mostRecentExecution.arn);
+  t.is(results[1].arn, oldestExecution.arn);
+});
+
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an array of workflow names, sorted by timestamp.', async (t) => {
+  const granuleId = randomGranuleId();
+  const aWorkflowName = randomWorkflow();
+  const anotherWorkflowName = randomWorkflow();
+
+  const oldestExecution = {
+    workflow_name: aWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('1999-01-26T08:42:00.000Z'),
+  };
+  const olderExecution = {
+    workflow_name: aWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2000-11-22T01:00:00.000Z'),
+  };
+  const mostRecentExecution = {
+    workflow_name: anotherWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2021-07-26T18:00:00.000Z'),
+  };
+  const recentExecutionButExcludedFromResults = {
+    workflow_name: randomWorkflow(),
+    arn: randomArn(),
+    timestamp: new Date(),
+  };
+
+  const granuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    oldestExecution,
+    {
+      granule_id: granuleId,
+    }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    mostRecentExecution
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    olderExecution
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    recentExecutionButExcludedFromResults
+  );
+
+  const results = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [granuleId],
+    [aWorkflowName, anotherWorkflowName]
+  );
+
+  t.is(results.length, 3);
+  t.is(results[0].arn, mostRecentExecution.arn);
+  t.is(results[1].arn, olderExecution.arn);
+  t.is(results[2].arn, oldestExecution.arn);
+});
+
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an array of granuleIds, sorted by timestamp.', async (t) => {
+  const granuleId = randomGranuleId();
+  const anotherGranuleId = randomGranuleId();
+
+  const aWorkflowName = randomWorkflow();
+
+  const oldestExecution = {
+    workflow_name: aWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('1999-01-26T08:42:00.000Z'),
+  };
+  const olderExecution = {
+    workflow_name: aWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2000-11-22T01:00:00.000Z'),
+  };
+  const mostRecentExecution = {
+    workflow_name: aWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2021-07-26T18:00:00.000Z'),
+  };
+  const recentExecutionButExcludedFromResults = {
+    workflow_name: randomWorkflow(),
+    arn: randomArn(),
+    timestamp: new Date(),
+  };
+
+  const granuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    oldestExecution,
+    { granule_id: granuleId }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    recentExecutionButExcludedFromResults
+  );
+
+  const secondGranuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    olderExecution,
+    { granule_id: anotherGranuleId }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    secondGranuleExecution.granuleCumulusId,
+    mostRecentExecution
+  );
+
+  const results = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [granuleId, anotherGranuleId],
+    [aWorkflowName]
+  );
+
+  t.is(results.length, 3);
+  t.is(results[0].arn, mostRecentExecution.arn);
+  t.is(results[1].arn, olderExecution.arn);
+  t.is(results[2].arn, oldestExecution.arn);
 });
