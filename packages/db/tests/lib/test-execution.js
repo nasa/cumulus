@@ -98,7 +98,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and granuleId for linked granule execution.', async (t) => {
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and granuleId for a linked granule execution.', async (t) => {
   const workflowName = randomWorkflow();
   const executionArn = randomArn();
   const granuleId = randomGranuleId();
@@ -123,7 +123,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and 
   t.is(results[0].arn, executionArn);
 });
 
-test('executionArnsFromGranuleIdsAndWorkflowNames() returns correct arn when a granule has multiple workflow executions associated with it.', async (t) => {
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns correct arn when a granule has multiple executions with different workflow names associated with it.', async (t) => {
   const granuleId = randomGranuleId();
   const firstExecutionParams = {
     workflow_name: randomWorkflow(),
