@@ -249,7 +249,6 @@ test('ExecutionPgModel.searchByCumulusIds() returns correct values', async (t) =
   results.forEach((result, index) => t.like(result, executionRecords[index]));
 });
 
-
 test('ExecutionPgModel.searchByCumulusIds() works with a transaction', async (t) => {
   const {
     knex,
