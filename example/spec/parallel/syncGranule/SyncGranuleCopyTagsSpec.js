@@ -14,7 +14,6 @@ const querystring = require('querystring');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteS3Object, s3GetObjectTagging, s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -104,7 +103,6 @@ describe('The SyncGranule task', () => {
 
       expect(stagedFileTags.TagSet).toEqual(expectedTagSet);
     } finally {
-      await deleteGranule({ prefix, granuleId });
       await pAll(
         [
           () => deleteS3Object(sourceBucket, sourceKey),

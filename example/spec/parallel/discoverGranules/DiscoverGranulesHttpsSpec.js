@@ -1,22 +1,19 @@
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const { getExecution } = require('@cumulus/api-client/executions');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'DiscoverGranules';
-
-// Note: This test runs in serial due to the logs endpoint tests
 
 describe('The Discover Granules workflow with https Protocol', () => {
   const collectionsDir = './data/collections/https_testcollection_001/';
@@ -70,10 +67,20 @@ describe('The Discover Granules workflow with https Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-      (granule) => deleteGranule({
-        prefix: config.stackName,
-        granuleId: granule.granuleId,
-      })
+      async (granule) => {
+        await waitForApiStatus(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          },
+          'completed'
+        );
+        await deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        });
+      }
     ));
     await Promise.all(ingestGranuleWorkflowArns.map((executionArn) =>
       deleteExecution({ prefix: config.stackName, executionArn })));
@@ -87,11 +94,11 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   it('executes successfully', () => {
-    expect(httpsWorkflowExecution.status).toEqual('SUCCEEDED');
+    expect(httpsWorkflowExecution.status).toEqual('completed');
   });
 
   describe('the DiscoverGranules Lambda', () => {
-    let lambdaInput = null;
+    let lambdaInput;
 
     beforeAll(async () => {
       lambdaInput = await lambdaStep.getStepInput(
@@ -102,15 +109,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
         httpsWorkflowExecution.executionArn,
         'DiscoverGranules'
       );
-    });
-
-    afterAll(async () => {
-      await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('has correctly configured provider', () => {
@@ -166,12 +164,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(ingestGranuleWorkflowArns.map((execution) => waitForCompletedExecution(execution)));
-      await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        })
-      ));
     });
 
     it('executes successfully', () => {
@@ -179,15 +171,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
     });
 
     describe('SyncGranule lambda function', () => {
-      afterAll(async () => {
-        await Promise.all(lambdaOutput.payload.granules.map(
-          (granule) => deleteGranule({
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          })
-        ));
-      });
-
       it('outputs the expected granule', async () => {
         lambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArns[0],
