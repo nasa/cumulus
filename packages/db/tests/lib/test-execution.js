@@ -214,7 +214,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
     arn: randomArn(),
     timestamp: new Date('1999-01-26T08:42:00.000Z'),
   };
-  const olderExecution = {
+  const oldExecution = {
     workflow_name: aWorkflowName,
     arn: randomArn(),
     timestamp: new Date('2000-11-22T01:00:00.000Z'),
@@ -245,7 +245,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
   await linkNewExecutionToGranule(
     t,
     granuleExecution.granuleCumulusId,
-    olderExecution
+    oldExecution
   );
   await linkNewExecutionToGranule(
     t,
@@ -261,7 +261,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
 
   t.is(results.length, 3);
   t.is(results[0].arn, mostRecentExecution.arn);
-  t.is(results[1].arn, olderExecution.arn);
+  t.is(results[1].arn, oldExecution.arn);
   t.is(results[2].arn, oldestExecution.arn);
 });
 
@@ -276,7 +276,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
     arn: randomArn(),
     timestamp: new Date('1999-01-26T08:42:00.000Z'),
   };
-  const olderExecution = {
+  const oldExecution = {
     workflow_name: aWorkflowName,
     arn: randomArn(),
     timestamp: new Date('2000-11-22T01:00:00.000Z'),
@@ -305,7 +305,7 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
 
   const secondGranuleExecution = await newGranuleAssociatedWithExecution(
     t,
-    olderExecution,
+    oldExecution,
     { granule_id: anotherGranuleId }
   );
   await linkNewExecutionToGranule(
@@ -322,6 +322,6 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
 
   t.is(results.length, 3);
   t.is(results[0].arn, mostRecentExecution.arn);
-  t.is(results[1].arn, olderExecution.arn);
+  t.is(results[1].arn, oldExecution.arn);
   t.is(results[2].arn, oldestExecution.arn);
 });
