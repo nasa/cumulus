@@ -47,15 +47,15 @@ async function list(req, res) {
 async function getAsyncOperation(req, res) {
   const knex = await getKnexClient();
   const asyncOperationPgModel = new AsyncOperationPgModel();
+  let asyncOperationRecord;
 
-  let asyncOperation;
   try {
-    const asyncOperationRecord = await asyncOperationPgModel.get(knex, { id: req.params.id });
-    asyncOperation = translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationRecord);
+    asyncOperationRecord = await asyncOperationPgModel.get(knex, { id: req.params.id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Async Operation Record ${req.params.id} Not Found`);
     throw error;
   }
+  const asyncOperation = translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationRecord);
 
   return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'description', 'operationType', 'output']));
 }
