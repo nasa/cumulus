@@ -310,19 +310,9 @@ test('POST returns a 400 response if invalid record is provided', async (t) => {
 
 test('POST returns a 404 if the requested path does not exist', async (t) => {
   const { jwtAuthToken } = t.context;
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+
   const response = await request(app)
     .post(`/asyncOperations/${randomString()}`)
-    .send(asyncOperation)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
