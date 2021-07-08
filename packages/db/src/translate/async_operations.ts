@@ -42,7 +42,7 @@ export const translatePostgresAsyncOperationToApiAsyncOperation = (
     operationType: pgAsyncOperation.operation_type,
     status: pgAsyncOperation.status,
     output: pgAsyncOperation.output ? JSON.stringify(pgAsyncOperation.output) : undefined,
-    taskArn: pgAsyncOperation.task_arn ? pgAsyncOperation.task_arn : undefined,
+    taskArn: pgAsyncOperation.task_arn,
     createdAt: pgAsyncOperation.created_at ? pgAsyncOperation.created_at.getTime() : undefined,
     updatedAt: pgAsyncOperation.updated_at ? pgAsyncOperation.updated_at.getTime() : undefined,
   };
