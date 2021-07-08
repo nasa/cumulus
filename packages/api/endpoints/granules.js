@@ -79,9 +79,9 @@ async function put(req, res) {
     const collectionModelClient = new models.Collection();
     const collection = await collectionModelClient.get({ name, version });
 
-    const targetExecution = await chooseTargetExecution(
-      granuleId, body.execution, body.workflowName
-    );
+    const targetExecution = await chooseTargetExecution({
+      granuleId, executionArn: body.execution, workflowName: body.workflowName
+    });
 
     if (targetExecution) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);

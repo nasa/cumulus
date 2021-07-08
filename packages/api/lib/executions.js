@@ -14,29 +14,29 @@ const {
  *  executions that match the granuleId and workflowName and return the most
  *  recent.
  *
- * @param {string} granuleId - granuleId
- * @param {string|undefined} [executionArn] - exection arn to use for reingest
- * @param {string|undefined} [workflowName] - workflow name to use for reingest
+ * @param {Object} params - function parameters
+ * @param {string} params.granuleId - granuleId
+ * @param {string|undefined} [params.executionArn] - execution arn to use for reingest
+ * @param {string|undefined} [params.workflowName] - workflow name to use for reingest
+ * @param {function|undefined} [params.dbFunction] - database function for
+ *     testing. Defaults to executionArnsFromGranuleIdsAndWorkflowNames.
  * @returns {Promise<string>|Promise<undefined>} - executionArn used in a
  *             granule reingest call to determine correct workflow to run or
  *             undefined.
  */
-const chooseTargetExecution = async (
+const chooseTargetExecution = async ({
   granuleId,
   executionArn = undefined,
-  workflowName = undefined
-) => {
+  workflowName = undefined,
+  dbFunction = executionArnsFromGranuleIdsAndWorkflowNames,
+}) => {
   // if a user specified an executionArn, use that always
   if (executionArn !== undefined) return executionArn;
   // if a user didn't specify a workflow, return undefined explicitly
   if (workflowName === undefined) return undefined;
 
   const knex = await getKnexClient({ env: process.env });
-  const executions = await executionArnsFromGranuleIdsAndWorkflowNames(
-    knex,
-    [granuleId],
-    [workflowName]
-  );
+  const executions = await dbFunction(knex, [granuleId], [workflowName]);
   return executions[0].arn;
 };
 

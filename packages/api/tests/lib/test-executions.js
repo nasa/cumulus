@@ -1,7 +1,5 @@
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
-const db = require('@cumulus/db');
 
 const { chooseTargetExecution } = require('../../lib/executions');
 
@@ -9,31 +7,17 @@ const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
 
-test.before((t) => {
-  t.context.sandbox = sinon.createSandbox();
-  t.context.arn = randomArn();
-  const knexFake = sinon.fake.resolves('knex');
-  const executionArnsFromGranuleIdsAndWorkflowNamesFake = sinon.fake.resolves([
-    { arn: t.context.arn },
-  ]);
-  t.context.sandbox.replaceGetter(db, 'getKnexClient', knexFake);
-  t.context.sandbox.replaceGetter(
-    db,
-    'executionArnsFromGranuleIdsAndWorkflowNames',
-    executionArnsFromGranuleIdsAndWorkflowNamesFake
-  );
-});
-
-test.after.always((t) => {
-  t.context.sandbox.restore();
-});
+process.env.PG_HOST = `hostname_${cryptoRandomString({ length: 10 })}`;
+process.env.PG_USER = `user_${cryptoRandomString({ length: 10 })}`;
+process.env.PG_PASSWORD = `password_${cryptoRandomString({ length: 10 })}`;
+process.env.PG_DATABASE = `password_${cryptoRandomString({ length: 10 })}`;
 
 test('chooseTargetExecution() returns executionArn if provided.', async (t) => {
   const executionArn = randomArn();
   const granuleId = randomGranuleId();
   const expected = executionArn;
 
-  const actual = await chooseTargetExecution(granuleId, executionArn);
+  const actual = await chooseTargetExecution({ granuleId, executionArn });
 
   t.is(expected, actual);
 });
@@ -42,7 +26,7 @@ test('chooseTargetExecution() returns undefined if no executionarn nor workflowN
   const granuleId = randomGranuleId();
   const expected = undefined;
 
-  const actual = await chooseTargetExecution(granuleId);
+  const actual = await chooseTargetExecution({ granuleId });
 
   t.is(expected, actual);
 });
@@ -50,12 +34,15 @@ test('chooseTargetExecution() returns undefined if no executionarn nor workflowN
 test('chooseTargetExecution() returns the first arn found in the database if a workflowName is provided.', async (t) => {
   const workflowName = randomWorkflow();
   const granuleId = randomGranuleId();
+  const arn = randomArn();
+  const testDbFunction = async () =>
+    Promise.resolve([{ arn }, { arn: randomArn() }, { arn: randomArn() }]);
 
-  const actual = await chooseTargetExecution(
+  const actual = await chooseTargetExecution({
     granuleId,
-    undefined,
-    workflowName
-  );
+    workflowName,
+    dbFunction: testDbFunction,
+  });
 
   t.is(actual[0].arn, t.context.arn);
 });
