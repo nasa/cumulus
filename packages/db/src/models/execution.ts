@@ -44,7 +44,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    * single execution cumulus_id or array of exeuction cumulus_ids
    * @returns {Promise<Array<number>>} An array of exeuctions
    */
-  async getExecutionsFromCumulusIds(
+  async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     executionCumulusIds: Array<number> | number
   ): Promise<Array<number>> {

@@ -18,7 +18,7 @@ package to catch or to otherwise handle errors that you may encounter.
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
 - **CUMULUS-2460**
-  - Adds `GET` and `POST` /executions/history for retriving workflow names from a given granule, list of granules, or granule query
+  - Adds `POST` /executions/search-by-granules for retriving workflow names from a given granule, list of granules, or granule query
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**

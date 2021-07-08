@@ -92,25 +92,21 @@ async function del(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function history(req, res) {
-  const { granuleId } = req.params;
+async function searchByGranules(req, res) {
   const payload = req.body;
-  const granuleIds = granuleId ? [granuleId] : await getGranuleIdsForPayload(payload);
-
+  const granuleIds = await getGranuleIdsForPayload(payload);
   const knex = await getKnexClient();
-
   const executionPgModel = new ExecutionPgModel();
 
   const executionCumulusIds = await getGranuleExecutionCumulusIds(knex, ['granule_id'], granuleIds);
 
   const executions = await executionPgModel
-    .getExecutionsFromCumulusIds(knex, executionCumulusIds);
+    .searchByCumulusIds(knex, executionCumulusIds);
 
   return res.send(executions);
 }
 
-router.post('/history', validateBulkGranulesRequest, history);
-router.get('/history/:granuleId', history);
+router.post('/search-by-granules', validateBulkGranulesRequest, searchByGranules);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

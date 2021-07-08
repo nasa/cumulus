@@ -228,3 +228,41 @@ test('ExecutionPgModel.delete() deletes execution and granule/execution join rec
     )
   );
 });
+
+test('ExecutionPgModel.searchByCumulusIds() returns correct values', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  let executionCumulusId1;
+  let executionCumulusId2;
+  await knex.transaction(async (trx) => {
+    [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
+    [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+  });
+
+  const results = await executionPgModel
+    .searchByCumulusIds(knex, [executionCumulusId1, executionCumulusId2]);
+
+  results.forEach((result, index) => t.like(result, executionRecords[index]));
+});
+
+
+test('ExecutionPgModel.searchByCumulusIds() works with a transaction', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  await knex.transaction(async (trx) => {
+    const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
+    const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+
+    const results = await executionPgModel
+      .searchByCumulusIds(trx, [executionCumulusId1, executionCumulusId2]);
+    results.forEach((result, index) => t.like(result, executionRecords[index]));
+  });
+});

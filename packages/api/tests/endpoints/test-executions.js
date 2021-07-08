@@ -1,8 +1,8 @@
 'use strict';
 
 const test = require('ava');
+const omit = require('lodash/omit');
 const request = require('supertest');
-const cryptoRandomString = require('crypto-random-string');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
@@ -14,13 +14,12 @@ const {
   destroyLocalTestDb,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
-  fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
-  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   translateApiExecutionToPostgresExecution,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
@@ -38,6 +37,8 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
+const executionOmitList = ['async_operation_cumulus_id', 'collection_cumulus_id', 'created_at', 'cumulus_id', 'parent_cumulus_id', 'timestamp', 'updated_at'];
+
 // create all the variables needed across this test
 let accessTokenModel;
 let collectionModel;
@@ -47,7 +48,6 @@ let esIndex;
 let executionModel;
 let executionPgModel;
 let granuleModel;
-let granulesExecutionsPgModel;
 let granulePgModel;
 let jwtAuthToken;
 const fakeExecutions = [];
@@ -127,6 +127,9 @@ test.before(async (t) => {
   fakeExecutions.push(
     fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2' })
   );
+  fakeExecutions.push(
+    fakeExecutionFactoryV2()
+  );
   await Promise.all(
     fakeExecutions.map((i) =>
       executionModel
@@ -137,7 +140,6 @@ test.before(async (t) => {
 
   executionPgModel = new ExecutionPgModel();
   collectionPgModel = new CollectionPgModel();
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   granulePgModel = new GranulePgModel();
 
   const username = randomId('username');
@@ -176,26 +178,31 @@ test.before(async (t) => {
     testPgCollection
   );
 
+  const executionCumulusIds = [];
+  t.context.fakePGExecutions = [];
+
+  await fakeExecutions.reduce(async (promise, execution) => {
+    // This line will wait for the last async function to finish.
+    // The first iteration uses an already resolved Promise
+    // so, it will immediately continue.
+    await promise;
+    const omitExecution = omit(execution, ['asyncOperationId']);
+    await executionModel.create(omitExecution);
+    const executionPgRecord = await translateApiExecutionToPostgresExecution(
+      omitExecution,
+      knex
+    );
+    executionCumulusIds.push(await executionPgModel.create(knex, executionPgRecord));
+    t.context.fakePGExecutions.push(executionPgRecord);
+  }, Promise.resolve());
+
+  t.context.executionCumulusIds = executionCumulusIds.flat();
+
   await esClient.indices.refresh();
 });
 
 test.beforeEach(async (t) => {
   const { esAlias, knex } = t.context;
-
-  const workflowName1 = cryptoRandomString({ length: 6 });
-  const workflowName2 = cryptoRandomString({ length: 6 });
-
-  // create fake Postgres executon records
-  t.context.fakePGExecutions = [
-    fakeExecutionRecordFactory({ workflow_name: workflowName1 }),
-    fakeExecutionRecordFactory({ workflow_name: workflowName2 }),
-  ];
-
-  [t.context.executionCumulusId1, t.context.executionCumulusId2]
-    = await Promise.all(
-      t.context.fakePGExecutions.map((execution) =>
-        executionPgModel.create(knex, execution))
-    );
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
@@ -232,20 +239,14 @@ test.beforeEach(async (t) => {
       granulePgModel.create(knex, granule))
   );
 
-  t.context.joinRecords = [
-    {
-      execution_cumulus_id: t.context.executionCumulusId1[0],
-      granule_cumulus_id: Number(t.context.granuleCumulusId),
-    },
-    {
-      execution_cumulus_id: t.context.executionCumulusId2[0],
-      granule_cumulus_id: Number(t.context.granuleCumulusId),
-    },
-  ];
-
-  await Promise.all(
-    t.context.joinRecords.map((joinRecord) =>
-      granulesExecutionsPgModel.create(knex, joinRecord))
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], t.context.executionCumulusIds[0]
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], t.context.executionCumulusIds[1]
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[1], t.context.executionCumulusIds[2]
   );
 });
 
@@ -308,10 +309,10 @@ test('default returns list of executions', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(results.length, 2);
+  t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'execution');
-  t.is(meta.count, 2);
+  t.is(meta.count, 3);
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
     t.true(arns.includes(r.arn));
@@ -379,20 +380,12 @@ test('DELETE removes only specified execution from all data stores', async (t) =
     name: 'test_execution',
   });
 
-  fakeExecutions.push(newExecution);
-
-  await Promise.all(
-    fakeExecutions.map(async (execution) => {
-      // delete async operation foreign key to avoid needing a valid async operation
-      delete execution.asyncOperationId;
-      await executionModel.create(execution);
-      const executionPgRecord = await translateApiExecutionToPostgresExecution(
-        execution,
-        knex
-      );
-      await executionPgModel.create(knex, executionPgRecord);
-    })
+  await executionModel.create(newExecution);
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    newExecution,
+    knex
   );
+  await executionPgModel.create(knex, executionPgRecord);
 
   t.true(await executionModel.exists({ arn: newExecution.arn }));
   t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
@@ -445,36 +438,24 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('GET /history/:granuleId returns all executions associated with the granule', async (t) => {
+test('POST /executions/search-by-granules returns correct executions when ids array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
-    .get(`/executions/history/${fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-
-  response.body.forEach((execution, index) => {
-    t.is(execution.arn, fakePGExecutions[index].arn);
-    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
-  });
-});
-
-test('POST /history returns correct executions when ids array is passed', async (t) => {
-  const { fakeGranules, fakePGExecutions } = t.context;
-
-  const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .send({ ids: [fakeGranules[0].granuleId, fakeGranules[1].granuleId] })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  response.body.forEach((execution, index) => {
-    t.is(execution.arn, fakePGExecutions[index].arn);
-    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
-  });
+  t.is(response.body.length, 3);
+
+  response.body.forEach((execution, index) => t.deepEqual(
+    omit(execution, executionOmitList),
+    omit(fakePGExecutions[index], executionOmitList)
+  ));
 });
 
-test.serial('POST /history returns correct executions when query is passed', async (t) => {
+test.serial('POST /executions/search-by-granules returns correct executions when query is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const expectedQuery = {
@@ -505,18 +486,20 @@ test.serial('POST /history returns correct executions when query is passed', asy
   };
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .send(body)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  response.body.forEach((execution, index) => {
-    t.is(execution.arn, fakePGExecutions[index].arn);
-    t.is(execution.workflow_name, fakePGExecutions[index].workflow_name);
-  });
+  t.is(response.body.length, 2);
+
+  response.body.forEach((execution, index) => t.deepEqual(
+    omit(execution, executionOmitList),
+    omit(fakePGExecutions[index], executionOmitList)
+  ));
 });
 
-test.serial('POST /executions/history returns 400 when a query is provided with no index', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when a query is provided with no index', async (t) => {
   const expectedQuery = { query: 'fake-query' };
 
   const body = {
@@ -524,7 +507,7 @@ test.serial('POST /executions/history returns 400 when a query is provided with 
   };
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -533,7 +516,7 @@ test.serial('POST /executions/history returns 400 when a query is provided with 
   t.regex(response.body.message, /Index is required if query is sent/);
 });
 
-test.serial('POST /executions/history returns 400 when no IDs or query is provided', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when no IDs or query is provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -541,7 +524,7 @@ test.serial('POST /executions/history returns 400 when no IDs or query is provid
   };
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -550,7 +533,7 @@ test.serial('POST /executions/history returns 400 when no IDs or query is provid
   t.regex(response.body.message, /One of ids or query is required/);
 });
 
-test.serial('POST /executions/history returns 400 when IDs is not an array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when IDs is not an array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -559,7 +542,7 @@ test.serial('POST /executions/history returns 400 when IDs is not an array', asy
   };
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -568,7 +551,7 @@ test.serial('POST /executions/history returns 400 when IDs is not an array', asy
   t.regex(response.body.message, /ids should be an array of values/);
 });
 
-test.serial('POST /executions/history returns 400 when IDs is an empty array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when IDs is an empty array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -577,7 +560,7 @@ test.serial('POST /executions/history returns 400 when IDs is an empty array', a
   };
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -586,7 +569,7 @@ test.serial('POST /executions/history returns 400 when IDs is an empty array', a
   t.regex(response.body.message, /no values provided for ids/);
 });
 
-test.serial('POST /executions/history returns 400 when the Metrics ELK stack is not configured', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
   const expectedIndex = 'my-index';
   const expectedQuery = { query: 'fake-query' };
 
@@ -598,7 +581,7 @@ test.serial('POST /executions/history returns 400 when the Metrics ELK stack is 
   process.env.METRICS_ES_USER = undefined;
 
   const response = await request(app)
-    .post('/executions/history')
+    .post('/executions/search-by-granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
