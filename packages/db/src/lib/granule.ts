@@ -69,7 +69,7 @@ export const getGranuleExecutionCumulusIds = async (
     .getRecordsCumulusIds(knexOrTransaction, columnNames, values);
 
   const executionCumulusIds = await granulesExecutionsPgModel
-    .getExecutionCumulusIdsFromGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);
+    .searchByGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);
 
   return executionCumulusIds;
 };
