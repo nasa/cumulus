@@ -445,7 +445,7 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('GET /history/:granuleId returns all workflow names associated with the granule', async (t) => {
+test('GET /history/:granuleId returns all executions associated with the granule', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
