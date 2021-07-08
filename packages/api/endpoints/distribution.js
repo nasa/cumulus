@@ -2,38 +2,24 @@
 
 const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
+const isNil = require('lodash/isNil');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
-const { URL } = require('url');
-const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
+
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { RecordDoesNotExist, UnparsableFileLocationError } = require('@cumulus/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { buildErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { objectStoreForProtocol } = require('@cumulus/object-store');
+
+const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
+const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
   : pathresolve(__dirname, 'templates');
-
-/**
- * Return a signed URL to an S3 object
- *
- * @param {Object} s3Client - an AWS S3 Service Object
- * @param {string} Bucket - the bucket of the requested object
- * @param {string} Key - the key of the requested object
- * @param {string} username - the username to add to the redirect url
- * @returns {string} a URL
- */
-function getSignedS3Url(s3Client, Bucket, Key, username) {
-  const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
-
-  const parsedSignedUrl = new URL(signedUrl);
-  parsedSignedUrl.searchParams.set('A-userid', username);
-
-  return parsedSignedUrl.toString();
-}
 
 /**
  * Sends a welcome page
@@ -95,7 +81,7 @@ async function handleLoginRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   log.debug('the query params:', req.query);
-  const templateVars = buildErrorTemplateVars(req.query);
+  const templateVars = buildLoginErrorTemplateVars(req.query);
   if (!isEmpty(templateVars) && templateVars.statusCode >= 400) {
     templateVars.requestid = requestid;
     const rendered = render(errorTemplate, templateVars);
@@ -105,7 +91,6 @@ async function handleLoginRequest(req, res) {
   try {
     log.debug('pre getAccessToken() with query params:', req.query);
     const accessTokenResponse = await oauthClient.getAccessToken(code);
-    log.debug('getAccessToken:', accessTokenResponse);
 
     // getAccessToken returns username only for EDL
     const params = {
@@ -181,33 +166,118 @@ async function handleLogoutRequest(req, res) {
 }
 
 /**
+ * Responds to a locate bucket request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} - promise of an express response object
+ */
+async function handleLocateBucketRequest(req, res) {
+  const { bucket_name: bucket } = req.query;
+  if (bucket === undefined) {
+    return res
+      .set({ 'Content-Type': 'text/plain' })
+      .status(400)
+      .send('Required "bucket_name" query paramater not specified');
+  }
+
+  const bucketMap = await getBucketMap();
+  const matchingPaths = getPathsByBucketName(bucketMap, bucket);
+  if (matchingPaths.length === 0) {
+    log.debug(`No route defined for ${bucket}`);
+    return res
+      .set({ 'Content-Type': 'text/plain' })
+      .status(404)
+      .send(`No route defined for ${bucket}`);
+  }
+
+  return res.status(200).json(matchingPaths);
+}
+
+/**
  * Responds to a file request
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-
 async function handleFileRequest(req, res) {
-  const { s3Client } = await getConfigurations();
-  let fileBucket;
-  let fileKey;
-  try {
-    [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  } catch (error) {
-    if (error instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(error.message);
-    }
-    throw error;
+  const errorTemplate = pathresolve(templatesDirectory, 'error.html');
+  const requestid = get(req, 'apiGateway.context.awsRequestId');
+  const bucketMap = await getBucketMap();
+  const { bucket, key } = processFileRequestPath(req.params[0], bucketMap);
+  if (bucket === undefined) {
+    const error = `Unable to locate bucket from bucket map for ${req.params[0]}`;
+    return res.boom.notFound(error);
   }
 
-  const signedS3Url = getSignedS3Url(
-    s3Client,
-    fileBucket,
-    fileKey,
-    req.authorizedMetadata.userName
-  );
+  // check private buckets' user groups for earthdata only
+  if (process.env.OAUTH_PROVIDER === 'earthdata') {
+    const allowedUserGroups = checkPrivateBucket(bucketMap, bucket, key);
+    log.debug(`checkPrivateBucket for ${bucket} ${key} returns: ${allowedUserGroups && allowedUserGroups.join(',')}`);
+    const allowed = isNil(allowedUserGroups)
+      || (req.authorizedMetadata.userGroups || [])
+        .some((group) => allowedUserGroups.includes(group));
+    if (!allowed) {
+      const statusCode = 403;
+      const vars = {
+        contentstring: 'This data is not currently available.',
+        title: 'Could not access data',
+        statusCode,
+        requestid,
+      };
+      const rendered = render(errorTemplate, vars);
+      return res.status(statusCode).send(rendered);
+    }
+  }
 
+  let signedS3Url;
+  const url = buildS3Uri(bucket, key);
+  const objectStore = objectStoreForProtocol('s3');
+  const range = req.get('Range');
+
+  const options = {
+    ...range ? { Range: range } : {},
+  };
+  const queryParams = { 'A-userid': req.authorizedMetadata.userName };
+
+  try {
+    switch (req.method) {
+    case 'GET':
+      options.ResponseCacheControl = 'private, max-age=600';
+      signedS3Url = await objectStore.signGetObject(url, options, queryParams);
+      break;
+    case 'HEAD':
+      signedS3Url = await objectStore.signHeadObject(url, options, queryParams);
+      break;
+    default:
+      break;
+    }
+  } catch (error) {
+    log.error('Error occurred when signing URL:', error);
+    let vars = {};
+    let statusCode;
+    if (error.name.toLowerCase() === 'forbidden') {
+      statusCode = 403;
+      vars = {
+        contentstring: `Cannot access requested bucket: ${error.message}`,
+        title: 'Forbidden',
+        statusCode,
+        requestid,
+      };
+    } else {
+      statusCode = 404;
+      vars = {
+        contentstring: `Could not find file, ${error.message}`,
+        title: 'File not found',
+        statusCode,
+        requestid,
+      };
+    }
+
+    const rendered = render(errorTemplate, vars);
+    return res.status(statusCode).send(rendered);
+  }
   return res
     .status(307)
     .set({ Location: signedS3Url })
@@ -215,9 +285,9 @@ async function handleFileRequest(req, res) {
 }
 
 module.exports = {
+  handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,
   handleRootRequest,
   handleFileRequest,
-  useSecureCookies,
 };

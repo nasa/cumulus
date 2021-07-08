@@ -63,6 +63,7 @@ export {
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export {

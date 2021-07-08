@@ -2,13 +2,13 @@
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
-  buildAndStartWorkflow,
   getLambdaAliases,
   getLambdaVersions,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const fs = require('fs-extra');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   protectFile,

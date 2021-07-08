@@ -3,14 +3,17 @@
 const get = require('lodash/get');
 
 const SQS = require('@cumulus/aws-client/SQS');
+const { getProvider } = require('@cumulus/api-client/providers');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const isNil = require('lodash/isNil');
 const Collection = require('../models/collections');
-const Provider = require('../models/providers');
 
-const getProvider = (id) => {
-  if (isNil(id)) return undefined;
-  return (new Provider()).get({ id });
+const getApiProvider = (providerId) => {
+  if (isNil(providerId)) return undefined;
+  return getProvider({
+    prefix: process.env.stackName,
+    providerId,
+  });
 };
 
 const getCollection = (collection) => {
@@ -30,11 +33,12 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [provider, collection] = await Promise.all([
-    getProvider(event.provider),
+  const [providerRecord, collection] = await Promise.all([
+    getApiProvider(event.provider),
     getCollection(event.collection),
   ]);
 
+  const provider = providerRecord ? JSON.parse(providerRecord.body) : undefined;
   const messageTemplate = get(event, 'template');
   const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
