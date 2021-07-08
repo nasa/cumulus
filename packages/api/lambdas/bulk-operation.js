@@ -11,7 +11,6 @@ const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { getGranuleIdsForPayload } = require('../lib/granules');
 
-
 async function applyWorkflowToGranules({
   granuleIds,
   workflowName,

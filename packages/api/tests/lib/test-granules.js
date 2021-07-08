@@ -37,7 +37,6 @@ test.after.always(() => {
   sandbox.restore();
 });
 
-
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
   t.deepEqual(
     getExecutionProcessingTimeInfo({}),
@@ -151,7 +150,6 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
     dbClient: {},
   }));
 });
-
 
 test('getGranuleIdsForPayload returns unique granule IDs from payload', async (t) => {
   const granuleId1 = randomId('granule');
