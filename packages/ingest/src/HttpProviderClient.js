@@ -29,6 +29,8 @@ const validateHost = (host) => {
   throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
 };
 
+const redirectCodes = new Set([300, 301, 302, 303, 304, 307, 308]);
+
 class HttpProviderClient {
   constructor(providerConfig) {
     this.providerConfig = providerConfig;
@@ -62,6 +64,24 @@ class HttpProviderClient {
 
     if (this.username) this.gotOptions.username = this.username;
     if (this.password) this.gotOptions.password = this.password;
+
+    // const self = this;
+    const RedirectHandler = {
+      handleBeforeRedirect: (options, response) => {
+        if (redirectCodes.has(response.statusCode)) {
+          /* eslint-disable no-param-reassign */
+          options.url.username = this.username;
+          options.url.password = this.password;
+          /* eslint-enable no-param-reassign */
+        }
+      },
+    };
+    const bindHandleBeforeRedirect = RedirectHandler.handleBeforeRedirect.bind(this);
+    this.gotOptions.hooks = {
+      beforeRedirect: [
+        bindHandleBeforeRedirect,
+      ],
+    };
   }
 
   async downloadTLSCertificate() {
