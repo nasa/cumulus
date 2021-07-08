@@ -5,7 +5,6 @@ const request = require('supertest');
 const noop = require('lodash/noop');
 const omit = require('lodash/omit');
 const sinon = require('sinon');
-const { v4: uuidv4 } = require('uuid');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -26,6 +25,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const assertions = require('../../../lib/assertions');
 const { migrationDir } = require('../../../../../lambdas/db-migration');
+const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
 const { buildFakeExpressResponse } = require('../utils');
 const { post } = require('../../../endpoints/async-operations');
 const {
@@ -104,14 +104,7 @@ test.after.always(async (t) => {
 });
 
 test('POST without an Authorization header returns an Authorization Missing response', async (t) => {
-  const asyncOperation1 = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-  };
+  const asyncOperation1 = fakeAsyncOperationFactory();
 
   const response = await request(app)
     .post('/asyncOperations')
@@ -127,14 +120,7 @@ test('POST without an Authorization header returns an Authorization Missing resp
 });
 
 test('POST with an invalid access token returns an unauthorized response', async (t) => {
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-  };
+  const asyncOperation = fakeAsyncOperationFactory();
 
   const response = await request(app)
     .post('/asyncOperations')
@@ -152,14 +138,9 @@ test('POST with an invalid access token returns an unauthorized response', async
 
 test('POST creates a new async operation in all data stores', async (t) => {
   const { asyncOperationPgModel, jwtAuthToken } = t.context;
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
+  const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
-  };
+  });
 
   const pgAsyncOperation = await translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
 
@@ -198,16 +179,9 @@ test('POST creates a new async operation in all data stores', async (t) => {
 
 test('POST creates a new async operation in DynamoDB and PG with correct timestamps', async (t) => {
   const { asyncOperationModel, asyncOperationPgModel, jwtAuthToken } = t.context;
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
+  const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  });
 
   const response = await request(app)
     .post('/asyncOperations')
@@ -241,16 +215,7 @@ test('POST creates a new async operation in DynamoDB and PG with correct timesta
 
 test('POST returns a 409 error if the async operation already exists in DynamoDB', async (t) => {
   const { asyncOperationModel, jwtAuthToken } = t.context;
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  const asyncOperation = fakeAsyncOperationFactory();
 
   await asyncOperationModel.create(asyncOperation);
 
@@ -271,17 +236,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
       throw new Error('unexpected error');
     });
 
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
+  const asyncOperation = fakeAsyncOperationFactory();
   const response = await request(app)
     .post('/asyncOperations')
     .send(asyncOperation)
@@ -336,16 +291,9 @@ test('POST returns a 400 response if invalid JSON provided', async (t) => {
 
 test('post() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
   const { testKnex } = t.context;
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
+  const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  });
 
   const fakeAsyncOperationModel = {
     create: () => {
@@ -380,16 +328,9 @@ test('post() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB f
 });
 
 test('post() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fails', async (t) => {
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
+  const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  });
 
   const fakeAsyncOperationPgModel = {
     create: () => Promise.reject(new Error('something bad')),
@@ -421,16 +362,9 @@ test('post() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL f
 });
 
 test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
+  const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  });
 
   const fakeEsClient = {
     index: () => Promise.reject(new Error('something bad')),
