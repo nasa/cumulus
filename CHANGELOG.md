@@ -62,6 +62,8 @@ database via the API
       PostgreSQL database instead of DynamoDB
   - **CUMULUS-2303**
     - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2301**
+    - Created API POST endpoint to create async operations.
 
 ### Changed
 
@@ -116,6 +118,11 @@ behavior
       PostgreSQL database instead of DynamoDB
     - Update sf-scheduler lambda to utilize API endpoint to get provider record
       from database via Private API lambda
+  - **CUMULUS-2301**
+    - Updated `getAsyncOperation` to read from PostgreSQL database instead of
+      DynamoDB.
+    - Added `translatePostgresAsyncOperationToApiAsyncOperation` function in
+      `@cumulus/db/translate/async-operation`.
 
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed

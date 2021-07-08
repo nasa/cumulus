@@ -45,7 +45,7 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function getAsyncOperation(req, res) {
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
   const asyncOperationPgModel = new AsyncOperationPgModel();
 
   let asyncOperation;
@@ -119,7 +119,7 @@ async function del(req, res) {
 }
 
 /**
- * Creates a new async operatioin
+ * Creates a new async operation
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
