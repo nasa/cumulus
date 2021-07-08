@@ -65,9 +65,11 @@ class HttpProviderClient {
     if (this.username) this.gotOptions.username = this.username;
     if (this.password) this.gotOptions.password = this.password;
 
-    // const self = this;
     const RedirectHandler = {
-      handleBeforeRedirect: (options, response) => {
+      // Need to use named function and not fat arrow
+      // expression so that we can use the bound value
+      // of "this"
+      handleBeforeRedirect(options, response) {
         if (redirectCodes.has(response.statusCode)) {
           /* eslint-disable no-param-reassign */
           options.url.username = this.username;
@@ -76,10 +78,10 @@ class HttpProviderClient {
         }
       },
     };
-    const bindHandleBeforeRedirect = RedirectHandler.handleBeforeRedirect.bind(this);
+    const boundHandleBeforeRedirect = RedirectHandler.handleBeforeRedirect.bind(this);
     this.gotOptions.hooks = {
       beforeRedirect: [
-        bindHandleBeforeRedirect,
+        boundHandleBeforeRedirect,
       ],
     };
   }
@@ -89,7 +91,8 @@ class HttpProviderClient {
     try {
       const s3Params = parseS3Uri(this.certificateUri);
       this.certificate = await getTextObject(s3Params.Bucket, s3Params.Key);
-      this.gotOptions.ca = this.certificate;
+      this.gotOptions.https = this.gotOptions.https || {};
+      this.gotOptions.https.certificateAuthority = this.certificate;
     } catch (error) {
       throw new errors.RemoteResourceError(`Failed to fetch CA certificate: ${error}`);
     }

@@ -30,10 +30,24 @@ const expectedAuthHeader = `Basic ${Buffer.from(`${basicUsername}:${basicPasswor
 const publicFile = '/public/file.hdf';
 // path for testing Basic auth HTTPS requests
 const protectedFile = '/protected-basic/file.hdf';
+const protectedFile2 = '/protected-basic/file2.hdf';
 
 test.beforeEach(async (t) => {
   t.context.server = await createTestServer({ certificate: '127.0.0.1' });
   t.context.server.use(cookieParser());
+
+  t.context.server2 = await createTestServer({ certificate: '127.0.0.1' });
+  t.context.server2.use(cookieParser());
+  // auth endpoint
+  t.context.server2.get('/auth', (req, res) => {
+    if (req.headers.authorization === expectedAuthHeader) {
+      res.cookie('DATA', 'abcd1234'); // set cookie to test cookie-jar usage
+      const protectedUrl = new URL(protectedFile, t.context.server.url);
+      res.redirect(protectedUrl.toString());
+    } else {
+      res.status(401).end();
+    }
+  });
 
   // public endpoint
   t.context.server.get(publicFile, (_, res) => {
@@ -47,6 +61,16 @@ test.beforeEach(async (t) => {
       res.end(remoteContent);
     } else {
       res.redirect('/auth');
+    }
+  });
+  // protected endpoint with redirect to /auth on a
+  // different server
+  t.context.server.get(protectedFile2, (req, res) => {
+    if (req.cookies && req.cookies.DATA === 'abcd1234') {
+      res.header({ 'content-type': expectedContentType });
+      res.end(remoteContent);
+    } else {
+      res.redirect(`${t.context.server2.url}/auth`);
     }
   });
   // auth endpoint
@@ -201,6 +225,36 @@ test('HttpsProviderClient supports basic auth with redirects for sync', async (t
     await s3().createBucket({ Bucket: destinationBucket }).promise();
     await httpsProviderClient.sync({
       fileRemotePath: protectedFile, destinationBucket, destinationKey,
+    });
+    t.truthy(fileExists(destinationBucket, destinationKey));
+    const syncedContent = await getTextObject(destinationBucket, destinationKey);
+    t.is(syncedContent, remoteContent);
+
+    const s3HeadResponse = await headObject(destinationBucket, destinationKey);
+    t.is(expectedContentType, s3HeadResponse.ContentType);
+  } finally {
+    await recursivelyDeleteS3Bucket(destinationBucket);
+  }
+});
+
+test('HttpsProviderClient supports basic auth for sync with redirect to different host/port', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+  });
+
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.hdf';
+  try {
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await httpsProviderClient.sync({
+      fileRemotePath: protectedFile2,
+      destinationBucket,
+      destinationKey,
     });
     t.truthy(fileExists(destinationBucket, destinationKey));
     const syncedContent = await getTextObject(destinationBucket, destinationKey);
