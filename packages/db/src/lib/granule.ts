@@ -51,8 +51,8 @@ export const upsertGranuleWithExecutionJoinRecord = async (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<string>} columnNames - column names for whereIn query
- * @param {Knex.QueryCallback} values - record values for whereIn query
+ * @param {Array<keyof PostgresGranule>} columnNames - column names for whereIn query
+ * @param {Array<any>} values - record values for whereIn query
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
@@ -60,8 +60,8 @@ export const upsertGranuleWithExecutionJoinRecord = async (
  */
 export const getGranuleExecutionCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  columnNames: Array<string>,
-  values: Knex.QueryCallback,
+  columnNames: Array<keyof PostgresGranule>,
+  values: Array<any>,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
 ): Promise<Array<number>> => {
