@@ -43,7 +43,7 @@ export default class GranulesExecutionsPgModel {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction
-   * @param {Function} granuleCumulusIds -
+   * @param {number | Array<number>} granuleCumulusIds -
    * single granule_cumulus_id or array of granule_cumulus_ids
    * @returns {Promise<Array<number>>} An array of execution_cumulus_ids
    */
