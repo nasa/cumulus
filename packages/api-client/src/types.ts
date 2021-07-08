@@ -28,7 +28,8 @@ export interface ApiGatewayLambdaErrorResponse {
 export interface InvokeApiFunctionParams {
   prefix: string,
   payload: ApiGatewayLambdaProxyPayload,
-  pRetryOptions?: pRetry.Options
+  pRetryOptions?: pRetry.Options,
+  expectedStatusCode?: number
 }
 
 export type InvokeApiFunction = (
