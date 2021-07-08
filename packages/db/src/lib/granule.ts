@@ -47,7 +47,7 @@ export const upsertGranuleWithExecutionJoinRecord = async (
 };
 
 /**
- * Upsert a granule and a record in the granules/executions join table.
+ * Get cumulus IDs for all executions associated to a set of granules
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
