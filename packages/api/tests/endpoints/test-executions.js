@@ -474,7 +474,7 @@ test('POST /history returns correct executions when ids array is passed', async 
   });
 });
 
-test.serial('POST /history returns all workflow names when query is passed', async (t) => {
+test.serial('POST /history returns correct executions when query is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const expectedQuery = {
