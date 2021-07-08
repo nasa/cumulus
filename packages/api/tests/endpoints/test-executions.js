@@ -459,7 +459,7 @@ test('GET /history/:granuleId returns all executions associated with the granule
   });
 });
 
-test('POST /history returns all workflow names when ids array is passed', async (t) => {
+test('POST /history returns correct executions when ids array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
