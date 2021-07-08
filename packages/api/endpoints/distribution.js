@@ -301,7 +301,7 @@ async function handleFileRequest(req, res) {
  * @param {string} event.s3Key        - Key to write .json map cache file to
  * @returns {Promise<Object>}         - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
  */
-async function handleCreateBucketMapCacheRequest({
+async function writeBucketMapCacheToS3({
   bucketList,
   s3Bucket,
   s3Key,
@@ -337,7 +337,7 @@ async function handleCreateBucketMapCacheRequest({
 }
 
 module.exports = {
-  handleCreateBucketMapCacheRequest,
+  writeBucketMapCacheToS3,
   handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,

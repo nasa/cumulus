@@ -33,7 +33,7 @@ let headObjectStub;
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');
-const { handleCreateBucketMapCacheRequest } = require('../../endpoints/distribution');
+const { writeBucketMapCacheToS3 } = require('../../endpoints/distribution');
 
 const publicBucket = randomId('publicbucket');
 const publicBucketPath = randomId('publicpath');
@@ -497,38 +497,38 @@ test('A /locate request returns error when request parameter is missing', async 
   t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
 });
 
-test('handleCreateBucketMapCacheRequest creates distribution map cache in s3', async (t) => {
+test('writeBucketMapCacheToS3 creates distribution map cache in s3', async (t) => {
   const bucketList = [protectedBucket, publicBucket];
   const s3Bucket = process.env.system_bucket;
   const s3Key = randomId('distributionBucketMap');
 
-  const mapObject = await handleCreateBucketMapCacheRequest({ bucketList, s3Bucket, s3Key });
+  const mapObject = await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
   t.is(mapObject[protectedBucket], protectedBucket);
   t.is(mapObject[publicBucket], publicBucketPath);
   t.true(await s3ObjectExists({ Bucket: s3Bucket, Key: s3Key }));
 });
 
-test('handleCreateBucketMapCacheRequest throws error when there is no bucket mapping found for bucket', async (t) => {
+test('writeBucketMapCacheToS3 throws error when there is no bucket mapping found for bucket', async (t) => {
   const bucketName = randomId('nonexistPath');
   const bucketList = [bucketName];
   const s3Bucket = process.env.system_bucket;
   const s3Key = randomId('distributionBucketMap');
 
   try {
-    await handleCreateBucketMapCacheRequest({ bucketList, s3Bucket, s3Key });
+    await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
   } catch (error) {
     t.is(error.message, `No bucket mapping found for ${bucketName}`);
   }
 });
 
-test('handleCreateBucketMapCacheRequest throws error when there are multiple paths found for bucket', async (t) => {
+test('writeBucketMapCacheToS3 throws error when there are multiple paths found for bucket', async (t) => {
   const bucketName = 'bucket-path-1';
   const bucketList = [bucketName];
   const s3Bucket = process.env.system_bucket;
   const s3Key = randomId('distributionBucketMap');
 
   try {
-    await handleCreateBucketMapCacheRequest({ bucketList, s3Bucket, s3Key });
+    await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
   } catch (error) {
     t.true(error.message.startsWith(`BucketMap configured with multiple responses from ${bucketName}`));
   }

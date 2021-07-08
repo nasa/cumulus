@@ -165,7 +165,7 @@ data "aws_lambda_invocation" "bucket_map_cache" {
     eventType           = "createBucketMapCache"
     bucketList          = local.distribution_buckets,
     s3Bucket            = var.system_bucket
-    s3Key               = "${var.prefix}/distribution_bucket_map.json"
+    s3Key               = local.distribution_bucket_map_key
     replacementTrigger  = timestamp()
   })
 }

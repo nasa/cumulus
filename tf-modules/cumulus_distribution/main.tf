@@ -17,6 +17,7 @@ locals {
     var.system_bucket
   ]))
   distribution_buckets   = concat(local.protected_buckets, local.public_buckets)
+  distribution_bucket_map_key = "${var.prefix}/distribution_bucket_map.json"
 }
 
 data "aws_region" "current" {}

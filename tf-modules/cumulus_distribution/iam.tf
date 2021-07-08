@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     actions   = [
       "s3:PutObject"
     ]
-    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/${local.distribution_bucket_map_key}"]
   }
 
   statement {
