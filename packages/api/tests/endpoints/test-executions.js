@@ -578,7 +578,11 @@ test.serial('POST /executions/search-by-granules returns 400 when the Metrics EL
     query: expectedQuery,
   };
 
-  process.env.METRICS_ES_USER = undefined;
+  const metricsUser = process.env.METRICS_ES_USER;
+  delete process.env.METRICS_ES_USER;
+  t.teardown(() => {
+    process.env.METRICS_ES_USER = metricsUser;
+  });
 
   const response = await request(app)
     .post('/executions/search-by-granules')
