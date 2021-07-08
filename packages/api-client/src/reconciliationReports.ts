@@ -18,7 +18,11 @@ export const getReconciliationReport = async (params: {
   name: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, name, callback = invokeApi } = params;
+  const {
+    prefix,
+    name,
+    callback = invokeApi,
+  } = params;
 
   return await callback({
     prefix: prefix,
@@ -77,7 +81,11 @@ export async function createReconciliationReport(params: {
   request: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> {
-  const { prefix, request, callback = invokeApi } = params;
+  const {
+    prefix,
+    request,
+    callback = invokeApi,
+  } = params;
 
   return await callback({
     prefix: prefix,
@@ -90,5 +98,6 @@ export async function createReconciliationReport(params: {
       path: '/reconciliationReports',
       body: JSON.stringify(request),
     },
+    expectedStatusCode: 202,
   });
 }
