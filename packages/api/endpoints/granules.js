@@ -80,7 +80,7 @@ async function put(req, res) {
     const collection = await collectionModelClient.get({ name, version });
 
     const targetExecution = await chooseTargetExecution({
-      granuleId, executionArn: body.execution, workflowName: body.workflowName
+      granuleId, executionArn: body.execution, workflowName: body.workflowName,
     });
 
     if (targetExecution) {

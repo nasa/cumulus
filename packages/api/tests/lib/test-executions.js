@@ -35,7 +35,7 @@ test('chooseTargetExecution() returns the first arn found in the database if a w
   const workflowName = randomWorkflow();
   const granuleId = randomGranuleId();
   const arn = randomArn();
-  const testDbFunction = async () =>
+  const testDbFunction = () =>
     Promise.resolve([{ arn }, { arn: randomArn() }, { arn: randomArn() }]);
 
   const actual = await chooseTargetExecution({

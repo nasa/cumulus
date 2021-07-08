@@ -14,25 +14,23 @@ export interface arnRecord {
  * @param workflowNames - Array of workflow names
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
-export const executionArnsFromGranuleIdsAndWorkflowNames = async (
+export const executionArnsFromGranuleIdsAndWorkflowNames = (
   knex: Knex,
   granuleIds: string[],
-  workflowNames: string[],
-): Promise<arnRecord[]> => {
-  return knex
-    .select(`${tableNames.executions}.arn`)
-    .from(tableNames.executions)
-    .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`,
-    )
-    .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`,
-    )
-    .whereIn(`${tableNames.granules}.granule_id`, granuleIds)
-    .whereIn(`${tableNames.executions}.workflow_name`, workflowNames)
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
-};
+  workflowNames: string[]
+): Promise<arnRecord[]> => knex
+  .select(`${tableNames.executions}.arn`)
+  .from(tableNames.executions)
+  .join(
+    tableNames.granulesExecutions,
+    `${tableNames.executions}.cumulus_id`,
+    `${tableNames.granulesExecutions}.execution_cumulus_id`
+  )
+  .join(
+    tableNames.granules,
+    `${tableNames.granules}.cumulus_id`,
+    `${tableNames.granulesExecutions}.granule_cumulus_id`
+  )
+  .whereIn(`${tableNames.granules}.granule_id`, granuleIds)
+  .whereIn(`${tableNames.executions}.workflow_name`, workflowNames)
+  .orderBy(`${tableNames.executions}.timestamp`, 'desc');
