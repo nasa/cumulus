@@ -14,6 +14,13 @@ trigger async operations). Previously the helpers in this package would return t
 regardless of the status code, so you may need to update any code using helpers from this
 package to catch or to otherwise handle errors that you may encounter.
 
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata login)
+
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
@@ -81,6 +88,10 @@ behavior
 
 ### Fixed
 
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure
     behavior
