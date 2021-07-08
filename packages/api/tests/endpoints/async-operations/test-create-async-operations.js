@@ -321,7 +321,7 @@ test('POST returns a 404 if the requested path does not exist', async (t) => {
     updatedAt: Date.now(),
   };
   const response = await request(app)
-    .post(`/asyncOperations/${asyncOperation.id}`)
+    .post(`/asyncOperations/${randomString()}`)
     .send(asyncOperation)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
