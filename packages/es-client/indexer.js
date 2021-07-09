@@ -74,13 +74,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
-  let indexResponse;
-  try {
-    indexResponse = await actualEsClient.index(params);
-  } catch (error) {
-    logger.error(`Error thrown on index ${JSON.stringify(error)}`);
-    throw error;
-  }
+  const indexResponse = await actualEsClient.index(params);
   return indexResponse.body;
 }
 
