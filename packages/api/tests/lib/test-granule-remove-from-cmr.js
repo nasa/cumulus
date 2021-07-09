@@ -159,6 +159,7 @@ test.serial('unpublishGranule() succeeds with Dynamo granule only', async (t) =>
   };
   delete expectedDynamoGranule.cmrLink;
 
+  t.true(cmrDeleteStub.called);
   t.deepEqual(
     dynamoGranule,
     expectedDynamoGranule
@@ -210,6 +211,7 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
     pgGranule,
   } = await unpublishGranule(t.context.knex, originalDynamoGranule);
 
+  t.true(cmrDeleteStub.called);
   t.deepEqual(
     dynamoGranule,
     omit(
@@ -231,7 +233,7 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   );
 });
 
-test.serial('unpublishGranule() does not update granule if PG write fails', async (t) => {
+test.serial('unpublishGranule() does not update granule or delete from CMR if PG write fails', async (t) => {
   const {
     originalDynamoGranule,
     originalPgGranule,
@@ -282,6 +284,7 @@ test.serial('unpublishGranule() does not update granule if PG write fails', asyn
     )
   );
 
+  t.false(cmrDeleteStub.called);
   t.like(
     await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
@@ -300,7 +303,7 @@ test.serial('unpublishGranule() does not update granule if PG write fails', asyn
   );
 });
 
-test.serial('unpublishGranule() does not update granule if Dynamo write fails', async (t) => {
+test.serial('unpublishGranule() does not update granule or delete from CMR if Dynamo write fails', async (t) => {
   const {
     originalDynamoGranule,
     originalPgGranule,
@@ -351,6 +354,71 @@ test.serial('unpublishGranule() does not update granule if Dynamo write fails', 
     )
   );
 
+  t.false(cmrDeleteStub.called);
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: true,
+      cmrLink: originalDynamoGranule.cmrLink,
+    }
+  );
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+});
+
+test.serial('unpublishGranule() does not update granule if CMR removal fails', async (t) => {
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
+    published: true,
+  });
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    title: 'bar',
+  });
+  const deleteError = new Error('CMR delete error');
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').throws(deleteError);
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: true,
+      cmrLink: originalDynamoGranule.cmrLink,
+    }
+  );
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
+  await t.throwsAsync(
+    unpublishGranule(
+      t.context.knex,
+      originalDynamoGranule
+    ),
+    { message: 'CMR delete error' }
+  );
+
+  t.true(cmrDeleteStub.called);
   t.like(
     await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
