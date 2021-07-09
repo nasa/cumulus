@@ -4,7 +4,17 @@ const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
+const {
+  CollectionPgModel,
+  ExecutionPgModel,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeGranuleRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+} = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -13,6 +23,9 @@ const Granule = require('../../models/granules');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
+const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
+const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
+const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
 
 const sandbox = sinon.createSandbox();
 const FakeEsClient = sandbox.stub();
@@ -53,6 +66,61 @@ const envVars = {
   METRICS_ES_PASS: randomId('pass'),
   stackName: randomId('stack'),
   system_bucket: randomId('bucket'),
+};
+
+const setUpExistingDatabaseRecords = async (t) => {
+  t.context.workflowName = randomWorkflow();
+  t.context.executionArn1 = randomArn();
+  t.context.executionArn2 = randomArn();
+  t.context.granuleId1 = randomGranuleId();
+  t.context.granuleId2 = randomGranuleId();
+
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const [collectionCumulusId] = await collectionPgModel.create(
+    t.context.knex,
+    fakeCollectionRecordFactory()
+  );
+
+  const granuleCumulusIds = await granulePgModel.create(
+    t.context.knex,
+    [
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        granule_id: t.context.granuleId1,
+      }),
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        granule_id: t.context.granuleId2,
+      }),
+    ]
+  );
+  const executionCumulusIds = await executionPgModel.create(
+    t.context.knex,
+    [
+      fakeExecutionRecordFactory({
+        workflow_name: t.context.workflowName,
+        arn: t.context.executionArn1,
+      }),
+      fakeExecutionRecordFactory({
+        workflow_name: t.context.workflowName,
+        arn: t.context.executionArn2,
+      }),
+    ]
+  );
+  const joinRecords = [
+    {
+      execution_cumulus_id: executionCumulusIds[0],
+      granule_cumulus_id: granuleCumulusIds[0],
+    },
+    {
+      execution_cumulus_id: executionCumulusIds[1],
+      granule_cumulus_id: granuleCumulusIds[1],
+    },
+  ];
+  await granulesExecutionsPgModel.create(t.context.knex, joinRecords);
 };
 
 test.before(async (t) => {
@@ -527,6 +595,38 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
   t.is(reingestStub.callCount, 2);
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
+    t.deepEqual(matchingGranule, callArgs[0]);
+    t.is(callArgs[1], process.env.asyncOperationId);
+  });
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  const workflowName = t.context.workflowName;
+  const granuleModel = new Granule();
+  const granules = await Promise.all([
+    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleId1 })),
+    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleId2 })),
+  ]);
+
+  await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      ids: [
+        granules[0].granuleId,
+        granules[1].granuleId,
+      ],
+      workflowName,
+    },
+  });
+
+  t.is(reingestStub.callCount, 2);
+  reingestStub.args.forEach((callArgs) => {
+    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
+    t.true([t.context.executionArn1, t.context.executionArn2].includes(callArgs[0].execution));
+    delete matchingGranule.execution;
+    delete callArgs[0].execution;
     t.deepEqual(matchingGranule, callArgs[0]);
     t.is(callArgs[1], process.env.asyncOperationId);
   });
