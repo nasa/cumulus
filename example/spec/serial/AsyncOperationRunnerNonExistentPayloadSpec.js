@@ -47,10 +47,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         status: 'RUNNING',
       };
 
-      const response = await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
-      if (response.statusCode !== 200) {
-        throw new Error(`createAsyncOperation failed: ${JSON.stringify(response)}`);
-      }
+      await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
 
       payloadUrl = `s3://${config.bucket}/${randomString()}`;
       const runTaskResponse = await ecs().runTask({

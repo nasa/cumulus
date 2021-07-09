@@ -55,10 +55,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         status: 'RUNNING',
       };
 
-      const response = await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
-      if (response.statusCode !== 200) {
-        throw new Error(`createAsyncOperation failed: ${JSON.stringify(response)}`);
-      }
+      await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
 
       const runTaskResponse = await ecs().runTask({
         cluster,
