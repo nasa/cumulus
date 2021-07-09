@@ -211,6 +211,7 @@ async function indexRecord(esClient, record) {
   const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
+    logger.debug(`about to remove ${indexType}, id: ${id}`);
     const parentId = getParentId(indexType, oldData);
     const deletedObject = await performDelete(
       deleteFnName,
@@ -219,11 +220,13 @@ async function indexRecord(esClient, record) {
       id,
       parentId
     );
+    logger.debug(`finished removing ${indexType}, id: ${id}`);
     return deletedObject;
   }
 
-  logger.debug(`indexing ${indexType} ${id}`);
+  logger.debug(`about to index ${indexType}, id: ${id}`);
   const response = await performIndex(indexFnName, esClient, data);
+  logger.debug(`finished indexing ${indexType}, id: ${id}`);
   return response;
 }
 

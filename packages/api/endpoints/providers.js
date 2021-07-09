@@ -6,6 +6,7 @@ const {
   getKnexClient,
   ProviderPgModel,
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
   validateProviderHost,
 } = require('@cumulus/db');
 const {
@@ -16,10 +17,10 @@ const {
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
 const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
 // Postgres error codes:
@@ -53,18 +54,21 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const id = req.params.id;
+  const knex = await getKnexClient({ env: process.env });
+  const providerPgModel = new ProviderPgModel();
 
-  const providerModel = new Provider();
   let result;
   try {
-    result = await providerModel.get({ id });
+    const providerRecord = await providerPgModel.get(knex, { name: id });
+    result = translatePostgresProviderToApiProvider(providerRecord);
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${id} not found.`);
+    throw error;
   }
-  delete result.password;
-  return res.send(result);
+  return res.send(removeNilProperties(result));
 }
 
+// TODO remove this Phase 3/Dynamo removal
 async function throwIfDynamoRecordExists(providerModel, id) {
   try {
     await providerModel.get({ id });

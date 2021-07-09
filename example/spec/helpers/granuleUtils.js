@@ -12,7 +12,13 @@ const pWaitFor = require('p-wait-for');
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
-const { listGranules } = require('@cumulus/api-client/granules');
+const {
+  deleteGranule,
+  getGranule,
+  listGranules,
+} = require('@cumulus/api-client/granules');
+
+const { waitForApiStatus } = require('./apiUtils');
 
 /**
  * Adds updated url_path to a granule's files object.
@@ -222,6 +228,22 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
+const waitForGranuleAndDelete = async (prefix, granuleId, status) => {
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix,
+      granuleId,
+    },
+    status
+  );
+  // clean up stack state added by test
+  await deleteGranule({
+    prefix,
+    granuleId,
+  });
+};
+
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
@@ -230,4 +252,5 @@ module.exports = {
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
   waitForGranuleRecordUpdatedInList,
+  waitForGranuleAndDelete,
 };
