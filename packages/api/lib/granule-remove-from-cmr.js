@@ -47,10 +47,7 @@ const unpublishGranule = async (
   granuleDynamoModel = new models.Granule()
 ) => {
   const collectionPgModel = new CollectionPgModel();
-
   let pgGranuleCumulusId;
-
-  await _removeGranuleFromCmr(granule);
 
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
@@ -73,31 +70,46 @@ const unpublishGranule = async (
     }
   }
 
-  return knex.transaction(async (trx) => {
-    let pgGranule;
-    if (pgGranuleCumulusId) {
-      [pgGranule] = await granulePgModel.update(
-        trx,
-        {
-          cumulus_id: pgGranuleCumulusId,
-        },
-        {
-          published: false,
-          // using `undefined` would result in Knex ignoring this binding
-          // for the update. also, `undefined` is not a valid SQL value, it
-          // should be `null` instead
-          cmr_link: trx.raw('DEFAULT'),
-        },
-        ['*']
+  try {
+    return await knex.transaction(async (trx) => {
+      let pgGranule;
+      if (pgGranuleCumulusId) {
+        [pgGranule] = await granulePgModel.update(
+          trx,
+          {
+            cumulus_id: pgGranuleCumulusId,
+          },
+          {
+            published: false,
+            // using `undefined` would result in Knex ignoring this binding
+            // for the update. also, `undefined` is not a valid SQL value, it
+            // should be `null` instead
+            cmr_link: trx.raw('DEFAULT'),
+          },
+          ['*']
+        );
+      }
+      const dynamoGranule = await granuleDynamoModel.update(
+        { granuleId: granule.granuleId },
+        { published: false },
+        ['cmrLink']
       );
+      await _removeGranuleFromCmr(granule);
+      return { dynamoGranule, pgGranule };
+    });
+  } catch (error) {
+    const updateParams = {
+      published: granule.published,
+    };
+    if (granule.cmrLink) {
+      updateParams.cmrLink = granule.cmrLink;
     }
-    const dynamoGranule = await granuleDynamoModel.update(
+    await granuleDynamoModel.update(
       { granuleId: granule.granuleId },
-      { published: false },
-      ['cmrLink']
+      updateParams
     );
-    return { dynamoGranule, pgGranule };
-  });
+    throw error;
+  }
 };
 
 module.exports = {
