@@ -159,6 +159,7 @@ resource "aws_api_gateway_deployment" "api" {
   stage_name        = var.api_gateway_stage
 }
 
+# this overrides the distribution (TEA) module generated bucket map cache if any
 data "aws_lambda_invocation" "bucket_map_cache" {
   function_name         = aws_lambda_function.api.function_name
   input                 = jsonencode({
