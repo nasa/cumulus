@@ -179,13 +179,8 @@ test.before(async (t) => {
   );
 
   const executionCumulusIds = [];
-  t.context.fakePGExecutions = [];
 
-  await fakeExecutions.reduce(async (promise, execution) => {
-    // This line will wait for the last async function to finish.
-    // The first iteration uses an already resolved Promise
-    // so, it will immediately continue.
-    await promise;
+  t.context.fakePGExecutions = await Promise.all(fakeExecutions.map(async (execution) => {
     const omitExecution = omit(execution, ['asyncOperationId']);
     await executionModel.create(omitExecution);
     const executionPgRecord = await translateApiExecutionToPostgresExecution(
@@ -193,8 +188,8 @@ test.before(async (t) => {
       knex
     );
     executionCumulusIds.push(await executionPgModel.create(knex, executionPgRecord));
-    t.context.fakePGExecutions.push(executionPgRecord);
-  }, Promise.resolve());
+    return executionPgRecord;
+  }));
 
   t.context.executionCumulusIds = executionCumulusIds.flat();
 
@@ -449,9 +444,10 @@ test('POST /executions/search-by-granules returns correct executions when ids ar
 
   t.is(response.body.length, 3);
 
-  response.body.forEach((execution, index) => t.deepEqual(
+  response.body.forEach((execution) => t.deepEqual(
     omit(execution, executionOmitList),
-    omit(fakePGExecutions[index], executionOmitList)
+    omit(fakePGExecutions
+      .find((fakePGexecution) => fakePGexecution.arn === execution.arn), executionOmitList)
   ));
 });
 
@@ -493,9 +489,10 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   t.is(response.body.length, 2);
 
-  response.body.forEach((execution, index) => t.deepEqual(
+  response.body.forEach((execution) => t.deepEqual(
     omit(execution, executionOmitList),
-    omit(fakePGExecutions[index], executionOmitList)
+    omit(fakePGExecutions
+      .find((fakePGexecution) => fakePGexecution.arn === execution.arn), executionOmitList)
   ));
 });
 
