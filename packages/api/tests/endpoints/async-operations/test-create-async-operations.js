@@ -236,7 +236,9 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
       throw new Error('unexpected error');
     });
 
-  const asyncOperation = fakeAsyncOperationFactory();
+  const asyncOperation = fakeAsyncOperationFactory({
+    output: JSON.stringify({ age: 59 }),
+  });
   const response = await request(app)
     .post('/asyncOperations')
     .send(asyncOperation)
@@ -336,16 +338,10 @@ test('post() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL f
     create: () => Promise.reject(new Error('something bad')),
   };
 
-  const fakeAsyncOperationModel = {
-    delete: () => Promise.resolve(),
-    exists: () => Promise.resolve(false),
-  };
-
   const expressRequest = {
     body: asyncOperation,
     testContext: {
       asyncOperationPgModel: fakeAsyncOperationPgModel,
-      asyncOperationModel: fakeAsyncOperationModel,
     },
   };
 
@@ -370,22 +366,10 @@ test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch f
     index: () => Promise.reject(new Error('something bad')),
   };
 
-  const fakeAsyncOperationModel = {
-    delete: () => Promise.resolve(),
-    exists: () => Promise.resolve(false),
-    create: () => Promise.resolve(asyncOperation),
-  };
-
-  const fakeAsyncOperationPgModel = {
-    create: () => Promise.resolve(),
-  };
-
   const expressRequest = {
     body: asyncOperation,
     testContext: {
       esClient: fakeEsClient,
-      asyncOperationModel: fakeAsyncOperationModel,
-      asyncOperationPgModel: fakeAsyncOperationPgModel,
     },
   };
 

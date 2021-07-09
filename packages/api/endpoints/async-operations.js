@@ -158,7 +158,7 @@ async function post(req, res) {
       });
     } catch (innerError) {
       // Clean up DynamoDB async operation record in case of any failure
-      await asyncOperationModel.delete(apiAsyncOperation);
+      await asyncOperationModel.delete({ id: apiAsyncOperation.id });
       throw innerError;
     }
     logger.info(`Successfully created async operation ${dbRecord.id}:`);
