@@ -218,6 +218,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
 test('deleteGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
+    pRetryOptions: { foo: 'bar' },
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
@@ -232,6 +233,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.deleteGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    pRetryOptions: { foo: 'bar' },
     callback,
   }));
 });

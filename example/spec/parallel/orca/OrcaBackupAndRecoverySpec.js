@@ -19,12 +19,12 @@ const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   addCollections,
   addProviders,
-  buildAndStartWorkflow,
   waitForAsyncOperationStatus,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,

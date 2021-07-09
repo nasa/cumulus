@@ -28,7 +28,7 @@ const {
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, deleteGranule, removeFromCMR } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
@@ -106,7 +106,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await removeFromCMR({ prefix: testConfig.stackName, granuleId });
     await deleteGranule({ prefix: testConfig.stackName, granuleId });
 
     await Promise.all([

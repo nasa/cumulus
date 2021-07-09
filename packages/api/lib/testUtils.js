@@ -4,6 +4,7 @@ const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
+const { v4: uuidv4 } = require('uuid');
 
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
@@ -14,8 +15,17 @@ const {
   translateApiRuleToPostgresRule,
   translateApiPdrToPostgresPdr,
   translateApiExecutionToPostgresExecution,
+  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
-const { indexCollection, indexProvider, indexRule, indexPdr, indexExecution, deleteExecution } = require('@cumulus/es-client/indexer');
+const {
+  indexCollection,
+  indexProvider,
+  indexRule,
+  indexPdr,
+  indexAsyncOperation,
+  indexExecution,
+  deleteExecution,
+} = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -215,13 +225,15 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 function fakeAsyncOperationFactory(params = {}) {
   const asyncOperation = {
     taskArn: randomId('arn'),
-    id: randomId('id'),
+    id: uuidv4(),
     description: randomId('description'),
     operationType: 'ES Index',
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
-    output: randomId('output'),
+    output: JSON.stringify({
+      key: randomId('output'),
+    }),
   };
 
   return { ...asyncOperation, ...params };
@@ -511,9 +523,9 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
 
   const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
   const originalDynamoPdr = await pdrModel.create(originalPdr);
-  const [ruleCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
-    knex, { cumulus_id: ruleCumulusId }
+    knex, { cumulus_id: pdrCumulusId }
   );
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
@@ -548,6 +560,39 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   );
   return {
     originalDynamoExecution,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createAsyncOperationTestRecords = async (context) => {
+  const {
+    knex,
+    asyncOperationModel,
+    asyncOperationPgModel,
+    esClient,
+    esAsyncOperationClient,
+  } = context;
+
+  const originalAsyncOperation = fakeAsyncOperationFactory();
+  const insertPgRecord = await translateApiAsyncOperationToPostgresAsyncOperation(
+    originalAsyncOperation,
+    knex
+  );
+  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
+  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+    knex,
+    insertPgRecord
+  );
+  const originalPgRecord = await asyncOperationPgModel.get(
+    knex, { cumulus_id: asyncOperationCumulusId }
+  );
+  await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
+  const originalEsRecord = await esAsyncOperationClient.get(
+    originalAsyncOperation.id
+  );
+  return {
+    originalDynamoAsyncOperation,
     originalPgRecord,
     originalEsRecord,
   };
@@ -600,4 +645,5 @@ module.exports = {
   createPdrTestRecords,
   createExecutionTestRecords,
   cleanupExecutionTestRecords,
+  createAsyncOperationTestRecords,
 };
