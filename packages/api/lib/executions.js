@@ -3,6 +3,8 @@ const {
   executionArnsFromGranuleIdsAndWorkflowNames,
 } = require('@cumulus/db');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
+
 /**
  *  Finds and returns alternative executionArn related to the input granuleId.
  *  Used to override the default (latest) executionArn when reingesting granules.
@@ -35,9 +37,19 @@ const chooseTargetExecution = async ({
   // if a user didn't specify a workflow, return undefined explicitly
   if (workflowName === undefined) return undefined;
 
-  const knex = await getKnexClient({ env: process.env });
-  const executions = await dbFunction(knex, [granuleId], [workflowName]);
-  return executions[0].arn;
+  try {
+    const knex = await getKnexClient({ env: process.env });
+    const executions = await dbFunction(knex, [granuleId], [workflowName]);
+    return executions[0].arn;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new RecordDoesNotExist(
+        `No targetExecutions found for ${granuleId} records running workflow ${workflowName}`
+      );
+    } else {
+      throw error;
+    }
+  }
 };
 
 module.exports = { chooseTargetExecution };

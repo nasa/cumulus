@@ -78,10 +78,16 @@ async function put(req, res) {
     const { name, version } = deconstructCollectionId(granule.collectionId);
     const collectionModelClient = new models.Collection();
     const collection = await collectionModelClient.get({ name, version });
-
-    const targetExecution = await chooseTargetExecution({
-      granuleId, executionArn: body.execution, workflowName: body.workflowName,
-    });
+    let targetExecution;
+    try {
+      targetExecution = await chooseTargetExecution({
+        granuleId, executionArn: body.execution, workflowName: body.workflowName,
+      });
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+      }
+    }
 
     if (targetExecution) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);

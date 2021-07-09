@@ -1,6 +1,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { chooseTargetExecution } = require('../../lib/executions');
 
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -45,4 +46,43 @@ test('chooseTargetExecution() returns the first arn found in the database if a w
   });
 
   t.is(actual[0].arn, t.context.arn);
+});
+
+test('chooseTargetExecution() throws a RecordDoesNotExist when the requested workflow is not associated with the granuleId.', async (t) => {
+  const workflowName = randomWorkflow();
+  const granuleId = randomGranuleId();
+  const testDbFunction = () => Promise.resolve([]);
+
+  await t.throwsAsync(
+    chooseTargetExecution({
+      granuleId,
+      workflowName,
+      dbFunction: testDbFunction,
+    }),
+    {
+      instanceOf: RecordDoesNotExist,
+      message: `No targetExecutions found for ${granuleId} records running workflow ${workflowName}`,
+    }
+  );
+});
+
+test('chooseTargetExecution() throws exactly any error that is not a RecordDoesNotExist from the database.', async (t) => {
+  const workflowName = randomWorkflow();
+  const granuleId = randomGranuleId();
+  const anError = new Error('a different Error');
+  const testDbFunction = () => {
+    throw anError;
+  };
+
+  await t.throwsAsync(
+    chooseTargetExecution({
+      granuleId,
+      workflowName,
+      dbFunction: testDbFunction,
+    }),
+    {
+      instanceOf: Error,
+      message: anError.message,
+    }
+  );
 });
