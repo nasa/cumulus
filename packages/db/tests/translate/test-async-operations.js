@@ -25,7 +25,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase re
   t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
 });
 
-test('translateApiAsyncOperationToPostgresAsyncOperation parses output from string to object', (t) => {
+test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified object to object', (t) => {
   const operationOutput = {
     esIndex: 'test-index',
     operationStatus: 'complete',
@@ -36,7 +36,7 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from stri
     taskArn: 'aws:arn:ecs:task:someTask',
     description: 'dummy operation',
     operationType: 'ES Index',
-    output: JSON.parse(JSON.stringify((operationOutput))),
+    output: JSON.stringify(operationOutput),
   };
 
   const expected = {
@@ -47,10 +47,77 @@ test('translateApiAsyncOperationToPostgresAsyncOperation parses output from stri
     operation_type: apiAsyncOperation.operationType,
     output: operationOutput,
   };
+  t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
+});
+
+test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified string to object', (t) => {
+  const operationOutput = '\"Index from database complete\"';
+  const apiAsyncOperation = {
+    id: '1234567890',
+    status: 'SUCCEEDED',
+    taskArn: 'aws:arn:ecs:task:someTask',
+    description: 'dummy operation',
+    operationType: 'ES Index',
+    output: operationOutput,
+  };
+
+  const expected = {
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
+    output: { output: JSON.parse(operationOutput) },
+  };
 
   t.deepEqual(translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation), expected);
 });
 
+test('translateApiAsyncOperationToPostgresAsyncOperation parses output from string to object', (t) => {
+  const operationOutput = 'some-string';
+  const apiAsyncOperation = {
+    id: '1234567890',
+    status: 'SUCCEEDED',
+    taskArn: 'aws:arn:ecs:task:someTask',
+    description: 'dummy operation',
+    operationType: 'ES Index',
+    output: operationOutput,
+  };
+
+  const expected = {
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
+    output: { output: operationOutput },
+  };
+  const translatedAsyncOp = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
+  t.deepEqual(translatedAsyncOp, expected);
+});
+
+test('translateApiAsyncOperationToPostgresAsyncOperation parses output from JSON stringified array to object', (t) => {
+  const operationOutput = JSON.stringify(['some-string', 'other-string']);
+  const apiAsyncOperation = {
+    id: '1234567890',
+    status: 'SUCCEEDED',
+    taskArn: 'aws:arn:ecs:task:someTask',
+    description: 'dummy operation',
+    operationType: 'ES Index',
+    output: operationOutput,
+  };
+
+  const expected = {
+    id: apiAsyncOperation.id,
+    status: apiAsyncOperation.status,
+    task_arn: apiAsyncOperation.taskArn,
+    description: apiAsyncOperation.description,
+    operation_type: apiAsyncOperation.operationType,
+    output: { output: JSON.parse(operationOutput) },
+  };
+  const translatedAsyncOp = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
+  t.deepEqual(translatedAsyncOp, expected);
+});
 test('translateApiAsyncOperationToPostgresAsyncOperation discards \'none\' output', (t) => {
   const apiAsyncOperation = {
     id: '1234567890',
