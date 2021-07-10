@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -31,14 +31,14 @@ const { deleteGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
-  api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
   getExecutionInputObject,
   waitForStartedExecution,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -49,9 +49,16 @@ const {
   updateAndUploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 
+const {
+  waitAndDeletePdr,
+} = require('../../helpers/pdrUtils');
+
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrsChildWorkflowMeta';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
+const granuleDateString = '2016360104606';
+const granuleIdReplacement = cryptoRandomString({ length: 13, type: 'numeric' });
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606'.replace(granuleDateString, granuleIdReplacement);
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
@@ -66,12 +73,13 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-  let addedCollection;
+  let addedCollections;
   let beforeAllFailed;
   let config;
   let executionNamePrefix;
+  let discoverPdrsExecutionArn;
   let ingestGranuleExecutionArn;
-  let ingestPdrExecutionArn;
+  let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
   let queuePdrsOutput;
@@ -83,8 +91,6 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     try {
       config = await loadConfig();
 
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithChildWorkflowMeta');
       testSuffix = createTestSuffix(testId);
       testDataFolder = createTestDataPath(testId);
@@ -94,23 +100,30 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       // populate collections, providers and test data
-      [addedCollection] = await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        updateAndUploadTestDataToBucket(
+      [addedCollections] = await Promise.all([
+        addCollections(
+          config.stackName,
           config.bucket,
-          s3data,
-          testDataFolder,
-          [
-            { old: 'cumulus-test-data/pdrs', new: testDataFolder },
-            { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
-          ]
+          collectionsDir,
+          testSuffix,
+          testId
         ),
-        uploadTestDataToBucket(
+        updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [
+          { old: 'cumulus-test-data/pdrs', new: testDataFolder },
+          {
+            old: 'DATA_TYPE = MOD09GQ;',
+            new: `DATA_TYPE = MOD09GQ${testSuffix};`,
+          },
+          { old: granuleDateString, new: granuleIdReplacement },
+        ]),
+        uploadTestDataToBucket(config.bucket, unmodifiedS3Data, testDataFolder),
+        addProviders(
+          config.stackName,
           config.bucket,
-          unmodifiedS3Data,
-          testDataFolder
+          providersDir,
+          config.bucket,
+          testSuffix
         ),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
       ]);
 
       // Rename the PDR to avoid race conditions
@@ -122,13 +135,16 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
 
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
 
-      executionNamePrefix = randomString(3);
+      executionNamePrefix = cryptoRandomString({
+        length: 3,
+        type: 'alphanumeric',
+      });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
         workflowName,
-        { name: addedCollection[0].name, version: addedCollection[0].version },
+        { name: addedCollections[0].name, version: addedCollections[0].version },
         provider,
         undefined,
         {
@@ -137,14 +153,23 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         }
       );
 
-      ingestPdrExecutionArn = workflowExecution.executionArn;
+      discoverPdrsExecutionArn = workflowExecution.executionArn;
 
       queuePdrsOutput = await lambdaStep.getStepOutput(
         workflowExecution.executionArn,
         'QueuePdrs'
       );
+      parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+
+      await waitForCompletedExecution(parsePdrExecutionArn);
+      const queueGranulesOutput = await lambdaStep.getStepOutput(
+        parsePdrExecutionArn,
+        'QueueGranules'
+      );
+      ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
+      console.log('ingest granule execution ARN:', ingestGranuleExecutionArn);
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
       throw error;
     }
   });
@@ -153,15 +178,18 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     // clean up stack state added by test
     await deleteGranule({
       prefix: config.stackName,
-      granuleId: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+      granuleId: testDataGranuleId,
     });
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
-    // The order of execution deletes matters. Parents must be deleted before children.
+    await waitAndDeletePdr(
+      config.stackName,
+      pdrFilename,
+      'completed'
+    );
+
+    // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestPdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: discoverPdrsExecutionArn });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -171,23 +199,22 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
   });
 
   it('executes successfully', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     }
   });
 
   it('results in an IngestGranule workflow execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      ingestGranuleExecutionArn = queuePdrsOutput.payload.running[0];
       await expectAsync(waitForStartedExecution(ingestGranuleExecutionArn)).toBeResolved();
     }
   });
 
   it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    const executionInput = await getExecutionInputObject(queuePdrsOutput.payload.running[0]);
+    if (beforeAllFailed) fail(beforeAllFailed);
+    const executionInput = await getExecutionInputObject(parsePdrExecutionArn);
     expect(executionInput.meta.staticValue).toEqual('aStaticValue');
     expect(executionInput.meta.interpolatedValueStackName).toEqual(queuePdrsOutput.meta.stack);
   });

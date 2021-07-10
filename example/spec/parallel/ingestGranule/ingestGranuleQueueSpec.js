@@ -21,7 +21,6 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndStartWorkflow,
   conceptExists,
   getOnlineResources,
   waitForCompletedExecution,
@@ -40,6 +39,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,

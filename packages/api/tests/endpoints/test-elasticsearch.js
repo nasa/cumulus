@@ -672,7 +672,7 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 503 
 test.serial('indexFromDatabase request completes successfully', async (t) => {
   const fakeRequest = {
     body: {
-      indexName: randomId('index'),
+      indexName: t.context.esAlias,
     },
     testContext: {
       // mock starting the ECS task
