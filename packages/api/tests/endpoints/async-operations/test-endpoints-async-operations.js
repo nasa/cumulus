@@ -22,6 +22,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
@@ -37,7 +38,7 @@ const {
   setAuthorizedOAuthUsers,
   createAsyncOperationTestRecords,
 } = require('../../../lib/testUtils');
-const { buildFakeExpressResponse } = require('../../../lib/utils');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -109,33 +110,19 @@ test.after.always(async (t) => {
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
-  const { esAlias, esClient } = t.context;
-  const asyncOperation1 = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-  };
-  const asyncOperation2 = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 }),
-  };
+  const { esClient, esIndex } = t.context;
+  const asyncOperation1 = fakeAsyncOperationFactory();
+  const asyncOperation2 = fakeAsyncOperationFactory();
 
   await asyncOperationModel.create(asyncOperation1);
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
   await asyncOperationModel.create(asyncOperation2);
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
+  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
 
   const response = await request(app)
     .get('/asyncOperations')
@@ -163,7 +150,7 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
 });
 
 test.serial('GET /asyncOperations with a timestamp parameter returns a list of filtered results', async (t) => {
-  const { esAlias, esClient } = t.context;
+  const { esClient, esIndex } = t.context;
   const firstDate = Date.now();
   const asyncOperation1 = {
     id: uuidv4(),
@@ -184,15 +171,15 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
 
   await asyncOperationModel.create(asyncOperation1);
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
+  await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
   const secondDate = Date.now();
 
   await asyncOperationModel.create(asyncOperation2);
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOpPgRecord2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
+  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
+  await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
 
   const response1 = await request(app)
     .get(`/asyncOperations?timestamp__from=${firstDate}`)
@@ -244,7 +231,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
   };
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
   const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOperationPgRecord);
+  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOperationPgRecord);
 
   const response = await request(app)
     .get(`/asyncOperations/${createdAsyncOperation.id}`)
