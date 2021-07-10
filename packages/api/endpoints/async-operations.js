@@ -69,11 +69,7 @@ async function getAsyncOperation(req, res) {
  */
 async function del(req, res) {
   const {
-    asyncOperationModel = new AsyncOperationModel({
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-      tableName: process.env.AsyncOperationsTable,
-    }),
+    asyncOperationModel = new AsyncOperationModel(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -138,8 +134,10 @@ async function post(req, res) {
   } = req.testContext || {};
 
   const apiAsyncOperation = req.body;
+
   apiAsyncOperation.createdAt = Date.now();
   apiAsyncOperation.updatedAt = Date.now();
+
   try {
     if (!apiAsyncOperation.id) {
       throw new ValidationError('Async Operations require an ID');
@@ -149,6 +147,7 @@ async function post(req, res) {
     }
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
     let dynamoDbRecord;
+
     try {
       logger.debug(`Attempting to create async operation ${dbRecord.id}`);
       await knex.transaction(async (trx) => {
@@ -179,6 +178,7 @@ async function post(req, res) {
 router.get('/', list);
 router.get('/:id', getAsyncOperation);
 router.delete('/:id', del);
+router.post('/', post);
 
 module.exports = {
   del,

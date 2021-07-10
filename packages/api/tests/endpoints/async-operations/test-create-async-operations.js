@@ -169,7 +169,7 @@ test('POST creates a new async operation in all data stores', async (t) => {
     omit(asyncOperationPgRecord, omitList),
     omit(pgAsyncOperation, omitList)
   );
-  t.deepEqual(asyncOperationPgRecord.output, JSON.parse(pgAsyncOperation.output));
+  t.deepEqual(asyncOperationPgRecord.output, pgAsyncOperation.output);
 
   const esRecord = await t.context.esAsyncOperationsClient.get(
     asyncOperation.id
@@ -236,9 +236,8 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
       throw new Error('unexpected error');
     });
 
-  const asyncOperation = fakeAsyncOperationFactory({
-    output: JSON.stringify({ age: 59 }),
-  });
+  const asyncOperation = fakeAsyncOperationFactory();
+
   const response = await request(app)
     .post('/asyncOperations')
     .send(asyncOperation)
