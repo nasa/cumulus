@@ -118,6 +118,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    delete inputPayload.pdr;
     granuleId = inputPayload.granules[0].granuleId;
 
     workflowExecutionArn = await buildAndStartWorkflow(
