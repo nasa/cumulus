@@ -12,6 +12,7 @@ const {
 const { sfn } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
 const { getGranule, listGranules } = require('@cumulus/api-client/granules');
@@ -140,6 +141,8 @@ describe('The S3 Ingest Granules workflow', () => {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
+
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
