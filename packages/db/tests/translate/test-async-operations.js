@@ -1,10 +1,13 @@
 const test = require('ava');
+
+const {
+  fakeAsyncOperationRecordFactory,
+} = require('../../dist/test-utils');
 const { randomString } = require('../../../api/node_modules/@cumulus/common/test-utils');
 const {
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('../../dist/translate/async_operations');
-
 test('translateApiAsyncOperationToPostgresAsyncOperation converts a camelCase record to snake_case', (t) => {
   const apiAsyncOperation = {
     id: '1234567890',
@@ -144,24 +147,22 @@ test('translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL r
   const taskArn = randomString();
   const createdAt = new Date();
   const updatedAt = new Date();
-  const pgAsyncOperation = {
+  const description = 'Some async run';
+  const pgAsyncOperation = fakeAsyncOperationRecordFactory({
     id,
-    status: 'RUNNING',
     task_arn: taskArn,
-    description: 'Some async run',
-    operation_type: 'ES Index',
-    output: { field: 'value' },
     created_at: createdAt,
     updated_at: updatedAt,
-  };
+    description,
+  });
 
   const expectedAsyncOperation = {
     id,
     status: 'RUNNING',
     taskArn,
-    description: 'Some async run',
+    description,
     operationType: 'ES Index',
-    output: JSON.stringify({ field: 'value' }),
+    output: JSON.stringify({ test: 'output' }),
     createdAt: createdAt.getTime(),
     updatedAt: updatedAt.getTime(),
   };
