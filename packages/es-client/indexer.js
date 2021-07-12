@@ -79,6 +79,45 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 }
 
 /**
+ * Updates a given record for the ElasticSearch index and type
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - the record id
+ * @param  {Object} doc      - the record
+ * @param  {string} index    - Elasticsearch index alias
+ * @param  {string} type     - Elasticsearch type
+ * @returns {Promise} Elasticsearch response
+ */
+async function updateExistingRecord(esClient, id, doc, index, type) {
+  return await esClient.update({
+    index,
+    type,
+    id,
+    body: {
+      doc: {
+        ...doc,
+        timestamp: Date.now(),
+      },
+    },
+    refresh: inTestMode(),
+  });
+}
+
+/**
+ * Updates an asyncOperation record in ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {Object} updates - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} elasticsearch update response
+ */
+function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, type = 'asyncOperation') {
+  return updateExistingRecord(esClient, id, updates, index, type);
+}
+
+/**
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
@@ -373,6 +412,33 @@ function deletePdr({
 }
 
 /**
+ * Deletes the async operation in ElasticSearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.id - the async operation ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteAsyncOperation({
+  esClient,
+  id,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'asyncOperation',
+}) {
+  return deleteRecord({
+    esClient,
+    id,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -396,8 +462,10 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
+  updateAsyncOperation,
   deleteCollection,
   deleteProvider,
   deleteRule,
   deletePdr,
+  deleteAsyncOperation,
 };

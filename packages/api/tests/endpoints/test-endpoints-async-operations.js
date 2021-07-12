@@ -3,38 +3,41 @@
 const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
-const { v4: uuidv4 } = require('uuid');
 const noop = require('lodash/noop');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search } = require('@cumulus/es-client/search');
-const indexer = require('@cumulus/es-client/indexer');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
-  translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
-  deleteAsyncOperation,
+  del,
 } = require('../../endpoints/async-operations');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
 } = require('../../models');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const {
+  createFakeJwtAuthToken,
+  setAuthorizedOAuthUsers,
+  createAsyncOperationTestRecords,
+} = require('../../lib/testUtils');
+const { buildFakeExpressResponse } = require('./utils');
 
-let esClient;
-let esIndex;
-let esAlias;
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -58,17 +61,20 @@ test.before(async (t) => {
   };
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.testKnex = knex;
+  t.context.knex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  esIndex = randomString();
-  esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
-  // create esClient
-  esClient = await Search.es('fakehost');
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esAsyncOperationClient = new Search(
+    {},
+    'asyncOperation',
+    t.context.esIndex
+  );
+
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // Create AsyncOperations table
@@ -77,6 +83,7 @@ test.before(async (t) => {
     systemBucket: process.env.system_bucket,
     tableName: process.env.AsyncOperationsTable,
   });
+  t.context.asyncOperationModel = asyncOperationModel;
   await asyncOperationModel.createTable();
 
   const username = randomString();
@@ -92,12 +99,12 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await asyncOperationModel.deleteTable().catch(noop);
   await accessTokenModel.deleteTable().catch(noop);
-  await esClient.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
-    knex: t.context.testKnex,
+    knex: t.context.knex,
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('GET /asyncOperations returns a list of operations', async (t) => {
@@ -119,9 +126,9 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   };
 
   await asyncOperationModel.create(asyncOperation1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation1, t.context.esIndex);
   await asyncOperationModel.create(asyncOperation2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
+  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation2, t.context.esIndex);
 
   const response = await request(app)
     .get('/asyncOperations')
@@ -168,12 +175,12 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
   };
 
   await asyncOperationModel.create(asyncOperation1);
-  await indexer.indexAsyncOperation(esClient, asyncOperation1, esAlias);
+  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation1, t.context.esIndex);
 
   const secondDate = Date.now();
 
   await asyncOperationModel.create(asyncOperation2);
-  await indexer.indexAsyncOperation(esClient, asyncOperation2, esAlias);
+  await indexer.indexAsyncOperation(t.context.esClient, asyncOperation2, t.context.esIndex);
 
   const response1 = await request(app)
     .get(`/asyncOperations?timestamp__from=${firstDate}`)
@@ -246,37 +253,30 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
   );
 });
 
-test('deleteAsyncOperation returns a 401 bad request if id is not provided', async (t) => {
+test('del() returns a 401 bad request if id is not provided', async (t) => {
   const fakeRequest = {};
   const fakeResponse = {
     boom: {
       badRequest: sinon.stub(),
     },
   };
-  await deleteAsyncOperation(fakeRequest, fakeResponse);
+  await del(fakeRequest, fakeResponse);
   t.true(fakeResponse.boom.badRequest.called);
 });
 
 test('DELETE deletes the async operation from all data stores', async (t) => {
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'ES Index',
-    output: JSON.stringify({ foo: 'bar' }),
-  };
-  await asyncOperationModel.create(asyncOperation);
-  const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
-  await t.context.asyncOperationPgModel.create(t.context.testKnex, asyncOperationPgRecord);
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
 
-  t.true(await asyncOperationModel.exists({ id: asyncOperation.id }));
+  t.true(await asyncOperationModel.exists({ id }));
   t.true(
-    await t.context.asyncOperationPgModel.exists(t.context.testKnex, { id: asyncOperation.id })
+    await t.context.asyncOperationPgModel.exists(t.context.knex, { id })
   );
 
   const response = await request(app)
-    .delete(`/asyncOperations/${asyncOperation.id}`)
+    .delete(`/asyncOperations/${id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -284,8 +284,145 @@ test('DELETE deletes the async operation from all data stores', async (t) => {
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(await asyncOperationModel.exists({ id: asyncOperation.id }));
+  t.false(await asyncOperationModel.exists({ id }));
   const dbRecords = await t.context.asyncOperationPgModel
-    .search(t.context.testKnex, { id: asyncOperation.id });
+    .search(t.context.knex, { id });
   t.is(dbRecords.length, 0);
+});
+
+test('del() does not remove from PostgreSQL/Elasticsearch if removing from DynamoDB fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeAsyncOperationModel = {
+    get: () => Promise.resolve(fakeAsyncOperationModel),
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: () => Promise.resolve(true),
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      asyncOperationModel: fakeAsyncOperationModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
+});
+
+test('del() does not remove from DynamoDB/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeAsyncOperationPgModel = {
+    delete: () => {
+      throw new Error('PG something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      asyncOperationPgModel: fakeAsyncOperationPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'PG something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
+});
+
+test('del() does not remove from DynamoDB/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalDynamoAsyncOperation,
+  } = await createAsyncOperationTestRecords(t.context);
+  const { id } = originalDynamoAsyncOperation;
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('ES something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      id,
+    },
+    testContext: {
+      knex: t.context.knex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'ES something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.asyncOperationModel.get({ id }),
+    originalDynamoAsyncOperation
+  );
+  t.true(
+    await t.context.asyncOperationPgModel.exists(t.context.knex, {
+      id,
+    })
+  );
+  t.true(
+    await t.context.esAsyncOperationClient.exists(
+      id
+    )
+  );
 });
