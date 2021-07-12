@@ -1,5 +1,5 @@
 /* functions for transforming and indexing Cumulus Payloads
- * in ElasticSearch. These functions are specifically designed
+ * in Elasticsearch. These functions are specifically designed
  * to transform data for use in cumulus api
  *
  * The module accepts the following kinds of workflows (state machines):
@@ -46,9 +46,9 @@ async function createIndex(esClient, indexName) {
 }
 
 /**
- * Indexes a given record to the specified ElasticSearch index and type
+ * Indexes a given record to the specified Elasticsearch index and type
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {string} id       - the record id
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
@@ -79,9 +79,9 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 }
 
 /**
- * Updates a given record for the ElasticSearch index and type
+ * Updates a given record for the Elasticsearch index and type
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {string} id       - the record id
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
@@ -104,9 +104,9 @@ async function updateExistingRecord(esClient, id, doc, index, type) {
 }
 
 /**
- * Updates an asyncOperation record in ElasticSearch
+ * Updates an asyncOperation record in Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} id - Record ID
  * @param  {Object} updates - Document of updates to apply
  * @param  {string} index - Elasticsearch index alias (default defined in search.js)
@@ -121,7 +121,7 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: execution)
@@ -132,9 +132,9 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Indexes the asyncOperation type on ElasticSearch
+ * Indexes the asyncOperation type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: asyncOperation)
@@ -145,9 +145,9 @@ function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type 
 }
 
 /**
- * Indexes the collection on ElasticSearch
+ * Indexes the collection on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} collection - the collection record
  * @param  {string} index - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type - Elasticsearch type (default: collection)
@@ -159,9 +159,9 @@ function indexCollection(esClient, collection, index = defaultIndexAlias, type =
 }
 
 /**
- * Indexes the provider type on ElasticSearch
+ * Indexes the provider type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the provider record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: provider)
@@ -172,9 +172,9 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
 }
 
 /**
- * Indexes the reconciliationReport type on ElasticSearch
+ * Indexes the reconciliationReport type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the ReconciliationReport record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: reconciliationReport)
@@ -185,9 +185,9 @@ function indexReconciliationReport(esClient, payload, index = defaultIndexAlias,
 }
 
 /**
- * Indexes the rule type on ElasticSearch
+ * Indexes the rule type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the Rule record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: rule)
@@ -199,9 +199,9 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 }
 
 /**
- * Indexes the granule type on ElasticSearch
+ * Indexes the granule type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
@@ -230,9 +230,9 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
 }
 
 /**
- * Indexes the pdr type on ElasticSearch
+ * Indexes the pdr type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: pdr)
@@ -249,10 +249,10 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
 }
 
 /**
- * delete a record from ElasticSearch
+ * delete a record from Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.id       - id of the Elasticsearch record
  * @param  {string} params.type     - Elasticsearch type (default: execution)
  * @param  {strint} params.parent   - id of the parent (optional)
@@ -304,10 +304,10 @@ async function deleteRecord({
 }
 
 /**
- * Deletes the collection in ElasticSearch
+ * Deletes the collection in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.collectionId - the collection ID
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -331,10 +331,10 @@ function deleteCollection({
 }
 
 /**
- * Deletes the provider in ElasticSearch
+ * Deletes the provider in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.id - the provider ID
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -358,10 +358,10 @@ function deleteProvider({
 }
 
 /**
- * Deletes the rule in ElasticSearch
+ * Deletes the rule in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.name - the rule name
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -385,10 +385,10 @@ function deleteRule({
 }
 
 /**
- * Deletes the PDR in ElasticSearch
+ * Deletes the PDR in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.name - the PDR name
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -412,10 +412,10 @@ function deletePdr({
 }
 
 /**
- * Deletes the execution in ElasticSearch
+ * Deletes the execution in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.arn - execution ARN
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -439,10 +439,10 @@ function deleteExecution({
 }
 
 /*
-* Deletes the async operation in ElasticSearch
+* Deletes the async operation in Elasticsearch
 *
 * @param  {Object} params
-* @param  {Object} params.esClient - ElasticSearch Connection object
+* @param  {Object} params.esClient - Elasticsearch Connection object
 * @param  {string} params.id - the async operation ID
 * @param  {string[]} [params.ignore] - Array of response codes to ignore
 * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
