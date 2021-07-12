@@ -152,23 +152,8 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
 test.serial('GET /asyncOperations with a timestamp parameter returns a list of filtered results', async (t) => {
   const { esClient, esIndex } = t.context;
   const firstDate = Date.now();
-  const asyncOperation1 = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'Bulk Granules',
-    output: JSON.stringify({ age: 59 }),
-  };
-  const asyncOperation2 = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 }),
-  };
-
+  const asyncOperation1 = fakeAsyncOperationFactory();
+  const asyncOperation2 = fakeAsyncOperationFactory();
   await asyncOperationModel.create(asyncOperation1);
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
@@ -221,14 +206,7 @@ test.serial('GET /asyncOperations/{:id} returns a 404 status code if the request
 });
 
 test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
-  const asyncOperation = {
-    id: uuidv4(),
-    status: 'RUNNING',
-    taskArn: randomString(),
-    description: 'Some async run',
-    operationType: 'ES Index',
-    output: JSON.stringify({ age: 37 }),
-  };
+  const asyncOperation = fakeAsyncOperationFactory();
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
   const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOperationPgRecord);
@@ -254,7 +232,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
   );
 });
 
-test('del() returns a 401 bad request if id is not provided', async (t) => {
+test.only('del() returns a 401 bad request if id is not provided', async (t) => {
   const fakeRequest = {};
   const fakeResponse = {
     boom: {
