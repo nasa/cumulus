@@ -441,8 +441,8 @@ Outputs:
 
 archive_api_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/token
 archive_api_uri = https://abc123.execute-api.us-east-1.amazonaws.com/dev/
-tea_distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
-tea_distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
+distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
+distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
 **Note:** Be sure to copy the redirect URLs, as you will use them to update your Earthdata application.
