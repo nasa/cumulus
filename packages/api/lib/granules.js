@@ -1,7 +1,9 @@
 'use strict';
 
+const isEqual = require('lodash/isEqual');
 const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
+const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -225,6 +227,47 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
 
 const SCROLL_SIZE = 500; // default size in Kibana
 
+async function granuleEsQuery({
+  index,
+  query,
+  source,
+}) {
+  const granules = [];
+  const responseQueue = [];
+
+  const client = await Search.es(undefined, true);
+  const searchResponse = await client.search({
+    index,
+    scroll: '30s',
+    size: SCROLL_SIZE,
+    _source: source,
+    body: query,
+  });
+
+  responseQueue.push(searchResponse);
+
+  while (responseQueue.length) {
+    const { body } = responseQueue.shift();
+
+    body.hits.hits.forEach((hit) => {
+      granules.push(hit._source);
+    });
+
+    const totalHits = body.hits.total.value || body.hits.total;
+
+    if (totalHits !== granules.length) {
+      responseQueue.push(
+        // eslint-disable-next-line no-await-in-loop
+        await client.scroll({
+          scrollId: body._scroll_id,
+          scroll: '30s',
+        })
+      );
+    }
+  }
+  return granules;
+}
+
 /**
  * Return a unique list of granule IDs based on the provided list or the response from the
  * query to ES using the provided query and index.
@@ -237,46 +280,20 @@ const SCROLL_SIZE = 500; // default size in Kibana
  * @returns {Promise<Array<string>>}
  */
 async function getGranuleIdsForPayload(payload) {
-  const granuleIds = payload.ids || [];
+  const { ids, index, query } = payload;
+  const granuleIds = ids || [];
 
   // query ElasticSearch if needed
   if (granuleIds.length === 0 && payload.query) {
     log.info('No granule ids detected. Searching for granules in Elasticsearch.');
 
-    const query = payload.query;
-    const index = payload.index;
-    const responseQueue = [];
-
-    const client = await Search.es(undefined, true);
-    const searchResponse = await client.search({
-      index: index,
-      scroll: '30s',
-      size: SCROLL_SIZE,
-      _source: ['granuleId'],
-      body: query,
+    const granules = await granuleEsQuery({
+      index,
+      query,
+      source: ['granuleId'],
     });
 
-    responseQueue.push(searchResponse);
-
-    while (responseQueue.length) {
-      const { body } = responseQueue.shift();
-
-      body.hits.hits.forEach((hit) => {
-        granuleIds.push(hit._source.granuleId);
-      });
-
-      const totalHits = body.hits.total.value || body.hits.total;
-
-      if (totalHits !== granuleIds.length) {
-        responseQueue.push(
-          // eslint-disable-next-line no-await-in-loop
-          await client.scroll({
-            scrollId: body._scroll_id,
-            scroll: '30s',
-          })
-        );
-      }
-    }
+    granules.map((granule) => granuleIds.push(granule.granuleId));
   }
 
   // Remove duplicate Granule IDs
@@ -285,10 +302,47 @@ async function getGranuleIdsForPayload(payload) {
   return uniqueGranuleIds;
 }
 
+/**
+ * Return a unique list of granule cumulus IDs based on the provided list or the response from the
+ * query to ES using the provided query and index.
+ *
+ * @param {Object} payload
+ * @param {Object} [payload.granules] - Optional list of granules with granuleId and collectionId
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES
+ * @param {string} [payload.index] - Optional parameter of ES index to query.
+ * Must exist if payload.query exists.
+ * @returns {Promise<Array<string>>}
+ */
+async function getGranulesForPayload(payload) {
+  const { granules, index, query } = payload;
+  const queryGranules = granules || [];
+
+  // query ElasticSearch if needed
+  if (!granules && query) {
+    log.info('No granules detected. Searching for granules in Elasticsearch.');
+
+    const esGranules = await granuleEsQuery({
+      index,
+      query,
+      source: ['granuleId', 'collectionId'],
+    });
+
+    esGranules.map((granule) => queryGranules.push({
+      granuleId: granule.granuleId,
+      collectionId: granule.collectionId,
+    }));
+  }
+  // Remove duplicate Granule IDs
+  // TODO: could we get unique IDs from the query directly?
+  const uniqueGranules = uniqWith(queryGranules, isEqual);
+  return uniqueGranules;
+}
+
 module.exports = {
   moveGranule,
   translateGranule,
   getExecutionProcessingTimeInfo,
+  getGranulesForPayload,
   getGranuleIdsForPayload,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,

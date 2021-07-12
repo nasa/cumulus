@@ -9,8 +9,8 @@ const {
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
-const { getGranuleIdsForPayload } = require('../lib/granules');
-const { validateBulkGranulesRequest } = require('../lib/request');
+const { getGranulesForPayload } = require('../lib/granules');
+const { validateGranuleExecutionRequest } = require('../lib/request');
 
 /**
  * List and search executions
@@ -94,11 +94,12 @@ async function del(req, res) {
  */
 async function searchByGranules(req, res) {
   const payload = req.body;
-  const granuleIds = await getGranuleIdsForPayload(payload);
   const knex = await getKnexClient();
+  const granules = await getGranulesForPayload(payload, knex);
+
   const executionPgModel = new ExecutionPgModel();
 
-  const executionCumulusIds = await getGranuleExecutionCumulusIds(knex, ['granule_id'], granuleIds);
+  const executionCumulusIds = await getGranuleExecutionCumulusIds(knex, granules);
 
   const executions = await executionPgModel
     .searchByCumulusIds(knex, executionCumulusIds);
@@ -106,7 +107,7 @@ async function searchByGranules(req, res) {
   return res.send(executions);
 }
 
-router.post('/search-by-granules', validateBulkGranulesRequest, searchByGranules);
+router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

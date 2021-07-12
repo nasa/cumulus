@@ -29,6 +29,7 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
+    "@cumulus/api": "9.1.0",
     "@cumulus/aws-client": "9.1.0",
     "@cumulus/common": "9.1.0",
     "@cumulus/errors": "9.1.0",

@@ -1,8 +1,11 @@
 import Knex from 'knex';
 
 import { PostgresGranule } from '../types/granule';
+import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
+
+const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
  * Upsert a granule and a record in the granules/executions join table.
@@ -51,8 +54,8 @@ export const upsertGranuleWithExecutionJoinRecord = async (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
- * @param {Array<keyof PostgresGranule>} columnNames - column names for whereIn query
- * @param {Array<any>} values - record values for whereIn query
+ * @param {Array<Object>} granules - array of granules with collectionId and granuleId
+ * @param {Object} [collectionPgModel] - Collection PG model class instance
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
@@ -60,13 +63,21 @@ export const upsertGranuleWithExecutionJoinRecord = async (
  */
 export const getGranuleExecutionCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  columnNames: Array<keyof PostgresGranule>,
-  values: Array<any>,
+  granules: Array<{ collectionId: string, granuleId: string }>,
+  collectionPgModel = new CollectionPgModel(),
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
 ): Promise<Array<number>> => {
-  const granuleCumulusIds: Array<number> = await granulePgModel
-    .getRecordsCumulusIds(knexOrTransaction, columnNames, values);
+  const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granule) => {
+    const { name, version } = deconstructCollectionId(granule.collectionId);
+    return await granulePgModel.getRecordCumulusId(knexOrTransaction, {
+      granule_id: granule.granuleId,
+      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+        knexOrTransaction,
+        { name, version }
+      ),
+    });
+  }));
 
   const executionCumulusIds = await granulesExecutionsPgModel
     .searchByGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);

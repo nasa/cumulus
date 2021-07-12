@@ -204,8 +204,8 @@ test.beforeEach(async (t) => {
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', collectionId: t.context.collectionId }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
   ];
 
   await Promise.all(
@@ -433,12 +433,15 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('POST /executions/search-by-granules returns correct executions when ids array is passed', async (t) => {
+test('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
     .post('/executions/search-by-granules')
-    .send({ ids: [fakeGranules[0].granuleId, fakeGranules[1].granuleId] })
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+    ] })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -467,7 +470,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
           },
           {
             bool: {
-              should: [{ match: { status: fakeGranules[0].status } }],
+              should: [{ match: { collectionId: fakeGranules[0].collectionId } }],
               minimum_should_match: 1,
             },
           },
@@ -525,9 +528,9 @@ test.serial('POST /executions/search-by-granules returns 400 when no IDs or quer
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of ids or query is required/);
+    .expect(400, /One of granules or query is required/);
 
-  t.regex(response.body.message, /One of ids or query is required/);
+  t.regex(response.body.message, /One of granules or query is required/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when IDs is not an array', async (t) => {
@@ -535,7 +538,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is not an 
 
   const body = {
     index: expectedIndex,
-    ids: 'bad-value',
+    granules: 'bad-value',
   };
 
   const response = await request(app)
@@ -545,7 +548,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is not an 
     .send(body)
     .expect(400);
 
-  t.regex(response.body.message, /ids should be an array of values/);
+  t.regex(response.body.message, /granules should be an array of values/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when IDs is an empty array', async (t) => {
@@ -553,7 +556,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is an empt
 
   const body = {
     index: expectedIndex,
-    ids: [],
+    granules: [],
   };
 
   const response = await request(app)
@@ -563,7 +566,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is an empt
     .send(body)
     .expect(400);
 
-  t.regex(response.body.message, /no values provided for ids/);
+  t.regex(response.body.message, /no values provided for granules/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
