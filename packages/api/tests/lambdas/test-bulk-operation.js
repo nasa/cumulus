@@ -68,12 +68,20 @@ const envVars = {
   system_bucket: randomId('bucket'),
 };
 
+/**
+ * Sets up test database with granules/executions/and granule_executions so
+ * that two granules that are linked to executions that have run the same
+ * workflow.
+ *
+ * Modifies the input object to add the workflowName, executionArns and
+ * granuleIds for access during testing.
+ *
+ * @param {Object} t - Ava test context
+ */
 const setUpExistingDatabaseRecords = async (t) => {
   t.context.workflowName = randomWorkflow();
-  t.context.executionArn1 = randomArn();
-  t.context.executionArn2 = randomArn();
-  t.context.granuleId1 = randomGranuleId();
-  t.context.granuleId2 = randomGranuleId();
+  t.context.executionArns = [randomArn(), randomArn()];
+  t.context.granuleIds = [randomGranuleId(), randomGranuleId()];
 
   const granulePgModel = new GranulePgModel();
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
@@ -89,11 +97,11 @@ const setUpExistingDatabaseRecords = async (t) => {
     [
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        granule_id: t.context.granuleId1,
+        granule_id: t.context.granuleIds[0],
       }),
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        granule_id: t.context.granuleId2,
+        granule_id: t.context.granuleIds[1],
       }),
     ]
   );
@@ -102,11 +110,11 @@ const setUpExistingDatabaseRecords = async (t) => {
     [
       fakeExecutionRecordFactory({
         workflow_name: t.context.workflowName,
-        arn: t.context.executionArn1,
+        arn: t.context.executionArns[0],
       }),
       fakeExecutionRecordFactory({
         workflow_name: t.context.workflowName,
-        arn: t.context.executionArn2,
+        arn: t.context.executionArns[1],
       }),
     ]
   );
@@ -605,8 +613,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
   const workflowName = t.context.workflowName;
   const granuleModel = new Granule();
   const granules = await Promise.all([
-    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleId1 })),
-    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleId2 })),
+    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleIds[0] })),
+    granuleModel.create(fakeGranuleFactoryV2({ granuleId: t.context.granuleIds[1] })),
   ]);
 
   await bulkOperation.handler({
@@ -624,7 +632,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
   t.is(reingestStub.callCount, 2);
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
-    t.true([t.context.executionArn1, t.context.executionArn2].includes(callArgs[0].execution));
+    t.true(t.context.executionArns.includes(callArgs[0].execution));
     delete matchingGranule.execution;
     delete callArgs[0].execution;
     t.deepEqual(matchingGranule, callArgs[0]);
