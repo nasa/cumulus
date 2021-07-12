@@ -123,6 +123,13 @@ behavior
       DynamoDB.
     - Added `translatePostgresAsyncOperationToApiAsyncOperation` function in
       `@cumulus/db/translate/async-operation`.
+    - Updated `translateApiAsyncOperationToPostgresAsyncOperation` function to
+      handle `output` for the following cases and ensure that `output` is an
+      object:
+      - `record.output` is a JSON stringified object
+      - `record.output` is a JSON stringified array
+      - `record.output` is a JSON stringified string
+      - `record.output` is a string
 
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
