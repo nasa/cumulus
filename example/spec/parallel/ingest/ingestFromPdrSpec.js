@@ -24,8 +24,7 @@
 const flatten = require('lodash/flatten');
 const cryptoRandomString = require('crypto-random-string');
 
-const { Execution, Pdr } = require('@cumulus/api/models');
-
+const { Pdr } = require('@cumulus/api/models');
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -40,6 +39,9 @@ const {
   cleanupCollections,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
+
+const { getExecution } = require('@cumulus/api-client/executions');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const {
   createTestDataPath,
@@ -81,7 +83,6 @@ describe('Ingesting from PDR', () => {
 
   let beforeAllFailed;
   let config;
-  let executionModel;
   let parsePdrExecutionArn;
   let pdrFilename;
   let provider;
@@ -95,10 +96,7 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
@@ -318,7 +316,7 @@ describe('Ingesting from PDR', () => {
       });
 
       describe('PdrStatusCheck lambda function', () => {
-        let lambdaOutput = null;
+        let lambdaOutput;
 
         beforeAll(async () => {
           lambdaOutput = await lambdaStep.getStepOutput(
@@ -422,9 +420,12 @@ describe('Ingesting from PDR', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
-            await waitForModelStatus(
-              executionModel,
-              { arn: ingestGranuleWorkflowArn },
+            await waitForApiStatus(
+              getExecution,
+              {
+                prefix: config.stackName,
+                arn: workflowExecution.executionArn,
+              },
               'completed'
             );
 
@@ -522,9 +523,12 @@ describe('Ingesting from PDR', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            executionModel,
-            { arn: parsePdrExecutionArn },
+          const record = await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn: workflowExecution.executionArn,
+            },
             'completed'
           );
           expect(record.status).toEqual('completed');

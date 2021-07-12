@@ -26,6 +26,7 @@ async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}
       if (!isMatch(record, matchParams)) {
         throw new Error(`Record ${JSON.stringify(record)} did not match expected ${JSON.stringify(matchParams)}`);
       }
+
       return record;
     },
     {

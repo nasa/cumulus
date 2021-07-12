@@ -3,10 +3,69 @@ import Knex from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
-import { PostgresExecution } from '../types/execution';
+import { removeNilProperties } from '@cumulus/common/util';
+import { constructCollectionId } from '@cumulus/message/Collections';
+import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
 import { AsyncOperationPgModel } from '../models/async_operation';
+
+export const translatePostgresExecutionToApiExecution = async (
+  executionRecord: PostgresExecutionRecord,
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+  executionPgModel = new ExecutionPgModel()
+): Promise<ExecutionRecord> => {
+  let parentArn: string | undefined;
+  let collectionId: string | undefined;
+  let asyncOperationId: string | undefined;
+
+  if (executionRecord.collection_cumulus_id) {
+    const collection = await collectionPgModel.get(knex, {
+      cumulus_id: executionRecord.collection_cumulus_id,
+    });
+    collectionId = constructCollectionId(collection.name, collection.version);
+  }
+  if (executionRecord.async_operation_cumulus_id) {
+    const asyncOperation = await asyncOperationPgModel.get(knex, {
+      cumulus_id: executionRecord.async_operation_cumulus_id,
+    });
+    asyncOperationId = asyncOperation.id;
+  }
+  if (executionRecord.parent_cumulus_id) {
+    const parentExecution = await executionPgModel.get(knex, {
+      cumulus_id: executionRecord.parent_cumulus_id,
+    });
+    parentArn = parentExecution.arn;
+  }
+
+  const postfix = executionRecord.arn.split(':').pop();
+  if (!postfix) {
+    throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
+  }
+
+  const translatedRecord: ExecutionRecord = {
+    name: postfix,
+    status: executionRecord.status,
+    arn: executionRecord.arn,
+    duration: executionRecord.duration,
+    error: executionRecord.error,
+    tasks: executionRecord.tasks,
+    originalPayload: executionRecord.original_payload,
+    finalPayload: executionRecord.final_payload,
+    type: executionRecord.workflow_name,
+    execution: executionRecord.url,
+    cumulusVersion: executionRecord.cumulus_version,
+    asyncOperationId,
+    collectionId,
+    parentArn,
+    createdAt: executionRecord.created_at.getTime(),
+    updatedAt: executionRecord.updated_at.getTime(),
+    timestamp: executionRecord.timestamp?.getTime(),
+  };
+  return <ExecutionRecord>removeNilProperties(translatedRecord);
+};
 
 /**
  * Translate execution record from Dynamo to RDS.

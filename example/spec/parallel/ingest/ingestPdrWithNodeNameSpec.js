@@ -15,14 +15,14 @@
  * pdr status check
  * This will kick off the ingest workflow
  *
- * Ingest worklow:
+ * Ingest workflow:
  * runs sync granule - saves file to file staging location
  * performs the fake processing step - generates CMR metadata
  * Moves the file to the final location
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
+const { Pdr } = require('@cumulus/api/models');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -41,8 +41,8 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { getExecution } = require('@cumulus/api-client/executions');
+
 const {
   createTestDataPath,
   createTestSuffix,
@@ -57,6 +57,8 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
 
+const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus, waitForModelStatus } = require('../../helpers/apiUtils');
 const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
@@ -75,7 +77,6 @@ describe('Ingesting from PDR', () => {
   let addedCollection;
   let beforeAllFailed;
   let config;
-  let executionModel;
   let nodeName;
   let nodeNameProvider;
   let nodeNameProviderId;
@@ -92,10 +93,7 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
@@ -376,7 +374,7 @@ describe('Ingesting from PDR', () => {
           }
         });
 
-        // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
+        // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
         it('has expected output message', () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else if (lambdaOutput) {
@@ -463,9 +461,12 @@ describe('Ingesting from PDR', () => {
         it('displays a link to the parent', async () => {
           if (beforeAllFailed) fail(beforeAllFailed);
           else {
-            await waitForModelStatus(
-              executionModel,
-              { arn: ingestGranuleWorkflowArn },
+            await waitForApiStatus(
+              getExecution,
+              {
+                prefix: config.stackName,
+                arn: ingestGranuleWorkflowArn,
+              },
               'completed'
             );
 
@@ -560,13 +561,16 @@ describe('Ingesting from PDR', () => {
       });
     });
 
-    describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+    describe('the reporting lambda has received the cloudwatch step function event and', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            executionModel,
-            { arn: parsePdrExecutionArn },
+          const record = await waitForApiStatus(
+            getExecution,
+            {
+              prefix: config.stackName,
+              arn: parsePdrExecutionArn,
+            },
             'completed'
           );
           expect(record.status).toEqual('completed');

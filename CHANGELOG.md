@@ -13,6 +13,7 @@ does not match the expected response (200 for most requests and 202 for a few re
 trigger async operations). Previously the helpers in this package would return the response
 regardless of the status code, so you may need to update any code using helpers from this
 package to catch or to otherwise handle errors that you may encounter.
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 
 ### Added
 
@@ -48,6 +49,20 @@ database via the API
   - `pdrs.deletePdr` - Delete a PDR via the API
   - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
 
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Added helpers to `@cumulus/es-client/indexer`:
+      - `deleteAsyncOperation` to delete async operation records from Elasticsearch
+      - `updateAsyncOperation` to update an async operation record in Elasticsearch
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+
 ### Changed
 
 - Moved functions from `@cumulus/integration-tests` to `example/spec/helpers/workflowUtils`:
@@ -78,6 +93,33 @@ the error object:
 - Added `params.pRetryOptions` parameter to
 `@cumulus/api-client/granules.deleteGranule` to control the retry
 behavior
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
+    - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+  - **CUMULUS-2306**
+    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
+    related records
+    - Updated @cumulus/db/models/granules-executions to add a delete method in
+      support of local cleanup
+    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
+      record retrievals on status in lieu of using `waitForModelStatus`
+  - **CUMULUS-2303**
+    - Update API provider GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed
+    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 
@@ -94,11 +136,21 @@ behavior
 - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
 endpoint for returning a PDR from the API
 
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+      - `<prefix>-AsyncOperationsTable`
+      - `<prefix>-CollectionsTable`
+      - `<prefix>-PdrsTable`
+      - `<prefix>-ProvidersTable`
+      - `<prefix>-RulesTable`
+
 ## [v9.1.0] 2021-06-03
 
 ### BREAKING CHANGES
 
-- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -118,7 +170,6 @@ endpoint for returning a PDR from the API
 
 ### Added
 
-- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
@@ -156,16 +207,10 @@ endpoint for returning a PDR from the API
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
     timeout for Knex library to acquire dataase connections
-- **CUMULUS-2208**
-  - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
-  timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
-
 - **CUMULUS-2489**
   - Updated docs for Terraform references in FAQs, glossary, and in Deployment sections
-
 - **CUMULUS-2434**
   - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
     both HTTPS URLS and S3 URIs to CMR metadata.
@@ -186,9 +231,6 @@ endpoint for returning a PDR from the API
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
-- **CUMULUS-2532**
-  - Changed integration tests to use `api-client/granules` functions as opposed
-    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 

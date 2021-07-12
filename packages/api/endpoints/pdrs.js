@@ -1,15 +1,13 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const {
-  deleteS3Object,
-} = require('@cumulus/aws-client/S3');
+const S3UtilsLib = require('@cumulus/aws-client/S3');
 const {
   getKnexClient,
   PdrPgModel,
 } = require('@cumulus/db');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const models = require('../models');
@@ -66,28 +64,62 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const pdrName = req.params.pdrName;
+  const {
+    pdrModel = new models.Pdr(),
+    pdrPgModel = new PdrPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+    s3Utils = S3UtilsLib,
+  } = req.testContext || {};
 
+  const pdrName = req.params.pdrName;
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  const pdrModel = new models.Pdr();
-  const pdrPgModel = new PdrPgModel();
-  const knex = await getKnexClient();
+  let existingPdr;
+  try {
+    existingPdr = await pdrModel.get({ pdrName });
+  } catch (error) {
+    // Ignore error if record does not exist in DynamoDb
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  const esPdrClient = new Search(
+    {},
+    'pdr',
+    process.env.ES_INDEX
+  );
+  const esPdrRecord = await esPdrClient.get(pdrName).catch(log.info);
 
   try {
-    await knex.transaction(async (trx) => {
-      await pdrPgModel.delete(trx, { name: pdrName });
-      await deleteS3Object(process.env.system_bucket, pdrS3Key);
-      await pdrModel.delete({ pdrName });
-    });
-
-    if (inTestMode()) {
-      const esClient = await Search.es(process.env.ES_HOST);
-      await esClient.delete({
-        id: pdrName,
-        index: process.env.ES_INDEX,
-        type: 'pdr',
-      }, { ignore: [404] });
+    let dynamoPdrDeleted = false;
+    let esPdrDeleted = false;
+    try {
+      await knex.transaction(async (trx) => {
+        await pdrPgModel.delete(trx, { name: pdrName });
+        await pdrModel.delete({ pdrName });
+        dynamoPdrDeleted = true;
+        await deletePdr({
+          esClient,
+          name: pdrName,
+          index: process.env.ES_INDEX,
+          ignore: [404],
+        });
+        esPdrDeleted = true;
+        await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (dynamoPdrDeleted && existingPdr) {
+        await pdrModel.create(existingPdr);
+      }
+      if (esPdrDeleted && esPdrRecord) {
+        delete esPdrRecord._id;
+        await indexPdr(esClient, esPdrRecord, process.env.ES_INDEX);
+      }
+      throw innerError;
     }
   } catch (error) {
     log.debug(`Failed to delete PDR with name ${pdrName}. Error ${JSON.stringify(error)}.`);
@@ -100,4 +132,7 @@ router.get('/:pdrName', get);
 router.get('/', list);
 router.delete('/:pdrName', del);
 
-module.exports = router;
+module.exports = {
+  del,
+  router,
+};
