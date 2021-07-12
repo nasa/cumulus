@@ -57,17 +57,6 @@ resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
   batch_size        = 10
 }
 
-data "aws_dynamodb_table" "async_operations" {
-  name = var.dynamo_tables.async_operations.name
-}
-
-resource "aws_lambda_event_source_mapping" "async_operations_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.async_operations.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
 data "aws_dynamodb_table" "granules" {
   name = var.dynamo_tables.granules.name
 }

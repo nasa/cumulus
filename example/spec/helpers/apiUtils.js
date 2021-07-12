@@ -1,5 +1,7 @@
 'use strict';
 
+const isMatch = require('lodash/isMatch');
+const isNil = require('lodash/isNil');
 const pRetry = require('p-retry');
 
 function setDistributionApiEnvVars() {
@@ -12,7 +14,29 @@ function setDistributionApiEnvVars() {
   }
 }
 
-async function waitForApiStatus(getMethod, params, status, config) {
+async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}) {
+  return await pRetry(
+    async () => {
+      if (isNil(matchParams)) {
+        throw new pRetry.AbortError('matchParams are required');
+      }
+
+      const record = await getMethod(params);
+
+      if (!isMatch(record, matchParams)) {
+        throw new Error(`Record ${JSON.stringify(record)} did not match expected ${JSON.stringify(matchParams)}`);
+      }
+
+      return record;
+    },
+    {
+      maxTimeout: 60 * 1000,
+      ...retryConfig,
+    }
+  );
+}
+
+async function waitForApiStatus(getMethod, params, status, retryConfig = {}) {
   return await pRetry(
     async () => {
       const record = await getMethod(params);
@@ -25,7 +49,7 @@ async function waitForApiStatus(getMethod, params, status, config) {
     },
     {
       maxTimeout: 60 * 1000,
-      ...config,
+      ...retryConfig,
     }
   );
 }
@@ -58,6 +82,7 @@ async function waitForModelStatus(model, params, status) {
 
 module.exports = {
   setDistributionApiEnvVars,
-  waitForModelStatus,
+  waitForApiRecord,
   waitForApiStatus,
+  waitForModelStatus,
 };

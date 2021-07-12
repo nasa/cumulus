@@ -9,7 +9,6 @@ const { URL, resolve } = require('url');
 const {
   Granule,
   Pdr,
-  Provider,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
@@ -22,7 +21,6 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndStartWorkflow,
   conceptExists,
   getOnlineResources,
   waitForCompletedExecution,
@@ -39,7 +37,9 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
@@ -92,7 +92,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let pdrModel;
   let postToCmrOutput;
   let provider;
-  let providerModel;
   let publishGranuleExecutionArn;
   let testDataFolder;
   let workflowExecutionArn;
@@ -112,7 +111,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      providerModel = new Provider();
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
       pdrModel = new Pdr();
 
@@ -247,7 +245,10 @@ describe('The S3 Ingest Granules workflow', () => {
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
-      providerModel.delete(provider),
+      deleteProvider({
+        prefix: config.stackName,
+        providerId: provider.id,
+      }),
     ]);
   });
 
@@ -282,12 +283,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ['completed']
     );
 
-    const granuleResponse = await getGranule({
+    const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    const granule = JSON.parse(granuleResponse.body);
-
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();
   });

@@ -3,7 +3,6 @@
 const get = require('lodash/get');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  buildAndExecuteWorkflow,
   loadCollection,
   loadProvider,
 } = require('@cumulus/integration-tests');
@@ -17,6 +16,8 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   createTimestampedTestId,
@@ -83,7 +84,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
 
   it('fails', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('FAILED');
+    else expect(workflowExecution.status).toEqual('failed');
   });
 
   it('records the correct execution failure reason in the API', async () => {

@@ -20,6 +20,11 @@ test('getGranule calls the callback with the expected object', async (t) => {
 
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
   };
 
   await t.notThrowsAsync(granulesApi.getGranule({
@@ -43,6 +48,11 @@ test('getGranule calls the callback with the expected object when there is query
 
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
   };
 
   await t.notThrowsAsync(granulesApi.getGranule({
@@ -208,6 +218,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
 test('deleteGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
+    pRetryOptions: { foo: 'bar' },
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
@@ -222,6 +233,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.deleteGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    pRetryOptions: { foo: 'bar' },
     callback,
   }));
 });

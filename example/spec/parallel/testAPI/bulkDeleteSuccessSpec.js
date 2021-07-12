@@ -152,21 +152,25 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
-        postBulkDeleteResponse = await granules.bulkDeleteGranules({
-          prefix,
-          body: {
-            ids: [granuleId],
-            // required to force removal of granules from CMR before deletion
-            forceRemoveFromCmr: true,
-          },
-        });
+        postBulkDeleteResponse = await granules.bulkDeleteGranules(
+          {
+            prefix,
+            body: {
+              ids: [granuleId],
+              // required to force removal of granules from CMR before deletion
+              forceRemoveFromCmr: true,
+            },
+          }
+        );
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-          prefix,
-          id: postBulkDeleteBody.id,
-        });
+        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation(
+          {
+            prefix,
+            id: postBulkDeleteBody.id,
+          }
+        );
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
       } catch (error) {
@@ -176,25 +180,31 @@ describe('POST /granules/bulkDelete', () => {
 
     afterAll(async () => {
       // Must delete rules and executions before deleting associated collection and provider
-      await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
-      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
+      await deleteRule(
+        { prefix, ruleName: get(ingestGranuleRule, 'name') }
+      );
+      await deleteExecution(
+        { prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }
+      );
 
       if (postBulkDeleteBody.id) {
-        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
-      }
-
-      if (postBulkDeleteBody.id) {
-        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+        await deleteAsyncOperation(
+          { prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id }
+        );
       }
 
       await pAll(
         [
-          () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
-          () => deleteCollection({
-            prefix,
-            collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version'),
-          }),
+          () => deleteProvider(
+            { prefix, providerId: get(provider, 'id') }
+          ),
+          () => deleteCollection(
+            {
+              prefix,
+              collectionName: get(collection, 'name'),
+              collectionVersion: get(collection, 'version'),
+            }
+          ),
         ],
         { stopOnError: false }
       ).catch(console.error);
