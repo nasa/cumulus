@@ -4,12 +4,12 @@ set -ex
 
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
-  "bamboo_INTEGRATION_CONCURRENCY"
   "bamboo_AWS_REGION"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
   "bamboo_FAKE_PROVIDER_CONFIG_BUCKET"
+  "bamboo_INTEGRATION_CONCURRENCY"
   "bamboo_METRICS_ES_HOST"
   "bamboo_METRICS_ES_USER"
   "bamboo_NGAP_ENV"
@@ -19,9 +19,9 @@ declare -a param_list=(
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
   "bamboo_SECRET_AWS_ACCOUNT_ID"
   "bamboo_SECRET_AWS_DEFAULT_REGION"
+  "bamboo_SECRET_AWS_LAMBDA_SUBNET"
   "bamboo_SECRET_AWS_SECRET_ACCESS_KEY"
   "bamboo_SECRET_AWS_SUBNET"
-  "bamboo_SECRET_AWS_LAMBDA_SUBNET"
   "bamboo_SECRET_CSDAP_CLIENT_ID"
   "bamboo_SECRET_CSDAP_CLIENT_PASSWORD"
   "bamboo_SECRET_DOCSEARCH_API_KEY"
@@ -35,8 +35,8 @@ declare -a param_list=(
   "bamboo_SECRET_LAUNCHPAD_PASSPHRASE"
   "bamboo_SECRET_METRICS_ES_PASS"
   "bamboo_SECRET_NPM_TOKEN"
-  "bamboo_SECRET_ORCA_POSTGRES_USER_PASSWORD"
   "bamboo_SECRET_ORCA_DATABASE_APP_USER_PASSWORD"
+  "bamboo_SECRET_ORCA_POSTGRES_USER_PASSWORD"
   "bamboo_SECRET_PROVIDER_FTP_PORT"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
   "bamboo_SECRET_RDS_ADMIN_ACCESS_SECRET_ARN"
@@ -168,7 +168,7 @@ echo GIT_PR is $GIT_PR
 ## for yes/no toggles on build
 if [[ -z $COMMIT_MESSAGE ]]; then
   COMMIT_MESSAGE=$(git log --pretty='format:%Creset%s' -1)
-  export commit_message_contains_skip_audit_flag
+  export COMMIT_MESSAGE
   echo export COMMIT_MESSAGE=\""$COMMIT_MESSAGE"\" >> .bamboo_env_vars
 fi
 
