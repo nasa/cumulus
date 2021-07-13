@@ -8,7 +8,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -571,7 +571,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is an empt
 
 test.serial('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
   const expectedIndex = 'my-index';
-  const granule = { granuleId: randomString('granuleId') };
+  const granule = { granuleId: randomId('granuleId') };
 
   const body = {
     index: expectedIndex,
@@ -590,7 +590,7 @@ test.serial('POST /executions/search-by-granules returns 400 when granules do no
 
 test.serial('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
   const expectedIndex = 'my-index';
-  const granule = { collectionId: randomString('granuleId') };
+  const granule = { collectionId: randomId('granuleId') };
 
   const body = {
     index: expectedIndex,
