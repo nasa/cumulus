@@ -68,14 +68,24 @@ export const getGranuleExecutionCumulusIds = async (
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
 ): Promise<Array<number>> => {
+  const collectionMap: {[key: string]: number} = {};
+
   const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granule) => {
+    const { collectionId } = granule;
+    let collectionCumulusId = collectionMap[collectionId];
     const { name, version } = deconstructCollectionId(granule.collectionId);
-    return await granulePgModel.getRecordCumulusId(knexOrTransaction, {
-      granule_id: granule.granuleId,
-      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+
+    if (!collectionCumulusId) {
+      collectionCumulusId = await collectionPgModel.getRecordCumulusId(
         knexOrTransaction,
         { name, version }
-      ),
+      );
+      collectionMap[collectionId] = collectionCumulusId;
+    }
+
+    return await granulePgModel.getRecordCumulusId(knexOrTransaction, {
+      granule_id: granule.granuleId,
+      collection_cumulus_id: collectionCumulusId,
     });
   }));
 
