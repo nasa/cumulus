@@ -68,7 +68,7 @@ export { translateApiExecutionToPostgresExecution } from './translate/executions
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
-  getGranuleExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 

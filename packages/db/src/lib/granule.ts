@@ -61,7 +61,7 @@ export const upsertGranuleWithExecutionJoinRecord = async (
  *   Granules/executions PG model class instance
  * @returns {Promise<number[]>}
  */
-export const getGranuleExecutionCumulusIds = async (
+export const getApiGranuleExecutionCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granules: Array<{ collectionId: string, granuleId: string }>,
   collectionPgModel = new CollectionPgModel(),

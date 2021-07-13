@@ -12,7 +12,7 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
-  getGranuleExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIds,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
@@ -329,7 +329,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
   );
 });
 
-test('getGranuleExecutionCumulusIds() returns correct values', async (t) => {
+test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
   const {
     knex,
     collection,
@@ -376,7 +376,7 @@ test('getGranuleExecutionCumulusIds() returns correct values', async (t) => {
     },
   ];
 
-  const results = await getGranuleExecutionCumulusIds(
+  const results = await getApiGranuleExecutionCumulusIds(
     knex,
     granules,
     collectionPgModel,
