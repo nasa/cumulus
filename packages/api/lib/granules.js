@@ -311,7 +311,7 @@ async function getGranuleIdsForPayload(payload) {
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
- * @returns {Promise<Array<string>>}
+ * @returns {Promise<Array<Object>>}
  */
 async function getGranulesForPayload(payload) {
   const { granules, index, query } = payload;
