@@ -5,7 +5,7 @@ import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
-const { deconstructCollectionId } = require('../../../api/lib/utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 /**
  * Upsert a granule and a record in the granules/executions join table.
