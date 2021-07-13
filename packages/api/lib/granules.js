@@ -303,7 +303,7 @@ async function getGranuleIdsForPayload(payload) {
 }
 
 /**
- * Return a unique list of granule cumulus IDs based on the provided list or the response from the
+ * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
  *
  * @param {Object} payload
