@@ -11,7 +11,7 @@ export interface arnRecord {
  *
  * @param {Knex} knex - DB Client
  * @param {string[]} granuleIds - Array of granuleIds
- * @param workflowNames - Array of workflow names
+ * @param {string[]} workflowNames - Array of workflow names
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
 export const executionArnsFromGranuleIdsAndWorkflowNames = (
