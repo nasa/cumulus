@@ -70,12 +70,25 @@ function validateGranuleExecutionRequest(req, res, next) {
     return res.boom.badRequest('One of granules or query is required');
   }
 
-  if (payload.granules && !Array.isArray(payload.granules)) {
-    return res.boom.badRequest(`granules should be an array of values, received ${payload.granules}`);
-  }
+  if (payload.granules) {
+    if (!Array.isArray(payload.granules)) {
+      return res.boom.badRequest(`granules should be an array of values, received ${payload.granules}`);
+    }
 
-  if (!payload.query && payload.granules && payload.granules.length === 0) {
-    return res.boom.badRequest('no values provided for granules');
+    if (!payload.query && payload.granules.length === 0) {
+      return res.boom.badRequest('no values provided for granules');
+    }
+
+    payload.granules.forEach((granule) => {
+      const granuleString = JSON.stringify(granule);
+      if (!granule.collectionId) {
+        return res.boom.badRequest(`no collectionId provided for ${granuleString}`);
+      }
+      if (!granule.granuleId) {
+        return res.boom.badRequest(`no granuleId provided for ${granuleString}`);
+      }
+      return true;
+    });
   }
 
   if (payload.query

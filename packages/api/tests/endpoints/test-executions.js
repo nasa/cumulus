@@ -8,7 +8,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -567,6 +567,44 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is an empt
     .expect(400);
 
   t.regex(response.body.message, /no values provided for granules/);
+});
+
+test.serial('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
+  const expectedIndex = 'my-index';
+  const granule = { granuleId: randomString('granuleId') };
+
+  const body = {
+    index: expectedIndex,
+    granules: [granule],
+  };
+
+  const response = await request(app)
+    .post('/executions/search-by-granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, new RegExp(`no collectionId provided for ${JSON.stringify(granule)}`));
+});
+
+test.serial('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
+  const expectedIndex = 'my-index';
+  const granule = { collectionId: randomString('granuleId') };
+
+  const body = {
+    index: expectedIndex,
+    granules: [granule],
+  };
+
+  const response = await request(app)
+    .post('/executions/search-by-granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400);
+
+  t.regex(response.body.message, new RegExp(`no granuleId provided for ${JSON.stringify(granule)}`));
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
