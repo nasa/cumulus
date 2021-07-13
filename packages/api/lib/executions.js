@@ -46,9 +46,8 @@ const chooseTargetExecution = async ({
       throw new RecordDoesNotExist(
         `No targetExecutions found for ${granuleId} records running workflow ${workflowName}`
       );
-    } else {
-      throw error;
     }
+    throw error;
   }
 };
 

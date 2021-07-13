@@ -81,12 +81,13 @@ async function put(req, res) {
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
-        granuleId, executionArn: body.execution, workflowName: body.workflowName,
+        granuleId, executionArn: body.executionArn, workflowName: body.workflowName,
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
         return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
       }
+      throw error;
     }
 
     if (targetExecution) {
