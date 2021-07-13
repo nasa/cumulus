@@ -73,9 +73,9 @@ export const getApiGranuleExecutionCumulusIds = async (
   const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granule) => {
     const { collectionId } = granule;
     let collectionCumulusId = collectionMap[collectionId];
-    const { name, version } = deconstructCollectionId(granule.collectionId);
 
     if (!collectionCumulusId) {
+      const { name, version } = deconstructCollectionId(collectionId);
       collectionCumulusId = await collectionPgModel.getRecordCumulusId(
         knexOrTransaction,
         { name, version }
