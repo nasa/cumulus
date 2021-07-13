@@ -54,7 +54,8 @@ export default class GranulesExecutionsPgModel {
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
     const granuleExecutions = await knexOrTransaction(this.tableName)
       .select('execution_cumulus_id')
-      .whereIn('granule_cumulus_id', granuleCumulusIdsArray);
+      .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
+      .groupBy('execution_cumulus_id');
     return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
   }
 

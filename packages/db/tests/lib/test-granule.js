@@ -1,4 +1,5 @@
 const test = require('ava');
+const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
@@ -16,7 +17,7 @@ const {
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
-const { constructCollectionId } = require('../../../es-client/node_modules/@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('../../../es-client/node_modules/@cumulus/message/Collections');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 
@@ -384,5 +385,88 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
     granulesExecutionsPgModel
   );
 
-  t.deepEqual(results, [executionCumulusId, secondExecutionCumulusId]);
+  t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
+});
+
+
+test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not in map', async (t) => {
+  const {
+    knex,
+    collection,
+    collectionCumulusId,
+    collectionPgModel,
+    executionCumulusId,
+    executionPgModel,
+    granulePgModel,
+    granulesExecutionsPgModel,
+  } = t.context;
+
+  const getCollectionRecordCumulusIdSpy = sinon.spy(CollectionPgModel.prototype, 'getRecordCumulusId');
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
+  const granule1 = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'completed',
+  });
+
+  const granule2 = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+
+
+  await knex.transaction(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
+      trx,
+      granule1,
+      executionCumulusId
+    )
+  );
+
+  const [secondExecutionCumulusId] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory()
+  );
+
+  await knex.transaction(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
+      trx,
+      granule1,
+      secondExecutionCumulusId
+    )
+  );
+
+  await knex.transaction(
+    (trx) => upsertGranuleWithExecutionJoinRecord(
+      trx,
+      granule2,
+      secondExecutionCumulusId
+    )
+  );
+
+  const granules = [
+    {
+      granuleId: granule1.granule_id,
+      collectionId,
+    },
+    {
+      granuleId: granule2.granule_id,
+      collectionId,
+    },
+  ];
+
+  const { name, version } = deconstructCollectionId(collectionId);
+  // we should only query collection once since the two granules have the same collection
+  t.true(getCollectionRecordCumulusIdSpy.calledOnceWith(knex, { name, version }));
+
+  const results = await getApiGranuleExecutionCumulusIds(
+    knex,
+    granules,
+    collectionPgModel,
+    granulePgModel,
+    granulesExecutionsPgModel
+  );
+
+  t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
 });

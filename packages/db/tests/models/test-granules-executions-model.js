@@ -210,11 +210,11 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct valu
       execution_cumulus_id: newExecutionCumulusId,
     });
   });
-  t.deepEqual(
-    await granulesExecutionsPgModel
-      .searchByGranuleCumulusIds(knex, [joinRecord.granule_cumulus_id]),
-    [executionCumulusId, newExecutionCumulusId]
-  );
+
+  const results = await granulesExecutionsPgModel
+    .searchByGranuleCumulusIds(knex, [joinRecord.granule_cumulus_id]);
+
+  t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
 });
 
 test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transaction', async (t) => {
@@ -237,10 +237,9 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
       execution_cumulus_id: newExecutionCumulusId,
     });
 
-    t.deepEqual(
-      await granulesExecutionsPgModel
-        .searchByGranuleCumulusIds(trx, [joinRecord.granule_cumulus_id]),
-      [executionCumulusId, newExecutionCumulusId]
-    );
+    const results = await granulesExecutionsPgModel
+      .searchByGranuleCumulusIds(trx, [joinRecord.granule_cumulus_id]);
+
+    t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
   });
 });
