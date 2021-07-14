@@ -86,6 +86,7 @@ describe('Distribution API', () => {
 
   describe('handles requests over HTTPS', () => {
     let fileChecksum;
+    let publicFilePath;
     let protectedFilePath;
 
     beforeAll(async () => {
@@ -94,6 +95,7 @@ describe('Distribution API', () => {
         fs.createReadStream(require.resolve(s3Data[0]))
       );
 
+      publicFilePath = `/${publicBucketName}/${fileKey}`;
       protectedFilePath = `/${protectedBucketName}/${fileKey}`;
     });
 
@@ -113,7 +115,6 @@ describe('Distribution API', () => {
       });
 
       it('downloads a public science file with the bucket map path', async () => {
-        const publicFilePath = `/cumulus-daac/public-data/browse/${fileKey}`;
         const s3SignedUrl = await getDistributionApiRedirect(
           publicFilePath,
           headers
@@ -130,7 +131,6 @@ describe('Distribution API', () => {
 
     describe('an unauthenticated user', () => {
       it('downloads a public science file as an unauthenticated user', async () => {
-        const publicFilePath = `/${publicBucketName}/${fileKey}`;
         const s3SignedUrl = await getDistributionApiRedirect(
           publicFilePath
         );
