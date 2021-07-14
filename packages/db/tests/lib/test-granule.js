@@ -388,7 +388,6 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
   t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
 });
 
-
 test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not in map', async (t) => {
   const {
     knex,
@@ -414,7 +413,6 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     collection_cumulus_id: collectionCumulusId,
     status: 'running',
   });
-
 
   await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(
