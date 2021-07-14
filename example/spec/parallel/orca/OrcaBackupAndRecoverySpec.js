@@ -12,7 +12,7 @@ const {
 const { sfn } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
 const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
 const { getGranule, listGranules } = require('@cumulus/api-client/granules');
@@ -84,6 +84,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let provider;
   let testDataFolder;
+  let recoveryWorkflowArn;
   let workflowExecutionArn;
   let granuleId;
   let filesCopiedToGlacier;
@@ -143,6 +144,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: recoveryWorkflowArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -236,6 +239,17 @@ describe('The S3 Ingest Granules workflow', () => {
         'completed'
       );
       await waitForGranuleRecordsInList(config.stackName, [granuleId]);
+
+      const executionsResponse = await getExecutions({
+        prefix: config.stackName,
+        query: {
+          fields: ['arn'],
+          asyncOperationId,
+        },
+      });
+      const executions = JSON.parse(executionsResponse.body).results;
+      expect(executions.length).toBe(1);
+      recoveryWorkflowArn = executions[0].arn;
     });
 
     it('retrieves recovery request status through the Cumulus API', async () => {
