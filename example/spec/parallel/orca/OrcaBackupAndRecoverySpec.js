@@ -233,17 +233,6 @@ describe('The S3 Ingest Granules workflow', () => {
         'completed'
       );
       await waitForGranuleRecordsInList(config.stackName, [granuleId]);
-
-      const executionsResponse = await getExecutions({
-        prefix: config.stackName,
-        query: {
-          fields: ['arn'],
-          asyncOperationId,
-        },
-      });
-      const executions = JSON.parse(executionsResponse.body).results;
-      expect(executions.length).toBe(1);
-      recoveryWorkflowArn = executions[0].arn;
     });
 
     it('retrieves recovery request status through the Cumulus API', async () => {
