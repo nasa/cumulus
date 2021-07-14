@@ -32,12 +32,11 @@ test('chooseTargetExecution() returns undefined if no executionarn nor workflowN
   t.is(expected, actual);
 });
 
-test('chooseTargetExecution() returns the first arn found in the database if a workflowName is provided.', async (t) => {
+test('chooseTargetExecution() returns the arn found in the database when a workflowName is provided.', async (t) => {
   const workflowName = randomWorkflow();
   const granuleId = randomGranuleId();
   const arn = randomArn();
-  const testDbFunction = () =>
-    Promise.resolve([{ arn }, { arn: randomArn() }, { arn: randomArn() }]);
+  const testDbFunction = () => Promise.resolve(arn);
 
   const actual = await chooseTargetExecution({
     granuleId,
@@ -48,25 +47,7 @@ test('chooseTargetExecution() returns the first arn found in the database if a w
   t.is(actual[0].arn, t.context.arn);
 });
 
-test('chooseTargetExecution() throws a RecordDoesNotExist when the requested workflow is not associated with the granuleId.', async (t) => {
-  const workflowName = randomWorkflow();
-  const granuleId = randomGranuleId();
-  const testDbFunction = () => Promise.resolve([]);
-
-  await t.throwsAsync(
-    chooseTargetExecution({
-      granuleId,
-      workflowName,
-      dbFunction: testDbFunction,
-    }),
-    {
-      instanceOf: RecordDoesNotExist,
-      message: `No targetExecutions found for ${granuleId} records running workflow ${workflowName}`,
-    }
-  );
-});
-
-test('chooseTargetExecution() throws exactly any error that is not a RecordDoesNotExist from the database.', async (t) => {
+test('chooseTargetExecution() throws exactly any error raised in the database function.', async (t) => {
   const workflowName = randomWorkflow();
   const granuleId = randomGranuleId();
   const anError = new Error('a different Error');

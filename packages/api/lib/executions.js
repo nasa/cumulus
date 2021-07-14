@@ -1,9 +1,7 @@
-const {
-  getKnexClient,
-  executionArnsFromGranuleIdsAndWorkflowNames,
-} = require('@cumulus/db');
+const { newestExecutionArnFromGranuleIdWorkflowName } = require('@cumulus/db');
+const Logger = require('@cumulus/logger');
 
-const { RecordDoesNotExist } = require('@cumulus/errors');
+const log = new Logger({ sender: '@cumulus/api/lib/executions' });
 
 /**
  *  Finds and returns alternative executionArn related to the input granuleId.
@@ -30,7 +28,7 @@ const chooseTargetExecution = async ({
   granuleId,
   executionArn = undefined,
   workflowName = undefined,
-  dbFunction = executionArnsFromGranuleIdsAndWorkflowNames,
+  dbFunction = newestExecutionArnFromGranuleIdWorkflowName,
 }) => {
   // if a user specified an executionArn, use that always
   if (executionArn !== undefined) return executionArn;
@@ -38,15 +36,9 @@ const chooseTargetExecution = async ({
   if (workflowName === undefined) return undefined;
 
   try {
-    const knex = await getKnexClient({ env: process.env });
-    const executions = await dbFunction(knex, [granuleId], [workflowName]);
-    return executions[0].arn;
+    return await dbFunction(granuleId, workflowName);
   } catch (error) {
-    if (error instanceof TypeError) {
-      throw new RecordDoesNotExist(
-        `No targetExecutions found for ${granuleId} records running workflow ${workflowName}`
-      );
-    }
+    log.error(error);
     throw error;
   }
 };

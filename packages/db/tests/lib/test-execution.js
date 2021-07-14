@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -18,6 +19,7 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   executionArnsFromGranuleIdsAndWorkflowNames,
+  newestExecutionArnFromGranuleIdWorkflowName,
 } = require('../../dist');
 
 /**
@@ -324,4 +326,65 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
   t.is(results[0].arn, mostRecentExecution.arn);
   t.is(results[1].arn, oldExecution.arn);
   t.is(results[2].arn, oldestExecution.arn);
+});
+
+test('executionArnsFromGranuleIdsAndWorkflowNames() returns empty array if no records are found.', async (t) => {
+  const results = await executionArnsFromGranuleIdsAndWorkflowNames(
+    t.context.knex,
+    [randomGranuleId()],
+    [randomWorkflow()]
+  );
+  t.is(results.length, 0);
+});
+
+test('newGranuleAssociatedWithExecution() returns the most recent arn.', async (t) => {
+  const granuleId = randomGranuleId();
+  const theWorkflowName = randomWorkflow();
+  const oldestExecution = {
+    workflow_name: theWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('1999-01-26T08:42:00.000Z'),
+  };
+  const mostRecentExecution = {
+    workflow_name: theWorkflowName,
+    arn: randomArn(),
+    timestamp: new Date('2021-07-26T18:00:00.000Z'),
+  };
+  const granuleExecution = await newGranuleAssociatedWithExecution(
+    t,
+    oldestExecution,
+    {
+      granule_id: granuleId,
+    }
+  );
+  await linkNewExecutionToGranule(
+    t,
+    granuleExecution.granuleCumulusId,
+    mostRecentExecution
+  );
+
+  const actual = await newestExecutionArnFromGranuleIdWorkflowName(
+    [granuleId],
+    [theWorkflowName],
+    t.context.knex
+  );
+
+  t.is(actual, mostRecentExecution.arn);
+});
+
+test('newGranuleAssociatedWithExecution() throws RecordDoesNotExist if no associated executionArn is found in the database.', async (t) => {
+  const granuleId = randomGranuleId();
+  const workflowName = randomGranuleId();
+
+  await t.throwsAsync(
+    newestExecutionArnFromGranuleIdWorkflowName(
+      [granuleId],
+      [workflowName],
+      t.context.knex
+    ),
+    {
+      instanceOf: RecordDoesNotExist,
+      message: `No executionArns found for granuleId:${granuleId} running workflow:${workflowName}`,
+    }
+  );
 });
