@@ -22,6 +22,7 @@ const awsServerlessExpress = require('aws-serverless-express');
 const morgan = require('morgan');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 const distributionRouter = require('./distribution-routes');
+const { writeBucketMapCacheToS3 } = require('../endpoints/distribution');
 
 const distributionApp = express();
 distributionApp.use(awsServerlessExpressMiddleware.eventContext());
@@ -62,7 +63,14 @@ distributionApp.use((err, req, res, _next) => {
 
 const server = awsServerlessExpress.createServer(distributionApp);
 
+const handler = (event, context) => {
+  if (event.eventType === 'createBucketMapCache') {
+    return writeBucketMapCacheToS3(event);
+  }
+  return awsServerlessExpress.proxy(server, event, context);
+};
+
 module.exports = {
   distributionApp,
-  handler: (event, context) => awsServerlessExpress.proxy(server, event, context),
+  handler,
 };

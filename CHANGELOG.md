@@ -29,12 +29,14 @@ package to catch or to otherwise handle errors that you may encounter.
     - determines if the file request is public based on the bucket map rather than the bucket type
     - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
     - bucket prefix and object prefix are supported
-  - Add 'Bearer token' support as an authorization method
+  - Added 'Bearer token' support as an authorization method
+- **CUMULUS-2487**
+  - Added integration test for cumulus distribution API
+- **CUMULUS-2569**
+  - Created bucket map cache for cumulus distribution API
 - **CUMULUS-2568**
   - Add `deletePdr`/PDR deletion functionality to `@cumulus/api-client/pdrs`
   - Add `removeCollectionAndAllDependencies` to integration test helpers
-- **CUMULUS-2487**
-  - Add integration test for cumulus distribution API
 - Added `example/spec/apiUtils.waitForApiStatus` to wait for a
 record to be returned by the API with a specific value for
 `status`
