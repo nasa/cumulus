@@ -1,10 +1,10 @@
 import Knex from 'knex';
+import { RecordDoesNotExist } from '@cumulus/errors';
+import { tableNames } from '../tables';
 
 const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
-import { tableNames } from '../tables';
-import { RecordDoesNotExist } from '@cumulus/errors';
 
 export interface arnRecord {
   arn: string;
@@ -53,9 +53,9 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
  * @throws {RecordNotFound}
  */
 export const newestExecutionArnFromGranuleIdWorkflowName = async (
-    granuleId: string,
-    workflowName: string,
-    testKnex: Knex|undefined,
+  granuleId: string,
+  workflowName: string,
+  testKnex: Knex|undefined
 ): Promise<string> => {
   try {
     const knex = testKnex ?? await getKnexClient({ env: process.env });

@@ -1,7 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { chooseTargetExecution } = require('../../lib/executions');
 
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
