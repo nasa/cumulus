@@ -631,6 +631,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
 
   t.is(reingestStub.callCount, 2);
   reingestStub.args.forEach((callArgs) => {
+    // verify that the call was made with an execution from the database, and
+    // then compare all other fields except the execution against the model
+    // granules.
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
     t.true(t.context.executionArns.includes(callArgs[0].execution));
     delete matchingGranule.execution;
