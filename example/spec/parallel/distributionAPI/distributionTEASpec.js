@@ -24,7 +24,7 @@ const s3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
 ];
 
-describe('Distribution API', () => {
+describe('TEA Distribution API', () => {
   let fileKey;
   let protectedBucketName;
   let publicBucketName;

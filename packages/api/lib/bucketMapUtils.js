@@ -36,10 +36,15 @@ async function getYamlFile(bucket, key) {
  */
 const getBucketMap = () => getYamlFile(process.env.system_bucket, process.env.BUCKET_MAP_FILE);
 
-function prependBucketname(name) {
+const prependBucketName = (name) => {
   const prefix = process.env.BUCKETNAME_PREFIX || '';
   return `${prefix}${name}`;
-}
+};
+
+const removePrefixBucketName = (name) => {
+  const prefix = process.env.BUCKETNAME_PREFIX || '';
+  return name.replace(new RegExp(`^${prefix}`), '');
+};
 
 /**
  * locate the bucket name and path from bucket map for the given paths
@@ -65,13 +70,13 @@ function getBucketDynamicPath(pathList, bucketMap) {
   if (mappings.length >= 1) {
     const mapping = mappings[0];
     const mappingObject = get(bucketMap.MAP, mapping.join('.'));
-    const bucketname = mappingObject.bucket || mappingObject;
+    const bucketName = mappingObject.bucket || mappingObject;
     const headers = mappingObject.headers || {};
 
     const path = mapping.join('/');
     const key = pathList.join('/').replace(`${path}/`, '');
-    log.info(`Bucket mapping was ${bucketname} ${path}, object was ${key}`);
-    return { bucket: prependBucketname(bucketname), path, key, headers };
+    log.info(`Bucket mapping was ${bucketName} ${path}, object was ${key}`);
+    return { bucket: prependBucketName(bucketName), path, key, headers };
   }
 
   log.warn(`Unable to find bucket in bucket map for path ${pathList.join('/')}`);
@@ -160,7 +165,7 @@ function checkPrivateBucket(bucketMap, bucket, key = '') {
     //log.debug(`Sorted PRIVATE buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
       const privBucket = sortedBuckets[i];
-      if (bucketPrefixMatch(bucket, prependBucketname(privBucket), key)) {
+      if (bucketPrefixMatch(bucket, prependBucketName(privBucket), key)) {
         // This bucket is PRIVATE, return group!
         return bucketMap.PRIVATE_BUCKETS[privBucket];
       }
@@ -184,7 +189,7 @@ function isPublicBucket(bucketMap, bucket, key = '') {
     const sortedBuckets = getSortedBucketList(bucketMap, 'PUBLIC_BUCKETS');
     //log.debug(`Sorted PUBLIC buckets are ${sortedBuckets}`);
     for (let i = 0; i < sortedBuckets.length; i += 1) {
-      if (bucketPrefixMatch(bucket, prependBucketname(sortedBuckets[i]), key)) {
+      if (bucketPrefixMatch(bucket, prependBucketName(sortedBuckets[i]), key)) {
         // This bucket is public!
         log.debug('found a public, we will take it');
         return true;
@@ -215,11 +220,22 @@ function getPathsByBucketName(bucketMap, bucket) {
   return pathStrings;
 }
 
+/**
+ * get all paths from bucket map for a given bucket
+ *
+ * @param {Object} bucketMap - bucket map object
+ * @param {string} prependBucket - bucket name with prefix
+ * @returns {Array<string>} - list of paths
+ */
+const getPathsByPrefixedBucketName = (bucketMap, prependBucket) =>
+  getPathsByBucketName(bucketMap, removePrefixBucketName(prependBucket));
+
 module.exports = {
   checkPrivateBucket,
   getBucketMap,
   getBucketDynamicPath,
   getPathsByBucketName,
+  getPathsByPrefixedBucketName,
   isPublicBucket,
   processFileRequestPath,
 };
