@@ -2,6 +2,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -17,7 +18,6 @@ const {
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
-const { constructCollectionId, deconstructCollectionId } = require('../../../es-client/node_modules/@cumulus/message/Collections');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 

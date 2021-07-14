@@ -265,3 +265,25 @@ test('ExecutionPgModel.searchByCumulusIds() works with a transaction', async (t)
     results.forEach((result, index) => t.like(result, executionRecords[index]));
   });
 });
+
+test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  await knex.transaction(async (trx) => {
+    const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
+    const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+
+    const firstPage = await executionPgModel
+      .searchByCumulusIds(trx, [executionCumulusId1, executionCumulusId2], { limit: 1, offset: 0 });
+    const secondPage = await executionPgModel
+      .searchByCumulusIds(trx, [executionCumulusId1, executionCumulusId2], { limit: 1, offset: 1 });
+    t.is(firstPage.length, 1);
+    t.like(firstPage[0], executionRecords[0]);
+    t.is(secondPage.length, 1);
+    t.like(secondPage[0], executionRecords[1]);
+  });
+});

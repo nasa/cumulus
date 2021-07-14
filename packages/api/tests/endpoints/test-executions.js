@@ -19,6 +19,7 @@ const {
   GranulePgModel,
   localStackConnectionEnv,
   translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
@@ -36,8 +37,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
-
-const executionOmitList = ['async_operation_cumulus_id', 'collection_cumulus_id', 'created_at', 'cumulus_id', 'parent_cumulus_id', 'timestamp', 'updated_at'];
 
 // create all the variables needed across this test
 let accessTokenModel;
@@ -58,6 +57,7 @@ process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
+
 
 const testDbName = randomId('execution_test');
 
@@ -433,7 +433,7 @@ test('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
   t.is(response.body.message, 'No record found');
 });
 
-test('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
+test('POST /executions/search-by-granules returns 1 record by default', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -445,12 +445,66 @@ test('POST /executions/search-by-granules returns correct executions when granul
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
+  t.is(response.body.length, 1);
+
+  response.body.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(fakePGExecutions
+      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
+  ));
+});
+
+test('POST /executions/search-by-granules supports paging', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+
+  const page1 = await request(app)
+    .post('/executions/search-by-granules?limit=2&page=1')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  const page2 = await request(app)
+    .post('/executions/search-by-granules?limit=2&page=2')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(page1.body.length, 2);
+  t.is(page2.body.length, 1);
+
+  const response = page1.body.concat(page2.body);
+
+  response.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(fakePGExecutions
+      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
+  ));
+});
+
+test('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+
+  const response = await request(app)
+    .post('/executions/search-by-granules?limit=10')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
   t.is(response.body.length, 3);
 
-  response.body.forEach((execution) => t.deepEqual(
-    omit(execution, executionOmitList),
-    omit(fakePGExecutions
-      .find((fakePGexecution) => fakePGexecution.arn === execution.arn), executionOmitList)
+  response.body.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(fakePGExecutions
+      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
   ));
 });
 
@@ -485,17 +539,17 @@ test.serial('POST /executions/search-by-granules returns correct executions when
   };
 
   const response = await request(app)
-    .post('/executions/search-by-granules')
+    .post('/executions/search-by-granules?limit=10')
     .send(body)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   t.is(response.body.length, 2);
 
-  response.body.forEach((execution) => t.deepEqual(
-    omit(execution, executionOmitList),
-    omit(fakePGExecutions
-      .find((fakePGexecution) => fakePGexecution.arn === execution.arn), executionOmitList)
+  response.body.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(fakePGExecutions
+      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
   ));
 });
 
@@ -516,7 +570,7 @@ test.serial('POST /executions/search-by-granules returns 400 when a query is pro
   t.regex(response.body.message, /Index is required if query is sent/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when no IDs or query is provided', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when no granules or query is provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -533,7 +587,7 @@ test.serial('POST /executions/search-by-granules returns 400 when no IDs or quer
   t.regex(response.body.message, /One of granules or query is required/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when IDs is not an array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is not an array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -551,7 +605,7 @@ test.serial('POST /executions/search-by-granules returns 400 when IDs is not an 
   t.regex(response.body.message, /granules should be an array of values/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when IDs is an empty array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is an empty array', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {

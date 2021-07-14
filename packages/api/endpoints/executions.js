@@ -6,6 +6,7 @@ const {
   getKnexClient,
   getApiGranuleExecutionCumulusIds,
   ExecutionPgModel,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
@@ -96,15 +97,20 @@ async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
   const granules = await getGranulesForPayload(payload, knex);
+  const { page = 1, limit = 1 } = req.query;
+  const offset = page < 1 ? 0 : (page - 1) * limit;
 
   const executionPgModel = new ExecutionPgModel();
 
   const executionCumulusIds = await getApiGranuleExecutionCumulusIds(knex, granules);
 
   const executions = await executionPgModel
-    .searchByCumulusIds(knex, executionCumulusIds);
+    .searchByCumulusIds(knex, executionCumulusIds, { limit, offset });
 
-  return res.send(executions);
+  const apiExecutions = await Promise.all(executions
+    .map((execution) => translatePostgresExecutionToApiExecution(execution)));
+
+  return res.send(apiExecutions);
 }
 
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
