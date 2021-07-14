@@ -369,7 +369,7 @@ variable "database_app_user_pw" {
   description = "ORCA application database user password."
 }
 
-variable "drop_database" {
+variable "orca_drop_database" {
   default = "False"
   type = string
   description = "Tells ORCA to drop the database on deployments."
