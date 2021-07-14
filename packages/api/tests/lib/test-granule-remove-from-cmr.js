@@ -233,7 +233,7 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   );
 });
 
-test.serial('unpublishGranule() does not update granule or delete from CMR if PG write fails', async (t) => {
+test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if PG write fails', async (t) => {
   const {
     originalDynamoGranule,
     originalPgGranule,
@@ -303,7 +303,7 @@ test.serial('unpublishGranule() does not update granule or delete from CMR if PG
   );
 });
 
-test.serial('unpublishGranule() does not update granule or delete from CMR if Dynamo write fails', async (t) => {
+test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if Dynamo write fails', async (t) => {
   const {
     originalDynamoGranule,
     originalPgGranule,
@@ -373,7 +373,7 @@ test.serial('unpublishGranule() does not update granule or delete from CMR if Dy
   );
 });
 
-test.serial('unpublishGranule() does not update granule if CMR removal fails', async (t) => {
+test.serial('unpublishGranule() does not update granule CMR status if CMR removal fails', async (t) => {
   const {
     originalDynamoGranule,
     originalPgGranule,

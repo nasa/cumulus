@@ -70,6 +70,7 @@ const unpublishGranule = async (
     }
   }
 
+  let dynamoGranuleDeleted = false;
   try {
     return await knex.transaction(async (trx) => {
       let pgGranule;
@@ -94,20 +95,23 @@ const unpublishGranule = async (
         { published: false },
         ['cmrLink']
       );
+      dynamoGranuleDeleted = true;
       await _removeGranuleFromCmr(granule);
       return { dynamoGranule, pgGranule };
     });
   } catch (error) {
-    const updateParams = {
-      published: granule.published,
-    };
-    if (granule.cmrLink) {
-      updateParams.cmrLink = granule.cmrLink;
+    if (dynamoGranuleDeleted) {
+      const updateParams = {
+        published: granule.published,
+      };
+      if (granule.cmrLink) {
+        updateParams.cmrLink = granule.cmrLink;
+      }
+      await granuleDynamoModel.update(
+        { granuleId: granule.granuleId },
+        updateParams
+      );
     }
-    await granuleDynamoModel.update(
-      { granuleId: granule.granuleId },
-      updateParams
-    );
     throw error;
   }
 };
