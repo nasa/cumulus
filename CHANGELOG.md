@@ -81,8 +81,7 @@ behavior
 
 ### Fixed
 
-- Fix bug where `cmr_custom_host` variable was not properly forwarded into `archive`
-and `ingest` modules from `cumulus` module
+- Fix bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure
     behavior
