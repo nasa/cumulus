@@ -82,7 +82,8 @@ export interface CMRConstructorParams {
   passwordSecretName?: string
   provider: string,
   token?: string,
-  username: string
+  username: string,
+  oauthProvider: string,
 }
 
 /**
@@ -112,6 +113,7 @@ export class CMR {
   clientId: string;
   provider: string;
   username: string;
+  oauthProvider: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
@@ -128,6 +130,7 @@ export class CMR {
    *  passwordSecretName is provided
    * @param {string} params.token - CMR or Launchpad token,
    * if not provided, CMR username and password are used to get a cmr token
+   * @param {string} params.oauthProvider - Oauth provider: earthdata or launchpad
    */
   constructor(params: CMRConstructorParams) {
     this.clientId = params.clientId;
@@ -136,6 +139,7 @@ export class CMR {
     this.password = params.password;
     this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
+    this.oauthProvider = params.oauthProvider;
   }
 
   /**
@@ -198,7 +202,10 @@ export class CMR {
       'Content-type': contentType,
     };
 
-    if (params.token) headers['Echo-Token'] = params.token;
+    if (params.token) {
+      if (this.oauthProvider === 'launchpad') headers.Authorization = `Bearer ${params.token}`;
+      else headers['Echo-Token'] = params.token;
+    }
     if (params.ummgVersion) headers.Accept = 'application/json';
     if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
 
@@ -217,7 +224,10 @@ export class CMR {
       'Client-Id': this.clientId,
     };
 
-    if (params.token) headers['Echo-Token'] = params.token;
+    if (params.token) {
+      if (this.oauthProvider === 'launchpad') headers.Authorization = `Bearer ${params.token}`;
+      else headers['Echo-Token'] = params.token;
+    }
 
     return headers;
   }
