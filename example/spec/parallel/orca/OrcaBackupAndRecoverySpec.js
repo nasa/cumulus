@@ -83,7 +83,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let provider;
   let testDataFolder;
-  let recoveryWorkflowArn;
   let workflowExecutionArn;
   let granuleId;
   let filesCopiedToGlacier;
