@@ -158,3 +158,15 @@ resource "aws_api_gateway_deployment" "api" {
   stage_description = md5(file("${path.module}/api.tf"))
   stage_name        = var.api_gateway_stage
 }
+
+# this overrides the distribution (TEA) module generated bucket map cache if any
+data "aws_lambda_invocation" "bucket_map_cache" {
+  function_name         = aws_lambda_function.api.function_name
+  input                 = jsonencode({
+    eventType           = "createBucketMapCache"
+    bucketList          = local.distribution_buckets,
+    s3Bucket            = var.system_bucket
+    s3Key               = local.distribution_bucket_map_key
+    replacementTrigger  = timestamp()
+  })
+}

@@ -9,7 +9,7 @@ const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 const moment = require('moment');
 
-const { createBucket, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { createBucket, s3ObjectExists, s3PutObject, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
@@ -33,6 +33,7 @@ let headObjectStub;
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');
+const { writeBucketMapCacheToS3 } = require('../../endpoints/distribution');
 
 const publicBucket = randomId('publicbucket');
 const publicBucketPath = randomId('publicpath');
@@ -46,9 +47,9 @@ const bucketMap = {
         'Content-Type': 'text/plain',
       },
     },
+    anotherPath1: 'bucket-path-1',
     [protectedBucket]: protectedBucket,
     [publicBucketPath]: publicBucket,
-    [publicBucket]: publicBucket,
   },
   PUBLIC_BUCKETS: {
     [publicBucket]: 'public bucket',
@@ -412,7 +413,7 @@ test.serial('A HEAD request for a public file without an access token redirects 
   const { fileKey, s3Endpoint } = context;
   const fileLocation = `${publicBucket}/${fileKey}`;
   const response = await request(distributionApp)
-    .head(`/${fileLocation}`)
+    .head(`/${publicBucketPath}/${fileKey}`)
     .set('Accept', 'application/json')
     .expect(307);
 
@@ -475,7 +476,7 @@ test('A sucessful /locate request for a bucket returns matching paths', async (t
     .set('Accept', 'application/json')
     .expect('Content-Type', /application\/json/)
     .expect(200);
-  t.deepEqual(response.body, ['path1']);
+  t.deepEqual(response.body, ['path1', 'anotherPath1']);
 });
 
 test('A /locate request returns error when no matching bucket found', async (t) => {
@@ -494,4 +495,41 @@ test('A /locate request returns error when request parameter is missing', async 
     .expect('Content-Type', /text\/plain/)
     .expect(400);
   t.true(JSON.stringify(response.error).includes('Required \\"bucket_name\\" query paramater not specified'));
+});
+
+test('writeBucketMapCacheToS3 creates distribution map cache in s3', async (t) => {
+  const bucketList = [protectedBucket, publicBucket];
+  const s3Bucket = process.env.system_bucket;
+  const s3Key = randomId('distributionBucketMap');
+
+  const mapObject = await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
+  t.is(mapObject[protectedBucket], protectedBucket);
+  t.is(mapObject[publicBucket], publicBucketPath);
+  t.true(await s3ObjectExists({ Bucket: s3Bucket, Key: s3Key }));
+});
+
+test('writeBucketMapCacheToS3 throws error when there is no bucket mapping found for bucket', async (t) => {
+  const bucketName = randomId('nonexistPath');
+  const bucketList = [bucketName];
+  const s3Bucket = process.env.system_bucket;
+  const s3Key = randomId('distributionBucketMap');
+
+  try {
+    await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
+  } catch (error) {
+    t.is(error.message, `No bucket mapping found for ${bucketName}`);
+  }
+});
+
+test('writeBucketMapCacheToS3 throws error when there are multiple paths found for bucket', async (t) => {
+  const bucketName = 'bucket-path-1';
+  const bucketList = [bucketName];
+  const s3Bucket = process.env.system_bucket;
+  const s3Key = randomId('distributionBucketMap');
+
+  try {
+    await writeBucketMapCacheToS3({ bucketList, s3Bucket, s3Key });
+  } catch (error) {
+    t.true(error.message.startsWith(`BucketMap configured with multiple responses from ${bucketName}`));
+  }
 });
