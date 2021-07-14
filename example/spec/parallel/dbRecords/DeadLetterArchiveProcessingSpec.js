@@ -183,6 +183,28 @@ describe('A dead letter record archive processing operation', () => {
     }
   });
 
+  it('starts a successful async operation', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+
+    deadLetterRecoveryAsyncOperation = await waitForApiStatus(
+      getAsyncOperation,
+      {
+        prefix: stackName,
+        asyncOperationId: deadLetterRecoveryAsyncOpId,
+      },
+      'SUCCEEDED'
+    );
+    expect(deadLetterRecoveryAsyncOperation.status).toEqual('SUCCEEDED');
+  });
+
+  it('returns the correct output for the async operation', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+    expect(deadLetterRecoveryAsyncOperation.output).toEqual(JSON.stringify({
+      processed: [messageKey],
+      failed: [],
+    }));
+  });
+
   it('processes a message to create records', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
@@ -208,24 +230,5 @@ describe('A dead letter record archive processing operation', () => {
         timeout: 30 * 1000,
       })).toBeResolved();
     }
-  });
-
-  it('marks the async operation as successful', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-
-    deadLetterRecoveryAsyncOperation = await waitForApiStatus(
-      getAsyncOperation,
-      {
-        prefix: stackName,
-        asyncOperationId: deadLetterRecoveryAsyncOpId,
-      },
-      'SUCCEEDED'
-    );
-    expect(deadLetterRecoveryAsyncOperation.status).toEqual('SUCCEEDED');
-  });
-
-  it('async operation has the correct output', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    expect(deadLetterRecoveryAsyncOperation.output).toEqual('SUCCEEDED');
   });
 });
