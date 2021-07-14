@@ -402,6 +402,10 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
 
   const getCollectionRecordCumulusIdSpy = sinon.spy(CollectionPgModel.prototype, 'getRecordCumulusId');
 
+  t.teardown(() => {
+    getCollectionRecordCumulusIdSpy.restore();
+  });
+
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const granule1 = fakeGranuleRecordFactory({
