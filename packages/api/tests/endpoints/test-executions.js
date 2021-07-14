@@ -58,7 +58,6 @@ process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
-
 const testDbName = randomId('execution_test');
 
 // import the express app after setting the env variables
