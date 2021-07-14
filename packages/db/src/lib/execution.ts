@@ -7,7 +7,8 @@ export interface arnRecord {
 }
 
 /**
- * Returns the executionArns for an input list of granuleIds and workflowNames.
+ * Returns a list of executionArns sorted by most recent first, for an input
+ * list of granuleIds and workflowNames.
  *
  * @param {Knex} knex - DB Client
  * @param {string[]} granuleIds - Array of granuleIds
