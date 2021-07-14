@@ -15,7 +15,7 @@ module "orca" {
   postgres_user_pw               = var.postgres_user_pw
   database_app_user              = var.database_app_user
   database_app_user_pw           = var.database_app_user_pw
-  orca_drop_database             = var.orca_drop_database
+  drop_database                  = var.orca_drop_database
   ddl_dir                        = var.ddl_dir
   lambda_timeout                 = var.lambda_timeout
   restore_complete_filter_prefix = var.restore_complete_filter_prefix
