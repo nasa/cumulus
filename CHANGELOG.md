@@ -26,6 +26,7 @@ package to catch or to otherwise handle errors that you may encounter.
   - `PUT /granules/bulkReingest` action allows a user to override the default
     execution/workflow combination to reingest with by providing an optional
     `workflowName` on the request body.
+- Adds `workflowName` and `executionArn` params to @cumulus/api-client/reingestGranules
 - **CUMULUS-2476**
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
 - **CUMULUS-2478**
