@@ -191,25 +191,6 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
-test('HttpsProviderClient does not allow basic auth with redirects if basicAuthRedirectHost is missing', async (t) => {
-  const httpsProviderClient = new HttpProviderClient({
-    protocol: 'https',
-    host: '127.0.0.1',
-    port: t.context.server.sslPort,
-    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
-    username: basicUsername,
-    password: basicPassword,
-  });
-
-  const localPath = path.join(tmpdir(), randomString());
-  try {
-    await httpsProviderClient.download({ remotePath: protectedFile, localPath });
-    t.false(fs.existsSync(localPath));
-  } finally {
-    fs.unlinkSync(localPath);
-  }
-});
-
 test('HttpsProviderClient supports basic auth with redirects for download', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
@@ -227,6 +208,29 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
     t.is(fs.existsSync(localPath), true);
   } finally {
     fs.unlinkSync(localPath);
+  }
+});
+
+test('HttpsProviderClient basic auth with redirects for sync fails if basicAuthRedirectHost is missing', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+  });
+
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.json';
+  try {
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await httpsProviderClient.sync({
+      fileRemotePath: protectedFile, destinationBucket, destinationKey,
+    });
+    t.false(await fileExists(destinationBucket, destinationKey));
+  } finally {
+    await recursivelyDeleteS3Bucket(destinationBucket);
   }
 });
 
