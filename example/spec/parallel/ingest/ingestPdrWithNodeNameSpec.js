@@ -22,12 +22,12 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Pdr } = require('@cumulus/api/models');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 
@@ -59,7 +59,7 @@ const {
 
 const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-const { waitForApiStatus, waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
@@ -92,8 +92,6 @@ describe('Ingesting from PDR', () => {
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
@@ -577,13 +575,16 @@ describe('Ingesting from PDR', () => {
         }
       });
 
-      it('the pdr record is added to DynamoDB', async () => {
+      it('the pdr record is added to the API', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            new Pdr(),
-            { pdrName: pdrFilename },
-            'completed'
+          const record = await waitForApiStatus(
+            getPdr,
+            {
+              prefix: config.stackName,
+              pdrName: pdrFilename,
+            },
+            ['completed']
           );
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');
