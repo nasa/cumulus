@@ -43,7 +43,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
 
       const testId = createTimestampedTestId(config.stackName, 'Rule');
       testSuffix = createTestSuffix(testId);
-      scheduledRuleName = timestampedName('SchedRuleWithExecutionPrefix');
+      scheduledRuleName = timestampedName('SRWEP');
       scheduledHelloWorldRule = {
         name: scheduledRuleName,
         collection: { name: `MOD09GQ${testSuffix}`, version: '006' },
