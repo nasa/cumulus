@@ -26,6 +26,9 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2327**
   - Added reserved concurrency setting to the Cumulus API lambda function.
   - Added relevant tfvars to the archive and cumulus terraform modules.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
+  - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
