@@ -27,6 +27,7 @@ const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+const { validateBulkGranulesRequest } = require('../lib/request');
 
 /**
  * List all granules for a given collection.
@@ -254,36 +255,6 @@ async function get(req, res) {
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)
     : undefined;
   return res.send({ ...result, recoveryStatus });
-}
-
-function validateBulkGranulesRequest(req, res, next) {
-  const payload = req.body;
-
-  if (!payload.ids && !payload.query) {
-    return res.boom.badRequest('One of ids or query is required');
-  }
-
-  if (payload.ids && !Array.isArray(payload.ids)) {
-    return res.boom.badRequest(`ids should be an array of values, received ${payload.ids}`);
-  }
-
-  if (!payload.query && payload.ids && payload.ids.length === 0) {
-    return res.boom.badRequest('no values provided for ids');
-  }
-
-  if (payload.query
-    && !(process.env.METRICS_ES_HOST
-        && process.env.METRICS_ES_USER
-        && process.env.METRICS_ES_PASS)
-  ) {
-    return res.boom.badRequest('ELK Metrics stack not configured');
-  }
-
-  if (payload.query && !payload.index) {
-    return res.boom.badRequest('Index is required if query is sent');
-  }
-
-  return next();
 }
 
 async function bulkOperations(req, res) {

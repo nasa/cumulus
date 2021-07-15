@@ -125,6 +125,36 @@ test('BasePgModel.getRecordCumulusId() throws RecordDoesNotExist error for missi
   );
 });
 
+test('BasePgModel.getRecordsCumulusIds() returns correct values', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordsCumulusIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+  t.is(recordsCumulusIds.length, 2);
+  t.deepEqual(
+    await basePgModel.getRecordsCumulusIds(knex, ['info'], [info1, info2]),
+    recordsCumulusIds
+  );
+});
+
+test('BasePgModel.getRecordsCumulusIds() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordsCumulusIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+  t.is(recordsCumulusIds.length, 2);
+  t.deepEqual(
+    await knex.transaction(
+      (trx) => basePgModel.getRecordsCumulusIds(trx, ['info'], [info1, info2])
+    ),
+    recordsCumulusIds
+  );
+});
+
 test('BasePgModel.exists() correctly returns true', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
