@@ -28,6 +28,30 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 
+const createGranuleInDynamoAndPG = async (t, params) => {
+  const granule = fakeGranuleFactoryV2({
+    collectionId: constructCollectionId(
+      t.context.fakeCollection.name,
+      t.context.fakeCollection.version
+    ),
+    ...params,
+  });
+  const originalDynamoGranule = await t.context.granulesModel.create(granule);
+  const originalPgGranule = await translateApiGranuleToPostgresGranule(
+    granule,
+    t.context.knex
+  );
+  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
+    t.context.knex,
+    originalPgGranule
+  );
+  return {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  };
+};
+
 test.before(async (t) => {
   process.env = {
     ...process.env,
@@ -59,6 +83,9 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  t.context.fakeCollection = fakeCollectionRecordFactory();
+  await t.context.collectionPgModel.create(t.context.knex, t.context.fakeCollection);
 });
 
 test.after.always(async (t) => {
@@ -78,15 +105,35 @@ test.after.always(async (t) => {
 });
 
 test('unpublishGranule() removing a granule from CMR fails if the granule is not in CMR', async (t) => {
-  const granule = fakeGranuleFactoryV2({ published: false });
-
-  await t.context.granulesModel.create(granule);
+  const {
+    originalDynamoGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
+    published: false,
+    cmrLink: undefined,
+  });
 
   try {
-    await unpublishGranule(t.context.knex, granule);
+    await unpublishGranule(t.context.knex, originalDynamoGranule);
   } catch (error) {
-    t.is(error.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+    t.is(error.message, `Granule ${originalDynamoGranule.granuleId} is not published to CMR, so cannot be removed from CMR`);
   }
+
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: false,
+      cmrLink: undefined,
+    }
+  );
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    {
+      published: false,
+      cmr_link: null,
+    }
+  );
 });
 
 test.serial('unpublishGranule() succeeds with Dynamo granule only', async (t) => {
@@ -112,6 +159,7 @@ test.serial('unpublishGranule() succeeds with Dynamo granule only', async (t) =>
   };
   delete expectedDynamoGranule.cmrLink;
 
+  t.true(cmrDeleteStub.called);
   t.deepEqual(
     dynamoGranule,
     expectedDynamoGranule
@@ -120,30 +168,23 @@ test.serial('unpublishGranule() succeeds with Dynamo granule only', async (t) =>
 });
 
 test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) => {
-  const fakeCollection = fakeCollectionRecordFactory();
+  const { fakeCollection } = t.context;
 
-  const granule = fakeGranuleFactoryV2({
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
     published: true,
     collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
   });
-  await t.context.granulesModel.create(granule);
 
   t.like(
-    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
       published: true,
-      cmrLink: granule.cmrLink,
+      cmrLink: originalDynamoGranule.cmrLink,
     }
-  );
-
-  await t.context.collectionPgModel.create(t.context.knex, fakeCollection);
-  const originalPgGranule = await translateApiGranuleToPostgresGranule(
-    granule,
-    t.context.knex
-  );
-  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
-    t.context.knex,
-    originalPgGranule
   );
 
   t.like(
@@ -165,13 +206,17 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
     cmrDeleteStub.restore();
   });
 
-  const { dynamoGranule, pgGranule } = await unpublishGranule(t.context.knex, granule);
+  const {
+    dynamoGranule,
+    pgGranule,
+  } = await unpublishGranule(t.context.knex, originalDynamoGranule);
 
+  t.true(cmrDeleteStub.called);
   t.deepEqual(
     dynamoGranule,
     omit(
       {
-        ...granule,
+        ...originalDynamoGranule,
         published: false,
         updatedAt: dynamoGranule.updatedAt,
       },
@@ -188,31 +233,21 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   );
 });
 
-test.serial('unpublishGranule() does not update granule if PG write fails', async (t) => {
-  const fakeCollection = fakeCollectionRecordFactory();
-
-  const granule = fakeGranuleFactoryV2({
+test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if PG write fails', async (t) => {
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
     published: true,
-    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
   });
-  await t.context.granulesModel.create(granule);
 
   t.like(
-    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
       published: true,
-      cmrLink: granule.cmrLink,
+      cmrLink: originalDynamoGranule.cmrLink,
     }
-  );
-
-  await t.context.collectionPgModel.create(t.context.knex, fakeCollection);
-  const originalPgGranule = await translateApiGranuleToPostgresGranule(
-    granule,
-    t.context.knex
-  );
-  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
-    t.context.knex,
-    originalPgGranule
   );
 
   t.like(
@@ -244,16 +279,17 @@ test.serial('unpublishGranule() does not update granule if PG write fails', asyn
   await t.throwsAsync(
     unpublishGranule(
       t.context.knex,
-      granule,
+      originalDynamoGranule,
       fakeGranulePgModel
     )
   );
 
+  t.false(cmrDeleteStub.called);
   t.like(
-    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
       published: true,
-      cmrLink: granule.cmrLink,
+      cmrLink: originalDynamoGranule.cmrLink,
     }
   );
   t.like(
@@ -267,31 +303,21 @@ test.serial('unpublishGranule() does not update granule if PG write fails', asyn
   );
 });
 
-test.serial('unpublishGranule() does not update granule if Dynamo write fails', async (t) => {
-  const fakeCollection = fakeCollectionRecordFactory();
-
-  const granule = fakeGranuleFactoryV2({
+test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if Dynamo write fails', async (t) => {
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
     published: true,
-    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
   });
-  await t.context.granulesModel.create(granule);
 
   t.like(
-    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
       published: true,
-      cmrLink: granule.cmrLink,
+      cmrLink: originalDynamoGranule.cmrLink,
     }
-  );
-
-  await t.context.collectionPgModel.create(t.context.knex, fakeCollection);
-  const originalPgGranule = await translateApiGranuleToPostgresGranule(
-    granule,
-    t.context.knex
-  );
-  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
-    t.context.knex,
-    originalPgGranule
   );
 
   t.like(
@@ -322,17 +348,82 @@ test.serial('unpublishGranule() does not update granule if Dynamo write fails', 
   await t.throwsAsync(
     unpublishGranule(
       t.context.knex,
-      granule,
+      originalDynamoGranule,
       t.context.granulePgModel,
       fakeGranuleDynamoModel
     )
   );
 
+  t.false(cmrDeleteStub.called);
   t.like(
-    await t.context.granulesModel.get({ granuleId: granule.granuleId }),
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
     {
       published: true,
-      cmrLink: granule.cmrLink,
+      cmrLink: originalDynamoGranule.cmrLink,
+    }
+  );
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+});
+
+test.serial('unpublishGranule() does not update granule CMR status if CMR removal fails', async (t) => {
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
+    published: true,
+  });
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    title: 'bar',
+  });
+  const deleteError = new Error('CMR delete error');
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').throws(deleteError);
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: true,
+      cmrLink: originalDynamoGranule.cmrLink,
+    }
+  );
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
+  await t.throwsAsync(
+    unpublishGranule(
+      t.context.knex,
+      originalDynamoGranule
+    ),
+    { message: 'CMR delete error' }
+  );
+
+  t.true(cmrDeleteStub.called);
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: true,
+      cmrLink: originalDynamoGranule.cmrLink,
     }
   );
   t.like(
