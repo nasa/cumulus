@@ -17,6 +17,9 @@ package to catch or to otherwise handle errors that you may encounter.
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
+  - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
@@ -80,6 +83,8 @@ the error object:
 - Added `params.pRetryOptions` parameter to
 `@cumulus/api-client/granules.deleteGranule` to control the retry
 behavior
+- **CUMULUS-2463**
+  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
 
 ### Fixed
 
