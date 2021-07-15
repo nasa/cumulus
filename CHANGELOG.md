@@ -105,6 +105,13 @@ behavior
     collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
+- **CUMULUS-2620**
+  - Fixed a bug where a granule could be removed from CMR but still be set as
+  `published: true` and with a CMR link in the Dynamo/PostgreSQL databases. Now,
+  the CMR deletion and the Dynamo/PostgreSQL record updates will all succeed or fail
+  together, preventing the database records from being out of sync with CMR.
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+  endpoint for returning a PDR from the API
 
 ## [v9.1.0] 2021-06-03
 
