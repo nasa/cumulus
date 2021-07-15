@@ -6,6 +6,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
 
 const { deconstructCollectionId } = require('../lib/utils');
+const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -165,15 +166,23 @@ async function bulkGranule(payload) {
 async function bulkGranuleReingest(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
+  const workflowName = payload.workflowName;
   return await pMap(
     granuleIds,
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
-        await granuleModel.reingest(granule, process.env.asyncOperationId);
+        const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
+        await granuleModel.reingest(
+          {
+            ...granule,
+            ...(targetExecution && { execution: targetExecution }),
+          },
+          process.env.asyncOperationId
+        );
         return granuleId;
       } catch (error) {
-        log.debug(`Granule ${granuleId} encountered an error`, error);
+        log.error(`Granule ${granuleId} encountered an error`, error);
         return { granuleId, err: error };
       }
     },
