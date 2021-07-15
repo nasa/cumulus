@@ -19,6 +19,7 @@ package to catch or to otherwise handle errors that you may encounter.
 - Added user doc describing new features related to the Cumulus dead letter archive.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
+  - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
