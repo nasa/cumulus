@@ -107,6 +107,7 @@ module "cumulus" {
   cmr_username    = var.cmr_username
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
+  cmr_custom_host = var.cmr_custom_host
 
   cmr_oauth_provider = var.cmr_oauth_provider
 

@@ -166,7 +166,7 @@ variable "buckets" {
 variable "cmr_custom_host" {
   description = "Custom host to use for CMR requests"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {
