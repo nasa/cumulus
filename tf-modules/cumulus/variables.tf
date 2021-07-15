@@ -165,7 +165,7 @@ variable "bucket_map_key" {
 variable "cmr_custom_host" {
   description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {
