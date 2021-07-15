@@ -9,8 +9,8 @@ const {
   fakeCollectionRecordFactory,
 } = require('../../dist');
 test('translatePostgresCollectionToApiCollection converts Postgres collection to API', (t) => {
-  const meta = '{"tag_key":"tag_value"}';
-  const tags = '["tag1","tag2"]';
+  const meta = { tag_key: 'tag_value' };
+  const tags = ['tag1', 'tag2'];
   const collectionRecord = fakeCollectionRecordFactory({
     meta,
     tags,
