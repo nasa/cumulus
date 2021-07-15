@@ -80,6 +80,8 @@ the error object:
 - Added `params.pRetryOptions` parameter to
 `@cumulus/api-client/granules.deleteGranule` to control the retry
 behavior
+- **CUMULUS-2463**
+  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
 
 ### Fixed
 
