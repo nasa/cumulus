@@ -41,7 +41,7 @@ const getApiCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [provider, collection] = await Promise.all([
+  const [providerRecord, collection] = await Promise.all([
     getApiProvider(event.provider),
     getApiCollection(event.collection),
   ]);
