@@ -25,7 +25,7 @@ variable "lambda_processing_role_arn" {
 variable "cmr_custom_host" {
   description = "Custom host to use for CMR requests"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "lambda_subnet_ids" {
