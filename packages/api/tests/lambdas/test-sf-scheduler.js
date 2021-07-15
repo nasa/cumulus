@@ -50,8 +50,6 @@ const fakeGetProvider = ({ providerId }) => {
   }
   return Promise.resolve({ body: JSON.stringify(fakeProvider) });
 };
-
-
 const getApiProvider = schedule.__get__('getApiProvider');
 const getApiCollection = schedule.__get__('getApiCollection');
 const resetProvider = schedule.__set__('getProvider', fakeGetProvider);

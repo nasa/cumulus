@@ -10,9 +10,6 @@ const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
 
-const Provider = require('../models/providers');
-const Collection = require('../models/collections');
-
 const getApiProvider = (providerId) => {
   if (isNil(providerId)) return undefined;
   return getProvider({
