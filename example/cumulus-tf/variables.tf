@@ -369,7 +369,7 @@ variable "database_app_user_pw" {
   description = "ORCA application database user password."
 }
 
-variable "drop_database" {
+variable "orca_drop_database" {
   default = "False"
   type = string
   description = "Tells ORCA to drop the database on deployments."
@@ -411,4 +411,10 @@ variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = null
 }
