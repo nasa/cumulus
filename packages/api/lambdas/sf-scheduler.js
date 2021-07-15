@@ -11,7 +11,6 @@ const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
 
 const Provider = require('../models/providers');
-const isNil = require('lodash/isNil');
 const Collection = require('../models/collections');
 
 const getApiProvider = (providerId) => {
