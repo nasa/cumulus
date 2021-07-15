@@ -29,6 +29,7 @@ module "ingest" {
   cmr_environment    = var.cmr_environment
   cmr_limit          = var.cmr_limit
   cmr_page_size      = var.cmr_page_size
+  cmr_custom_host    = var.cmr_custom_host
 
   # Launchpad config
   launchpad_api         = var.launchpad_api

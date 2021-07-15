@@ -412,3 +412,9 @@ variable "optional_dynamo_tables" {
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
 }
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = null
+}
