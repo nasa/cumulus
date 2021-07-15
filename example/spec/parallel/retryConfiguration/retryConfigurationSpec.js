@@ -119,8 +119,10 @@ describe('When a task is configured', () => {
     it('and it fails, Cumulus retries it with the configured backoff time', () => {
       const retryIntervals = getRetryIntervals(retryFailLambdaExecutions);
       const expectedIntervals = [2, 4, 8];
-      expectedIntervals.forEach((expected, idx) => {
-        expect(Math.abs(expected - retryIntervals[idx])).toBeLessThanOrEqual(1);
+      expectedIntervals.forEach((expectedInterval, index) => {
+        console.log(`expected interval: ${expectedInterval}, Actual: ${retryIntervals[index]}`);
+        expect((retryIntervals[index] - expectedInterval)).toBeLessThanOrEqual(1);
+        expect((retryIntervals[index] - expectedInterval)).toBeGreaterThanOrEqual(0);
       });
     });
   });
