@@ -44,6 +44,7 @@ class HttpProviderClient {
       throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
     }
     this.encrypted = providerConfig.encrypted;
+    this.basicAuthRedirectHost = this.providerConfig.basicAuthRedirectHost;
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
@@ -70,6 +71,26 @@ class HttpProviderClient {
       // expression so that we can use the bound value
       // of "this"
       handleBeforeRedirect(options, response) {
+        // If there is no allowed redirect for basic auth specified, do not
+        // forward auth credentials
+        if (!this.basicAuthRedirectHost) {
+          log.debug(`
+            Request is redirecting to ${options.url.toString()} but no
+            basicAuthRedirectHost is specified for provider, so auth
+            credentials will not be forwarded
+          `);
+          return;
+        }
+
+        if (options.url.host !== this.basicAuthRedirectHost) {
+          log.debug(`
+            basicAuthRedirectHost ${this.basicAuthRedirectHost} does not match
+            host for redirect ${options.url.host}, so auth
+            credentials will not be forwarded
+          `);
+          return;
+        }
+
         if (redirectCodes.has(response.statusCode)) {
           /* eslint-disable no-param-reassign */
           options.url.username = this.username;

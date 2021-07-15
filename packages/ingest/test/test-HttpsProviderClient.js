@@ -37,6 +37,7 @@ test.beforeEach(async (t) => {
   t.context.server.use(cookieParser());
 
   t.context.server2 = await createTestServer({ certificate: '127.0.0.1' });
+  t.context.server2Url = new URL(t.context.server2.url);
   t.context.server2.use(cookieParser());
   // auth endpoint
   t.context.server2.get('/auth', (req, res) => {
@@ -190,6 +191,25 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
+test('HttpsProviderClient does not allow basic auth with redirects if basicAuthRedirectHost is missing', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+  });
+
+  const localPath = path.join(tmpdir(), randomString());
+  try {
+    await httpsProviderClient.download({ remotePath: protectedFile, localPath });
+    t.false(fs.existsSync(localPath));
+  } finally {
+    fs.unlinkSync(localPath);
+  }
+});
+
 test('HttpsProviderClient supports basic auth with redirects for download', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
@@ -198,6 +218,7 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
+    basicAuthRedirectHost: t.context.server2Url.host,
   });
 
   const localPath = path.join(tmpdir(), randomString());
@@ -217,6 +238,7 @@ test('HttpsProviderClient supports basic auth with redirects for sync', async (t
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
+    basicAuthRedirectHost: t.context.server2Url.host,
   });
 
   const destinationBucket = randomString();
@@ -245,6 +267,7 @@ test('HttpsProviderClient supports basic auth for sync with redirect to differen
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
+    basicAuthRedirectHost: t.context.server2Url.host,
   });
 
   const destinationBucket = randomString();
