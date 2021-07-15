@@ -40,18 +40,18 @@ package to catch or to otherwise handle errors that you may encounter.
 - **CUMULUS-2568**
   - Add `deletePdr`/PDR deletion functionality to `@cumulus/api-client/pdrs`
   - Add `removeCollectionAndAllDependencies` to integration test helpers
-- Added `example/spec/apiUtils.waitForApiStatus` to wait for a
-record to be returned by the API with a specific value for
-`status`
-- Added `example/spec/discoverUtils.uploadS3GranuleDataForDiscovery` to upload granule data fixtures
-to S3 with a randomized granule ID for `discover-granules` based
-integration tests
-- Added `example/spec/Collections.removeCollectionAndAllDependencies` to remove a collection and
-all dependent objects (e.g. PDRs, granules, executions) from the
-database via the API
-- Added helpers to `@cumulus/api-client`:
-  - `pdrs.deletePdr` - Delete a PDR via the API
-  - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
+  - Added `example/spec/apiUtils.waitForApiStatus` to wait for a
+  record to be returned by the API with a specific value for
+  `status`
+  - Added `example/spec/discoverUtils.uploadS3GranuleDataForDiscovery` to upload granule data fixtures
+  to S3 with a randomized granule ID for `discover-granules` based
+  integration tests
+  - Added `example/spec/Collections.removeCollectionAndAllDependencies` to remove a collection and
+  all dependent objects (e.g. PDRs, granules, executions) from the
+  database via the API
+  - Added helpers to `@cumulus/api-client`:
+    - `pdrs.deletePdr` - Delete a PDR via the API
+    - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
 
 ### Changed
 
@@ -86,9 +86,29 @@ behavior
 
 ### Fixed
 
+- Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
 - **CUMULUS-2568**
-  - Update reconciliation report integration test to have better cleanup/failure
-    behavior
+  - Update reconciliation report integration test to have better cleanup/failure behavior
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
+- **CUMULUS-2620**
+  - Fixed a bug where a granule could be removed from CMR but still be set as
+  `published: true` and with a CMR link in the Dynamo/PostgreSQL databases. Now,
+  the CMR deletion and the Dynamo/PostgreSQL record updates will all succeed or fail
+  together, preventing the database records from being out of sync with CMR.
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+  endpoint for returning a PDR from the API
+
+## [v9.2.0] 2021-06-22
+
+### Added
+
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+
+### Fixed
+
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
 - **CUMULUS-2532**
@@ -96,13 +116,6 @@ behavior
     collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
-- **CUMULUS-2620**
-  - Fixed a bug where a granule could be removed from CMR but still be set as
-  `published: true` and with a CMR link in the Dynamo/PostgreSQL databases. Now,
-  the CMR deletion and the Dynamo/PostgreSQL record updates will all succeed or fail
-  together, preventing the database records from being out of sync with CMR.
-- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
-endpoint for returning a PDR from the API
 
 ## [v9.1.0] 2021-06-03
 
@@ -4512,7 +4525,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.2.0...HEAD
+[v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
 [v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
