@@ -178,7 +178,6 @@ test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/Dynamo/Elasticse
     esClient: t.context.esClient,
   });
 
-  // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.false(

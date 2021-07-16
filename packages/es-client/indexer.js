@@ -426,31 +426,17 @@ function deleteExecution({
   });
 }
 
-<<<<<<< HEAD
 /**
- * Deletes the async operation in ElasticSearch
+ * Deletes the async operation in Elasticsearch
  *
- * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
- * @param  {string} params.id - the async operation ID
- * @param  {string[]} [params.ignore] - Array of response codes to ignore
- * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
- * @param  {string} params.type - Elasticsearch type (default: asyncOperation)
+ * @param {Object} params
+ * @param {Object} params.esClient - Elasticsearch Connection object
+ * @param {string} params.id - the async operation ID
+ * @param {string[]} [params.ignore] - Array of response codes to ignore
+ * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param {string} params.type - Elasticsearch type (default: asyncOperation)
  * @returns {Promise} Elasticsearch response
- */
-=======
-/*
-* Deletes the async operation in Elasticsearch
-*
-* @param  {Object} params
-* @param  {Object} params.esClient - Elasticsearch Connection object
-* @param  {string} params.id - the async operation ID
-* @param  {string[]} [params.ignore] - Array of response codes to ignore
-* @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
-* @param  {string} params.type - Elasticsearch type (default: asyncOperation)
-* @returns {Promise} Elasticsearch response
 */
->>>>>>> feature/rds-phase-2
 function deleteAsyncOperation({
   esClient,
   id,
@@ -468,7 +454,6 @@ function deleteAsyncOperation({
 }
 
 /**
-<<<<<<< HEAD
  * Deletes the reconciliation report from ElasticSearch
  *
  * @param  {Object} params
@@ -547,8 +532,6 @@ async function deleteGranule({
 }
 
 /**
-=======
->>>>>>> feature/rds-phase-2
  * Index a record to local Elasticsearch. Used when running API locally.
  *
  * @param {Object} record - Record object
@@ -572,21 +555,13 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
-<<<<<<< HEAD
   deleteAsyncOperation,
-=======
   updateAsyncOperation,
->>>>>>> feature/rds-phase-2
   deleteCollection,
   deleteProvider,
   deleteRule,
   deletePdr,
-<<<<<<< HEAD
   deleteGranule,
   deleteExecution,
   deleteReconciliationReport,
-=======
-  deleteExecution,
-  deleteAsyncOperation,
->>>>>>> feature/rds-phase-2
 };
