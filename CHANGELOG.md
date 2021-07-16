@@ -106,6 +106,8 @@ behavior
 ### Fixed
 
 - Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
+- Fixed bug where `parse-pdr` set a granule's provider to the entire provider record when a `NODE_NAME`
+  is present. Expected behavior consistent with other tasks is to set the provider name in that field.
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
