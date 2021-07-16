@@ -7,7 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
-const { invokeApi } = require('@cumulus/api-client');
+const { postKinesisReplays } = require('@cumulus/api-client/replays');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
@@ -151,17 +151,9 @@ describe('The Kinesis Replay API', () => {
         endTimestamp,
         startTimestamp,
       };
-      const response = await invokeApi({
+      const response = await postKinesisReplays({
         prefix: testConfig.stackName,
-        payload: {
-          httpMethod: 'POST',
-          resource: '/{proxy+}',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          path: '/replays',
-          body: JSON.stringify(apiRequestBody),
-        },
+        payload: apiRequestBody,
       });
       console.log(`received response ${JSON.stringify(response)}`);
       asyncOperationId = JSON.parse(response.body).asyncOperationId;

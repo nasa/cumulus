@@ -35,6 +35,7 @@ const {
 const {
   shouldWriteExecutionToPostgres,
   writeExecution,
+  writeExecutionToDynamoAndES,
 } = require('./write-execution');
 
 const {
@@ -53,10 +54,13 @@ const writeRecordsToDynamoDb = async ({
   pdrModel = new Pdr(),
 }) => {
   const results = await Promise.allSettled([
-    executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
     writePdrToDynamoAndEs({
       cumulusMessage,
       pdrModel,
+    }),
+    writeExecutionToDynamoAndES({
+      cumulusMessage,
+      executionModel,
     }),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);
@@ -92,7 +96,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB and not RDS');
+    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB/Elasticsearch and not RDS');
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,

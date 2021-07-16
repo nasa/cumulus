@@ -15,7 +15,7 @@ test('getPdr calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/pdr/${t.context.name}`,
+      path: `/pdrs/${t.context.name}`,
     },
   };
 
@@ -50,6 +50,28 @@ test('getPdrs calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(pdrsApi.getPdrs({
     prefix: t.context.testPrefix,
     query,
+    callback,
+  }));
+});
+
+test('deletePdr calls the callback with the expected object', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/pdrs/${t.context.name}`,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve(t.context.testPdrReturn);
+  };
+
+  await t.notThrowsAsync(pdrsApi.deletePdr({
+    prefix: t.context.testPrefix,
+    pdrName: t.context.name,
     callback,
   }));
 });

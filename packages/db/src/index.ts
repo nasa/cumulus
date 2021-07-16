@@ -63,6 +63,7 @@ export {
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export {
@@ -70,7 +71,10 @@ export {
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
-export { translateApiPdrToPostgresPdr } from './translate/pdr';
+export {
+  translateApiPdrToPostgresPdr,
+  translatePostgresPdrToApiPdr,
+} from './translate/pdr';
 
 export {
   upsertGranuleWithExecutionJoinRecord,

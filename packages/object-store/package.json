@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/object-store",
-  "version": "9.0.1-alpha.0",
+  "version": "9.1.0",
   "description": "Utilities for managing object stores",
   "keywords": [
     "GIBS",
@@ -16,8 +16,10 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/object-store",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nasa/cumulus.git"
+    "url": "git+https://github.com/nasa/cumulus.git",
+    "directory": "packages/object-store"
   },
+  "main": "dist/index.js",
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
@@ -37,6 +39,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.0.1"
+    "@cumulus/aws-client": "9.1.0"
   }
 }

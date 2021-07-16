@@ -14,7 +14,6 @@ const isObject = require('lodash/isObject');
 
 const {
   Granule,
-  Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -33,8 +32,6 @@ const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-uti
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
-  buildAndStartWorkflow,
   conceptExists,
   getExecutionOutput,
   getOnlineResources,
@@ -51,7 +48,6 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   applyWorkflow,
   bulkReingestGranules,
-  deleteGranule,
   getGranule,
   moveGranule,
   removeFromCMR,
@@ -65,8 +61,13 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const {
+  buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
+} = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   templateFile,
@@ -127,11 +128,11 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let opendapFilePath;
   let pdrFilename;
-  let pdrModel;
   let postToCmrOutput;
   let provider;
   let testDataFolder;
   let workflowExecutionArn;
+  let granuleWasDeleted = false;
 
   beforeAll(async () => {
     try {
@@ -149,8 +150,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -264,11 +263,25 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
+    // granule may already have been deleted by
+    // granule deletion spec. but in case that spec
+    // wasn't reached, make sure granule is deleted
+    if (!granuleWasDeleted) {
+      try {
+        await removePublishedGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        });
+      } catch (error) {
+        if (error.statusCode !== 404 &&
+            // remove from CMR throws a 400 when granule is missing
+            (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
+          throw error;
+        }
+      }
+    }
+
     // clean up stack state added by test
-    await removePublishedGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId,
-    });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
       pdr: pdrFilename,
@@ -308,18 +321,21 @@ describe('The S3 Ingest Granules workflow', () => {
       },
       ['running']
     );
-    expect(record.status).toEqual('running');
+    expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
 
-    const record = await waitForModelStatus(
-      pdrModel,
-      { pdrName: inputPayload.pdr.name },
+    const record = await waitForApiStatus(
+      getPdr,
+      {
+        prefix: config.stackName,
+        pdrName: inputPayload.pdr.name,
+      },
       ['running', 'completed']
     );
-    expect(record.status).toEqual('running');
+    expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
   it('makes the granule available through the Cumulus API', async () => {
@@ -331,11 +347,10 @@ describe('The S3 Ingest Granules workflow', () => {
       ['running', 'completed']
     );
 
-    const granuleResponse = await getGranule({
+    const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(['running', 'completed'].includes(granule.status)).toBeTrue();
@@ -788,16 +803,6 @@ describe('The S3 Ingest Granules workflow', () => {
       if (beforeAllError) fail(beforeAllError);
     });
 
-    it('is published for a running granule', async () => {
-      if (beforeAllError) throw SetupError;
-
-      const granuleExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: granuleRunningMessageKey,
-      });
-      expect(granuleExists).toEqual(true);
-    });
-
     it('is published for an execution on a successful workflow completion', async () => {
       if (beforeAllError) throw SetupError;
 
@@ -842,11 +847,10 @@ describe('The S3 Ingest Granules workflow', () => {
         try {
           if (beforeAllError) throw SetupError;
 
-          const granuleResponse = await getGranule({
+          granule = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
           });
-          granule = JSON.parse(granuleResponse.body);
           cmrLink = granule.cmrLink;
         } catch (error) {
           subTestSetupError = error;
@@ -903,13 +907,26 @@ describe('The S3 Ingest Granules workflow', () => {
         let fakeGranuleId;
         let asyncOperationId;
         let reingestExecutionArn;
+        let bulkReingestResponse;
+        let reingestBeforeAllError;
 
-        beforeAll(() => {
-          startTime = new Date();
-          oldUpdatedAt = granule.updatedAt;
-          oldExecution = granule.execution;
-          reingestGranuleId = inputPayload.granules[0].granuleId;
-          fakeGranuleId = randomId('fakeGranuleId');
+        beforeAll(async () => {
+          try {
+            startTime = new Date();
+            oldUpdatedAt = granule.updatedAt;
+            oldExecution = granule.execution;
+            reingestGranuleId = inputPayload.granules[0].granuleId;
+            fakeGranuleId = randomId('fakeGranuleId');
+
+            bulkReingestResponse = await bulkReingestGranules({
+              prefix: config.stackName,
+              body: {
+                ids: [reingestGranuleId, fakeGranuleId],
+              },
+            });
+          } catch (error) {
+            reingestBeforeAllError = error;
+          }
         });
 
         afterAll(async () => {
@@ -921,106 +938,116 @@ describe('The S3 Ingest Granules workflow', () => {
           await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
         });
 
-        it('generates an async operation through the Cumulus API', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
-          const response = await bulkReingestGranules({
-            prefix: config.stackName,
-            body: {
-              ids: [reingestGranuleId, fakeGranuleId],
-            },
-          });
-
-          const responseBody = JSON.parse(response.body);
-          asyncOperationId = responseBody.id;
-          expect(responseBody.operationType).toBe('Bulk Granule Reingest');
+        it('generates an async operation through the Cumulus API', () => {
+          if (beforeAllError || subTestSetupError) {
+            throw SetupError;
+          } else if (reingestBeforeAllError) {
+            fail(reingestBeforeAllError);
+          } else {
+            const responseBody = JSON.parse(bulkReingestResponse.body);
+            asyncOperationId = responseBody.id;
+            expect(responseBody.operationType).toBe('Bulk Granule Reingest');
+          }
         });
 
         it('executes async operation successfully', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
+          if (beforeAllError || subTestSetupError) {
+            throw SetupError;
+          } else if (reingestBeforeAllError) {
+            fail(reingestBeforeAllError);
+          } else {
+            const asyncOperation = await waitForAsyncOperationStatus({
+              id: asyncOperationId,
+              status: 'SUCCEEDED',
+              stackName: config.stackName,
+              retryOptions: {
+                retries: 70,
+                factor: 1.041,
+              },
+            });
 
-          const asyncOperation = await waitForAsyncOperationStatus({
-            id: asyncOperationId,
-            status: 'SUCCEEDED',
-            stackName: config.stackName,
-            retryOptions: {
-              retries: 70,
-              factor: 1.041,
-            },
-          });
-
-          const reingestOutput = JSON.parse(asyncOperation.output);
-          expect(reingestOutput.length).toBe(2);
-          expect(reingestOutput.includes(reingestGranuleId)).toBe(true);
-          const fakeGranResult = reingestOutput.filter((result) => isObject(result));
-          expect(fakeGranResult.length).toBe(1);
-          expect(get(fakeGranResult[0], 'granuleId')).toEqual(fakeGranuleId);
+            const reingestOutput = JSON.parse(asyncOperation.output);
+            expect(reingestOutput.length).toBe(2);
+            expect(reingestOutput.includes(reingestGranuleId)).toBe(true);
+            const fakeGranResult = reingestOutput.filter((result) => isObject(result));
+            expect(fakeGranResult.length).toBe(1);
+            expect(get(fakeGranResult[0], 'granuleId')).toEqual(fakeGranuleId);
+          }
         });
 
         it('overwrites granule files', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
+          if (beforeAllError || subTestSetupError) {
+            throw SetupError;
+          } else if (reingestBeforeAllError) {
+            fail(reingestBeforeAllError);
+          } else {
+            // Await reingest completion
+            const reingestGranuleExecution = await waitForTestExecutionStart({
+              workflowName,
+              stackName: config.stackName,
+              bucket: config.bucket,
+              findExecutionFn: isReingestExecutionForGranuleId,
+              findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+              startTask: 'SyncGranule',
+            });
 
-          // Await reingest completion
-          const reingestGranuleExecution = await waitForTestExecutionStart({
-            workflowName,
-            stackName: config.stackName,
-            bucket: config.bucket,
-            findExecutionFn: isReingestExecutionForGranuleId,
-            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-            startTask: 'SyncGranule',
-          });
+            reingestExecutionArn = reingestGranuleExecution.executionArn;
+            console.log(`Wait for completed execution ${reingestExecutionArn}`);
 
-          reingestExecutionArn = reingestGranuleExecution.executionArn;
-          console.log(`Wait for completed execution ${reingestExecutionArn}`);
+            await waitForCompletedExecution(reingestExecutionArn);
 
-          await waitForCompletedExecution(reingestExecutionArn);
+            const moveGranuleOutput = await lambdaStep.getStepOutput(
+              reingestExecutionArn,
+              'MoveGranule'
+            );
 
-          const moveGranuleOutput = await lambdaStep.getStepOutput(
-            reingestExecutionArn,
-            'MoveGranule'
-          );
+            const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
+            const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
+            nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
 
-          const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
-          const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
-          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
+            await waitForModelStatus(
+              granuleModel,
+              { granuleId: reingestGranuleId },
+              'completed'
+            );
 
-          await waitForModelStatus(
-            granuleModel,
-            { granuleId: reingestGranuleId },
-            'completed'
-          );
+            const updatedGranule = await getGranule({
+              prefix: config.stackName,
+              granuleId: reingestGranuleId,
+            });
 
-          const updatedGranuleResponse = await getGranule({
-            prefix: config.stackName,
-            granuleId: reingestGranuleId,
-          });
+            expect(updatedGranule.status).toEqual('completed');
+            expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
+            expect(updatedGranule.execution).not.toEqual(oldExecution);
 
-          const updatedGranule = JSON.parse(updatedGranuleResponse.body);
-          expect(updatedGranule.status).toEqual('completed');
-          expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
-          expect(updatedGranule.execution).not.toEqual(oldExecution);
+            // the updated granule has the same files
+            const oldFileNames = granule.files.map((f) => f.filename);
+            const newFileNames = updatedGranule.files.map((f) => f.filename);
+            expect(difference(oldFileNames, newFileNames).length).toBe(0);
 
-          // the updated granule has the same files
-          const oldFileNames = granule.files.map((f) => f.filename);
-          const newFileNames = updatedGranule.files.map((f) => f.filename);
-          expect(difference(oldFileNames, newFileNames).length).toBe(0);
-
-          const currentFiles = await getFilesMetadata(updatedGranule.files);
-          currentFiles.forEach((cf) => {
-            expect(cf.LastModified).toBeGreaterThan(startTime);
-          });
+            const currentFiles = await getFilesMetadata(updatedGranule.files);
+            currentFiles.forEach((cf) => {
+              expect(cf.LastModified).toBeGreaterThan(startTime);
+            });
+          }
         });
 
         it('saves asyncOperationId to execution record', async () => {
-          if (beforeAllError || subTestSetupError) throw SetupError;
-          const reingestExecution = await waitForApiStatus(
-            getExecution,
-            {
-              prefix: config.stackName,
-              arn: reingestExecutionArn,
-            },
-            'completed'
-          );
-          expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);
+          if (beforeAllError || subTestSetupError) {
+            throw SetupError;
+          } else if (reingestBeforeAllError) {
+            fail(reingestBeforeAllError);
+          } else {
+            const reingestExecution = await waitForApiStatus(
+              getExecution,
+              {
+                prefix: config.stackName,
+                arn: reingestExecutionArn,
+              },
+              'completed'
+            );
+            expect(reingestExecution.asyncOperationId).toEqual(asyncOperationId);
+          }
         });
       });
 
@@ -1114,11 +1141,10 @@ describe('The S3 Ingest Granules workflow', () => {
           'completed'
         );
 
-        const granuleResponse = await getGranule({
+        const updatedGranuleRecord = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
-        const updatedGranuleRecord = JSON.parse(granuleResponse.body);
         const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
 
         const granuleCmrMetadata = await metadataObjectFromCMRFile(`s3://${updatedGranuleCmrFile.bucket}/${updatedGranuleCmrFile.key}`);
@@ -1166,16 +1192,19 @@ describe('The S3 Ingest Granules workflow', () => {
             Key: destinationKey,
           });
 
-          const moveGranuleResponse = await moveGranule({
-            prefix: config.stackName,
-            granuleId: inputPayload.granules[0].granuleId,
-            destinations,
-          });
+          let moveGranuleResponseError;
+          try {
+            await moveGranule({
+              prefix: config.stackName,
+              granuleId: inputPayload.granules[0].granuleId,
+              destinations,
+            });
+          } catch (error) {
+            moveGranuleResponseError = error;
+          }
 
-          const responseBody = JSON.parse(moveGranuleResponse.body);
-
-          expect(moveGranuleResponse.statusCode).toEqual(409);
-          expect(responseBody.message).toEqual(
+          expect(moveGranuleResponseError.statusCode).toEqual(409);
+          expect(JSON.parse(moveGranuleResponseError.apiMessage).message).toEqual(
             `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
@@ -1203,26 +1232,24 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         if (beforeAllError || subTestSetupError) throw SetupError;
-        // pre-delete: Remove the granule from CMR
-        await removeFromCMR({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-
-        // Delete the granule
-        await deleteGranule({
+        await removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
         });
 
         // Verify deletion
-        const granuleResponse = await getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-        const resp = JSON.parse(granuleResponse.body);
-
-        expect(resp.message).toEqual('Granule not found');
+        let granuleResponseError;
+        try {
+          await getGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            expectedStatusCode: 404,
+          });
+        } catch (error) {
+          granuleResponseError = error;
+        }
+        expect(JSON.parse(granuleResponseError.apiMessage).message).toEqual('Granule not found');
+        granuleWasDeleted = true;
       });
     });
 

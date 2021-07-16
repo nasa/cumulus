@@ -385,7 +385,7 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   // make execution write throw an error
   const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
+    storeExecution: () => {
       throw new Error('execution Dynamo error');
     },
   };

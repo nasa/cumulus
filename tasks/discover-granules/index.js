@@ -197,13 +197,18 @@ const buildGranule = curry(
  *
  */
 const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
-  const response = await granules.getGranule({
-    prefix: process.env.STACKNAME,
-    granuleId,
-  });
-  const responseBody = JSON.parse(response.body);
-  if (response.statusCode === 404 && responseBody.error === 'Not Found') {
-    return granuleId;
+  let response;
+  try {
+    response = await granules.getGranuleResponse({
+      prefix: process.env.STACKNAME,
+      granuleId,
+    });
+  } catch (error) {
+    const responseError = error;
+    if (responseError.statusCode === 404) {
+      return granuleId;
+    }
+    throw new Error(`Unexpected error from Private API lambda: ${responseError.message}`);
   }
 
   if (response.statusCode === 200) {
@@ -212,7 +217,8 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
     }
     return false;
   }
-  throw new Error(`Unexpected return from Private API lambda ${JSON.stringify(response)}`);
+
+  throw new Error(`Unexpected return from Private API lambda: ${JSON.stringify(response)}`);
 };
 
 /**

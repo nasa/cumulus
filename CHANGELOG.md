@@ -8,6 +8,159 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- All API requests made by `@cumulus/api-client` will now throw an error if the status code
+does not match the expected response (200 for most requests and 202 for a few requests that
+trigger async operations). Previously the helpers in this package would return the response
+regardless of the status code, so you may need to update any code using helpers from this
+package to catch or to otherwise handle errors that you may encounter.
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+
+### Added
+
+- Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+- **CUMULUS-2478**
+  - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
+  - Implemented /locate endpoint
+  - Cumulus distribution API checks the file request against bucket map:
+    - retrieves the bucket and key from file path
+    - determines if the file request is public based on the bucket map rather than the bucket type
+    - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
+    - bucket prefix and object prefix are supported
+  - Add 'Bearer token' support as an authorization method
+- **CUMULUS-2568**
+  - Add `deletePdr`/PDR deletion functionality to `@cumulus/api-client/pdrs`
+  - Add `removeCollectionAndAllDependencies` to integration test helpers
+- **CUMULUS-2487**
+  - Add integration test for cumulus distribution API
+- Added `example/spec/apiUtils.waitForApiStatus` to wait for a
+record to be returned by the API with a specific value for
+`status`
+- Added `example/spec/discoverUtils.uploadS3GranuleDataForDiscovery` to upload granule data fixtures
+to S3 with a randomized granule ID for `discover-granules` based
+integration tests
+- Added `example/spec/Collections.removeCollectionAndAllDependencies` to remove a collection and
+all dependent objects (e.g. PDRs, granules, executions) from the
+database via the API
+- Added helpers to `@cumulus/api-client`:
+  - `pdrs.deletePdr` - Delete a PDR via the API
+  - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
+
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Added `@cumulus/message/PDRs/generatePdrApiRecordFromMessage` to generate PDR from Cumulus workflow message
+    - Added helpers to `@cumulus/es-client/indexer`:
+      - `deleteAsyncOperation` to delete async operation records from Elasticsearch
+      - `updateAsyncOperation` to update an async operation record in Elasticsearch
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2307**
+    - Updated API PDR GET endpoint to read individual PDR records from
+      PostgreSQL database instead of DynamoDB
+    - Added `deletePdr` to `@cumulus/api-client/pdrs`
+
+### Changed
+
+- Moved functions from `@cumulus/integration-tests` to `example/spec/helpers/workflowUtils`:
+  - `startWorkflowExecution`
+  - `startWorkflow`
+  - `executeWorkflow`
+  - `buildWorkflow`
+  - `testWorkflow`
+  - `buildAndExecuteWorkflow`
+  - `buildAndStartWorkflow`
+- `example/spec/helpers/workflowUtils.executeWorkflow` now uses
+`waitForApiStatus` to ensure that the execution is `completed` or
+`failed` before resolving
+- `example/spec/helpers/testUtils.updateAndUploadTestFileToBucket`
+now accepts an object of parameters rather than positional
+arguments
+- Removed PDR from the `payload` in the input payload test fixture for reconciliation report integration tests
+- The following integration tests for PDR-based workflows were
+updated to use randomized granule IDs:
+  - `example/spec/parallel/ingest/ingestFromPdrSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithChildWorkflowMetaSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithExecutionNamePrefixSpec.js`
+  - `example/spec/parallel/ingest/ingestPdrWithNodeNameSpec.js`
+- Updated the `@cumulus/api-client/CumulusApiClientError` error class to include new properties that can be accessed directly on
+the error object:
+  - `statusCode` - The HTTP status code of the API response
+  - `apiMessage` - The message from the API response
+- Added `params.pRetryOptions` parameter to
+`@cumulus/api-client/granules.deleteGranule` to control the retry
+behavior
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
+    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
+      - PDRs
+    - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
+    - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+  - **CUMULUS-2306**
+    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
+    related records
+    - Updated @cumulus/db/models/granules-executions to add a delete method in
+      support of local cleanup
+    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
+      record retrievals on status in lieu of using `waitForModelStatus`
+  - **CUMULUS-2303**
+    - Update API provider GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed
+    to `granulesApi` from `@cumulus/integration-tests`.
+
+### Fixed
+
+- **CUMULUS-2568**
+  - Update reconciliation report integration test to have better cleanup/failure
+    behavior
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+- Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+endpoint for returning a PDR from the API
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+      - `<prefix>-AsyncOperationsTable`
+      - `<prefix>-CollectionsTable`
+      - `<prefix>-ExecutionsTable`
+      - `<prefix>-PdrsTable`
+      - `<prefix>-ProvidersTable`
+      - `<prefix>-RulesTable`
+
+## [v9.1.0] 2021-06-03
+
+### BREAKING CHANGES
+
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -27,24 +180,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2208**
-    - Added `@cumulus/message/PDRs/generatePdrApiRecordFromMessage` to generate PDR from Cumulus workflow message
-  - **CUMULUS-2306**
-    - Updated API execution GET endpoint to read individual execution records
-      from PostgreSQL database instead of DynamoDB
-    - Updated API execution-status endpoint to read execution records from
-      PostgreSQL database instead of DynamoDB
 - **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
 - **CUMULUS-2354**
   - Adds configuration options to allow `/s3credentials` endpoint to distribute
     same-region read-only tokens based on a user's CMR ACLs.
   - Configures the example deployment to enable this feature.
 - **CUMULUS-2442**
-  - Adds option to generate cloudfront URL to lzards-backup task. This will
-    require a few new task config options that have been documented in the
-    [task
-    README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
 - **CUMULUS-2471**
   - Add `/s3credentialsREADME` endpoint to distribution API
 - **CUMULUS-2473**
@@ -52,35 +196,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
 - **CUMULUS-2474**
   - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
-  - Add `object-store` package which contains abstracted object store functions
-    for working with various  cloud providers
-- **CUMULUS-2470**
-  - Added `/s3credentials` endpoint for distribution API
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
 - **CUMULUS-2477**
   - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
 - **CUMULUS-2479**
   - Adds /version endpoint to distribution API
 - **CUMULUS-2497**
   - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+- **CUMULUS-2371**
+  - Added helpers to `@cumulus/ingest/sqs`:
+    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
+    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
 
 ### Changed
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2208**
-    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
-      - PDRs
-  - **CUMULUS-2306**
-    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
-    related records
-    - Updated @cumulus/db/models/granules-executions to add a delete method in
-      support of local cleanup
-    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
-      record retrievals on status in lieu of using `waitForModelStatus`
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
     timeout for Knex library to acquire dataase connections
@@ -108,14 +241,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
-- **CUMULUS-2532**
-  - Changed integration tests to use `api-client/granules` functions as opposed
-    to `granulesApi` from `@cumulus/integration-tests`.
 
 ### Fixed
 
-- **CUMULUS-2558**
-  - Fixed issue where executions original_payload would not be retained on successful execution
 - **CUMULUS-2519**
   - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
 - **CUMULUS-2518**
@@ -129,23 +257,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     added `remoteAltBucket`to allow for an override of the passed in provider
     bucket for the source file
   - Update "eslint-plugin-import" to be pinned to 2.22.1
-- **[2231](https://github.com/nasa/cumulus/issues/2231)**
-  - Fixes broken relative path links in `docs/README.md`
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and
-    collection deletion in test cleanup.
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
 
 ### Removed
 
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2208**
-    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
-      - `<prefix>-CollectionsTable`
-      - `<prefix>-PdrsTable`
-      - `<prefix>-ProvidersTable`
-      - `<prefix>-RulesTable`
 - **CUMULUS-2502**
   - Removed outdated documenation regarding Kibana index patterns for metrics.
 
@@ -199,15 +317,6 @@ correct a failure in our build script and push out corrected release artifacts. 
       accessible via the Core API.
 
 ### Added
-
-- **CUMULUS-2371**
-  - Added helpers to `@cumulus/ingest/sqs`:
-    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
-    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
-  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
-    archives all incoming SQS messages to S3.
-  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
-    deletes archived SQS message from S3 once it has been processed.
 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2130**
@@ -4445,7 +4554,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.1.0...HEAD
+[v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
 [v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0

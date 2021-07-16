@@ -36,6 +36,7 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const { parseException } = require('@cumulus/message/utils');
 
 const FileUtils = require('../../lib/FileUtils');
 const {
@@ -44,9 +45,6 @@ const {
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
 } = require('../../lib/granules');
-const {
-  parseException,
-} = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-granules' });
@@ -261,7 +259,7 @@ const _writeGranuleViaTransaction = async ({
     updatedAt,
   });
 
-  logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
+  logger.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
@@ -270,14 +268,14 @@ const _writeGranuleViaTransaction = async ({
   );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
-  const granuleCumulusId = getGranuleCumulusIdFromQueryResultOrLookup({
+  const granuleCumulusId = await getGranuleCumulusIdFromQueryResultOrLookup({
     trx,
     queryResult: upsertQueryResult,
     granuleRecord,
   });
 
   logger.info(`
-    Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collection_cumulus_id ${collectionCumulusId}
+    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId}
     to granule record with cumulus_id ${granuleCumulusId} in PostgreSQL
   `);
   return granuleCumulusId;

@@ -21,7 +21,7 @@ class GranuleNotFoundError extends Error {
 }
 
 const getGranule = async (params) => {
-  const response = await granulesApi.getGranule(
+  const response = await granulesApi.getGranuleResponse(
     pick(params, ['prefix', 'granuleId', 'callback'])
   );
 
@@ -71,7 +71,7 @@ const getGranuleWithStatus = async (params = {}) =>
     },
     {
       retries: get(params, 'timeout', 30),
-      maxTimeout: 1000,
+      maxTimeout: 2000,
     }
   );
 

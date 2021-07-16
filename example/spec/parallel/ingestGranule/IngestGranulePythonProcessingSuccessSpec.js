@@ -11,18 +11,18 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   addCollections,
   api: apiTestUtils,
-  buildAndStartWorkflow,
   getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { getGranule, removePublishedGranule, waitForGranule } = require('@cumulus/api-client/granules');
+const { getGranule, deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteProvider, createProvider,
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
 const {
   loadConfig,
@@ -128,7 +128,7 @@ describe('The TestPythonProcessing workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-    await removePublishedGranule({
+    await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
@@ -150,11 +150,10 @@ describe('The TestPythonProcessing workflow', () => {
       granuleId: inputPayload.granules[0].granuleId,
       status: 'completed',
     });
-    const granuleResponse = await getGranule({
+    granuleResult = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
-    granuleResult = JSON.parse(granuleResponse.body);
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(granuleResult.status).toEqual('completed');
   });
