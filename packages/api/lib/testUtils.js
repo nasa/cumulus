@@ -14,6 +14,7 @@ const {
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
   translateApiPdrToPostgresPdr,
+  translateApiExecutionToPostgresExecution,
   translateApiAsyncOperationToPostgresAsyncOperation,
 } = require('@cumulus/db');
 const {
@@ -22,6 +23,8 @@ const {
   indexRule,
   indexPdr,
   indexAsyncOperation,
+  indexExecution,
+  deleteExecution,
 } = require('@cumulus/es-client/indexer');
 const {
   constructCollectionId,
@@ -535,6 +538,33 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   };
 };
 
+const createExecutionTestRecords = async (context, executionParams = {}) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esExecutionsClient,
+  } = context;
+
+  const originalExecution = fakeExecutionFactoryV2(executionParams);
+  const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
+  const originalDynamoExecution = await executionModel.create(originalExecution);
+  const [executionCumulusId] = await executionPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await executionPgModel.get(
+    knex, { cumulus_id: executionCumulusId }
+  );
+  await indexExecution(esClient, originalExecution, process.env.ES_INDEX);
+  const originalEsRecord = await esExecutionsClient.get(
+    originalExecution.arn
+  );
+  return {
+    originalDynamoExecution,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
@@ -568,6 +598,24 @@ const createAsyncOperationTestRecords = async (context) => {
   };
 };
 
+const cleanupExecutionTestRecords = async (context, { arn }) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esIndex,
+  } = context;
+
+  await executionModel.delete({ arn });
+  await executionPgModel.delete(knex, { arn });
+  await deleteExecution({
+    esClient,
+    arn,
+    index: esIndex,
+  });
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -595,5 +643,7 @@ module.exports = {
   createProviderTestRecords,
   createRuleTestRecords,
   createPdrTestRecords,
+  createExecutionTestRecords,
+  cleanupExecutionTestRecords,
   createAsyncOperationTestRecords,
 };

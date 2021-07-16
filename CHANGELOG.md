@@ -106,6 +106,9 @@ behavior
     - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
     - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
     - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
   - **CUMULUS-2306**
@@ -147,6 +150,7 @@ endpoint for returning a PDR from the API
     - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
       - `<prefix>-AsyncOperationsTable`
       - `<prefix>-CollectionsTable`
+      - `<prefix>-ExecutionsTable`
       - `<prefix>-PdrsTable`
       - `<prefix>-ProvidersTable`
       - `<prefix>-RulesTable`

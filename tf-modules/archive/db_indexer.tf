@@ -50,13 +50,6 @@ data "aws_dynamodb_table" "executions" {
   name = var.dynamo_tables.executions.name
 }
 
-resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
-  event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
-  function_name     = aws_lambda_function.db_indexer.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
 data "aws_dynamodb_table" "granules" {
   name = var.dynamo_tables.granules.name
 }
