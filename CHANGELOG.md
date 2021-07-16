@@ -166,11 +166,8 @@ endpoint for returning a PDR from the API
     - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
       - `<prefix>-AsyncOperationsTable`
       - `<prefix>-CollectionsTable`
-<<<<<<< HEAD
-      - `<prefix>-GranulesTable`
-=======
       - `<prefix>-ExecutionsTable`
->>>>>>> feature/rds-phase-2
+      - `<prefix>-GranulesTable`
       - `<prefix>-PdrsTable`
       - `<prefix>-ProvidersTable`
       - `<prefix>-RulesTable`
