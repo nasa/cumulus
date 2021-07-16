@@ -13,10 +13,19 @@ does not match the expected response (200 for most requests and 202 for a few re
 trigger async operations). Previously the helpers in this package would return the response
 regardless of the status code, so you may need to update any code using helpers from this
 package to catch or to otherwise handle errors that you may encounter.
+- The Cumulus API Lambda function has now been configured with reserved concurrency to ensure
+availability in a high-concurrency environment. However, this also caps max concurrency which
+may result in throttling errors if trying to reach the Cumulus API multiple times in a short
+period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
+terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
+The default reserved concurrency value is 8.
 
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2327**
+  - Added reserved concurrency setting to the Cumulus API lambda function.
+  - Added relevant tfvars to the archive and cumulus terraform modules.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
