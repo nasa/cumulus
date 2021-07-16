@@ -33,6 +33,7 @@ module "archive" {
   cmr_provider       = var.cmr_provider
   cmr_username       = var.cmr_username
   cmr_password       = var.cmr_password
+  cmr_custom_host    = var.cmr_custom_host
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -54,6 +55,7 @@ module "archive" {
   api_port = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage = var.api_gateway_stage
+  api_reserved_concurrency = var.archive_api_reserved_concurrency
 
   schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
   manual_consumer_function_arn                     = module.ingest.manual_consumer_lambda_function_arn

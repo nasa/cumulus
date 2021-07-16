@@ -164,6 +164,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 2
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
@@ -411,4 +417,10 @@ variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = null
 }

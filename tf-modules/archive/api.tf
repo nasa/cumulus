@@ -162,6 +162,8 @@ resource "aws_lambda_function" "api" {
   memory_size = 960
   tags        = var.tags
 
+  reserved_concurrent_executions = var.api_reserved_concurrency
+
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
