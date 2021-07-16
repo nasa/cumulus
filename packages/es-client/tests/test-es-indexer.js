@@ -368,7 +368,7 @@ test.serial('delete a provider record', async (t) => {
   t.false(await esProvidersClient.exists(id));
 });
 
-test.serial('delete an execution record', async (t) => {
+test.serial('deleteExecution deletes an execution record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
@@ -395,7 +395,7 @@ test.serial('delete an execution record', async (t) => {
   t.false(await esExecutionsClient.exists(testRecord.arn));
 });
 
-test.serial('delete an async operation record', async (t) => {
+test.serial('deleteAsyncOperation deletes an async operation record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
@@ -424,36 +424,7 @@ test.serial('delete an async operation record', async (t) => {
   );
 });
 
-test.serial('delete an execution record', async (t) => {
-  const { esAlias } = t.context;
-
-  const testRecord = {
-    arn: randomString(),
-  };
-  const type = 'execution';
-
-  let r = await indexer.indexExecution(esClient, testRecord, esAlias, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-  t.is(r._id, testRecord.arn);
-
-  r = await indexer.deleteExecution({
-    esClient,
-    arn: testRecord.arn,
-    type,
-    index: esAlias,
-  });
-
-  t.is(r.result, 'deleted');
-
-  await t.throwsAsync(
-    () => esClient.get({ index: esAlias, type, id: testRecord.arn }),
-    { message: 'Response Error' }
-  );
-});
-
-test.serial('delete a reconciliation report record', async (t) => {
+test.serial('deleteReconciliationReport deletes a reconciliation report record', async (t) => {
   const { esAlias } = t.context;
 
   const testRecord = {
@@ -555,32 +526,6 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
     id,
   }).then((response) => response.body);
   t.is(updatedRecord._source.status, 'SUCCEEDED');
-});
-
-test.serial('deleting an async operation record', async (t) => {
-  const { esAlias } = t.context;
-
-  const id = randomString();
-  const testRecord = {
-    id,
-  };
-
-  await indexer.indexAsyncOperation(esClient, testRecord, esAlias);
-
-  // check the record exists
-  const esAsyncOperationsClient = new Search(
-    {},
-    'asyncOperation',
-    esAlias
-  );
-  t.true(await esAsyncOperationsClient.exists(id));
-
-  await indexer.deleteAsyncOperation({
-    esClient,
-    id,
-    index: esAlias,
-  });
-  t.false(await esAsyncOperationsClient.exists(id));
 });
 
 test.serial('deleting a collection record', async (t) => {

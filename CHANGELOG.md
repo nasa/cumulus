@@ -115,7 +115,7 @@ behavior
     - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
     - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+    - `sfEventSqsToDbRecords` Lambda now writes the following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
       - executions
       - granules
     - Moved:

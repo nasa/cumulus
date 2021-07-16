@@ -454,10 +454,10 @@ function deleteAsyncOperation({
 }
 
 /**
- * Deletes the reconciliation report from ElasticSearch
+ * Deletes the reconciliation report from Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.name - reconciliation report name
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
  * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
@@ -481,10 +481,10 @@ function deleteReconciliationReport({
 }
 
 /**
- * Deletes the granule in ElasticSearch
+ * Deletes the granule in Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.granuleId - the granule ID
  * @param  {string} params.collectionId - the collection ID
  * @param  {string[]} [params.ignore] - Array of response codes to ignore
