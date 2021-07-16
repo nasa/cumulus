@@ -9,7 +9,7 @@ const createTestServer = require('create-test-server');
 const cookieParser = require('cookie-parser');
 const { tmpdir } = require('os');
 const {
-  fileExists,
+  s3ObjectExists,
   getTextObject,
   headObject,
   promiseS3Upload,
@@ -147,13 +147,14 @@ test('HttpsProviderClient.download() downloads a file', async (t) => {
   const localPath = path.join(tmpdir(), randomString());
   try {
     await httpsProviderClient.download({ remotePath: publicFile, localPath });
-    t.is(fs.existsSync(localPath), true);
+    t.true(fs.existsSync(localPath));
+    t.is(fs.readFileSync(localPath, 'utf-8'), remoteContent);
   } finally {
     fs.unlinkSync(localPath);
   }
 });
 
-test('HttpsProviderClient.sync() downloads remote file to s3 with correct content-type', async (t) => {
+test('HttpsProviderClient.sync() copies remote file to s3 with correct content-type', async (t) => {
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.json';
 
@@ -166,7 +167,10 @@ test('HttpsProviderClient.sync() downloads remote file to s3 with correct conten
     });
     t.truthy(s3uri, 'Missing s3uri');
     t.truthy(etag, 'Missing etag');
-    t.truthy(fileExists(destinationBucket, destinationKey));
+    t.true(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
     const syncedContent = await getTextObject(destinationBucket, destinationKey);
     t.is(syncedContent, remoteContent);
 
@@ -204,7 +208,8 @@ test('HttpsProviderClient.download() supports basic auth with redirects', async 
   const localPath = path.join(tmpdir(), randomString());
   try {
     await httpsProviderClient.download({ remotePath: protectedFile, localPath });
-    t.is(fs.existsSync(localPath), true);
+    t.true(fs.existsSync(localPath));
+    t.is(fs.readFileSync(localPath, 'utf-8'), remoteContent);
   } finally {
     fs.unlinkSync(localPath);
   }
@@ -225,6 +230,7 @@ test('HttpsProviderClient.download() supports basic auth with redirect to differ
   try {
     await httpsProviderClient.download({ remotePath: protectedFile2, localPath });
     t.true(fs.existsSync(localPath));
+    t.is(fs.readFileSync(localPath, 'utf-8'), remoteContent);
   } finally {
     fs.unlinkSync(localPath);
   }
@@ -293,7 +299,10 @@ test('HttpsProviderClient.sync() supports basic auth with redirects', async (t) 
     await httpsProviderClient.sync({
       fileRemotePath: protectedFile, destinationBucket, destinationKey,
     });
-    t.truthy(fileExists(destinationBucket, destinationKey));
+    t.true(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
     const syncedContent = await getTextObject(destinationBucket, destinationKey);
     t.is(syncedContent, remoteContent);
 
@@ -324,7 +333,10 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to different 
       destinationBucket,
       destinationKey,
     });
-    t.truthy(fileExists(destinationBucket, destinationKey));
+    t.true(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
     const syncedContent = await getTextObject(destinationBucket, destinationKey);
     t.is(syncedContent, remoteContent);
 
@@ -357,7 +369,10 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
       }),
       { message: /Response code 401/ }
     );
-    t.false(await fileExists(destinationBucket, destinationKey));
+    t.false(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
   } finally {
     await recursivelyDeleteS3Bucket(destinationBucket);
   }
@@ -386,7 +401,10 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
       }),
       { message: /Response code 401/ }
     );
-    t.false(await fileExists(destinationBucket, destinationKey));
+    t.false(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
   } finally {
     await recursivelyDeleteS3Bucket(destinationBucket);
   }
