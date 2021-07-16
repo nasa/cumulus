@@ -43,7 +43,7 @@ test.beforeEach(async (t) => {
   t.context.server2.get('/auth', (req, res) => {
     if (req.headers.authorization === expectedAuthHeader) {
       res.cookie('DATA', 'abcd1234'); // set cookie to test cookie-jar usage
-      const protectedUrl = new URL(protectedFile, t.context.server.url);
+      const protectedUrl = new URL(protectedFile2, t.context.server.url);
       res.redirect(protectedUrl.toString());
     } else {
       res.status(401).end();
