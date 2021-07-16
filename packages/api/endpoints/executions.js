@@ -2,9 +2,16 @@
 
 const router = require('express-promise-router')();
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { getKnexClient, ExecutionPgModel } = require('@cumulus/db');
+const {
+  getKnexClient,
+  getApiGranuleExecutionCumulusIds,
+  ExecutionPgModel,
+  translatePostgresExecutionToApiExecution,
+} = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const models = require('../models');
+const { getGranulesForPayload } = require('../lib/granules');
+const { validateGranuleExecutionRequest } = require('../lib/request');
 
 /**
  * List and search executions
@@ -79,6 +86,34 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+/**
+ * Get execution history for a single granule or multiple granules
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function searchByGranules(req, res) {
+  const payload = req.body;
+  const knex = await getKnexClient();
+  const granules = await getGranulesForPayload(payload, knex);
+  const { page = 1, limit = 1 } = req.query;
+  const offset = page < 1 ? 0 : (page - 1) * limit;
+
+  const executionPgModel = new ExecutionPgModel();
+
+  const executionCumulusIds = await getApiGranuleExecutionCumulusIds(knex, granules);
+
+  const executions = await executionPgModel
+    .searchByCumulusIds(knex, executionCumulusIds, { limit, offset });
+
+  const apiExecutions = await Promise.all(executions
+    .map((execution) => translatePostgresExecutionToApiExecution(execution)));
+
+  return res.send(apiExecutions);
+}
+
+router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

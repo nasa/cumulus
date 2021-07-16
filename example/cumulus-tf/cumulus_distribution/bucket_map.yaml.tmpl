@@ -7,12 +7,6 @@ MAP:
 %{ endif ~}
 %{ if length(public_buckets) > 0 ~}
 %{ for bucket in public_buckets ~}
-  cumulus-daac:
-    public-data:
-      browse:
-        bucket: ${bucket}
-        headers:
-          Content-Type: "image/jpeg"
   ${bucket}: ${bucket}
 %{ endfor ~}
 %{ endif ~}
