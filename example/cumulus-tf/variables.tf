@@ -164,6 +164,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 2
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
