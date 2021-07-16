@@ -408,6 +408,12 @@ test.serial('deleteAsyncOperation deletes an async operation record', async (t) 
   // make sure record is created
   t.is(r.result, 'created');
   t.is(r._id, testRecord.id);
+  const esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    esAlias
+  );
+  t.true(await esAsyncOperationsClient.exists(testRecord.id));
 
   r = await indexer.deleteAsyncOperation({
     esClient,
@@ -417,11 +423,7 @@ test.serial('deleteAsyncOperation deletes an async operation record', async (t) 
   });
 
   t.is(r.result, 'deleted');
-
-  await t.throwsAsync(
-    () => esClient.get({ index: esAlias, type, id: testRecord.id }),
-    { message: 'Response Error' }
-  );
+  t.false(await esAsyncOperationsClient.exists(testRecord.id));
 });
 
 test.serial('deleteReconciliationReport deletes a reconciliation report record', async (t) => {
