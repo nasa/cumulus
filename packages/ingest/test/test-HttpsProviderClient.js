@@ -211,29 +211,6 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
   }
 });
 
-test('HttpsProviderClient basic auth with redirects for sync fails if basicAuthRedirectHost is missing', async (t) => {
-  const httpsProviderClient = new HttpProviderClient({
-    protocol: 'https',
-    host: '127.0.0.1',
-    port: t.context.server.sslPort,
-    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
-    username: basicUsername,
-    password: basicPassword,
-  });
-
-  const destinationBucket = randomString();
-  const destinationKey = 'syncedFile.json';
-  try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
-    await httpsProviderClient.sync({
-      fileRemotePath: protectedFile, destinationBucket, destinationKey,
-    });
-    t.false(await fileExists(destinationBucket, destinationKey));
-  } finally {
-    await recursivelyDeleteS3Bucket(destinationBucket);
-  }
-});
-
 test('HttpsProviderClient supports basic auth with redirects for sync', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
@@ -289,6 +266,34 @@ test('HttpsProviderClient supports basic auth for sync with redirect to differen
 
     const s3HeadResponse = await headObject(destinationBucket, destinationKey);
     t.is(expectedContentType, s3HeadResponse.ContentType);
+  } finally {
+    await recursivelyDeleteS3Bucket(destinationBucket);
+  }
+});
+
+test('HttpsProviderClient basic auth redirect to different host fails if basicAuthRedirectHost is missing', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+  });
+
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.hdf';
+  try {
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await t.throwsAsync(
+      httpsProviderClient.sync({
+        fileRemotePath: protectedFile2,
+        destinationBucket,
+        destinationKey,
+      }),
+      { message: /Response code 401/ }
+    );
+    t.false(await fileExists(destinationBucket, destinationKey));
   } finally {
     await recursivelyDeleteS3Bucket(destinationBucket);
   }

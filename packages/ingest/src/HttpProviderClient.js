@@ -250,9 +250,10 @@ class HttpProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} bucket - destination s3 bucket of the file
-   * @param {string} key - destination s3 key of the file
+   * @param {Object} params
+   * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
+   * @param {string} params.destinationBucket - destination s3 bucket of the file
+   * @param {string} params.destinationKey - destination s3 key of the file
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
@@ -281,7 +282,11 @@ class HttpProviderClient {
     const contentType = headers['content-type'] || lookupMimeType(destinationKey);
 
     const pass = new PassThrough();
-    got.stream(remoteUrl, this.gotOptions).pipe(pass);
+    await promisify(pipeline)(
+      got.stream(remoteUrl, this.gotOptions),
+      pass
+    );
+
     const { ETag: etag } = await promiseS3Upload({
       Bucket: destinationBucket,
       Key: destinationKey,
