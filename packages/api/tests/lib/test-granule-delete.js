@@ -250,7 +250,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   );
 });
 
-test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the PostgreSQL Granule delete fails', async (t) => {
+test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the PostgreSQL granule delete fails', async (t) => {
   const {
     newPgGranule,
     newDynamoGranule,
@@ -419,7 +419,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() does not require a PostgreSQL Granule', async (t) => {
+test.serial('deleteGranuleAndFiles() does not require a PostgreSQL granule', async (t) => {
   // Create a granule in Dynamo only
   const s3Buckets = {
     protected: {

@@ -474,7 +474,7 @@ test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL writ
   );
 });
 
-test.serial('writeGranules() does not persist file records to PostgreSQL if the worflow status is "running"', async (t) => {
+test.serial('writeGranules() does not persist file records to PostgreSQL if the workflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
