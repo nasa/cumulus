@@ -21,8 +21,14 @@ const sinon = require('sinon');
 const pMap = require('p-map');
 
 const pMapSpy = sinon.spy(pMap);
+const fakeProvidersApi = {};
 
-const { queueGranules } = proxyquire('..', { 'p-map': pMapSpy });
+const { queueGranules } = proxyquire('..', {
+  'p-map': pMapSpy,
+  '@cumulus/api-client': {
+    providers: fakeProvidersApi,
+  },
+});
 
 test.beforeEach(async (t) => {
   pMapSpy.resetHistory();
@@ -445,7 +451,16 @@ test.serial('If a granule has a provider property, that provider is used', async
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
-  const provider = { host: randomString() };
+  const provider = { id: randomString(), host: randomString() };
+
+  fakeProvidersApi.getProvider = ({ prefix, providerId }) => {
+    t.is(prefix, t.context.stackName);
+    t.is(providerId, provider.id);
+
+    return Promise.resolve({
+      body: JSON.stringify(provider),
+    });
+  };
 
   const { event } = t.context;
 
@@ -453,7 +468,7 @@ test.serial('If a granule has a provider property, that provider is used', async
     {
       dataType,
       version,
-      provider,
+      provider: provider.id,
       granuleId: randomString(),
       files: [],
     },
