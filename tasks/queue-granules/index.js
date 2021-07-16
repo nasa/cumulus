@@ -5,7 +5,17 @@ const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
+const { providers: providersApi } = require('@cumulus/api-client');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
+
+async function fetchGranuleProvider(prefix, providerId) {
+  const { body } = await providersApi.getProvider({
+    prefix,
+    providerId,
+  });
+
+  return JSON.parse(body);
+}
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
@@ -34,7 +44,9 @@ async function queueGranules(event) {
         granule,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
-        provider: granule.provider || event.config.provider,
+        provider: granule.provider
+          ? await fetchGranuleProvider(event.config.stackName, granule.provider)
+          : event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,
         parentExecutionArn: arn,
