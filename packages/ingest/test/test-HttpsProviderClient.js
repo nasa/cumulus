@@ -132,7 +132,7 @@ test('HttpsProviderClient decrypts credentials when encrypted', async (t) => {
   );
 });
 
-test('list() with HTTPS returns expected files', async (t) => {
+test('HttpsProviderClient.list() with HTTPS returns expected files', async (t) => {
   t.context.server.get('/', '<html><body><A HREF="test.txt">test.txt</A></body></html>');
 
   const expectedFiles = [{ name: 'test.txt', path: '' }];
@@ -142,7 +142,7 @@ test('list() with HTTPS returns expected files', async (t) => {
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-test('download() downloads a file', async (t) => {
+test('HttpsProviderClient.download() downloads a file', async (t) => {
   const { httpsProviderClient } = t.context;
   const localPath = path.join(tmpdir(), randomString());
   try {
@@ -153,7 +153,7 @@ test('download() downloads a file', async (t) => {
   }
 });
 
-test('sync() downloads remote file to s3 with correct content-type', async (t) => {
+test('HttpsProviderClient.sync() downloads remote file to s3 with correct content-type', async (t) => {
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.json';
 
@@ -191,7 +191,7 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
-test('HttpsProviderClient supports basic auth with redirects for download', async (t) => {
+test('HttpsProviderClient.download() supports basic auth with redirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -211,7 +211,7 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
   }
 });
 
-test('HttpsProviderClient supports basic auth with redirects for sync', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth with redirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -240,7 +240,7 @@ test('HttpsProviderClient supports basic auth with redirects for sync', async (t
   }
 });
 
-test('HttpsProviderClient supports basic auth for sync with redirect to different host/port', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth for sync with redirect to different host/port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -271,7 +271,7 @@ test('HttpsProviderClient supports basic auth for sync with redirect to differen
   }
 });
 
-test('HttpsProviderClient basic auth redirect to different host fails if basicAuthRedirectHost is missing', async (t) => {
+test('HttpsProviderClient.sync() fails on basic auth redirect to different host if basicAuthRedirectHost is missing', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -279,6 +279,35 @@ test('HttpsProviderClient basic auth redirect to different host fails if basicAu
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
+  });
+
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.hdf';
+  try {
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await t.throwsAsync(
+      httpsProviderClient.sync({
+        fileRemotePath: protectedFile2,
+        destinationBucket,
+        destinationKey,
+      }),
+      { message: /Response code 401/ }
+    );
+    t.false(await fileExists(destinationBucket, destinationKey));
+  } finally {
+    await recursivelyDeleteS3Bucket(destinationBucket);
+  }
+});
+
+test('HttpsProviderClient.sync() fails on basic auth redirect to different host if basicAuthRedirectHost does not match redirect host', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+    basicAuthRedirectHost: 'fake-host',
   });
 
   const destinationBucket = randomString();
