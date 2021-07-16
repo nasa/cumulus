@@ -55,6 +55,8 @@ database via the API
     - Added helpers to `@cumulus/es-client/indexer`:
       - `deleteAsyncOperation` to delete async operation records from Elasticsearch
       - `updateAsyncOperation` to update an async operation record in Elasticsearch
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
   - **CUMULUS-2306**
     - Updated API execution GET endpoint to read individual execution records
       from PostgreSQL database instead of DynamoDB
@@ -68,6 +70,10 @@ database via the API
    - **CUMULUS-2303**
   - **CUMULUS-2303**
     - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2307**
+    - Updated API PDR GET endpoint to read individual PDR records from
+      PostgreSQL database instead of DynamoDB
+    - Added `deletePdr` to `@cumulus/api-client/pdrs`
 
 ### Changed
 
