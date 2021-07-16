@@ -1,8 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const isObject = require('lodash/isObject');
-const isNil = require('lodash/isNil');
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
@@ -10,21 +8,6 @@ function errorify(err) {
 
 function filenamify(fileName) {
   return fileName.replace(/["%*/:<>?\\|]/g, '_');
-}
-
-/**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {string} an stringified exception
- */
-function parseException(exception) {
-  if (isNil(exception)) return {};
-  if (isObject(exception)) return exception;
-  return {
-    Error: 'Unknown Error',
-    Cause: exception,
-  };
 }
 
 /**
@@ -92,5 +75,4 @@ module.exports = {
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  parseException,
 };

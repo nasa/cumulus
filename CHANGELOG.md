@@ -58,13 +58,20 @@ database via the API
       - `getGranuleTimeToPreprocess`
       - `getGranuleTimeToArchive`
       - `generateGranuleApiRecord`
+    - Added helpers to `@cumulus/es-client/indexer`:
+      - `deleteAsyncOperation` to delete async operation records from Elasticsearch
+      - `updateAsyncOperation` to update an async operation record in Elasticsearch
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
   - **CUMULUS-2306**
     - Updated API execution GET endpoint to read individual execution records
       from PostgreSQL database instead of DynamoDB
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
-  - **CUMULUS-2303**
-    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2307**
+    - Updated API PDR GET endpoint to read individual PDR records from
+      PostgreSQL database instead of DynamoDB
+    - Added `deletePdr` to `@cumulus/api-client/pdrs`
 
 ### Changed
 
@@ -105,7 +112,11 @@ behavior
     - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
+    - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
       - granules
     - Moved:
       - `packages/api/lib/granules.getGranuleProductVolume` ->
@@ -153,8 +164,13 @@ endpoint for returning a PDR from the API
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2208**
     - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+      - `<prefix>-AsyncOperationsTable`
       - `<prefix>-CollectionsTable`
+<<<<<<< HEAD
       - `<prefix>-GranulesTable`
+=======
+      - `<prefix>-ExecutionsTable`
+>>>>>>> feature/rds-phase-2
       - `<prefix>-PdrsTable`
       - `<prefix>-ProvidersTable`
       - `<prefix>-RulesTable`

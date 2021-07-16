@@ -8,7 +8,6 @@ const { URL, resolve } = require('url');
 
 const {
   Granule,
-  Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
@@ -27,8 +26,10 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
@@ -36,8 +37,6 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { getExecution } = require('@cumulus/api-client/executions');
-const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -89,7 +88,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let granuleModel;
   let inputPayload;
   let pdrFilename;
-  let pdrModel;
   let postToCmrOutput;
   let provider;
   let publishGranuleExecutionArn;
@@ -111,8 +109,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -265,11 +261,14 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
-  it('triggers a PDR record being added to DynamoDB', async () => {
+  it('triggers a PDR record being added to the API', async () => {
     if (beforeAllError) throw SetupError;
-    const record = await waitForModelStatus(
-      pdrModel,
-      { pdrName: inputPayload.pdr.name },
+    const record = await waitForApiStatus(
+      getPdr,
+      {
+        prefix: config.stackName,
+        pdrName: inputPayload.pdr.name,
+      },
       ['running', 'completed']
     );
     expect(['running', 'completed'].includes(record.status)).toBeTrue();

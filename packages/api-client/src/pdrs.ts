@@ -3,7 +3,7 @@ import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
- * Delete a PDR from the Cumulus API
+ * Delete a PDR via the Cumulus API
  *
  * @param {Object} params            - params
  * @param {string} params.prefix     - the prefix configured for the stack
@@ -11,7 +11,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  * @param {Function} params.callback - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}        - the execution fetched by the API
+ * @returns {Promise<Object>}        - the API response
  */
 export const deletePdr = async (params: {
   prefix: string,
@@ -39,7 +39,7 @@ export const deletePdr = async (params: {
  * @param {Function} params.callback - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}        - the execution fetched by the API
+ * @returns {Promise<Object>}        - the PDR fetched by the API
  */
 export const getPdr = async (params: {
   prefix: string,

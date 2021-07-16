@@ -46,9 +46,7 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
-const {
-  parseException,
-} = require('@cumulus/message/utils');
+const { parseException } = require('@cumulus/message/utils');
 
 const FileUtils = require('../../lib/FileUtils');
 const {
