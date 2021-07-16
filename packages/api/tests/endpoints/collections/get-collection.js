@@ -131,6 +131,7 @@ test('GET returns an existing collection', async (t) => {
     version: testCollection.version,
     createdAt: response.body.createdAt,
     updatedAt: response.body.updatedAt,
+    meta: testCollection.meta,
   };
   t.deepEqual(response.body, expected);
 });
