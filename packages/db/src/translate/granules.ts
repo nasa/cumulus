@@ -4,7 +4,7 @@ import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
-const { deconstructCollectionId } = require('../../../api/lib/utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.

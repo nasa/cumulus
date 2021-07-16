@@ -13,12 +13,32 @@ does not match the expected response (200 for most requests and 202 for a few re
 trigger async operations). Previously the helpers in this package would return the response
 regardless of the status code, so you may need to update any code using helpers from this
 package to catch or to otherwise handle errors that you may encounter.
+- The Cumulus API Lambda function has now been configured with reserved concurrency to ensure
+availability in a high-concurrency environment. However, this also caps max concurrency which
+may result in throttling errors if trying to reach the Cumulus API multiple times in a short
+period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
+terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
+The default reserved concurrency value is 8.
 
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2327**
+  - Added reserved concurrency setting to the Cumulus API lambda function.
+  - Added relevant tfvars to the archive and cumulus terraform modules.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
+  - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
+- **CUMULUS-2463**
+  - `PUT /granules` reingest action allows a user to override the default execution
+    to use by providing an optional `workflowName` or `executionArn` parameter on
+    the request body.
+  - `PUT /granules/bulkReingest` action allows a user to override the default
+    execution/workflow combination to reingest with by providing an optional
+    `workflowName` on the request body.
+- Adds `workflowName` and `executionArn` params to @cumulus/api-client/reingestGranules
 - **CUMULUS-2476**
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
 - **CUMULUS-2478**
@@ -90,6 +110,8 @@ behavior
 ### Fixed
 
 - Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
+- Fixed bug where `parse-pdr` set a granule's provider to the entire provider record when a `NODE_NAME`
+  is present. Expected behavior consistent with other tasks is to set the provider name in that field.
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API

@@ -164,6 +164,7 @@ module "cumulus" {
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
+  archive_api_reserved_concurrency = var.api_reserved_concurrency
 
   # Thin Egress App settings
   # must match stage_name variable for thin-egress-app module

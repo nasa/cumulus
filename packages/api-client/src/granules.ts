@@ -132,21 +132,25 @@ export const waitForGranule = async (params: {
  * Reingest a granule from the Cumulus API
  * PUT /granules/{}
  *
- * @param {Object} params             - params
- * @param {string} params.prefix      - the prefix configured for the stack
- * @param {string} params.granuleId   - a granule ID
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the granule fetched by the API
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {string} params.granuleId    - a granule ID
+ * @param {string} params.workflowName - Optional WorkflowName
+ * @param {string} params.executionArn - Optional executionArn
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApifunction to invoke the
+ *                                       api lambda
+ * @returns {Promise<Object>}          - the granule fetched by the API
  */
 export const reingestGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  workflowName?: string|undefined,
+  executionArn?: string|undefined,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, workflowName, executionArn, callback = invokeApi } = params;
 
   return await callback({
     prefix: prefix,
@@ -157,7 +161,11 @@ export const reingestGranule = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'reingest' }),
+      body: JSON.stringify({
+        action: 'reingest',
+        workflowName,
+        executionArn,
+      }),
     },
   });
 };
