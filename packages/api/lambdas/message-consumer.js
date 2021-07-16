@@ -5,13 +5,13 @@ const get = require('lodash/get');
 const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
-const {
-  getKnexClient,
-  CollectionPgModel,
-  RulePgModel,
-} = require('@cumulus/db');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
-const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
+const {
+  fetchAllRules,
+  filterRulesByRuleParams,
+  lookupCollectionInEvent,
+  queueMessageForRule,
+} = require('../lib/rulesHelpers');
 
 /**
  * `validateMessage` validates an event as being valid for creating a workflow.
@@ -96,16 +96,17 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
  *        If false, the record is from a Kinesis stream and any errors
  *        encountered will cause the record to be published to a fallback SNS
  *        topic for further attempts at processing.
+ * @param {Array<Object>} allRules - Array of all rules in Cumulus API
  * @returns {[Promises]} Array of promises. Each promise is resolved when a
  * message is queued for all associated kinesis rules.
  */
-function processRecord(record, fromSNS) {
+function processRecord(record, fromSNS, allRules) {
   let eventObject;
   let isKinesisRetry = false;
   let parsed = record;
   let validationSchema;
   let originalMessageSource;
-  let ruleParam = {};
+  let ruleParams = {};
 
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
@@ -114,7 +115,7 @@ function processRecord(record, fromSNS) {
     // normal SNS notification - not a Kinesis fallback
     eventObject = parsed;
     originalMessageSource = 'sns';
-    ruleParam = {
+    ruleParams = {
       type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn'),
@@ -132,7 +133,7 @@ function processRecord(record, fromSNS) {
       const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
-      ruleParam = {
+      ruleParams = {
         type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
@@ -145,23 +146,10 @@ function processRecord(record, fromSNS) {
     }
   }
 
-  const knex = getKnexClient();
-  const rulePgModel = new RulePgModel();
-  const collectionPgModel = new CollectionPgModel();
   return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => ((ruleParam.name && ruleParam.version) ?
-      collectionPgModel.get(knex, { name: ruleParam.name, version: ruleParam.version }) :
-      undefined))
-    .then((pgCollection) => rulePgModel.search(
-      knex,
-      {
-        collection_cumulus_id: pgCollection.cumulus_id,
-        type: ruleParam.type,
-        value: ruleParam.sourceArn,
-      }
-    ))
-    .then((rules) => Promise.all(rules.map((rule) => {
-      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
+    .then(() => Promise.resolve(filterRulesByRuleParams(allRules, ruleParams)))
+    .then((applicableRules) => Promise.all(applicableRules.map((rule) => {
+      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
     })))
     .catch((error) => {
@@ -182,10 +170,13 @@ function processRecord(record, fromSNS) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
-  const fromSns = event.Records[0].EventSource === 'aws:sns';
   const records = event.Records;
 
-  return Promise.all(records.map((r) => processRecord(r, fromSns)))
+  // fetch all rules in the system and cache in memory so we don't need a ton of DB connections
+  return fetchAllRules()
+    .then((rules) => Promise.all(records.map(
+      (r) => processRecord(r, (r.EventSource === 'aws:sns'), rules)
+    )))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((error) => {
       cb(error);

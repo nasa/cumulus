@@ -2,9 +2,29 @@
 
 const get = require('lodash/get');
 
+const { rules: rulesApi } = require('@cumulus/api-client');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
+
+/**
+ * fetch all rules in the Cumulus API
+ *
+ * @param {number} [pageNumber] - current page of API results
+ * @param {Array<Object>} [rules] - partial rules array
+ * @returns {Array<Object>} all rules
+ */
+async function fetchAllRules(pageNumber = 1, rules = []) {
+  const queryParams = { page: pageNumber };
+  const apiResponse = await rulesApi.listRules({
+    prefix: process.env.stackName,
+    query: queryParams,
+  });
+  if (apiResponse.body.results.length > 0) {
+    return fetchAllRules((pageNumber + 1), rules.concat(apiResponse.body.results));
+  }
+  return rules;
+}
 
 const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
   (rule) => {
@@ -16,6 +36,17 @@ const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
       ? get(rule, 'collection.version') === collection.version
       : true;
     return nameMatch && versionMatch;
+  }
+);
+
+const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
+  (rule) => {
+    const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
+    const collectionMatch = filterRulesbyCollection(rules, ruleParams);
+    const sourceArnMatch = ruleParams.sourceArn
+      ? get(ruleParams, 'sourceArn') === rule.rule.value
+      : true;
+    return typeMatch && collectionMatch && sourceArnMatch;
   }
 );
 
@@ -67,7 +98,9 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 module.exports = {
+  fetchAllRules,
   filterRulesbyCollection,
+  filterRulesByRuleParams,
   getMaxTimeoutForRules,
   lookupCollectionInEvent,
   queueMessageForRule,
