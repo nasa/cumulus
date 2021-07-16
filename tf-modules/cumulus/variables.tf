@@ -163,6 +163,12 @@ variable "archive_api_port" {
   default     = null
 }
 
+variable "archive_api_reserved_concurrency" {
+  description = "Reserved Concurrency for the API lambda function"
+  type = number
+  default = 8
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
@@ -184,7 +190,7 @@ variable "bucket_map_key" {
 variable "cmr_custom_host" {
   description = "Custom host to use for CMR requests"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {

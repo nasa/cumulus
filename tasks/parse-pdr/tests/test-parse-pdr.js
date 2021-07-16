@@ -299,7 +299,7 @@ test.serial('parse-pdr sets the provider of a granule with NODE_NAME set', async
   t.context.payload.input.pdr.name = 'MOD09GQ-with-NODE_NAME.PDR';
   await setUpTestPdrAndValidate(t).catch(t.fail);
 
-  const provider = { host: 'modpdr01' };
+  const provider = { id: 'provider001', host: 'modpdr01' };
 
   fakeProvidersApi.getProviders = ({ prefix, queryStringParameters }) => {
     t.is(prefix, t.context.stackName);
@@ -322,7 +322,7 @@ test.serial('parse-pdr sets the provider of a granule with NODE_NAME set', async
 
   const granule = result.granules[0];
 
-  t.deepEqual(granule.provider, provider);
+  t.deepEqual(granule.provider, provider.id);
 });
 
 test.serial('parse-pdr throws an exception if the provider specified in NODE_NAME does not exist', async (t) => {
