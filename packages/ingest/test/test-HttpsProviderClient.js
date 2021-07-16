@@ -199,13 +199,78 @@ test('HttpsProviderClient.download() supports basic auth with redirects', async 
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: t.context.server2Url.host,
   });
 
   const localPath = path.join(tmpdir(), randomString());
   try {
     await httpsProviderClient.download({ remotePath: protectedFile, localPath });
     t.is(fs.existsSync(localPath), true);
+  } finally {
+    fs.unlinkSync(localPath);
+  }
+});
+
+test('HttpsProviderClient.download() supports basic auth with redirect to different host/port', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+    basicAuthRedirectHost: t.context.server2Url.host,
+  });
+
+  const localPath = path.join(tmpdir(), randomString());
+  try {
+    await httpsProviderClient.download({ remotePath: protectedFile2, localPath });
+    t.true(fs.existsSync(localPath));
+  } finally {
+    fs.unlinkSync(localPath);
+  }
+});
+
+test('HttpsProviderClient.download() fails on basic auth redirect to different host if basicAuthRedirectHost is missing', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+  });
+
+  const localPath = path.join(tmpdir(), randomString());
+  console.log(localPath);
+  try {
+    await t.throwsAsync(
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
+      { message: /Response code 401/ }
+    );
+    t.is(fs.readFileSync(localPath, 'utf-8'), '');
+  } finally {
+    fs.unlinkSync(localPath);
+  }
+});
+
+test('HttpsProviderClient.download() fails on basic auth redirect to different host if basicAuthRedirectHost does not match redirect host', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: '127.0.0.1',
+    port: t.context.server.sslPort,
+    certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
+    username: basicUsername,
+    password: basicPassword,
+    basicAuthRedirectHost: 'fake-host',
+  });
+
+  const localPath = path.join(tmpdir(), randomString());
+  try {
+    await t.throwsAsync(
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
+      { message: /Response code 401/ }
+    );
+    t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
     fs.unlinkSync(localPath);
   }
@@ -219,7 +284,6 @@ test('HttpsProviderClient.sync() supports basic auth with redirects', async (t) 
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: t.context.server2Url.host,
   });
 
   const destinationBucket = randomString();
@@ -240,7 +304,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirects', async (t) 
   }
 });
 
-test('HttpsProviderClient.sync() supports basic auth for sync with redirect to different host/port', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth with redirect to different host/port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
