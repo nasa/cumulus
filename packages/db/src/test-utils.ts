@@ -77,7 +77,7 @@ export const fakeCollectionRecordFactory = (
     regex: 'fake-regex',
     sampleFileName: 'file.txt',
   }]),
-  meta: JSON.stringify({ foo: 'bar' }),
+  meta: { foo: 'bar' },
   ...params,
 });
 

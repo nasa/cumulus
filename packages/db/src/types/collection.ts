@@ -12,14 +12,15 @@ export interface PostgresCollection {
   sample_file_name: string,
   url_path?: string,
   ignore_files_config_for_discovery?: boolean,
-  meta?: string,
+  meta?: object,
   tags?: string,
   created_at?: Date,
   updated_at?: Date,
 }
 
-export interface PostgresCollectionRecord extends PostgresCollection {
+export interface PostgresCollectionRecord extends Omit<PostgresCollection, 'tags'> {
   cumulus_id: number,
   created_at: Date,
   updated_at: Date,
+  tags: string[],
 }

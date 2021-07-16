@@ -19,13 +19,13 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
    * @param {updatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
-   * @returns {Promise<RecordType[]>} List of returned records
+   * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
    */
   async searchWithUpdatedAtRange(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<PostgresCollection>,
     updatedAtParams: updatedAtRange
-  ): Promise<PostgresCollection[]> {
+  ): Promise<PostgresCollectionRecord[]> {
     const records: Array<PostgresCollectionRecord> = await knexOrTransaction(this.tableName)
       .where((builder) => {
         builder.where(params);

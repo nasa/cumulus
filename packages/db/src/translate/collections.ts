@@ -3,7 +3,7 @@ import { PostgresCollection, PostgresCollectionRecord } from '../types/collectio
 const { removeNilProperties } = require('@cumulus/common/util');
 
 /**
-* Translates a PostgresCollectionRecord object to a `NewCollectionRecord` API collection object
+* Translates a PostgresCollectionRecord object to a `CollectionRecord` API collection object
 * @param {PostgresCollectionRecord} collectionRecord - PostgreSQL collection record to translate
 * @returns {CollectionRecord} - Translated record
 */
@@ -49,7 +49,7 @@ export const translateApiCollectionToPostgresCollection = (
     report_to_ems: record.reportToEms,
     sample_file_name: record.sampleFileName,
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
-    meta: (record.meta ? JSON.stringify(record.meta) : undefined),
+    meta: record.meta,
     // have to stringify on an array of values
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
   };

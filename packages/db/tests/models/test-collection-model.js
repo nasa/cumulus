@@ -51,7 +51,7 @@ test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
     {
       ...collectionRecord,
       files: JSON.parse(collectionRecord.files),
-      meta: JSON.parse(collectionRecord.meta),
+      meta: collectionRecord.meta,
     }
   );
 });
@@ -80,7 +80,7 @@ test.serial('CollectionPgModel.upsert() overwrites a collection record', async (
     {
       ...updatedCollection,
       files: JSON.parse(updatedCollection.files),
-      meta: JSON.parse(collectionRecord.meta),
+      meta: collectionRecord.meta,
     }
   );
 });
@@ -95,6 +95,7 @@ test('Collection.searchWithUpdatedAtRange() returns an array of records if no da
   const records = times(3, (i) => fakeCollectionRecordFactory({
     name: collectionName,
     version: i,
+    updated_at: new Date(),
   }));
   await Promise.all(records.map((r) => collectionPgModel.create(knex, r)));
 
@@ -117,6 +118,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   const records = times(3, (i) => fakeCollectionRecordFactory({
     name: collectionName,
     version: i,
+    updated_at: new Date(),
   }));
 
   const dateValue = 5000;
@@ -143,7 +145,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: searchRecord.meta }
   );
 });
 
@@ -183,7 +185,7 @@ test('Collection.searchWithUpdatedAtRange() returns a filtered array of records 
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: searchRecord.meta }
   );
 });
 
@@ -223,6 +225,6 @@ test.serial('Collection.searchWithUpdatedAtRange() returns a filtered array of r
   t.is(searchResponse.length, 1);
   t.like(
     removeNilProperties(searchResponse[0]),
-    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: JSON.parse(searchRecord.meta) }
+    { ...searchRecord, files: JSON.parse(searchRecord.files), meta: searchRecord.meta }
   );
 });
