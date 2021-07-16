@@ -147,6 +147,11 @@ variable "api_port" {
   default = null
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 8
+}
+
 variable "api_url" {
   type        = string
   default     = null
