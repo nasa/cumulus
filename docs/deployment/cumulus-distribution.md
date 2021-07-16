@@ -12,6 +12,8 @@ The Cumulus Distribution API is included in the main [Cumulus](https://github.co
 
 To configure a deployment to use Cumulus Distribution, remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings.
 
+If you are deploying from the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo, also rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+
 ## S3 Bucket Mapping
 
 The Cumulus Distribution API uses a `bucket_map.yaml` or `bucket_map.yaml.tmpl` file to determine which buckets to
@@ -33,5 +35,7 @@ The configuration file is a simple json mapping of the form:
 
 ## Switching from the Thin Egress App to Cumulus Distribution
 
-If you have previously deployed the Thin Egress App (TEA) as your distribution app, you can switch to Cumulus Distribution by changing the `cumulus-tf/main.tf` variables linked above. Note, however, that the `cumulus_distribution` module will generate a bucket map cache and overwrite any existing bucket map caches created by TEA.
+If you have previously deployed the Thin Egress App (TEA) as your distribution app, you can switch to Cumulus Distribution by changing the `cumulus-tf/main.tf` variables linked above and renaming `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+
+Note, however, that the `cumulus_distribution` module will generate a bucket map cache and overwrite any existing bucket map caches created by TEA.
 
