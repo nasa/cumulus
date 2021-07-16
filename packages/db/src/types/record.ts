@@ -1,4 +1,4 @@
 export interface updatedAtRange {
-  updatedAtFrom?: Date | null,
-  updatedAtTo?: Date | null,
+  updatedAtFrom?: Date,
+  updatedAtTo?: Date
 }
