@@ -23,8 +23,8 @@ export const translatePostgresCollectionToApiCollection = (
   reportToEms: collectionRecord.report_to_ems,
   sampleFileName: collectionRecord.sample_file_name,
   ignoreFilesConfigForDiscovery: collectionRecord.ignore_files_config_for_discovery,
-  meta: collectionRecord.meta ?? undefined,
-  tags: collectionRecord.tags ?? undefined,
+  meta: collectionRecord.meta,
+  tags: collectionRecord.tags,
 }));
 
 /**
