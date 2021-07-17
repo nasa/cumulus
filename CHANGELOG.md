@@ -134,10 +134,6 @@ behavior
       support of local cleanup
     - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
       record retrievals on status in lieu of using `waitForModelStatus`
-    - Updated API execution GET endpoint to read individual execution records
-      from PostgreSQL database instead of DynamoDB
-    - Updated API execution-status endpoint to read execution records from
-      PostgreSQL database instead of DynamoDB
   - **CUMULUS-2303**
     - Update API provider GET endpoint to read individual provider records from
       PostgreSQL database instead of DynamoDB
