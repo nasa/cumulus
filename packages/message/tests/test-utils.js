@@ -2,7 +2,7 @@
 
 const test = require('ava');
 
-const { parseException } = require('../../lib/utils');
+const { parseException } = require('../utils');
 
 test('parseExecption() returns an empty object if the exception is null or undefined', (t) => {
   t.deepEqual(

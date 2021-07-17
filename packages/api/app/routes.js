@@ -62,7 +62,7 @@ router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
-router.use('/executions', ensureAuthorized, executions);
+router.use('/executions', ensureAuthorized, executions.router);
 
 // async operation endpoint
 router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);

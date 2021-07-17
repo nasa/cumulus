@@ -31,13 +31,13 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
   addProviders,
-  api: apiTestUtils,
   cleanupProviders,
   cleanupCollections,
   waitForCompletedExecution,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
 
+const { waitAndDeletePdr } = require('../../helpers/pdrUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -191,10 +191,11 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
       granuleId: testDataGranuleId,
     });
     // clean up stack state added by test
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
+    await waitAndDeletePdr(
+      config.stackName,
+      pdrFilename,
+      'completed'
+    );
 
     // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
