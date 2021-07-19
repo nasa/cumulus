@@ -13,6 +13,8 @@ const manualConsumer = rewire('../../lambdas/manual-consumer');
 
 const Kinesis = awsServices.kinesis();
 let describeStreamStub;
+const fakeStackName = 'fake-stack';
+const rulesArray = [];
 
 test.before(() => {
   describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(() => Promise.resolve({
@@ -104,7 +106,8 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
     const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
       { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
       { Data: 'record2', ApproximateArrivalTimestamp: Date.now() },
-    ]);
+    ],
+    rulesArray);
 
     t.is(result, 2);
     t.true(processRecord.calledTwice);
@@ -114,12 +117,14 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
         data: 'record1',
       },
     });
+    t.deepEqual(processRecord.args[0][2], rulesArray);
     t.deepEqual(processRecord.args[1][0], {
       eventSourceARN: 'fake-stream-arn',
       kinesis: {
         data: 'record2',
       },
     });
+    t.deepEqual(processRecord.args[1][2], rulesArray);
   } finally {
     processRecord.restore();
   }
@@ -315,10 +320,31 @@ test('handler returns error string if no valid param is provided to determine in
 test.serial('handler calls processStream if valid parameters are provided', async (t) => {
   const logInfo = sinon.spy(log, 'info');
   const expectedOutput = 'testing-output';
+  const restoreFetchAllRules = manualConsumer.__set__('fetchAllRules', () => Promise.resolve(rulesArray));
   const restoreprocessStream = manualConsumer.__set__('processStream', () => Promise.resolve(expectedOutput));
   const actualOutput = await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   logInfo.restore();
   restoreprocessStream();
+  restoreFetchAllRules();
   t.is(actualOutput, expectedOutput);
   t.true(logInfo.calledOnce);
+});
+
+test.serial('handler calls fetchAllRules if valid parameters are provided', async (t) => {
+  const fetchAllRulesStub = sinon.stub().callsFake(() => {
+    t.is(process.env.stackName, fakeStackName);
+    return Promise.resolve(rulesArray);
+  });
+  const restoreFetchAllRules = manualConsumer.__set__('fetchAllRules', fetchAllRulesStub);
+  const restoreprocessStream = manualConsumer.__set__('processStream', (_1, _2, rulesArg) => {
+    t.deepEqual(rulesArg, rulesArray);
+    return Promise.resolve({});
+  });
+  process.env.stackName = fakeStackName;
+  await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
+  delete process.env.stackName;
+  restoreFetchAllRules();
+  restoreprocessStream();
+
+  t.true(fetchAllRulesStub.calledOnce);
 });
