@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 
-const { rules: rulesApi } = require('@cumulus/api-client');
+const { listRules } = require('@cumulus/api-client/rules');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
@@ -16,7 +16,7 @@ const Rule = require('../models/rules');
  */
 async function fetchAllRules(pageNumber = 1, rules = []) {
   const queryParams = { page: pageNumber };
-  const apiResponse = await rulesApi.listRules({
+  const apiResponse = await listRules({
     prefix: process.env.stackName,
     query: queryParams,
   });

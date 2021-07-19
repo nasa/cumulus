@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const rewire = require('rewire');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -35,10 +36,56 @@ test.before(async () => {
   ]);
 });
 
-test.after(async () => {
+test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+});
+
+test.serial('fetchAllRules invokes API to fetch rules', async (t) => {
+  const apiResults = [];
+  const listRulesStub = sinon.stub().callsFake(({ prefix }) => {
+    t.is(prefix, process.env.stackName);
+    return { body: { results: apiResults } };
+  });
+  const restoreListRules = rulesHelpers.__set__('listRules', listRulesStub);
+  const rules = await rulesHelpers.fetchAllRules();
+  restoreListRules();
+
+  t.deepEqual(rules, apiResults);
+  t.true(listRulesStub.calledOnce);
+});
+
+test.serial('fetchAllRules pages through results until reaching an empty list', async (t) => {
+  const listRulesStub = sinon.stub();
+  const rule1 = { name: 'rule-1' };
+  const rule2 = { name: 'rule-2' };
+  const firstCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 1 },
+  };
+  const secondCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 2 },
+  };
+  const thirdCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 3 },
+  };
+  listRulesStub.withArgs(firstCallArgs).returns({ body: { results: [rule1] } });
+  listRulesStub.withArgs(secondCallArgs).returns({ body: { results: [rule2] } });
+  listRulesStub.withArgs(thirdCallArgs).returns({ body: { results: [] } });
+
+  const restoreListRules = rulesHelpers.__set__('listRules', listRulesStub);
+  const expectedOutput = [rule1, rule2];
+  const actualOutput = await rulesHelpers.fetchAllRules();
+  restoreListRules();
+
+  t.true(listRulesStub.calledThrice);
+  t.true(listRulesStub.withArgs(firstCallArgs).calledOnce);
+  t.true(listRulesStub.withArgs(secondCallArgs).calledOnce);
+  t.true(listRulesStub.withArgs(thirdCallArgs).calledOnce);
+  t.deepEqual(actualOutput, expectedOutput);
 });
 
 test('filterRulesbyCollection returns rules with matching only collection name', (t) => {
@@ -100,6 +147,8 @@ test('filterRulesbyCollection returns all rules if no collection information is 
     [rule1, rule2]
   );
 });
+
+test.todo('filterRulesByRuleParams returns matching rules');
 
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
   const rule1 = fakeRuleFactoryV2({
