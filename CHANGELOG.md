@@ -58,6 +58,7 @@ database via the API
       - `getGranuleTimeToPreprocess`
       - `getGranuleTimeToArchive`
       - `generateGranuleApiRecord`
+    - Added `@cumulus/message/PDRs/generatePdrApiRecordFromMessage` to generate PDR from Cumulus workflow message
     - Added helpers to `@cumulus/es-client/indexer`:
       - `deleteAsyncOperation` to delete async operation records from Elasticsearch
       - `updateAsyncOperation` to update an async operation record in Elasticsearch
@@ -113,11 +114,12 @@ behavior
     - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
+      - PDRs
+      - granules
     - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
     - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - `sfEventSqsToDbRecords` Lambda now writes the following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
-      - executions
-      - granules
     - Moved:
       - `packages/api/lib/granules.getGranuleProductVolume` ->
       `@cumulus/message/Granules.getGranuleProductVolume`
