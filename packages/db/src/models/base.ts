@@ -2,8 +2,8 @@ import Knex from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
+import { updatedAtRange } from '../types/record';
 import { tableNames } from '../tables';
-
 import { isRecordDefined } from '../database';
 
 class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
@@ -15,6 +15,32 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     tableName: tableNames,
   }) {
     this.tableName = tableName;
+  }
+
+  /**
+   * Fetches multiple items from Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @param {updatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
+   * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
+   */
+  async searchWithUpdatedAtRange(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<RecordType>,
+    updatedAtParams: updatedAtRange
+  ): Promise<RecordType[]> {
+    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
+      .where((builder) => {
+        builder.where(params);
+        if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
+          builder.whereBetween('updated_at', [
+            updatedAtParams?.updatedAtFrom ?? new Date(0),
+            updatedAtParams?.updatedAtTo ?? new Date(),
+          ]);
+        }
+      });
+    return records;
   }
 
   async count(
