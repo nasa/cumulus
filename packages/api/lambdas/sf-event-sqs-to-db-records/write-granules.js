@@ -401,6 +401,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
     processingTimeInfo,
     queryFields,
     granuleModel,
+    files,
     cmrUtils = CmrUtils,
     updatedAt = Date.now(),
     esClient = await Search.es(),
@@ -418,6 +419,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
     queryFields,
     updatedAt,
     cmrUtils,
+    files,
   });
   try {
     await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
@@ -516,6 +518,7 @@ const _writeGranule = async ({
       granuleModel,
       esClient,
       updatedAt,
+      files,
     });
   });
 

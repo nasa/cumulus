@@ -437,7 +437,7 @@ test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elastics
   t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {
+test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -448,6 +448,7 @@ test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL writ
     granulePgModel,
     knex,
     providerCumulusId,
+    files,
   } = t.context;
 
   cumulusMessage.meta.status = 'completed';
@@ -461,6 +462,9 @@ test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL writ
     granuleModel,
   });
 
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.deepEqual(dynamoGranule.files, files);
+
   const granule = await granulePgModel.get(
     knex,
     {
@@ -469,9 +473,20 @@ test.serial('writeGranules() saves file records to PostgreSQL if PostgreSQL writ
     }
   );
 
-  t.true(
-    await filePgModel.exists(knex, { granule_cumulus_id: granule.cumulus_id })
-  );
+  const pgFiles = await filePgModel.search(knex, { granule_cumulus_id: granule.cumulus_id });
+  files.forEach((file) => {
+    const matchingPgFile = pgFiles.find(
+      (pgFile) => file.bucket === pgFile.bucket && file.key === pgFile.key
+    );
+    t.like(
+      matchingPgFile,
+      {
+        bucket: file.bucket,
+        key: file.key,
+        file_size: `${file.size}`,
+      }
+    );
+  });
 });
 
 test.serial('writeGranules() does not persist file records to PostgreSQL if the workflow status is "running"', async (t) => {
