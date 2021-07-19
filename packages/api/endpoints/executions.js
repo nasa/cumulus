@@ -7,7 +7,6 @@ const {
   getApiGranuleExecutionCumulusIds,
   getApiGranuleCumulusIds,
   ExecutionPgModel,
-  GranulesExecutionsPgModel,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
@@ -128,11 +127,11 @@ async function workflowsByGranules(req, res) {
   const knex = await getKnexClient();
   const granules = await getGranulesForPayload(payload, knex);
 
-  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const executionsPgModel = new ExecutionPgModel();
 
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
 
-  const workflowNames = await granulesExecutionsPgModel
+  const workflowNames = await executionsPgModel
     .getWorkflowNameJoin(knex, granuleCumulusIds);
 
   return res.send(workflowNames);
