@@ -262,16 +262,6 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-Do not merge `master` back into the release merge branch **until**:
-
-- the PR is approved,
-- CI has passed against the release artifacts above,
-- and you are ready to merge.
-
-Doing so earlier, even just to resolve merge conflicts, might cause headaches if you need to troubleshoot. For example, if CI fails on the release build for any reason and if you have merged master into the release already you will no longer have a branch representing ONLY the release and will need to specify a specific commit SHA.
-
-**IMPORTANT:** **Do not squash this merge**. Doing so will make the "compare" view from step 4 show an incorrect diff, because the tag is linked to a specific commit on the base branch.
-
 If this is a backport, you will need to create a PR that ports the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example, fixes in backport version `1.14.5` may not be available in `1.15.0` because the fix was introduced in `1.15.3`.
 
 ## Troubleshooting
