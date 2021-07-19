@@ -1,8 +1,5 @@
 const test = require('ava');
-const times = require('lodash/times');
 const cryptoRandomString = require('crypto-random-string');
-
-const { removeNilProperties } = require('@cumulus/common/util');
 
 const {
   CollectionPgModel,
