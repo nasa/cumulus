@@ -5,7 +5,7 @@ const pMap = require('p-map');
 const { envUtils } = require('@cumulus/common');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getQueueUrlByName, sendSQSMessage } = require('@cumulus/aws-client/SQS');
+const { getQueueUrlByName, sendSQSMessage, sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { getS3PrefixForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Logger = require('@cumulus/logger');
 
@@ -50,12 +50,10 @@ async function replayArchivedMessages(event) {
   const replayedMessages = [];
   const queueName = event.queueName;
   const queueUrl = await getQueueUrlByName(queueName);
-  logger.debug(`Queue URL is ${queueUrl}`);
   const messagesToReplay = await getArchivedMessagesFromQueue(event.queueName);
   await pMap(
     messagesToReplay,
     async (message) => {
-      logger.debug(`Sending message to queue URL ${queueUrl}`);
       try {
         await sendSQSMessage(queueUrl, message);
         logger.debug(`Successfully sent message to queue URL ${queueUrl}`);

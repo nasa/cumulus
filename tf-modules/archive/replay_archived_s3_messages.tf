@@ -37,11 +37,7 @@ data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
     statement {
       actions = [
         "sqs:SendMessage",
-        "sqs:ReceiveMessage",
-        "sqs:ChangeMessageVisibility",
-        "sqs:DeleteMessage",
         "sqs:GetQueueUrl",
-        "sqs:GetQueueAttributes",
       ]
       resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
