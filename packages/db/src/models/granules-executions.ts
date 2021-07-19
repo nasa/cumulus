@@ -65,17 +65,16 @@ export default class GranulesExecutionsPgModel {
   ): Promise<Array<Object>> {
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
     const numberOfGranules = granuleCumulusIdsArray.length;
-    const { executions: executionsTable, granules: granulesTable } = tableNames;
+    const { executions: executionsTable } = tableNames;
 
     const aggregatedWorkflowCounts = await knexOrTransaction(this.tableName)
       .select('workflow_name')
-      .count('*')
+      .countDistinct('granule_cumulus_id')
       .innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`)
-      .innerJoin(granulesTable, `${this.tableName}.granule_cumulus_id`, `${granulesTable}.cumulus_id`)
       .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
-      .groupBy('workflow_name');
+      .groupBy('workflow_name')
+      .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules]);
     return aggregatedWorkflowCounts
-      .filter((workflowCounts) => Number(workflowCounts.count) === numberOfGranules)
       .map((workflowCounts) => workflowCounts.workflow_name);
   }
 
