@@ -147,7 +147,7 @@ function processRecord(record, fromSNS, allRules) {
   }
 
   return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => Promise.resolve(filterRulesByRuleParams(allRules, ruleParams)))
+    .then(() => filterRulesByRuleParams(allRules, ruleParams))
     .then((applicableRules) => Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
