@@ -114,6 +114,7 @@ behavior
     - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
     - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for granules API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
       - executions
       - PDRs
