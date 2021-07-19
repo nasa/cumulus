@@ -10,13 +10,6 @@ data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
   }
 
   statement {
-    actions   = [
-      "s3:ListBucket"
-    ]
-    resources = ["arn:aws:s3:::${var.system_bucket}"]
-  }
-
-  statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
@@ -34,14 +27,6 @@ data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
     ]
     resources = ["*"]
   }
-
-  statement {
-    actions = [
-      "s3:GetObject*",
-    ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
-  }
-
   statement {
     actions = [
       "secretsmanager:GetSecretValue"
@@ -52,8 +37,13 @@ data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
     statement {
       actions = [
         "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueUrl",
+        "sqs:GetQueueAttributes",
       ]
-      resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-*"]
+      resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
 }
 
@@ -101,5 +91,11 @@ resource "aws_lambda_function" "replay_archived_s3_messages" {
     }
   }
 
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "replay_archived_s3_messages" {
+  name = "/aws/lambda/${aws_lambda_function.replay_archived_s3_messages.function_name}"
+  retention_in_days = 30
   tags = var.tags
 }
