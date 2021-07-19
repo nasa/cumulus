@@ -6,6 +6,7 @@ const {
   getKnexClient,
   getApiGranuleExecutionCumulusIds,
   getApiGranuleCumulusIds,
+  getWorkflowNameIntersectFromGranuleIds,
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
@@ -127,12 +128,9 @@ async function workflowsByGranules(req, res) {
   const knex = await getKnexClient();
   const granules = await getGranulesForPayload(payload, knex);
 
-  const executionsPgModel = new ExecutionPgModel();
-
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
 
-  const workflowNames = await executionsPgModel
-    .getWorkflowNameJoin(knex, granuleCumulusIds);
+  const workflowNames = await getWorkflowNameIntersectFromGranuleIds(knex, granuleCumulusIds);
 
   return res.send(workflowNames);
 }

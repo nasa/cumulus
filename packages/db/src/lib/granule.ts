@@ -85,7 +85,7 @@ export const getApiGranuleCumulusIds = async (
       collection_cumulus_id: collectionCumulusId,
     });
   }));
-  return granuleCumulusIds;
+  return [...new Set(granuleCumulusIds)];
 };
 
 /**

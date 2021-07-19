@@ -73,6 +73,7 @@ export { translateApiGranuleToPostgresGranule } from './translate/granules';
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
+  getWorkflowNameIntersectFromGranuleIds,
 } from './lib/execution';
 
 export {

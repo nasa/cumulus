@@ -72,24 +72,6 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
       });
     return executions;
   }
-  async getWorkflowNameJoin(
-    knexOrTransaction: Knex | Knex.Transaction,
-    granuleCumulusIds: Array<number> | number
-  ): Promise<Array<Object>> {
-    const granuleCumulusIdsArray = [granuleCumulusIds].flat();
-    const numberOfGranules = granuleCumulusIdsArray.length;
-    const { granulesExecutions: granulesExecutionsTable } = tableNames;
-
-    const aggregatedWorkflowCounts = await knexOrTransaction(this.tableName)
-      .select('workflow_name')
-      .countDistinct('granule_cumulus_id')
-      .innerJoin(granulesExecutionsTable, `${this.tableName}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
-      .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
-      .groupBy('workflow_name')
-      .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules]);
-    return aggregatedWorkflowCounts
-      .map((workflowCounts) => workflowCounts.workflow_name);
-  }
 }
 
 export { ExecutionPgModel };
