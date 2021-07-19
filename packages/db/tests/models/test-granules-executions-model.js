@@ -41,7 +41,7 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const [executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
-    fakeExecutionRecordFactory({ workflow_name: 'fakeWorkflow' })
+    fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = executionCumulusId;
   const [granuleCumulusId] = await t.context.granulePgModel.create(

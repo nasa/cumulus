@@ -59,25 +59,6 @@ export default class GranulesExecutionsPgModel {
     return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
   }
 
-  async getWorkflowNameJoin(
-    knexOrTransaction: Knex | Knex.Transaction,
-    granuleCumulusIds: Array<number> | number
-  ): Promise<Array<Object>> {
-    const granuleCumulusIdsArray = [granuleCumulusIds].flat();
-    const numberOfGranules = granuleCumulusIdsArray.length;
-    const { executions: executionsTable } = tableNames;
-
-    const aggregatedWorkflowCounts = await knexOrTransaction(this.tableName)
-      .select('workflow_name')
-      .countDistinct('granule_cumulus_id')
-      .innerJoin(executionsTable, `${this.tableName}.execution_cumulus_id`, `${executionsTable}.cumulus_id`)
-      .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
-      .groupBy('workflow_name')
-      .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules]);
-    return aggregatedWorkflowCounts
-      .map((workflowCounts) => workflowCounts.workflow_name);
-  }
-
   search(
     knexTransaction: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>

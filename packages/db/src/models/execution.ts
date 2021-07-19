@@ -4,7 +4,6 @@ import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
-// import { PostgresGranuleExecution } from '../types/granule-execution';
 
 const queries = require('@cumulus/es-client/queries');
 

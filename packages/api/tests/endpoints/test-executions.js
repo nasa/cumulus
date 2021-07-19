@@ -191,8 +191,6 @@ test.before(async (t) => {
     return executionPgRecord;
   }));
 
-  console.log(t.context.fakePGExecutions);
-
   t.context.executionCumulusIds = executionCumulusIds.flat();
 
   await esClient.indices.refresh();
