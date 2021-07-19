@@ -290,7 +290,6 @@ test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
   });
 });
 
-
 test('ExecutionsPgModel.getWorkflowNameJoin() returns correct values', async (t) => {
   const {
     knex,
@@ -345,7 +344,6 @@ test('ExecutionsPgModel.getWorkflowNameJoin() returns correct values', async (t)
     granule_cumulus_id: granuleCumulusId3,
     execution_cumulus_id: executionCumulusId3,
   });
-
 
   const results = await executionPgModel
     .getWorkflowNameJoin(knex, [granuleCumulusId1, granuleCumulusId2, granuleCumulusId3]);
