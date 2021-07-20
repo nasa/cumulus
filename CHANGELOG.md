@@ -72,6 +72,16 @@ The default reserved concurrency value is 8.
   - Added helpers to `@cumulus/api-client`:
     - `pdrs.deletePdr` - Delete a PDR via the API
     - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
+  - Add integration test for cumulus distribution API
+- **CUMULUS-2373**
+  - Added `replayArchivedS3Messages` lambda to replay archived incoming SQS
+    messages from S3.
+  - Added `/replayArchivedS3Messages` endpoint to trigger an async operation for
+    the `replayArchivedS3Messages` lambda.
+  - Added unit tests and integration tests for new endpoint and lambda.
+  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
+    for an archived message.
+  - Added new `async_operation` type `Archived S3 Messages Replay`.
 
 ### Changed
 
@@ -105,7 +115,9 @@ the error object:
 behavior
 - **CUMULUS-2463**
   - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
-
+- **CUMULUS-2373**
+  - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
+    by `queueName`.
 
 ### Fixed
 
