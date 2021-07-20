@@ -44,7 +44,7 @@ class HttpProviderClient {
       throw new ReferenceError('Found providerConfig.username, but providerConfig.password is not defined');
     }
     this.encrypted = providerConfig.encrypted;
-    this.basicAuthRedirectHost = this.providerConfig.basicAuthRedirectHost;
+    this.allowedRedirects = this.providerConfig.allowedRedirects || [];
     this.endpoint = buildURL({
       protocol: this.protocol,
       host: this.host,
@@ -71,22 +71,28 @@ class HttpProviderClient {
       // expression so that we can use the bound value
       // of "this"
       handleBeforeRedirect(options, response) {
+        const requestUrl = new URL(response.requestUrl);
+        // If redirecting to the same host and port, do nothing
+        if (options.url.host === requestUrl.host) {
+          return;
+        }
+
         // If there is no allowed redirect for basic auth specified, do not
         // forward auth credentials
-        if (!this.basicAuthRedirectHost) {
+        if (!this.allowedRedirects) {
           log.debug(`
             Request is redirecting to ${options.url.toString()} but no
-            basicAuthRedirectHost is specified for provider, so auth
+            allowedRedirects are specified for provider, so auth
             credentials will not be forwarded
           `);
           return;
         }
 
-        if (options.url.host !== this.basicAuthRedirectHost) {
+        if (!this.allowedRedirects.includes(options.url.host)) {
           log.debug(`
-            basicAuthRedirectHost ${this.basicAuthRedirectHost} does not match
-            host for redirect ${options.url.host}, so auth
-            credentials will not be forwarded
+            ${options.url.host} does match any of the allowed redirects
+            in ${JSON.stringify(this.allowedRedirects)}, so auth credentials
+            will not be forwarded
           `);
           return;
         }

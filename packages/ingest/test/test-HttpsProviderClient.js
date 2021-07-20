@@ -195,7 +195,7 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
-test('HttpsProviderClient.download() supports basic auth with redirects', async (t) => {
+test('HttpsProviderClient.download() supports basic auth with redirect to same host', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -223,7 +223,7 @@ test('HttpsProviderClient.download() supports basic auth with redirect to differ
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: t.context.server2Url.host,
+    allowedRedirects: [t.context.server2Url.host],
   });
 
   const localPath = path.join(tmpdir(), randomString());
@@ -236,7 +236,7 @@ test('HttpsProviderClient.download() supports basic auth with redirect to differ
   }
 });
 
-test('HttpsProviderClient.download() fails on basic auth redirect to different host if basicAuthRedirectHost is missing', async (t) => {
+test('HttpsProviderClient.download() fails on basic auth redirect to different host if allowedRedirects are missing', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -259,7 +259,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   }
 });
 
-test('HttpsProviderClient.download() fails on basic auth redirect to different host if basicAuthRedirectHost does not match redirect host', async (t) => {
+test('HttpsProviderClient.download() fails on basic auth redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -267,7 +267,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: 'fake-host',
+    allowedRedirects: ['fake-host'],
   });
 
   const localPath = path.join(tmpdir(), randomString());
@@ -282,7 +282,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   }
 });
 
-test('HttpsProviderClient.sync() supports basic auth with redirects', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth with redirect to same host', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -321,7 +321,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to different 
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: t.context.server2Url.host,
+    allowedRedirects: [t.context.server2Url.host],
   });
 
   const destinationBucket = randomString();
@@ -347,7 +347,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to different 
   }
 });
 
-test('HttpsProviderClient.sync() fails on basic auth redirect to different host if basicAuthRedirectHost is missing', async (t) => {
+test('HttpsProviderClient.sync() fails on basic auth redirect to different host if allowedRedirects are missing', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -378,7 +378,7 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
   }
 });
 
-test('HttpsProviderClient.sync() fails on basic auth redirect to different host if basicAuthRedirectHost does not match redirect host', async (t) => {
+test('HttpsProviderClient.sync() fails on basic auth redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -386,7 +386,7 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    basicAuthRedirectHost: 'fake-host',
+    allowedRedirects: ['fake-host'],
   });
 
   const destinationBucket = randomString();
