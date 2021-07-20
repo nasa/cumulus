@@ -194,10 +194,10 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     pdrName,
     workflowStatus,
     cmrUtils: t.context.fakeCmrUtils,
-    // in reality granuleFiles comes from FileUtils.buildDatabaseFiles
+    // in reality files comes from FileUtils.buildDatabaseFiles
     // and not the raw granule.files, but that functionality is tested
     // elsewhere and doesn't need to be re-verified here
-    granuleFiles: granule.files,
+    files: granule.files,
   });
 
   t.deepEqual(
@@ -245,10 +245,10 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
     workflowStatus: 'failed',
     error,
     cmrUtils: t.context.fakeCmrUtils,
-    // in reality granuleFiles comes from FileUtils.buildDatabaseFiles
+    // in reality files comes from FileUtils.buildDatabaseFiles
     // and not the raw granule.files, but that functionality is tested
     // elsewhere and doesn't need to be re-verified here
-    granuleFiles: granule.files,
+    files: granule.files,
   });
 
   t.deepEqual(
