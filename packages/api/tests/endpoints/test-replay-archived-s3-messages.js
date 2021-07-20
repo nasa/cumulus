@@ -5,17 +5,39 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const asyncOperations = require('@cumulus/async-operations');
+const awsServices = require('@cumulus/aws-client/services');
+const SQS = require('@cumulus/aws-client/SQS');
 const { s3 } = require('@cumulus/aws-client/services');
-const {
-  recursivelyDeleteS3Bucket,
-} = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
-
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
-
 const { app } = require('../../app');
+const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+
+/**
+ * create a source queue
+ *
+ * @param {string} queueNamePrefix - prefix of the queue name
+ * @param {string} visibilityTimeout - visibility timeout for queue messages
+ * @returns {Object} - {queueUrl: <url>} queue created
+ */
+async function createSqsQueues(
+  queueNamePrefix,
+  visibilityTimeout = '300'
+) {
+  // source queue
+  const queueName = `${queueNamePrefix}Queue`;
+  const queueParms = {
+    QueueName: queueName,
+    Attributes: {
+      VisibilityTimeout: visibilityTimeout,
+    },
+  };
+
+  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
+  return { queueName, queueUrl };
+}
 
 process.env = {
   ...process.env,
@@ -44,6 +66,7 @@ test.before(async (t) => {
   t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
+  t.context.queues = await createSqsQueues(randomString());
 });
 
 test.beforeEach((t) => {
@@ -52,18 +75,17 @@ test.beforeEach((t) => {
 
 test.after.always(async (t) => {
   t.context.asyncOperationStartStub.restore();
+  await SQS.deleteQueue(t.context.queues.queueUrl);
   await Promise.all([
     recursivelyDeleteS3Bucket(process.env.system_bucket),
     accessTokenModel.deleteTable()]);
 });
 
 test.serial('POST /replayArchivedS3Messages starts an async-operation with specified payload', async (t) => {
-  const { asyncOperationStartStub } = t.context;
-  const queueName = 'archived-sqs-messages';
-
+  const { asyncOperationStartStub, queues } = t.context;
   const body = {
     type: 'sqs',
-    queueName: queueName,
+    queueName: queues.queueName,
   };
 
   const response = await request(app)

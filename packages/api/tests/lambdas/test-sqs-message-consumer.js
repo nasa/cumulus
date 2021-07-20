@@ -15,6 +15,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
+const { getQueueNameFromUrl } = require('@cumulus/aws-client/SQS');
 const Rule = require('../../models/rules');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
@@ -382,8 +383,15 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
     queues[1].queueUrl,
     { testdata: randomString() }
   );
-  const enabledQueueKey = getS3KeyForArchivedMessage(stackName, firstMessage.MessageId);
-  const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
+
+  const firstMessageId = firstMessage.MessageId;
+  const secondMessageId = secondMessage.MessageId;
+
+  const enabledQueueName = getQueueNameFromUrl(queues[0].queueUrl);
+  const disabledQueueName = getQueueNameFromUrl(queues[1].queueUrl);
+
+  const enabledQueueKey = getS3KeyForArchivedMessage(stackName, firstMessageId, enabledQueueName);
+  const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessageId, disabledQueueName);
 
   await handler(event);
 
@@ -416,7 +424,8 @@ test.serial('processQueues archives multiple messages', async (t) => {
         { testdata: randomString() }
       ))
   );
-  const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId);
+  const queueName = getQueueNameFromUrl(queues[0].queueUrl);
+  const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId, queueName);
   const keys = messages.map((m) => deriveKey(m));
 
   await handler(event);
