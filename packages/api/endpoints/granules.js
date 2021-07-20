@@ -15,7 +15,7 @@ const {
   CollectionPgModel,
   getKnexClient,
   GranulePgModel,
-  translateApiCollectionToPostgresCollection,
+  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 
 const Search = require('@cumulus/es-client/search').Search;
@@ -75,7 +75,7 @@ async function put(req, res) {
     const collectionPgModel = new CollectionPgModel();
     const knex = await getKnexClient();
     const { name, version } = deconstructCollectionId(granule.collectionId);
-    const collection = translateApiCollectionToPostgresCollection(
+    const collection = translatePostgresCollectionToApiCollection(
       await collectionPgModel.get(knex, { name, version })
     );
     await granuleModelClient.reingest({
@@ -92,7 +92,6 @@ async function put(req, res) {
     if (collection.duplicateHandling !== 'replace') {
       response.warning = 'The granule files may be overwritten';
     }
-
     return res.send(response);
   }
 
