@@ -29,6 +29,8 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
