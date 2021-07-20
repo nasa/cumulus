@@ -22,6 +22,7 @@ const {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
   upsertGranuleWithExecutionJoinRecord,
+  fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
@@ -529,28 +530,6 @@ test('POST /executions/search-by-granules returns correct executions when granul
   ));
 });
 
-test('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
-  const { fakeGranules, fakePGExecutions } = t.context;
-
-  const response = await request(app)
-    .post('/executions/workflows-by-granules?limit=10')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-
-  t.is(response.body.length, 1);
-
-  response.body.forEach((workflow) => t.deepEqual(
-    workflow,
-    fakePGExecutions
-      .map((fakePGExecution) => fakePGExecution.workflow_name)
-      .find((workflowName) => workflowName === workflow)
-  ));
-});
-
 test.serial('POST /executions/search-by-granules returns correct executions when query is passed', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
@@ -727,4 +706,49 @@ test.serial('POST /executions/search-by-granules returns 400 when the Metrics EL
     .expect(400);
 
   t.regex(response.body.message, /ELK Metrics stack not configured/);
+});
+
+test.serial('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
+  const { collectionId, fakeGranules, fakePGExecutions } = t.context;
+
+  const response = await request(app)
+    .post('/executions/workflows-by-granules?limit=10')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.body.length, 1);
+
+  response.body.forEach((workflow) => t.deepEqual(
+    workflow,
+    fakePGExecutions
+      .map((fakePGExecution) => fakePGExecution.workflow_name)
+      .find((workflowName) => workflowName === workflow)
+  ));
+});
+
+test.serial('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
+  const { knex, collectionId, fakeGranules, fakePGGranules } = t.context;
+
+  const [mostRecentExecutionCumulusId]
+    = await executionPgModel.create(knex, fakeExecutionRecordFactory({ workflow_name: 'newWorkflow' }));
+
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, fakePGGranules[0], mostRecentExecutionCumulusId
+  );
+
+  const response = await request(app)
+    .post('/executions/workflows-by-granules?limit=10')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.body.length, 3);
+  // newWorkflow should be the first result since it is most recent
+  t.is(response.body[0], 'newWorkflow');
 });
