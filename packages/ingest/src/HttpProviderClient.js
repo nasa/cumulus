@@ -88,7 +88,16 @@ class HttpProviderClient {
           return;
         }
 
-        if (!this.allowedRedirects.includes(options.url.host)) {
+        const hasDifferentPort = options.url.port !== requestUrl.port;
+        const isAllowedRedirect = hasDifferentPort
+          // If redirecting to a different port (example.com:80 -> test.com:53), port is required
+          // to specify allowed redirect
+          ? this.allowedRedirects.includes(options.url.host)
+          // If not redirecting to a different port (example.com:80 -> test.com:80), host name is
+          // sufficient to specify allowed redirect
+          : this.allowedRedirects.includes(options.url.hostname);
+
+        if (!isAllowedRedirect) {
           log.debug(`
             ${options.url.host} does match any of the allowed redirects
             in ${JSON.stringify(this.allowedRedirects)}, so auth credentials
