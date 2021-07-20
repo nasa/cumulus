@@ -6,7 +6,10 @@ import { updatedAtRange } from '../types/record';
 import { tableNames } from '../tables';
 import { isRecordDefined } from '../database';
 
-class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
+class BasePgModel<ItemType, RecordType extends {
+  cumulus_id: number,
+  updated_at: Date,
+}> {
   readonly tableName: tableNames;
 
   constructor({
