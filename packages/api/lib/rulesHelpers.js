@@ -14,16 +14,28 @@ const Rule = require('../models/rules');
  * @param {Array<Object>} [rules] - partial rules array
  * @returns {Array<Object>} all rules
  */
-async function fetchAllRules(pageNumber = 1, rules = []) {
-  const queryParams = { page: pageNumber };
+async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
+  const query = { ...queryParams, page: pageNumber };
   const apiResponse = await listRules({
     prefix: process.env.stackName,
-    query: queryParams,
+    query,
   });
   if (apiResponse.body.results.length > 0) {
-    return fetchAllRules((pageNumber + 1), rules.concat(apiResponse.body.results));
+    return fetchRules({
+      pageNumber: (pageNumber + 1),
+      rules: rules.concat(apiResponse.body.results),
+      queryParams,
+    });
   }
   return rules;
+}
+
+async function fetchAllRules() {
+  return await fetchRules({});
+}
+
+async function fetchEnabledRules() {
+  return await fetchRules({ queryParams: { state: 'ENABLED' } });
 }
 
 const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
@@ -99,6 +111,8 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 
 module.exports = {
   fetchAllRules,
+  fetchEnabledRules,
+  fetchRules,
   filterRulesbyCollection,
   filterRulesByRuleParams,
   getMaxTimeoutForRules,

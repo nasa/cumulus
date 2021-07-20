@@ -13,24 +13,15 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
-const {
-  destroyLocalTestDb,
-  generateLocalTestDb,
-  RulePgModel,
-  translateApiRuleToPostgresRule,
-} = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
-
 const {
   handler,
 } = require('../../lambdas/sqs-message-consumer');
 
-const testDbName = randomString(12);
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 
@@ -38,30 +29,21 @@ const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
 
-let dbClient;
-let rulePgModel;
 const event = { messageLimit: 10, timeLimit: 100 };
-
-const fakePgRuleFactory = (params) => {
-  const rule = fakeRuleFactoryV2(params);
-  delete rule.provider;
-  delete rule.collection;
-  translateApiRuleToPostgresRule(rule);
-};
 
 async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
   const queues = await Promise.all(range(2).map(
     () => createSqsQueues(randomString(), queueMaxReceiveCount)
   ));
-  let rules = [
-    fakePgRuleFactory({
+  const rules = [
+    fakeRuleFactoryV2({
       workflow,
       rule: {
         type: 'onetime',
       },
       state: 'ENABLED',
     }),
-    fakePgRuleFactory({
+    fakeRuleFactoryV2({
       workflow,
       rule: {
         type: 'sqs',
@@ -73,7 +55,7 @@ async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
       },
       state: 'ENABLED',
     }),
-    fakePgRuleFactory({
+    fakeRuleFactoryV2({
       workflow,
       rule: {
         type: 'sqs',
@@ -86,17 +68,10 @@ async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
       state: 'DISABLED',
     }),
   ];
-  rules = await Promise.all(
-    rules.map((rule) => rulePgModel.create(dbClient, rule))
-  );
   return { rules, queues };
 }
 
-async function cleanupRulesAndQueues(rules, queues) {
-  await Promise.all(
-    rules.map((rule) => rulePgModel.delete(dbClient, rule))
-  );
-
+async function cleanupQueues(queues) {
   const queueUrls = queues.reduce(
     (accumulator, currentValue) => accumulator.concat(Object.values(currentValue)), []
   );
@@ -106,12 +81,7 @@ async function cleanupRulesAndQueues(rules, queues) {
   );
 }
 
-test.before(async (t) => {
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
-  dbClient = knex;
-  rulePgModel = new RulePgModel();
+test.before(async () => {
   await createBucket(process.env.system_bucket);
 
   await Promise.all([
@@ -128,42 +98,30 @@ test.before(async (t) => {
   ]);
 });
 
-test.after.always(async (t) => {
-  // cleanup table
+test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await destroyLocalTestDb({
-    knex: t.context.testKnex,
-    knexAdmin: t.context.testKnexAdmin,
-    testDbName,
-  });
 });
 
 test.beforeEach((t) => {
   t.context.queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
+  t.context.fetchAllRulesStub = sinon.stub(rulesHelpers, 'fetchAllRules').returns([]);
 });
 
 test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
+  t.context.fetchAllRulesStub.restore();
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
   const { queueMessageStub } = t.context;
   await createRulesAndQueues();
-  await handler(event, dbClient);
+  await handler(event);
   t.is(queueMessageStub.notCalled, true);
 });
 
 test.serial('processQueues does nothing when queue does not exist', async (t) => {
   const { queueMessageStub } = t.context;
-  await rulePgModel.create(dbClient, fakePgRuleFactory({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: 'non-existent-queue',
-    },
-    state: 'ENABLED',
-  }));
-  await handler(event, dbClient);
+  await handler(event);
   t.is(queueMessageStub.notCalled, true);
 });
 
@@ -175,7 +133,7 @@ test.serial('processQueues does nothing when no rule matches collection in messa
     name: randomId('col'),
     version: '1.0.0',
   };
-  const rule = await rulePgModel.create(dbClient, fakePgRuleFactory({
+  const rule = fakeRuleFactoryV2({
     collection: {
       name: 'different-collection',
       version: '1.2.3',
@@ -186,23 +144,25 @@ test.serial('processQueues does nothing when no rule matches collection in messa
       value: queue.queueUrl,
     },
     state: 'ENABLED',
-  }));
+  });
+  t.context.fetchAllRulesStub.returns([rule]);
 
   await SQS.sendSQSMessage(
     queue.queueUrl,
     { collection }
   );
-  await handler(event, dbClient);
+  await handler(event);
 
   t.is(queueMessageStub.notCalled, true);
   t.teardown(async () => {
-    await cleanupRulesAndQueues([rule], [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchAllRulesStub.returns(rules);
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
 
@@ -223,7 +183,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
         { testdata: randomString() }
       ))
   );
-  await handler(event, dbClient);
+  await handler(event);
 
   // verify only messages from ENABLED rule are processed
   t.is(queueMessageStub.calledTwice, true);
@@ -232,7 +192,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
 
   // messages are not processed multiple times in parallel
   // given the visibilityTimeout is long enough
-  await handler(event, dbClient);
+  await handler(event);
   t.is(queueMessageStub.notCalled, true);
   t.is(queueMessageFromEnabledRuleStub.notCalled, true);
 
@@ -247,7 +207,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // in this test, workflow executions are stubbed
   t.is(numberOfMessages.numberOfMessagesNotVisible, 2);
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
@@ -261,6 +221,7 @@ test.serial('messages are retried the correct number of times based on the rule 
     { visibilityTimeout, retries: 1 },
     queueMaxReceiveCount
   );
+  t.context.fetchAllRulesStub.returns(rules);
 
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
@@ -274,12 +235,12 @@ test.serial('messages are retried the correct number of times based on the rule 
       ))
   );
 
-  await handler(event, dbClient);
+  await handler(event);
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
     await delay(visibilityTimeout * 1000);
-    await handler(event, dbClient);
+    await handler(event);
   }
   /* eslint-enable no-await-in-loop */
 
@@ -296,7 +257,7 @@ test.serial('messages are retried the correct number of times based on the rule 
   t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
@@ -304,7 +265,7 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
   const { queueMessageStub } = t.context;
 
   const queue = await createSqsQueues(randomId('queue'));
-  const rule = fakePgRuleFactory({
+  const rule = fakeRuleFactoryV2({
     name: randomId('matchingRule'),
     rule: {
       type: 'sqs',
@@ -313,20 +274,20 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
     state: 'ENABLED',
     workflow,
   });
+  t.context.fetchAllRulesStub.returns([rule]);
 
-  const createdRule = await rulePgModel.create(dbClient, rule);
   await SQS.sendSQSMessage(
     queue.queueUrl,
     { foo: 'bar' }
   );
 
-  await handler(event, dbClient);
+  await handler(event);
 
   // Should queue message for enabled rule
   t.is(queueMessageStub.callCount, 1);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues([createdRule], [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
@@ -342,7 +303,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   // read when processing all rules
   const visibilityTimeout = 0;
   const rules = [
-    fakePgRuleFactory({
+    fakeRuleFactoryV2({
       name: randomId('matchingRule'),
       collection,
       rule: {
@@ -355,7 +316,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
       state: 'ENABLED',
       workflow,
     }),
-    fakePgRuleFactory({
+    fakeRuleFactoryV2({
       rule: {
         type: 'sqs',
         value: queue.queueUrl,
@@ -367,26 +328,27 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
       workflow,
     }),
   ];
+  t.context.fetchAllRulesStub.returns(rules);
 
-  await Promise.all(rules.map((rule) => rulePgModel.create(dbClient, rule)));
   await SQS.sendSQSMessage(
     queue.queueUrl,
     { collection } // include collection in message
   );
 
-  await handler(event, dbClient);
+  await handler(event);
 
   // Should only queue message for the workflow on the rule matching the collection in the event
   t.is(queueMessageStub.callCount, 1);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchAllRulesStub.returns(rules);
   const message = { testdata: randomString() };
 
   // Send message to ENABLED queue
@@ -403,7 +365,7 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
   const enabledQueueKey = getS3KeyForArchivedMessage(stackName, firstMessage.MessageId);
   const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessage.MessageId);
 
-  await handler(event, dbClient);
+  await handler(event);
 
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
@@ -418,13 +380,14 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
   }));
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
 test.serial('processQueues archives multiple messages', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchAllRulesStub.returns(rules);
 
   // Send message to ENABLED queue
   const messages = await Promise.all(
@@ -437,7 +400,7 @@ test.serial('processQueues archives multiple messages', async (t) => {
   const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId);
   const keys = messages.map((m) => deriveKey(m));
 
-  await handler(event, dbClient);
+  await handler(event);
 
   const items = await Promise.all(keys.map((k) =>
     s3ObjectExists({
@@ -450,6 +413,6 @@ test.serial('processQueues archives multiple messages', async (t) => {
   items.every(itemExists);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
