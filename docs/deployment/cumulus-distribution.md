@@ -10,7 +10,7 @@ The Cumulus Distribution API is a set of endpoints that can be used to enable AW
 
 The Cumulus Distribution API is included in the main [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_distribution) repo. It is available as part of the `terraform-aws-cumulus.zip` archive in the [latest release](https://github.com/nasa/cumulus/releases).
 
-To configure a deployment to use Cumulus Distribution, remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings.
+To configure a deployment to use Cumulus Distribution, remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings. You may also uncomment/add the `cumulus_distribution_url` environment variable in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). This override allows you to provide a full URL with a port for the Cumulus Distribution URL.
 
 If you are deploying from the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo, also rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
 
