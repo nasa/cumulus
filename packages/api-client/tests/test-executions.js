@@ -160,3 +160,36 @@ test('searchExecutionsByGranules calls the callback with the expected object and
     callback,
   }));
 });
+
+test('workflowsByGranules calls the callback with the expected object and returns the parsed response', async (t) => {
+  const payload = {
+    granules: [
+      { granuleId: randomId('granuleId1'), collectionId: randomId('collectionId1') },
+      { granuleId: randomId('granuleId2'), collectionId: randomId('collectionId2') },
+    ],
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/workflows-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(executionsApi.searchExecutionsByGranules({
+    prefix: t.context.testPrefix,
+    payload,
+    callback,
+  }));
+});
