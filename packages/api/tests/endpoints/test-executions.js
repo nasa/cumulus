@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const omit = require('lodash/omit');
+const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const {
   createBucket,
@@ -190,6 +191,10 @@ test.before(async (t) => {
     executionCumulusIds.push(await executionPgModel.create(knex, executionPgRecord));
     return executionPgRecord;
   }));
+
+  t.context.fakeApiExecutions = await Promise.all(t.context.fakePGExecutions
+    .map(async (fakePGExecution) =>
+      await translatePostgresExecutionToApiExecution(fakePGExecution)));
 
   t.context.executionCumulusIds = executionCumulusIds.flat();
 
@@ -455,7 +460,7 @@ test('POST /executions/search-by-granules returns 1 record by default', async (t
 });
 
 test('POST /executions/search-by-granules supports paging', async (t) => {
-  const { fakeGranules, fakePGExecutions } = t.context;
+  const { fakeGranules, fakeApiExecutions } = t.context;
 
   const page1 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=1')
@@ -480,11 +485,27 @@ test('POST /executions/search-by-granules supports paging', async (t) => {
 
   const response = page1.body.concat(page2.body);
 
-  response.forEach(async (execution) => t.deepEqual(
+  response.forEach((execution) => t.deepEqual(
     execution,
-    await translatePostgresExecutionToApiExecution(fakePGExecutions
-      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
+    fakeApiExecutions.find((fakeAPIExecution) => fakeAPIExecution.arn === execution.arn)
   ));
+});
+
+test('POST /executions/search-by-granules supports sorting', async (t) => {
+  const { fakeGranules, fakeApiExecutions } = t.context;
+
+  const response = await request(app)
+    .post('/executions/search-by-granules?sort_by=arn&order=asc&limit=10')
+    .send({ granules: [
+      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+    ] })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  const sortedApiExecutions = sortBy(fakeApiExecutions, ['arn']);
+
+  t.deepEqual(response.body, sortedApiExecutions);
 });
 
 test('POST /executions/search-by-granules returns correct executions when granules array is passed', async (t) => {
