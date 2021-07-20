@@ -64,10 +64,19 @@ export {
   translateApiProviderToPostgresProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
-export { translateApiExecutionToPostgresExecution } from './translate/executions';
+export {
+  translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
+} from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
 
 export {
+  executionArnsFromGranuleIdsAndWorkflowNames,
+  newestExecutionArnFromGranuleIdWorkflowName,
+} from './lib/execution';
+
+export {
+  getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 

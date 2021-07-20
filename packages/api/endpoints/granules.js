@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   DeletePublishedGranule,
@@ -21,12 +21,16 @@ const Search = require('@cumulus/es-client/search').Search;
 const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { chooseTargetExecution } = require('../lib/executions');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+const { validateBulkGranulesRequest } = require('../lib/request');
+
+const log = new Logger({ sender: '@cumulus/api' });
 
 /**
  * List all granules for a given collection.
@@ -75,9 +79,25 @@ async function put(req, res) {
     const { name, version } = deconstructCollectionId(granule.collectionId);
     const collectionModelClient = new models.Collection();
     const collection = await collectionModelClient.get({ name, version });
+    let targetExecution;
+    try {
+      targetExecution = await chooseTargetExecution({
+        granuleId, executionArn: body.executionArn, workflowName: body.workflowName,
+      });
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+      }
+      throw error;
+    }
+
+    if (targetExecution) {
+      log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
+    }
 
     await granuleModelClient.reingest({
       ...granule,
+      ...(targetExecution && { execution: targetExecution }),
       queueUrl: process.env.backgroundQueueUrl,
     });
 
@@ -254,36 +274,6 @@ async function get(req, res) {
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)
     : undefined;
   return res.send({ ...result, recoveryStatus });
-}
-
-function validateBulkGranulesRequest(req, res, next) {
-  const payload = req.body;
-
-  if (!payload.ids && !payload.query) {
-    return res.boom.badRequest('One of ids or query is required');
-  }
-
-  if (payload.ids && !Array.isArray(payload.ids)) {
-    return res.boom.badRequest(`ids should be an array of values, received ${payload.ids}`);
-  }
-
-  if (!payload.query && payload.ids && payload.ids.length === 0) {
-    return res.boom.badRequest('no values provided for ids');
-  }
-
-  if (payload.query
-    && !(process.env.METRICS_ES_HOST
-        && process.env.METRICS_ES_USER
-        && process.env.METRICS_ES_PASS)
-  ) {
-    return res.boom.badRequest('ELK Metrics stack not configured');
-  }
-
-  if (payload.query && !payload.index) {
-    return res.boom.badRequest('Index is required if query is sent');
-  }
-
-  return next();
 }
 
 async function bulkOperations(req, res) {

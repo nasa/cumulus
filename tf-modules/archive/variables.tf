@@ -147,6 +147,11 @@ variable "api_port" {
   default = null
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 8
+}
+
 variable "api_url" {
   type        = string
   default     = null
@@ -161,7 +166,7 @@ variable "buckets" {
 variable "cmr_custom_host" {
   description = "Custom host to use for CMR requests"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {
