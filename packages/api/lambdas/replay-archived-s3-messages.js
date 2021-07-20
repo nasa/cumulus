@@ -5,7 +5,7 @@ const pMap = require('p-map');
 const { envUtils } = require('@cumulus/common');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getQueueUrlByName, sendSQSMessage, sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const { getQueueUrlByName, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3PrefixForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Logger = require('@cumulus/logger');
 
@@ -42,7 +42,6 @@ const getArchivedMessagesFromQueue = async (queueName) => {
     ));
   } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
-  logger.debug(`Archived messages length ${archivedMessages.length}`);
   return archivedMessages;
 };
 
@@ -54,9 +53,10 @@ async function replayArchivedMessages(event) {
   await pMap(
     messagesToReplay,
     async (message) => {
+      logger.debug(`Attempting to queue message ${message}`);
       try {
         await sendSQSMessage(queueUrl, message);
-        logger.debug(`Successfully sent message to queue URL ${queueUrl}`);
+        logger.info(`Successfully sent message to queue URL ${queueUrl}`);
         replayedMessages.push(message);
       } catch (error) {
         logger.error(`Could not send message to queue. Message: ${JSON.stringify(message)}, Queue: ${queueUrl}`, error);

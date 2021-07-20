@@ -51,14 +51,15 @@ const {
 } = require('../../helpers/testUtils');
 
 let config;
+let executionArn;
 let inputPayload;
+let pdrFilename;
+let queueName;
+let ruleOverride;
+let ruleSuffix;
+let testDataFolder;
 let testId;
 let testSuffix;
-let testDataFolder;
-let ruleSuffix;
-let ruleOverride;
-let executionArn;
-let pdrFilename;
 
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 const providersDir = './data/providers/s3/';
@@ -223,7 +224,7 @@ describe('The SQS rule', () => {
     });
 
     afterAll(async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
+      const key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
       await deleteS3Object(config.bucket, key);
     });
 
@@ -282,9 +283,8 @@ describe('The SQS rule', () => {
     });
 
     it('stores incoming messages on S3', async () => {
-      const queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
+      queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
       const key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
-      console.log(key);
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: key,
