@@ -202,7 +202,7 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
-test('HttpsProviderClient correctly includes a default redirect for the provided host', async (t) => {
+test('HttpsProviderClient correctly includes a default redirect for the provided host', (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: 'foo.com',
@@ -211,7 +211,7 @@ test('HttpsProviderClient correctly includes a default redirect for the provided
   t.deepEqual(httpsProviderClient.allowedRedirects, ['foo.com']);
 });
 
-test('HttpsProviderClient correctly includes a default redirect for the provided host/port', async (t) => {
+test('HttpsProviderClient correctly includes a default redirect for the provided host/port', (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: 'test.com',
