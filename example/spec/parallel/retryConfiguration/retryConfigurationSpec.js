@@ -1,6 +1,7 @@
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 const lambdaStep = new LambdaStep();
@@ -21,20 +22,19 @@ function getRetryIntervals(executions) {
     const intervalSeconds = (
       executions[i].scheduleEvent.timestamp - executions[i - 1].completeEvent.timestamp
     ) / 1000;
-    retryIntervals.push(Math.round(intervalSeconds));
+    retryIntervals.push(intervalSeconds);
   }
 
   return retryIntervals;
 }
 
 describe('When a task is configured', () => {
-  let retryPassWorkflowExecution = null;
-  let noRetryWorkflowExecution = null;
-  let retryFailWorkflowExecution = null;
+  let retryPassWorkflowExecution;
+  let noRetryWorkflowExecution;
+  let retryFailWorkflowExecution;
 
-  let retryPassLambdaExecutions = null;
-  let retryFailLambdaExecutions = null;
-
+  let retryPassLambdaExecutions;
+  let retryFailLambdaExecutions;
   beforeAll(async () => {
     config = await loadConfig();
 
@@ -97,20 +97,20 @@ describe('When a task is configured', () => {
 
     describe('and it succeeds', () => {
       it('Cumulus continues the workflow', () => {
-        expect(retryPassWorkflowExecution.status).toEqual('SUCCEEDED');
+        expect(retryPassWorkflowExecution.status).toEqual('completed');
       });
     });
   });
 
   describe('not to retry', () => {
     it('Cumulus fails the workflow', () => {
-      expect(noRetryWorkflowExecution.status).toEqual('FAILED');
+      expect(noRetryWorkflowExecution.status).toEqual('failed');
     });
   });
 
   describe('a specific number of times', () => {
     it('and it fails that number of times, Cumulus stops retrying it and fails the workflow', () => {
-      expect(retryFailWorkflowExecution.status).toEqual('FAILED');
+      expect(retryFailWorkflowExecution.status).toEqual('failed');
       expect(retryFailLambdaExecutions.length).toEqual(4);
     });
   });
@@ -118,7 +118,12 @@ describe('When a task is configured', () => {
   describe('with a backoff', () => {
     it('and it fails, Cumulus retries it with the configured backoff time', () => {
       const retryIntervals = getRetryIntervals(retryFailLambdaExecutions);
-      expect(retryIntervals).toEqual([2, 4, 8]);
+      const expectedIntervals = [2, 4, 8];
+      expectedIntervals.forEach((expectedInterval, index) => {
+        console.log(`expected interval: ${expectedInterval}, Actual: ${retryIntervals[index]}`);
+        expect((retryIntervals[index] - expectedInterval)).toBeLessThanOrEqual(1);
+        expect((retryIntervals[index] - expectedInterval)).toBeGreaterThanOrEqual(0);
+      });
     });
   });
 });

@@ -17,24 +17,25 @@ const {
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
 
-const SetupError = new Error('Test setup failed');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 describe('Creating a one-time rule via the Cumulus API', () => {
   let beforeAllError;
-  let ingestTime;
   let collection;
   let config;
   let executionArn;
+  let executionArn2;
+  let ingestTime;
   let prefix;
   let rule;
   let testExecutionId;
-  let executionArn2;
 
   beforeAll(async () => {
     try {
@@ -60,6 +61,17 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           payload: { testExecutionId },
         }
       );
+
+      executionArn = await findExecutionArn(
+        prefix,
+        (execution) =>
+          get(execution, 'originalPayload.testExecutionId') === testExecutionId,
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': testExecutionId,
+        },
+        { timeout: 60 }
+      );
     } catch (error) {
       beforeAllError = error;
     }
@@ -82,25 +94,18 @@ describe('Creating a one-time rule via the Cumulus API', () => {
     }
   });
 
-  beforeEach(() => {
-    if (beforeAllError) fail(beforeAllError);
-  });
-
   it('starts a workflow execution', async () => {
-    if (beforeAllError) throw SetupError;
-
-    executionArn = await findExecutionArn(
-      prefix,
-      (execution) =>
-        get(execution, 'originalPayload.testExecutionId') === testExecutionId,
-      { timestamp__from: ingestTime },
-      { timeout: 60 }
+    if (beforeAllError) fail(beforeAllError);
+    await waitForApiStatus(
+      getExecution,
+      { prefix, arn: executionArn },
+      'completed'
     );
     expect(executionArn).toContain('arn:aws');
   });
 
   it('the rule can be updated', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     const updatedCheck = timestampedName('Updated');
 
@@ -139,12 +144,18 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
     const lambdaStep = new LambdaStep();
     const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'HelloWorld');
+
+    await waitForApiStatus(
+      getExecution,
+      { prefix, arn: executionArn2 },
+      'completed'
+    );
     expect(updatedExecution).not.toBeNull();
     expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
   });
 
   it('the rule is returned with the listed rules', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     await expectAsync(
       pWaitFor(

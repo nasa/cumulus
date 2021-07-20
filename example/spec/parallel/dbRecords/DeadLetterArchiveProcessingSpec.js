@@ -51,17 +51,15 @@ describe('A dead letter record archive processing operation', () => {
       stackName = config.stackName;
       systemBucket = config.bucket;
 
-      let response;
       const testId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessing');
 
       testCollection = await loadCollection({
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
         postfix: testId,
       });
-      response = await createCollection({ prefix: stackName, collection: testCollection });
-      if (response.statusCode !== 200) {
-        throw new Error(`createCollection failed: ${JSON.stringify(response)}`);
-      }
+      await createCollection(
+        { prefix: stackName, collection: testCollection }
+      );
 
       testProvider = {
         id: `s3_provider_${testId}`,
@@ -69,10 +67,9 @@ describe('A dead letter record archive processing operation', () => {
         protocol: 's3',
         globalConnectionLimit: 1000,
       };
-      response = await createProvider({ prefix: stackName, provider: testProvider });
-      if (response.statusCode !== 200) {
-        throw new Error(`createProvider failed: ${JSON.stringify(response)}`);
-      }
+      await createProvider(
+        { prefix: stackName, provider: testProvider }
+      );
 
       const testFiles = [
         fakeFileFactory({ bucket: systemBucket }),
@@ -125,16 +122,17 @@ describe('A dead letter record archive processing operation', () => {
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
       await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
 
-      response = await postRecoverCumulusMessages({
-        prefix: stackName,
-        payload: {
-          bucket: systemBucket,
-          path: archivePath,
-        },
-      });
-      if (response.statusCode !== 202) {
-        throw new Error(`postRecoverCumulusMessages failed: ${JSON.stringify(response)}`);
-      }
+      const postRecoverResponse = await postRecoverCumulusMessages(
+        {
+          prefix: stackName,
+          payload: {
+            bucket: systemBucket,
+            path: archivePath,
+          },
+        }
+      );
+      const postRecoverResponseBody = JSON.parse(postRecoverResponse.body);
+      console.log('dead letter recover async operation ID', postRecoverResponseBody.id);
     } catch (error) {
       beforeAllFailed = true;
       console.log('beforeAll() failed, error:', error);
@@ -143,19 +141,31 @@ describe('A dead letter record archive processing operation', () => {
 
   afterAll(async () => {
     const ruleName = get(testRule, 'name');
-    if (testGranule) await deleteGranule({ prefix: stackName, granuleId: testGranule.granuleId });
-    if (ruleName) await deleteRule({ prefix: stackName, ruleName });
+    if (testGranule) {
+      await deleteGranule(
+        { prefix: stackName, granuleId: testGranule.granuleId }
+      );
+    }
+    if (ruleName) {
+      await deleteRule({ prefix: stackName, ruleName });
+    }
 
     await deleteExecution({ prefix: stackName, executionArn });
 
     if (testCollection) {
-      await deleteCollection({
-        prefix: stackName,
-        collectionName: testCollection.name,
-        collectionVersion: testCollection.version,
-      });
+      await deleteCollection(
+        {
+          prefix: stackName,
+          collectionName: testCollection.name,
+          collectionVersion: testCollection.version,
+        }
+      );
     }
-    if (testProvider) await deleteProvider({ prefix: stackName, providerId: testProvider.id });
+    if (testProvider) {
+      await deleteProvider(
+        { prefix: stackName, providerId: testProvider.id }
+      );
+    }
   });
 
   it('processes a message to create records', async () => {

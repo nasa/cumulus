@@ -71,6 +71,10 @@ csdap_host_url = "csdap host url"
 # toggle this after deployed to put the correct port in. (and hosts and config)
 # cumulus_distribution_url = "cumulus distribution url"
 
+# Optional. Uncomment if using TEA.
+# toggle this after deployed to put the correct port in. (and hosts and config)
+# tea_distribution_url = "TEA distribution URL"
+
 # Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
 /*
 launchpad_api = "launchpadApi"

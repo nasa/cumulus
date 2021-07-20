@@ -11,20 +11,20 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { sfn } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { deleteCollection } = require('@cumulus/api-client/collections');
-const { bulkOperation, removePublishedGranule } = require('@cumulus/api-client/granules');
+const { bulkOperation } = require('@cumulus/api-client/granules');
 const { listRequests } = require('@cumulus/api-client/orca');
 const { getGranule, listGranules } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   addCollections,
   addProviders,
-  buildAndStartWorkflow,
   waitForAsyncOperationStatus,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -55,6 +55,7 @@ const providersDir = './data/providers/s3/';
 // TODO use ./data/collections/s3_MOD09GQ_006_full_ingest
 // after ORCA tickets are fixed ORCA-140, ORCA-144
 const collectionsDir = './data/collections/s3_MOD09GQ_006_orca';
+let collection;
 
 async function stateMachineExists(stateMachineName) {
   const sfnList = await sfn().listStateMachines({ maxResults: 1 }).promise();
@@ -77,7 +78,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
   let isOrcaIncluded = true;
-  let collection;
   let config;
   let granuleModel;
   let inputPayload;
@@ -117,7 +117,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(
+      config.bucket,
+      JSON.stringify({ ...JSON.parse(inputPayloadJson), pdr: undefined }),
+      granuleRegex,
+      testSuffix,
+      testDataFolder
+    );
     granuleId = inputPayload.granules[0].granuleId;
 
     workflowExecutionArn = await buildAndStartWorkflow(
@@ -133,19 +139,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     if (!isOrcaIncluded) return;
-
-    // clean up stack state added by test
-    await removePublishedGranule({
+    await removeCollectionAndAllDependencies({
       prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId,
+      collection,
     });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      deleteCollection({
-        prefix: config.stackName,
-        collectionName: collection.name,
-        collectionVersion: collection.version,
-      }),
       deleteProvider({ prefix: config.stackName, providerId: get(provider, 'id') }),
     ]);
   });

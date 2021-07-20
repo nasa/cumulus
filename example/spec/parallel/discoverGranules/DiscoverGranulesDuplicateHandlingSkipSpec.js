@@ -24,7 +24,7 @@ const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
-  let beforeAllFailed = false;
+  let beforeAllError;
   let collection;
   let discoverGranulesRule;
   let existingGranuleId;
@@ -98,11 +98,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "IngestGranule" execution ARN
+      console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
       ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -141,11 +145,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "DiscoverGranules" execution ARN
+      console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
       discoverGranulesExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': discoverGranulesRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -156,18 +164,18 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         status: 'completed',
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = error;
       throw error;
     }
   });
 
   it('queues one granule for ingest', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else expect(finishedDiscoverGranulesExecution.finalPayload.running.length).toEqual(1);
   });
 
   it('queues the correct granule for ingest', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       // The execution ARN of the "IngestGranules" workflow that was
       // created as a result of the "DiscoverGranules" workflow.
@@ -181,7 +189,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   });
 
   it('results in the new granule being ingested', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       await expectAsync(
         getGranuleWithStatus({ prefix, granuleId: newGranuleId, status: 'completed' })

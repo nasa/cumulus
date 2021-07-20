@@ -15,7 +15,7 @@ test('getPdr calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/pdr/${t.context.name}`,
+      path: `/pdrs/${t.context.name}`,
     },
   };
 

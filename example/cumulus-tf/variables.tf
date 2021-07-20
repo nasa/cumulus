@@ -164,6 +164,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 2
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
@@ -175,7 +181,7 @@ variable "cumulus_distribution_url" {
   description = "The url of cumulus distribution API Gateway endpoint"
 }
 
-variable "distribution_url" {
+variable "tea_distribution_url" {
   type    = string
   default = null
 }
@@ -369,7 +375,7 @@ variable "database_app_user_pw" {
   description = "ORCA application database user password."
 }
 
-variable "drop_database" {
+variable "orca_drop_database" {
   default = "False"
   type = string
   description = "Tells ORCA to drop the database on deployments."
@@ -411,4 +417,10 @@ variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = null
 }
