@@ -12,5 +12,5 @@ export interface ApiProvider {
   privateKey?: string,
   cmKeyId?: string,
   certificateUri?: string
-  basicAuthRedirectHost?: string
+  allowedRedirects?: string[]
 }
