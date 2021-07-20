@@ -202,7 +202,7 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
-test('HttpsProviderClient.download() supports basic auth with redirect to same host', async (t) => {
+test('HttpsProviderClient.download() supports basic auth with redirect to same host/same port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -222,7 +222,7 @@ test('HttpsProviderClient.download() supports basic auth with redirect to same h
   }
 });
 
-test('HttpsProviderClient.download() supports basic auth with redirect to different host/port', async (t) => {
+test('HttpsProviderClient.download() supports basic auth with redirect to same host/different port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -243,7 +243,9 @@ test('HttpsProviderClient.download() supports basic auth with redirect to differ
   }
 });
 
-test('HttpsProviderClient.download() fails on basic auth redirect to different host if allowedRedirects are missing', async (t) => {
+test.todo('HttpsProviderClient.download() supports basic auth with redirect to different host/same port');
+
+test('HttpsProviderClient.download() fails on redirect to different host if no allowedRedirects are specified', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -256,8 +258,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   const localPath = path.join(tmpdir(), randomString());
   try {
     await t.throwsAsync(
-      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
-      { instanceof: /no\n.*allowedRedirects/ }
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath })
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -265,7 +266,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   }
 });
 
-test('HttpsProviderClient.download() fails on basic auth redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
+test('HttpsProviderClient.download() fails on redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -279,8 +280,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   const localPath = path.join(tmpdir(), randomString());
   try {
     await t.throwsAsync(
-      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
-      { message: /Response code 401/ }
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath })
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -288,7 +288,7 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   }
 });
 
-test('HttpsProviderClient.sync() supports basic auth with redirect to same host', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth with redirect to same host/same port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -319,7 +319,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to same host'
   }
 });
 
-test('HttpsProviderClient.sync() supports basic auth with redirect to different host/port', async (t) => {
+test('HttpsProviderClient.sync() supports basic auth with redirect to same host/different port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -353,7 +353,9 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to different 
   }
 });
 
-test('HttpsProviderClient.sync() fails on basic auth redirect to different host if allowedRedirects are missing', async (t) => {
+test.todo('HttpsProviderClient.sync() supports basic auth with redirect to different host/same port');
+
+test('HttpsProviderClient.sync() fails on redirect to different host if allowedRedirects are missing', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -372,8 +374,7 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      }),
-      { message: /Response code 401/ }
+      })
     );
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
@@ -384,7 +385,7 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
   }
 });
 
-test('HttpsProviderClient.sync() fails on basic auth redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
+test('HttpsProviderClient.sync() fails on redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -404,8 +405,7 @@ test('HttpsProviderClient.sync() fails on basic auth redirect to different host 
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      }),
-      { message: /Response code 401/ }
+      })
     );
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
