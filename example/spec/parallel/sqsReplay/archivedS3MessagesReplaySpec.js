@@ -4,16 +4,10 @@ const delay = require('delay');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { invokeApi } = require('@cumulus/api-client');
-const { getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
-
-const {
-  waitForApiRecord,
-} = require('../../helpers/apiUtils');
-
 const {
   createTimestampedTestId,
   loadConfig,
@@ -91,6 +85,7 @@ describe('The replay archived S3 messages API endpoint', () => {
 
   it('updates the async operation results with a list of replayed messages', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
+    await delay(100 * 1000);
     const response = await invokeApi({
       prefix: stackName,
       payload: {
@@ -99,25 +94,9 @@ describe('The replay archived S3 messages API endpoint', () => {
         path: `/asyncOperations/${asyncOperationId}`,
       },
     });
-    console.log('ASYNC OPERATION', response);
-    const parsedBody = JSON.parse(response.body);
-    const expectedBody = {
-      ...parsedBody,
-      status: 'SUCCEEDED',
-    };
+    const body = JSON.parse(response.body);
+    const expected = JSON.parse(body.output)[0];
 
-    const asyncOperation = await waitForApiRecord(
-      getAsyncOperation,
-      {
-        prefix: stackName,
-        asyncOperationId,
-      },
-      {
-        ...response,
-        body: JSON.stringify(expectedBody),
-      }
-    );
-    console.log(asyncOperation);
-    expect(asyncOperation.output).toBe(invalidMessage);
+    expect(expected).toEqual(JSON.parse(invalidMessage));
   });
 });
