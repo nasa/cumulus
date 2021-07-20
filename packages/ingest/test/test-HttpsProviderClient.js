@@ -202,6 +202,25 @@ test('HttpsProviderClient throws error if it gets a username but no password', (
   });
 });
 
+test('HttpsProviderClient correctly includes a default redirect for the provided host', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: 'foo.com',
+  });
+
+  t.deepEqual(httpsProviderClient.allowedRedirects, ['foo.com']);
+});
+
+test('HttpsProviderClient correctly includes a default redirect for the provided host/port', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: 'test.com',
+    port: '53',
+  });
+
+  t.deepEqual(httpsProviderClient.allowedRedirects, ['test.com:53']);
+});
+
 test('HttpsProviderClient.download() supports basic auth with redirect to same host/same port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
