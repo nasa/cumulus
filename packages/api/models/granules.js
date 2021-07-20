@@ -591,7 +591,7 @@ class Granule extends Manager {
 
     return await Promise.all(granules.map(
       async (granule) => {
-        const granuleFiles = await this.fileUtils.buildDatabaseFiles({
+        const files = await this.fileUtils.buildDatabaseFiles({
           s3: awsClients.s3(),
           providerURL: buildURL(provider),
           files: granule.files || [],
@@ -608,7 +608,7 @@ class Granule extends Manager {
           processingTimeInfo,
           queryFields,
           cmrUtils: this.cmrUtils,
-          granuleFiles,
+          files,
         }).catch((writeError) => logger.error(writeError));
         await this.storeGranuleFromCumulusMessage(granuleRecord)
           .catch((writeError) => logger.error(writeError));

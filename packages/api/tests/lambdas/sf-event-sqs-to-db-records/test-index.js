@@ -22,6 +22,12 @@ const {
   MissingRequiredEnvVarError,
 } = require('@cumulus/errors');
 const {
+  generateExecutionApiRecordFromMessage,
+} = require('@cumulus/message/Executions');
+const {
+  generatePdrApiRecordFromMessage,
+} = require('@cumulus/message/PDRs');
+const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
@@ -180,8 +186,11 @@ test.beforeEach(async (t) => {
   };
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId: t.context.granuleId });
+  t.context.files = [fakeFileFactory()];
+  t.context.granule = fakeGranuleFactoryV2({
+    files: t.context.files,
+    granuleId: t.context.granuleId,
+  });
 
   t.context.cumulusMessage = {
     cumulus_meta: {
@@ -198,7 +207,7 @@ test.beforeEach(async (t) => {
     payload: {
       key: 'my-payload',
       pdr: t.context.pdr,
-      granules: [granule],
+      granules: [t.context.granule],
     },
   };
 
@@ -282,7 +291,7 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   );
 });
 
-test('writeRecords() writes records only to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
+test('writeRecords() writes records only to Dynamo if requirements to write execution to PostgreSQL are not met', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -303,9 +312,33 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
     granuleModel,
   });
 
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
+  const dynamoExecution = await executionModel.get({ arn: executionArn });
+  t.deepEqual(
+    await executionModel.get({ arn: executionArn }),
+    {
+      ...generateExecutionApiRecordFromMessage(cumulusMessage),
+      timestamp: dynamoExecution.timestamp,
+      updatedAt: dynamoExecution.updatedAt,
+    }
+  );
+  const dynamoPdr = await pdrModel.get({ pdrName });
+  t.deepEqual(
+    dynamoPdr,
+    {
+      ...generatePdrApiRecordFromMessage(cumulusMessage),
+      duration: dynamoPdr.duration,
+      timestamp: dynamoPdr.timestamp,
+      updatedAt: dynamoPdr.updatedAt,
+    }
+  );
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.like(
+    dynamoGranule,
+    {
+      granuleId,
+      files: t.context.files,
+    }
+  );
 
   t.false(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -313,8 +346,9 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
   t.false(
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
-  t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+  t.deepEqual(
+    await t.context.granulePgModel.search(t.context.testKnex, { granule_id: granuleId }),
+    []
   );
 });
 
