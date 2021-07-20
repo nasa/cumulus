@@ -24,6 +24,10 @@ export {
 } from './provider';
 
 export {
+  BaseRecord,
+} from './types/base';
+
+export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
 } from './types/async_operation';

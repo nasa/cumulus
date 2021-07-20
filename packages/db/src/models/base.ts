@@ -3,13 +3,11 @@ import Knex from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 
 import { updatedAtRange } from '../types/record';
+import { BaseRecord } from '../types/base';
 import { tableNames } from '../tables';
 import { isRecordDefined } from '../database';
 
-class BasePgModel<ItemType, RecordType extends {
-  cumulus_id: number,
-  updated_at: Date,
-}> {
+class BasePgModel<ItemType, RecordType extends BaseRecord> {
   readonly tableName: tableNames;
 
   constructor({
