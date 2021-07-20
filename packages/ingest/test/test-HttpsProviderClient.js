@@ -17,6 +17,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
+
 const HttpProviderClient = rewire('../HttpProviderClient');
 
 const remoteContent = '<HDF CONTENT>';
@@ -35,15 +36,18 @@ const protectedFile2 = '/protected-basic/file2.hdf';
 test.beforeEach(async (t) => {
   t.context.server = await createTestServer({ certificate: '127.0.0.1' });
   t.context.server.use(cookieParser());
+  t.context.serverHost = `127.0.0.1:${t.context.server.sslPort}`;
+  t.context.serverUrl = `https://${t.context.serverHost}`;
 
   t.context.server2 = await createTestServer({ certificate: '127.0.0.1' });
-  t.context.server2Url = new URL(t.context.server2.url);
+  t.context.server2Host = `127.0.0.1:${t.context.server2.port}`;
+  t.context.server2Url = `http://${t.context.server2Host}`;
   t.context.server2.use(cookieParser());
   // auth endpoint
   t.context.server2.get('/auth', (req, res) => {
     if (req.headers.authorization === expectedAuthHeader) {
       res.cookie('DATA', 'abcd1234'); // set cookie to test cookie-jar usage
-      const protectedUrl = new URL(protectedFile2, t.context.server.url);
+      const protectedUrl = new URL(protectedFile2, t.context.serverUrl);
       res.redirect(protectedUrl.toString());
     } else {
       res.status(401).end();
@@ -64,6 +68,7 @@ test.beforeEach(async (t) => {
       res.redirect('/auth');
     }
   });
+
   // protected endpoint with redirect to /auth on a
   // different server
   t.context.server.get(protectedFile2, (req, res) => {
@@ -71,7 +76,8 @@ test.beforeEach(async (t) => {
       res.header({ 'content-type': expectedContentType });
       res.end(remoteContent);
     } else {
-      res.redirect(`${t.context.server2.url}/auth`);
+      const server2AuthUrl = new URL('/auth', t.context.server2Url.toString());
+      res.redirect(server2AuthUrl.toString());
     }
   });
   // auth endpoint
@@ -102,6 +108,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await t.context.server.close();
+  await t.context.server2.close();
   await recursivelyDeleteS3Bucket(t.context.configBucket);
 });
 
@@ -223,7 +230,7 @@ test('HttpsProviderClient.download() supports basic auth with redirect to differ
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    allowedRedirects: [t.context.server2Url.host],
+    allowedRedirects: [t.context.server2Host],
   });
 
   const localPath = path.join(tmpdir(), randomString());
@@ -247,11 +254,10 @@ test('HttpsProviderClient.download() fails on basic auth redirect to different h
   });
 
   const localPath = path.join(tmpdir(), randomString());
-  console.log(localPath);
   try {
     await t.throwsAsync(
       httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
-      { message: /Response code 401/ }
+      { instanceof: /no\n.*allowedRedirects/ }
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -321,7 +327,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to different 
     certificateUri: `s3://${t.context.configBucket}/certificate.pem`,
     username: basicUsername,
     password: basicPassword,
-    allowedRedirects: [t.context.server2Url.host],
+    allowedRedirects: [t.context.server2Host],
   });
 
   const destinationBucket = randomString();

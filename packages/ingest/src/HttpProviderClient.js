@@ -71,39 +71,47 @@ class HttpProviderClient {
       // expression so that we can use the bound value
       // of "this"
       handleBeforeRedirect(options, response) {
-        const requestUrl = new URL(response.requestUrl);
-        // If redirecting to the same host and port, do nothing
-        if (options.url.host === requestUrl.host) {
+        const requestUrl = new URL(response.url);
+        // If redirecting to the same host/port for the provider or
+        // if the redirect is to the same host/port as the previous
+        // request, do nothing
+        if ((options.url.hostname === this.host && String(options.url.port) === String(this.port))
+            || options.url.host === requestUrl.host) {
           return;
         }
 
         // If there is no allowed redirect for basic auth specified, do not
         // forward auth credentials
-        if (!this.allowedRedirects) {
-          log.debug(`
+        if (this.allowedRedirects.length === 0) {
+          throw new Error(`
             Request is redirecting to ${options.url.toString()} but no
             allowedRedirects are specified for provider, so auth
             credentials will not be forwarded
           `);
-          return;
+          // return;
         }
 
-        const hasDifferentPort = options.url.port !== requestUrl.port;
-        const isAllowedRedirect = hasDifferentPort
-          // If redirecting to a different port (example.com:80 -> test.com:53), port is required
-          // to specify allowed redirect
-          ? this.allowedRedirects.includes(options.url.host)
-          // If not redirecting to a different port (example.com:80 -> test.com:80), host name is
-          // sufficient to specify allowed redirect
-          : this.allowedRedirects.includes(options.url.hostname);
+        const isDifferentRedirectPort = options.url.port !== requestUrl.port;
 
-        if (!isAllowedRedirect) {
-          log.debug(`
+        // If redirecting to a different port (example.com:80 -> test.com:53), port is required
+        // to specify allowed redirect
+        if (isDifferentRedirectPort && !this.allowedRedirects.includes(options.url.host)) {
+          throw new Error(`
             ${options.url.host} does match any of the allowed redirects
             in ${JSON.stringify(this.allowedRedirects)}, so auth credentials
-            will not be forwarded
+            will not be forwarded. Ensure that allowed redirect specifies the
+            port number.
           `);
-          return;
+          // return;
+        }
+
+        if (!isDifferentRedirectPort && !this.allowedRedirects.includes(options.url.hostname)) {
+          throw new Error(`
+            ${options.url.hostname} does match any of the allowed redirects
+            in ${JSON.stringify(this.allowedRedirects)}, so auth credentials
+            will not be forwarded.
+          `);
+          // return;
         }
 
         if (redirectCodes.has(response.statusCode)) {
