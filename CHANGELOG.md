@@ -68,7 +68,6 @@ database via the API
       `@cumulus/db/translate/collections`
     - Added `searchWithUpdatedAtRange` method to
       `@cumulus/db/models/collections`
-   - **CUMULUS-2303**
   - **CUMULUS-2303**
     - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
   - **CUMULUS-2307**
