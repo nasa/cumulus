@@ -17,13 +17,14 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
-  let beforeAllFailed = false;
+  let beforeAllError;
   let collection;
   let discoverGranulesRule;
   let existingGranuleId;
@@ -35,6 +36,9 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   let prefix;
   let provider;
   let sourceBucket;
+  let discoverGranulesExecutionArn;
+  let ingestGranuleExecutionArn;
+  let finishedIngestGranulesArn;
 
   beforeAll(async () => {
     try {
@@ -94,11 +98,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "IngestGranule" execution ARN
-      const ingestGranuleExecutionArn = await findExecutionArn(
+      console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
+      ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -137,11 +145,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "DiscoverGranules" execution ARN
-      const discoverGranulesExecutionArn = await findExecutionArn(
+      console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
+      discoverGranulesExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': discoverGranulesRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -152,32 +164,32 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         status: 'completed',
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = error;
       throw error;
     }
   });
 
-  it('queues one granule for ingest', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+  it('queues one granule for ingest', () => {
+    if (beforeAllError) fail(beforeAllError);
     else expect(finishedDiscoverGranulesExecution.finalPayload.running.length).toEqual(1);
   });
 
   it('queues the correct granule for ingest', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       // The execution ARN of the "IngestGranules" workflow that was
       // created as a result of the "DiscoverGranules" workflow.
-      const arn = finishedDiscoverGranulesExecution.finalPayload.running[0];
+      finishedIngestGranulesArn = finishedDiscoverGranulesExecution.finalPayload.running[0];
 
       // Wait for the execution to end
-      const execution = await getExecutionWithStatus({ prefix, arn, status: 'completed' });
+      const execution = await getExecutionWithStatus({ prefix, arn: finishedIngestGranulesArn, status: 'completed' });
 
       expect(execution.originalPayload.granules[0].granuleId).toEqual(newGranuleId);
     }
   });
 
   it('results in the new granule being ingested', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       await expectAsync(
         getGranuleWithStatus({ prefix, granuleId: newGranuleId, status: 'completed' })
@@ -195,12 +207,23 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       { stopOnError: false }
     ).catch(console.error);
 
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix, executionArn: finishedIngestGranulesArn });
+    await deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn });
+    await deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn });
+
+    await pAll(
+      [
+        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId }),
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
+
     await pAll(
       [
         () => deleteS3Object(sourceBucket, existingGranuleKey),
         () => deleteS3Object(sourceBucket, newGranuleKey),
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
-        () => deleteGranule({ prefix, granuleId: newGranuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

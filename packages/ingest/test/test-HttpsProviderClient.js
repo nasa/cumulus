@@ -121,7 +121,7 @@ test('download() downloads a file', async (t) => {
   const { httpsProviderClient } = t.context;
   const localPath = path.join(tmpdir(), randomString());
   try {
-    await httpsProviderClient.download(publicFile, localPath);
+    await httpsProviderClient.download({ remotePath: publicFile, localPath });
     t.is(fs.existsSync(localPath), true);
   } finally {
     fs.unlinkSync(localPath);
@@ -129,26 +129,26 @@ test('download() downloads a file', async (t) => {
 });
 
 test('sync() downloads remote file to s3 with correct content-type', async (t) => {
-  const bucket = randomString();
-  const key = 'syncedFile.json';
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.json';
 
   try {
-    await s3().createBucket({ Bucket: bucket }).promise();
-    const { s3uri, etag } = await t.context.httpsProviderClient.sync(
-      publicFile,
-      bucket,
-      key
-    );
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    const { s3uri, etag } = await t.context.httpsProviderClient.sync({
+      fileRemotePath: publicFile,
+      destinationBucket,
+      destinationKey,
+    });
     t.truthy(s3uri, 'Missing s3uri');
     t.truthy(etag, 'Missing etag');
-    t.truthy(fileExists(bucket, key));
-    const syncedContent = await getTextObject(bucket, key);
+    t.truthy(fileExists(destinationBucket, destinationKey));
+    const syncedContent = await getTextObject(destinationBucket, destinationKey);
     t.is(syncedContent, remoteContent);
 
-    const s3HeadResponse = await headObject(bucket, key);
+    const s3HeadResponse = await headObject(destinationBucket, destinationKey);
     t.is(expectedContentType, s3HeadResponse.ContentType);
   } finally {
-    await recursivelyDeleteS3Bucket(bucket);
+    await recursivelyDeleteS3Bucket(destinationBucket);
   }
 });
 
@@ -178,7 +178,7 @@ test('HttpsProviderClient supports basic auth with redirects for download', asyn
 
   const localPath = path.join(tmpdir(), randomString());
   try {
-    await httpsProviderClient.download(protectedFile, localPath);
+    await httpsProviderClient.download({ remotePath: protectedFile, localPath });
     t.is(fs.existsSync(localPath), true);
   } finally {
     fs.unlinkSync(localPath);
@@ -195,20 +195,20 @@ test('HttpsProviderClient supports basic auth with redirects for sync', async (t
     password: basicPassword,
   });
 
-  const bucket = randomString();
-  const key = 'syncedFile.json';
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.json';
   try {
-    await s3().createBucket({ Bucket: bucket }).promise();
-    await httpsProviderClient.sync(
-      protectedFile, bucket, key
-    );
-    t.truthy(fileExists(bucket, key));
-    const syncedContent = await getTextObject(bucket, key);
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await httpsProviderClient.sync({
+      fileRemotePath: protectedFile, destinationBucket, destinationKey,
+    });
+    t.truthy(fileExists(destinationBucket, destinationKey));
+    const syncedContent = await getTextObject(destinationBucket, destinationKey);
     t.is(syncedContent, remoteContent);
 
-    const s3HeadResponse = await headObject(bucket, key);
+    const s3HeadResponse = await headObject(destinationBucket, destinationKey);
     t.is(expectedContentType, s3HeadResponse.ContentType);
   } finally {
-    await recursivelyDeleteS3Bucket(bucket);
+    await recursivelyDeleteS3Bucket(destinationBucket);
   }
 });

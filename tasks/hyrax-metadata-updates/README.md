@@ -4,9 +4,11 @@
 
 This lambda function is responsible for augmenting granule metadata files with the correct Hyrax (OPeNDAP) URL to provide subsetting and reformatting services on your granules. The URL will convey enough information to Hyrax to discover the granule using CMR. Hyrax will then determine the archive location within Cumulus from the granule's metadata.
 
-For example, the Hyrax URL for a granule from provider `GHRC_CLOUD` and collection entry title 'ACES CONTINUOUS DATA V1' with granule UR `aces1cont_2002.191_v2.50.nc`:
+For example, the Hyrax URL for a granule with short name `GLDAS_CLSM025_DA1_D` and version `2.2` from collection ID `C1233603862-GES_DISC` and granule UR `GLDAS_CLSM025_DA1_D.2.2:GLDAS_CLSM025_DA1_D.A20030204.022.nc4`:
 
-h<span>ttps://opendap.earthdata.nasa.gov/providers/**GHRC_CLOUD**/datasets/**ACES CONTINUOUS DATA V1**/granules/**aces1cont_2002.191_v2.50.nc**
+h<span>ttps://opendap.uat.earthdata.nasa.gov/collections/**C1233603862-GES_DISC**/**GLDAS_CLSM025_DA1_D**.**2.2**/granules/**GLDAS_CLSM025_DA1_D.2.2:GLDAS_CLSM025_DA1_D.A20030204.022.nc4**
+
+/UMM-C:{ShortName}.UMM-C:{Version} between "collections" and "granules" is optional and could be included using `addShortnameAndVersionIdToConceptId: true` in config.json. By default, it is `false`.
 
 This url will be added to the Urls portion of the granule metadata as follows,
 
@@ -16,8 +18,8 @@ This url will be added to the Urls portion of the granule metadata as follows,
 "RelatedUrls": [
     ...
     {
-        "URL": "https://opendap.earthdata.nasa.gov/providers/GHRC_CLOUD/datasets/ACES CONTINUOUS DATA V1/granules/aces1cont_2002.191_v2.50.nc",
-        "Type": "GET DATA",
+        "URL": "opendap.uat.earthdata.nasa.gov/collections/C1233603862-GES_DISC/GLDAS_CLSM025_DA1_D.2.2/granules/GLDAS_CLSM025_DA1_D.2.2:GLDAS_CLSM025_DA1_D.A20030204.022.nc4",
+        "Type": "USE SERVICE API",
         "Subtype": "OPENDAP DATA",
         "Description": "OPeNDAP request URL"
     }
@@ -30,19 +32,22 @@ This url will be added to the Urls portion of the granule metadata as follows,
 <OnlineResources>
     ...
     <OnlineResource>
-        <URL>https://opendap.earthdata.nasa.gov/providers/GHRC_CLOUD/datasets/ACES CONTINUOUS DATA V1/granules/aces1cont_2002.191_v2.50.nc</URL>
+        <URL>https://opendap.uat.earthdata.nasa.gov/collections/C1233603862-GES_DISC/GLDAS_CLSM025_DA1_D.2.2/granules/GLDAS_CLSM025_DA1_D.2.2:GLDAS_CLSM025_DA1_D.A20030204.022.nc4</URL>
         <Description>OPeNDAP request URL</Description>
         <Type>GET DATA : OPENDAP DATA</Type>
     </OnlineResource>
 </OnlineResources>
 ```
 The four properties we need to construct this url are as follows,
-| Property | Source | Notes
-| -------- | ------ | -----
-| Provider ID | Configuration `config.cmr.provider` | 
-| Entry Title | Derived from retrieval of parent collection from CMR | This requires a call to the CMR search API
-| Granule UR   | Granule metadata:  <br>UMM-G `GranuleUR`  <br>ECHO10 `Granule->GranuleUR`
-| Environment | `process.env.CMR_ENVIRONMENT` | Specifies the environment of Hyrax (e.g. `SIT`, `UAT`, `PROD`)
+| Property      | Source                              | Notes
+| ------------- | ----------------------------------- | -----
+| Provider ID   | Configuration `config.cmr.provider` | 
+| Collection ID | Derived from retrieval of parent collection from CMR | This requires a call to the CMR search API
+| ShortName     | --//--                              | optional
+| Version       | --//--                              | optional
+| Granule UR    | Granule metadata:  <br>UMM-G `GranuleUR`  <br>ECHO10 `Granule->GranuleUR`
+| Environment   | `process.env.CMR_ENVIRONMENT`       | Specifies the environment of Hyrax (e.g. `SIT`, `UAT`, `PROD`)
+
 
 
 For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
@@ -56,6 +61,7 @@ Config object fields:
 | bucket                | string  | (required) | Name of S3 bucket containing public/private key pair to decrypt CMR credentials
 | stack                 | string  | (required) | Name of deployment stack
 | cmr                   | object  | (required) | CMR credentials object
+| addShortnameAndVersionIdToConceptId | boolean | false | Option to humanize the Hyrax URL. Humanizes when set to true.
 
 ### Input
 

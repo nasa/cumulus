@@ -31,3 +31,6 @@
 * Phil Osip
 * Sara Chaparro Diaz
 * Seth Vincent
+* Slav Korolev
+* Snyk bot
+* Tobias Nießen

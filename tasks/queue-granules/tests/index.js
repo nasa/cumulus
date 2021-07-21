@@ -21,8 +21,14 @@ const sinon = require('sinon');
 const pMap = require('p-map');
 
 const pMapSpy = sinon.spy(pMap);
+const fakeProvidersApi = {};
 
-const { queueGranules } = proxyquire('..', { 'p-map': pMapSpy });
+const { queueGranules } = proxyquire('..', {
+  'p-map': pMapSpy,
+  '@cumulus/api-client': {
+    providers: fakeProvidersApi,
+  },
+});
 
 test.beforeEach(async (t) => {
   pMapSpy.resetHistory();
@@ -445,7 +451,16 @@ test.serial('If a granule has a provider property, that provider is used', async
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
-  const provider = { host: randomString() };
+  const provider = { id: randomString(), host: randomString() };
+
+  fakeProvidersApi.getProvider = ({ prefix, providerId }) => {
+    t.is(prefix, t.context.stackName);
+    t.is(providerId, provider.id);
+
+    return Promise.resolve({
+      body: JSON.stringify(provider),
+    });
+  };
 
   const { event } = t.context;
 
@@ -453,7 +468,7 @@ test.serial('If a granule has a provider property, that provider is used', async
     {
       dataType,
       version,
-      provider,
+      provider: provider.id,
       granuleId: randomString(),
       files: [],
     },
@@ -583,5 +598,51 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
   // Make sure that the execution name isn't _just_ the prefix
   t.true(
     message.cumulus_meta.execution_name.length > executionNamePrefix.length
+  );
+});
+
+test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  const cnm = {
+    id: 1234,
+    body: 'string',
+  };
+  event.config.childWorkflowMeta = {
+    cnm,
+  };
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+
+  const messages = receiveMessageResponse.Messages;
+
+  t.is(messages.length, 1);
+
+  const message = JSON.parse(messages[0].Body);
+
+  t.deepEqual(
+    message.meta.cnm, cnm
   );
 });

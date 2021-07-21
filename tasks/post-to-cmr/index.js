@@ -47,8 +47,8 @@ function buildOutput(results, granules) {
  * @returns {Promise<Array<Object>>} clone of input array with each object
  *    updated with its metadata as a `metadataObject` property
  */
-function addMetadataObjects(cmrFiles) {
-  return Promise.all(
+async function addMetadataObjects(cmrFiles) {
+  return await Promise.all(
     cmrFiles.map(async (cmrFile) => {
       const metadataObject = await metadataObjectFromCMRFile(
         cmrFile.filename,
@@ -101,10 +101,12 @@ function checkForMetadata(granules, cmrFiles) {
  * @param {boolean} event.config.skipMetaCheck - option to skip Meta file check
  * @param {Object} event.input.granules - Object of all granules where granuleID
  *    is the key
+ * @param {string} event.input.cmrRevisionId - CMR Revision ID
  * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
   // get cmr files and metadata
+  const revisionId = event.input.cmrRevisionId;
   const cmrFiles = granulesToCmrFileObjects(event.input.granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);
   if (!event.config.skipMetaCheck) checkForMetadata(event.input.granules, cmrFiles);
@@ -121,7 +123,7 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings))
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, revisionId))
   );
 
   const endTime = Date.now();
@@ -146,7 +148,7 @@ async function postToCMR(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
 }
 
 exports.handler = handler;

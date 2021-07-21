@@ -1,0 +1,22 @@
+{
+  "title": "QueueWorkflowConfig",
+  "description": "Describes the config used by the queue-workflow task",
+  "type": "object",
+  "required": [
+    "stackName",
+    "internalBucket",
+    "queueUrl",
+    "workflow"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "queueUrl": { "type": "string" },
+    "internalBucket": { "type": "string" },
+    "collection": { "type": "object" },
+    "provider": { "type": "object" },
+    "stackName": { "type": "string" },
+    "executionNamePrefix": { "type": "string" },
+    "workflow": { "type": "string" },
+    "workflowInput": { "type": "object" }
+  }
+}

@@ -91,6 +91,8 @@ The full local destination file path
 
 Close the connect to the SFTP server.
 
+---
+
 ### sftpClient.list(remotePath)
 
 Returns a `Promise` that resolves to an `array` of `object`s containing information about discovered files.
@@ -102,6 +104,11 @@ The returned file `object`s will each contain `name`, `path`, `type`, `size`, an
 Type: `string`
 
 The remote path to be listed.
+
+---
+### sftpClient.sftp()
+
+Returns the `ssh2-sftp-client` Client as a convenience.
 
 ---
 

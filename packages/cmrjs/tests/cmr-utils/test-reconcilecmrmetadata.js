@@ -102,6 +102,7 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
         files: updatedFiles,
         distEndpoint,
         published,
+        cmrGranuleUrlType: 'both',
         distributionBucketMap,
         bucketTypes,
       })
@@ -169,7 +170,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
       cmrFile: updatedFiles[1],
       files: updatedFiles,
       distEndpoint,
-      cmrGranuleUrlType: 'distribution',
+      cmrGranuleUrlType: 'both',
       bucketTypes,
       distributionBucketMap,
     };
@@ -231,7 +232,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
       cmrFile: updatedFiles[1],
       files: updatedFiles,
       distEndpoint,
-      cmrGranuleUrlType: 'distribution',
+      cmrGranuleUrlType: 'both',
       bucketTypes,
       distributionBucketMap,
     };
@@ -299,7 +300,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
       cmrFile: updatedFiles[1],
       files: updatedFiles,
       distEndpoint,
-      cmrGranuleUrlType: 'distribution',
+      cmrGranuleUrlType: 'both',
       bucketTypes,
       distributionBucketMap,
     };
@@ -350,7 +351,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
     granuleId: 'fakeGranuleID',
   };
   const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
-  const ingestFake = sinon.fake.resolves({ result: { 'concept-id': 'fakeID' } });
+  const ingestFake = sinon.fake.resolves({ 'concept-id': 'fakeID' });
   const CmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
 
   const restoreCMR = cmrUtils.__set__('CMR', CmrFake);
@@ -359,7 +360,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
   await publishUMMGJSON2CMR(cmrPublishObject, new CmrFake());
 
   // Assert
-  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject));
+  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject, undefined));
 
   // Cleanup
   restoreCMR();

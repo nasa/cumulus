@@ -8,7 +8,7 @@ export interface ApiGatewayLambdaProxyPayload {
   httpMethod: HttpMethod,
   path: string,
   headers?: { [key: string]: string | undefined },
-  queryStringParameters?: { [key: string]: string }
+  queryStringParameters?: { [key: string]: string | string[] | undefined }
   body?: string
 }
 
@@ -28,7 +28,8 @@ export interface ApiGatewayLambdaErrorResponse {
 export interface InvokeApiFunctionParams {
   prefix: string,
   payload: ApiGatewayLambdaProxyPayload,
-  pRetryOptions?: pRetry.Options
+  pRetryOptions?: pRetry.Options,
+  expectedStatusCode?: number
 }
 
 export type InvokeApiFunction = (

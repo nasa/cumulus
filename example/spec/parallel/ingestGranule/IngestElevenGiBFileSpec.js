@@ -14,28 +14,30 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { loadConfig } = require('../../helpers/testUtils');
-const { fetchFakeS3ProviderBucket } = require('../../helpers/Providers');
+const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
 describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
   let collection;
-  let ingestGranuleRule;
+  let config;
   let granuleId;
   let ingestGranuleExecution;
+  let ingestGranuleExecutionArn;
+  let ingestGranuleRule;
   let prefix;
   let provider;
-  let sourceBucket;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
-      sourceBucket = await fetchFakeS3ProviderBucket();
+      const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
       // Create the collection
       collection = await createCollection(
@@ -47,7 +49,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       );
 
       // Create the S3 provider
-      provider = await createProvider(prefix, { host: sourceBucket });
+      provider = await createProvider(prefix, { host: fakeS3ProviderBucket });
 
       granuleId = randomId('granule-id-');
 
@@ -80,7 +82,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       );
 
       // Find the execution ARN
-      const ingestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -89,6 +91,8 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
         { timestamp__from: ingestTime },
         { timeout: 60 }
       );
+
+      console.log(`Waiting for ${ingestGranuleExecutionArn} to complete`);
 
       // Wait for the execution to be completed
       ingestGranuleExecution = await getExecutionWithStatus({
@@ -124,9 +128,10 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await deleteGranule({ prefix, granuleId });
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

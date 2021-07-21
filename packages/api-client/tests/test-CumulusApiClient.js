@@ -12,7 +12,7 @@ const apiClient = proxyquire(
   }
 );
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testPayload = { payload: 'payloadValue' };
   // eslint-disable-next-line quotes
@@ -29,9 +29,9 @@ test.serial('invokeApi invokes the lambda with the expected Payload and Function
     invoke: (payloadObject) => {
       const passedPayload = payloadObject;
       return {
-        promise: async () => {
+        promise: () => {
           t.deepEqual(Payload, passedPayload);
-          return { Payload: JSON.stringify(t.context.testLambdaReturn) };
+          return Promise.resolve({ Payload: JSON.stringify(t.context.testLambdaReturn) });
         },
       };
     },
@@ -53,7 +53,9 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
     invoke: () => {
       lambdaInvocations += 1;
       return {
-        promise: async () => ({ Payload: JSON.stringify({ errorMessage: 'Task timed out' }) }),
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({ errorMessage: 'Task timed out' }),
+        }),
       };
     },
   });
@@ -68,4 +70,70 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
   }));
 
   t.is(4, lambdaInvocations);
+});
+
+test.serial('invokeApi retries on status code failure, then throws expected error on failure', async (t) => {
+  let lambdaInvocations = 0;
+
+  fakeServices.lambda = () => ({
+    invoke: () => {
+      lambdaInvocations += 1;
+      return {
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({
+            statusCode: 500,
+            body: JSON.stringify({
+              message: 'API failure',
+            }),
+          }),
+        }),
+      };
+    },
+  });
+
+  const actualError = await t.throwsAsync(apiClient.invokeApi({
+    prefix: t.context.testPrefix,
+    payload: t.context.testPayload,
+    pRetryOptions: {
+      retries: 4,
+      minTimeout: 1,
+      maxTimeout: 1,
+    },
+  }));
+
+  t.is(5, lambdaInvocations);
+  t.is(actualError.statusCode, 500);
+  t.is(actualError.apiMessage, '{"message":"API failure"}');
+});
+
+test.serial('invokeApi respects expected non-200 status code', async (t) => {
+  let lambdaInvocations = 0;
+
+  fakeServices.lambda = () => ({
+    invoke: () => {
+      lambdaInvocations += 1;
+      return {
+        promise: () => Promise.resolve({
+          Payload: JSON.stringify({
+            statusCode: 202,
+            body: JSON.stringify({
+              message: 'success',
+            }),
+          }),
+        }),
+      };
+    },
+  });
+
+  await t.notThrowsAsync(apiClient.invokeApi({
+    prefix: t.context.testPrefix,
+    payload: t.context.testPayload,
+    pRetryOptions: {
+      minTimeout: 1,
+      maxTimeout: 1,
+    },
+    expectedStatusCode: 202,
+  }));
+
+  t.is(1, lambdaInvocations);
 });

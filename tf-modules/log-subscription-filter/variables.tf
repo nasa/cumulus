@@ -5,13 +5,7 @@ variable "prefix" {
 
 variable "log_destination_arn" {
   type        = string
-  default     = null
   description = "A shared AWS:Log:Destination that receives logs from log_groups"
-}
-
-variable "log2elasticsearch_lambda_function_arn" {
-  type = string
-  description = "Lambda used to send logs to an elasticsearch instance"
 }
 
 # Ingest log groups

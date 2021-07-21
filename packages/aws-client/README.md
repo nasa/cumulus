@@ -64,6 +64,9 @@ memory at once.  Handles paging.</p>
 <dd><p>Class to efficiently list all of the objects in an S3 bucket, without loading
 them all into memory at once.  Handles paging of listS3ObjectsV2 requests.</p>
 </dd>
+<dt><a href="#S3ObjectStore">S3ObjectStore</a></dt>
+<dd><p>Class to use when interacting with S3</p>
+</dd>
 </dl>
 
 <a name="module_CloudFormation"></a>
@@ -141,6 +144,7 @@ Create a CloudWatch Events rule
 * [DynamoDb](#module_DynamoDb)
     * [.get](#module_DynamoDb.get) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.scan](#module_DynamoDb.scan) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.parallelScan(params)](#module_DynamoDb.parallelScan) ⇒ <code>Promise</code>
     * [.createAndWaitForDynamoDbTable(params)](#module_DynamoDb.createAndWaitForDynamoDbTable) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteAndWaitForDynamoDbTableNotExists(params)](#module_DynamoDb.deleteAndWaitForDynamoDbTableNotExists) ⇒ <code>Promise</code>
 
@@ -179,6 +183,25 @@ for descriptions of `params` and the return data.
 | Param | Type |
 | --- | --- |
 | params | <code>Object</code> | 
+
+<a name="module_DynamoDb.parallelScan"></a>
+
+### DynamoDb.parallelScan(params) ⇒ <code>Promise</code>
+Do a parallel scan of DynamoDB table using a document client.
+
+See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
+See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+
+**Kind**: static method of [<code>DynamoDb</code>](#module_DynamoDb)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.totalSegments | <code>number</code> | Total number of segments to divide table into for parallel scanning |
+| params.scanParams | <code>DocumentClient.ScanInput</code> | Params for the DynamoDB client scan operation   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html |
+| params.processItemsFunc | <code>function</code> | Function used to process returned items by scan |
+| [params.dynamoDbClient] | <code>DocumentClient</code> | Instance of Dynamo DB document client |
+| [params.retryOptions] | <code>pRetry.Options</code> | Retry options for scan operations |
 
 <a name="module_DynamoDb.createAndWaitForDynamoDbTable"></a>
 
@@ -314,6 +337,7 @@ Invoke a Lambda function
     * [.getObjectReadStream(params)](#module_S3.getObjectReadStream) ⇒ <code>Readable</code>
     * [.fileExists(bucket, key)](#module_S3.fileExists) ⇒ <code>Promise</code>
     * [.deleteS3Files(s3Objs)](#module_S3.deleteS3Files) ⇒ <code>Promise</code>
+    * [.deleteS3Buckets(buckets)](#module_S3.deleteS3Buckets) ⇒ <code>Promise</code>
     * [.uploadS3FileStream(fileStream, bucket, key, s3opts)](#module_S3.uploadS3FileStream) ⇒ <code>Promise</code>
     * [.listS3Objects(bucket, prefix, skipFolders)](#module_S3.listS3Objects) ⇒ <code>Promise</code>
     * [.listS3ObjectsV2(params)](#module_S3.listS3ObjectsV2) ⇒ <code>Promise.&lt;Array&gt;</code>
@@ -321,6 +345,7 @@ Invoke a Lambda function
     * [.validateS3ObjectChecksum(params)](#module_S3.validateS3ObjectChecksum) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.getFileBucketAndKey(pathParams)](#module_S3.getFileBucketAndKey) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createBucket(Bucket)](#module_S3.createBucket) ⇒ <code>Promise</code>
+    * [.createS3Buckets(buckets)](#module_S3.createS3Buckets) ⇒ <code>Promise</code>
     * [.multipartCopyObject(params)](#module_S3.multipartCopyObject) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
     * [.moveObject(params)](#module_S3.moveObject) ⇒ <code>Promise.&lt;undefined&gt;</code>
 
@@ -660,6 +685,18 @@ Delete files from S3
 | --- | --- | --- |
 | s3Objs | <code>Array</code> | An array of objects containing keys 'Bucket' and 'Key' |
 
+<a name="module_S3.deleteS3Buckets"></a>
+
+### S3.deleteS3Buckets(buckets) ⇒ <code>Promise</code>
+Delete a list of buckets and all of their objects from S3
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+**Returns**: <code>Promise</code> - the promised result of `S3.deleteBucket`  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buckets | <code>Array</code> | list of bucket names |
+
 <a name="module_S3.uploadS3FileStream"></a>
 
 ### S3.uploadS3FileStream(fileStream, bucket, key, s3opts) ⇒ <code>Promise</code>
@@ -770,6 +807,17 @@ Create an S3 bucket
 | --- | --- | --- |
 | Bucket | <code>string</code> | the name of the S3 bucket to create |
 
+<a name="module_S3.createS3Buckets"></a>
+
+### S3.createS3Buckets(buckets) ⇒ <code>Promise</code>
+Create multiple S3 buckets
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| buckets | <code>Array.&lt;string&gt;</code> | the names of the S3 buckets to create |
+
 <a name="module_S3.multipartCopyObject"></a>
 
 ### S3.multipartCopyObject(params) ⇒ <code>Promise.&lt;{etag: string}&gt;</code>
@@ -786,6 +834,7 @@ Copy an S3 object to another location in S3 using a multipart copy
 | params.sourceKey | <code>string</code> |  |  |
 | params.destinationBucket | <code>string</code> |  |  |
 | params.destinationKey | <code>string</code> |  |  |
+| [params.sourceObject] | <code>AWS.S3.HeadObjectOutput</code> |  | Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
 
@@ -1069,6 +1118,55 @@ When there are no more items in the queue, returns 'null'.
 
 **Kind**: instance method of [<code>S3ListObjectsV2Queue</code>](#S3ListObjectsV2Queue)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - an S3 object description  
+<a name="S3ObjectStore"></a>
+
+## S3ObjectStore
+Class to use when interacting with S3
+
+**Kind**: global class  
+
+* [S3ObjectStore](#S3ObjectStore)
+    * [.signGetObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signGetObject) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.signHeadObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signHeadObject) ⇒ <code>Promise.&lt;string&gt;</code>
+
+<a name="S3ObjectStore+signGetObject"></a>
+
+### s3ObjectStore.signGetObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a GET on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+
+<a name="S3ObjectStore+signHeadObject"></a>
+
+### s3ObjectStore.signHeadObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a HEAD on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+
 
 ## About Cumulus
 

@@ -1,62 +1,75 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const get = require('lodash/get');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
-const partial = require('lodash/partial');
 const path = require('path');
-const pMap = require('p-map');
 
 const awsClients = require('@cumulus/aws-client/services');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const log = require('@cumulus/common/log');
+const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const { getMessageGranules } = require('@cumulus/message/Granules');
-const { buildURL } = require('@cumulus/common/URLUtils');
-const isNil = require('lodash/isNil');
-const { removeNilProperties } = require('@cumulus/common/util');
 const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
+  getMessageExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
+const {
+  getMessageGranules,
+  getGranuleStatus,
+  getGranuleQueryFields,
+} = require('@cumulus/message/Granules');
+const {
+  getMessagePdrName,
+} = require('@cumulus/message/PDRs');
+const {
+  getMessageProvider,
+} = require('@cumulus/message/Providers');
+const {
+  getMessageWorkflowStartTime,
+  getWorkflowDuration,
+  getMetaStatus,
+} = require('@cumulus/message/workflows');
+const { buildURL } = require('@cumulus/common/URLUtils');
+const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
 } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
-  moveGranuleFiles,
 } = require('@cumulus/ingest/granule');
 
-const StepFunctionUtils = require('../lib/StepFunctionUtils');
 const Manager = require('./base');
 
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
-const { translateGranule } = require('../lib/granules');
+const {
+  getExecutionProcessingTimeInfo,
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
+  translateGranule,
+  getGranuleProductVolume,
+} = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const {
   parseException,
   deconstructCollectionId,
-  getGranuleProductVolume,
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
-const renameProperty = (from, to, obj) => {
-  const newObj = { ...obj, [to]: obj[from] };
-  delete newObj[from];
-  return newObj;
-};
+const logger = new Logger({ sender: '@cumulus/api/models/granules' });
 
 class Granule extends Manager {
-  constructor() {
+  constructor({
+    fileUtils = FileUtils,
+    stepFunctionUtils = StepFunctions,
+    cmrUtils = cmrjsCmrUtils,
+  } = {}) {
     const globalSecondaryIndexes = [{
       IndexName: 'collectionId-granuleId-index',
       KeySchema: [
@@ -85,10 +98,17 @@ class Granule extends Manager {
       tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
       schema: granuleSchema,
     });
+
+    this.fileUtils = fileUtils;
+    this.stepFunctionUtils = stepFunctionUtils;
+    this.cmrUtils = cmrUtils;
   }
 
   async get(...args) {
-    return translateGranule(await super.get(...args));
+    return translateGranule(
+      await super.get(...args),
+      this.fileUtils
+    );
   }
 
   getRecord({ granuleId }) {
@@ -99,7 +119,7 @@ class Granule extends Manager {
     const result = cloneDeep(await super.batchGet(...args));
 
     result.Responses[this.tableName] = await Promise.all(
-      result.Responses[this.tableName].map(translateGranule)
+      result.Responses[this.tableName].map((response) => translateGranule(response))
     );
 
     return result;
@@ -111,7 +131,9 @@ class Granule extends Manager {
     if (scanResponse.Items) {
       return {
         ...scanResponse,
-        Items: await Promise.all(scanResponse.Items.map(translateGranule)),
+        Items: await Promise.all(scanResponse.Items.map(
+          (response) => translateGranule(response)
+        )),
       };
     }
 
@@ -127,13 +149,13 @@ class Granule extends Manager {
    * @private
    */
   async _removeGranuleFromCmr(granule) {
-    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
+    logger.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
       throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
     }
 
-    const cmrSettings = await cmrUtils.getCmrSettings();
+    const cmrSettings = await this.cmrUtils.getCmrSettings();
     const cmr = new CMR(cmrSettings);
     const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
 
@@ -141,6 +163,9 @@ class Granule extends Manager {
     await cmr.deleteGranule(metadata.title, granule.collectionId);
   }
 
+  /*
+  * DEPRECATED: This has moved to /lib/granule-rmove-from-cmr.js
+  */
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
     return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
@@ -190,17 +215,18 @@ class Granule extends Manager {
    *
    * @param {Object} granule - the granule object
    * @param {string} workflow - the workflow name
-   * @param {Object} meta - optional meta object to insert in workflow message
-   * @param {string} [queueName] - specify queue to append message to
+   * @param {Object} [meta] - optional meta object to insert in workflow message
+   * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
+   *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
    * @param {string} [asyncOperationId] - specify asyncOperationId origin
    * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(
     granule,
     workflow,
-    meta = undefined,
-    queueName = undefined,
-    asyncOperationId = undefined
+    meta,
+    queueUrl,
+    asyncOperationId
   ) {
     if (!workflow) {
       throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
@@ -219,62 +245,13 @@ class Granule extends Manager {
         version,
       },
       meta,
-      queueName,
+      queueUrl,
       asyncOperationId,
     });
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);
-  }
-
-  /**
-   * Move a granule's files to destinations specified
-   *
-   * @param {Object} g - the granule record object
-   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   *    - list of destinations specified
-   *    regex - regex for matching filepath of file to new destination
-   *    bucket - aws bucket of the destination
-   *    filepath - file path/directory on the bucket for the destination
-   * @param {string} distEndpoint - distribution endpoint URL
-   * @returns {Promise<undefined>} undefined
-   */
-  async move(g, destinations, distEndpoint) {
-    log.info(`granules.move ${g.granuleId}`);
-
-    const bucketsConfig = await s3Utils.getJsonS3Object(
-      process.env.system_bucket,
-      getBucketsConfigKey(process.env.stackName)
-    );
-
-    const bucketTypes = Object.values(bucketsConfig)
-      .reduce(
-        (acc, { name, type }) => ({ ...acc, [name]: type }),
-        {}
-      );
-
-    const distributionBucketMap = await s3Utils.getJsonS3Object(
-      process.env.system_bucket,
-      getDistributionBucketMapKey(process.env.stackName)
-    );
-    const updatedFiles = await moveGranuleFiles(g.files, destinations);
-
-    await cmrUtils.reconcileCMRMetadata({
-      granuleId: g.granuleId,
-      updatedFiles,
-      distEndpoint,
-      published: g.published,
-      distributionBucketMap,
-      bucketTypes,
-    });
-
-    return this.update(
-      { granuleId: g.granuleId },
-      {
-        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName')),
-      }
-    );
   }
 
   /**
@@ -318,73 +295,74 @@ class Granule extends Manager {
    * @param {Object} params
    * @param {AWS.S3} params.s3 - an AWS.S3 instance
    * @param {Object} params.granule - A granule object
-   * @param {Object} params.message - A workflow execution message
    * @param {string} params.executionUrl - A Step Function execution URL
-   * @param {Object} [params.executionDescription={}] - Defaults to empty object
-   * @param {Date} params.executionDescription.startDate - Start date of the workflow execution
-   * @param {Date} params.executionDescription.stopDate - Stop date of the workflow execution
+   * @param {Object} params.provider - Provider object
+   * @param {string} params.workflowStatus - Workflow status
+   * @param {string} params.collectionId - Collection ID for the workflow
+   * @param {string} [params.pdrName] - PDR name for the workflow, if any
+   * @param {Object} [params.error] - Workflow error, if any
+   * @param {Object} [params.processingTimeInfo={}]
+   *   Info describing the processing time for the granule
    * @returns {Promise<Object>} A granule record
    */
-  static async generateGranuleRecord({
+  async generateGranuleRecord({
     s3,
     granule,
-    message,
     executionUrl,
-    executionDescription = {},
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
+    queryFields,
+    processingTimeInfo = {},
+    updatedAt,
   }) {
     if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
-    const collectionId = getCollectionIdFromMessage(message);
+
     if (!collectionId) {
-      throw new CumulusModelError('meta.collection required to generate a granule record');
+      throw new CumulusModelError('collection required to generate a granule record');
     }
 
-    const granuleFiles = await FileUtils.buildDatabaseFiles({
+    const {
+      files,
+      granuleId,
+      cmrLink,
+      published = false,
+    } = granule;
+
+    const granuleFiles = await this.fileUtils.buildDatabaseFiles({
       s3,
-      providerURL: buildURL({
-        protocol: message.meta.provider.protocol,
-        host: message.meta.provider.host,
-        port: message.meta.provider.port,
-      }),
-      files: granule.files,
+      providerURL: buildURL(provider),
+      files,
     });
 
-    const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-
-    const { startDate, stopDate } = executionDescription;
-    const processingTimeInfo = {};
-    if (startDate) {
-      processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      processingTimeInfo.processingEndDateTime = stopDate
-        ? stopDate.toISOString()
-        : new Date().toISOString();
-    }
-
     const now = Date.now();
+    const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
 
     const record = {
-      granuleId: granule.granuleId,
-      pdrName: get(message, 'meta.pdr.name'),
+      granuleId,
+      pdrName,
       collectionId,
-      status: get(message, 'meta.status', get(granule, 'status')),
-      provider: get(message, 'meta.provider.id'),
+      status: getGranuleStatus(workflowStatus, granule),
+      provider: provider.id,
       execution: executionUrl,
-      cmrLink: granule.cmrLink,
+      cmrLink: cmrLink,
       files: granuleFiles,
-      error: parseException(message.exception),
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      error,
+      published,
+      createdAt: workflowStartTime,
       timestamp: now,
-      updatedAt: now,
+      updatedAt: updatedAt || now,
+      duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
-      timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
-      timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+      timeToPreprocess: getGranuleTimeToPreprocess(granule),
+      timeToArchive: getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
       ...temporalInfo,
-      queryFields: get(message, 'meta.granule.queryFields'),
+      queryFields,
     };
-
-    record.published = get(granule, 'published', false);
-    // Duration is also used as timeToXfer for the EMS report
-    record.duration = (record.timestamp - record.createdAt) / 1000;
 
     return removeNilProperties(record);
   }
@@ -549,31 +527,7 @@ class Granule extends Manager {
    * @private
    */
   async _deleteRecord(granule) {
-    // Delete granule files
-    await pMap(
-      get(granule, 'files', []),
-      (file) => {
-        const bucket = FileUtils.getBucket(file);
-        const key = FileUtils.getKey(file);
-        return s3Utils.deleteS3Object(bucket, key);
-      }
-    );
-
-    return super.delete({ granuleId: granule.granuleId });
-  }
-
-  /**
-   * Unpublish and delete granule.
-   *
-   * @param {Object} granule - A granule record
-   * @returns {Promise}
-   */
-  async unpublishAndDeleteGranule(granule) {
-    await this._removeGranuleFromCmr(granule);
-    // Intentionally do not update the record to set `published: false`.
-    // So if _deleteRecord fails, the record is still in a state where this
-    // operation can be retried.
-    return this._deleteRecord(granule);
+    return await super.delete({ granuleId: granule.granuleId });
   }
 
   /**
@@ -587,7 +541,7 @@ class Granule extends Manager {
       throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
     }
 
-    return this._deleteRecord(granule);
+    return await this._deleteRecord(granule);
   }
 
   /**
@@ -595,7 +549,7 @@ class Granule extends Manager {
    */
   async deleteGranules() {
     const granules = await this.scan();
-    return Promise.all(granules.Items.map((granule) =>
+    return await Promise.all(granules.Items.map((granule) =>
       this.delete(granule)));
   }
 
@@ -607,66 +561,45 @@ class Granule extends Manager {
    */
   _getMutableFieldNames(record) {
     if (record.status === 'running') {
-      return ['updatedAt', 'timestamp', 'status', 'execution'];
+      return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
   }
 
   /**
-   * Parse a Cumulus message and build granule records for the embedded granules.
+   * Store a granule record in DynamoDB.
    *
-   * @param {Object} cumulusMessage - A Cumulus message
-   * @returns {Promise<Array<Object>>} - An array of granule records
+   * @param {Object} granuleRecord - A granule record.
+   * @returns {Promise<Object|undefined>}
    */
-  static async _getGranuleRecordsFromCumulusMessage(cumulusMessage) {
-    const granules = getMessageGranules(cumulusMessage);
-    if (!granules) {
-      log.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
-      return [];
+  async _storeGranuleRecord(granuleRecord) {
+    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: granuleRecord,
+      itemKey: { granuleId: granuleRecord.granuleId },
+      mutableFieldNames,
+    });
+
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+
+    // Only allow "running" granule to replace completed/failed
+    // granule if the execution has changed
+    if (granuleRecord.status === 'running') {
+      updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    const executionUrl = StepFunctionUtils.getExecutionUrl(executionArn);
-
-    let executionDescription;
     try {
-      executionDescription = await StepFunctions.describeExecution({ executionArn });
+      return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
-      log.error(`Could not describe execution ${executionArn}`, error);
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        logger.error(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution}), cause:`, error);
+        return undefined;
+      }
+      throw error;
     }
-
-    const promisedGranuleRecords = granules
-      .map(
-        async (granule) => {
-          try {
-            return await Granule.generateGranuleRecord({
-              s3: awsClients.s3(),
-              granule,
-              message: cumulusMessage,
-              executionUrl,
-              executionDescription,
-            });
-          } catch (error) {
-            log.logAdditionalKeys(
-              {
-                error: {
-                  name: error.name,
-                  message: error.message,
-                  stack: error.stack.split('\n'),
-                },
-                cumulusMessage,
-              },
-              'Unable to get granule records from Cumulus Message'
-            );
-
-            return undefined;
-          }
-        }
-      );
-
-    const granuleRecords = await Promise.all(promisedGranuleRecords);
-
-    return granuleRecords.filter((r) => !isNil(r));
   }
 
   /**
@@ -676,31 +609,74 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
+    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
+    return this._storeGranuleRecord(granuleRecord);
+  }
+
+  /**
+   * Generate a granule record from a Cumulus message and store it in DynamoDB.
+   *
+   * @param {Object} params
+   * @param {Object} params.granule - Granule object from a Cumulus message
+   * @param {Object} params.cumulusMessage - A workflow message
+   * @param {string} params.executionUrl - Step Function execution URL for the workflow
+   * @param {Object} params.provider - Provider object
+   * @param {number} params.workflowStartTime - Workflow start timestamp
+   * @param {string} params.workflowStatus - Workflow status
+   * @param {string} params.collectionId - Collection ID for the workflow
+   * @param {string} [params.pdrName] - PDR name for the workflow, if any
+   * @param {Object} [params.error] - Workflow error, if any
+   * @param {Object} [params.processingTimeInfo]
+   *   Info describing the processing time for the granule
+   *
+   * @returns {Promise<Object|undefined>}
+   * @throws
+   */
+  async storeGranuleFromCumulusMessage({
+    granule,
+    executionUrl,
+    processingTimeInfo,
+    provider,
+    workflowStartTime,
+    collectionId,
+    error,
+    pdrName,
+    workflowStatus,
+    queryFields,
+    updatedAt,
+  }) {
+    const granuleRecord = await this.generateGranuleRecord({
+      s3: awsClients.s3(),
+      granule,
+      executionUrl,
+      collectionId,
+      provider,
+      workflowStartTime,
+      error,
+      pdrName,
+      workflowStatus,
+      processingTimeInfo,
+      queryFields,
+      updatedAt,
+    });
+    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
+    logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    return response;
+  }
+
+  async describeGranuleExecution(executionArn) {
+    let executionDescription;
     try {
-      // TODO: Refactor this all to use model.update() to avoid having to manually call
-      // schema validation and the actual client.update() method.
-      await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
-
-      const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
-      const updateParams = this._buildDocClientUpdateParams({
-        item: granuleRecord,
-        itemKey: { granuleId: granuleRecord.granuleId },
-        mutableFieldNames,
+      executionDescription = await this.stepFunctionUtils.describeExecution({
+        executionArn,
       });
-
-      // Only allow "running" granule to replace completed/failed
-      // granule if the execution has changed
-      if (granuleRecord.status === 'running') {
-        updateParams.ConditionExpression = '#execution <> :execution';
-      }
-
-      await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
-      log.error(
-        'Could not store granule record: ', granuleRecord,
-        error
-      );
+      logger.error(`Could not describe execution ${executionArn}`, error);
     }
+    return executionDescription;
   }
 
   /**
@@ -710,9 +686,39 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async storeGranulesFromCumulusMessage(cumulusMessage) {
-    const granuleRecords = await this.constructor
-      ._getGranuleRecordsFromCumulusMessage(cumulusMessage);
-    return Promise.all(granuleRecords.map(this._validateAndStoreGranuleRecord, this));
+    const granules = getMessageGranules(cumulusMessage);
+    if (granules.length === 0) {
+      logger.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
+      return granules;
+    }
+
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+    const executionUrl = getExecutionUrlFromArn(executionArn);
+    const executionDescription = await this.describeGranuleExecution(executionArn);
+    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
+    const provider = getMessageProvider(cumulusMessage);
+    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
+    const pdrName = getMessagePdrName(cumulusMessage);
+    const error = parseException(cumulusMessage.exception);
+    const workflowStatus = getMetaStatus(cumulusMessage);
+    const queryFields = getGranuleQueryFields(cumulusMessage);
+
+    return await Promise.all(granules.map(
+      (granule) =>
+        this.storeGranuleFromCumulusMessage({
+          granule,
+          processingTimeInfo,
+          executionUrl,
+          provider,
+          workflowStartTime,
+          collectionId,
+          error,
+          pdrName,
+          workflowStatus,
+          queryFields,
+        }).catch((writeError) => logger.error(writeError))
+    ));
   }
 }
 

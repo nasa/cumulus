@@ -3,7 +3,7 @@
 const test = require('ava');
 const granulesApi = require('../granules');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
 });
@@ -20,6 +20,11 @@ test('getGranule calls the callback with the expected object', async (t) => {
 
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
   };
 
   await t.notThrowsAsync(granulesApi.getGranule({
@@ -29,12 +34,41 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('getGranule calls the callback with the expected object when there is query param', async (t) => {
+  const query = { getRecoveryStatus: true };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+      queryStringParameters: query,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    query,
+  }));
+});
+
 test('waitForGranules calls getGranules with the expected payload', async (t) => {
-  const callback = async ({ prefix, payload }) => {
+  const callback = ({ prefix, payload }) => {
     t.true(payload.path.endsWith(t.context.granuleId));
     t.is(prefix, t.context.testPrefix);
 
-    return { statusCode: 200 };
+    return Promise.resolve({ statusCode: 200 });
   };
 
   await granulesApi.waitForGranule({
@@ -46,7 +80,7 @@ test('waitForGranules calls getGranules with the expected payload', async (t) =>
 
 test('waitForGranules fails on 500 statusCode', async (t) => {
   await t.throwsAsync(granulesApi.waitForGranule({
-    callback: async () => ({ statusCode: 500 }),
+    callback: () => Promise.resolve({ statusCode: 500 }),
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
   }));
@@ -103,6 +137,7 @@ test('waitForGranules retries if status does not match provided status', async (
 });
 
 test('reingestGranule calls the callback with the expected object', async (t) => {
+  const aWorkflow = 'anyWorkflowName';
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -112,7 +147,10 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'reingest' }),
+      body: JSON.stringify({
+        action: 'reingest',
+        workflowName: aWorkflow,
+      }),
     },
   };
 
@@ -123,6 +161,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
   await t.notThrowsAsync(granulesApi.reingestGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    workflowName: aWorkflow,
     callback,
   }));
 });
@@ -184,6 +223,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
 test('deleteGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
+    pRetryOptions: { foo: 'bar' },
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
@@ -198,6 +238,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.deleteGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    pRetryOptions: { foo: 'bar' },
     callback,
   }));
 });
@@ -279,7 +320,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   let removeFromCmrCalled = false;
   let deleteGranuleCalled = false;
 
-  const callback = async ({ payload }) => {
+  const callback = ({ payload }) => {
     if (
       payload.httpMethod === 'PUT'
       && payload.path === `/granules/${t.context.granuleId}`

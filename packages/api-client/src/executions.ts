@@ -44,12 +44,15 @@ export const getExecution = async (params: {
  */
 export const getExecutions = async (params: {
   prefix: string,
-  query?: { [key: string]: string },
+  query?: {
+    fields?: string[] | string
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -78,12 +81,73 @@ export const getExecutionStatus = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, arn, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/status/${arn}`,
     },
+  });
+};
+
+/**
+ * DELETE /executions/{executionArn}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.executionArn - the execution ARN
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const deleteExecution = async (params: {
+  prefix: string,
+  executionArn: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, executionArn, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/executions/${executionArn}`,
+    },
+  });
+};
+
+/**
+ * Search executions by granules
+ * POST /executions/search-by-granules
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const searchExecutionsByGranules = async (params: {
+  prefix: string,
+  payload: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, payload, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/search-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
   });
 };

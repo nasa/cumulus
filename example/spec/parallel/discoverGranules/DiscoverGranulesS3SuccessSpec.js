@@ -1,9 +1,8 @@
 'use strict';
 
 const pWaitFor = require('p-wait-for');
-const { randomString } = require('@cumulus/common/test-utils');
 const {
-  buildAndExecuteWorkflow,
+  getExecutionInputObject,
   loadCollection,
   loadProvider,
   waitForCompletedExecution,
@@ -12,23 +11,38 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
-const { getExecution } = require('@cumulus/api-client/executions');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 const {
-  deleteFolder, loadConfig, updateAndUploadTestDataToBucket,
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
+const {
+  uploadS3GranuleDataForDiscovery,
+} = require('../../helpers/discoverUtils');
+const {
+  waitForGranuleAndDelete,
+} = require('../../helpers/granuleUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const {
+  createTimestampedTestId,
+  deleteFolder,
+  loadConfig,
 } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow', () => {
   let beforeAllCompleted = false;
-  let collection;
-  let provider;
-  let queueGranulesOutput;
-  let workflowExecution;
-  let stackName;
   let bucket;
+  let collection;
+  let expectedGranuleId;
+  let ingestGranuleExecutionArn;
+  let provider;
   let providerPath;
+  let discoverGranulesOutput;
+  let queueGranulesOutput;
+  let stackName;
+  let workflowExecution;
 
   beforeAll(async () => {
     ({ stackName, bucket } = await loadConfig());
@@ -38,7 +52,7 @@ describe('The DiscoverGranules workflow', () => {
 
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = randomString();
+    const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3Success');
 
     // Create the provider
     provider = await loadProvider({
@@ -59,15 +73,11 @@ describe('The DiscoverGranules workflow', () => {
     providerPath = `cumulus-test-data/${testId}`;
 
     // Upload the granule to be discovered
-    await updateAndUploadTestDataToBucket(
+    const { granuleId } = await uploadS3GranuleDataForDiscovery({
       bucket,
-      [
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-        '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
-      ],
-      providerPath
-    );
+      prefix: providerPath,
+    });
+    expectedGranuleId = granuleId;
 
     // Execute the DiscoverGranules workflow
     workflowExecution = await buildAndExecuteWorkflow(
@@ -80,9 +90,16 @@ describe('The DiscoverGranules workflow', () => {
       { provider_path: providerPath }
     );
 
+    const lambdaStep = new LambdaStep();
+
+    discoverGranulesOutput = await lambdaStep.getStepOutput(
+      workflowExecution.executionArn,
+      'DiscoverGranules'
+    );
+
     // Get the output of the QueueGranules task. Doing it here because there are
     // two tests that need it.
-    queueGranulesOutput = await (new LambdaStep()).getStepOutput(
+    queueGranulesOutput = await lambdaStep.getStepOutput(
       workflowExecution.executionArn,
       'QueueGranules'
     );
@@ -90,8 +107,33 @@ describe('The DiscoverGranules workflow', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    await Promise.all(discoverGranulesOutput.payload.granules.map(
+      async (granule) => {
+        await waitForGranuleAndDelete(
+          stackName,
+          granule.granuleId,
+          'completed'
+        );
+      }
+    ));
+
+    await Promise.all([
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: ingestGranuleExecutionArn },
+        'completed'
+      ),
+      waitForApiStatus(
+        getExecution,
+        { prefix: stackName, arn: workflowExecution.executionArn },
+        'completed'
+      ),
+    ]);
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
+    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({
         prefix: stackName,
@@ -102,11 +144,12 @@ describe('The DiscoverGranules workflow', () => {
         prefix: stackName,
         provider: provider.id,
       }),
-    ]));
+    ]);
+  });
 
   it('executes successfully', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('SUCCEEDED');
+    else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('can be fetched from the API', async () => {
@@ -139,17 +182,12 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   describe('DiscoverGranules task', () => {
-    it('outputs the list of discovered granules', async () => {
+    it('outputs the list of discovered granules', () => {
       if (!beforeAllCompleted) fail('beforeAll() failed');
       else {
-        const discoverGranulesOutput = await (new LambdaStep()).getStepOutput(
-          workflowExecution.executionArn,
-          'DiscoverGranules'
-        );
-
         expect(discoverGranulesOutput.payload.granules.length).toEqual(1);
         const granule = discoverGranulesOutput.payload.granules[0];
-        expect(granule.granuleId).toEqual('MOD09GQ.A2016358.h13v04.006.2016360104606');
+        expect(granule.granuleId).toEqual(expectedGranuleId);
         expect(granule.dataType).toEqual(collection.name);
         expect(granule.version).toEqual(collection.version);
         expect(granule.files.length).toEqual(3);
@@ -158,9 +196,23 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   describe('QueueGranules task', () => {
+    afterAll(async () => {
+      await Promise.all(
+        queueGranulesOutput.payload.running
+          .map((arn) => waitForCompletedExecution(arn))
+      );
+    });
+
     it('has queued the granule', () => {
       if (!beforeAllCompleted) fail('beforeAll() failed');
       else expect(queueGranulesOutput.payload.running.length).toEqual(1);
+    });
+
+    it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
+      ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
+      const executionInput = await getExecutionInputObject(queueGranulesOutput.payload.running[0]);
+      expect(executionInput.meta.staticValue).toEqual('aStaticValue');
+      expect(executionInput.meta.interpolatedValueStackName).toEqual(queueGranulesOutput.meta.stack);
     });
   });
 });

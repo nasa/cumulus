@@ -5,22 +5,29 @@ const test = require('ava');
 const get = require('lodash/get');
 const sinon = require('sinon');
 
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
+const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
+const mappings = require('@cumulus/es-client/config/mappings.json');
 
+const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { Search, defaultIndexAlias } = require('../../es/search');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const mappings = require('../../models/mappings.json');
 
 const esIndex = randomString();
 
@@ -32,6 +39,7 @@ process.env.system_bucket = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
+const { indexFromDatabase } = require('../../endpoints/elasticsearch');
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -74,6 +82,8 @@ async function createIndex(indexName, aliasName) {
   esClient = await Search.es();
 }
 
+const testDbName = randomId('elasticsearch');
+
 test.before(async (t) => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -94,6 +104,15 @@ test.before(async (t) => {
 
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
 
   // create the elasticsearch index and add mapping
   await createIndex(esIndex, t.context.esAlias);
@@ -101,10 +120,15 @@ test.before(async (t) => {
   await indexData();
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await asyncOperationsModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
@@ -183,6 +207,7 @@ test.serial('Reindex - specify a source index that does not exist', async (t) =>
 test.serial('Reindex - specify a source index that is not aliased', async (t) => {
   const { esAlias } = t.context;
   const indexName = 'source-index';
+  const destIndex = randomString();
 
   await esClient.indices.create({
     index: indexName,
@@ -191,14 +216,74 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
-    .send({ aliasName: esAlias, sourceIndex: indexName })
+    .send({
+      aliasName: esAlias,
+      sourceIndex: indexName,
+      destIndex,
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${indexName}. Check the reindex-status endpoint for status.`);
+
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  await esClient.indices.delete({ index: indexName });
+  await esClient.indices.delete({ index: destIndex });
+});
+
+test.serial('Reindex request returns 400 with the expected message when source index matches destination index.', async (t) => {
+  const indexName = randomId('index');
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings },
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ destIndex: indexName, sourceIndex: indexName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, `Source index source-index is not aliased with alias ${esAlias}.`);
-
+  t.is(response.body.message, `source index(${indexName}) and destination index(${indexName}) must be different.`);
   await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
+  const date = new Date();
+  const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  await esClient.indices.create({
+    index: defaultIndexName,
+    body: { mappings },
+  });
+
+  t.teardown(async () => {
+    await esClient.indices.delete({ index: defaultIndexName });
+  });
+
+  const response = await request(app)
+    .post('/elasticsearch/reindex')
+    .send({ sourceIndex: defaultIndexName })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `source index(${defaultIndexName}) and destination index(${defaultIndexName}) must be different.`);
 });
 
 test.serial('Reindex success', async (t) => {
@@ -251,19 +336,40 @@ test.serial('Reindex success', async (t) => {
 
 test.serial('Reindex - destination index exists', async (t) => {
   const { esAlias } = t.context;
+  const destIndex = randomString();
+  const newAlias = randomString();
+
+  await createIndex(destIndex, newAlias);
 
   const response = await request(app)
     .post('/elasticsearch/reindex')
     .send({
       aliasName: esAlias,
-      destIndex: esIndex,
+      destIndex: destIndex,
       sourceIndex: esIndex,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${esIndex}. Check the reindex-status endpoint for status.`);
+
+  // Check the reindex status endpoint to see if the operation has completed
+  let statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  /* eslint-disable no-await-in-loop */
+  while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
+    statusResponse = await request(app)
+      .get('/elasticsearch/reindex-status')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  await esClient.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex status, no task running', async (t) => {
@@ -340,9 +446,11 @@ test.serial('Change index - new index does not exist', async (t) => {
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.body.message, `New index ${newIndex} does not exist.`);
+  t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
+
+  await esClient.indices.delete({ index: newIndex });
 });
 
 test.serial('Change index - current index same as new index', async (t) => {
@@ -446,7 +554,7 @@ test.serial('Reindex from database - create new index', async (t) => {
   const indexName = randomString();
   const id = randomString();
 
-  const stub = sinon.stub(models.AsyncOperation.prototype, 'start').resolves({ id });
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
 
   try {
     const response = await request(app)
@@ -500,6 +608,7 @@ test.serial('Indices status', async (t) => {
 test.serial('Current index - default alias', async (t) => {
   const indexName = randomString();
   await createIndex(indexName, defaultIndexAlias);
+  t.teardown(() => esClient.indices.delete({ index: indexName }));
 
   const response = await request(app)
     .get('/elasticsearch/current-index')
@@ -507,8 +616,6 @@ test.serial('Current index - default alias', async (t) => {
     .expect(200);
 
   t.true(response.body.includes(indexName));
-
-  await esClient.indices.delete({ index: indexName });
 });
 
 test.serial('Current index - custom alias', async (t) => {
@@ -527,7 +634,7 @@ test.serial('Current index - custom alias', async (t) => {
 });
 
 test.serial('request to /elasticsearch/index-from-database endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
@@ -544,7 +651,7 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 500 
 });
 
 test.serial('request to /elasticsearch/index-from-database endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(models.AsyncOperation.prototype, 'start').throws(
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 
@@ -558,4 +665,22 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 503 
   } finally {
     asyncOperationStartStub.restore();
   }
+});
+
+test.serial('indexFromDatabase request completes successfully', async (t) => {
+  const fakeRequest = {
+    body: {
+      indexName: randomId('index'),
+    },
+    testContext: {
+      // mock starting the ECS task
+      startEcsTaskFunc: () => Promise.resolve({}),
+    },
+  };
+  const fakeResponse = {
+    send: sinon.stub(),
+  };
+
+  await t.notThrowsAsync(indexFromDatabase(fakeRequest, fakeResponse));
+  t.true(fakeResponse.send.called);
 });

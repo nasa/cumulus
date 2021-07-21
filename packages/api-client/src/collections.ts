@@ -23,7 +23,7 @@ export const createCollection = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, collection, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
@@ -60,7 +60,7 @@ export const deleteCollection = async (params: {
     callback = invokeApi,
   } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -126,7 +126,7 @@ export const getCollections = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',

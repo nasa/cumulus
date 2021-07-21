@@ -6,16 +6,18 @@ const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { models: { Granule, Pdr } } = require('@cumulus/api');
+const { getGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
   addProviders,
   api: apiTestUtils,
-  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   deleteFolder,
   loadConfig,
@@ -29,8 +31,11 @@ const {
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const {
+  waitForApiRecord,
+} = require('../../helpers/apiUtils');
 
 const workflowName = 'SyncGranule';
 
@@ -40,24 +45,28 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
 ];
-
 const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
 describe('When the Sync Granule workflow is configured', () => {
-  let config;
-  let lambdaStep;
-  let workflowExecution;
+  let caughtDuplicateErrorExecutionArn;
   let collection;
-  let provider;
-  let inputPayload;
-  let granuleModel;
+  let config;
+  let duplicateChecksumExecutionArn;
+  let duplicateFilenameExecutionArn;
+  let existingVersionedFileExecutionArn;
   let expectedPayload;
-  let pdrModel;
-  let testSuffix;
+  let inputPayload;
+  let lambdaStep;
+  let newGranuleId;
+  let provider;
+  let syncGranuleExecutionArn;
   let testDataFolder;
+  let testSuffix;
+  let uncaughtDuplicateErrorExecutionArn;
+  let workflowExecution;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -71,12 +80,6 @@ describe('When the Sync Granule workflow is configured', () => {
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
-
-    process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-    pdrModel = new Pdr();
-
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -88,7 +91,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    const newGranuleId = inputPayload.granules[0].granuleId;
+    newGranuleId = inputPayload.granules[0].granuleId;
 
     const templatedOutputPayloadFilename = templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
@@ -124,27 +127,40 @@ describe('When the Sync Granule workflow is configured', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(inputPayload.granules.map(
+      async (granule) => {
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
+          ['completed', 'failed']
+        );
+      }
+    ));
+
+    // Executions must be deleted in a specific order due to foreign key relationships
+    await deleteExecution({ prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
-      pdrModel.delete({
-        pdrName: inputPayload.pdr.name,
-      }),
     ]);
   });
 
   describe('to keep both files when encountering duplicate filenames\n', () => {
     it('the initial workflow completes execution with success status', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+      expect(workflowExecution.status).toEqual('completed');
     });
 
     describe('and it encounters data with a duplicated filename with duplicate checksum', () => {
@@ -169,6 +185,8 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        duplicateChecksumExecutionArn = workflowExecution.executionArn;
       });
 
       afterAll(() => {
@@ -178,7 +196,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('does not create a copy of the file', async () => {
@@ -225,10 +243,12 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        duplicateFilenameExecutionArn = workflowExecution.executionArn;
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('moves the existing data to a file with a suffix to distinguish it from the new file', async () => {
@@ -243,21 +263,21 @@ describe('When the Sync Granule workflow is configured', () => {
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
-      it('captures both files', async () => {
-        // This assertion is to check that the granule has been updated in dynamo
+      it('captures the additional file', async () => {
+        // This assertion is to check that the granule has been updated in the API
         // before performing further checks
-        const record = await waitForModelStatus(
-          granuleModel,
-          { granuleId: inputPayload.granules[0].granuleId },
-          'completed'
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'completed',
+            execution: getExecutionUrlFromArn(duplicateFilenameExecutionArn),
+          }
         );
-        expect(record.status).toEqual('completed');
-
-        const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-        const granule = JSON.parse(granuleResponse.body);
+        expect(granule.status).toEqual('completed');
         expect(granule.files.length).toEqual(3);
       });
     });
@@ -281,14 +301,16 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        existingVersionedFileExecutionArn = workflowExecution.executionArn;
       });
 
       it('does not raise a workflow error', () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+        expect(workflowExecution.status).toEqual('completed');
       });
 
       it('moves the existing data to a file with a suffix to distinguish it from the new file and existing versioned file', async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+        lambdaOutput = await lambdaStep.getStepOutput(existingVersionedFileExecutionArn, 'SyncGranule');
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(4);
 
@@ -297,18 +319,18 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures all files', async () => {
-        const record = await waitForModelStatus(
-          granuleModel,
-          { granuleId: inputPayload.granules[0].granuleId },
-          'completed'
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'completed',
+            execution: getExecutionUrlFromArn(existingVersionedFileExecutionArn),
+          }
         );
-        expect(record.status).toEqual('completed');
-
-        const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-        });
-        const granule = JSON.parse(granuleResponse.body);
+        expect(granule.status).toEqual('completed');
         expect(granule.files.length).toEqual(4);
       });
     });
@@ -327,15 +349,17 @@ describe('When the Sync Granule workflow is configured', () => {
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
         );
+
+        uncaughtDuplicateErrorExecutionArn = workflowExecution.executionArn;
       });
 
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
+        const lambdaInput = await lambdaStep.getStepInput(uncaughtDuplicateErrorExecutionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(uncaughtDuplicateErrorExecutionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
@@ -345,7 +369,22 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('fails the workflow', () => {
-        expect(workflowExecution.status).toEqual('FAILED');
+        expect(workflowExecution.status).toEqual('failed');
+      });
+
+      it('sets granule status to "failed"', async () => {
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'failed',
+            execution: getExecutionUrlFromArn(uncaughtDuplicateErrorExecutionArn),
+          }
+        );
+        expect(granule.status).toEqual('failed');
       });
     });
 
@@ -359,15 +398,16 @@ describe('When the Sync Granule workflow is configured', () => {
           provider,
           inputPayload
         );
+        caughtDuplicateErrorExecutionArn = workflowExecution.executionArn;
       });
 
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
+        const lambdaInput = await lambdaStep.getStepInput(caughtDuplicateErrorExecutionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(caughtDuplicateErrorExecutionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
@@ -376,8 +416,26 @@ describe('When the Sync Granule workflow is configured', () => {
         );
       });
 
-      it('completes execution with success status', async () => {
-        expect(workflowExecution.status).toEqual('SUCCEEDED');
+      it('completes execution with success status', () => {
+        expect(workflowExecution.status).toEqual('completed');
+      });
+
+      it('sets granule status to "failed"', async () => {
+        // Granule status will be "failed" even though workflow
+        // succeeded because file bucket/key properties were not
+        // generated since SyncGranule failed
+        const granule = await waitForApiRecord(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          },
+          {
+            status: 'failed',
+            execution: getExecutionUrlFromArn(caughtDuplicateErrorExecutionArn),
+          }
+        );
+        expect(granule.status).toEqual('failed');
       });
     });
   });

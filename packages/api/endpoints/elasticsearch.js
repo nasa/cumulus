@@ -3,12 +3,14 @@
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
+const asyncOperations = require('@cumulus/async-operations');
+const { IndexExistsError } = require('@cumulus/errors');
+const { defaultIndexAlias, Search } = require('@cumulus/es-client/search');
+const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const { AsyncOperation } = require('../models');
-const { IndexExistsError } = require('../lib/errors');
-const { defaultIndexAlias, Search } = require('../es/search');
-const { createIndex } = require('../es/indexer');
+
+const models = require('../models');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -17,7 +19,7 @@ function timestampedIndexName() {
   return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-async function createEsSnapshot(req, res) {
+function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****
@@ -57,14 +59,14 @@ async function reindex(req, res) {
 
   const esClient = await Search.es();
 
-  const alias = await esClient.indices.getAlias({
-    name: aliasName,
-  }).then((response) => response.body);
-
-  // alias keys = index name
-  const indices = Object.keys(alias);
-
   if (!sourceIndex) {
+    const alias = await esClient.indices.getAlias({
+      name: aliasName,
+    }).then((response) => response.body);
+
+    // alias keys = index name
+    const indices = Object.keys(alias);
+
     if (indices.length > 1) {
       // We don't know which index to use as the source, throw error
       return res.boom.badRequest(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.sort().join(', ')}].`);
@@ -78,27 +80,27 @@ async function reindex(req, res) {
     if (!sourceExists) {
       return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
     }
-
-    if (indices.includes(sourceIndex) === false) {
-      return res.boom.badRequest(`Source index ${sourceIndex} is not aliased with alias ${aliasName}.`);
-    }
   }
 
   if (!destIndex) {
     destIndex = timestampedIndexName();
   }
 
-  try {
-    await createIndex(esClient, destIndex);
-  } catch (error) {
-    if (error instanceof IndexExistsError) {
-      return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
-    }
-
-    return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
+  if (sourceIndex === destIndex) {
+    return res.boom.badRequest(`source index(${sourceIndex}) and destination index(${destIndex}) must be different.`);
   }
 
-  log.info(`Created destination index ${destIndex}.`);
+  const destExists = await esClient.indices.exists({ index: destIndex })
+    .then((response) => response.body);
+
+  if (!destExists) {
+    try {
+      await createIndex(esClient, destIndex);
+      log.info(`Created destination index ${destIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
+    }
+  }
 
   // reindex
   esClient.reindex({
@@ -160,7 +162,12 @@ async function changeIndex(req, res) {
     .then((response) => response.body);
 
   if (!destExists) {
-    return res.boom.badRequest(`New index ${newIndex} does not exist.`);
+    try {
+      await createIndex(esClient, newIndex);
+      log.info(`Created destination index ${newIndex}.`);
+    } catch (error) {
+      return res.boom.badRequest(`Error creating index ${newIndex}: ${error.message}`);
+    }
   }
 
   try {
@@ -198,22 +205,22 @@ async function indicesStatus(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
+  const {
+    startEcsTaskFunc,
+  } = req.testContext || {};
   const esClient = await Search.es();
-
   const indexName = req.body.indexName || timestampedIndexName();
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
+  const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;
     });
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.IndexFromDatabaseLambda,
@@ -234,7 +241,12 @@ async function indexFromDatabase(req, res) {
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
     },
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+    startEcsTaskFunc,
+  }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
@@ -259,4 +271,7 @@ router.get('/indices-status', indicesStatus);
 router.get('/current-index/:alias', getCurrentIndex);
 router.get('/current-index', getCurrentIndex);
 
-module.exports = router;
+module.exports = {
+  indexFromDatabase,
+  router,
+};

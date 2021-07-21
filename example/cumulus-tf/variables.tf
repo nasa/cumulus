@@ -1,29 +1,5 @@
 # Required
 
-variable "async_operation_image_version" {
-  description = "docker image version to use for Cumulus async operations tasks"
-  type = string
-  default = "27"
-}
-
-variable "cumulus_process_activity_version" {
-    description = "docker image version to use for python processing service"
-    type = string
-    default = "1"
-}
-
-variable "ecs_task_image_version" {
-  description = "docker image version to use for Cumulus hello world task"
-    type = string
-    default = "1.7.0"
-}
-
-variable "cumulus_test_ingest_image_version" {
-    description = "docker image version to use for python test ingest processing service"
-    type = string
-    default = "12"
-}
-
 variable "cmr_client_id" {
   type = string
 }
@@ -57,6 +33,21 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 variable "cmr_oauth_provider" {
   type    = string
   default = "earthdata"
+}
+
+variable "csdap_client_id" {
+  type        = string
+  description = "The csdap client id"
+}
+
+variable "csdap_client_password" {
+  type        = string
+  description = "The csdap client password"
+}
+
+variable "csdap_host_url" {
+  type        = string
+  description = "The csdap host url"
 }
 
 variable "launchpad_api" {
@@ -173,12 +164,24 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 2
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
 }
 
-variable "distribution_url" {
+variable "cumulus_distribution_url" {
+  type        = string
+  default     = null
+  description = "The url of cumulus distribution API Gateway endpoint"
+}
+
+variable "tea_distribution_url" {
   type    = string
   default = null
 }
@@ -188,58 +191,9 @@ variable "ecs_cluster_instance_subnet_ids" {
   default = []
 }
 
-variable "ems_datasource" {
-  type        = string
-  description = "the data source of EMS reports"
-  default     = "UAT"
-}
-
-variable "ems_host" {
-  type        = string
-  description = "EMS host"
-  default     = "change-ems-host"
-}
-
-variable "ems_path" {
-  type        = string
-  description = "EMS host directory path for reports"
-  default     = "/"
-}
-
-variable "ems_port" {
-  type        = number
-  description = "EMS host port"
-  default     = 22
-}
-
-variable "ems_private_key" {
-  type        = string
-  description = "the private key file used for sending reports to EMS"
-  default     = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type        = string
-  description = "the provider used for sending reports to EMS"
-  default     = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type        = number
-  description = "the retention in days for reports and s3 server access logs"
-  default     = 30
-}
-
-variable "ems_submit_report" {
-  type        = bool
-  description = "toggle whether the reports will be sent to EMS"
-  default     = false
-}
-
-variable "ems_username" {
-  type        = string
-  description = "the username used for sending reports to EMS"
-  default     = "cumulus"
+variable "ecs_include_docker_cleanup_cronjob" {
+  type    = bool
+  default = false
 }
 
 variable "es_request_concurrency" {
@@ -345,8 +299,128 @@ variable "pdr_node_name_provider_bucket" {
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
+variable "rds_connection_heartbeat" {
+  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "async_operation_image_version" {
+  description = "docker image version to use for Cumulus async operations tasks"
+  type = string
+  default = "32"
+}
+
+variable "cumulus_process_activity_version" {
+    description = "docker image version to use for python processing service"
+    type = string
+    default = "1"
+}
+
+variable "ecs_task_image_version" {
+  description = "docker image version to use for Cumulus hello world task"
+    type = string
+    default = "1.7.0"
+}
+
+variable "cumulus_test_ingest_image_version" {
+    description = "docker image version to use for python test ingest processing service"
+    type = string
+    default = "12"
+}
+variable "ecs_custom_sg_ids" {
+  description = "User defined security groups to add to the Core ECS cluster"
+  type = list(string)
+  default = []
+}
+
+## ORCA Variables Definitions
+
+variable "include_orca" {
+  type    = bool
+  default = true
+}
+
+variable "platform" {
+  default = "AWS"
+  type = string
+  description = "Indicates if running locally (onprem) or in AWS (AWS)."
+}
+
+variable "database_name" {
+  default = "disaster_recovery"
+  type = string
+  description = "Name of the ORCA database that contains state information."
+}
+
+variable "database_port" {
+  default = "5432"
+  type = string
+  description = "Port the database listens on."
+}
+
+variable "postgres_user_pw" {
+  type = string
+  description = "postgres database user password."
+}
+
+variable "database_app_user" {
+  default = "druser"
+  type = string
+  description = "ORCA application database user name."
+}
+
+variable "database_app_user_pw" {
+  type = string
+  description = "ORCA application database user password."
+}
+
+variable "orca_drop_database" {
+  default = "False"
+  type = string
+  description = "Tells ORCA to drop the database on deployments."
+}
+
+variable "ddl_dir" {
+  default = "ddl/"
+  type = string
+  description = "The location of the ddl dir that contains the sql to create the application database."
+}
+
+variable "lambda_timeout" {
+  default = 300
+  type = number
+  description = "Lambda max time before a timeout error is thrown."
+}
+
+variable "restore_complete_filter_prefix" {
+  default = ""
+  type = string
+  description = ""
+}
+
+variable "copy_retry_sleep_secs" {
+  default = 0
+  type = number
+  description = "How many seconds to wait between retry calls to `copy_object`."
+}
+
+variable "default_tags" {
+  type = object({ team = string, application = string })
+  default = {
+    team : "DR",
+    application : "disaster-recovery"
+  }
+}
+
+variable "optional_dynamo_tables" {
+  type = map(object({ name = string, arn = string }))
+  default = {}
+  description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom host to use for CMR requests"
+  type        = string
+  default     = null
 }

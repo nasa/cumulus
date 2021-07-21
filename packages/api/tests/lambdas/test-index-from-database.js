@@ -10,6 +10,9 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');
 
@@ -25,9 +28,6 @@ const {
   fakeRuleFactoryV2,
   getWorkflowList,
 } = require('../../lib/testUtils');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
 
 const workflowList = getWorkflowList();
 
@@ -94,7 +94,7 @@ test.before(async (t) => {
   t.context.esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -213,7 +213,7 @@ test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) =
 test('No error is thrown if nothing is in the database', async (t) => {
   const { esAlias } = t.context;
 
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase({
+  await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
     tables,
   }));
