@@ -15,8 +15,9 @@ These steps assume you're using [the Cumulus Deployment Template](https://github
 To configure a deployment to use Cumulus Distribution:
 
  1. Remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings.
- 2. (Optional) Delete or comment the contents of [thin_egress_app.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/thin_egress_app.tf). These are not necessary for a Cumulus Distribution deployment.
- 3. Set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
+ 2. Delete or comment the contents of [thin_egress_app.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/thin_egress_app.tf) and the corresponding Thin Egress App outputs in [outputs.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/outputs.tf). These are not necessary for a Cumulus Distribution deployment.
+ 3. Uncomment the Cumulus Distribution outputs in [outputs.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/outputs.tf).
+ 4. Set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
 
   - cumulus_distribution_url
   - csdap_client_id
@@ -24,7 +25,7 @@ To configure a deployment to use Cumulus Distribution:
   - csdap_host_url
   - any others under the `Cumulus Distribution Variables` section in the example
 
-  4. Rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+  5. Rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
 
 
 ## S3 Bucket Mapping
