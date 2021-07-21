@@ -7,7 +7,7 @@ const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const {
-  fetchAllRules,
+  fetchEnabledRules,
   filterRulesByRuleParams,
   lookupCollectionInEvent,
   queueMessageForRule,
@@ -173,7 +173,7 @@ function handler(event, context, cb) {
   const records = event.Records;
 
   // fetch all rules in the system and cache in memory so we don't need a ton of DB connections
-  return fetchAllRules()
+  return fetchEnabledRules()
     .then((rules) => Promise.all(records.map(
       (r) => processRecord(r, (r.EventSource === 'aws:sns'), rules)
     )))
