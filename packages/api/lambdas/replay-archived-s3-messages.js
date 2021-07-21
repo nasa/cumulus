@@ -53,7 +53,6 @@ async function replayArchivedMessages(event) {
   await pMap(
     messagesToReplay,
     async (message) => {
-      logger.debug(`Attempting to queue message ${message}`);
       try {
         await sendSQSMessage(queueUrl, message);
         logger.info(`Successfully sent message to queue URL ${queueUrl}`);
