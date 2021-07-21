@@ -62,6 +62,9 @@ downloading files protected by Earthdata login)
   - Added 'Bearer token' support as an authorization method
 - **CUMULUS-2487**
   - Added integration test for cumulus distribution API
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
 - **CUMULUS-2569**
   - Created bucket map cache for cumulus distribution API
 - **CUMULUS-2568**
@@ -125,7 +128,7 @@ behavior
 - **CUMULUS-2548**
   - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
 properly handle basic auth when redirecting to a different
-host
+host and/or host with a different port
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
