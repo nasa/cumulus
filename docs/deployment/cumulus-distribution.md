@@ -10,15 +10,22 @@ The Cumulus Distribution API is a set of endpoints that can be used to enable AW
 
 The Cumulus Distribution API is included in the main [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_distribution) repo. It is available as part of the `terraform-aws-cumulus.zip` archive in the [latest release](https://github.com/nasa/cumulus/releases).
 
-To configure a deployment to use Cumulus Distribution, remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings. You may also set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
+These steps assume you're using [the Cumulus Deployment Template](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) but can also be used for custom deployments.
 
-- cumulus_distribution_url
-- csdap_client_id
-- csdap_client_password
-- csdap_host_url
-- any others under the `Cumulus Distribution Variables` section in the example
+To configure a deployment to use Cumulus Distribution:
 
-If you are deploying from the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo, also rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+ 1. Remove or comment the "Thin Egress App Settings" in [the Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the Cumulus Distribution settings.
+ 2. (Optional) Delete or comment the contents of [thin_egress_app.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/thin_egress_app.tf). These are not necessary for a Cumulus Distribution deployment.
+ 3. Set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
+
+  - cumulus_distribution_url
+  - csdap_client_id
+  - csdap_client_password
+  - csdap_host_url
+  - any others under the `Cumulus Distribution Variables` section in the example
+
+  4. Rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+
 
 ## S3 Bucket Mapping
 
