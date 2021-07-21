@@ -6,7 +6,7 @@ hide_title: false
 
 Cumulus supports AWS Step Function [`Choice`](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html) states. A `Choice` state enables branching logic in Cumulus workflows.
 
-`Choice` state definitions include a list of `Choice Rule`s. Each `Choice Rule` defines a logical operation which compares an input value against a value using a comparison operator. For available comparision operators, review [the AWS docs](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html).
+`Choice` state definitions include a list of `Choice Rule`s. Each `Choice Rule` defines a logical operation which compares an input value against a value using a comparison operator. For available comparison operators, review [the AWS docs](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html).
 
 If the comparison evaluates to `true`, the `Next` state is followed.
 

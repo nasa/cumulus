@@ -10,7 +10,7 @@ const schemas = require('../models/schemas');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function get(req, res) {
+function get(req, res) {
   const schemaName = req.params.name;
 
   return res.send(schemas[schemaName]);

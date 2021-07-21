@@ -21,6 +21,10 @@ buckets = {
     name = "lf-cumulus-public"
     type = "public"
   }
+  glacier = {
+    name = "lf-internal"
+    type = "glacier"
+  }
 }
 key_name         = "lauren"
 archive_api_port = 8000

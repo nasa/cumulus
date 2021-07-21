@@ -3,9 +3,10 @@
 const pLimit = require('p-limit');
 const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
-const bootstrap = require('../lambdas/bootstrap');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
@@ -54,7 +55,7 @@ async function populateBucket(bucket, stackName) {
   await Promise.all([...workflowPromises, templatePromise]);
 }
 
-function setTableEnvVariables(stackName) {
+async function setTableEnvVariables(stackName) {
   process.env.FilesTable = `${stackName}-FilesTable`;
 
   const tableModels = Object
@@ -62,14 +63,25 @@ function setTableEnvVariables(stackName) {
     .filter((tableModel) => tableModel !== 'Manager');
 
   // generate table names
-  let tableNames = tableModels
+  const tableMapKeys = tableModels
     .map((tableModel) => `${tableModel}sTable`);
 
   // set table env variables
-  tableNames = tableNames.map((tableName) => {
-    process.env[tableName] = `${stackName}-${tableName}`;
-    return process.env[tableName];
+  const tableNamesMap = {};
+  const tableNames = tableMapKeys.map((tableNameKey) => {
+    const tableName = `${stackName}-${tableNameKey}`;
+    tableNamesMap[tableNameKey] = tableName;
+    process.env[tableNameKey] = tableName;
+    return process.env[tableNameKey];
   });
+
+  const dynamoTableNamesParameterName = `${stackName}-dynamo-tables`;
+  process.env.dynamoTableNamesParameterName = dynamoTableNamesParameterName;
+  await systemsManager().putParameter({
+    Name: dynamoTableNamesParameterName,
+    Value: JSON.stringify(tableNamesMap),
+    Overwrite: true,
+  }).promise();
 
   return {
     tableModels,
@@ -80,13 +92,13 @@ function setTableEnvVariables(stackName) {
 // check if the tables and Elasticsearch indices exist
 // if not create them
 async function checkOrCreateTables(stackName) {
-  const tables = setTableEnvVariables(stackName);
-
+  const tables = await setTableEnvVariables(stackName);
   const limit = pLimit(1);
 
   let i = -1;
   const promises = tables.tableModels.map((t) => limit(() => {
     i += 1;
+    console.log(tables.tableNames[i]);
     return createTable(
       models[t],
       tables.tableNames[i]
@@ -97,7 +109,8 @@ async function checkOrCreateTables(stackName) {
 
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
+  console.log(process.env.ES_HOST);
+  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -148,7 +161,7 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrap.bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
 }
 
 /**
@@ -220,6 +233,11 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomId('tokensecret');
 
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+  };
+
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
@@ -230,7 +248,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
 
     // create tables if not already created
     await pRetry(
-      async () => checkOrCreateTables(stackName),
+      async () => await checkOrCreateTables(stackName),
       {
         onFailedAttempt: (error) => console.log(
           `Failed to Create Tables. Localstack may not be ready, will retry ${error.attemptsLeft} more times.`
@@ -245,7 +263,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     }
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    setTableEnvVariables(process.env.stackName);
+    await setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -288,7 +306,7 @@ async function serveDistributionApi(stackName = localStackName, done) {
     await createDBRecords(stackName);
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    setTableEnvVariables(stackName);
+    await setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);

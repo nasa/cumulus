@@ -2,8 +2,13 @@
  * @module DynamoDb
  */
 
+import pMap from 'p-map';
+import pRetry from 'p-retry';
+import range from 'lodash/range';
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
+
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { dynamodb } from './services';
+import { dynamodb, dynamodbDocClient } from './services';
 import { improveStackTrace } from './utils';
 
 /**
@@ -136,6 +141,76 @@ export const scan = improveStackTrace(
     return response;
   }
 );
+
+/**
+ * Do a parallel scan of DynamoDB table using a document client.
+ *
+ * See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
+ * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+ *
+ * @param {Object} params
+ * @param {number} params.totalSegments
+ *   Total number of segments to divide table into for parallel scanning
+ * @param {DocumentClient.ScanInput} params.scanParams
+ *   Params for the DynamoDB client scan operation
+ *   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
+ * @param {function} params.processItemsFunc - Function used to process returned items by scan
+ * @param {DocumentClient} [params.dynamoDbClient] - Instance of Dynamo DB document client
+ * @param {pRetry.Options} [params.retryOptions] - Retry options for scan operations
+ * @returns {Promise}
+ */
+export const parallelScan = async (
+  params: {
+    totalSegments: number,
+    scanParams: DocumentClient.ScanInput,
+    processItemsFunc: (items: DocumentClient.ItemList) => Promise<void>,
+    dynamoDbClient?: DocumentClient,
+    retryOptions?: pRetry.Options,
+  }
+) => {
+  const {
+    totalSegments,
+    scanParams,
+    processItemsFunc,
+    dynamoDbClient = dynamodbDocClient(),
+    retryOptions,
+  } = params;
+
+  return await pMap(
+    range(totalSegments),
+    async (_, segmentIndex) => {
+      let exclusiveStartKey: DocumentClient.Key | undefined;
+
+      const segmentScanParams: DocumentClient.ScanInput = {
+        ...scanParams,
+        TotalSegments: totalSegments,
+        Segment: segmentIndex,
+      };
+
+      /* eslint-disable no-await-in-loop */
+      do {
+        const {
+          Items = [],
+          LastEvaluatedKey,
+        } = await pRetry(
+          () => dynamoDbClient.scan(segmentScanParams).promise(),
+          retryOptions
+        );
+
+        exclusiveStartKey = LastEvaluatedKey;
+        segmentScanParams.ExclusiveStartKey = exclusiveStartKey;
+
+        await processItemsFunc(Items);
+      } while (exclusiveStartKey);
+      /* eslint-enable no-await-in-loop */
+
+      return Promise.resolve();
+    },
+    {
+      stopOnError: false,
+    }
+  );
+};
 
 /**
  * Create a DynamoDB table and then wait for the table to exist

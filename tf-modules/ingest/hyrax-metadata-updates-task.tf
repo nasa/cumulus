@@ -13,6 +13,7 @@ resource "aws_lambda_function" "hyrax_metadata_updates_task" {
   environment {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment
+      CMR_HOST                    = var.cmr_custom_host
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"

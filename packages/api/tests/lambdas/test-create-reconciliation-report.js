@@ -9,6 +9,7 @@ const range = require('lodash/range');
 const sample = require('lodash/sample');
 const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
+
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const {
   buildS3Uri,
@@ -19,16 +20,17 @@ const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
-const { Search } = require('../../es/search');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
-const indexer = require('../../es/indexer');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 
 // Call normalize event on all input events before calling the handler.
@@ -75,7 +77,7 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
     Body: JSON.stringify(distributionMap),
   }).promise();
 
-  return awsServices.s3().putObject({
+  return await awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: `${stackName}/workflows/buckets.json`,
     Body: JSON.stringify(bucketsConfig),
@@ -83,16 +85,16 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 }
 
 // Expect files to have bucket and key properties
-function storeFilesToS3(files) {
+async function storeFilesToS3(files) {
   const putObjectParams = files.map((file) => ({
     Bucket: file.bucket,
     Key: file.key,
     Body: randomId('Body'),
   }));
 
-  return pMap(
+  return await pMap(
     putObjectParams,
-    (params) => awsServices.s3().putObject(params).promise(),
+    async (params) => await awsServices.s3().putObject(params).promise(),
     { concurrency: 10 }
   );
 }
@@ -132,7 +134,7 @@ async function storeCollection(collection) {
  * @param {Array<Object>} collections - list of collection objects
  * @returns {Promise} - Promise of collections indexed
  */
-async function storeCollectionsToElasticsearch(collections) {
+function storeCollectionsToElasticsearch(collections) {
   let result = Promise.resolve();
   collections.forEach((collection) => {
     result = result.then(() => storeCollection(collection));
@@ -153,14 +155,14 @@ async function storeGranulesToElasticsearch(granules) {
 }
 
 async function fetchCompletedReport(reportRecord) {
-  return awsServices.s3()
+  return await awsServices.s3()
     .getObject(parseS3Uri(reportRecord.location)).promise()
     .then((response) => response.Body.toString())
     .then(JSON.parse);
 }
 
 async function fetchCompletedReportString(reportRecord) {
-  return awsServices.s3()
+  return await awsServices.s3()
     .getObject(parseS3Uri(reportRecord.location)).promise()
     .then((response) => response.Body.toString());
 }
@@ -407,7 +409,7 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
 });
 
-test.serial('Generates valid reconciliation report when everything is in sync', async (t) => {
+test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -452,6 +454,7 @@ test.serial('Generates valid reconciliation report when everything is in sync', 
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -467,6 +470,77 @@ test.serial('Generates valid reconciliation report when everything is in sync', 
     const okCountForGranule = filesInCumulus.okCountByGranule[granuleId];
     t.is(okCountForGranule, 1);
   });
+
+  t.is(report.error, undefined);
+  t.is(filesInCumulus.okCount, files.length);
+  t.is(filesInCumulus.onlyInS3.length, 0);
+  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
+  t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
+  t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
+
+  const createStartTime = moment(report.createStartTime);
+  const createEndTime = moment(report.createEndTime);
+  t.true(createStartTime <= createEndTime);
+});
+
+test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
+  const dataBuckets = range(2).map(() => randomId('bucket'));
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  // Create random files
+  const files = range(10).map((i) => ({
+    bucket: dataBuckets[i % dataBuckets.length],
+    key: randomId('key'),
+    granuleId: randomId('granuleId'),
+  }));
+
+  // Store the files to S3 and DynamoDB
+  await Promise.all([
+    storeFilesToS3(files),
+    GranuleFilesCache.batchUpdate({ puts: files }),
+  ]);
+
+  // Create collections that are in sync
+  const matchingColls = range(10).map(() => ({
+    name: randomId('name'),
+    version: randomId('vers'),
+  }));
+
+  const cmrCollections = sortBy(matchingColls, ['name', 'version'])
+    .map((collection) => ({
+      umm: { ShortName: collection.name, Version: collection.version },
+    }));
+
+  CMR.prototype.searchCollections.restore();
+  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
+
+  await storeCollectionsToElasticsearch(matchingColls);
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Inventory',
+  };
+
+  const reportRecord = await handler(event);
+  t.is(reportRecord.status, 'Generated');
+
+  const report = await fetchCompletedReport(reportRecord);
+  const filesInCumulus = report.filesInCumulus;
+  const collectionsInCumulusCmr = report.collectionsInCumulusCmr;
+  t.is(report.status, 'SUCCESS');
+
+  t.is(filesInCumulus.okCountByGranule, undefined);
 
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
@@ -511,6 +585,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -579,6 +654,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -651,6 +727,7 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -695,6 +772,7 @@ test.serial('Generates valid reconciliation report when there are both extra ES 
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
+    reportType: 'Granule Not Found',
   };
 
   const reportRecord = await handler(event);
@@ -800,6 +878,7 @@ test.serial(
     const event = {
       systemBucket: t.context.systemBucket,
       stackName: t.context.stackName,
+      reportType: 'Granule Not Found',
       location: 'S3',
     };
 

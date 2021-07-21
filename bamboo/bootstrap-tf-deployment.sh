@@ -52,7 +52,36 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "vpc_id=$VPC_ID" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "rds_security_group=$RDS_SECURITY_GROUP"\
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
+
+cd ../db-migration-tf
+# Ensure remote state is configured for the deployment
+echo "terraform {
+  backend \"s3\" {
+    bucket = \"$TFSTATE_BUCKET\"
+    key    = \"$DEPLOYMENT/db-migration/terraform.tfstate\"
+    region = \"$AWS_REGION\"
+    dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
+  }
+}" >> ci_backend.tf
+
+# Initialize deployment
+../terraform init \
+  -input=false
+
+## TODO: This can be removed entirely once most stacks have run through Bamboo
+echo "Deploying the Cumulus database schema migration module to $DEPLOYMENT"
+../terraform apply \
+  -auto-approve \
+  -input=false \
+  -var-file="../deployments/db-migration/$BASE_VAR_FILE" \
+  -var-file="../deployments/db-migration/$DEPLOYMENT.tfvars" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
+  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
+  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
+  -var "vpc_id=$VPC_ID"
 
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment
@@ -82,13 +111,17 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
   -var "cmr_provider=CUMULUS" \
   -var "cmr_environment=UAT" \
+  -var "csdap_client_id=$CSDAP_CLIENT_ID" \
+  -var "csdap_client_password=$CSDAP_CLIENT_PASSWORD" \
   -var "launchpad_passphrase=$LAUNCHPAD_PASSPHRASE" \
   -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
   -var "region=$AWS_REGION" \
   -var "vpc_id=$VPC_ID" \
-  -var "lambda_subnet_ids=[\"$AWS_SUBNET\"]" \
+  -var "lambda_subnet_ids=[$AWS_LAMBDA_SUBNET]" \
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
+  -var "postgres_user_pw=$ORCA_POSTGRES_USER_PASSWORD" \
+  -var "database_app_user_pw=$ORCA_DATABASE_APP_USER_PASSWORD" \

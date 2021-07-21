@@ -257,7 +257,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  */
 function metadataFormatToVersion(typeStr) {
   try {
-    return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
+    return typeStr.match(/umm_json_v(.*)/)[1].replace(/_/g, '.');
   } catch (error) {
     return '';
   }
@@ -332,10 +332,10 @@ async function getOnlineResourcesUMMG(cmrLink) {
  */
 async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
   if (cmrMetadataFormat === 'echo10') {
-    return getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
+    return await getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
   }
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
-    return getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
+    return await getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
 }
@@ -376,7 +376,8 @@ async function generateAndStoreCmrUmmJson(
   }
 
   const defaultVersion = 1.4;
-  if (Number(versionString) > defaultVersion) {
+  // convert version string like 1.6.2 to 1.62 for comparision
+  if (Number(versionString.replace('.', '_').replace(/\./g, '').replace('_', '.')) > defaultVersion) {
     jsonObject.MetadataSpecification = {
       URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
       Name: 'UMM-G',

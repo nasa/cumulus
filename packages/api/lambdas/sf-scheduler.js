@@ -47,7 +47,6 @@ async function handleScheduleEvent(event) {
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
-    queueUrl,
     asyncOperationId: get(event, 'asyncOperationId'),
     customCumulusMeta: get(event, 'cumulus_meta', {}),
     customMeta: {

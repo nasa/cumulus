@@ -3,8 +3,10 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -26,6 +28,7 @@ const {
   createTimestampedTestId,
   createTestSuffix,
   loadConfig,
+  isValidAsyncOperationId,
 } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete', () => {
@@ -46,6 +49,7 @@ describe('POST /granules/bulkDelete', () => {
 
   describe('deletes a published granule', () => {
     let beforeAllSucceeded = false;
+    let ingestGranuleExecution1Arn;
     let postBulkDeleteResponse;
     let postBulkDeleteBody;
     let taskArn;
@@ -127,20 +131,20 @@ describe('POST /granules/bulkDelete', () => {
         );
 
         // Find the execution ARN
-        const firstIngestGranuleExecutionArn = await findExecutionArn(
+        ingestGranuleExecution1Arn = await findExecutionArn(
           prefix,
           (execution) => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
           { timestamp__from: ingestTime },
-          { timeout: 15 }
+          { timeout: 30 }
         );
 
         // Wait for the execution to be completed
         await getExecutionWithStatus({
           prefix,
-          arn: firstIngestGranuleExecutionArn,
+          arn: ingestGranuleExecution1Arn,
           status: 'completed',
           timeout: 60,
         });
@@ -148,21 +152,25 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
-        postBulkDeleteResponse = await granules.bulkDeleteGranules({
-          prefix,
-          body: {
-            ids: [granuleId],
-            // required to force removal of granules from CMR before deletion
-            forceRemoveFromCmr: true,
-          },
-        });
+        postBulkDeleteResponse = await granules.bulkDeleteGranules(
+          {
+            prefix,
+            body: {
+              ids: [granuleId],
+              // required to force removal of granules from CMR before deletion
+              forceRemoveFromCmr: true,
+            },
+          }
+        );
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-          prefix,
-          id: postBulkDeleteBody.id,
-        });
+        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation(
+          {
+            prefix,
+            id: postBulkDeleteBody.id,
+          }
+        );
         ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
         beforeAllSucceeded = true;
       } catch (error) {
@@ -171,17 +179,32 @@ describe('POST /granules/bulkDelete', () => {
     });
 
     afterAll(async () => {
-      // Must delete rules before deleting associated collection and provider
-      await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
+      // Must delete rules and executions before deleting associated collection and provider
+      await deleteRule(
+        { prefix, ruleName: get(ingestGranuleRule, 'name') }
+      );
+      await deleteExecution(
+        { prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }
+      );
+
+      if (postBulkDeleteBody.id) {
+        await deleteAsyncOperation(
+          { prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id }
+        );
+      }
 
       await pAll(
         [
-          () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
-          () => deleteCollection({
-            prefix,
-            collectionName: get(collection, 'name'),
-            collectionVersion: get(collection, 'version'),
-          }),
+          () => deleteProvider(
+            { prefix, providerId: get(provider, 'id') }
+          ),
+          () => deleteCollection(
+            {
+              prefix,
+              collectionName: get(collection, 'name'),
+              collectionVersion: get(collection, 'version'),
+            }
+          ),
         ],
         { stopOnError: false }
       ).catch(console.error);
@@ -200,7 +223,7 @@ describe('POST /granules/bulkDelete', () => {
 
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
-      expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
+      expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
     });
 
     it('creates an AsyncOperation', async () => {

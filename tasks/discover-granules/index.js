@@ -10,13 +10,14 @@ const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
-const logger = () => new Logger({
+const logger = (logOptions) => new Logger({
   executions: process.env.EXECUTIONS,
   granules: process.env.GRANULES ? JSON.parse(process.env.GRANULES) : undefined,
   parentArn: process.env.PARENTARN,
-  sender: process.env.SENDER,
+  sender: process.env.SENDER || '@cumulus/discover-granules',
   stackName: process.env.STACKNAME,
   version: process.env.TASKVERSION,
+  ...logOptions,
 });
 
 /**
@@ -196,13 +197,18 @@ const buildGranule = curry(
  *
  */
 const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
-  const response = await granules.getGranule({
-    prefix: process.env.STACKNAME,
-    granuleId,
-  });
-  const responseBody = JSON.parse(response.body);
-  if (response.statusCode === 404 && responseBody.error === 'Not Found') {
-    return granuleId;
+  let response;
+  try {
+    response = await granules.getGranuleResponse({
+      prefix: process.env.STACKNAME,
+      granuleId,
+    });
+  } catch (error) {
+    const responseError = error;
+    if (responseError.statusCode === 404) {
+      return granuleId;
+    }
+    throw new Error(`Unexpected error from Private API lambda: ${responseError.message}`);
   }
 
   if (response.statusCode === 200) {
@@ -211,7 +217,8 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
     }
     return false;
   }
-  throw new Error(`Unexpected return from Private API lambda ${JSON.stringify(response)}`);
+
+  throw new Error(`Unexpected return from Private API lambda: ${JSON.stringify(response)}`);
 };
 
 /**
@@ -288,12 +295,7 @@ const discoverGranules = async ({ config }) => {
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
-  // Set the environment variable for the logger
-  if (discoveredGranules) {
-    process.env.GRANULES = JSON.stringify(discoveredGranules.map((g) => g.granuleId));
-  }
-
-  logger().info(`Discovered ${discoveredGranules.length} granules.`);
+  logger({ granules: discoveredGranules.map((g) => g.granuleId) }).info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };
 
@@ -305,7 +307,7 @@ const discoverGranules = async ({ config }) => {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-const handler = async (event, context) => runCumulusTask(discoverGranules, event, context);
+const handler = async (event, context) => await runCumulusTask(discoverGranules, event, context);
 
 module.exports = {
   checkGranuleHasNoDuplicate, // exported to support testing

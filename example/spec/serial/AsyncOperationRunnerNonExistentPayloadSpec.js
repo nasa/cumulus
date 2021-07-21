@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -100,12 +101,18 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
     }
   });
 
-  it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
+  afterAll(async () => {
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
+  });
+
+  it('updates the status field in DynamoDB to "RUNNER_FAILED"', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('RUNNER_FAILED');
   });
 
-  it('updates the output field in DynamoDB', async () => {
+  it('updates the output field in DynamoDB', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);

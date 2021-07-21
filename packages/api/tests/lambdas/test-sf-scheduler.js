@@ -37,21 +37,21 @@ const fakeProvider = {
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 class FakeCollection {
-  async get(item) {
+  get(item) {
     if (item.name !== fakeCollection.name
         || item.version !== fakeCollection.version) {
-      throw new Error('Collection could not be found');
+      return Promise.reject(new Error('Collection could not be found'));
     }
-    return fakeCollection;
+    return Promise.resolve(fakeCollection);
   }
 }
 
 class FakeProvider {
-  async get({ id }) {
+  get({ id }) {
     if (id !== fakeProvider.id) {
-      throw new Error('Provider could not be found');
+      return Promise.reject(new Error('Provider could not be found'));
     }
-    return fakeProvider;
+    return Promise.resolve(fakeProvider);
   }
 }
 
@@ -117,7 +117,6 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, customQueueUrl);
-  t.is(targetMessage.cumulus_meta.queueUrl, customQueueUrl);
   t.is(targetMessage.cumulus_meta.queueExecutionLimits[customQueueUrl], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
@@ -139,7 +138,6 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, defaultQueueUrl);
-  t.is(targetMessage.cumulus_meta.queueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });

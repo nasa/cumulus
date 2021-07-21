@@ -72,50 +72,7 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
   { message: 'Could not find name on PDR object {}' });
 });
 
-test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
-  const pdrName = randomId('pdr');
-  const message = createPdrMessage({
-    numRunningExecutions: 3,
-  });
-
-  const pdr = {
-    name: pdrName,
-  };
-
-  message.payload.pdr = pdr;
-
-  const record = pdrsModel.generatePdrRecord(message);
-
-  t.is(record.status, 'running');
-  t.is(record.stats.processing, 3);
-  t.is(record.stats.total, 3);
-  t.is(record.progress, 0);
-});
-
-test('generatePdrRecord() sets correct progress value for partially complete PDR', async (t) => {
-  const pdrName = randomId('pdr');
-  const message = createPdrMessage({
-    numCompletedExecutions: 1,
-    numFailedExecutions: 2,
-    numRunningExecutions: 3,
-  });
-  const pdr = {
-    name: pdrName,
-  };
-
-  message.payload.pdr = pdr;
-
-  const record = pdrsModel.generatePdrRecord(message);
-
-  t.is(record.status, 'running');
-  t.is(record.stats.processing, 3);
-  t.is(record.stats.failed, 2);
-  t.is(record.stats.completed, 1);
-  t.is(record.stats.total, 6);
-  t.is(record.progress, 50);
-});
-
-test('generatePdrRecord() generates a completed PDR record', async (t) => {
+test('generatePdrRecord() generates a completed PDR record', (t) => {
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
@@ -149,7 +106,7 @@ test('generatePdrRecord() generates a completed PDR record', async (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generatePdrRecord() generates a failed PDR record', async (t) => {
+test('generatePdrRecord() generates a failed PDR record', (t) => {
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
@@ -185,7 +142,7 @@ test('generatePdrRecord() generates a failed PDR record', async (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generatePdrRecord() sets PDR properties when included', async (t) => {
+test('generatePdrRecord() sets PDR properties when included', (t) => {
   const pdrName = randomId('pdr');
   const message = createPdrMessage();
   const PANmessage = 'test message';
@@ -251,6 +208,47 @@ test(
 );
 
 test(
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'running',
+      createdAt: Date.now(),
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
+test(
   'storePdrFromCumulusMessage does not update same-execution if progress is less than current',
   async (t) => {
     const pdrName = randomId('pdr');
@@ -278,6 +276,88 @@ test(
       stateMachine,
       numRunningExecutions: 3,
       status: 'running',
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
+test(
+  'storePdrFromCumulusMessage does not update PDR record if update is from an older completed execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'failed',
+      createdAt: Date.now(),
+    });
+
+    newMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(newMsg);
+
+    const record = await pdrsModel.get({ pdrName });
+    t.is(record.status, 'completed');
+    t.is(record.stats.completed, 3);
+  }
+);
+
+test(
+  'storePdrFromCumulusMessage does not update if PDR record is from an older, prior completed execution',
+  async (t) => {
+    const pdrName = randomId('pdr');
+    const stateMachine = randomId('parsePdr');
+    const execution = randomId('exec');
+
+    const initialMsg = createPdrMessage({
+      execution,
+      stateMachine,
+      numCompletedExecutions: 3,
+      status: 'completed',
+      createdAtTime: (Date.now() + 10000000000),
+    });
+
+    initialMsg.payload.pdr = {
+      name: pdrName,
+    };
+
+    await pdrsModel.storePdrFromCumulusMessage(initialMsg);
+
+    const newMsg = createPdrMessage({
+      execution: randomId('newExec'),
+      stateMachine,
+      numRunningExecutions: 2,
+      status: 'failed',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {
@@ -320,6 +400,7 @@ test('storePdrFromCumulusMessage overwrites a same-execution running status if p
       numCompletedExecutions: 4,
       stateMachine,
       status: 'running',
+      createdAt: Date.now(),
     });
 
     newMsg.payload.pdr = {

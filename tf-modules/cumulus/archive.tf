@@ -18,23 +18,11 @@ module "archive" {
   elasticsearch_hostname          = var.elasticsearch_hostname
   elasticsearch_security_group_id = var.elasticsearch_security_group_id
 
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
-
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency
 
   system_bucket     = var.system_bucket
-  public_buckets    = local.public_bucket_names
-  protected_buckets = local.protected_bucket_names
-  private_buckets   = local.private_bucket_names
+  buckets           = var.buckets
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
@@ -45,6 +33,7 @@ module "archive" {
   cmr_provider       = var.cmr_provider
   cmr_username       = var.cmr_username
   cmr_password       = var.cmr_password
+  cmr_custom_host    = var.cmr_custom_host
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -66,6 +55,7 @@ module "archive" {
   api_port = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage = var.api_gateway_stage
+  api_reserved_concurrency = var.archive_api_reserved_concurrency
 
   schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
   manual_consumer_function_arn                     = module.ingest.manual_consumer_lambda_function_arn
@@ -95,7 +85,11 @@ module "archive" {
 
   log_destination_arn = var.log_destination_arn
 
-  ems_deploy = var.ems_deploy
+  rds_security_group = var.rds_security_group
+  rds_user_access_secret_arn = var.rds_user_access_secret_arn
+  rds_connection_heartbeat = var.rds_connection_heartbeat
+  postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
+  postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
   tags = var.tags
 }

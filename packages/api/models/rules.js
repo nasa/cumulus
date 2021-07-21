@@ -2,24 +2,31 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const merge = require('lodash/merge');
 const set = require('lodash/set');
+const merge = require('lodash/merge');
 
-const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const s3Utils = require('@cumulus/aws-client/S3');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
+const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
 
 class Rule extends Manager {
   constructor() {
     super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: ruleSchema,
+    });
+
+    this.dynamoDbClient = new Manager({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
       schema: ruleSchema,
@@ -52,7 +59,7 @@ class Rule extends Manager {
   async deleteRules() {
     const rules = await this.scan();
     const deletePromises = rules.Items.map((r) => this.delete(r));
-    return Promise.all(deletePromises);
+    return await Promise.all(deletePromises);
   }
 
   async delete(item) {
@@ -78,6 +85,15 @@ class Rule extends Manager {
       break;
     }
     return super.delete({ name: item.name });
+  }
+
+  async getAllRules() {
+    return await this.dynamoDbClient.scan({
+      names: {
+        '#name': 'name',
+      },
+    },
+    '#name').then((result) => result.Items);
   }
 
   /**
@@ -145,8 +161,7 @@ class Rule extends Manager {
 
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
-    return super.update({ name: original.name }, updatedRuleItem,
-      fieldsToDelete);
+    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
@@ -242,8 +257,8 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
-    newRuleItem.createdAt = Date.now();
-    newRuleItem.updatedAt = Date.now();
+    newRuleItem.createdAt = item.createdAt || Date.now();
+    newRuleItem.updatedAt = item.updatedAt || Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
@@ -360,7 +375,7 @@ class Rule extends Manager {
         }
       )
     );
-    return Promise.all(deleteEventPromises);
+    return await Promise.all(deleteEventPromises);
   }
 
   /**
@@ -470,7 +485,14 @@ class Rule extends Manager {
       FunctionName: process.env.messageConsumer,
       StatementId: `${item.name}Permission`,
     };
-    await awsServices.lambda().removePermission(permissionParams).promise();
+    try {
+      await awsServices.lambda().removePermission(permissionParams).promise();
+    } catch (error) {
+      if (isResourceNotFoundException(error)) {
+        throw new ResourceNotFoundError(error);
+      }
+      throw error;
+    }
     // delete sns subscription
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn,
@@ -576,6 +598,15 @@ class Rule extends Manager {
       );
     }
     return rules;
+  }
+
+  /**
+   * Returns `true` if the rule with the specified name exists, false otherwise
+   * @param {string} name - rule name
+   * @returns {boolean} `true` if the rule with the specified name exists, false otherwise
+   */
+  async exists(name) {
+    return await super.exists({ name });
   }
 }
 

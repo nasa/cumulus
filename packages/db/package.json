@@ -1,0 +1,48 @@
+{
+  "name": "@cumulus/db",
+  "version": "9.2.0",
+  "description": "Utilities for working with the Cumulus DB",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "../../node_modules/.bin/tsc -w"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true,
+    "timeout": "5m"
+  },
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "9.2.0",
+    "@cumulus/common": "9.2.0",
+    "@cumulus/errors": "9.2.0",
+    "@cumulus/logger": "9.2.0",
+    "@cumulus/message": "9.2.0",
+    "@cumulus/types": "9.2.0",
+    "is-valid-hostname": "0.0.1",
+    "knex": "0.21.13",
+    "lodash": "^4.17.20",
+    "pg": "^8.3.0",
+    "snake-camel": "^1.0.6",
+    "uuid": "8.3.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.0.0"
+  }
+}

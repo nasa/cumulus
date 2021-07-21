@@ -27,27 +27,25 @@ module.exports = {
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
-    sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records.js',
     dbIndexer: './lambdas/db-indexer.js',
     distribution: './app/distribution.js',
-    emsDistributionReport: './lambdas/ems-distribution-report.js',
-    emsIngestReport: './lambdas/ems-ingest-report.js',
-    emsProductMetadataReport: './lambdas/ems-metadata-report.js',
     executeMigrations: './lambdas/executeMigrations.js',
     granuleFilesCacheUpdater: './lambdas/granuleFilesCacheUpdater.js',
-    indexer: './es/indexer.js',
     indexFromDatabase: './lambdas/index-from-database.js',
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
+    processDeadLetterArchive: './lambdas/process-s3-dead-letter-archive.js',
     publishCollections: './lambdas/publish-collections.js',
     publishExecutions: './lambdas/publish-executions.js',
     publishGranules: './lambdas/publish-granules.js',
     publishPdrs: './lambdas/publish-pdrs.js',
+    sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records/index.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js',
     sqsMessageConsumer: './lambdas/sqs-message-consumer.js',
+    writeDbDlqRecordstoS3: './lambdas/write-db-dlq-records-to-s3.js',
   },
   devtool: 'inline-source-map',
   resolve: {
@@ -65,6 +63,10 @@ module.exports = {
         {
           from: 'node_modules/xml-encryption/lib/templates',
           to: 'app/templates'
+        },
+        {
+          from: 'app/data/distribution/templates',
+          to: 'distribution/templates'
         }
       ]
     }),
@@ -81,7 +83,8 @@ module.exports = {
   externals: [
     'aws-sdk',
     'electron',
-    { formidable: 'url' }
+    { formidable: 'url' },
+    { fsevents: "require('fsevents')" }
   ],
   module: {
     rules: [
@@ -96,6 +99,10 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
       },
     ],
   },

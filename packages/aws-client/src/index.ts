@@ -1,5 +1,6 @@
 export * as CloudFormation from './CloudFormation';
 export * as DynamoDb from './DynamoDb';
+export * as KMS from './KMS';
 export * as S3 from './S3';
 export * as services from './services';
 export * as SNS from './SNS';
@@ -12,4 +13,5 @@ export * as utils from './utils';
 export import client = require('./client');
 export import DynamoDbSearchQueue = require('./DynamoDbSearchQueue');
 export import S3ListObjectsV2Queue = require('./S3ListObjectsV2Queue');
+export import S3ObjectStore = require('./S3ObjectStore');
 /* eslint-enable @typescript-eslint/no-unused-vars */

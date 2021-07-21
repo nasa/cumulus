@@ -13,7 +13,7 @@ const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { ESSearchQueue } = require('../es/esSearchQueue');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const {
   convertToDBCollectionSearchParams,
@@ -50,7 +50,7 @@ async function internalRecReportForCollections(recReportParams) {
 
   // get collections from database and sort them, since the scan result is not ordered
   const dbSearchParams = convertToDBCollectionSearchParams(recReportParams);
-  const dbCollectionsQueue = await (new Collection()).search(dbSearchParams);
+  const dbCollectionsQueue = (new Collection()).search(dbSearchParams);
   const dbCollectionsSearched = await dbCollectionsQueue.empty();
   const dbCollectionItems = sortBy(
     filterDBCollections(dbCollectionsSearched, recReportParams),

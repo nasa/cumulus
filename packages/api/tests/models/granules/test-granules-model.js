@@ -163,7 +163,7 @@ test('files existing at location returns both files if both exist', async (t) =>
       Key: filename,
       Body: 'test',
     };
-    return awsServices.s3().putObject(params).promise();
+    return await awsServices.s3().putObject(params).promise();
   });
 
   await Promise.all(dataSetupPromises);
@@ -720,7 +720,7 @@ test.serial(
       provider: 'someProvider',
       queueUrl,
     };
-    const fileExists = async () => true;
+    const fileExists = () => Promise.resolve(true);
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
     const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
 
@@ -738,7 +738,7 @@ test.serial(
   }
 );
 
-test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { granuleModel } = t.context;
 
   const updatedItem = {
@@ -749,11 +749,11 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
   const updateFields = granuleModel._getMutableFieldNames(updatedItem);
 
   t.deepEqual(updateFields, [
-    'updatedAt', 'timestamp', 'status', 'execution',
+    'createdAt', 'updatedAt', 'timestamp', 'status', 'execution',
   ]);
 });
 
-test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for completed status', (t) => {
   const { granuleModel } = t.context;
 
   const item = {
@@ -761,6 +761,7 @@ test('_getMutableFieldNames() returns correct fields for completed status', asyn
     status: 'completed',
     pdrName: 'pdr',
     files: [],
+    createdAt: Date.now(),
   };
 
   const updateFields = granuleModel._getMutableFieldNames(item);
@@ -783,7 +784,7 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
   );
 });
 
-test('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -810,4 +811,28 @@ test('applyWorkflow updates granule status and invokes Lambda to schedule workfl
 
   t.true(lambdaInvokeStub.called);
   t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
+});
+
+test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const queueUrl = randomString();
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow, undefined, queueUrl);
+
+  t.true(buildPayloadStub.called);
+  t.like(buildPayloadStub.args[0][0], {
+    queueUrl,
+  });
 });

@@ -6,9 +6,47 @@ const got = require('got');
 const jwt = require('jsonwebtoken');
 
 const CloudFormation = require('@cumulus/aws-client/CloudFormation');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const SecretsManager = require('@cumulus/aws-client/SecretsManager');
 
 const { getEarthdataAccessToken } = require('./EarthdataLogin');
+
+async function invokeDistributionApiLambda(path, headers) {
+  const lambda = new Lambda();
+  const FunctionName = `${process.env.stackName}-DistributionApiEndpoints`;
+
+  const event = {
+    httpMethod: 'GET',
+    resource: '/{proxy+}',
+    path,
+    headers,
+    // All of these properties are necessary for the distribution api request to succeed
+    requestContext: {
+      resourcePath: '/{proxy+}',
+      operationName: 'proxy',
+      httpMethod: 'GET',
+      path: '/{proxy+}',
+      identity: {
+        sourceIp: '127.0.0.1',
+      },
+    },
+    multiValueQueryStringParameters: null,
+    pathParameters: {
+      proxy: path.replace(/\/+/, ''),
+    },
+    body: null,
+    stageVariables: null,
+  };
+
+  const data = await lambda.invoke({
+    FunctionName,
+    Payload: JSON.stringify(event),
+  }).promise();
+
+  const payload = JSON.parse(data.Payload);
+
+  return payload;
+}
 
 /**
  * Invoke Thin Egress App API lambda directly to get a response payload.
@@ -106,6 +144,7 @@ async function invokeS3CredentialsLambda(path, accessToken = '') {
  * @param {string} params.distributionEndpoint - Distribution API endpoint
  * @param {string} params.bucket - S3 bucket
  * @param {string} params.key - S3 object key
+ * @param {string} params.urlType - url type, distribution or s3
  *
  * @returns {string} - Distribution API file URL
  */
@@ -113,9 +152,12 @@ function getDistributionFileUrl({
   distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT,
   bucket,
   key,
+  urlType = 'distribution',
 }) {
-  const theUrl = new URL(`${bucket}/${key}`, distributionEndpoint);
-  return theUrl.href;
+  if (urlType === 's3') {
+    return buildS3Uri(bucket, key);
+  }
+  return new URL(`${bucket}/${key}`, distributionEndpoint).href;
 }
 
 /**
@@ -226,10 +268,20 @@ async function getTEARequestHeaders(stackName) {
   return buildTeaRequestHeaders(accessTokenResponse.accessToken, jwtToken);
 }
 
+async function getDistributionApiRedirect(filepath, headers) {
+  const payload = await invokeDistributionApiLambda(
+    filepath,
+    headers
+  );
+  return payload.headers.location || payload.headers.Location;
+}
+
 module.exports = {
+  getDistributionApiRedirect,
   getDistributionFileUrl,
   getTEADistributionApiFileStream,
   getTEADistributionApiRedirect,
   getTEARequestHeaders,
+  invokeDistributionApiLambda,
   invokeS3CredentialsLambda,
 };

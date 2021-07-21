@@ -28,6 +28,12 @@ module.exports.accessToken = {
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
       type: 'string',
     },
+    tokenInfo: {
+      title: 'Token Info',
+      description: 'The information associated with the access token, such as user profile information',
+      type: 'object',
+      additionalProperties: true,
+    },
   },
 };
 
@@ -44,7 +50,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report'],
+      enum: ['Data Migration', 'Dead-Letter Processing', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report'],
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -180,6 +186,12 @@ module.exports.collection = {
                 type: 'boolean',
               },
             },
+          },
+          reportToEms: {
+            title: 'Report to EMS',
+            description: 'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
+            type: 'boolean',
+            default: true,
           },
         },
         required: [
@@ -710,6 +722,7 @@ module.exports.execution = {
     duration: { type: 'number' },
     parentArn: { type: 'string' },
     asyncOperationId: { type: 'string' },
+    cumulusVersion: { type: 'string' },
   },
   required: [
     'arn',

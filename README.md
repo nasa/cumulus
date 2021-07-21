@@ -43,6 +43,7 @@ This is for installation for Cumulus development.  See the [Cumulus deployment i
 - Docker (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
 - Python 3.6+
+- [pipenv](https://pypi.org/project/pipenv/)
 
 Install the correct node version:
 

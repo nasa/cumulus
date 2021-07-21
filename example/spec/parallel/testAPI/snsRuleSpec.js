@@ -12,6 +12,7 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -54,6 +55,7 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let testSuffix;
   let updatedRule;
+  let hellowWorldExecutionArn;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -108,12 +110,7 @@ describe('The SNS-type rule', () => {
       // the case where the deletion test did not properly clean this up.
     }
 
-    console.log(`deleting rule ${snsRuleDefinition.name}`);
-
-    await rulesApiTestUtils.deleteRule({
-      prefix: config.stackName,
-      ruleName: snsRuleDefinition.name,
-    });
+    await deleteExecution({ prefix: config.stackName, executionArn: hellowWorldExecutionArn });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -157,6 +154,8 @@ describe('The SNS-type rule', () => {
         findExecutionFnParams: { rule: ruleName },
         startTask: 'HelloWorld',
       });
+
+      hellowWorldExecutionArn = execution.executionArn;
     });
 
     it('triggers the workflow', () => {
@@ -165,12 +164,12 @@ describe('The SNS-type rule', () => {
     });
 
     it('passes the message as payload', async () => {
-      const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'HelloWorld');
+      const executionInput = await lambdaStep.getStepInput(hellowWorldExecutionArn, 'HelloWorld');
       expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
     });
 
     it('results in an execution with the correct prefix', () => {
-      const executionName = execution.executionArn.split(':').reverse()[0];
+      const executionName = hellowWorldExecutionArn.split(':').reverse()[0];
 
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
@@ -306,13 +305,20 @@ describe('The SNS-type rule', () => {
   });
 
   describe('on deletion', () => {
-    let getRule;
+    let responseError;
 
     beforeAll(async () => {
       console.log(`deleting rule ${snsRuleDefinition.name}`);
       await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
-      const getRuleResponse = await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
-      getRule = JSON.parse(getRuleResponse.body);
+
+      try {
+        await rulesApiTestUtils.getRule({
+          prefix: config.stackName,
+          ruleName,
+        });
+      } catch (error) {
+        responseError = error;
+      }
     });
 
     afterAll(async () => {
@@ -320,7 +326,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('is removed from the rules API', () => {
-      expect(getRule.message).toContain('No record found');
+      expect(responseError.apiMessage).toContain('No record found');
     });
 
     it('deletes the policy and subscription', async () => {

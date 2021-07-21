@@ -20,14 +20,15 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
-      "deployment/terraform-best-practices",
-      "deployment/upgrade-readme",
-      "deployment/components",
       "deployment/create_bucket",
+      "deployment/terraform-best-practices",
+      "deployment/postgres_database_deployment",
+      "deployment/components",
       "deployment/thin_egress_app",
       "deployment/api-gateway-logging",
       "deployment/share-s3-access-logs",
-      "deployment/cloudwatch-logs-delivery"
+      "deployment/cloudwatch-logs-delivery",
+      "deployment/upgrade-readme"
     ],
     "Configuration": [
       "configuration/data-management-types",
@@ -69,7 +70,8 @@
       "troubleshooting/troubleshooting-readme",
       "troubleshooting/troubleshooting-deployment",
       "troubleshooting/rerunning-workflow-executions",
-      "troubleshooting/troubleshooting-deployment"
+      "troubleshooting/troubleshooting-deployment",
+      "troubleshooting/reindex-elasticsearch"
     ],
     "Cumulus Development": [
       "adding-a-task",
@@ -83,7 +85,8 @@
     ],
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone",
-      "upgrade-notes/upgrade_tf_version_0.13.6"
+      "upgrade-notes/upgrade_tf_version_0.13.6",
+      "upgrade-notes/upgrade-rds"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"
@@ -103,7 +106,8 @@
       "data-cookbooks/browse-generation",
       "data-cookbooks/tracking-files",
       "data-cookbooks/run-tasks-in-lambda-or-docker",
-      "data-cookbooks/throttling-queued-executions"
+      "data-cookbooks/throttling-queued-executions",
+      "data-cookbooks/queue-post-to-cmr"
     ]
   },
   "Operator Docs": {
@@ -118,9 +122,9 @@
       "operator-docs/discovery-filtering",
       "operator-docs/bulk-operations",
       "operator-docs/cmr-operations",
-      "operator-docs/discovery-filtering",
-      "operator-docs/rerunning-workflow-executions",
-      "operator-docs/replay-kinesis-messages"
+      "operator-docs/naming-executions",
+      "troubleshooting/rerunning-workflow-executions",
+      "features/replay-kinesis-messages"
     ],
     "Common Use Cases": [
       "operator-docs/ops-common-use-cases",

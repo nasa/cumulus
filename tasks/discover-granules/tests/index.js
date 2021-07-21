@@ -4,6 +4,7 @@ const path = require('path');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 const { readJson } = require('fs-extra');
+const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const {
@@ -33,29 +34,30 @@ class FakeLogger extends Logger {
 // This fakes the `@cumulus/api-client/granules` module so that we can simulate responses from the
 // Cumulus API in our tests. It returns different canned responses depending on the `granuleId`.
 const fakeGranulesModule = {
-  getGranule: async ({ granuleId }) => {
-    if (granuleId === 'throw-error') {
-      throw new Error('Test Error');
-    }
-
-    if (granuleId === 'crash-the-api') {
-      return {
-        statusCode: 500,
-        body: '{}',
-      };
-    }
-
+  getGranuleResponse: ({ granuleId }) => {
     if (granuleId === 'duplicate') {
-      return {
+      return Promise.resolve({
         statusCode: 200,
         body: '{}',
-      };
+      });
     }
 
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ error: 'Not Found' }),
-    };
+    if (granuleId === 'throw-error') {
+      throw new CumulusApiClientError('Test Error');
+    }
+
+    if (granuleId === 'unexpected-response') {
+      return Promise.resolve({
+        statusCode: 201,
+        body: '{}',
+      });
+    }
+
+    throw new CumulusApiClientError(
+      'API error',
+      404,
+      'Not Found'
+    );
   },
 };
 
@@ -368,12 +370,12 @@ test(
   'checkGranuleHasNoDuplicate throws an error if the API lambda throws an error other than 404/Not Found',
   (t) => t.throwsAsync(
     checkGranuleHasNoDuplicate('throw-error', 'skip'),
-    { message: 'Test Error' }
+    { message: /Test Error/ }
   )
 );
 
 test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return', async (t) => {
-  const error = await t.throwsAsync(checkGranuleHasNoDuplicate('crash-the-api', 'skip'));
+  const error = await t.throwsAsync(checkGranuleHasNoDuplicate('unexpected-response', 'skip'));
   t.true(error.message.startsWith('Unexpected return from Private API lambda'));
 });
 

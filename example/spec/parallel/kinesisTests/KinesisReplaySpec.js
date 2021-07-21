@@ -7,7 +7,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
-const { invokeApi } = require('@cumulus/api-client');
+const { postKinesisReplays } = require('@cumulus/api-client/replays');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -150,17 +151,9 @@ describe('The Kinesis Replay API', () => {
         endTimestamp,
         startTimestamp,
       };
-      const response = await invokeApi({
+      const response = await postKinesisReplays({
         prefix: testConfig.stackName,
-        payload: {
-          httpMethod: 'POST',
-          resource: '/{proxy+}',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          path: '/replays',
-          body: JSON.stringify(apiRequestBody),
-        },
+        payload: apiRequestBody,
       });
       console.log(`received response ${JSON.stringify(response)}`);
       asyncOperationId = JSON.parse(response.body).asyncOperationId;
@@ -215,6 +208,12 @@ describe('The Kinesis Replay API', () => {
         console.log('Waiting to ensure workflows expected not to start do not start...');
         await Promise.all(tooOldToExpectWorkflows);
         await Promise.all(tooNewToExpectWorkflows);
+
+        console.log('Cleaning up executions...');
+        await Promise.all([
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[0].executionArn }),
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[1].executionArn }),
+        ]);
       });
     });
   });

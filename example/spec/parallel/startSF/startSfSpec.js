@@ -26,7 +26,6 @@ async function sendStartSfMessages({
 }) {
   const message = {
     cumulus_meta: {
-      queueUrl,
       state_machine: workflowArn,
     },
     payload,
@@ -44,7 +43,7 @@ async function sendStartSfMessages({
       () =>
         sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(message) }).promise()
     );
-  return Promise.all(sendMessages);
+  return await Promise.all(sendMessages);
 }
 
 const createCloudwatchRuleWithTarget = async ({
@@ -124,9 +123,9 @@ const deleteCloudwatchRuleWithTargets = async ({
 
 describe('the sf-starter lambda function', () => {
   let config;
-  let waitPassSfParams;
   let testName;
-  let passSfParams;
+  let passSfArn;
+  let waitPassSfArn;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -147,12 +146,13 @@ describe('the sf-starter lambda function', () => {
         },
       },
     };
-
-    passSfParams = {
+    const passSfParams = {
       name: passSfName,
       definition: JSON.stringify(passSfDef),
       roleArn: passSfRoleArn,
     };
+    const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+    passSfArn = stateMachineArn;
 
     const waitPassSfName = timestampedName('waitPassTestSf');
     const waitPassSfDef = {
@@ -171,18 +171,23 @@ describe('the sf-starter lambda function', () => {
         },
       },
     };
-
-    waitPassSfParams = {
+    const waitPassSfParams = {
       name: waitPassSfName,
       definition: JSON.stringify(waitPassSfDef),
       roleArn: passSfRoleArn,
     };
+    const response = await sfn().createStateMachine(waitPassSfParams).promise();
+    waitPassSfArn = response.stateMachineArn;
+  });
+
+  afterAll(async () => {
+    await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
+    await sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise();
   });
 
   describe('when linked to a queue', () => {
     const initialMessageCount = 30;
 
-    let passSfArn;
     let queueName;
     let queueUrl;
     let queueArn;
@@ -209,9 +214,6 @@ describe('the sf-starter lambda function', () => {
       }).promise();
       queueArn = Attributes.QueueArn;
 
-      const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
-      passSfArn = stateMachineArn;
-
       await sendStartSfMessages({
         numOfMessages: initialMessageCount,
         queueName,
@@ -222,15 +224,12 @@ describe('the sf-starter lambda function', () => {
     });
 
     afterAll(async () => {
-      await Promise.all([
-        sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise(),
-        sqs().deleteQueue({
-          QueueUrl: queueUrl,
-        }).promise(),
-      ]);
+      await sqs().deleteQueue({
+        QueueUrl: queueUrl,
+      }).promise();
     });
 
-    it('that has messages', async () => {
+    it('that has messages', () => {
       pending('until SQS provides a strongly consistent getNumberOfMessages function');
     });
 
@@ -262,7 +261,7 @@ describe('the sf-starter lambda function', () => {
         expect(executions.length).toEqual(initialMessageCount);
       });
 
-      it('and then deleted from the queue', async () => {
+      it('and then deleted from the queue', () => {
         pending('until SQS provides a strongly consistent getNumberOfMessages function');
       });
     });
@@ -275,7 +274,6 @@ describe('the sf-starter lambda function', () => {
     let rulePermissionId;
     let ruleTargetId;
     let semaphoreDownLambda;
-    let waitPassSfArn;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
@@ -289,9 +287,6 @@ describe('the sf-starter lambda function', () => {
         QueueName: maxQueueName,
       }).promise();
       maxQueueUrl = QueueUrl;
-
-      const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
-      waitPassSfArn = stateMachineArn;
 
       ruleName = timestampedName('waitPassSfRule');
       ruleTargetId = timestampedName('waitPassSfRuleTarget');
@@ -329,7 +324,6 @@ describe('the sf-starter lambda function', () => {
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl,
         }).promise(),
-        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise(),
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {

@@ -11,15 +11,21 @@
 import isNil from 'lodash/isNil';
 import { Message } from '@cumulus/types';
 
+type MessageWithQueueInfo = Message.CumulusMessage & {
+  cumulus_meta: {
+    queueUrl: string
+  }
+};
+
 /**
  * Get the queue URL from a workflow message.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {MessageWithQueueInfo} message - A workflow message object
  * @returns {string} A queue URL
  *
  * @alias module:Queue
  */
-export const getQueueUrl = (message: Message.CumulusMessage): string => {
+export const getQueueUrl = (message: MessageWithQueueInfo): string => {
   const queueUrl = message.cumulus_meta.queueUrl;
   if (isNil(queueUrl)) {
     throw new Error('Could not find queue URL at cumulus_meta.queueUrl in message');
@@ -51,13 +57,13 @@ export const getMaximumExecutions = (
 /**
  * Determine if there is a queue and queue execution limit in the message.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {MessageWithQueueInfo} message - A workflow message object
  * @returns {boolean} True if there is a queue and execution limit.
  *
  * @alias module:Queue
  */
 export const hasQueueAndExecutionLimit = (
-  message: Message.CumulusMessage
+  message: MessageWithQueueInfo
 ): boolean => {
   try {
     const queueUrl = getQueueUrl(message);

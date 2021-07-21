@@ -1,9 +1,10 @@
 'use strict';
 
 const test = require('ava');
+const { randomId } = require('../../common/test-utils');
 const executionsApi = require('../executions');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.arn = 'testArn';
   t.context.testExecutionReturn = { body: '{"some": "object"}' };
@@ -19,9 +20,9 @@ test('getExecution calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
-    return (t.context.testExecutionReturn);
+    return Promise.resolve(t.context.testExecutionReturn);
   };
 
   await t.notThrowsAsync(executionsApi.getExecution({
@@ -42,7 +43,7 @@ test('getExecutions calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -64,7 +65,7 @@ test('getExecutions calls the callback with the expected object with query param
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -85,13 +86,77 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
   await t.notThrowsAsync(executionsApi.getExecutionStatus({
     prefix: t.context.testPrefix,
     arn: t.context.arn,
+    callback,
+  }));
+});
+
+test('deleteExecution calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
+  const executionArn = 'id-1234';
+
+  const expected = {
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/executions/${executionArn}`,
+    },
+  };
+  const resultBody = {
+    foo: 'bar',
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+
+    return { body: JSON.stringify(resultBody) };
+  };
+
+  const result = await executionsApi.deleteExecution({
+    prefix,
+    executionArn,
+    callback,
+  });
+
+  t.deepEqual(JSON.parse(result.body), resultBody);
+});
+
+test('searchExecutionsByGranules calls the callback with the expected object and returns the parsed response', async (t) => {
+  const payload = {
+    granules: [
+      { granuleId: randomId('granuleId1'), collectionId: randomId('collectionId1') },
+      { granuleId: randomId('granuleId2'), collectionId: randomId('collectionId2') },
+    ],
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/search-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(executionsApi.searchExecutionsByGranules({
+    prefix: t.context.testPrefix,
+    payload,
     callback,
   }));
 });
