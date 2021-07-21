@@ -172,7 +172,36 @@ test('filterRulesbyCollection returns all rules if no collection information is 
   );
 });
 
-test.todo('filterRulesByRuleParams returns matching rules');
+test('filterRulesByRuleParams filters on type', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'kinesis', sourceArn: randomString() } });
+
+  const ruleParamsToSelectRule1 = { type: 'sqs' };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
+});
+
+test('filterRulesByRuleParams filters on collection', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+
+  const ruleParamsToSelectRule1 = { ...rule1.collection };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
+});
+
+test('filterRulesByRuleParams filters on sourceArn', (t) => {
+  const desiredSourceArn = randomString();
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', value: desiredSourceArn } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', value: randomString() } });
+
+  const ruleParamsToSelectRule1 = { sourceArn: desiredSourceArn };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
+});
 
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
   const rule1 = fakeRuleFactoryV2({

@@ -10,9 +10,11 @@ const Rule = require('../models/rules');
 /**
  * fetch all rules in the Cumulus API
  *
- * @param {number} [pageNumber] - current page of API results
- * @param {Array<Object>} [rules] - partial rules array
- * @returns {Array<Object>} all rules
+ * @param {Object} params - function params
+ * @param {number} [params.pageNumber] - current page of API results
+ * @param {Array<Object>} [params.rules] - partial rules Array
+ * @param {Object} [params.queryParams] - API query params, empty query returns all rules
+ * @returns {Array<Object>} all matching rules
  */
 async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   const query = { ...queryParams, page: pageNumber };
@@ -38,23 +40,25 @@ async function fetchEnabledRules() {
   return await fetchRules({ queryParams: { state: 'ENABLED' } });
 }
 
+const collectionRuleMatcher = (rule, collection) => {
+  // Match as much collection info as we found in the message
+  const nameMatch = collection.name
+    ? get(rule, 'collection.name') === collection.name
+    : true;
+  const versionMatch = collection.version
+    ? get(rule, 'collection.version') === collection.version
+    : true;
+  return nameMatch && versionMatch;
+};
+
 const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
-  (rule) => {
-    // Match as much collection info as we found in the message
-    const nameMatch = collection.name
-      ? get(rule, 'collection.name') === collection.name
-      : true;
-    const versionMatch = collection.version
-      ? get(rule, 'collection.version') === collection.version
-      : true;
-    return nameMatch && versionMatch;
-  }
+  (rule) => collectionRuleMatcher(rule, collection)
 );
 
 const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(
   (rule) => {
     const typeMatch = ruleParams.type ? get(ruleParams, 'type') === rule.rule.type : true;
-    const collectionMatch = filterRulesbyCollection(rules, ruleParams);
+    const collectionMatch = collectionRuleMatcher(rule, ruleParams);
     const sourceArnMatch = ruleParams.sourceArn
       ? get(ruleParams, 'sourceArn') === rule.rule.value
       : true;
