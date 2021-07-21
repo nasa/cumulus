@@ -24,10 +24,10 @@
 const flatten = require('lodash/flatten');
 const cryptoRandomString = require('crypto-random-string');
 
-const { Pdr } = require('@cumulus/api/models');
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
@@ -58,8 +58,6 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -95,8 +93,6 @@ describe('Ingesting from PDR', () => {
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
       testSuffix = createTestSuffix(testId);
@@ -535,13 +531,16 @@ describe('Ingesting from PDR', () => {
         }
       });
 
-      it('the pdr record is added to DynamoDB', async () => {
+      it('the pdr record is added to the API', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            new Pdr(),
-            { pdrName: pdrFilename },
-            'completed'
+          const record = await waitForApiStatus(
+            getPdr,
+            {
+              prefix: config.stackName,
+              pdrName: pdrFilename,
+            },
+            ['completed']
           );
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');

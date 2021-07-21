@@ -360,6 +360,33 @@ test.serial('delete a provider record', async (t) => {
   t.false(await esProvidersClient.exists(id));
 });
 
+test.serial('delete an execution record', async (t) => {
+  const { esAlias } = t.context;
+
+  const testRecord = {
+    arn: randomString(),
+  };
+  const type = 'execution';
+
+  await indexer.indexExecution(esClient, testRecord, esAlias, type);
+
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+  t.true(await esExecutionsClient.exists(testRecord.arn));
+
+  await indexer.deleteExecution({
+    esClient,
+    arn: testRecord.arn,
+    type,
+    index: esAlias,
+  });
+
+  t.false(await esExecutionsClient.exists(testRecord.arn));
+});
+
 test.serial('indexing a granule record', async (t) => {
   const { esAlias } = t.context;
 
