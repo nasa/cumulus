@@ -3,13 +3,15 @@
 const get = require('lodash/get');
 const set = require('lodash/set');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const {
   getStepExitedEvent,
   getTaskExitedEventOutput,
 } = require('@cumulus/common/execution-history');
 const { getMessageExecutionArn } = require('@cumulus/message/Executions');
 const { parseStepMessage, pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+
+const log = new Logger({ sender: '@cumulus/api/lib/cwSfExecutionEventUtils' });
 
 const executionStatusToWorkflowStatus = (executionStatus) => {
   const statusMap = {
@@ -99,7 +101,42 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
   return fullCumulusMessage;
 };
 
+/**
+ * Searches the Execution History for the TaskStateEntered pertaining to the failed task Id.
+ * HistoryEvent ids are numbered sequentially, starting at one.
+*
+ * @param {HistoryEvent[]} events
+ * @param {number} lastFailureId
+ * @returns {string} name of the current stepfunction task or 'Unknown FailedStepName'.
+ */
+const failedStepName = (events, lastFailureId) => {
+  try {
+    const previousEvents = events.slice(0, lastFailureId - 1);
+    const startEvents = previousEvents.filter((e) => e.type === 'TaskStateEntered');
+    return startEvents.pop().stateEnteredEventDetails.name;
+  } catch (error) {
+    log.info('Failed to determine a failed stepName from execution events.');
+    log.error(error);
+  }
+  return 'Unknown FailedStepName';
+};
+
+/**
+ * Finds all failed execution events and returns the last one in the list.
+ *
+ * @param {Array<HistoryEventList>} events - array of AWS Stepfunction execution HistoryEvents
+ * @returns {HistoryEvent|[]} - the last lambda or activity that failed in the
+ * event array, or an empty array.
+ */
+const lastExecutionFailure = (events) => {
+  const failures = events.filter((event) =>
+    ['LambdaFunctionFailed', 'ActivityFailed'].includes(event.type));
+  return failures.pop();
+};
+
 module.exports = {
+  failedStepName,
   getFailedExecutionMessage,
   getCumulusMessageFromExecutionEvent,
+  lastExecutionFailure,
 };
