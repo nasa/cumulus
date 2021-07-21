@@ -18,6 +18,7 @@ test('postReplayArchivedMessages calls the callback with the expected object and
       },
       path: `/replayArchivedS3Messages/${queueName}`,
     },
+    expectedStatusCode: 202,
   };
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);
