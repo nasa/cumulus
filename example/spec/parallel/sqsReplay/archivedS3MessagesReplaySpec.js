@@ -78,6 +78,7 @@ describe('The replay archived S3 messages API endpoint', () => {
         path: '/replayArchivedS3Messages',
         body: JSON.stringify(apiRequestBody),
       },
+      expectedStatusCode: 202,
     });
     asyncOperationId = JSON.parse(response.body).asyncOperationId;
     expect(asyncOperationId).toBeDefined();
