@@ -292,6 +292,16 @@ test('HttpsProviderClient correctly includes a default redirect for the provided
   t.deepEqual(httpsProviderClient.allowedRedirects, ['test.com:53']);
 });
 
+test('HttpsProviderClient correctly adds specified allowedRedirects', (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: 'test.com',
+    allowedRedirects: ['foo.com'],
+  });
+
+  t.deepEqual(httpsProviderClient.allowedRedirects.sort(), ['test.com', 'foo.com'].sort());
+});
+
 test('HttpsProviderClient.download() supports basic auth with redirect to same host/same port', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
