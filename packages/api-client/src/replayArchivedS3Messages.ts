@@ -30,5 +30,6 @@ export const postReplayArchivedMessages = async (params: {
       },
       path: `/replayArchivedS3Messages/${queueName}`,
     },
+    expectedStatusCode: 202,
   });
 };
