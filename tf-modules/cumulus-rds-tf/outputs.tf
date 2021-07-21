@@ -13,7 +13,7 @@ output "admin_db_login_secret_arn" {
 output "admin_db_login_secret_version" {
   value = aws_secretsmanager_secret_version.rds_login.version_id
 }
-
+# Return aws_secretsmanager_secret.rds_login.arn in case var.provision_user_database is false
 output "user_credentials_secret_arn" {
-  value = var.provision_user_database ? module.provision_database[0].database_credentials_secret_arn : null
+  value = var.provision_user_database ? module.provision_database[0].database_credentials_secret_arn : aws_secretsmanager_secret.rds_login.arn
 }
