@@ -75,22 +75,14 @@ class HttpProviderClient {
       // expression so that we can use the bound value
       // of "this"
       handleBeforeRedirect(options, response) {
-        // If there is no allowed redirect for basic auth specified, do not
-        // forward auth credentials
-        if (this.allowedRedirects.length === 0) {
-          throw new Error(`
-            Request is redirecting to ${options.url.toString()} but no
-            allowedRedirects are specified for provider
-          `);
-        }
-
         if (!this.allowedRedirects.includes(options.url.host)) {
-          throw new Error(`
+          log.debug(`
             ${options.url.host} does match any of the allowed redirects
             in ${JSON.stringify(this.allowedRedirects)}, so auth credentials
             will not be forwarded. If provider specifies a port number, ensure
             that allowed redirect specifies the port number.
           `);
+          return;
         }
 
         if (redirectCodes.has(response.statusCode)) {

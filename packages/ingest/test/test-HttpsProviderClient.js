@@ -277,7 +277,8 @@ test('HttpsProviderClient.download() fails on redirect to different host if no a
   const localPath = path.join(tmpdir(), randomString());
   try {
     await t.throwsAsync(
-      httpsProviderClient.download({ remotePath: protectedFile2, localPath })
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
+      { message: /Response code 401/ }
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -299,7 +300,8 @@ test('HttpsProviderClient.download() fails on redirect to different host if redi
   const localPath = path.join(tmpdir(), randomString());
   try {
     await t.throwsAsync(
-      httpsProviderClient.download({ remotePath: protectedFile2, localPath })
+      httpsProviderClient.download({ remotePath: protectedFile2, localPath }),
+      { message: /Response code 401/ }
     );
     t.is(fs.readFileSync(localPath, 'utf-8'), '');
   } finally {
@@ -393,7 +395,8 @@ test('HttpsProviderClient.sync() fails on redirect to different host if allowedR
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      })
+      }),
+      { message: /Response code 401/ }
     );
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
@@ -424,7 +427,8 @@ test('HttpsProviderClient.sync() fails on redirect to different host if redirect
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      })
+      }),
+      { message: /Response code 401/ }
     );
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
