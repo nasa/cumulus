@@ -114,7 +114,7 @@ async function searchByGranules(req, res) {
     meta: {
       count: apiExecutions.length,
     },
-    results: apiExecutions
+    results: apiExecutions,
   };
 
   return res.send(response);
