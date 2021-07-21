@@ -37,10 +37,14 @@ const protectedFile2 = '/protected-basic/file2.hdf';
 
 const fakeDataServerDomain = 'fake-data.com';
 const fakeDataServerHost = `https://${fakeDataServerDomain}`;
-const fakeDataServerProtectedFile = '/protected/file.hdf';
+const fakeDataServerProtectedFile = '/data/file.hdf';
+const fakeDataServerProtectedFile2 = '/data/file2.hdf';
 
 const fakeAuthServerDomain = 'fake-auth.com';
 const fakeAuthServerHost = `https://${fakeAuthServerDomain}`;
+
+const fakeAuthServerDomain2 = 'fake-auth2.com:873';
+const fakeAuthServerHost2 = `https://${fakeAuthServerDomain2}`;
 
 test.before(() => {
   nock.disableNetConnect();
@@ -121,28 +125,49 @@ test.beforeEach(async (t) => {
   });
 
   nock(fakeDataServerHost)
-    .get(fakeDataServerProtectedFile)
-    .basicAuth({ user: basicUsername, pass: basicPassword })
-    .once()
-    .reply(302, undefined, {
-      Location: `${fakeAuthServerHost}/auth`,
-    });
-
-  nock(fakeDataServerHost)
     .head(fakeDataServerProtectedFile)
+    .reply(200)
+    .head(fakeDataServerProtectedFile2)
     .reply(200);
 
   nock(fakeDataServerHost)
     .get(fakeDataServerProtectedFile)
     .basicAuth({ user: basicUsername, pass: basicPassword })
     .once()
+    .reply(302, undefined, {
+      Location: `${fakeAuthServerHost}/auth`,
+    })
+    .get(fakeDataServerProtectedFile)
+    .basicAuth({ user: basicUsername, pass: basicPassword })
+    .once()
     .reply(200, remoteContent);
 
+  // Mock auth server
   nock(fakeAuthServerHost)
     .get('/auth')
     .basicAuth({ user: basicUsername, pass: basicPassword })
     .reply(302, undefined, {
       Location: `${fakeDataServerHost}${fakeDataServerProtectedFile}`,
+    });
+
+  nock(fakeDataServerHost)
+    .get(fakeDataServerProtectedFile2)
+    .basicAuth({ user: basicUsername, pass: basicPassword })
+    .once()
+    .reply(302, undefined, {
+      Location: `${fakeAuthServerHost2}/auth`,
+    })
+    .get(fakeDataServerProtectedFile2)
+    .basicAuth({ user: basicUsername, pass: basicPassword })
+    .once()
+    .reply(200, remoteContent);
+
+  // Mock auth server on non-standard port
+  nock(fakeAuthServerHost2)
+    .get('/auth')
+    .basicAuth({ user: basicUsername, pass: basicPassword })
+    .reply(302, undefined, {
+      Location: `${fakeDataServerHost}${fakeDataServerProtectedFile2}`,
     });
 });
 
@@ -327,6 +352,25 @@ test.serial('HttpsProviderClient.download() supports basic auth with redirect to
   }
 });
 
+test.serial('HttpsProviderClient.download() supports basic auth with redirect to different host/different port', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: fakeDataServerDomain,
+    username: basicUsername,
+    password: basicPassword,
+    allowedRedirects: [fakeAuthServerDomain2],
+  });
+
+  const localPath = path.join(tmpdir(), randomString());
+  try {
+    await httpsProviderClient.download({ remotePath: fakeDataServerProtectedFile2, localPath });
+    t.true(fs.existsSync(localPath));
+    t.is(fs.readFileSync(localPath, 'utf-8'), remoteContent);
+  } finally {
+    fs.unlinkSync(localPath);
+  }
+});
+
 test('HttpsProviderClient.download() fails on redirect to different host if no allowedRedirects are specified', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
@@ -452,6 +496,38 @@ test.serial('HttpsProviderClient.sync() supports basic auth with redirect to dif
     await s3().createBucket({ Bucket: destinationBucket }).promise();
     await httpsProviderClient.sync({
       fileRemotePath: fakeDataServerProtectedFile,
+      destinationBucket,
+      destinationKey,
+    });
+    t.true(await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    }));
+    const syncedContent = await getTextObject(destinationBucket, destinationKey);
+    t.is(syncedContent, remoteContent);
+
+    const s3HeadResponse = await headObject(destinationBucket, destinationKey);
+    t.is(expectedContentType, s3HeadResponse.ContentType);
+  } finally {
+    await recursivelyDeleteS3Bucket(destinationBucket);
+  }
+});
+
+test.serial('HttpsProviderClient.sync() supports basic auth with redirect to different host/different port', async (t) => {
+  const httpsProviderClient = new HttpProviderClient({
+    protocol: 'https',
+    host: fakeDataServerDomain,
+    username: basicUsername,
+    password: basicPassword,
+    allowedRedirects: [fakeAuthServerDomain2],
+  });
+
+  const destinationBucket = randomString();
+  const destinationKey = 'syncedFile.hdf';
+  try {
+    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await httpsProviderClient.sync({
+      fileRemotePath: fakeDataServerProtectedFile2,
       destinationBucket,
       destinationKey,
     });
