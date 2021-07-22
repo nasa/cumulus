@@ -142,7 +142,7 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/Dynamo/Elasticsearch and files from PostgreSQL/S3', async (t) => {
+test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/DynamoDB/Elasticsearch and files from PostgreSQL/S3', async (t) => {
   const {
     newPgGranule,
     newDynamoGranule,
@@ -282,7 +282,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the 
     { message: 'PG delete failed' }
   );
 
-  // granule should still exist in Dynamo and PostgreSQL
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.true(
@@ -306,7 +306,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the 
   ]));
 });
 
-test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the Dynamo granule delete fails', async (t) => {
+test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the DynamoDB granule delete fails', async (t) => {
   const {
     newPgGranule,
     newDynamoGranule,
@@ -338,7 +338,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     { message: 'Dynamo delete failed' }
   );
 
-  // granule should still exist in Dynamo and PostgreSQL
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.true(
@@ -348,7 +348,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     )
   );
 
-  // Files will still exist from S3 and PostgreSQL.
+  // Files will still exist in S3 and PostgreSQL.
   await Promise.all(
     files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
@@ -395,7 +395,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     { message: 'ES delete failed' }
   );
 
-  // granule should still exist in Dynamo and PostgreSQL
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
   t.true(
@@ -405,7 +405,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     )
   );
 
-  // Files will still exist from S3 and PostgreSQL.
+  // Files will still exist in S3 and PostgreSQL.
   await Promise.all(
     files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));

@@ -164,7 +164,7 @@ function performIndex(indexFnName, esClient, data) {
  * @returns {Promise<Object>} elasticsearch response
  */
 function performDelete(deleteFnName, esClient, type, id, parentId) {
-  logger.debug(`deleting ${type} ${id}`);
+  logger.debug(`deleting type: ${type} id: ${id}`);
 
   const idFieldName = mapIndexTypeToIdFieldName(type);
   const deleteParams = {
