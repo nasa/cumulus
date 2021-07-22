@@ -446,7 +446,7 @@ test('POST /executions/search-by-granules returns 1 record by default', async (t
 
   t.is(response.body.results.length, 1);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
