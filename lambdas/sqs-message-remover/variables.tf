@@ -23,7 +23,7 @@ variable "lambda_processing_role_arn" {
 # Optional
 
 variable "cmr_custom_host" {
-  description = "Custom protocol/host to use for CMR requests (e.g. http://cmr-host.com)"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
