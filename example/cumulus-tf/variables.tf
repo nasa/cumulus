@@ -181,7 +181,7 @@ variable "cumulus_distribution_url" {
   description = "The url of cumulus distribution API Gateway endpoint"
 }
 
-variable "distribution_url" {
+variable "tea_distribution_url" {
   type    = string
   default = null
 }
@@ -420,7 +420,7 @@ variable "optional_dynamo_tables" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
