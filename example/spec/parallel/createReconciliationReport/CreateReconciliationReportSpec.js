@@ -346,6 +346,9 @@ describe('When there are granule differences and granule reconciliation is run',
         ingestGranuleToCMR(cmrClient),
       ]);
 
+      console.log('dbGranuleId', dbGranuleId);
+      console.log('publishedGranuleId', publishedGranuleId);
+
       console.log('XXXXX Waiting for collections in list');
       const collectionIds = [
         collectionId,
