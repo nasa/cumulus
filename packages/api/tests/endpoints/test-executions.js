@@ -477,7 +477,7 @@ test('POST /executions/search-by-granules supports paging', async (t) => {
   t.is(page1.body.results.length, 2);
   t.is(page2.body.results.length, 1);
 
-  const response = page1.body.concat(page2.body);
+  const response = page1.body.results.concat(page2.body.results);
 
   response.forEach(async (execution) => t.deepEqual(
     execution,
@@ -500,7 +500,7 @@ test('POST /executions/search-by-granules returns correct executions when granul
 
   t.is(response.body.results.length, 3);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
@@ -545,7 +545,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   t.is(response.body.results.length, 2);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
