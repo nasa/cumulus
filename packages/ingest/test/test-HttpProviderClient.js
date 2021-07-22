@@ -14,7 +14,7 @@ const {
   calculateObjectHash,
   recursivelyDeleteS3Bucket,
   headObject,
-  s3ObjectExists
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');

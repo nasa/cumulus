@@ -10,7 +10,7 @@ import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
-import { Readable, TransformOptions } from 'stream';
+import { Readable, TransformOptions, PassThrough } from 'stream';
 import { deprecate } from 'util';
 
 import {
@@ -254,6 +254,28 @@ export const s3CopyObject = improveStackTrace(
 export const promiseS3Upload = improveStackTrace(
   (params: AWS.S3.PutObjectRequest) => s3().upload(params).promise()
 );
+
+/**
+ * Upload data to S3 using a stream
+ *
+ * Enables integration with Node's [stream.pipeline](https://nodejs.org/docs/latest-v12.x/api/stream.html#stream_stream_pipeline_streams_callback) utility
+ *
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {PassThrough} - a pass through stream
+ */
+export const streamS3Upload = (params: AWS.S3.PutObjectRequest) => {
+  const passThroughStream = new PassThrough();
+
+  s3().upload({
+    ...params,
+    Body: passThroughStream,
+  }, (error, data) => {
+    console.error(error);
+    console.info(data);
+  });
+
+  return passThroughStream;
+};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner

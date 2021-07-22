@@ -586,7 +586,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if allowedR
   }
 });
 
-test('HttpsProviderClient.sync() fails on redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
+test.only('HttpsProviderClient.sync() fails on redirect to different host if redirect host is not included in allowedRedirects', async (t) => {
   const httpsProviderClient = new HttpProviderClient({
     protocol: 'https',
     host: '127.0.0.1',
@@ -602,7 +602,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if redirect
   try {
     await s3().createBucket({ Bucket: destinationBucket }).promise();
     await t.throwsAsync(
-      httpsProviderClient.sync({
+      () => httpsProviderClient.sync({
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
