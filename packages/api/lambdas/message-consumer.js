@@ -76,7 +76,7 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
       // We couldn't publish the record to the fallback Topic, so we will log
       // and throw the original error.  Kinesis polling will pick up this
       // record again and retry.
-      log.error(`Failed to publish record to fallback topic: ${record}`);
+      log.error(`Failed to publish record to fallback topic: ${JSON.stringify(record)}`);
       log.error(`original error: ${error}`);
       log.error(`subsequent error: ${snsError}`);
       throw error;
@@ -96,11 +96,11 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
  *        If false, the record is from a Kinesis stream and any errors
  *        encountered will cause the record to be published to a fallback SNS
  *        topic for further attempts at processing.
- * @param {Array<Object>} allRules - Array of all rules in Cumulus API
+ * @param {Array<Object>} enabledRules - Array of all enabled rules in Cumulus API
  * @returns {[Promises]} Array of promises. Each promise is resolved when a
  * message is queued for all associated kinesis rules.
  */
-function processRecord(record, fromSNS, allRules) {
+function processRecord(record, fromSNS, enabledRules) {
   let eventObject;
   let isKinesisRetry = false;
   let parsed = record;
@@ -147,7 +147,7 @@ function processRecord(record, fromSNS, allRules) {
   }
 
   return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => filterRulesByRuleParams(allRules, ruleParams))
+    .then(() => filterRulesByRuleParams(enabledRules, ruleParams))
     .then((applicableRules) => Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
@@ -172,7 +172,7 @@ function processRecord(record, fromSNS, allRules) {
 function handler(event, context, cb) {
   const records = event.Records;
 
-  // fetch all rules in the system and cache in memory so we don't need a ton of DB connections
+  // fetch enabled rules from the API and cache in memory so we don't need a ton of DB connections
   return fetchEnabledRules()
     .then((rules) => Promise.all(records.map(
       (r) => processRecord(r, (r.EventSource === 'aws:sns'), rules)
