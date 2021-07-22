@@ -36,6 +36,19 @@ function parseException(exception) {
 }
 
 /**
+ * convert error Object keys to begin with capitalized letters.
+ * so that {error: "error"} => {Error: "error"}
+ *
+ * @param {Object} obj
+ * @returns {Object} shallow copy of object but with each key capitalized.
+ */
+const capitalizeKeys = (obj) =>
+  Object.keys(obj).reduce((acc, key) => {
+    acc[key[0].toUpperCase() + key.slice(1)] = obj[key];
+    return acc;
+  }, {});
+
+/**
  * For any status Failed cumulusMessage, update the message with the
  * Execution's failed step name in `FailedExecutionStepName` and update the
  * `FailedExecutionStepOutput` with the last failed output from either a
@@ -60,11 +73,12 @@ const amendCumulusMessageException = async (cumulusMessage) => {
       ...lastFailure.lambdaFunctionFailedEventDetails,
       ...lastFailure.activityFailedEventDetails,
     };
+
     const failedExecutionStepName = failedStepName(events, lastFailure.id);
     amendedMessage.exception = {
       ...amendedMessage.exception,
+      ...capitalizeKeys(failedExecutionStepOutput),
       failedExecutionStepName,
-      failedExecutionStepOutput,
     };
     log.debug(`amended exception: ${JSON.stringify(amendedMessage.exception)}`);
   } catch (error) {
