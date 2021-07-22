@@ -56,6 +56,9 @@ variable.
     - determines if the file request is public based on the bucket map rather than the bucket type
     - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
     - bucket prefix and object prefix are supported
+  - Add 'Bearer token' support as an authorization method
+- **CUMULUS-2486**
+  - Implemented support for custom headers
   - Added 'Bearer token' support as an authorization method
 - **CUMULUS-2487**
   - Added integration test for cumulus distribution API
@@ -109,6 +112,9 @@ the error object:
 behavior
 - Updated `cmr_custom_host` variable to accept a full protocol and host name
 (e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
 - **CUMULUS-2463**
   - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
 
