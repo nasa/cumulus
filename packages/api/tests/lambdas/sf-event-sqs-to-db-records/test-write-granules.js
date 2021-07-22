@@ -382,7 +382,7 @@ test.serial('writeGranules() throws an error if collection is not provided', asy
   );
 });
 
-test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -407,7 +407,7 @@ test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elastics
   t.true(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
+test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -586,7 +586,7 @@ test.serial('writeGranules() throws error if any granule writes fail', async (t)
   }));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if Dynamo write fails', async (t) => {
+test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if DynamoDB write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -624,7 +624,7 @@ test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elast
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
+test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -663,7 +663,7 @@ test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elast
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to Dynamo/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
