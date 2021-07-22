@@ -23,7 +23,9 @@ The default reserved concurrency value is 8.
 ### Notable changes
 
 - `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
-integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`)
+integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
+that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
+variable.
 
 ### Added
 
