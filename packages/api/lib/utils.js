@@ -9,7 +9,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const Logger = require('@cumulus/logger');
 const { failedStepName, lastExecutionFailure } = require('./cwSfExecutionEventUtils');
 
-const log = new Logger('@cumulus/api/lib/utils');
+const log = new Logger({ sender: '@cumulus/api/lib/utils' });
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
@@ -43,30 +43,32 @@ function parseException(exception) {
  * the error record (leaving anything that was parsed from the cumulusMessage.exception?)
  * @param {Object} cumulusMessage
  */
-const amendCumulusMessageError = async (cumulusMessage) => {
+const amendCumulusMessageException = async (cumulusMessage) => {
   const amendedMessage = { ...cumulusMessage };
-  amendedMessage.error = parseException(cumulusMessage.exception);
+  amendedMessage.exception = parseException(cumulusMessage.exception);
 
   const status = getMetaStatus(cumulusMessage);
   if (status !== 'failed') {
     return amendedMessage;
   }
-
   try {
+    log.debug('Attempting to amend cumulusMessage exception.');
     const executionArn = getMessageExecutionArn(cumulusMessage);
-    const { events } = await StepFunctions.getExecutionHistory(executionArn);
+    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
     const lastFailure = lastExecutionFailure(events);
     const failedExecutionStepOutput = {
       ...lastFailure.lambdaFunctionFailedEventDetails,
       ...lastFailure.activityFailedEventDetails,
     };
-    const failedExecutionStepName = failedStepName(events, lastFailure);
-    amendedMessage.error = {
-      ...amendedMessage.error,
+    const failedExecutionStepName = failedStepName(events, lastFailure.id);
+    amendedMessage.exception = {
+      ...amendedMessage.exception,
       failedExecutionStepName,
       failedExecutionStepOutput,
     };
+    log.debug(`amended exception: ${JSON.stringify(amendedMessage.exception)}`);
   } catch (error) {
+    log.error('Could not amend cumulus message exception.');
     log.error(error);
   }
   return amendedMessage;
@@ -131,7 +133,7 @@ function findCaseInsensitiveValue(obj, keyArg) {
 }
 
 module.exports = {
-  amendCumulusMessageError,
+  amendCumulusMessageException,
   deconstructCollectionId,
   errorify,
   extractDate,
