@@ -26,7 +26,7 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   if (responseBody.results.length > 0) {
     return fetchRules({
       pageNumber: (pageNumber + 1),
-      rules: rules.concat(apiResponse.body.results),
+      rules: rules.concat(responseBody.results),
       queryParams,
     });
   }

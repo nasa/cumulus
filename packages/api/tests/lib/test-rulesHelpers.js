@@ -58,7 +58,7 @@ test.serial('fetchRules invokes API to fetch rules', async (t) => {
   const apiResults = [];
   listRulesStub.callsFake(({ prefix }) => {
     t.is(prefix, process.env.stackName);
-    return { body: { results: apiResults } };
+    return { body: JSON.stringify({ results: apiResults }) };
   });
   const rules = await rulesHelpers.fetchRules({});
 
@@ -83,15 +83,15 @@ test.serial('fetchRules pages through results until reaching an empty list', asy
   };
   listRulesStub.onFirstCall().callsFake((params) => {
     t.deepEqual(params, firstCallArgs);
-    return { body: { results: [rule1] } };
+    return { body: JSON.stringify({ results: [rule1] }) };
   });
   listRulesStub.onSecondCall().callsFake((params) => {
     t.deepEqual(params, secondCallArgs);
-    return { body: { results: [rule2] } };
+    return { body: JSON.stringify({ results: [rule2] }) };
   });
   listRulesStub.onThirdCall().callsFake((params) => {
     t.deepEqual(params, thirdCallArgs);
-    return { body: { results: [] } };
+    return { body: JSON.stringify({ results: [] }) };
   });
 
   const expectedOutput = [rule1, rule2];
@@ -107,7 +107,7 @@ test.serial('fetchRules pages through results until reaching an empty list', asy
 test.serial('fetchEnabledRules passes ENABLED state to listRules endpoint', async (t) => {
   listRulesStub.callsFake((params) => {
     t.is(params.query.state, 'ENABLED');
-    return { body: { results: [] } };
+    return { body: JSON.stringify({ results: [] }) };
   });
   await rulesHelpers.fetchEnabledRules();
 });
