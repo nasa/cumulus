@@ -417,9 +417,7 @@ test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if E
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    index: () => {
-      throw new Error('PDR ES error');
-    },
+    index: () => Promise.reject(new Error('PDR ES error')),
   };
 
   await t.throwsAsync(
