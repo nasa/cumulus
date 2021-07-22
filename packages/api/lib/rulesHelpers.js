@@ -22,7 +22,8 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
     prefix: process.env.stackName,
     query,
   });
-  if (apiResponse.body.results.length > 0) {
+  const responseBody = JSON.parse(apiResponse.body);
+  if (responseBody.results.length > 0) {
     return fetchRules({
       pageNumber: (pageNumber + 1),
       rules: rules.concat(apiResponse.body.results),
