@@ -45,6 +45,8 @@ The configuration file is a simple json mapping of the form:
 
 ## Switching from the Thin Egress App to Cumulus Distribution
 
-If you have previously deployed the Thin Egress App (TEA) as your distribution app, you can switch to Cumulus Distribution by changing the `cumulus-tf/main.tf` variables linked above and renaming `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
+If you have previously deployed the Thin Egress App (TEA) as your distribution app, you can switch to Cumulus Distribution by following the steps above.
 
 Note, however, that the `cumulus_distribution` module will generate a bucket map cache and overwrite any existing bucket map caches created by TEA.
+
+There will also be downtime while your API gateway is updated.
