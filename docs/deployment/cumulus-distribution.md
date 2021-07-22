@@ -20,6 +20,7 @@ To configure a deployment to use Cumulus Distribution:
  4. Rename `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf.example` to `cumulus-template-deploy/cumulus-tf/cumulus_distribution.tf`.
  5. Set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
 
+- deploy_cumulus_distribution
 - cumulus_distribution_url
 - csdap_client_id
 - csdap_client_password
