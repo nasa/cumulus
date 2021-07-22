@@ -45,7 +45,7 @@ locals {
       EcsCluster                       = var.ecs_cluster_name
       ENTITY_ID                        = var.saml_entity_id
       ES_CONCURRENCY                   = var.es_request_concurrency
-      ES_HOST                          = var.elasticsearch_hostname
+                                = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
