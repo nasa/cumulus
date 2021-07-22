@@ -19,7 +19,7 @@ const rulesHelpers = require('../lib/rulesHelpers');
  * messages from SQS queue are processed
  */
 async function processQueues(event, dispatchFn) {
-  const rules = await rulesHelpers.fetchAllRules().filter((rule) => rule.state === 'ENABLED');
+  const rules = await rulesHelpers.fetchEnabledRules();
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;

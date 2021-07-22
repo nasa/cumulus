@@ -320,22 +320,22 @@ test('handler returns error string if no valid param is provided to determine in
 test.serial('handler calls processStream if valid parameters are provided', async (t) => {
   const logInfo = sinon.spy(log, 'info');
   const expectedOutput = 'testing-output';
-  const restoreFetchAllRules = manualConsumer.__set__('fetchAllRules', () => Promise.resolve(rulesArray));
+  const restorefetchEnabledRules = manualConsumer.__set__('fetchEnabledRules', () => Promise.resolve(rulesArray));
   const restoreprocessStream = manualConsumer.__set__('processStream', () => Promise.resolve(expectedOutput));
   const actualOutput = await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   logInfo.restore();
   restoreprocessStream();
-  restoreFetchAllRules();
+  restorefetchEnabledRules();
   t.is(actualOutput, expectedOutput);
   t.true(logInfo.calledOnce);
 });
 
-test.serial('handler calls fetchAllRules if valid parameters are provided', async (t) => {
-  const fetchAllRulesStub = sinon.stub().callsFake(() => {
+test.serial('handler calls fetchEnabledRules if valid parameters are provided', async (t) => {
+  const fetchEnabledRulesStub = sinon.stub().callsFake(() => {
     t.is(process.env.stackName, fakeStackName);
     return Promise.resolve(rulesArray);
   });
-  const restoreFetchAllRules = manualConsumer.__set__('fetchAllRules', fetchAllRulesStub);
+  const restorefetchEnabledRules = manualConsumer.__set__('fetchEnabledRules', fetchEnabledRulesStub);
   const restoreprocessStream = manualConsumer.__set__('processStream', (_1, _2, rulesArg) => {
     t.deepEqual(rulesArg, rulesArray);
     return Promise.resolve({});
@@ -343,8 +343,8 @@ test.serial('handler calls fetchAllRules if valid parameters are provided', asyn
   process.env.stackName = fakeStackName;
   await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   delete process.env.stackName;
-  restoreFetchAllRules();
+  restorefetchEnabledRules();
   restoreprocessStream();
 
-  t.true(fetchAllRulesStub.calledOnce);
+  t.true(fetchEnabledRulesStub.calledOnce);
 });

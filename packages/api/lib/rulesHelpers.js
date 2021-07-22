@@ -41,7 +41,6 @@ async function fetchEnabledRules() {
 }
 
 const collectionRuleMatcher = (rule, collection) => {
-  if (!rule.collection) return true;
   // Match as much collection info as we found in the message
   const nameMatch = collection.name
     ? get(rule, 'collection.name') === collection.name

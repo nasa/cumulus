@@ -104,12 +104,12 @@ test.after.always(async () => {
 
 test.beforeEach((t) => {
   t.context.queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
-  t.context.fetchAllRulesStub = sinon.stub(rulesHelpers, 'fetchAllRules').returns([]);
+  t.context.fetchEnabledRulesStub = sinon.stub(rulesHelpers, 'fetchEnabledRules').returns([]);
 });
 
 test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
-  t.context.fetchAllRulesStub.restore();
+  t.context.fetchEnabledRulesStub.restore();
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
@@ -145,7 +145,7 @@ test.serial('processQueues does nothing when no rule matches collection in messa
     },
     state: 'ENABLED',
   });
-  t.context.fetchAllRulesStub.returns([rule]);
+  t.context.fetchEnabledRulesStub.returns([rule]);
 
   await SQS.sendSQSMessage(
     queue.queueUrl,
@@ -162,7 +162,7 @@ test.serial('processQueues does nothing when no rule matches collection in messa
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
-  t.context.fetchAllRulesStub.returns(rules);
+  t.context.fetchEnabledRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
 
@@ -221,7 +221,7 @@ test.serial('messages are retried the correct number of times based on the rule 
     { visibilityTimeout, retries: 1 },
     queueMaxReceiveCount
   );
-  t.context.fetchAllRulesStub.returns(rules);
+  t.context.fetchEnabledRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
@@ -274,7 +274,7 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
     state: 'ENABLED',
     workflow,
   });
-  t.context.fetchAllRulesStub.returns([rule]);
+  t.context.fetchEnabledRulesStub.returns([rule]);
 
   await SQS.sendSQSMessage(
     queue.queueUrl,
@@ -328,7 +328,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
       workflow,
     }),
   ];
-  t.context.fetchAllRulesStub.returns(rules);
+  t.context.fetchEnabledRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
   await SQS.sendSQSMessage(
     queue.queueUrl,
@@ -348,7 +348,7 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
-  t.context.fetchAllRulesStub.returns(rules);
+  t.context.fetchEnabledRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
   const message = { testdata: randomString() };
 
   // Send message to ENABLED queue
@@ -387,7 +387,7 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
 test.serial('processQueues archives multiple messages', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
-  t.context.fetchAllRulesStub.returns(rules);
+  t.context.fetchEnabledRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
   // Send message to ENABLED queue
   const messages = await Promise.all(

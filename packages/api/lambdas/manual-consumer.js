@@ -7,7 +7,7 @@ const awsServices = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 
 const messageConsumer = require('./message-consumer');
-const { fetchAllRules } = require('../lib/rulesHelpers');
+const { fetchEnabledRules } = require('../lib/rulesHelpers');
 
 const Kinesis = awsServices.kinesis();
 const tallyReducer = (acc, cur) => acc + cur;
@@ -252,7 +252,7 @@ async function handler(event) {
 
   if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
-    const allRules = await fetchAllRules();
+    const allRules = await fetchEnabledRules();
     return await processStream(event.kinesisStream, event.kinesisStreamCreationTimestamp, allRules);
   }
 

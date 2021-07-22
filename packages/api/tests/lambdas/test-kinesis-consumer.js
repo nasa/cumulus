@@ -15,10 +15,10 @@ const Provider = require('../../models/providers');
 
 const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
-const fetchAllRulesStub = sandbox.stub();
+const fetchEnabledRulesStub = sandbox.stub();
 const { handler } = proxyquire('../../lambdas/message-consumer', {
   '../lib/rulesHelpers': {
-    fetchAllRules: fetchAllRulesStub,
+    fetchEnabledRules: fetchEnabledRulesStub,
     queueMessageForRule: queueMessageStub,
   },
 });
@@ -146,7 +146,7 @@ test.beforeEach(async (t) => {
   process.env.messageConsumer = randomString();
 
   t.context.createdRule = await ruleModel.create(kinesisRule);
-  fetchAllRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
+  fetchEnabledRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
 });
 
 test.afterEach.always(() => {
