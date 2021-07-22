@@ -206,10 +206,11 @@ test.serial('GET /asyncOperations/{:id} returns a 404 status code if the request
 });
 
 test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
+  const { asyncOperationPgModel } = t.context;
   const asyncOperation = fakeAsyncOperationFactory();
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
   const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
-  await t.context.asyncOperationPgModel.create(t.context.knex, asyncOperationPgRecord);
+  await asyncOperationPgModel.create(t.context.knex, asyncOperationPgRecord);
 
   const response = await request(app)
     .get(`/asyncOperations/${createdAsyncOperation.id}`)
@@ -232,7 +233,7 @@ test.serial('GET /asyncOperations/{:id} returns the async operation if it does e
   );
 });
 
-test.only('del() returns a 401 bad request if id is not provided', async (t) => {
+test('del() returns a 401 bad request if id is not provided', async (t) => {
   const fakeRequest = {};
   const fakeResponse = {
     boom: {

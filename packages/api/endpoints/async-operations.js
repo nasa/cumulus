@@ -69,7 +69,11 @@ async function getAsyncOperation(req, res) {
  */
 async function del(req, res) {
   const {
-    asyncOperationModel = new AsyncOperationModel(),
+    asyncOperationModel = new AsyncOperationModel({
+      stackName: process.env.stackName,
+      systemBucket: process.env.system_bucket,
+      tableName: process.env.AsyncOperationsTable,
+    }),
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
