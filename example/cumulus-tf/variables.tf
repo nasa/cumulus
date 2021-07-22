@@ -441,3 +441,8 @@ variable "default_tags" {
   }
 }
 
+variable "cmr_custom_host" {
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
+  type        = string
+  default     = null
+}
