@@ -113,7 +113,14 @@ async function searchByGranules(req, res) {
   const apiExecutions = await Promise.all(executions
     .map((execution) => translatePostgresExecutionToApiExecution(execution, knex)));
 
-  return res.send(apiExecutions);
+  const response = {
+    meta: {
+      count: apiExecutions.length,
+    },
+    results: apiExecutions,
+  };
+
+  return res.send(response);
 }
 
 /**

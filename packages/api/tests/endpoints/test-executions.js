@@ -451,9 +451,9 @@ test('POST /executions/search-by-granules returns 1 record by default', async (t
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(response.body.length, 1);
+  t.is(response.body.results.length, 1);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
@@ -481,10 +481,10 @@ test('POST /executions/search-by-granules supports paging', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(page1.body.length, 2);
-  t.is(page2.body.length, 1);
+  t.is(page1.body.results.length, 2);
+  t.is(page2.body.results.length, 1);
 
-  const response = page1.body.concat(page2.body);
+  const response = page1.body.results.concat(page2.body.results);
 
   response.forEach((execution) => t.deepEqual(
     execution,
@@ -521,9 +521,9 @@ test('POST /executions/search-by-granules returns correct executions when granul
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(response.body.length, 3);
+  t.is(response.body.results.length, 3);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
@@ -566,9 +566,9 @@ test.serial('POST /executions/search-by-granules returns correct executions when
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(response.body.length, 2);
+  t.is(response.body.results.length, 2);
 
-  response.body.forEach(async (execution) => t.deepEqual(
+  response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
     await translatePostgresExecutionToApiExecution(fakePGExecutions
       .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
