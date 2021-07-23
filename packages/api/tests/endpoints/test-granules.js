@@ -42,6 +42,7 @@ const {
   metadataObjectFromCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -53,12 +54,11 @@ const {
   fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
+const { migrationDir } = require('../../../../lambdas/db-migration');
+
+const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
-const models = require('../../models');
-
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
-
-// Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
@@ -66,16 +66,16 @@ const {
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-
 const {
   createJwtToken,
 } = require('../../lib/token');
-const { migrationDir } = require('../../../../lambdas/db-migration');
+const models = require('../../models');
 
 const {
   generateMoveGranuleTestFilesAndEntries,
   getPostgresFilesInOrder,
 } = require('./granules/helpers');
+const { buildFakeExpressResponse } = require('./utils');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
@@ -164,8 +164,10 @@ test.before(async (t) => {
   // create fake Granules table
   granuleModel = new models.Granule();
   await granuleModel.createTable();
+  t.context.granuleModel = granuleModel;
 
   granulePgModel = new GranulePgModel();
+  t.context.granulePgModel = granulePgModel;
   filePgModel = new FilePgModel();
 
   const username = randomString();
@@ -199,6 +201,12 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+
+  t.context.esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -1477,4 +1485,66 @@ test.serial('PUT with action move returns failure if more than one granule file 
     'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
 
   filesExistingStub.restore();
+});
+
+test.only('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
+  const { esClient, knex } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+  });
+
+  const fakeGranuleModel = {
+    get: () => Promise.resolve(newDynamoGranule),
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const newExecution = 'new-execution';
+  const updatedGranule = {
+    ...newDynamoGranule,
+    execution: newExecution,
+  };
+
+  const expressRequest = {
+    params: {
+      granuleId: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      granuleModel: fakeGranuleModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    }),
+    newDynamoGranule
+  );
+  t.deepEqual(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    }),
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
 });
