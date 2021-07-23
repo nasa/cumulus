@@ -445,18 +445,6 @@ test.serial('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test.serial('PUT fails if action is not provided', async (t) => {
-  const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
-
-  t.is(response.status, 400);
-  const { message } = response.body;
-  t.is(message, 'Action is missing');
-});
-
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
   const fakeDescribeExecutionResult = {
@@ -693,7 +681,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    granuleParams: { published: true },
+    granuleParams: { published: false },
     esClient: t.context.esClient,
   });
 
@@ -1487,7 +1475,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.only('PUT replaces an existing granule in all data stores', async (t) => {
+test('PUT replaces an existing granule in all data stores', async (t) => {
   const { esClient, knex } = t.context;
   const {
     newPgGranule,
@@ -1500,6 +1488,13 @@ test.only('PUT replaces an existing granule in all data stores', async (t) => {
       status: 'running',
     },
   });
+
+  t.is(newDynamoGranule.status, 'running');
+  t.is(newDynamoGranule.queryFields, undefined);
+  t.is(newPgGranule.status, 'running');
+  t.is(newPgGranule.query_fields, null);
+  t.is(esRecord.status, 'running');
+  t.is(esRecord.queryFields, undefined);
 
   const newQueryFields = {
     foo: randomString(),
@@ -1551,6 +1546,54 @@ test.only('PUT replaces an existing granule in all data stores', async (t) => {
       timestamp: updatedEsRecord.timestamp,
     }
   );
+});
+
+test('PUT replaces an existing granule in all data stores with correct timestamps', async (t) => {
+  const { esClient, knex } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+  });
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  t.true(actualGranule.updatedAt > updatedGranule.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualGranule.createdAt, newDynamoGranule.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgGranule.created_at.getTime(), actualGranule.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+  t.is(actualPgGranule.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
 test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
