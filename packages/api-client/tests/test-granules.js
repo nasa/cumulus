@@ -341,3 +341,32 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   t.true(removeFromCmrCalled);
   t.true(deleteGranuleCalled);
 });
+
+test('updateGranule calls the callback with the expected object', async (t) => {
+  const updateParams = {
+    status: 'completed',
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateParams),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.updateGranule({
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    updateParams,
+    callback,
+  }));
+});
