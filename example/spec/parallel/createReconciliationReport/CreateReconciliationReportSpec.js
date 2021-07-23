@@ -35,7 +35,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { getCollections } = require('@cumulus/api-client/collections');
-const { getGranule } = require('@cumulus/api-client/granules');
+const { getGranule, updateGranule } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -220,7 +220,7 @@ async function ingestGranuleToCMR(cmrClient) {
 }
 
 // update granule file which matches the regex
-async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
+async function updateGranuleFile(prefix, granuleId, granuleFiles, regex, replacement) {
   console.log(`update granule file: ${granuleId} regex ${regex} to ${replacement}`);
   let originalGranuleFile;
   let updatedGranuleFile;
@@ -234,7 +234,12 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
     updatedFile.key = updatedFile.key.replace(regex, replacement);
     return updatedFile;
   });
-  await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
+  await updateGranule({
+    prefix,
+    granuleId,
+    updateParams: { files: updatedFiles },
+  });
+  // await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
   return { originalGranuleFile, updatedGranuleFile };
 }
 
@@ -366,7 +371,13 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
       console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
-      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, 'jpg2'));
+      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
+        config.stackName,
+        publishedGranuleId,
+        granuleBeforeUpdate.files,
+        /jpg$/,
+        'jpg2'
+      ));
       console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
