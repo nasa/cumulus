@@ -9,7 +9,7 @@ echo Running parallel integration tests
 DOT_PID="$!"
 
 TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
-testOutputDir=scripts/test_output2
+testOutputDir=scripts/test_outpu
 
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
