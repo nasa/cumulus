@@ -5,8 +5,7 @@ const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
-const { Granule } = require('@cumulus/api/models');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
@@ -37,7 +36,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutions } = require('@cumulus/api-client/executions');
 
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const {
@@ -150,50 +149,56 @@ const waitForQueueMessageCount = (queueUrl, expectedCount) =>
   );
 
 describe('The SQS rule', () => {
+  let beforeAllFailed;
   let ruleList;
   let executionNamePrefix;
 
   beforeAll(async () => {
-    config = await loadConfig();
-    testId = createTimestampedTestId(config.stackName, 'sqsRule');
-    testSuffix = createTestSuffix(testId);
-    testDataFolder = createTestDataPath(testId);
-    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    const provider = { id: `s3_provider${testSuffix}` };
-    ruleSuffix = replace(testSuffix, /-/g, '_');
+    try {
+      config = await loadConfig();
+      testId = createTimestampedTestId(config.stackName, 'sqsRule');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
+      const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+      const provider = { id: `s3_provider${testSuffix}` };
+      ruleSuffix = replace(testSuffix, /-/g, '_');
 
-    executionNamePrefix = randomId('prefix');
+      executionNamePrefix = randomId('prefix');
 
-    const scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
+      const scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
 
-    ruleOverride = {
-      name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
-      collection: {
-        name: collection.name,
-        version: collection.version,
-      },
-      provider: provider.id,
-      workflow: workflowName,
-      meta: {
-        retries: 1,
-      },
-      executionNamePrefix,
-      // use custom queue for scheduling workflows
-      queueUrl: scheduleQueueUrl,
-    };
+      ruleOverride = {
+        name: `MOD09GQ_006_sqsRule${ruleSuffix}`,
+        collection: {
+          name: collection.name,
+          version: collection.version,
+        },
+        provider: provider.id,
+        workflow: workflowName,
+        meta: {
+          retries: 1,
+        },
+        executionNamePrefix,
+        // use custom queue for scheduling workflows
+        queueUrl: scheduleQueueUrl,
+      };
 
-    await setupCollectionAndTestData();
+      await setupCollectionAndTestData();
 
-    // create SQS queues and add rule
-    const { queueUrl, deadLetterQueueUrl } = await createSqsQueues(testId);
-    queues = {
-      sourceQueueUrl: queueUrl,
-      deadLetterQueueUrl,
-      scheduleQueueUrl,
-    };
-    config.queueUrl = queues.sourceQueueUrl;
+      // create SQS queues and add rule
+      const { queueUrl, deadLetterQueueUrl } = await createSqsQueues(testId);
+      queues = {
+        sourceQueueUrl: queueUrl,
+        deadLetterQueueUrl,
+        scheduleQueueUrl,
+      };
+      config.queueUrl = queues.sourceQueueUrl;
 
-    ruleList = await addRules(config, ruleDirectory, ruleOverride);
+      ruleList = await addRules(config, ruleDirectory, ruleOverride);
+    } catch (error) {
+      console.log('beforeAll error', error);
+      beforeAllFailed = error;
+    }
   });
 
   afterAll(async () => {
@@ -201,6 +206,7 @@ describe('The SQS rule', () => {
   });
 
   it('SQS rules are added', () => {
+    if (beforeAllFailed) fail(beforeAllFailed);
     expect(ruleList.length).toBe(1);
     expect(ruleList[0].rule.value).toBe(queues.sourceQueueUrl);
     expect(ruleList[0].meta.visibilityTimeout).toBe(300);
@@ -213,12 +219,18 @@ describe('The SQS rule', () => {
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 
     beforeAll(async () => {
-      // post a valid message for ingesting a granule
-      granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
+      if (beforeAllFailed) return;
+      try {
+        // post a valid message for ingesting a granule
+        granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
 
-      // post a non-processable message
-      const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
-      messageId = message.MessageId;
+        // post a non-processable message
+        const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+        messageId = message.MessageId;
+      } catch (error) {
+        console.log('beforeAll error', error);
+        beforeAllFailed = error;
+      }
     });
 
     afterAll(async () => {
@@ -230,26 +242,36 @@ describe('The SQS rule', () => {
       let record;
 
       beforeAll(async () => {
-        process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-        const granuleModel = new Granule();
-        record = await waitForModelStatus(
-          granuleModel,
-          { granuleId },
-          'completed'
-        );
+        if (beforeAllFailed) return;
+        try {
+          record = await waitForApiStatus(
+            getGranule,
+            {
+              prefix: config.stackName,
+              granuleId,
+            },
+            'completed'
+          );
+        } catch (error) {
+          console.log('beforeAll error', error);
+          beforeAllFailed = error;
+        }
       });
 
       it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
+        if (beforeAllFailed) fail(beforeAllFailed);
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });
 
       it('the execution name starts with the expected prefix', () => {
+        if (beforeAllFailed) fail(beforeAllFailed);
         const executionName = record.execution.split(':').reverse()[0];
         expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
       });
 
       it('references the correct queue URL in the execution message', async () => {
+        if (beforeAllFailed) fail(beforeAllFailed);
         executionArn = record.execution.split('/').reverse()[0];
         const executionInput = await getExecutionInputObject(executionArn);
         expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
@@ -258,6 +280,7 @@ describe('The SQS rule', () => {
 
     describe('If the message is unprocessable by the workflow', () => {
       it('is moved to dead-letter queue after retries', async () => {
+        if (beforeAllFailed) fail(beforeAllFailed);
         const sqsOptions = { numOfMessages: 10, visibilityTimeout: ruleList[0].meta.visibilityTimeout, waitTimeSeconds: 20 };
         let messages = await receiveSQSMessages(queues.deadLetterQueueUrl, sqsOptions);
 
@@ -277,10 +300,12 @@ describe('The SQS rule', () => {
     });
 
     it('messages are picked up and removed from source queue', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
     });
 
     it('stores incoming messages on S3', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
       const key = getS3KeyForArchivedMessage(config.stackName, messageId);
       const message = await s3().getObject({
         Bucket: config.bucket,
