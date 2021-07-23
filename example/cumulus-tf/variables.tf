@@ -430,3 +430,9 @@ variable "cmr_custom_host" {
   type        = string
   default     = null
 }
+
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = true
+}
