@@ -3,11 +3,11 @@
 # TEA-Specific outputs.
 
 output "distribution_bucket_map" {
-  value = var.tea_internal_api_endpoint != null ? module.distribution[0].distribution_bucket_map : null
+  value = var.deploy_cumulus_distribution == false ? module.distribution[0].distribution_bucket_map : null
 }
 
 output "s3_credentials_redirect_uri" {
-  value = var.tea_internal_api_endpoint != null ? module.distribution[0].s3_credentials_redirect_uri : null
+  value = var.deploy_cumulus_distribution == false ? module.distribution[0].s3_credentials_redirect_uri : null
 }
 
 # End TEA-Specific outputs.

@@ -156,6 +156,11 @@ behavior
 - **CUMULUS-2476**
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
 
+### Changed
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
+  
 ### Fixed
 
 - **CUMULUS-2520**
