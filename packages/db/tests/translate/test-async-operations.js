@@ -153,6 +153,7 @@ test('translatePostgresAsyncOperationToApiAsyncOperation translates PostgreSQL r
     task_arn: taskArn,
     created_at: createdAt,
     updated_at: updatedAt,
+    output: { test: 'output' },
     description,
   });
 

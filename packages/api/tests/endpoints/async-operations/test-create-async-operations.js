@@ -177,7 +177,7 @@ test('POST creates a new async operation in all data stores', async (t) => {
   t.like(esRecord, record);
 });
 
-test('POST creates a new async operation in DynamoDB and PG with correct timestamps', async (t) => {
+test('POST creates a new async operation in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const { asyncOperationModel, asyncOperationPgModel, jwtAuthToken } = t.context;
   const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),

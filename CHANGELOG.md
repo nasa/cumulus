@@ -133,8 +133,9 @@ behavior
     - Added `translatePostgresAsyncOperationToApiAsyncOperation` function in
       `@cumulus/db/translate/async-operation`.
     - Updated `translateApiAsyncOperationToPostgresAsyncOperation` function to
-      handle `output` for the following cases and ensure that `output` is an
-      object:
+      ensure that `output` is properly translated to an object for the
+      PostgreSQL record for the following cases of `output` on the incoming API
+      record:
       - `record.output` is a JSON stringified object
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string

@@ -18,12 +18,12 @@ const convertOutputToObject = (output: string) => {
     // Second case is intended for an output that is a JSON stringified string or an array
     if (typeof convertedOutput === 'string' || Array.isArray(convertedOutput)) {
       log.info(`Converting JSON string ${output} to object to conform to PostgreSQL schema`);
-      convertedOutput = { output: JSON.parse(output) };
+      convertedOutput = { output: convertedOutput };
     }
   } catch (error) {
     // Third case is for an output that is a string
     log.error('Converting string to object to conform to PostgreSQL schema', error);
-    convertedOutput = { output: output };
+    convertedOutput = { output };
   }
   return convertedOutput;
 };
