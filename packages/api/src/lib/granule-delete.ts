@@ -13,8 +13,10 @@ import { ApiFile, ApiGranule } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const FileUtils = require('../../lib/FileUtils');
 const Granule = require('../../models/granules');
+
 const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
 
 /**
@@ -48,15 +50,7 @@ const _deleteS3Files = async (
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {Object} params.granuleModelClient - Granule Dynamo model
  */
-const deleteGranuleAndFiles = async ({
-  knex,
-  dynamoGranule,
-  pgGranule,
-  filePgModel = new FilePgModel(),
-  granulePgModel = new GranulePgModel(),
-  granuleModelClient = new Granule(),
-  esClient,
-}: {
+const deleteGranuleAndFiles = async (params: {
   knex: Knex,
   dynamoGranule: ApiGranule,
   pgGranule: PostgresGranuleRecord,
@@ -67,6 +61,15 @@ const deleteGranuleAndFiles = async ({
     delete(...args: any): any | any[];
   },
 }) => {
+  const {
+    knex,
+    dynamoGranule,
+    pgGranule,
+    filePgModel = new FilePgModel(),
+    granulePgModel = new GranulePgModel(),
+    granuleModelClient = new Granule(),
+    esClient = await Search.es(),
+  } = params;
   if (pgGranule === undefined) {
     logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
     // Delete only the Dynamo Granule and S3 Files
