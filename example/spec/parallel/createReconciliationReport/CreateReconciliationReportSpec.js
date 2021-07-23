@@ -429,6 +429,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       inventoryReportAsyncOperationId = responseBody.id;
+      console.log('inventoryReportAsyncOperationId', inventoryReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -609,6 +610,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       internalReportAsyncOperationId = responseBody.id;
+      console.log('internalReportAsyncOperationId', internalReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -713,6 +715,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       granuleInventoryAsyncOpId = responseBody.id;
+      console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
