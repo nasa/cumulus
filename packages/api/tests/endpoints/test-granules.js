@@ -548,8 +548,8 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 test.serial('remove a granule from CMR', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: true,
     esClient: t.context.esClient,
+    granuleParams: { published: true },
   });
 
   const granuleId = newDynamoGranule.granuleId;
@@ -653,7 +653,7 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: true,
+    granuleParams: { published: true },
     esClient: t.context.esClient,
   });
 
@@ -693,7 +693,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: false,
+    granuleParams: { published: true },
     esClient: t.context.esClient,
   });
 
@@ -811,7 +811,7 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
   const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: false,
+    granuleParams: { published: true },
     esClient: t.context.esClient,
   });
 
@@ -1487,7 +1487,73 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.only('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
+test.only('PUT replaces an existing granule in all data stores', async (t) => {
+  const { esClient, knex } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+    },
+  });
+
+  const newQueryFields = {
+    foo: randomString(),
+  };
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+    queryFields: newQueryFields,
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  t.deepEqual(actualGranule, {
+    ...newDynamoGranule,
+    status: 'completed',
+    queryFields: newQueryFields,
+    updatedAt: actualGranule.updatedAt,
+  });
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  t.deepEqual(actualPgGranule, {
+    ...newPgGranule,
+    status: 'completed',
+    query_fields: newQueryFields,
+    updated_at: actualPgGranule.updated_at,
+  });
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+  t.like(
+    updatedEsRecord,
+    {
+      ...esRecord,
+      files: actualGranule.files,
+      status: 'completed',
+      queryFields: newQueryFields,
+      updatedAt: updatedEsRecord.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+});
+
+test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
   const { esClient, knex } = t.context;
   const {
     newPgGranule,

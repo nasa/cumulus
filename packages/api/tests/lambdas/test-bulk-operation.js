@@ -358,12 +358,12 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   const granules = await Promise.all([
     createGranuleAndFiles({
       dbClient: t.context.knex,
-      published: false,
+      granuleParams: { published: true },
       esClient: t.context.esClient,
     }),
     createGranuleAndFiles({
       dbClient: t.context.knex,
-      published: false,
+      granuleParams: { published: true },
       esClient: t.context.esClient,
     }),
   ]);

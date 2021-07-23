@@ -6,6 +6,7 @@ const {
   FilePgModel,
   GranulePgModel,
   CollectionPgModel,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -13,7 +14,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
 const {
-  fakeGranuleRecordFactory,
   fakeCollectionRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
@@ -45,10 +45,9 @@ async function createGranuleAndFiles({
   collectionId,
   collectionCumulusId,
   esClient,
-  published = false,
+  granuleParams = { published: false },
 }) {
   let newCollectionId;
-  let newCollectionCumulusId;
 
   const s3Buckets = {
     protected: {
@@ -101,14 +100,13 @@ async function createGranuleAndFiles({
     });
 
     const collectionPgModel = new CollectionPgModel();
-    [newCollectionCumulusId] = await collectionPgModel.create(
+    await collectionPgModel.create(
       dbClient,
       testPgCollection
     );
   }
 
   const granuleCollectionId = collectionId || newCollectionId;
-  const granuleCollectionCumulusId = collectionCumulusId || newCollectionCumulusId;
 
   const files = [
     {
@@ -132,8 +130,8 @@ async function createGranuleAndFiles({
     {
       granuleId: granuleId,
       status: 'failed',
-      published: published,
       collectionId: granuleCollectionId,
+      ...granuleParams,
     }
   );
 
@@ -151,16 +149,8 @@ async function createGranuleAndFiles({
   await indexGranule(esClient, dynamoGranule, process.env.ES_INDEX);
 
   // create a new Postgres granule
-  const newPGGranule = fakeGranuleRecordFactory(
-    {
-      granule_id: granuleId,
-      status: 'failed',
-      collection_cumulus_id: granuleCollectionCumulusId,
-      published: published,
-    }
-  );
-
-  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(dynamoGranule, dbClient);
+  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPgGranule);
 
   // create Postgres files
   await Promise.all(

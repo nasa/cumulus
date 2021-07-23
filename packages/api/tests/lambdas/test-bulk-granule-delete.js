@@ -72,12 +72,12 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const granules = await Promise.all([
     createGranuleAndFiles({
       dbClient: t.context.knex,
-      published: true,
+      granuleParams: { published: true },
       esClient: t.context.esClient,
     }),
     createGranuleAndFiles({
       dbClient: t.context.knex,
-      published: true,
+      granuleParams: { published: true },
       esClient: t.context.esClient,
     }),
   ]);
