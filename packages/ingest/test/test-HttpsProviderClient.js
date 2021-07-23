@@ -601,14 +601,16 @@ test.only('HttpsProviderClient.sync() fails on redirect to different host if red
   const destinationKey = 'syncedFile.hdf';
   try {
     await s3().createBucket({ Bucket: destinationBucket }).promise();
-    await t.throwsAsync(
-      () => httpsProviderClient.sync({
+    try {
+      await httpsProviderClient.sync({
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      }),
-      { message: /Response code 401/ }
-    );
+      });
+      t.fail();
+    } catch (error) {
+      t.true(/Response code 401/.test(error.message));
+    }
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
       Key: destinationKey,

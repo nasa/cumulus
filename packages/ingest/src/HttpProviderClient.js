@@ -277,44 +277,25 @@ class HttpProviderClient {
     }
     const contentType = headers['content-type'] || lookupMimeType(destinationKey);
 
+    const pipelinePromise = promisify(pipeline);
     const pass = new PassThrough();
-    let gotStream;
-    try {
-      gotStream = got.stream(remoteUrl, this.gotOptions);
-    } catch (error) {
-      console.log(error);
-    }
-
-    gotStream.pipe(pass);
-
-    // await promisify(pipeline)(
-    //   got.stream(remoteUrl, this.gotOptions),
-    //   streamS3Upload({
-    //     Bucket: destinationBucket,
-    //     Key: destinationKey,
-    //     ContentType: contentType,
-    //   })
-    // );
-
-    // got.stream(remoteUrl, this.gotOptions)
-    //   .pipe(streamS3Upload({
-    //     Bucket: destinationBucket,
-    //     Key: destinationKey,
-    //     ContentType: contentType,
-    //   }));
-
-    const { ETag: etag } = await promiseS3Upload({
+    const downloadPipePromise = pipelinePromise(
+      got.stream(remoteUrl, this.gotOptions),
+      pass
+    );
+    const uploadPromise = promiseS3Upload({
       Bucket: destinationBucket,
       Key: destinationKey,
       Body: pass,
       ContentType: contentType,
     });
-
-    // const test = await headObject(
-    //   destinationBucket,
-    //   destinationKey,
-    //   { retries: 3 }
-    // );
+    try {
+      await downloadPipePromise;
+    } catch (error) {
+      console.log(error);
+      // throw error;
+    }
+    const { ETag: etag } = await uploadPromise;
 
     log.info('Uploading to s3 is complete (http)', s3uri);
     return { s3uri, etag };
