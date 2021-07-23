@@ -213,11 +213,12 @@ test('POST creates a new async operation in DynamoDB and PG with correct timesta
   t.is(asyncOperationPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test('POST returns a 409 error if the async operation already exists in DynamoDB', async (t) => {
-  const { asyncOperationModel, jwtAuthToken } = t.context;
+test('POST returns a 409 error if the async operation already exists in PostgreSQL', async (t) => {
+  const { asyncOperationPgModel, jwtAuthToken, testKnex } = t.context;
   const asyncOperation = fakeAsyncOperationFactory();
+  const pgAsyncOperation = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
 
-  await asyncOperationModel.create(asyncOperation);
+  await asyncOperationPgModel.create(testKnex, pgAsyncOperation);
 
   const response = await request(app)
     .post('/asyncOperations')
@@ -226,7 +227,7 @@ test('POST returns a 409 error if the async operation already exists in DynamoDB
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
   const { message } = response.body;
-  t.is(message, (`A DynamoDb record already exists for async operation ID ${asyncOperation.id}`));
+  t.is(message, (`A record already exists for async operation ID ${asyncOperation.id}`));
 });
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
@@ -296,6 +297,11 @@ test('post() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB f
     output: JSON.stringify({ age: 59 }),
   });
 
+  const fakeAsyncOperationPgModel = {
+    create: () => Promise.resolve(true),
+    exists: () => Promise.resolve(false),
+  };
+
   const fakeAsyncOperationModel = {
     create: () => {
       throw new Error('something bad');
@@ -309,6 +315,7 @@ test('post() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB f
     testContext: {
       knex: testKnex,
       asyncOperationModel: fakeAsyncOperationModel,
+      asyncOperationPgModel: fakeAsyncOperationPgModel,
     },
   };
 
@@ -334,6 +341,7 @@ test('post() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL f
   });
 
   const fakeAsyncOperationPgModel = {
+    exists: () => Promise.resolve(false),
     create: () => Promise.reject(new Error('something bad')),
   };
 
@@ -361,6 +369,11 @@ test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch f
     output: JSON.stringify({ age: 59 }),
   });
 
+  const fakeAsyncOperationPgModel = {
+    create: () => Promise.resolve(true),
+    exists: () => Promise.resolve(false),
+  };
+
   const fakeEsClient = {
     index: () => Promise.reject(new Error('something bad')),
   };
@@ -368,6 +381,7 @@ test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch f
   const expressRequest = {
     body: asyncOperation,
     testContext: {
+      asyncOperationPgModel: fakeAsyncOperationPgModel,
       esClient: fakeEsClient,
     },
   };

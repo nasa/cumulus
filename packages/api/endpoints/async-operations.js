@@ -146,8 +146,8 @@ async function post(req, res) {
     if (!apiAsyncOperation.id) {
       throw new ValidationError('Async Operations require an ID');
     }
-    if (await asyncOperationModel.exists({ id: apiAsyncOperation.id })) {
-      return res.boom.conflict(`A DynamoDb record already exists for async operation ID ${apiAsyncOperation.id}`);
+    if (await asyncOperationPgModel.exists(knex, { id: apiAsyncOperation.id })) {
+      return res.boom.conflict(`A record already exists for async operation ID ${apiAsyncOperation.id}`);
     }
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
     let dynamoDbRecord;
