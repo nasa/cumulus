@@ -123,7 +123,7 @@ test('getKnexClient logs retry errors and throws expected knexTimeoutError', asy
       PG_PASSWORD: 'badPassword',
       createTimeoutMillis: 1000,
       acquireTimeoutMillis: 3000,
-      createRetryIntervalMillis: 1000,
+      createRetryIntervalMillis: 500,
     },
     knexLogger,
   });
