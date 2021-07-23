@@ -62,6 +62,10 @@ database via the API
     - Added helpers to `@cumulus/es-client/indexer`:
       - `deleteAsyncOperation` to delete async operation records from Elasticsearch
       - `updateAsyncOperation` to update an async operation record in Elasticsearch
+    - Added granules `PUT` endpoint to Cumulus API for updating a granule.
+    Requests to this endpoint should be submitted **without an `action`**
+    attribute in the request body.
+    - Added `@cumulus/api-client/granules.updateGranule` to update granule via the API
   - **CUMULUS-2303**
     - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
   - **CUMULUS-2306**
