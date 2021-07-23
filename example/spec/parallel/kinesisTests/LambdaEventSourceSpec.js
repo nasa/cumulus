@@ -129,7 +129,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
         await updateRule({
           prefix: testConfig.stackName,
           ruleName: rules[1].name,
-          updateParams: { state: 'DISABLED' },
+          updateParams: { ...rules[1], state: 'DISABLED' },
         });
 
         const record = {
