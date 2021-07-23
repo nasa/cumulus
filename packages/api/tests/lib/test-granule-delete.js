@@ -8,7 +8,7 @@ const {
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   FilePgModel,
@@ -16,18 +16,16 @@ const {
   destroyLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
-  fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
+  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
+const { DeletePublishedGranule } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-
-const { DeletePublishedGranule } = require('@cumulus/errors');
-
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const models = require('../../models');
 
@@ -94,10 +92,16 @@ test.before(async (t) => {
     duplicateHandling: 'error',
   });
   await collectionModel.create(t.context.testCollection);
+  t.context.collectionId = constructCollectionId(
+    t.context.testCollection.name,
+    t.context.testCollection.version
+  );
 
   // Create a PostgreSQL Collection
-  const testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
+  const testPgCollection = translateApiCollectionToPostgresCollection(
+    t.context.testCollection
+  );
   [t.context.collectionCumulusId] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
@@ -152,7 +156,7 @@ test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/DynamoDB/Elastic
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
-    granuleParams: { published: true },
+    granuleParams: { published: false },
     esClient: t.context.esClient,
   });
 
@@ -261,7 +265,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the 
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
-    granuleParams: { published: true },
+    granuleParams: { published: false },
   });
 
   const mockGranuleModel = {
@@ -317,7 +321,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
-    granuleParams: { published: true },
+    granuleParams: { published: false },
   });
 
   const mockGranuleDynamoModel = {
@@ -373,7 +377,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
-    granuleParams: { published: true },
+    granuleParams: { published: false },
   });
 
   const fakeEsClient = {
