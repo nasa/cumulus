@@ -220,11 +220,12 @@ async function ingestGranuleToCMR(cmrClient) {
 }
 
 // update granule file which matches the regex
-async function updateGranuleFile(prefix, granuleId, granuleFiles, regex, replacement) {
+async function updateGranuleFile(prefix, granule, regex, replacement) {
+  const { granuleId, files } = granule;
   console.log(`update granule file: ${granuleId} regex ${regex} to ${replacement}`);
   let originalGranuleFile;
   let updatedGranuleFile;
-  const updatedFiles = granuleFiles.map((file) => {
+  const updatedFiles = files.map((file) => {
     const updatedFile = cloneDeep(file);
     if (file.fileName.match(regex)) {
       originalGranuleFile = file;
@@ -237,9 +238,11 @@ async function updateGranuleFile(prefix, granuleId, granuleFiles, regex, replace
   await updateGranule({
     prefix,
     granuleId,
-    updateParams: { files: updatedFiles },
+    updateParams: {
+      ...granule,
+      files: updatedFiles,
+    },
   });
-  // await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
   return { originalGranuleFile, updatedGranuleFile };
 }
 
@@ -370,15 +373,14 @@ describe('When there are granule differences and granule reconciliation is run',
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
-      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
+      console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
       ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
         config.stackName,
-        publishedGranuleId,
-        granuleBeforeUpdate.files,
+        granuleBeforeUpdate,
         /jpg$/,
         'jpg2'
       ));
-      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
+      console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
         getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
