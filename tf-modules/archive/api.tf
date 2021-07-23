@@ -34,7 +34,11 @@ locals {
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn
-      dbHeartBeat                      = var.rds_connection_heartbeat
+      acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis        = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis              = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id

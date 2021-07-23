@@ -18,7 +18,11 @@ resource "aws_lambda_function" "postgres_migration_count_tool" {
       ExecutionsTable             = var.dynamo_tables.executions.name
       GranulesTable               = var.dynamo_tables.granules.name
       PdrsTable                   = var.dynamo_tables.pdrs.name
-      dbHeartBeat                 = var.rds_connection_heartbeat
+      acquireTimeoutMillis        = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis   = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis         = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis           = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis          = var.rds_connection_timing_configuration.reapIntervalMillis
       AsyncOperationsTable        = var.dynamo_tables.async_operations.name
       CollectionsTable            = var.dynamo_tables.collections.name
       ExecutionsTable             = var.dynamo_tables.executions.name

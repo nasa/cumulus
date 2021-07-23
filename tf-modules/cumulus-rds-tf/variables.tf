@@ -120,3 +120,15 @@ variable "rds_user_password" {
   type    = string
   default = ""
 }
+
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
+}

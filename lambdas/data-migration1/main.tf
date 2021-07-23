@@ -105,8 +105,12 @@ resource "aws_lambda_function" "data_migration1" {
       CollectionsTable = var.dynamo_tables.collections.name
       ProvidersTable = var.dynamo_tables.providers.name
       RulesTable = var.dynamo_tables.rules.name
-      dbHeartBeat = var.rds_connection_heartbeat
       provider_kms_key_id = var.provider_kms_key_id
+      acquireTimeoutMillis                  = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createTimeoutMillis                   = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis                     = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis                    = var.rds_connection_timing_configuration.reapIntervalMillis
+      createRetryIntervalMillis             = var.rds_connection_timing_configuration.createRetryIntervalMillis
     }
   }
 

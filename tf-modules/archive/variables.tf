@@ -240,10 +240,16 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "saml_entity_id" {

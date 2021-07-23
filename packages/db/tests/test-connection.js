@@ -1,6 +1,9 @@
 const test = require('ava');
 const sinon = require('sinon');
-const { getKnexClient, queryHeartbeat } = require('../dist/connection');
+const cryptoRandomString = require('crypto-random-string');
+const { KnexTimeoutError } = require('knex');
+
+const { getKnexClient } = require('../dist/connection');
 const { localStackConnectionEnv } = require('../dist/config');
 
 const fakeConnectionConfig = {
@@ -14,7 +17,7 @@ const fakeConnectionConfig = {
 const knexFakeError = new Error('Fake Knex Timeout Error');
 knexFakeError.name = 'KnexTimeoutError';
 
-test.before((t) => {
+test.before(async (t) => {
   t.context.secretsManager = {
     getSecretValue: () => ({
       promise: () => Promise.resolve({
@@ -27,6 +30,17 @@ test.before((t) => {
       }),
     }),
   };
+
+  t.context.knex = await getKnexClient({ env: localStackConnectionEnv });
+  t.context.tableName = cryptoRandomString({ length: 10 });
+  await t.context.knex.schema.createTable(t.context.tableName, (table) => {
+    table.increments('cumulus_id').primary();
+    table.text('info');
+  });
+});
+
+test.after.always(async (t) => {
+  await t.context.knex.schema.dropTable(t.context.tableName);
 });
 
 test('getKnexClient returns expected Knex object with migration defined',
@@ -98,61 +112,42 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test('getKnexClient with heartbeat check enabled and configured database connection returns Knex object',
+test('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
+  const loggerWarnStub = sinon.stub();
+  const knexLogger = { warn: loggerWarnStub };
+  const knex = await getKnexClient({
+    env: {
+      KNEX_ASYNC_STACK_TRACES: 'true',
+      KNEX_DEBUG: 'true',
+      ...localStackConnectionEnv,
+      PG_PASSWORD: 'badPassword',
+      createTimeoutMillis: 1000,
+      acquireTimeoutMillis: 3000,
+      createRetryIntervalMillis: 1000,
+    },
+    knexLogger,
+  });
+  await t.throwsAsync(
+    knex('fakeTable').where({}),
+    { instanceOf: KnexTimeoutError }
+  );
+  const actual = [loggerWarnStub.args[0][0], loggerWarnStub.args[0][1].message];
+  t.deepEqual(
+    actual,
+    [
+      'knex failed on attempted connection',
+      'password authentication failed for user "postgres"',
+    ]
+  );
+  console.log(loggerWarnStub.callCount);
+  t.true(loggerWarnStub.callCount > 1);
+});
+
+test('getKnexClient returns a working knex client that throws invalid query errors as expected',
   async (t) => {
-    const results = await getKnexClient({
-      env: {
-        migrationDir: 'testMigrationDir',
-        KNEX_ASYNC_STACK_TRACES: 'true',
-        KNEX_DEBUG: 'true',
-        ...localStackConnectionEnv,
-        dbHeartBeat: 'true',
-      },
+    const tableName = t.context.tableName;
+    await t.context.knex(tableName).select();
+    await t.throwsAsync(t.context.knex(tableName).select({ foo: 'bar' }), {
+      message: `select "bar" as "foo" from "${t.context.tableName}" - column "bar" does not exist`,
     });
-    const expected = {
-      database: localStackConnectionEnv.PG_DATABASE,
-      host: localStackConnectionEnv.PG_HOST,
-      password: localStackConnectionEnv.PG_PASSWORD,
-      user: localStackConnectionEnv.PG_USER,
-      port: Number(localStackConnectionEnv.PG_PORT),
-    };
-    t.deepEqual(expected, results.client.config.connection);
-  });
-
-test('getKnexClient with heartbeat check enabled and invalid db_config throws error',
-  async (t) => {
-    await t.throwsAsync(getKnexClient({
-      env: {
-        migrationDir: 'testMigrationDir',
-        KNEX_ASYNC_STACK_TRACES: 'true',
-        KNEX_DEBUG: 'true',
-        ...localStackConnectionEnv,
-        dbHeartBeat: 'true',
-        PG_USER: 'bogus_user',
-      },
-    }));
-  });
-
-test.serial('queryHeartbeat retries and does not throw error when KnexTimeOutError is thrown on the first attempt',
-  async (t) => {
-    const knexRawStub = sinon.stub();
-    knexRawStub.onCall(0).throws(knexFakeError);
-    knexRawStub.onCall(1).returns(Promise.resolve());
-    await t.notThrowsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
-  });
-
-test.serial('queryHeartbeat throws when non-KnexTimeOutError error is thrown',
-  async (t) => {
-    const knexRawStub = sinon.stub();
-    knexRawStub.onCall(0).throws(new Error('some random error'));
-    await t.throwsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
-  });
-
-test.serial('queryHeartbeat throws error when KnexTimeOutError is thrown repeatedly',
-  async (t) => {
-    const knexRawStub = sinon.stub();
-    knexRawStub.onCall(0).throws(knexFakeError);
-    knexRawStub.onCall(1).throws(knexFakeError);
-    knexRawStub.onCall(2).returns(Promise.resolve());
-    await t.throwsAsync(async () => await queryHeartbeat({ knex: { raw: knexRawStub } }));
   });

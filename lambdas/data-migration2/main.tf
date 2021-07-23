@@ -87,14 +87,18 @@ resource "aws_lambda_function" "data_migration2" {
   memory_size      = 512
 
   environment {
-    variables = {
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      ExecutionsTable             = var.dynamo_tables.executions.name
-      GranulesTable               = var.dynamo_tables.granules.name
-      PdrsTable                   = var.dynamo_tables.pdrs.name
-      dbHeartBeat                 = var.rds_connection_heartbeat
-      system_bucket               = var.system_bucket
-      stackName                   = var.prefix
+    variables           = {
+      databaseCredentialSecretArn           = var.rds_user_access_secret_arn
+      ExecutionsTable                       = var.dynamo_tables.executions.name
+      GranulesTable                         = var.dynamo_tables.granules.name
+      PdrsTable                             = var.dynamo_tables.pdrs.name
+      acquireTimeoutMillis                  = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createTimeoutMillis                   = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis                     = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis                    = var.rds_connection_timing_configuration.reapIntervalMillis
+      createRetryIntervalMillis             = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      system_bucket                         = var.system_bucket
+      stackName                             = var.prefix
     }
   }
 

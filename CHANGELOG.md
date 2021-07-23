@@ -23,10 +23,13 @@ The default reserved concurrency value is 8.
 ### Notable changes
 
 - `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
-integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
-that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
-variable.
-
+  integrate with a custom CMR host name and protocol (e.g.
+  `http://custom-cmr-host.com`). Note that you **must** include a protocol
+  (`http://` or `https://)  if specifying a value for this variable.
+- The cumulus module configuration value`rds_connetion_heartbeat` and it's
+  behavior has been replaced by a more robust database connection 'retry'
+  solution.   Users can remove this value from their configuration, regardless
+  of value.  See the `Changed` section notes on CUMULUS-2528 for more details.
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
@@ -116,7 +119,30 @@ behavior
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
 - **CUMULUS-2463**
-  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
+  - Increases the duration of allowed backoff times for a successful test from
+    0.5 sec to 1 sec.
+- **CUMULUS-2528**
+  - Removed `rds_connetion_heartbeat` as a configuration option from all
+    Cumulus terraform modules
+  - Removed `dbHeartBeat` as an enviornental switch from
+    `@cumulus/db.getKnexClient` in favore of more comprehensive general db
+    connect retry solution
+  - Added new `rds_connection_timing_configuration` string map to allow for
+    configuration and tuning of Core's internal database retry/connection
+    timeout behaviors.  These values map to connection pool configuration
+    values for tarn (https://github.com/vincit/tarn.js/) which Core's database
+    module / knex(https://www.npmjs.com/package/knex) use for this purpose:
+    - acquireTimeoutMillis
+    - createRetryIntervalMillis
+    - createTimeoutMillis
+    - idleTimeoutMillis
+    - reapIntervalMillis
+      Connection errors will result in a log line prepended with 'knex failed on
+      attempted connection error' and sent from '@cumulus/db/connection'
+  - Updated `@cumulus/db` and all terraform mdules to set default retry
+    configuration values for the database module to cover existing database
+    heartbeat  connection failurs as well as all other knex/tarn connection
+    creation failures.
 
 ### Fixed
 
