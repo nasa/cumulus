@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 
 const {
   getExecutionUrlFromArn,
@@ -12,7 +13,34 @@ const {
   getMessageCumulusVersion,
   getMessageExecutionOriginalPayload,
   getMessageExecutionFinalPayload,
+  generateExecutionApiRecordFromMessage,
 } = require('../Executions');
+
+test.beforeEach((t) => {
+  t.context.executionName = `${cryptoRandomString({ length: 5 })}_execution`;
+
+  t.context.workflowStartTime = Date.now();
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
+      execution_name: t.context.executionName,
+      workflow_start_time: t.context.workflowStartTime,
+      cumulus_version: '1.2.3',
+    },
+    meta: {
+      status: 'running',
+      collection: {
+        name: 'my-name',
+        version: 'my-version',
+      },
+    },
+    payload: {
+      value: 'my-payload',
+    },
+  };
+
+  t.context.executionArn = `arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:${t.context.executionName}`;
+});
 
 test('getExecutionUrlFromArn returns correct URL when no region environment variable is specified', (t) => {
   t.is(
@@ -173,4 +201,115 @@ test('getMessageExecutionFinalPayload returns undefined for running execution', 
     }),
     undefined
   );
+});
+
+test('generateExecutionApiRecordFromMessage() returns the correct record from workflow message', (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    executionName,
+    workflowStartTime,
+  } = t.context;
+
+  const actualRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  const expectedRecord = {
+    name: executionName,
+    arn: executionArn,
+    cumulusVersion: '1.2.3',
+    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
+    collectionId: 'my-name___my-version',
+    error: {},
+    status: 'running',
+    createdAt: workflowStartTime,
+    timestamp: actualRecord.timestamp,
+    updatedAt: actualRecord.updatedAt,
+    originalPayload: {
+      value: 'my-payload',
+    },
+    duration: 0,
+  };
+
+  t.deepEqual(actualRecord, expectedRecord);
+});
+
+test('generateExecutionApiRecordFromMessage() throws an exception if the execution ARN cannot be determined', (t) => {
+  t.throws(
+    () => generateExecutionApiRecordFromMessage({
+      cumulus_meta: {},
+    })
+  );
+});
+
+test('generateExecutionApiRecordFromMessage() throws an exception if meta.status is not present', (t) => {
+  const { cumulusMessage } = t.context;
+
+  delete cumulusMessage.meta.status;
+
+  t.throws(() => generateExecutionApiRecordFromMessage(cumulusMessage));
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with asyncOperationId when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.cumulus_meta.asyncOperationId = 'my-asyncOperationId';
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.asyncOperationId, 'my-asyncOperationId');
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with parentArn when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.cumulus_meta.parentExecutionArn = 'my-parentArn';
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.parentArn, 'my-parentArn');
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with tasks when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.workflow_tasks = 'my-tasks';
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.tasks, 'my-tasks');
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with type when available', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.workflow_name = 'my-workflow-name';
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.type, 'my-workflow-name');
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with correct payload for non-running messages', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = 'my-payload';
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.finalPayload, 'my-payload');
+  t.is(record.originalPayload, undefined);
+});
+
+test('generateExecutionApiRecordFromMessage() returns a record with correct duration for non-running messages', (t) => {
+  const { cumulusMessage } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+
+  const startTime = cumulusMessage.cumulus_meta.workflow_start_time;
+  cumulusMessage.cumulus_meta.workflow_stop_time = startTime + 1000;
+
+  const record = generateExecutionApiRecordFromMessage(cumulusMessage);
+
+  t.is(record.duration, 1);
 });

@@ -13,15 +13,17 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
   CollectionPgModel,
+  ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const {
-  fakePdrRecordFactory,
   fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
+  fakePdrRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -29,6 +31,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   createFakeJwtAuthToken,
@@ -128,6 +131,16 @@ test.before(async (t) => {
     t.context.knex,
     t.context.testPgProvider
   );
+
+  // Create an execution
+  t.context.testPgExecution = fakeExecutionRecordFactory({
+    collection_cumulus_id: t.context.testPgCollection.cumulus_id,
+  });
+  const executionPgModel = new ExecutionPgModel();
+  [t.context.executionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    t.context.testPgExecution
+  );
 });
 
 test.after.always(async (t) => {
@@ -222,14 +235,46 @@ test('default returns list of pdrs', async (t) => {
 });
 
 test('GET returns an existing pdr', async (t) => {
+  const timestamp = new Date();
+
+  const newPGPdr = {
+    status: 'completed',
+    name: `${randomString()}.PDR`,
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+
+  const expectedPdr = {
+    status: newPGPdr.status,
+    pdrName: newPGPdr.name,
+    provider: t.context.testPgProvider.name,
+    collectionId: constructCollectionId(
+      t.context.testPgCollection.name,
+      t.context.testPgCollection.version
+    ),
+    createdAt: timestamp.getTime(),
+    updatedAt: timestamp.getTime(),
+  };
+
+  // create a new PDR in RDS
+  await t.context.pdrPgModel.create(t.context.knex, newPGPdr);
+
   const response = await request(app)
-    .get(`/pdrs/${fakePdrs[0].pdrName}`)
+    .get(`/pdrs/${newPGPdr.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { pdrName } = response.body;
-  t.is(pdrName, fakePdrs[0].pdrName);
+  t.deepEqual(
+    response.body,
+    {
+      ...expectedPdr,
+      updatedAt: response.body.updatedAt,
+      createdAt: response.body.createdAt,
+    }
+  );
 });
 
 test('GET fails if pdr is not found', async (t) => {

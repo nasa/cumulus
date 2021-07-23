@@ -6,6 +6,7 @@ const test = require('ava');
 const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
+const proxyquire = require('proxyquire');
 
 const {
   localStackConnectionEnv,
@@ -20,7 +21,10 @@ const {
 const {
   MissingRequiredEnvVarError,
 } = require('@cumulus/errors');
-const proxyquire = require('proxyquire');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../../models/executions');
@@ -110,6 +114,10 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
@@ -219,6 +227,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName: t.context.testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
@@ -376,7 +385,7 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   // make execution write throw an error
   const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
+    storeExecution: () => {
       throw new Error('execution Dynamo error');
     },
   };

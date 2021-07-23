@@ -5,6 +5,7 @@ const S3UtilsLib = require('@cumulus/aws-client/S3');
 const {
   getKnexClient,
   PdrPgModel,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
@@ -41,10 +42,12 @@ async function list(req, res) {
 async function get(req, res) {
   const pdrName = req.params.pdrName;
 
-  const pdrModel = new models.Pdr();
+  const knex = await getKnexClient();
+  const pdrPgModel = new PdrPgModel();
 
   try {
-    const result = await pdrModel.get({ pdrName });
+    const pgPdr = await pdrPgModel.get(knex, { name: pdrName });
+    const result = await translatePostgresPdrToApiPdr(pgPdr, knex);
     return res.send(result);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {

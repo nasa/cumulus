@@ -14,7 +14,6 @@ const isObject = require('lodash/isObject');
 
 const {
   Granule,
-  Pdr,
 } = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -62,6 +61,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -128,7 +128,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let opendapFilePath;
   let pdrFilename;
-  let pdrModel;
   let postToCmrOutput;
   let provider;
   let testDataFolder;
@@ -151,8 +150,6 @@ describe('The S3 Ingest Granules workflow', () => {
       granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      pdrModel = new Pdr();
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -330,9 +327,12 @@ describe('The S3 Ingest Granules workflow', () => {
   it('triggers a running PDR record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
 
-    const record = await waitForModelStatus(
-      pdrModel,
-      { pdrName: inputPayload.pdr.name },
+    const record = await waitForApiStatus(
+      getPdr,
+      {
+        prefix: config.stackName,
+        pdrName: inputPayload.pdr.name,
+      },
       ['running', 'completed']
     );
     expect(['running', 'completed'].includes(record.status)).toBeTrue();
