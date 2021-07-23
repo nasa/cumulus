@@ -1605,6 +1605,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fa
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    granuleParams: { status: 'running' },
   });
 
   const fakeGranuleModel = {
@@ -1614,20 +1615,142 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fa
     },
   };
 
-  const newExecution = 'new-execution';
   const updatedGranule = {
     ...newDynamoGranule,
-    execution: newExecution,
+    status: 'completed',
   };
 
   const expressRequest = {
     params: {
-      granuleId: newDynamoGranule.granuleId,
+      granuleName: newDynamoGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
       knex,
       granuleModel: fakeGranuleModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    }),
+    newDynamoGranule
+  );
+  t.deepEqual(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    }),
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
+});
+
+test('put() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+  const { esClient, knex } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: { status: 'running' },
+  });
+
+  const fakeGranulePgModel = {
+    upsert: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      granulePgModel: fakeGranulePgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    }),
+    newDynamoGranule
+  );
+  t.deepEqual(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    }),
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
+});
+
+test('put() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { esClient, knex } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: { status: 'running' },
+  });
+
+  const fakeEsClient = {
+    index: () => {
+      throw new Error('something bad');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      esClient: fakeEsClient,
     },
   };
 
