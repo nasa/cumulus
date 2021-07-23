@@ -64,7 +64,7 @@ database via the API
     - Updated API execution-status endpoint to read execution records from
       PostgreSQL database instead of DynamoDB
   - **CUMULUS-2301**
-    - Created API POST endpoint to create async operations.
+    - Created API asyncOperations POST endpoint to create async operations.
   - **CUMULUS-2307**
     - Updated API PDR GET endpoint to read individual PDR records from
       PostgreSQL database instead of DynamoDB
