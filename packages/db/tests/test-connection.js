@@ -112,7 +112,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
+test.serial('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
   const loggerWarnStub = sinon.stub();
   const knexLogger = { warn: loggerWarnStub };
   const knex = await getKnexClient({
