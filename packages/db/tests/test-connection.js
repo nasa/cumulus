@@ -112,7 +112,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     t.is(60000, results.client.config.acquireConnectionTimeout);
   });
 
-test.serial('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
+test('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
   const loggerWarnStub = sinon.stub();
   const knexLogger = { warn: loggerWarnStub };
   const knex = await getKnexClient({
@@ -120,7 +120,7 @@ test.serial('getKnexClient logs retry errors and throws expected knexTimeoutErro
       KNEX_ASYNC_STACK_TRACES: 'true',
       KNEX_DEBUG: 'true',
       ...localStackConnectionEnv,
-      PG_PASSWORD: 'badPassword',
+      PG_PORT: 5400,
       createTimeoutMillis: 1000,
       acquireTimeoutMillis: 3000,
       createRetryIntervalMillis: 500,
@@ -136,7 +136,7 @@ test.serial('getKnexClient logs retry errors and throws expected knexTimeoutErro
     actual,
     [
       'knex failed on attempted connection',
-      'password authentication failed for user "postgres"',
+      'connect ECONNREFUSED 127.0.0.1:5400',
     ]
   );
   console.log(loggerWarnStub.callCount);
