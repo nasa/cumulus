@@ -128,7 +128,7 @@ test('getKnexClient logs retry errors and throws expected knexTimeoutError', asy
     knexLogger,
   });
   await t.throwsAsync(
-    knex('t.context.tableName').where({}),
+    knex(t.context.tableName).where({}),
     { instanceOf: KnexTimeoutError }
   );
   const actual = [loggerWarnStub.args[0][0], loggerWarnStub.args[0][1].message];
