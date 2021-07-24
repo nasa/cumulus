@@ -76,7 +76,7 @@ async function internalRecReportForCollections(recReportParams) {
   let onlyInEs = [];
   let onlyInDb = [];
 
-  const fieldsIgnored = ['timestamp', 'updatedAt'];
+  const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
   let nextEsItem = await esCollectionsIterator.peek();
   let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : undefined;
 
