@@ -141,7 +141,7 @@ const writePdrToDynamoAndEs = async (params) => {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await pRetry(
-      pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
+      async () => await pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
       {
         retries: 3,
       }

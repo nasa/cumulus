@@ -68,8 +68,8 @@ database via the API
       `@cumulus/db/translate/collections`
     - Added `searchWithUpdatedAtRange` method to
       `@cumulus/db/models/collections`
-  - **CUMULUS-2303**
-    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2301**
+    - Created API asyncOperations POST endpoint to create async operations.
   - **CUMULUS-2307**
     - Updated API PDR GET endpoint to read individual PDR records from
       PostgreSQL database instead of DynamoDB
@@ -143,6 +143,19 @@ behavior
       PostgreSQL database instead of DynamoDB
     - Update sf-scheduler lambda to utilize API endpoint to get provider record
       from database via Private API lambda
+  - **CUMULUS-2301**
+    - Updated `getAsyncOperation` to read from PostgreSQL database instead of
+      DynamoDB.
+    - Added `translatePostgresAsyncOperationToApiAsyncOperation` function in
+      `@cumulus/db/translate/async-operation`.
+    - Updated `translateApiAsyncOperationToPostgresAsyncOperation` function to
+      ensure that `output` is properly translated to an object for the
+      PostgreSQL record for the following cases of `output` on the incoming API
+      record:
+      - `record.output` is a JSON stringified object
+      - `record.output` is a JSON stringified array
+      - `record.output` is a JSON stringified string
+      - `record.output` is a string
 
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
