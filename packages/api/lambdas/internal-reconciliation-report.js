@@ -66,6 +66,7 @@ async function internalRecReportForCollections(recReportParams) {
     updatedAtRangeParams
   );
 
+  // TODO - improve this sort
   const dbCollectionItems = sortBy(
     filterDBCollections(dbCollectionsSearched, recReportParams),
     ['name', 'version']
@@ -78,7 +79,10 @@ async function internalRecReportForCollections(recReportParams) {
 
   const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
   let nextEsItem = await esCollectionsIterator.peek();
-  let nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : undefined;
+  let nextDbItem =
+    dbCollectionItems.length !== 0
+      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+      : undefined;
 
   while (nextEsItem && nextDbItem) {
     const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
@@ -98,7 +102,7 @@ async function internalRecReportForCollections(recReportParams) {
         isEqual(
           omit(nextEsItem, fieldsIgnored),
           omit(
-            translatePostgresCollectionToApiCollection(nextDbItem),
+            nextDbItem,
             fieldsIgnored
           )
         )
