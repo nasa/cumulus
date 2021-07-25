@@ -116,7 +116,10 @@ async function internalRecReportForCollections(recReportParams) {
     }
 
     nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-    nextDbItem = (dbCollectionItems.length !== 0) ? dbCollectionItems[0] : undefined;
+    nextDbItem =
+      dbCollectionItems.length !== 0
+        ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+        : undefined;
   }
 
   // Add any remaining ES items to the report
