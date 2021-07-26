@@ -36,7 +36,7 @@ The process involves:
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 - [Terraform](https://www.terraform.io)
 
-#### Install Terraform
+### Install Terraform
 
 It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
 
@@ -422,9 +422,20 @@ Notes on specific variables:
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
+#### Choose a distribution API
+
+Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
+
+**IMPORTANT!** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use
+the new API gateway.
+
 #### Configure the Thin Egress App
 
-The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+The Thin Egress App can be used for Cumulus distribution and is the default selection. It allows authentication using Earthdata Login. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+
+#### Configure the Cumulus Distribution API (optional)
+
+If you would prefer to use the Cumulus Distribution API, which supports [AWS Cognito authentication](https://aws.amazon.com/cognito/), follow [these steps](./cumulus_distribution) to configure distribution in your `cumulus-tf` deployment.
 
 #### Initialize Terraform
 

@@ -544,3 +544,9 @@ variable "ecs_custom_sg_ids" {
   type = list(string)
   default = []
 }
+
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = false
+}
