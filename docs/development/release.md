@@ -176,7 +176,7 @@ Commit and push these changes.
 
     **IMPORTANT**: Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
 
-    ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](assets/configure-release-branch-test.png)
+    ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
 
 4. Verify that the Bamboo build for the PR succeeds and then merge to the minor version base branch (`release-1.2.x`).
     - It **is safe** to do a squash merge in this instance, but not required
