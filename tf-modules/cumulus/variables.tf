@@ -188,7 +188,7 @@ variable "bucket_map_key" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
@@ -543,4 +543,10 @@ variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
   type = list(string)
   default = []
+}
+
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = false
 }
