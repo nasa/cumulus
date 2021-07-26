@@ -9,7 +9,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
