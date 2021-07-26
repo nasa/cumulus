@@ -1,11 +1,15 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const times = require('lodash/times');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { localStackConnectionEnv } = require('../../dist/config');
 const { getKnexClient } = require('../../dist/connection');
 const { BasePgModel } = require('../../dist/models/base');
+
+const defaultDates = { created_at: new Date(), updated_at: new Date() };
 
 test.before(async (t) => {
   t.context.knex = await getKnexClient({
@@ -15,6 +19,7 @@ test.before(async (t) => {
   await t.context.knex.schema.createTable(t.context.tableName, (table) => {
     table.increments('cumulus_id').primary();
     table.text('info');
+    table.timestamps(false, true);
   });
   t.context.basePgModel = new BasePgModel({ tableName: t.context.tableName });
 });
@@ -27,12 +32,13 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  const queryResult = await basePgModel.create(knex, { info });
+  const queryResult = await basePgModel.create(knex, { ...defaultDates, info });
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(
     record,
     {
+      ...defaultDates,
       cumulus_id: queryResult[0],
       info,
     }
@@ -44,13 +50,14 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
   const info = cryptoRandomString({ length: 5 });
 
   const queryResult = await knex.transaction(
-    (trx) => basePgModel.create(trx, { info })
+    (trx) => basePgModel.create(trx, { ...defaultDates, info })
   );
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(
     record,
     {
+      ...defaultDates,
       cumulus_id: queryResult[0],
       info,
     }
@@ -60,24 +67,20 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
 test('BasePgModel.get() returns correct record', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
-  await knex(tableName).insert({ info });
+  await knex(tableName).insert({ ...defaultDates, info });
   t.like(
     await basePgModel.get(knex, { info }),
-    {
-      info,
-    }
+    { ...defaultDates, info }
   );
 });
 
 test('BasePgModel.get() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
-  await knex(tableName).insert({ info });
+  await knex(tableName).insert({ ...defaultDates, info });
   t.like(
     await knex.transaction((trx) => basePgModel.get(trx, { info })),
-    {
-      info,
-    }
+    { ...defaultDates, info }
   );
 });
 
@@ -278,12 +281,13 @@ test('BasePgModel.update() updates provided fields on a record', async (t) => {
 
   // Update record
   const newInfo = cryptoRandomString({ length: 5 });
-  await basePgModel.update(knex, { cumulus_id: cumulusId }, { info: newInfo });
+  await basePgModel.update(knex, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo });
 
   const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(
     record,
     {
+      ...defaultDates,
       cumulus_id: cumulusId,
       info: newInfo,
     }
@@ -329,14 +333,152 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
 
   // Use existing transation rather than knex client
   await knex.transaction(async (trx) =>
-    await basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
+    await basePgModel.update(trx, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo }));
 
   const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(
     record,
     {
+      ...defaultDates,
       cumulus_id: cumulusId,
       info: newInfo,
     }
+  );
+});
+
+test('BasePgModel.searchWithUpdatedAtRange() returns an array of records if no date range specified', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  const info = cryptoRandomString({ length: 5 });
+
+  const records = times(3, () => ({
+    info,
+  }));
+  await Promise.all(records.map((r) => basePgModel.create(knex, r)));
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
+    knex,
+    { info },
+    {}
+  );
+
+  t.is(searchResponse.length, 3);
+});
+
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if a date range is specified', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  const info = cryptoRandomString({ length: 5 });
+
+  const records = times(3, () => ({
+    info,
+    updated_at: new Date(),
+  }));
+
+  const dateValue = 5000;
+  const searchRecord = ({
+    info,
+    updated_at: new Date(dateValue),
+  });
+  records.push(searchRecord);
+
+  await Promise.all(records.map((r) => basePgModel.create(knex, r)));
+
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
+    knex,
+    {
+      info,
+    },
+    {
+      updatedAtFrom: new Date(dateValue - 1),
+      updatedAtTo: new Date(dateValue + 1),
+    }
+  );
+
+  t.is(searchResponse.length, 1);
+  t.like(
+    removeNilProperties(searchResponse[0]),
+    searchRecord
+  );
+});
+
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtTo is specified', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  const dateValue = 5000;
+  const info = cryptoRandomString({ length: 5 });
+  const records = times(3, () => ({
+    info,
+    updated_at: new Date(),
+  }));
+
+  const searchRecord = ({
+    info,
+    updated_at: new Date(dateValue),
+  });
+  records.push(searchRecord);
+
+  await Promise.all(records.map((r) => basePgModel.create(knex, r)));
+
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
+    knex,
+    {
+      info,
+    },
+    {
+      updatedAtTo: new Date(dateValue + 1),
+    }
+  );
+
+  t.is(searchResponse.length, 1);
+  t.like(
+    removeNilProperties(searchResponse[0]),
+    searchRecord
+  );
+});
+
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtFrom is specified', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  const nowDateValue = new Date().valueOf();
+  const info = cryptoRandomString({ length: 5 });
+  const records = times(3, () => ({
+    info,
+    updated_at: new Date(nowDateValue - 10000),
+  }));
+
+  const searchRecord = ({
+    updated_at: new Date(nowDateValue),
+    info,
+  });
+  records.push(searchRecord);
+
+  await Promise.all(records.map((r) => basePgModel.create(knex, r)));
+
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
+    knex,
+    {
+      info,
+    },
+    {
+      updatedAtFrom: new Date(nowDateValue - 1),
+    }
+  );
+
+  t.is(searchResponse.length, 1);
+  t.like(
+    removeNilProperties(searchResponse[0]),
+    searchRecord
   );
 });
