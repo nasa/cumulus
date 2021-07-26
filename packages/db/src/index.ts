@@ -24,6 +24,10 @@ export {
 } from './provider';
 
 export {
+  BaseRecord,
+} from './types/base';
+
+export {
   PostgresAsyncOperation,
   PostgresAsyncOperationRecord,
 } from './types/async_operation';
@@ -63,7 +67,12 @@ export {
 export {
   translateApiFiletoPostgresFile,
 } from './translate/file';
-export { translateApiCollectionToPostgresCollection } from './translate/collections';
+
+export {
+  translateApiCollectionToPostgresCollection,
+  translatePostgresCollectionToApiCollection,
+} from './translate/collections';
+
 export {
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
