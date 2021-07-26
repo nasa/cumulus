@@ -11,10 +11,13 @@ const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
 
 const {
+  s3,
+} = require('@cumulus/aws-client/services');
+const {
   buildS3Uri,
   getTextObject,
   parseS3Uri,
-  promiseS3Upload,
+  // promiseS3Upload,
   // headObject,
   // streamS3Upload,
 } = require('@cumulus/aws-client/S3');
@@ -277,25 +280,53 @@ class HttpProviderClient {
     }
     const contentType = headers['content-type'] || lookupMimeType(destinationKey);
 
-    const pipelinePromise = promisify(pipeline);
-    const pass = new PassThrough();
-    const downloadPipePromise = pipelinePromise(
-      got.stream(remoteUrl, this.gotOptions),
-      pass
+    function uploadPromise(streamUrl, gotOptions, uploadParams) {
+      return new Promise((resolve, reject) => {
+        const download = got
+          .stream(streamUrl, gotOptions);
+        const pass = new PassThrough();
+        download.on('error', reject);
+        pass.on('error', reject);
+
+        return s3().upload({
+          ...uploadParams,
+          Body: pass,
+        }, (err, uploadResponse) => {
+          if (err) {
+            return reject(err);
+          }
+          return resolve(uploadResponse);
+        });
+      });
+    }
+
+    // const pipelinePromise = promisify(pipeline);
+    // const pass = new PassThrough();
+    // const downloadPipePromise = pipelinePromise(
+    //   got.stream(remoteUrl, this.gotOptions),
+    //   pass
+    // );
+    // const uploadPromise = promiseS3Upload({
+    //   Bucket: destinationBucket,
+    //   Key: destinationKey,
+    //   Body: pass,
+    //   ContentType: contentType,
+    // });
+
+    // pass.on('error', (err) => {
+    //   throw err;
+    // });
+
+    // await downloadPipePromise;
+    const { ETag: etag } = await uploadPromise(
+      remoteUrl,
+      this.gotOptions,
+      {
+        Bucket: destinationBucket,
+        Key: destinationKey,
+        ContentType: contentType,
+      }
     );
-    const uploadPromise = promiseS3Upload({
-      Bucket: destinationBucket,
-      Key: destinationKey,
-      Body: pass,
-      ContentType: contentType,
-    });
-
-    pass.on('error', (err) => {
-      throw err;
-    });
-
-    await downloadPipePromise;
-    const { ETag: etag } = await uploadPromise;
 
     log.info('Uploading to s3 is complete (http)', s3uri);
     return { s3uri, etag };
