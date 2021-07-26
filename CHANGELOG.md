@@ -125,7 +125,7 @@ behavior
   - Removed `rds_connetion_heartbeat` as a configuration option from all
     Cumulus terraform modules
   - Removed `dbHeartBeat` as an environmental switch from
-    `@cumulus/db.getKnexClient` in favore of more comprehensive general db
+    `@cumulus/db.getKnexClient` in favor of more comprehensive general db
     connect retry solution
   - Added new `rds_connection_timing_configuration` string map to allow for
     configuration and tuning of Core's internal database retry/connection
