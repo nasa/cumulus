@@ -17,7 +17,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const Granule = require('../../models/granules');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
@@ -39,8 +39,6 @@ const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
     Search: FakeSearch,
   },
 });
-
-const models = require('../../models');
 
 let applyWorkflowStub;
 let reingestStub;
@@ -73,14 +71,12 @@ test.before(async (t) => {
     METRICS_ES_USER: randomId('user'),
     METRICS_ES_PASS: randomId('pass'),
     GranulesTable: randomId('granule'),
-    CollectionsTable: randomId('collection'),
     ...envVars,
   };
 
   // create a fake bucket
   await createBucket(envVars.system_bucket);
 
-  await new models.Collection().createTable();
   await new Granule().createTable();
 
   applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');

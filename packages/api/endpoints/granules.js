@@ -9,6 +9,7 @@ const {
   getKnexClient,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
+  translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const {
   DeletePublishedGranule,
@@ -24,7 +25,6 @@ const {
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
-const Collection = require('../models/collections');
 const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -101,9 +101,11 @@ async function put(req, res) {
   const granule = await granuleModel.get({ granuleId });
 
   if (action === 'reingest') {
+    const collectionPgModel = new CollectionPgModel();
     const { name, version } = deconstructCollectionId(granule.collectionId);
-    const collectionModelClient = new Collection();
-    const collection = await collectionModelClient.get({ name, version });
+    const collection = translatePostgresCollectionToApiCollection(
+      await collectionPgModel.get(knex, { name, version })
+    );
 
     await granuleModel.reingest({
       ...granule,
@@ -119,7 +121,6 @@ async function put(req, res) {
     if (collection.duplicateHandling !== 'replace') {
       response.warning = 'The granule files may be overwritten';
     }
-
     return res.send(response);
   }
 

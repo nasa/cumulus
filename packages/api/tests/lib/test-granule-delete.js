@@ -39,16 +39,15 @@ const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
-let collectionModel;
 let filePgModel;
 let granuleModel;
 let granulePgModel;
 
-process.env.CollectionsTable = randomId('collection');
+process.env.CollectionsTable = randomId('collections');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
@@ -64,13 +63,12 @@ test.before(async (t) => {
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
-  // create fake Collections table
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
   // create fake Granules table
   granuleModel = new models.Granule();
   await granuleModel.createTable();
+
+  const collectionModel = new models.Collection();
+  await collectionModel.createTable();
 
   granulePgModel = new GranulePgModel();
   filePgModel = new FilePgModel();

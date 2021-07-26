@@ -58,7 +58,9 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
+
+// Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
@@ -80,7 +82,6 @@ const { buildFakeExpressResponse } = require('./utils');
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
-let collectionModel;
 let filePgModel;
 let granuleModel;
 let granulePgModel;
@@ -88,7 +89,6 @@ let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
-process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
@@ -157,10 +157,6 @@ test.before(async (t) => {
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
-  // create fake Collections table
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
   // create fake Granules table
   granuleModel = new models.Granule();
   await granuleModel.createTable();
@@ -218,10 +214,9 @@ test.before(async (t) => {
     version: collectionVersion,
     duplicateHandling: 'error',
   });
-  const dynamoCollection = await collectionModel.create(t.context.testCollection);
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const testPgCollection = fakeCollectionRecordFactory({
@@ -272,7 +267,6 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -464,6 +458,7 @@ test.serial('reingest a granule', async (t) => {
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
+  t.teardown(() => stub.restore());
 
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
@@ -479,7 +474,6 @@ test.serial('reingest a granule', async (t) => {
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
-  stub.restore();
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -512,6 +506,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
+  t.teardown(() => stub.restore());
 
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
@@ -530,7 +525,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
-  stub.restore();
 });
 
 test.serial('remove a granule from CMR', async (t) => {

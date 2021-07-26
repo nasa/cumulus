@@ -24,10 +24,9 @@ const {
 // Dynamo mock data factories
 const {
   fakeGranuleFactoryV2,
-  fakeCollectionFactory,
-} = require('./testUtils');
+} = require('../../lib/testUtils');
 
-const models = require('../models');
+const models = require('../../models');
 
 /**
  * Helper for creating a granule, a parent collection,
@@ -47,8 +46,6 @@ async function createGranuleAndFiles({
   esClient,
   granuleParams = { published: false },
 }) {
-  let newCollectionId;
-
   const s3Buckets = {
     protected: {
       name: randomId('protected'),
@@ -73,23 +70,10 @@ async function createGranuleAndFiles({
 
   const collectionName = randomString(5);
   const collectionVersion = randomString(3);
-
-  // If a collectionId for a Dynamo Collection was not passed,
-  // create one to use for the Granule creation
-  if (!collectionId) {
-    const testCollection = fakeCollectionFactory({
-      name: collectionName,
-      version: collectionVersion,
-    });
-
-    const collectionDynamoModel = new models.Collection();
-    const dynamoCollection = await collectionDynamoModel.create(testCollection);
-
-    newCollectionId = constructCollectionId(
-      dynamoCollection.name,
-      dynamoCollection.version
-    );
-  }
+  const newCollectionId = constructCollectionId(
+    collectionName,
+    collectionVersion
+  );
 
   // If a cumulus_id for a Collection was not passed,
   // create one to use for the Granule creation
