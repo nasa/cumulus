@@ -55,7 +55,7 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let testSuffix;
   let updatedRule;
-  let hellowWorldExecutionArn;
+  let helloWorldExecutionArn;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -110,7 +110,7 @@ describe('The SNS-type rule', () => {
       // the case where the deletion test did not properly clean this up.
     }
 
-    await deleteExecution({ prefix: config.stackName, executionArn: hellowWorldExecutionArn });
+    await deleteExecution({ prefix: config.stackName, executionArn: helloWorldExecutionArn });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -155,7 +155,7 @@ describe('The SNS-type rule', () => {
         startTask: 'HelloWorld',
       });
 
-      hellowWorldExecutionArn = execution.executionArn;
+      helloWorldExecutionArn = execution.executionArn;
     });
 
     it('triggers the workflow', () => {
@@ -164,12 +164,12 @@ describe('The SNS-type rule', () => {
     });
 
     it('passes the message as payload', async () => {
-      const executionInput = await lambdaStep.getStepInput(hellowWorldExecutionArn, 'HelloWorld');
+      const executionInput = await lambdaStep.getStepInput(helloWorldExecutionArn, 'HelloWorld');
       expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
     });
 
     it('results in an execution with the correct prefix', () => {
-      const executionName = hellowWorldExecutionArn.split(':').reverse()[0];
+      const executionName = helloWorldExecutionArn.split(':').reverse()[0];
 
       expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
@@ -263,9 +263,10 @@ describe('The SNS-type rule', () => {
     it('adds the new policy and subscription', async () => {
       const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
       const { Statement } = JSON.parse(Policy);
-      expect(Statement.length).toEqual(1);
-      expect(Statement[0].Sid).toEqual(`${ruleName}Permission`);
-      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(1);
+      const actualStatement = Statement.find((s) => s.Sid === `${ruleName}Permission`);
+      expect(actualStatement).toBeDefined();
+      expect(actualStatement.Sid).toEqual(`${ruleName}Permission`);
+      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
     });
   });
 
