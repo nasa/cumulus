@@ -66,8 +66,8 @@ async function list(req, res) {
 async function put(req, res) {
   const {
     granuleModel = new Granule(),
-    granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = req.testContext || {};
 

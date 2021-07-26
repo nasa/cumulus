@@ -9,6 +9,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { localStackConnectionEnv } = require('@cumulus/db');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
@@ -28,6 +29,10 @@ let accessTokenModel;
 let jwtAuthToken;
 
 test.before(async () => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+  };
   process.env.system_bucket = randomString();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
