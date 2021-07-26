@@ -131,8 +131,8 @@ test('Search.get() returns record by parentId', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const parentId = randomString();
-  const type = 'record';
-  const parentType = 'parent';
+  const type = `child${randomString()}`;
+  const parentType = `parent${randomString()}`;
 
   await t.context.esClient.indices.putMapping({
     index: t.context.esIndex,
