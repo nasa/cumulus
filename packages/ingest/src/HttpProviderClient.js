@@ -289,12 +289,12 @@ class HttpProviderClient {
       Body: pass,
       ContentType: contentType,
     });
-    try {
-      await downloadPipePromise;
-    } catch (error) {
-      console.log(error);
-      // throw error;
-    }
+
+    pass.on('error', (err) => {
+      throw err;
+    });
+
+    await downloadPipePromise;
     const { ETag: etag } = await uploadPromise;
 
     log.info('Uploading to s3 is complete (http)', s3uri);
