@@ -22,7 +22,7 @@ const {
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
-const { parseException, amendCumulusMessageException } = require('../../lib/utils');
+const { parseException } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-execution' });
@@ -111,16 +111,15 @@ const writeExecution = async ({
   updatedAt = Date.now(),
 }) =>
   await knex.transaction(async (trx) => {
-    const amendedCumulusMessage = await amendCumulusMessageException(cumulusMessage);
     const [executionCumulusId] = await writeExecutionViaTransaction({
-      cumulusMessage: amendedCumulusMessage,
+      cumulusMessage,
       collectionCumulusId,
       asyncOperationCumulusId,
       parentExecutionCumulusId,
       trx,
       updatedAt,
     });
-    await executionModel.storeExecutionFromCumulusMessage(amendedCumulusMessage, updatedAt);
+    await executionModel.storeExecutionFromCumulusMessage(cumulusMessage, updatedAt);
     return executionCumulusId;
   });
 
