@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-2626**
-  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a PDR's `execution` field
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 
 ## [v9.2.0] 2021-06-22
 
