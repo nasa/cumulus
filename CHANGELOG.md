@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata login)
+
+### Added
+
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+
+### Fixed
+
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+
 ## [v9.3.0] 2021-07-26
 
 ### BREAKING CHANGES
@@ -24,10 +46,6 @@ The default reserved concurrency value is 8.
 
 ### Notable changes
 
-- `@cumulus/sync-granule` task should now properly handle
-syncing files from HTTP/HTTPS providers where basic auth is
-required and involves a redirect to a different host (e.g.
-downloading files protected by Earthdata login)
 - `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
 integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
 that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
@@ -68,9 +86,6 @@ variable.
   - Added 'Bearer token' support as an authorization method
 - **CUMULUS-2487**
   - Added integration test for cumulus distribution API
-- **CUMULUS-2548**
-  - Added `allowed_redirects` field to PostgreSQL `providers` table
-  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
 - **CUMULUS-2569**
   - Created bucket map cache for cumulus distribution API
 - **CUMULUS-2568**
@@ -132,10 +147,6 @@ behavior
 - Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
 - Fixed bug where `parse-pdr` set a granule's provider to the entire provider record when a `NODE_NAME`
   is present. Expected behavior consistent with other tasks is to set the provider name in that field.
-- **CUMULUS-2548**
-  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
-properly handle basic auth when redirecting to a different
-host and/or host with a different port
 - **CUMULUS-2568**
   - Update reconciliation report integration test to have better cleanup/failure behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
