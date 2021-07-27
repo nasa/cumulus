@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
+### Added
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
+
 ## [v9.3.0] 2021-07-26
 
 ### BREAKING CHANGES
@@ -149,7 +156,7 @@ behavior
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
-  
+
 ### Fixed
 
 - **CUMULUS-2520**

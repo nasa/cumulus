@@ -11,7 +11,7 @@ const getCumulusMessageFromExecutionEvent = cwSfExecutionEventUtils.__get__('get
 const failedStepName = cwSfExecutionEventUtils.__get__('failedStepName');
 const lastFailedEventStep = cwSfExecutionEventUtils.__get__('lastFailedEventStep');
 
-const randomFailedStepName = `StepName${cryptoRandomString({ length: 10 })}`;
+const randomFailedStepNameFn = () => `StepName${cryptoRandomString({ length: 10 })}`;
 
 test.serial('getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step with FailedExecutionStepName amended.', async (t) => {
   const inputMessage = {
@@ -20,7 +20,7 @@ test.serial('getFailedExecutionMessage() returns the Cumulus message from the ou
       execution_name: 'my-execution-name',
     },
   };
-
+  const randomFailedStepName = randomFailedStepNameFn();
   const failedTaskOutput = { a: 1, exception: { Error: 'anError' } };
   const expected = { a: 1, exception: { Error: 'anError', failedExecutionStepName: randomFailedStepName } };
 
@@ -137,6 +137,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
     ...inputMessage,
     exception: {
       type: 'really bad',
+      failedExecutionStepName: 'UnknownFailedStepName',
     },
   };
 
@@ -150,7 +151,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
       execution_name: 'my-execution-name',
     },
   };
-
+  const randomFailedStepName = randomFailedStepNameFn();
   const actualResult = await cwSfExecutionEventUtils.__with__({
     StepFunctions: {
       getExecutionHistory: ({ executionArn }) => {
@@ -160,9 +161,17 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
         return {
           events: [
             {
+              type: 'TaskStateEntered',
+              id: 1,
+              stateEnteredEventDetails: {
+                name: randomFailedStepName,
+              },
+            },
+            {
               // lastStepFailedEvent
               type: 'ActivityFailed',
-              id: 1,
+              id: 2,
+              previousEventId: 1,
               activityFailedEventDetails: {
                 reason: 'busted',
               },
@@ -177,6 +186,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
     ...inputMessage,
     exception: {
       reason: 'busted',
+      failedExecutionStepName: randomFailedStepName,
     },
   };
 
@@ -305,6 +315,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
 });
 
 test('failedStepName() returns the name of the most recent TaskStateEntered event to the lastFailureId.', (t) => {
+  const randomFailedStepName = randomFailedStepNameFn();
   const events = [
     {
       type: 'TaskStateEntered',
