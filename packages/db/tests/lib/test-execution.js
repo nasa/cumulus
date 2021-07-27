@@ -523,7 +523,6 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   t.deepEqual(results, []);
 });
 
-
 test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single granule', async (t) => {
   const {
     knex,
@@ -568,7 +567,6 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
 
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
-
 
 test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for single granule', async (t) => {
   const {
