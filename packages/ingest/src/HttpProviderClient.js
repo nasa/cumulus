@@ -17,7 +17,7 @@ const {
   buildS3Uri,
   getTextObject,
   parseS3Uri,
-  // promiseS3Upload,
+  promiseS3Upload,
   // headObject,
   // streamS3Upload,
 } = require('@cumulus/aws-client/S3');
@@ -285,6 +285,8 @@ class HttpProviderClient {
         const download = got
           .stream(streamUrl, gotOptions);
         const pass = new PassThrough();
+        download.pipe(pass);
+
         download.on('error', reject);
         pass.on('error', reject);
 
@@ -302,8 +304,9 @@ class HttpProviderClient {
 
     // const pipelinePromise = promisify(pipeline);
     // const pass = new PassThrough();
+    // const downloadStream = got.stream(remoteUrl, this.gotOptions);
     // const downloadPipePromise = pipelinePromise(
-    //   got.stream(remoteUrl, this.gotOptions),
+    //   downloadStream,
     //   pass
     // );
     // const uploadPromise = promiseS3Upload({
@@ -324,6 +327,7 @@ class HttpProviderClient {
       {
         Bucket: destinationBucket,
         Key: destinationKey,
+        // Body: pass,
         ContentType: contentType,
       }
     );

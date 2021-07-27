@@ -232,20 +232,14 @@ test('HttpsProviderClient.download() downloads a file', async (t) => {
   }
 });
 
-test.only('HttpsProviderClient.sync() copies remote file to s3 with correct content-type', async (t) => {
+test('HttpsProviderClient.sync() copies remote file to s3 with correct content-type', async (t) => {
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.json';
 
-  const httpProviderClient = new HttpProviderClient({
-    protocol: 'http',
-    host: 'localhost',
-    port: 3030,
-  });
-
   try {
     await s3().createBucket({ Bucket: destinationBucket }).promise();
-    const { s3uri, etag } = await httpProviderClient.sync({
-      fileRemotePath: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met',
+    const { s3uri, etag } = await t.context.httpsProviderClient.sync({
+      fileRemotePath: publicFile,
       destinationBucket,
       destinationKey,
     });
@@ -255,11 +249,11 @@ test.only('HttpsProviderClient.sync() copies remote file to s3 with correct cont
       Bucket: destinationBucket,
       Key: destinationKey,
     }));
-    // const syncedContent = await getTextObject(destinationBucket, destinationKey);
-    // t.is(syncedContent, remoteContent);
+    const syncedContent = await getTextObject(destinationBucket, destinationKey);
+    t.is(syncedContent, remoteContent);
 
-    // const s3HeadResponse = await headObject(destinationBucket, destinationKey);
-    // t.is(expectedContentType, s3HeadResponse.ContentType);
+    const s3HeadResponse = await headObject(destinationBucket, destinationKey);
+    t.is(expectedContentType, s3HeadResponse.ContentType);
   } finally {
     await recursivelyDeleteS3Bucket(destinationBucket);
   }
@@ -580,8 +574,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if allowedR
         fileRemotePath: protectedFile2,
         destinationBucket,
         destinationKey,
-      }),
-      { message: /Response code 401/ }
+      })
     );
     t.false(await s3ObjectExists({
       Bucket: destinationBucket,
