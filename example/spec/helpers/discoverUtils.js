@@ -18,13 +18,13 @@ const uploadS3GranuleDataForDiscovery = async ({
   const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
   const newGranuleId = randomStringFromRegex(granuleRegex);
-  await s3Data.map((file) => updateAndUploadTestFileToBucket({
+  await Promise.all(s3Data.map(async (file) => await updateAndUploadTestFileToBucket({
     file,
     bucket,
     prefix,
     targetReplacementRegex: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
     targetReplacementString: newGranuleId,
-  }));
+  })));
   return {
     granuleId: newGranuleId,
   };

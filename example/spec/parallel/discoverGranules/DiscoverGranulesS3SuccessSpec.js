@@ -32,7 +32,7 @@ const {
 } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow', () => {
-  let beforeAllCompleted = false;
+  let beforeAllError;
   let bucket;
   let collection;
   let expectedGranuleId;
@@ -45,66 +45,68 @@ describe('The DiscoverGranules workflow', () => {
   let workflowExecution;
 
   beforeAll(async () => {
-    ({ stackName, bucket } = await loadConfig());
+    try {
+      ({ stackName, bucket } = await loadConfig());
 
-    process.env.stackName = stackName;
-    process.env.system_bucket = bucket;
+      process.env.stackName = stackName;
+      process.env.system_bucket = bucket;
 
-    process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+      process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3Success');
+      const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3Success');
 
-    // Create the provider
-    provider = await loadProvider({
-      filename: './data/providers/s3/s3_provider.json',
-      postfix: testId,
-      s3Host: bucket,
-    });
-    await createProvider({ prefix: stackName, provider });
+      // Create the provider
+      provider = await loadProvider({
+        filename: './data/providers/s3/s3_provider.json',
+        postfix: testId,
+        s3Host: bucket,
+      });
+      await createProvider({ prefix: stackName, provider });
 
-    // Create the collection
-    collection = await loadCollection({
-      filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
-      postfix: testId,
-    });
+      // Create the collection
+      collection = await loadCollection({
+        filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
+        postfix: testId,
+      });
 
-    await createCollection({ prefix: stackName, collection });
+      await createCollection({ prefix: stackName, collection });
 
-    providerPath = `cumulus-test-data/${testId}`;
+      providerPath = `cumulus-test-data/${testId}`;
 
-    // Upload the granule to be discovered
-    const { granuleId } = await uploadS3GranuleDataForDiscovery({
-      bucket,
-      prefix: providerPath,
-    });
-    expectedGranuleId = granuleId;
+      // Upload the granule to be discovered
+      const { granuleId } = await uploadS3GranuleDataForDiscovery({
+        bucket,
+        prefix: providerPath,
+      });
+      expectedGranuleId = granuleId;
 
-    // Execute the DiscoverGranules workflow
-    workflowExecution = await buildAndExecuteWorkflow(
-      stackName,
-      bucket,
-      'DiscoverGranules',
-      collection,
-      provider,
-      undefined,
-      { provider_path: providerPath }
-    );
+      // Execute the DiscoverGranules workflow
+      workflowExecution = await buildAndExecuteWorkflow(
+        stackName,
+        bucket,
+        'DiscoverGranules',
+        collection,
+        provider,
+        undefined,
+        { provider_path: providerPath }
+      );
 
-    const lambdaStep = new LambdaStep();
+      const lambdaStep = new LambdaStep();
 
-    discoverGranulesOutput = await lambdaStep.getStepOutput(
-      workflowExecution.executionArn,
-      'DiscoverGranules'
-    );
+      discoverGranulesOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'DiscoverGranules'
+      );
 
-    // Get the output of the QueueGranules task. Doing it here because there are
-    // two tests that need it.
-    queueGranulesOutput = await lambdaStep.getStepOutput(
-      workflowExecution.executionArn,
-      'QueueGranules'
-    );
-
-    beforeAllCompleted = true;
+      // Get the output of the QueueGranules task. Doing it here because there are
+      // two tests that need it.
+      queueGranulesOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
+    } catch (error) {
+      beforeAllError = error;
+    }
   });
 
   afterAll(async () => {
@@ -130,7 +132,7 @@ describe('The DiscoverGranules workflow', () => {
         'completed'
       ),
     ]);
-    // The order of execution deletes matters. Parents must be deleted before children.
+    // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
     await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
@@ -148,12 +150,12 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   it('executes successfully', () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else expect(workflowExecution.status).toEqual('completed');
   });
 
   it('can be fetched from the API', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       await expectAsync(
         pWaitFor(
@@ -172,7 +174,7 @@ describe('The DiscoverGranules workflow', () => {
   });
 
   it('results in a successful IngestGranule workflow execution', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       const ingestGranuleExecutionStatus = await waitForCompletedExecution(
         queueGranulesOutput.payload.running[0]
@@ -183,7 +185,7 @@ describe('The DiscoverGranules workflow', () => {
 
   describe('DiscoverGranules task', () => {
     it('outputs the list of discovered granules', () => {
-      if (!beforeAllCompleted) fail('beforeAll() failed');
+      if (beforeAllError) fail(beforeAllError);
       else {
         expect(discoverGranulesOutput.payload.granules.length).toEqual(1);
         const granule = discoverGranulesOutput.payload.granules[0];
@@ -204,11 +206,12 @@ describe('The DiscoverGranules workflow', () => {
     });
 
     it('has queued the granule', () => {
-      if (!beforeAllCompleted) fail('beforeAll() failed');
+      if (beforeAllError) fail(beforeAllError);
       else expect(queueGranulesOutput.payload.running.length).toEqual(1);
     });
 
     it('passes through childWorkflowMeta to the IngestGranule execution', async () => {
+      if (beforeAllError) fail(beforeAllError);
       ingestGranuleExecutionArn = queueGranulesOutput.payload.running[0];
       const executionInput = await getExecutionInputObject(queueGranulesOutput.payload.running[0]);
       expect(executionInput.meta.staticValue).toEqual('aStaticValue');
