@@ -124,8 +124,8 @@ behavior
 - **CUMULUS-2528**
   - Removed `rds_connetion_heartbeat` as a configuration option from all
     Cumulus terraform modules
-  - Removed `dbHeartBeat` as an enviornental switch from
-    `@cumulus/db.getKnexClient` in favore of more comprehensive general db
+  - Removed `dbHeartBeat` as an environmental switch from
+    `@cumulus/db.getKnexClient` in favor of more comprehensive general db
     connect retry solution
   - Added new `rds_connection_timing_configuration` string map to allow for
     configuration and tuning of Core's internal database retry/connection
@@ -141,7 +141,7 @@ behavior
       attempted connection error' and sent from '@cumulus/db/connection'
   - Updated `@cumulus/db` and all terraform mdules to set default retry
     configuration values for the database module to cover existing database
-    heartbeat  connection failurs as well as all other knex/tarn connection
+    heartbeat connection failures as well as all other knex/tarn connection
     creation failures.
 
 ### Fixed
