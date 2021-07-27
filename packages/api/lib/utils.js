@@ -3,13 +3,6 @@
 const get = require('lodash/get');
 const isObject = require('lodash/isObject');
 const isNil = require('lodash/isNil');
-const { getMetaStatus } = require('@cumulus/message/workflows');
-const { getMessageExecutionArn } = require('@cumulus/message/Executions');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const Logger = require('@cumulus/logger');
-const { failedStepName, lastExecutionFailure } = require('./cwSfExecutionEventUtils');
-
-const log = new Logger({ sender: '@cumulus/api/lib/utils' });
 
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
@@ -34,59 +27,6 @@ function parseException(exception) {
     Cause: exception,
   };
 }
-
-/**
- * convert error Object keys to begin with capitalized letters.
- * so that {error: "error"} => {Error: "error"}
- *
- * @param {Object} obj
- * @returns {Object} shallow copy of object but with each key capitalized.
- */
-const capitalizeKeys = (obj) =>
-  Object.keys(obj).reduce((acc, key) => {
-    acc[key[0].toUpperCase() + key.slice(1)] = obj[key];
-    return acc;
-  }, {});
-
-/**
- * For any status Failed cumulusMessage, update the message with the
- * Execution's failed step name in `FailedExecutionStepName` and update the
- * `FailedExecutionStepOutput` with the last failed output from either a
- * LambdaFunctionFailed, or ActivityFailed step and add those new properties to
- * the error record (leaving anything that was parsed from the cumulusMessage.exception?)
- * @param {Object} cumulusMessage
- */
-const amendCumulusMessageException = async (cumulusMessage) => {
-  const amendedMessage = { ...cumulusMessage };
-  amendedMessage.exception = parseException(cumulusMessage.exception);
-
-  const status = getMetaStatus(cumulusMessage);
-  if (status !== 'failed') {
-    return amendedMessage;
-  }
-  try {
-    log.debug('Attempting to amend cumulusMessage exception.');
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    const { events } = await StepFunctions.getExecutionHistory({ executionArn });
-    const lastFailure = lastExecutionFailure(events);
-    const failedExecutionStepOutput = {
-      ...lastFailure.lambdaFunctionFailedEventDetails,
-      ...lastFailure.activityFailedEventDetails,
-    };
-
-    const failedExecutionStepName = failedStepName(events, lastFailure.id);
-    amendedMessage.exception = {
-      ...amendedMessage.exception,
-      ...capitalizeKeys(failedExecutionStepOutput),
-      failedExecutionStepName,
-    };
-    log.debug(`amended exception: ${JSON.stringify(amendedMessage.exception)}`);
-  } catch (error) {
-    log.error('Could not amend cumulus message exception.');
-    log.error(error);
-  }
-  return amendedMessage;
-};
 
 /**
  * Returns the name and version of a collection based on
@@ -147,7 +87,6 @@ function findCaseInsensitiveValue(obj, keyArg) {
 }
 
 module.exports = {
-  amendCumulusMessageException,
   deconstructCollectionId,
   errorify,
   extractDate,
