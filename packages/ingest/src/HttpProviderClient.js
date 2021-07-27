@@ -4,22 +4,17 @@ const fs = require('fs');
 const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
-const { PassThrough, pipeline } = require('stream');
+const { pipeline } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
 const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
 
 const {
-  s3,
-} = require('@cumulus/aws-client/services');
-const {
   buildS3Uri,
   getTextObject,
   parseS3Uri,
-  promiseS3Upload,
-  // headObject,
-  // streamS3Upload,
+  streamS3Upload,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const isValidHostname = require('is-valid-hostname');
@@ -280,54 +275,12 @@ class HttpProviderClient {
     }
     const contentType = headers['content-type'] || lookupMimeType(destinationKey);
 
-    function uploadPromise(streamUrl, gotOptions, uploadParams) {
-      return new Promise((resolve, reject) => {
-        const download = got
-          .stream(streamUrl, gotOptions);
-        const pass = new PassThrough();
-        download.pipe(pass);
-
-        download.on('error', reject);
-        pass.on('error', reject);
-
-        return s3().upload({
-          ...uploadParams,
-          Body: pass,
-        }, (err, uploadResponse) => {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(uploadResponse);
-        });
-      });
-    }
-
-    // const pipelinePromise = promisify(pipeline);
-    // const pass = new PassThrough();
-    // const downloadStream = got.stream(remoteUrl, this.gotOptions);
-    // const downloadPipePromise = pipelinePromise(
-    //   downloadStream,
-    //   pass
-    // );
-    // const uploadPromise = promiseS3Upload({
-    //   Bucket: destinationBucket,
-    //   Key: destinationKey,
-    //   Body: pass,
-    //   ContentType: contentType,
-    // });
-
-    // pass.on('error', (err) => {
-    //   throw err;
-    // });
-
-    // await downloadPipePromise;
-    const { ETag: etag } = await uploadPromise(
-      remoteUrl,
-      this.gotOptions,
+    const uploadStream = got.stream(remoteUrl, this.gotOptions);
+    const { ETag: etag } = await streamS3Upload(
+      uploadStream,
       {
         Bucket: destinationBucket,
         Key: destinationKey,
-        // Body: pass,
         ContentType: contentType,
       }
     );
