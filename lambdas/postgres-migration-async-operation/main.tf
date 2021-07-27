@@ -14,18 +14,18 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
 
   environment {
     variables = {
-      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
+      AsyncOperationTaskDefinition = var.async_operation_task_definition_arn
       createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
-      idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
-      reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
-      system_bucket                = var.system_bucket
-      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
-      stackName                    = var.prefix
-      MigrationLambda              = var.data_migration2_function_arn
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       EcsCluster                   = var.ecs_cluster_name
-      AsyncOperationTaskDefinition = var.async_operation_task_definition_arn
+      idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
+      MigrationLambda              = var.data_migration2_function_arn
+      reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
+      stackName                    = var.prefix
+      system_bucket                = var.system_bucket
     }
   }
 

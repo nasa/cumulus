@@ -14,24 +14,24 @@ resource "aws_lambda_function" "postgres_migration_count_tool" {
 
   environment {
     variables = {
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
-      ExecutionsTable             = var.dynamo_tables.executions.name
-      GranulesTable               = var.dynamo_tables.granules.name
-      PdrsTable                   = var.dynamo_tables.pdrs.name
       acquireTimeoutMillis        = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      createRetryIntervalMillis   = var.rds_connection_timing_configuration.createRetryIntervalMillis
-      createTimeoutMillis         = var.rds_connection_timing_configuration.createTimeoutMillis
-      idleTimeoutMillis           = var.rds_connection_timing_configuration.idleTimeoutMillis
-      reapIntervalMillis          = var.rds_connection_timing_configuration.reapIntervalMillis
       AsyncOperationsTable        = var.dynamo_tables.async_operations.name
       CollectionsTable            = var.dynamo_tables.collections.name
+      createRetryIntervalMillis   = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis         = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      ExecutionsTable             = var.dynamo_tables.executions.name
       ExecutionsTable             = var.dynamo_tables.executions.name
       GranulesTable               = var.dynamo_tables.granules.name
+      GranulesTable               = var.dynamo_tables.granules.name
+      idleTimeoutMillis           = var.rds_connection_timing_configuration.idleTimeoutMillis
       PdrsTable                   = var.dynamo_tables.pdrs.name
+      PdrsTable                   = var.dynamo_tables.pdrs.name
+      prefix                      = var.prefix
       ProvidersTable              = var.dynamo_tables.providers.name
+      reapIntervalMillis          = var.rds_connection_timing_configuration.reapIntervalMillis
       RulesTable                  = var.dynamo_tables.rules.name
       systemBucket                = var.system_bucket
-      prefix                      = var.prefix
     }
   }
 

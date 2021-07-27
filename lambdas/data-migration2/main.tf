@@ -88,17 +88,17 @@ resource "aws_lambda_function" "data_migration2" {
 
   environment {
     variables           = {
+      acquireTimeoutMillis                  = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis             = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis                   = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn           = var.rds_user_access_secret_arn
       ExecutionsTable                       = var.dynamo_tables.executions.name
       GranulesTable                         = var.dynamo_tables.granules.name
-      PdrsTable                             = var.dynamo_tables.pdrs.name
-      acquireTimeoutMillis                  = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      createTimeoutMillis                   = var.rds_connection_timing_configuration.createTimeoutMillis
       idleTimeoutMillis                     = var.rds_connection_timing_configuration.idleTimeoutMillis
+      PdrsTable                             = var.dynamo_tables.pdrs.name
       reapIntervalMillis                    = var.rds_connection_timing_configuration.reapIntervalMillis
-      createRetryIntervalMillis             = var.rds_connection_timing_configuration.createRetryIntervalMillis
-      system_bucket                         = var.system_bucket
       stackName                             = var.prefix
+      system_bucket                         = var.system_bucket
     }
   }
 
