@@ -187,7 +187,7 @@ test('workflowsByGranules calls the callback with the expected object and return
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(executionsApi.searchExecutionsByGranules({
+  await t.notThrowsAsync(executionsApi.workflowsByGranules({
     prefix: t.context.testPrefix,
     payload,
     callback,
