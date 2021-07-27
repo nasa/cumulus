@@ -132,8 +132,14 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
     testProvider,
   } = t.context;
   const executionPgModel = new ExecutionPgModel();
+  const executionArn = 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:587f47b1-88b4-4f74-bd51-525085943fd3';
+  const executionURL = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`;
+
   const execution = fakeExecutionRecordFactory(
-    { arn: 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:587f47b1-88b4-4f74-bd51-525085943fd3' }
+    {
+      arn: executionArn,
+      url: executionURL,
+    }
   );
 
   const executionResponse = await executionPgModel.create(
@@ -145,7 +151,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${execution.arn}`,
+    execution: executionURL,
   });
   await migratePdrRecord(testPdr, knex);
 
@@ -276,8 +282,16 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
     pdrPgModel,
   } = t.context;
 
+  const executionArn = 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:45624c2-86b4-5g85-bd51-525085943fc4';
+  const executionURL = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`;
+
   const executionPgModel = new ExecutionPgModel();
-  const execution = fakeExecutionRecordFactory();
+  const execution = fakeExecutionRecordFactory(
+    {
+      arn: executionArn,
+      url: executionURL,
+    }
+  );
 
   await executionPgModel.create(
     knex,
@@ -287,7 +301,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: execution.arn,
+    execution: executionURL,
     status: 'completed',
     updatedAt: Date.now() - 1000,
   });
