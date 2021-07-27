@@ -141,7 +141,7 @@ behavior
       attempted connection error' and sent from '@cumulus/db/connection'
   - Updated `@cumulus/db` and all terraform mdules to set default retry
     configuration values for the database module to cover existing database
-    heartbeat  connection failurs as well as all other knex/tarn connection
+    heartbeat connection failures as well as all other knex/tarn connection
     creation failures.
 
 ### Fixed
