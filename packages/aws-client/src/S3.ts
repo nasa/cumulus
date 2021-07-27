@@ -264,7 +264,7 @@ export const promiseS3Upload = improveStackTrace(
  *
  * @param {Readable} uploadStream - Stream of data to upload
  * @param {Object} uploadParams - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
- * @returns {PassThrough} - a pass through stream
+ * @returns {Promise}
  */
 export const streamS3Upload = (
   uploadStream: Readable,

@@ -28,6 +28,8 @@ const {
   putFile,
   calculateObjectHash,
   getObjectReadStream,
+  streamS3Upload,
+  getObject,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -376,4 +378,35 @@ test('getObjectSize() returns the size of an object', async (t) => {
   });
 
   t.is(objectSize, 4);
+});
+
+test('streamS3Upload() uploads contents of stream to S3', async (t) => {
+  const tmpDir = await mkdtemp(`${os.tmpdir()}${path.sep}`);
+  const sourceFile = path.join(tmpDir, randomString());
+  const sourceData = randomString();
+
+  const key = randomString();
+
+  await writeFile(sourceFile, sourceData);
+  t.teardown(async () => {
+    await unlink(sourceFile);
+    await rmdir(tmpDir);
+  });
+
+  await streamS3Upload(
+    fs.createReadStream(sourceFile),
+    {
+      Bucket: t.context.Bucket,
+      Key: key,
+      ContentType: 'plaintext',
+    }
+  );
+  const object = await getObject(
+    awsServices.s3(),
+    {
+      Bucket: t.context.Bucket,
+      Key: key,
+    }
+  );
+  t.is(object.Body.toString(), sourceData);
 });
