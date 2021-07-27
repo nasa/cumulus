@@ -132,7 +132,9 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
     testProvider,
   } = t.context;
   const executionPgModel = new ExecutionPgModel();
-  const execution = fakeExecutionRecordFactory();
+  const execution = fakeExecutionRecordFactory(
+    { arn: 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:587f47b1-88b4-4f74-bd51-525085943fd3' }
+  );
 
   const executionResponse = await executionPgModel.create(
     knex,
@@ -143,7 +145,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: execution.arn,
+    execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${execution.arn}`,
   });
   await migratePdrRecord(testPdr, knex);
 

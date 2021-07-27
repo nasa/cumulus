@@ -72,6 +72,7 @@ export const migratePdrRecord = async (
     { name: dynamoRecord.provider }
   );
 
+  // TODO this isn't right. a PG Execution's "arn" is not a full URL like a Dynamo PDR's "execution" field.
   const executionCumulusId = dynamoRecord.execution
     ? await executionPgModel.getRecordCumulusId(
       knex,
