@@ -42,7 +42,7 @@ const failedStepName = (events, lastFailureId) => {
     log.info('Failed to determine a failed stepName from execution events.');
     log.error(error);
   }
-  return 'Unknown FailedStepName';
+  return 'UnknownFailedStepName';
 };
 
 /**
@@ -104,7 +104,7 @@ const getFailedExecutionMessage = async (inputCumulusMessage) => {
       ...taskExitedEventOutput.exception,
       failedExecutionStepName,
     };
-    return await parseStepMessage( taskExitedEventOutput, failedExecutionStepName );
+    return await parseStepMessage(taskExitedEventOutput, failedExecutionStepName);
   } catch (error) {
     log.error('getFailedExecution failed to retrieve failure.', error);
     return amendedCumulusMessage;
@@ -137,5 +137,4 @@ module.exports = {
   failedStepName,
   getFailedExecutionMessage,
   getCumulusMessageFromExecutionEvent,
-  lastFailedEventStep,
 };
