@@ -34,7 +34,7 @@ const executionStatusToWorkflowStatus = (executionStatus) => {
  * @param {number} lastFailureId
  * @returns {string} name of the current stepfunction task or 'UnknownFailedStepName'.
  */
-const failedStepName = (events, lastFailureId) => {
+const getFailedStepName = (events, lastFailureId) => {
   try {
     const previousEvents = events.slice(0, lastFailureId - 1);
     const startEvents = previousEvents.filter((e) => e.type === 'TaskStateEntered');
@@ -83,7 +83,7 @@ const getFailedExecutionMessage = async (inputCumulusMessage) => {
       log.warn(`No failed step events found in execution ${executionArn}`);
       return amendedCumulusMessage;
     }
-    const failedExecutionStepName = failedStepName(events, lastFailedEvent.id);
+    const failedExecutionStepName = getFailedStepName(events, lastFailedEvent.id);
     const failedStepExitedEvent = getStepExitedEvent(events, lastFailedEvent);
 
     if (!failedStepExitedEvent) {
@@ -134,7 +134,6 @@ const getCumulusMessageFromExecutionEvent = async (executionEvent) => {
 };
 
 module.exports = {
-  failedStepName,
   getFailedExecutionMessage,
   getCumulusMessageFromExecutionEvent,
 };

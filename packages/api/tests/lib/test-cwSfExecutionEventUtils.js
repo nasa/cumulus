@@ -8,7 +8,7 @@ const cwSfExecutionEventUtils = rewire('../../lib/cwSfExecutionEventUtils');
 
 const getFailedExecutionMessage = cwSfExecutionEventUtils.__get__('getFailedExecutionMessage');
 const getCumulusMessageFromExecutionEvent = cwSfExecutionEventUtils.__get__('getCumulusMessageFromExecutionEvent');
-const failedStepName = cwSfExecutionEventUtils.__get__('failedStepName');
+const getFailedStepName = cwSfExecutionEventUtils.__get__('getFailedStepName');
 const lastFailedEventStep = cwSfExecutionEventUtils.__get__('lastFailedEventStep');
 
 const randomFailedStepNameFn = () => `StepName${cryptoRandomString({ length: 10 })}`;
@@ -314,7 +314,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
   t.deepEqual(message, expectedMessage);
 });
 
-test('failedStepName() returns the name of the most recent TaskStateEntered event to the lastFailureId.', (t) => {
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event to the lastFailureId.', (t) => {
   const randomFailedStepName = randomFailedStepNameFn();
   const events = [
     {
@@ -350,12 +350,12 @@ test('failedStepName() returns the name of the most recent TaskStateEntered even
   ];
 
   const expected = randomFailedStepName;
-  const actual = failedStepName(events, 5);
+  const actual = getFailedStepName(events, 5);
 
   t.is(actual, expected);
 });
 
-test('failedStepName() returns UnknownFailedStepName if no TaskStateEntered events exist before the failed id.', (t) => {
+test('getFailedStepName() returns UnknownFailedStepName if no TaskStateEntered events exist before the failed id.', (t) => {
   const events = [
     {
       type: 'LambdaFunctionScheduled',
@@ -382,7 +382,7 @@ test('failedStepName() returns UnknownFailedStepName if no TaskStateEntered even
   ];
 
   const expected = 'UnknownFailedStepName';
-  const actual = failedStepName(events, 5);
+  const actual = getFailedStepName(events, 5);
 
   t.is(actual, expected);
 });
