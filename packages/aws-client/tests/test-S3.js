@@ -384,7 +384,6 @@ test('streamS3Upload() uploads contents of stream to S3', async (t) => {
   const tmpDir = await mkdtemp(`${os.tmpdir()}${path.sep}`);
   const sourceFile = path.join(tmpDir, randomString());
   const sourceData = randomString();
-
   const key = randomString();
 
   await writeFile(sourceFile, sourceData);
