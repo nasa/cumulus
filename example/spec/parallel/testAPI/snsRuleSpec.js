@@ -289,7 +289,7 @@ describe('The SNS-type rule', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
       const { Statement } = JSON.parse(Policy);
-      expect(Statement.some((s) => s.Sid === expectedStatementId));
+      expect(Statement.some((s) => s.Sid === expectedStatementId)).toBeTrue();
     });
   });
 
