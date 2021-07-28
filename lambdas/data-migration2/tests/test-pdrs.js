@@ -25,7 +25,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
-const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
