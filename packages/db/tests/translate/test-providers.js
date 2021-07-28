@@ -42,7 +42,7 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
     protocol: 'fakeProtocol',
     updated_at: new Date(5678),
     username: 'fakeEncryptedString',
-    allowed_redirects: JSON.stringify(allowedRedirects),
+    allowed_redirects: allowedRedirects,
   };
   const result = await translateApiProviderToPostgresProvider(
     cumulusProviderObject,

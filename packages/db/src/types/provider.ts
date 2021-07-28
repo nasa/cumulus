@@ -31,6 +31,5 @@ export interface PostgresProvider {
 export interface PostgresProviderRecord extends Omit<PostgresProvider, 'allowed_redirects'> {
   cumulus_id: number,
   created_at: Date,
-  updated_at: Date,
-  allowed_redirects?: string[]
+  updated_at: Date
 }
