@@ -16,7 +16,7 @@ Cumulus has added a new endpoint to its API, `/replays`. This endpoint will allo
 
 ## Start a replay
 
-In order to start a replay, you must perform a `POST` request to the `replays` endpoint.
+In order to start a Kinesis replay, you must perform a `POST` request to the `/replays/kinesis` endpoint.
 
 The required and optional fields that should be part of the body of this request are documented below.
 
@@ -25,7 +25,6 @@ If tolerable, the same is recommended for the `startTimestamp` although it is us
 
 | Field | Type | Required | Description |
 | ------ | ------ | ------ | ------ |
-| `type` | string | required | Currently only accepts `kinesis`. |
 | `kinesisStream` | string | for type `kinesis` | Any valid kinesis stream name (*not* ARN) |
 | `kinesisStreamCreationTimestamp` | * | optional | Any input valid for a JS Date constructor. For reasons to use this field see [AWS documentation on StreamCreationTimestamp](https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListShards.html#API_ListShards_RequestSyntax). |
 | `endTimestamp` | * | optional | Any input valid for a JS Date constructor. Messages newer than this timestamp will be skipped.
@@ -33,5 +32,5 @@ If tolerable, the same is recommended for the `startTimestamp` although it is us
 
 ## Status tracking
 
-A successful response from the `/replays` endpoint will contain an `asyncOperationId` field.
+A successful response from the `/replays/kinesis` endpoint will contain an `asyncOperationId` field.
 Use this ID with the `/asyncOperations` endpoint to track the status.

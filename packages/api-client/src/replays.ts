@@ -29,7 +29,7 @@ export const postKinesisReplays = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/replays',
+      path: '/replays/kinesis',
       body: JSON.stringify(payload),
     },
     expectedStatusCode: 202,

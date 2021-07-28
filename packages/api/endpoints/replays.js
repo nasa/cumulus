@@ -5,6 +5,7 @@ const asyncOperations = require('@cumulus/async-operations');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
+
 /**
  * Start an AsyncOperation that will perform kinesis message replay
  *
@@ -20,13 +21,10 @@ async function startKinesisReplayAsyncOperation(req, res) {
 
   const payload = req.body;
 
-  if (!payload.type) {
-    return res.boom.badRequest('replay type is required');
-  }
-
-  if (payload.type === 'kinesis' && !payload.kinesisStream) {
+  if (!payload.kinesisStream) {
     return res.boom.badRequest('kinesisStream is required for kinesis-type replay');
   }
+
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
@@ -43,6 +41,6 @@ async function startKinesisReplayAsyncOperation(req, res) {
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
-router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
+router.post('/kinesis', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
 
 module.exports = router;

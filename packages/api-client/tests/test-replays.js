@@ -6,7 +6,6 @@ const replaysApi = require('../replays');
 
 test('postKinesisReplays calls the callback with the expected object', async (t) => {
   const payload = {
-    type: 'kinesis',
     kinesisStream: 'fake-stream',
     endTimestamp: Date.now(),
     startTimestamp: Date.now(),

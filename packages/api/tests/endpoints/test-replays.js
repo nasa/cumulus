@@ -59,33 +59,15 @@ test.after.always(async () => {
   });
 });
 
-test.serial('request to replays endpoint returns 400 when no type is specified', async (t) => {
+test.serial('request to kinesis replays endpoint returns 400 if no kinesisStream is specified', async (t) => {
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
 
-  await request(app)
-    .post('/replays')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({})
-    .expect(400, /replay type is required/);
-
-  asyncOperationStartStub.restore();
-  t.false(asyncOperationStartStub.called);
-});
-
-test.serial('request to replays endpoint returns 400 if type is kinesis but no kinesisStream is specified', async (t) => {
-  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
-    { id: '1234' }
-  );
-
-  const body = {
-    type: 'kinesis',
-  };
+  const body = {};
 
   await request(app)
-    .post('/replays')
+    .post('/replays/kinesis')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -95,20 +77,19 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
   t.false(asyncOperationStartStub.called);
 });
 
-test.serial('request to replays endpoint with valid kinesis parameters starts an AsyncOperation and returns its id', async (t) => {
+test.serial('request to kinesis replays endpoint with valid kinesis parameters starts an AsyncOperation and returns its id', async (t) => {
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
 
   const body = {
-    type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
     startTimestamp: 12356789,
   };
 
   await request(app)
-    .post('/replays')
+    .post('/replays/kinesis')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -123,13 +104,12 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   asyncOperationStartStub.restore();
 });
 
-test.serial('request to /replays endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+test.serial('request to /replays/kinesis endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new Error('failed to start')
   );
 
   const body = {
-    type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
     startTimestamp: 12356789,
@@ -137,7 +117,7 @@ test.serial('request to /replays endpoint returns 500 if starting ECS task throw
 
   try {
     const response = await request(app)
-      .post('/replays')
+      .post('/replays/kinesis')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(body);
@@ -147,13 +127,12 @@ test.serial('request to /replays endpoint returns 500 if starting ECS task throw
   }
 });
 
-test.serial('request to /replays endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
+test.serial('request to /replays/kinesis endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
     new EcsStartTaskError('failed to start')
   );
 
   const body = {
-    type: 'kinesis',
     kinesisStream: 'fakestream',
     endTimestamp: 12345678,
     startTimestamp: 12356789,
@@ -161,7 +140,7 @@ test.serial('request to /replays endpoint returns 503 if starting ECS task throw
 
   try {
     const response = await request(app)
-      .post('/replays')
+      .post('/replays/kinesis')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(body);

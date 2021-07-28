@@ -146,7 +146,6 @@ describe('The Kinesis Replay API', () => {
       await Promise.all(newRecordsToSkip.map((r) => putRecordOnStream(streamName, r)));
 
       const apiRequestBody = {
-        type: 'kinesis',
         kinesisStream: streamName,
         endTimestamp,
         startTimestamp,

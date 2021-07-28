@@ -132,6 +132,7 @@ behavior
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
+  - Moved kinesis replay functionality from `/replays` to `/replays/kinesis`. Due to the use of explicit pathing to infer the type of the replay request, the `type` parameter is no longer required in the payload of a POST request.
 
 ### Fixed
 
