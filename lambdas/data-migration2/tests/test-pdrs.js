@@ -25,6 +25,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 // eslint-disable-next-line node/no-unpublished-require
 const { migrationDir } = require('../../db-migration');
@@ -132,15 +133,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
     testProvider,
   } = t.context;
   const executionPgModel = new ExecutionPgModel();
-  const executionArn = 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:587f47b1-88b4-4f74-bd51-525085943fd3';
-  const executionURL = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`;
-
-  const execution = fakeExecutionRecordFactory(
-    {
-      arn: executionArn,
-      url: executionURL,
-    }
-  );
+  const execution = fakeExecutionRecordFactory();
 
   const executionResponse = await executionPgModel.create(
     knex,
@@ -151,7 +144,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: executionURL,
+    execution: execution.url,
   });
   await migratePdrRecord(testPdr, knex);
 
@@ -282,16 +275,8 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
     pdrPgModel,
   } = t.context;
 
-  const executionArn = 'arn:aws:states:us-east-1:12345:execution:test-IngestGranule:45624c2-86b4-5g85-bd51-525085943fc4';
-  const executionURL = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`;
-
   const executionPgModel = new ExecutionPgModel();
-  const execution = fakeExecutionRecordFactory(
-    {
-      arn: executionArn,
-      url: executionURL,
-    }
-  );
+  const execution = fakeExecutionRecordFactory();
 
   await executionPgModel.create(
     knex,
@@ -301,7 +286,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: executionURL,
+    execution: execution.url,
     status: 'completed',
     updatedAt: Date.now() - 1000,
   });
