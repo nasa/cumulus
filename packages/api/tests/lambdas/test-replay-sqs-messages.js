@@ -3,8 +3,8 @@
 const test = require('ava');
 const uuidv4 = require('uuid/v4');
 
-const S3 = require('@cumulus/aws-client/S3');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { deleteQueue } = require('@cumulus/aws-client/SQS');
+const { createBucket, recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -16,7 +16,7 @@ const {
 test.before(async (t) => {
   process.env.system_bucket = randomString();
   t.context.system_bucket = process.env.system_bucket;
-  await S3.createBucket(t.context.system_bucket);
+  await createBucket(t.context.system_bucket);
 });
 
 test.beforeEach(async (t) => {
@@ -27,27 +27,56 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = queues.queueUrl;
   t.context.queueName = queues.queueName;
 
-  const message1 = { id: uuidv4(), Body: JSON.stringify({ testdata: randomString() }) };
-  t.context.message1 = message1;
-
-  const key1 = getS3KeyForArchivedMessage(t.context.stackName, message1.id, queues.queueName);
+  const validMessage = { id: uuidv4(), Body: JSON.stringify({ testdata: randomString() }) };
+  t.context.validMessage = validMessage;
+  const key1 = getS3KeyForArchivedMessage(t.context.stackName, validMessage.id, queues.queueName);
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: key1,
-    Body: message1.Body,
+    Body: validMessage.Body,
   });
 });
 
+test.afterEach(async (t) => {
+  await deleteQueue(t.context.queueUrl);
+});
+
 test.after(async (t) => {
-  await S3.recursivelyDeleteS3Bucket(t.context.system_bucket);
+  await recursivelyDeleteS3Bucket(t.context.system_bucket);
 });
 
 test('replaySqsMessages queues messages to SQS for each archived message', async (t) => {
-  const { message1, queueUrl } = t.context;
+  const { queueName, queueUrl, validMessage } = t.context;
+
   const event = {
-    queueName: t.context.queueName,
+    queueName,
   };
-  const expected = [JSON.parse(message1.Body)];
+  const expected = [JSON.parse(validMessage.Body)];
+
+  const replay = (await replaySqsMessages(event));
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(queueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  t.deepEqual(replay, expected);
+});
+
+test('replaySqsMessages queues only valid messages to SQS', async (t) => {
+  const { queueName, queueUrl, validMessage } = t.context;
+  const invalidMessage = { id: uuidv4(), Body: randomString() };
+  const key2 = getS3KeyForArchivedMessage(t.context.stackName, invalidMessage.id, queueName);
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: key2,
+    Body: invalidMessage.Body,
+  });
+
+  const event = {
+    queueName,
+  };
+  const expected = [JSON.parse(validMessage.Body)];
 
   const replay = (await replaySqsMessages(event));
   const {
