@@ -81,7 +81,7 @@ test.after.always(async (t) => {
     accessTokenModel.deleteTable()]);
 });
 
-test.serial('POST /replayArchivedS3Messages starts an async-operation with specified payload', async (t) => {
+test.serial('POST /replaySqsMessages starts an async-operation with specified payload', async (t) => {
   const { asyncOperationStartStub, queues } = t.context;
   const body = {
     type: 'sqs',
@@ -89,7 +89,7 @@ test.serial('POST /replayArchivedS3Messages starts an async-operation with speci
   };
 
   const response = await request(app)
-    .post('/replayArchivedS3Messages')
+    .post('/replaySqsMessages')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -106,14 +106,14 @@ test.serial('POST /replayArchivedS3Messages starts an async-operation with speci
   t.true(asyncOperationStartStub.calledOnce);
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'SQS Replay');
-  t.is(lambdaName, process.env.ReplayArchivedS3MessagesLambda);
+  t.is(lambdaName, process.env.ReplaySqsMessagesLambda);
   t.deepEqual(payload, body);
 });
 
-test.serial('POST /replayArchivedS3Messages does not start an async-operation without queueName', async (t) => {
+test.serial('POST /replaySqsMessages does not start an async-operation without queueName', async (t) => {
   const { asyncOperationStartStub } = t.context;
   await request(app)
-    .post('/replayArchivedS3Messages')
+    .post('/replaySqsMessages')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ type: 'sqs' })
@@ -121,10 +121,10 @@ test.serial('POST /replayArchivedS3Messages does not start an async-operation wi
   t.false(asyncOperationStartStub.called);
 });
 
-test.serial('POST /replayArchivedS3Messages does not start an async-operation without type', async (t) => {
+test.serial('POST /replaySqsMessages does not start an async-operation without type', async (t) => {
   const { asyncOperationStartStub } = t.context;
   await request(app)
-    .post('/replayArchivedS3Messages')
+    .post('/replaySqsMessages')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ queueName: 'some-queue' })
