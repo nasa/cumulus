@@ -18,7 +18,7 @@ export interface PostgresProvider {
   protocol: string,
   updated_at?: Date | null,
   username?: string | null,
-  allowed_redirects?: string
+  allowed_redirects?: string[]
 }
 
 /**

@@ -3,7 +3,7 @@ import * as Knex from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   await knex.schema.table('providers', (table) => {
     table
-      .jsonb('allowed_redirects')
+      .specificType('allowed_redirects', 'text ARRAY')
       .comment('Allowed hosts for redirect when retrieving data. If a redirect outside of this list is encountered, data retrival will fail.');
   });
 
