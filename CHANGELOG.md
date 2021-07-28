@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+
 ## [v9.3.0] 2021-07-26
 
 ### BREAKING CHANGES
@@ -175,7 +180,7 @@ behavior
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
-  
+
 ### Fixed
 
 - **CUMULUS-2520**
