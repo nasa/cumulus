@@ -8,7 +8,7 @@ const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { createSqsQueues } = require('../../lib/testUtils');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const {
   replaySqsMessages,
 } = require('../../lambdas/replay-sqs-messages');
@@ -24,6 +24,7 @@ test.beforeEach(async (t) => {
   t.context.stackName = process.env.stackName;
 
   const queues = await createSqsQueues(randomString());
+  t.context.queueUrl = queues.queueUrl;
   t.context.queueName = queues.queueName;
 
   const message1 = { id: uuidv4(), Body: JSON.stringify({ testdata: randomString() }) };
@@ -42,12 +43,18 @@ test.after(async (t) => {
 });
 
 test('replaySqsMessages queues messages to SQS for each archived message', async (t) => {
-  const { message1 } = t.context;
+  const { message1, queueUrl } = t.context;
   const event = {
     queueName: t.context.queueName,
   };
   const expected = [JSON.parse(message1.Body)];
 
   const replay = (await replaySqsMessages(event));
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(queueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
   t.deepEqual(replay, expected);
 });
