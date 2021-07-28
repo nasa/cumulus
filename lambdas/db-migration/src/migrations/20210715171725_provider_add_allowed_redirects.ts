@@ -4,7 +4,7 @@ export const up = async (knex: Knex): Promise<void> =>
   await knex.schema.table('providers', (table) => {
     table
       .specificType('allowed_redirects', 'text ARRAY')
-      .comment('Allowed hosts for redirect when retrieving data. If a redirect outside of this list is encountered, data retrival will fail.');
+      .comment('Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.');
   });
 
 export const down = async (knex: Knex): Promise<void> => {

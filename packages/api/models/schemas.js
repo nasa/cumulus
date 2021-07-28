@@ -621,7 +621,8 @@ module.exports.provider = {
       type: 'string',
     },
     allowedRedirects: {
-      title: 'Allowed hosts for redirect when retrieving data. If a redirect outside of this list is encountered, data retrival will fail.',
+      title: 'Allowed redirects',
+      description: 'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
       type: 'array',
       items: {
         type: 'string',
