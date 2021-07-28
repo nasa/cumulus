@@ -27,6 +27,8 @@ downloading files protected by Earthdata Login)
   - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
 properly handle basic auth when redirecting to a different
 host and/or host with a different port
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 
 ## [v9.3.0] 2021-07-26
 
