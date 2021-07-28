@@ -16,13 +16,11 @@ const {
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { getQueueNameFromUrl } = require('@cumulus/aws-client/SQS');
-const Rule = require('../../models/rules');
-const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
-const rulesHelpers = require('../../lib/rulesHelpers');
 
-const {
-  handler,
-} = require('../../lambdas/sqs-message-consumer');
+const { handler } = require('../../lambdas/sqs-message-consumer');
+const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
+const Rule = require('../../models/rules');
+const rulesHelpers = require('../../lib/rulesHelpers');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -82,6 +80,9 @@ async function cleanupRulesAndQueues(rules, queues) {
   await Promise.all(
     rules.map((rule) => rulesModel.delete(rule))
   );
+
+  // Delete queueName for each object in list
+  queues.forEach((q) => delete q.queueName);
 
   const queueUrls = queues.reduce(
     (accumulator, currentValue) => accumulator.concat(Object.values(currentValue)), []
