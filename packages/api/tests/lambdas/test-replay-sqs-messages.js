@@ -3,41 +3,15 @@
 const test = require('ava');
 const uuidv4 = require('uuid/v4');
 
-const awsServices = require('@cumulus/aws-client/services');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
-
 const { randomString } = require('@cumulus/common/test-utils');
 
+const { createSqsQueues } = require('../../lib/testUtils');
 const {
-  replayArchivedMessages,
-} = require('../../lambdas/replay-archived-s3-messages');
-
-// Copied from @cumulus/api/lib/testUtils to avoid circular dependency
-
-/**
- * create a source queue
- *
- * @param {string} queueNamePrefix - prefix of the queue name
- * @param {string} visibilityTimeout - visibility timeout for queue messages
- * @returns {Object} - {queueUrl: <url>} queue created
- */
-async function createSqsQueues(
-  queueNamePrefix,
-  visibilityTimeout = '300'
-) {
-  // source queue
-  const queueName = `${queueNamePrefix}Queue`;
-  const queueParms = {
-    QueueName: queueName,
-    Attributes: {
-      VisibilityTimeout: visibilityTimeout,
-    },
-  };
-  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
-  return { queueName, queueUrl };
-}
+  replaySqsMessages,
+} = require('../../lambdas/replay-sqs-messages');
 
 test.before(async (t) => {
   process.env.system_bucket = randomString();
@@ -67,13 +41,13 @@ test.after(async (t) => {
   await S3.recursivelyDeleteS3Bucket(t.context.system_bucket);
 });
 
-test('replayArchivedMessages queues messages to SQS for each archived message', async (t) => {
+test('replaySqsMessages queues messages to SQS for each archived message', async (t) => {
   const { message1 } = t.context;
   const event = {
     queueName: t.context.queueName,
   };
   const expected = [JSON.parse(message1.Body)];
 
-  const replay = (await replayArchivedMessages(event));
+  const replay = (await replaySqsMessages(event));
   t.deepEqual(replay, expected);
 });
