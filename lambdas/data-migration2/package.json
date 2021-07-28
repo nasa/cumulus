@@ -39,7 +39,6 @@
     "pg": "^8.3.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "9.3.0",
-    "@cumulus/message": "9.3.0"
+    "@cumulus/test-data": "9.3.0"
   }
 }
