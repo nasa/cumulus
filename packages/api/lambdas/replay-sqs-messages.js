@@ -9,7 +9,7 @@ const { getQueueUrlByName, sendSQSMessage } = require('@cumulus/aws-client/SQS')
 const { getS3PrefixForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Logger = require('@cumulus/logger');
 
-const logger = new Logger({ sender: '@cumulus/replay-archived-messages' });
+const logger = new Logger({ sender: '@cumulus/replay-sqs-messages' });
 
 // Get messages from S3 using queueName
 const getArchivedMessagesFromQueue = async (queueName) => {
@@ -45,7 +45,7 @@ const getArchivedMessagesFromQueue = async (queueName) => {
   return archivedMessages;
 };
 
-async function replayArchivedMessages(event) {
+async function replaySqsMessages(event) {
   const replayedMessages = [];
   const queueName = event.queueName;
   const queueUrl = await getQueueUrlByName(queueName);
@@ -70,10 +70,10 @@ async function replayArchivedMessages(event) {
 }
 
 async function handler(event) {
-  return await replayArchivedMessages(event);
+  return await replaySqsMessages(event);
 }
 
 module.exports = {
   handler,
-  replayArchivedMessages,
+  replaySqsMessages,
 };

@@ -22,7 +22,7 @@ async function startArchivedMessagesReplay(req, res) {
   }
 
   if (payload.type === 'sqs' && !payload.queueName) {
-    return res.boom.badRequest('queueName is required for archived S3 messages replay');
+    return res.boom.badRequest('queueName is required for SQS messages replay');
   }
 
   const queueUrl = await getQueueUrlByName(payload.queueName);
@@ -32,11 +32,11 @@ async function startArchivedMessagesReplay(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    description: 'Archived Messages Replay',
+    description: 'SQS Replay',
     dynamoTableName: tableName,
     knexConfig: process.env,
-    lambdaName: process.env.ReplayArchivedS3MessagesLambda,
-    operationType: 'Archived S3 Messages Replay',
+    lambdaName: process.env.ReplaySQSMessagesLambda,
+    operationType: 'SQS Replay',
     payload,
     stackName,
     systemBucket,

@@ -105,7 +105,7 @@ test.serial('POST /replayArchivedS3Messages starts an async-operation with speci
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(cluster, process.env.EcsCluster);
-  t.is(description, 'Archived Messages Replay');
+  t.is(description, 'SQS Replay');
   t.is(lambdaName, process.env.ReplayArchivedS3MessagesLambda);
   t.deepEqual(payload, body);
 });

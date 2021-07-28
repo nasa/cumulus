@@ -22,7 +22,7 @@ let stackName;
 let testName;
 
 // The test setup entails creating SQS messages that will be archived in S3
-describe('The replay archived S3 messages API endpoint', () => {
+describe('The replay SQS messages API endpoint', () => {
   const invalidMessage = JSON.stringify({ testdata: randomString() });
 
   beforeAll(async () => {
@@ -75,11 +75,12 @@ describe('The replay archived S3 messages API endpoint', () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        path: '/replayArchivedS3Messages',
+        path: '/replaySqsMessages',
         body: JSON.stringify(apiRequestBody),
       },
       expectedStatusCode: 202,
     });
+    console.log('REPSONSE', response.body);
     asyncOperationId = JSON.parse(response.body).asyncOperationId;
     expect(asyncOperationId).toBeDefined();
   });

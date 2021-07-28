@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
+data "aws_iam_policy_document" "replay_sqs_messages_policy" {
 
   statement {
     actions   = [
@@ -43,24 +43,24 @@ data "aws_iam_policy_document" "replay_archived_s3_messages_policy" {
   }
 }
 
-resource "aws_iam_role" "replay_archived_s3_messages_role" {
-  name                 = "${var.prefix}_replay_archived_s3_messages_role"
+resource "aws_iam_role" "replay_sqs_messages_role" {
+  name                 = "${var.prefix}_replay_sqs_messages_role"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
 }
 
-resource "aws_iam_role_policy" "replay_archived_s3_messages_role_policy" {
-  name   = "${var.prefix}_replay_archived_s3_messages_lambda_role_policy"
-  role   = aws_iam_role.replay_archived_s3_messages_role.id
-  policy = data.aws_iam_policy_document.replay_archived_s3_messages_policy.json
+resource "aws_iam_role_policy" "replay_sqs_messages_role_policy" {
+  name   = "${var.prefix}_replay_sqs_messages_lambda_role_policy"
+  role   = aws_iam_role.replay_sqs_messages_role.id
+  policy = data.aws_iam_policy_document.replay_sqs_messages_policy.json
 }
 
-resource "aws_lambda_function" "replay_archived_s3_messages" {
-  filename         = "${path.module}/../../packages/api/dist/replayArchivedS3Messages/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/replayArchivedS3Messages/lambda.zip")
-  function_name    = "${var.prefix}-replayArchivedS3Messages"
-  role             = aws_iam_role.replay_archived_s3_messages_role.arn
+resource "aws_lambda_function" "replay_sqs_messages" {
+  filename         = "${path.module}/../../packages/api/dist/replaySqsMessages/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/replaySqsMessages/lambda.zip")
+  function_name    = "${var.prefix}-replaySqsMessages"
+  role             = aws_iam_role.replay_sqs_messages_role.arn
   handler          = "index.handler"
   runtime          = "nodejs12.x"
   timeout          = 300
@@ -90,8 +90,8 @@ resource "aws_lambda_function" "replay_archived_s3_messages" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_log_group" "replay_archived_s3_messages" {
-  name = "/aws/lambda/${aws_lambda_function.replay_archived_s3_messages.function_name}"
+resource "aws_cloudwatch_log_group" "replay_sqs_messages" {
+  name = "/aws/lambda/${aws_lambda_function.replay_sqs_messages.function_name}"
   retention_in_days = 30
   tags = var.tags
 }

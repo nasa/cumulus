@@ -2,7 +2,7 @@ import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 /**
- * POST a request to start replaying archived S3 Messages
+ * POST a request to start replaying archived SQS Messages
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
@@ -13,7 +13,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-export const postReplayArchivedMessages = async (params: {
+export const replaySqsMessages = async (params: {
   prefix: string,
   queueName: string,
   callback?: InvokeApiFunction,
@@ -28,7 +28,7 @@ export const postReplayArchivedMessages = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/replayArchivedS3Messages/${queueName}`,
+      path: `/replaySqsMessages/${queueName}`,
     },
     expectedStatusCode: 202,
   });

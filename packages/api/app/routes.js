@@ -28,7 +28,7 @@ const migrationCounts = require('../endpoints/migrationCounts');
 const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
-const replayArchivedS3Messages = require('../endpoints/replayArchivedS3Messages');
+const replaySqsMessages = require('../endpoints/replaySqsMessages');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -38,7 +38,7 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // replay archived S3 messages endpoint
-router.use('/replayArchivedS3Messages', ensureAuthorized, replayArchivedS3Messages);
+router.use('/replaySqsMessages', ensureAuthorized, replaySqsMessages);
 
 // dead letters endpoint
 router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive);
