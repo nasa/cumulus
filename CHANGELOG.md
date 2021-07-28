@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - `@cumulus/sync-granule` task should now properly handle
 syncing files from HTTP/HTTPS providers where basic auth is
 required and involves a redirect to a different host (e.g.
-downloading files protected by Earthdata login)
+downloading files protected by Earthdata Login)
 
 ### Added
 
