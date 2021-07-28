@@ -131,3 +131,14 @@ test.serial('POST /replaySqsMessages does not start an async-operation without t
     .expect(400);
   t.false(asyncOperationStartStub.called);
 });
+
+test.serial('POST /replaySqsMessages returns Internal Server Error if SQS queue does not exist', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  await request(app)
+    .post('/replaySqsMessages')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ queueName: 'some-queue', type: 'sqs' })
+    .expect(500);
+  t.false(asyncOperationStartStub.called);
+});

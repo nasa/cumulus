@@ -27,7 +27,7 @@ async function startArchivedMessagesReplay(req, res) {
 
   const queueUrl = await getQueueUrlByName(payload.queueName);
   if (!(await sqsQueueExists(queueUrl))) {
-    logger.info(`Could not find queue ${queueUrl}. Unable to process message.`);
+    logger.error(`Could not find queue ${queueUrl}. Unable to process message.`);
   }
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
