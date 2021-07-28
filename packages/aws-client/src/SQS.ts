@@ -162,15 +162,15 @@ export const deleteSQSMessage = improveStackTrace(
 /**
  * Test if an SQS queue exists
  *
- * @param {Object} queue - queue name or url
- * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
+ * @param {Object} queueUrl     - queue url
+ * @returns {Promise<boolean>}  - a Promise that will resolve to a boolean indicating
  *                               if the queue exists
  */
-export const sqsQueueExists = async (queue: string) => {
-  const QueueName = getQueueNameFromUrl(queue);
+export const sqsQueueExists = async (queueUrl: string) => {
+  const QueueName = getQueueNameFromUrl(queueUrl);
 
   if (!QueueName) {
-    throw new Error(`Unable to determine QueueName from ${queue}`);
+    throw new Error(`Unable to determine QueueName from ${queueUrl}`);
   }
 
   try {
