@@ -2,9 +2,9 @@
 
 const test = require('ava');
 
-const replayArchivedMessagesApi = require('../replayArchivedS3Messages');
+const replaySqsMessagesApi = require('../replaySqsMessages');
 
-test('postReplayArchivedMessages calls the callback with the expected object and returns the parsed response', async (t) => {
+test('replaySqsMessages calls the callback with the expected object and returns the parsed response', async (t) => {
   const prefix = 'unitTestStack';
   const queueName = 'myQueue';
 
@@ -16,7 +16,7 @@ test('postReplayArchivedMessages calls the callback with the expected object and
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/replayArchivedS3Messages/${queueName}`,
+      path: `/replaySqsMessages/${queueName}`,
     },
     expectedStatusCode: 202,
   };
@@ -24,7 +24,7 @@ test('postReplayArchivedMessages calls the callback with the expected object and
     t.deepEqual(expected, configObject);
   };
 
-  await t.notThrowsAsync(replayArchivedMessagesApi.postReplayArchivedMessages({
+  await t.notThrowsAsync(replaySqsMessagesApi.replaySqsMessages({
     prefix,
     queueName,
     callback,
