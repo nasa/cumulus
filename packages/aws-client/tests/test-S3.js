@@ -409,3 +409,19 @@ test('streamS3Upload() uploads contents of stream to S3', async (t) => {
   );
   t.is(object.Body.toString(), sourceData);
 });
+
+test('streamS3Upload() throws error if upload stream errors', async (t) => {
+  const sourceFile = `non-existent-path${randomString()}`;
+  const key = randomString();
+  await t.throwsAsync(
+    streamS3Upload(
+      fs.createReadStream(sourceFile),
+      {
+        Bucket: t.context.Bucket,
+        Key: key,
+        ContentType: 'plaintext',
+      }
+    ),
+    { message: /ENOENT: no such file or directory/ }
+  );
+});
