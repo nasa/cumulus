@@ -211,6 +211,7 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
+    let key;
     let messageId;
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 
@@ -221,10 +222,11 @@ describe('The SQS rule', () => {
       // post a non-processable message
       const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
       messageId = message.MessageId;
+      queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
+      key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
     });
 
     afterAll(async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
       await deleteS3Object(config.bucket, key);
     });
 
@@ -283,8 +285,6 @@ describe('The SQS rule', () => {
     });
 
     it('stores incoming messages on S3', async () => {
-      queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: key,
