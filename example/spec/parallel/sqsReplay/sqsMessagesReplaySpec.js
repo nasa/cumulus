@@ -13,7 +13,7 @@ const {
 } = require('../../helpers/testUtils');
 
 let asyncOperationId;
-let beforeAllFailed = false;
+let beforeAllFailed;
 let config;
 let queueName;
 let queueUrl;
@@ -50,7 +50,6 @@ describe('The replay SQS messages API endpoint', () => {
       });
     } catch (error) {
       beforeAllFailed = true;
-      throw error;
     }
   });
 
@@ -61,7 +60,7 @@ describe('The replay SQS messages API endpoint', () => {
   });
 
   it('starts an AsyncOperation and returns an AsyncOperation ID when a valid SQS replay request is made', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     const apiRequestBody = {
       type: 'sqs',
       queueName: queueName,
@@ -84,7 +83,7 @@ describe('The replay SQS messages API endpoint', () => {
   });
 
   it('updates the async operation results with a list of replayed messages', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     const response = await waitForAsyncOperationStatus({
       id: asyncOperationId,
       status: 'SUCCEEDED',
