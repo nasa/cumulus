@@ -49,7 +49,7 @@ describe('The replay SQS messages API endpoint', () => {
         Body: retrievedMessage[0].Body,
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
     }
   });
 
