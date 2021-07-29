@@ -16,6 +16,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   ProviderPgModel,
+  nullifyUndefinedProviderValues,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -43,12 +44,22 @@ const generateFakeProvider = (params) => ({
   privateKey: 'key',
   cmKeyId: 'key-id',
   certificateUri: 'uri',
+  allowedRedirects: ['redirect-1', 'redirect-2'],
   ...params,
 });
 
 let providersModel;
 let rulesModel;
-const providerOmitList = ['id', 'globalConnectionLimit', 'privateKey', 'cmKeyId', 'certificateUri', 'createdAt', 'updatedAt'];
+const providerOmitList = [
+  'id',
+  'globalConnectionLimit',
+  'privateKey',
+  'cmKeyId',
+  'certificateUri',
+  'createdAt',
+  'updatedAt',
+  'allowedRedirects',
+];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -122,8 +133,9 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
       ['cumulus_id']
     ),
     omit(
-      {
+      nullifyUndefinedProviderValues({
         ...fakeProvider,
+        allowed_redirects: fakeProvider.allowedRedirects,
         name: fakeProvider.id,
         global_connection_limit: fakeProvider.globalConnectionLimit,
         private_key: fakeProvider.privateKey,
@@ -131,7 +143,7 @@ test.serial('migrateProviderRecord correctly migrates provider record', async (t
         certificate_uri: fakeProvider.certificateUri,
         created_at: new Date(fakeProvider.createdAt),
         updated_at: new Date(fakeProvider.updatedAt),
-      },
+      }),
       [...providerOmitList, 'encrypted']
     )
   );
@@ -253,6 +265,7 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   delete fakeProvider.cmKeyId;
   delete fakeProvider.certificateUri;
   delete fakeProvider.updatedAt;
+  delete fakeProvider.allowedRedirects;
 
   await migrateProviderRecord(fakeProvider, knex);
   const createdRecord = await providerPgModel.get(
@@ -265,18 +278,12 @@ test.serial('migrateProviderRecord handles nullable fields on source collection 
   t.deepEqual(
     omit(createdRecord, ['cumulus_id', 'updated_at']),
     omit(
-      {
+      nullifyUndefinedProviderValues({
         ...fakeProvider,
         name: fakeProvider.id,
-        port: null,
-        username: null,
-        password: null,
         global_connection_limit: fakeProvider.globalConnectionLimit,
-        private_key: null,
-        cm_key_id: null,
-        certificate_uri: null,
         created_at: new Date(fakeProvider.createdAt),
-      },
+      }),
       providerOmitList
     )
   );

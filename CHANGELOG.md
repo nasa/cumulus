@@ -6,8 +6,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+
 ### Fixed
 
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
 - **CUMULUS-2626**
   - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 
@@ -30,10 +49,13 @@ The default reserved concurrency value is 8.
 ### Notable changes
 
 - `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
-integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
-that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
-variable.
-
+  integrate with a custom CMR host name and protocol (e.g.
+  `http://custom-cmr-host.com`). Note that you **must** include a protocol
+  (`http://` or `https://)  if specifying a value for this variable.
+- The cumulus module configuration value`rds_connetion_heartbeat` and it's
+  behavior has been replaced by a more robust database connection 'retry'
+  solution.   Users can remove this value from their configuration, regardless
+  of value.  See the `Changed` section notes on CUMULUS-2528 for more details.
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
@@ -125,7 +147,30 @@ behavior
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
 - **CUMULUS-2463**
-  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
+  - Increases the duration of allowed backoff times for a successful test from
+    0.5 sec to 1 sec.
+- **CUMULUS-2528**
+  - Removed `rds_connection_heartbeat` as a configuration option from all
+    Cumulus terraform modules
+  - Removed `dbHeartBeat` as an environmental switch from
+    `@cumulus/db.getKnexClient` in favor of more comprehensive general db
+    connect retry solution
+  - Added new `rds_connection_timing_configuration` string map to allow for
+    configuration and tuning of Core's internal database retry/connection
+    timeout behaviors.  These values map to connection pool configuration
+    values for tarn (https://github.com/vincit/tarn.js/) which Core's database
+    module / knex(https://www.npmjs.com/package/knex) use for this purpose:
+    - acquireTimeoutMillis
+    - createRetryIntervalMillis
+    - createTimeoutMillis
+    - idleTimeoutMillis
+    - reapIntervalMillis
+      Connection errors will result in a log line prepended with 'knex failed on
+      attempted connection error' and sent from '@cumulus/db/connection'
+  - Updated `@cumulus/db` and all terraform mdules to set default retry
+    configuration values for the database module to cover existing database
+    heartbeat connection failures as well as all other knex/tarn connection
+    creation failures.
 
 ### Fixed
 
@@ -153,6 +198,7 @@ behavior
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
 
 ### Changed
+
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`

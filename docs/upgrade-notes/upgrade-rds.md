@@ -104,7 +104,6 @@ The following variables were added to the Cumulus module
 
 - `rds_security_group`
 - `rds_user_access_secret_arn`
-- `rds_connection_heartbeat`
 
 For reference on how to set these values, see our template-deploy repo: <https://github.com/nasa/cumulus-template-deploy/tree/master/cumulus-tf>
 
