@@ -33,7 +33,7 @@ export async function archiveSqsMessageToS3(queueUrl:string, message: SQSMessage
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
 
   if (!message.MessageId) {
-    const error = new Error(`MessageId on message ${message} required but not found.`);
+    const error = new Error(`MessageId on message ${JSON.stringify(message)} required but not found.`);
     logger.error(error);
     throw error;
   }
@@ -63,8 +63,8 @@ export async function archiveSqsMessageToS3(queueUrl:string, message: SQSMessage
 /**
  * Deletes archived SQS Message from S3
  *
- * @param {Object} messageId - SQS message ID
- * @param {Object} queueUrl  - SQS queue URL
+ * @param {string} messageId - SQS message ID
+ * @param {string} queueUrl  - SQS queue URL
  * @returns {undefined}
  */
 export async function deleteArchivedMessageFromS3(messageId: string, queueUrl: string) {

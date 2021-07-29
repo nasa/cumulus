@@ -61,13 +61,13 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
     queues.queueUrl,
     body
   );
-  const messages = await receiveSQSMessages(
+  const receivedMessage = await receiveSQSMessages(
     queues.queueUrl,
     { numOfMessages: 1, visibilityTimeout: 5 }
   );
   const key = getS3KeyForArchivedMessage(stackName, message.MessageId, queues.queueName);
 
-  await Promise.all(messages.map((m) => archiveSqsMessageToS3(queues.queueUrl, m)));
+  await archiveSqsMessageToS3(queues.queueUrl, receivedMessage[0]);
 
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
@@ -84,7 +84,7 @@ test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot 
     queues.queueUrl,
     body
   );
-  const messages = await receiveSQSMessages(
+  const receivedMessage = await receiveSQSMessages(
     queues.queueUrl,
     { numOfMessages: 1, visibilityTimeout: 5 }
   );
@@ -92,7 +92,7 @@ test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot 
   const queueUrl = '';
 
   await t.throwsAsync(
-    Promise.all(messages.map((m) => archiveSqsMessageToS3(queueUrl, m))),
+    archiveSqsMessageToS3(queueUrl, receivedMessage[0]),
     { message: `Unable to determine queueName from ${queueUrl}` }
   );
 });
