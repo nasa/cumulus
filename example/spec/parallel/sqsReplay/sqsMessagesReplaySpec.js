@@ -1,7 +1,7 @@
 'use strict';
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { invokeApi } = require('@cumulus/api-client');
+const { replaySqsMessages } = require('@cumulus/api-client/replaySqsMessages');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -61,23 +61,14 @@ describe('The replay SQS messages API endpoint', () => {
 
   it('starts an AsyncOperation and returns an AsyncOperation ID when a valid SQS replay request is made', async () => {
     if (beforeAllFailed) fail(beforeAllFailed);
-    const apiRequestBody = {
-      type: 'sqs',
-      queueName: queueName,
-    };
-    const response = await invokeApi({
+    const params = {
       prefix: stackName,
       payload: {
-        httpMethod: 'POST',
-        resource: '/{proxy+}',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        path: '/replaySqsMessages',
-        body: JSON.stringify(apiRequestBody),
+        queueName,
+        type: 'sqs',
       },
-      expectedStatusCode: 202,
-    });
+    };
+    const response = await replaySqsMessages(params);
     asyncOperationId = JSON.parse(response.body).asyncOperationId;
     expect(asyncOperationId).toBeDefined();
   });
