@@ -21,11 +21,8 @@ resource "aws_lambda_function" "postgres_migration_count_tool" {
       createTimeoutMillis         = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
       ExecutionsTable             = var.dynamo_tables.executions.name
-      ExecutionsTable             = var.dynamo_tables.executions.name
-      GranulesTable               = var.dynamo_tables.granules.name
       GranulesTable               = var.dynamo_tables.granules.name
       idleTimeoutMillis           = var.rds_connection_timing_configuration.idleTimeoutMillis
-      PdrsTable                   = var.dynamo_tables.pdrs.name
       PdrsTable                   = var.dynamo_tables.pdrs.name
       prefix                      = var.prefix
       ProvidersTable              = var.dynamo_tables.providers.name
