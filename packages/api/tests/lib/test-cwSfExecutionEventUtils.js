@@ -314,7 +314,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
   t.deepEqual(message, expectedMessage);
 });
 
-test('getFailedStepName() returns the name of the most recent TaskStateEntered event to the lastFailureId.', (t) => {
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
   const randomFailedStepName = randomFailedStepNameFn();
   const events = [
     {
@@ -343,14 +343,37 @@ test('getFailedStepName() returns the name of the most recent TaskStateEntered e
       id: 5,
       previousEventId: 4,
       lambdaFunctionFailedEventDetails: {
-        error: 'CumulusMessageAdapterExecutionError',
-        cause: 'someCause',
+        error: 'ThisIsTheFailureWeAreTesting',
+        cause: 'something',
       },
+    },
+    {
+      type: 'TaskStateEntered',
+      id: 6,
+      previousEventId: 5,
+      stateEnteredEventDetails: {
+        name: 'ALaterSuccessfulTaskEntered',
+      },
+    },
+    {
+      type: 'LambdaFunctionExited',
+      id: 7,
+      previousEventId: 6,
     },
   ];
 
+  const failedEvent = {
+    type: 'LambdaFunctionFailed',
+    id: 5,
+    previousEventId: 4,
+    lambdaFunctionFailedEventDetails: {
+      error: 'ThisIsTheFailureWeAreTesting',
+      cause: 'something',
+    },
+  };
+
   const expected = randomFailedStepName;
-  const actual = getFailedStepName(events, events[events.length - 1]);
+  const actual = getFailedStepName(events, failedEvent);
 
   t.is(actual, expected);
 });
