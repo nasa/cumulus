@@ -216,7 +216,7 @@ describe('The Ingest Granule failure workflow', () => {
       expect(syncGranExceptionCause).toEqual(syncGranFailedCause);
     });
 
-    it('logs the execution with the error message', () => {
+    it('The execution error object has the expected values for the Error, failedExecutionStepName and Cause keys', () => {
       expect(execution.error.Error).toBe(syncGranFailedDetail.error);
       expect(execution.error.failedExecutionStepName).toBe('SyncGranule');
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
