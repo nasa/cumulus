@@ -12,9 +12,12 @@ export function getS3PrefixForArchivedMessage(stackName:string, queueName: strin
   return prefix;
 }
 
-// eslint-disable-next-line max-len
-export function getS3KeyForArchivedMessage(stackName: string, messageId: string, queueName: string) {
-  const key = `${stackName}/archived-incoming-messages/${queueName}/${messageId}`;
+export function getS3KeyForArchivedMessage(
+  stackName: string,
+  messageId: string,
+  queueName: string
+) {
+  const key = `${getS3PrefixForArchivedMessage(stackName, queueName)}${messageId}`;
   return key;
 }
 

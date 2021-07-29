@@ -77,6 +77,26 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   t.deepEqual(body, JSON.parse(item.Body));
 });
 
+test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot be derived from queueUrl', async (t) => {
+  const { queues } = t.context;
+  const body = { testdata: randomString() };
+  await SQS.sendSQSMessage(
+    queues.queueUrl,
+    body
+  );
+  const messages = await receiveSQSMessages(
+    queues.queueUrl,
+    { numOfMessages: 1, visibilityTimeout: 5 }
+  );
+
+  const queueUrl = '';
+
+  await t.throwsAsync(
+    Promise.all(messages.map((m) => archiveSqsMessageToS3(queueUrl, m))),
+    { message: `Unable to determine queueName from ${queueUrl}` }
+  );
+});
+
 test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
   const { queues } = t.context;
   const message = { testdata: randomString() };
@@ -104,6 +124,41 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
 
   // Check that item no longer exists
   t.false(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }));
+});
+
+test.serial('deleteArchivedMessageFromS3 does delete archived message if queueName cannot be derived from queueUrl', async (t) => {
+  const { queues } = t.context;
+  const message = { testdata: randomString() };
+  await createBucket(process.env.system_bucket);
+
+  const sqsMessage = await awsServices.sqs().sendMessage({
+    QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(message),
+  }).promise();
+  const messageId = sqsMessage.MessageId;
+  const key = getS3KeyForArchivedMessage(process.env.stackName, messageId, queues.queueName);
+  const queueUrl = '';
+
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: sqsMessage.Body,
+  });
+
+  // Check that item exists in S3
+  t.true(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }));
+
+  await t.throwsAsync(
+    deleteArchivedMessageFromS3(messageId, queueUrl),
+    { message: `Unable to determine queueName from ${queueUrl}` }
+  );
+  // Check that item still exists in S3
+  t.true(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: key,
   }));
