@@ -241,7 +241,7 @@ variable "private_archive_api_gateway" {
 }
 
 variable "rds_connection_timing_configuration" {
-  description = "Cumulus rds connection timeout retry timing object"
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
   type = map(number)
   default = {
       acquireTimeoutMillis: 90000
