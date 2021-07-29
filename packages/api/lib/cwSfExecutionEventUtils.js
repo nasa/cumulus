@@ -30,13 +30,13 @@ const executionStatusToWorkflowStatus = (executionStatus) => {
  * the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
  * one.
 *
- * @param {HistoryEvent[]} events
- * @param {number} lastFailureId
+ * @param {HistoryEvent[]} events - Step Function events array
+ * @param {HistoryEvent} failedStepEvent - Step Function's failed event.
  * @returns {string} name of the current stepfunction task or 'UnknownFailedStepName'.
  */
-const getFailedStepName = (events, lastFailureId) => {
+const getFailedStepName = (events, failedStepEvent) => {
   try {
-    const previousEvents = events.slice(0, lastFailureId - 1);
+    const previousEvents = events.slice(0, failedStepEvent.id - 1);
     const startEvents = previousEvents.filter((e) => e.type === 'TaskStateEntered');
     return startEvents.pop().stateEnteredEventDetails.name;
   } catch (error) {
@@ -83,20 +83,21 @@ const getFailedExecutionMessage = async (inputCumulusMessage) => {
       log.warn(`No failed step events found in execution ${executionArn}`);
       return amendedCumulusMessage;
     }
-    const failedExecutionStepName = getFailedStepName(events, lastFailedEvent.id);
+    const failedExecutionStepName = getFailedStepName(events, lastFailedEvent);
     const failedStepExitedEvent = getStepExitedEvent(events, lastFailedEvent);
 
     if (!failedStepExitedEvent) {
       log.info(`Could not retrieve output from last failed step in execution ${executionArn}, falling back to execution input`);
-      log.error(new Error(`Could not find TaskStateExited event after step ID ${lastFailedEvent.id} for execution ${executionArn}`));
+      log.info(`Could not find TaskStateExited event after step ID ${lastFailedEvent.id} for execution ${executionArn}`);
+      return {
+        ...amendedCumulusMessage,
+        exception: {
+          ...lastFailedEvent.activityFailedEventDetails,
+          ...lastFailedEvent.lambdaFunctionFailedEventDetails,
+          failedExecutionStepName,
 
-      amendedCumulusMessage.exception = {
-        ...lastFailedEvent.activityFailedEventDetails,
-        ...lastFailedEvent.lambdaFunctionFailedEventDetails,
-        failedExecutionStepName,
+        },
       };
-      // If input from the failed step can't be retrieved, fall back to execution input.
-      return amendedCumulusMessage;
     }
 
     const taskExitedEventOutput = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent));

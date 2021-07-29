@@ -350,7 +350,7 @@ test('getFailedStepName() returns the name of the most recent TaskStateEntered e
   ];
 
   const expected = randomFailedStepName;
-  const actual = getFailedStepName(events, 5);
+  const actual = getFailedStepName(events, events[events.length - 1]);
 
   t.is(actual, expected);
 });
