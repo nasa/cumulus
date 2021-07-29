@@ -38,11 +38,6 @@ const log = new Logger({ sender: '@cumulus/db/connection' });
  *   acquireConnectionTimeout connection timeout
  * @param {string} [params.env.migrationDir] - Directory to look in for
  *   migrations
- * @param {string} params.env.dbHeartBeat - Configuration option if set to 'true'
- *                                          causes the method to test the connection
- *                                          before returning a knex object.  Will retry
- *                                          on KnexTimeOutError due possible RDS serverless
- *                                          deployment architechtures
  * @returns {Promise<Knex>} a Knex configuration object that has returned at least one query
  */
 export const getKnexClient = async ({
