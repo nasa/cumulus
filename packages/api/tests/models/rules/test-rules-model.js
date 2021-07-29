@@ -625,7 +625,9 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     newQueues.deadLetterQueueUrl,
   ];
   await Promise.all(
-    queuesToDelete.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queuesToDelete.map(
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+    )
   );
 });
 
