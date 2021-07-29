@@ -1,3 +1,4 @@
+import { ReplaySqsMessagesPayload } from '@cumulus/types/api/replaySqsMessages';
 import { invokeApi } from './cumulusApiClient';
 import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
@@ -6,7 +7,7 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
- * @param {string} params.queueName    - name of queue to queue archived messages
+ * @param {Object} params.payload      - payload to post to the endpoint
  * @param {Function} params.callback   - async function to invoke the api lambda
  *                                       that takes a prefix / user payload.  Defaults
  *                                       to cumulusApiClient.invokeApi
@@ -15,10 +16,10 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  */
 export const replaySqsMessages = async (params: {
   prefix: string,
-  queueName: string,
+  payload: ReplaySqsMessagesPayload,
   callback?: InvokeApiFunction,
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, queueName, callback = invokeApi } = params;
+  const { payload, prefix, callback = invokeApi } = params;
 
   return await callback({
     prefix,
@@ -28,7 +29,8 @@ export const replaySqsMessages = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/replaySqsMessages/${queueName}`,
+      path: '/replaySqsMessages',
+      body: JSON.stringify(payload),
     },
     expectedStatusCode: 202,
   });

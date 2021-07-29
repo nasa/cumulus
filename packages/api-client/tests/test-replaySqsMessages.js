@@ -7,6 +7,10 @@ const replaySqsMessagesApi = require('../replaySqsMessages');
 test('replaySqsMessages calls the callback with the expected object and returns the parsed response', async (t) => {
   const prefix = 'unitTestStack';
   const queueName = 'myQueue';
+  const payload = {
+    queueName,
+    type: 'sqs',
+  };
 
   const expected = {
     prefix,
@@ -16,7 +20,8 @@ test('replaySqsMessages calls the callback with the expected object and returns 
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/replaySqsMessages/${queueName}`,
+      path: '/replaySqsMessages',
+      body: JSON.stringify(payload),
     },
     expectedStatusCode: 202,
   };
@@ -26,7 +31,7 @@ test('replaySqsMessages calls the callback with the expected object and returns 
 
   await t.notThrowsAsync(replaySqsMessagesApi.replaySqsMessages({
     prefix,
-    queueName,
+    payload,
     callback,
   }));
 });
