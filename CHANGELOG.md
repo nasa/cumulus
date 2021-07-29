@@ -129,7 +129,7 @@ behavior
   - Increases the duration of allowed backoff times for a successful test from
     0.5 sec to 1 sec.
 - **CUMULUS-2528**
-  - Removed `rds_connetion_heartbeat` as a configuration option from all
+  - Removed `rds_connection_heartbeat` as a configuration option from all
     Cumulus terraform modules
   - Removed `dbHeartBeat` as an environmental switch from
     `@cumulus/db.getKnexClient` in favor of more comprehensive general db
