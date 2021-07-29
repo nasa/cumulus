@@ -3,8 +3,7 @@
 const pMap = require('p-map');
 
 const { envUtils } = require('@cumulus/common');
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { getQueueUrlByName, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3PrefixForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Logger = require('@cumulus/logger');
@@ -13,8 +12,8 @@ const logger = new Logger({ sender: '@cumulus/replay-sqs-messages' });
 
 // Get messages from S3 using queueName
 const getArchivedMessagesFromQueue = async (queueName) => {
-  let listObjectsResponse;
   let continuationToken;
+  const validMessages = [];
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
   const prefix = getS3PrefixForArchivedMessage(stackName, queueName);
@@ -25,24 +24,22 @@ const getArchivedMessagesFromQueue = async (queueName) => {
     Delimiter: '/',
   };
   logger.debug(`Params for listS3Keys bucket: ${bucket}, prefix: ${prefix}`);
-  const archivedMessages = [];
 
-  /* eslint-disable no-await-in-loop */
-  do {
-    listObjectsResponse = await s3().listObjectsV2(params).promise();
-    continuationToken = listObjectsResponse.NextContinuationToken;
-    const messageObjects = listObjectsResponse.Contents;
-
-    await Promise.allSettled(messageObjects.map(
-      async (messageObject) => {
-        const sqsMessage = await getJsonS3Object(bucket, messageObject.Key);
-        logger.debug(`Message retrieved ${JSON.stringify(sqsMessage)}`);
-        archivedMessages.push(sqsMessage);
-      }
-    ));
-  } while (listObjectsResponse.IsTruncated);
-  /* eslint-enable no-await-in-loop */
-  return archivedMessages;
+  const messageObjects = await listS3ObjectsV2(params);
+  const archivedMessages = await Promise.allSettled(messageObjects.map(
+    async (messageObject) => {
+      const sqsMessage = await getJsonS3Object(bucket, messageObject.Key);
+      logger.debug(`Message retrieved ${JSON.stringify(sqsMessage)}`);
+      return sqsMessage;
+    }
+  ));
+  archivedMessages.map((message) => {
+    if (message.status === 'fulfilled') {
+      validMessages.push(message.value);
+    }
+    return validMessages;
+  });
+  return validMessages;
 };
 
 async function replaySqsMessages(event) {
@@ -76,4 +73,5 @@ async function handler(event) {
 module.exports = {
   handler,
   replaySqsMessages,
+  getArchivedMessagesFromQueue,
 };

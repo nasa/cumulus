@@ -1,20 +1,19 @@
 'use strict';
 
-const delay = require('delay');
-
 const { randomString } = require('@cumulus/common/test-utils');
-const { invokeApi } = require('@cumulus/api-client');
+const { replaySqsMessages } = require('@cumulus/api-client/replaySqsMessages');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const {
   createTimestampedTestId,
   loadConfig,
 } = require('../../helpers/testUtils');
 
 let asyncOperationId;
-let beforeAllFailed = false;
+let beforeAllFailed;
 let config;
 let queueName;
 let queueUrl;
@@ -23,7 +22,7 @@ let testName;
 
 // The test setup entails creating SQS messages that will be archived in S3
 describe('The replay SQS messages API endpoint', () => {
-  const invalidMessage = JSON.stringify({ testdata: randomString() });
+  const message = JSON.stringify({ testdata: randomString() });
 
   beforeAll(async () => {
     try {
@@ -38,7 +37,7 @@ describe('The replay SQS messages API endpoint', () => {
       }).promise();
       queueUrl = QueueUrl;
 
-      const sqsMessage = await sendSQSMessage(queueUrl, invalidMessage);
+      const sqsMessage = await sendSQSMessage(queueUrl, message);
 
       const sqsOptions = { numOfMessages: 10, waitTimeSeconds: 20 };
       const retrievedMessage = await receiveSQSMessages(queueUrl, sqsOptions);
@@ -50,8 +49,7 @@ describe('The replay SQS messages API endpoint', () => {
         Body: retrievedMessage[0].Body,
       });
     } catch (error) {
-      beforeAllFailed = true;
-      throw error;
+      beforeAllFailed = error;
     }
   });
 
@@ -62,43 +60,31 @@ describe('The replay SQS messages API endpoint', () => {
   });
 
   it('starts an AsyncOperation and returns an AsyncOperation ID when a valid SQS replay request is made', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    const apiRequestBody = {
-      type: 'sqs',
-      queueName: queueName,
-    };
-    const response = await invokeApi({
+    if (beforeAllFailed) fail(beforeAllFailed);
+    const params = {
       prefix: stackName,
       payload: {
-        httpMethod: 'POST',
-        resource: '/{proxy+}',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        path: '/replaySqsMessages',
-        body: JSON.stringify(apiRequestBody),
+        queueName,
+        type: 'sqs',
       },
-      expectedStatusCode: 202,
-    });
-    console.log('REPSONSE', response.body);
+    };
+    const response = await replaySqsMessages(params);
     asyncOperationId = JSON.parse(response.body).asyncOperationId;
     expect(asyncOperationId).toBeDefined();
   });
 
   it('updates the async operation results with a list of replayed messages', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    await delay(100 * 1000);
-    const response = await invokeApi({
-      prefix: stackName,
-      payload: {
-        httpMethod: 'GET',
-        resource: '/{proxy+}',
-        path: `/asyncOperations/${asyncOperationId}`,
+    if (beforeAllFailed) fail(beforeAllFailed);
+    const response = await waitForAsyncOperationStatus({
+      id: asyncOperationId,
+      status: 'SUCCEEDED',
+      stackName: config.stackName,
+      retryOptions: {
+        retries: 30 * 5,
       },
     });
-    const body = JSON.parse(response.body);
-    const expected = JSON.parse(body.output)[0];
+    const expected = JSON.parse(response.output)[0];
 
-    expect(expected).toEqual(JSON.parse(invalidMessage));
+    expect(expected).toEqual(JSON.parse(message));
   });
 });

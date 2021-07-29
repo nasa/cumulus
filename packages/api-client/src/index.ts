@@ -10,3 +10,4 @@ export * as providers from './providers';
 export * as reconciliationReports from './reconciliationReports';
 export * as replays from './replays';
 export * as types from './types';
+export * as replaySqsMessages from './replaySqsMessages';
