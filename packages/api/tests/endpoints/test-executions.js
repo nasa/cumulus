@@ -714,7 +714,7 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
   const { collectionId, fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
-    .post('/executions/workflows-by-granules?limit=10')
+    .post('/executions/workflows-by-granules')
     .send({ granules: [
       { granuleId: fakeGranules[0].granuleId, collectionId },
       { granuleId: fakeGranules[1].granuleId, collectionId },
@@ -743,7 +743,7 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
   );
 
   const response = await request(app)
-    .post('/executions/workflows-by-granules?limit=10')
+    .post('/executions/workflows-by-granules')
     .send({ granules: [
       { granuleId: fakeGranules[0].granuleId, collectionId },
     ] })
@@ -786,7 +786,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   };
 
   const response = await request(app)
-    .post('/executions/workflows-by-granules?limit=10')
+    .post('/executions/workflows-by-granules')
     .send(body)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
