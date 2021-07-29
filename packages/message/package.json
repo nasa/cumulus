@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "8.1.1",
+  "version": "8.1.2",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -38,11 +38,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "8.1.1",
-    "@cumulus/common": "8.1.1",
-    "@cumulus/errors": "8.1.1",
-    "@cumulus/logger": "8.1.1",
-    "@cumulus/types": "8.1.1",
+    "@cumulus/aws-client": "8.1.2",
+    "@cumulus/common": "8.1.2",
+    "@cumulus/errors": "8.1.2",
+    "@cumulus/logger": "8.1.2",
+    "@cumulus/types": "8.1.2",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.20",
     "uuid": "^8.2.0"
