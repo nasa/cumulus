@@ -136,12 +136,17 @@ export const getKnexConfig = async ({
       // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
       // is improperly typed.
       //@ts-ignore
-      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
+      acquireTimeoutMillis: Number.parseInt(env.acquireTimeoutMillis ?? '90000', 10),
+      createRetryIntervalMillis: Number.parseInt(env.createRetryIntervalMillis ?? '30000', 10),
+      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '20000', 10),
+      destroyTimeoutMillis: Number.parseInt(env.destroyTimeoutMillis ?? '5000', 10),
+      reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
+      propagateCreateError: false,
     },
   };
 
-  knexConfig.acquireConnectionTimeout = env.knexAcquireConnectionTimeout
-    ? Number(env.knexAcquireConnectionTimeout)
+  knexConfig.acquireConnectionTimeout = env.acquireTimeoutMillis
+    ? Number(env.acquireTimeoutMillis + 1000)
     : 60000;
 
   if (env.migrationDir) {

@@ -16,9 +16,9 @@ module "postgres_migration_async_operation" {
   prefix                     = var.prefix
   permissions_boundary_arn   = var.permissions_boundary_arn
 
-  rds_connection_heartbeat   = var.rds_connection_heartbeat
-  rds_security_group_id      = var.rds_security_group
-  rds_user_access_secret_arn = var.rds_user_access_secret_arn
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+  rds_security_group_id                  = var.rds_security_group
+  rds_user_access_secret_arn             = var.rds_user_access_secret_arn
 
   system_bucket              = var.system_bucket
 
