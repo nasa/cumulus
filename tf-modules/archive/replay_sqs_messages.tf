@@ -72,7 +72,6 @@ resource "aws_lambda_function" "replay_sqs_messages" {
       stackName       = var.prefix
       dbHeartBeat     = var.rds_connection_heartbeat
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
     }
   }
 
