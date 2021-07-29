@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v9.2.1] 2021-07-28
+
+### Fixed
+
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+
 ## [v9.2.0] 2021-06-22
 
 ### Added
@@ -4432,7 +4439,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.2.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.2.1...HEAD
+[v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
