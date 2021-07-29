@@ -106,7 +106,7 @@ const getFailedExecutionMessage = async (inputCumulusMessage) => {
     };
     return await parseStepMessage(taskExitedEventOutput, failedExecutionStepName);
   } catch (error) {
-    log.error('getFailedExecution failed to retrieve failure.', error);
+    log.error('getFailedExecution failed to retrieve failure:', error);
     return amendedCumulusMessage;
   }
 };
