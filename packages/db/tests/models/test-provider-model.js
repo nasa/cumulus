@@ -76,3 +76,23 @@ test('ProviderPgModel.upsert() overwrites a provider record', async (t) => {
     }
   );
 });
+
+test('ProviderPgModel.upsert() creates provider with allowed_redirects', async (t) => {
+  const {
+    knex,
+    providerPgModel,
+    providerRecord,
+  } = t.context;
+
+  const updatedRecord = {
+    ...providerRecord,
+    allowed_redirects: ['test.com', 'fake.com:53'],
+  };
+
+  await providerPgModel.upsert(knex, updatedRecord);
+  const actualRecord = await providerPgModel.get(knex, updatedRecord);
+  t.like(
+    actualRecord,
+    updatedRecord
+  );
+});

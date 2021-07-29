@@ -10,7 +10,7 @@ import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
 import pump from 'pump';
 import querystring from 'querystring';
-import { Readable, TransformOptions } from 'stream';
+import { Readable, TransformOptions, PassThrough } from 'stream';
 import { deprecate } from 'util';
 
 import {
@@ -254,6 +254,38 @@ export const s3CopyObject = improveStackTrace(
 export const promiseS3Upload = improveStackTrace(
   (params: AWS.S3.PutObjectRequest) => s3().upload(params).promise()
 );
+
+/**
+ * Upload data to S3 using a stream
+ *
+ * We are not using `s3.upload().promise()` due to errors observed in testing
+ * with uncaught exceptions. By creating our own promise, we can ensure any
+ * errors from the streams or upload cause this promise to reject.
+ *
+ * @param {Readable} uploadStream - Stream of data to upload
+ * @param {Object} uploadParams - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise}
+ */
+export const streamS3Upload = (
+  uploadStream: Readable,
+  uploadParams: AWS.S3.PutObjectRequest
+) => new Promise((resolve, reject) => {
+  const pass = new PassThrough();
+  uploadStream.pipe(pass);
+
+  uploadStream.on('error', reject);
+  pass.on('error', reject);
+
+  return s3().upload({
+    ...uploadParams,
+    Body: pass,
+  }, (err, uploadResponse) => {
+    if (err) {
+      return reject(err);
+    }
+    return resolve(uploadResponse);
+  });
+});
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner

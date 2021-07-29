@@ -620,6 +620,14 @@ module.exports.provider = {
       title: 'Host',
       type: 'string',
     },
+    allowedRedirects: {
+      title: 'Allowed redirects',
+      description: 'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
     port: {
       title: 'Port',
       type: 'number',
