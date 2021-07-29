@@ -73,4 +73,5 @@ async function handler(event) {
 module.exports = {
   handler,
   replaySqsMessages,
+  getArchivedMessagesFromQueue,
 };

@@ -10,6 +10,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
 const {
+  getArchivedMessagesFromQueue,
   replaySqsMessages,
 } = require('../../lambdas/replay-sqs-messages');
 
@@ -86,4 +87,16 @@ test('replaySqsMessages queues only valid messages to SQS', async (t) => {
   t.is(numberOfMessagesAvailable, 1);
   t.is(numberOfMessagesNotVisible, 0);
   t.deepEqual(replay, expected);
+});
+
+test('getArchivedMessagesFromQueue gets archived messages from S3 with the provided queueName', async (t) => {
+  const { queueName, validMessage } = t.context;
+  const messages = await getArchivedMessagesFromQueue(queueName);
+  const expected = [JSON.parse(validMessage.Body)];
+  t.deepEqual(messages, expected);
+});
+
+test('getArchivedMessagesFromQueue returns no messages if queueName does not exist', async (t) => {
+  const messages = await getArchivedMessagesFromQueue(randomString());
+  t.deepEqual(messages, []);
 });
