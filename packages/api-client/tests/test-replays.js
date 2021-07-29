@@ -18,7 +18,7 @@ test('postKinesisReplays calls the callback with the expected object', async (t)
       headers: {
         'Content-Type': 'application/json',
       },
-      path: '/replays',
+      path: '/replays/kinesis',
       body: JSON.stringify(payload),
     },
     expectedStatusCode: 202,
