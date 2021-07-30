@@ -267,23 +267,23 @@ class GranuleFetcher {
         options,
       });
     } else {
-      log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
+      log.warn(`Could not verify ${file.bucket}/${file.key} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
     if (file.size) {
       const ingestedSize = await S3.getObjectSize({ s3: s3(), bucket, key });
       if (ingestedSize !== (file.size)) {
         throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
+          `verifyFile ${file.key} failed: Actual file size ${ingestedSize}`
           + ` did not match expected file size ${(file.size)}`
         );
       }
     } else {
-      log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
+      log.warn(`Could not verify ${file.key} expected file size: ${file.size}.`);
     }
 
     return (file.checksumType || file.checksum)
       ? [file.checksumType, file.checksum]
-      : [null, null];
+      : [undefined, undefined];
   }
 
   /**
@@ -328,11 +328,11 @@ class GranuleFetcher {
 
     // the staged file expected
     const stagedFile = {
-      ...file,
-      filename: S3.buildS3Uri(destinationBucket, destinationKey),
-      fileStagingDir: stagingPath,
-      url_path: this.getUrlPath(file),
+      size: file.size,
+      type: file.type,
       bucket: destinationBucket,
+      key: destinationKey,
+      source: `${file.path}/${file.name}`,
     };
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
@@ -352,7 +352,7 @@ class GranuleFetcher {
       );
 
       if (s3ObjAlreadyExists) {
-        stagedFile.duplicate_found = true;
+        stagedFile.duplicate_found = true; // TODO add duplicate configuration key
         const stagedFileKey = `${destinationKey}.${uuidv4()}`;
         // returns renamed files for 'version', otherwise empty array
         versionedFiles = await handleDuplicateFile({
@@ -390,16 +390,16 @@ class GranuleFetcher {
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file
     log.debug(`returning ${JSON.stringify(stagedFile)}`);
-    return [stagedFile].concat(versionedFiles.map((f) => (
+    const returnVal = [stagedFile].concat(versionedFiles.map((f) => (
       {
-        bucket: destinationBucket,
-        name: path.basename(f.Key),
-        path: file.path,
+        bucket: f.Bucket,
+        key: f.Key,
+        source: `${file.path}/${file.key}`,
         filename: S3.buildS3Uri(f.Bucket, f.Key),
         size: f.size,
         fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file),
       })));
+    return returnVal;
   }
 }
 

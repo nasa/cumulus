@@ -77,7 +77,8 @@ async function download({
  * @param {Object} event - contains input and config parameters
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
-exports.syncGranule = function syncGranule(event) {
+
+function syncGranule(event) {
   const config = event.config;
   const input = event.input;
   const stack = config.stack;
@@ -133,7 +134,7 @@ exports.syncGranule = function syncGranule(event) {
     log.error(errorToThrow);
     throw errorToThrow;
   });
-};
+}
 
 /**
  * Lambda handler
@@ -143,10 +144,12 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-exports.handler = async function handler(event, context) {
+async function handler(event, context) {
   return await cumulusMessageAdapter.runCumulusTask(
-    exports.syncGranule,
+    syncGranule,
     event,
     context
   );
-};
+}
+
+module.exports = { handler, syncGranule };
