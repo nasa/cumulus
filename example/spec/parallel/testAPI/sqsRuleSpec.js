@@ -1,5 +1,6 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
 const delay = require('delay');
 const fs = require('fs-extra');
 const replace = require('lodash/replace');
@@ -16,6 +17,7 @@ const {
   getQueueUrlByName,
   getQueueNameFromUrl,
 } = require('@cumulus/aws-client/SQS');
+const { randomString } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
@@ -53,6 +55,7 @@ const {
 let config;
 let executionArn;
 let inputPayload;
+let key;
 let pdrFilename;
 let queueName;
 let ruleOverride;
@@ -117,6 +120,7 @@ async function cleanUp() {
   ));
 
   await Promise.all([
+    deleteS3Object(config.bucket, key),
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -211,9 +215,9 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
-    let key;
     let messageId;
-    const invalidMessage = JSON.stringify({ foo: 'bar' });
+    const id = uuidv4();
+    const invalidMessage = JSON.stringify({ Id: id, MessageBody: randomString() });
 
     beforeAll(async () => {
       // post a valid message for ingesting a granule
