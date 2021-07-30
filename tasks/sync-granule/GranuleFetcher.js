@@ -123,14 +123,33 @@ class GranuleFetcher {
 
     const filesWithChecksums = await this.addChecksumsToFiles(granule.files);
 
-    const downloadFiles = filesWithChecksums
-      .filter((f) => syncChecksumFiles || !this.isChecksumFile(f))
-      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
+    const filesToDownload = filesWithChecksums.filter(
+      (f) => syncChecksumFiles || !this.isChecksumFile(f)
+    );
 
+    const downloadFiles = [];
+    const granuleDuplicates = [];
+    const downloadPromises = filesToDownload.map(async (file) => {
+      const [downloadFile, granuleDuplicate] = await this.ingestFile(
+        file,
+        bucket,
+        this.duplicateHandling
+      );
+      downloadFiles.push(downloadFile);
+      granuleDuplicates.push(granuleDuplicate);
+    });
     log.debug('awaiting all download.Files');
-    const files = flatten(await Promise.all(downloadFiles));
-    log.debug('finished ingest()');
+    await Promise.all(downloadPromises);
 
+    // TODO: Updating this to a map->push results in files in completion order
+    // sorting them here results in some consistency in output but should consider
+    // if retaining input order, or *any* order is actually valuable.
+    const files = flatten(downloadFiles).sort((a, b) => {
+      if (a.key < b.key) return -1;
+      return 1;
+    });
+
+    log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
       dataType: collectionName,
@@ -320,6 +339,7 @@ class GranuleFetcher {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
+    let dupilcateFound = {};
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
@@ -352,6 +372,7 @@ class GranuleFetcher {
       );
 
       if (s3ObjAlreadyExists) {
+        dupilcateFound = { bucket: destinationBucket, key: destinationKey };
         stagedFile.duplicate_found = true; // TODO add duplicate configuration key
         const stagedFileKey = `${destinationKey}.${uuidv4()}`;
         // returns renamed files for 'version', otherwise empty array
@@ -399,7 +420,7 @@ class GranuleFetcher {
         size: f.size,
         fileStagingDir: stagingPath,
       })));
-    return returnVal;
+    return [returnVal, dupilcateFound];
   }
 }
 
