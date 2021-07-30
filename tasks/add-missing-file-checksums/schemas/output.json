@@ -15,18 +15,21 @@
             "items": {
               "type": "object",
               "required": [
-                "filename",
+                "bucket",
+                "checksum",
                 "checksumType",
-                "checksum"
+                "key"
               ],
-              "properties": {
-                "filename": {
-                  "type": "string",
-                  "description": "The s3:// URI of the file"
-                },
-                "checksumType": { "type": "string" },
-                "checksum": { "type": "string" }
-              }
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              },
+              "checksumType": { "type": "string" },
+              "checksum": { "type": "string" }
             }
           }
         }

@@ -14,11 +14,15 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["filename"],
+              "required": ["bucket", "key"],
               "properties": {
-                "filename": {
-                  "type": "string",
-                  "description": "The s3:// URI of the file"
+                "bucket": {
+                  "description": "Bucket in-process file is being staged in in S3",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "S3 Key for in-process file",
+                  "type": "string"
                 },
                 "checksumType": { "type": "string" },
                 "checksum": { "type": "string" }
