@@ -4,7 +4,7 @@ const pMap = require('p-map');
 
 const { envUtils } = require('@cumulus/common');
 const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
-const { getQueueUrlByName, sendSQSMessage } = require('@cumulus/aws-client/SQS');
+const { getQueueUrlByName, sqsSendMessageBatch } = require('@cumulus/aws-client/SQS');
 const { getS3PrefixForArchivedMessage } = require('@cumulus/ingest/sqs');
 const Logger = require('@cumulus/logger');
 
@@ -47,15 +47,19 @@ async function replaySqsMessages(event) {
   const queueName = event.queueName;
   const queueUrl = await getQueueUrlByName(queueName);
   const messagesToReplay = await getArchivedMessagesFromQueue(event.queueName);
+  const listOfBatchedMessages = [];
+  while (messagesToReplay.length > 0) {
+    listOfBatchedMessages.push(messagesToReplay.splice(0, 10));
+  }
   await pMap(
-    messagesToReplay,
-    async (message) => {
+    listOfBatchedMessages,
+    async (batchedMessages) => {
       try {
-        await sendSQSMessage(queueUrl, message);
-        logger.info(`Successfully sent message to queue URL ${queueUrl}`);
-        replayedMessages.push(message);
+        await sqsSendMessageBatch(queueUrl, batchedMessages);
+        logger.info(`Successfully sent batch of messages to queue URL ${queueUrl}`);
+        replayedMessages.push(batchedMessages);
       } catch (error) {
-        logger.error(`Could not send message to queue. Message: ${JSON.stringify(message)}, Queue: ${queueUrl}`, error);
+        logger.error(`Could not send batch of messages to queue. Message Batch: ${JSON.stringify(batchedMessages)}, Queue: ${queueUrl}`, error);
         throw error;
       }
     },
@@ -63,7 +67,8 @@ async function replaySqsMessages(event) {
       stopOnError: false,
     }
   );
-  return replayedMessages;
+
+  return replayedMessages.flat();
 }
 
 async function handler(event) {

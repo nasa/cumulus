@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const uuidv4 = require('uuid/v4');
+const range = require('lodash/range');
 
 const { deleteQueue } = require('@cumulus/aws-client/SQS');
 const { createBucket, recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
@@ -28,12 +29,14 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = queues.queueUrl;
   t.context.queueName = queues.queueName;
 
-  const validMessage = { id: uuidv4(), Body: JSON.stringify({ testdata: randomString() }) };
+  const id = uuidv4();
+  const validMessage = { id, Body: JSON.stringify({ Id: id, MessageBody: randomString() }) };
   t.context.validMessage = validMessage;
-  const key1 = getS3KeyForArchivedMessage(t.context.stackName, validMessage.id, queues.queueName);
+
+  const key = getS3KeyForArchivedMessage(t.context.stackName, validMessage.id, queues.queueName);
   await s3PutObject({
     Bucket: process.env.system_bucket,
-    Key: key1,
+    Key: key,
     Body: validMessage.Body,
   });
 });
@@ -99,4 +102,45 @@ test('getArchivedMessagesFromQueue gets archived messages from S3 with the provi
 test('getArchivedMessagesFromQueue returns no messages if queueName does not exist', async (t) => {
   const messages = await getArchivedMessagesFromQueue(randomString());
   t.deepEqual(messages, []);
+});
+
+test('replaySqsMessages queues batched messages to SQS', async (t) => {
+  const { queueName, queueUrl, stackName, validMessage } = t.context;
+  const messages = await Promise.all(
+    range(20).map(async () => {
+      const id = uuidv4();
+      const message = { id, Body: JSON.stringify({ Id: id, MessageBody: randomString() }) };
+      const key = getS3KeyForArchivedMessage(stackName, message.id, queueName);
+      await s3PutObject({
+        Bucket: process.env.system_bucket,
+        Key: key,
+        Body: message.Body,
+      });
+      return message;
+    })
+  );
+  const event = {
+    queueName,
+  };
+  const expected = messages.map(
+    (message) => JSON.parse(message.Body)
+  );
+  expected.push(validMessage);
+
+  const replay = (await replaySqsMessages(event));
+
+  const containsAllMessages = replay.every(
+    (replayedMessage) => expected.find(
+      (expectedMessage) => expectedMessage.id === replayedMessage.id
+    )
+  );
+
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(queueUrl);
+
+  t.is(numberOfMessagesAvailable, 21);
+  t.is(numberOfMessagesNotVisible, 0);
+  t.true(containsAllMessages);
 });

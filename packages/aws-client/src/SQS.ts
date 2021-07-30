@@ -181,3 +181,27 @@ export const sqsQueueExists = async (queueUrl: string) => {
     throw error;
   }
 };
+
+type sendMessageBatchRequestEntry = {
+  Id: string,
+  MessageBody: string,
+};
+
+/**
+ * Send a message to AWS SQS
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {Array<sendMessageBatchRequestEntry>} entries -
+ *   Array of sendMessageBatchRequestEntry items
+ * @returns {Promise} resolves when the messsage has been sent
+ **/
+export const sqsSendMessageBatch = async (
+  queueUrl: string,
+  entries: Array<sendMessageBatchRequestEntry>
+) => {
+  const params = {
+    QueueUrl: queueUrl,
+    Entries: entries,
+  };
+  await sqs().sendMessageBatch(params).promise();
+};

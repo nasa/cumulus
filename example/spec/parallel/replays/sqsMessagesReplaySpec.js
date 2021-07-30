@@ -1,11 +1,13 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const { replaySqsMessages } = require('@cumulus/api-client/replays');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { s3PutObject, deleteS3Object } = require('@cumulus/aws-client/S3');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const {
   createTimestampedTestId,
@@ -15,6 +17,7 @@ const {
 let asyncOperationId;
 let beforeAllFailed;
 let config;
+let key;
 let queueName;
 let queueUrl;
 let stackName;
@@ -22,7 +25,8 @@ let testName;
 
 // The test setup entails creating SQS messages that will be archived in S3
 describe('The replay SQS messages API endpoint', () => {
-  const message = JSON.stringify({ testdata: randomString() });
+  const id = uuidv4();
+  const message = { Id: id, MessageBody: randomString() };
 
   beforeAll(async () => {
     try {
@@ -38,10 +42,12 @@ describe('The replay SQS messages API endpoint', () => {
       queueUrl = QueueUrl;
 
       const sqsMessage = await sendSQSMessage(queueUrl, message);
+      console.log('SENT MESSAGE', sqsMessage);
 
       const sqsOptions = { numOfMessages: 10, waitTimeSeconds: 20 };
       const retrievedMessage = await receiveSQSMessages(queueUrl, sqsOptions);
-      const key = getS3KeyForArchivedMessage(stackName, sqsMessage.MessageId, queueName);
+      console.log('MESSAGE', retrievedMessage);
+      key = getS3KeyForArchivedMessage(stackName, sqsMessage.MessageId, queueName);
 
       await s3PutObject({
         Bucket: config.bucket,
@@ -54,6 +60,7 @@ describe('The replay SQS messages API endpoint', () => {
   });
 
   afterAll(async () => {
+    await deleteS3Object(config.bucket, key);
     await sqs().deleteQueue({
       QueueUrl: queueUrl,
     }).promise();
@@ -69,6 +76,7 @@ describe('The replay SQS messages API endpoint', () => {
     };
     const response = await replaySqsMessages(params);
     asyncOperationId = JSON.parse(response.body).asyncOperationId;
+    console.log('asyncOperationId', asyncOperationId);
     expect(asyncOperationId).toBeDefined();
   });
 
@@ -84,6 +92,6 @@ describe('The replay SQS messages API endpoint', () => {
     });
     const expected = JSON.parse(response.output)[0];
 
-    expect(expected).toEqual(JSON.parse(message));
+    expect(expected).toEqual(message);
   });
 });
