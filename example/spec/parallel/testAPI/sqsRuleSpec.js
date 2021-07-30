@@ -53,6 +53,7 @@ const {
 let config;
 let executionArn;
 let inputPayload;
+let key;
 let pdrFilename;
 let queueName;
 let ruleOverride;
@@ -117,6 +118,7 @@ async function cleanUp() {
   ));
 
   await Promise.all([
+    deleteS3Object(config.bucket, key),
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -211,7 +213,6 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
-    let key;
     let messageId;
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 

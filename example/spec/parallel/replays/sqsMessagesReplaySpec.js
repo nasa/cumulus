@@ -5,7 +5,7 @@ const { replaySqsMessages } = require('@cumulus/api-client/replays');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const {
   createTimestampedTestId,
@@ -15,6 +15,7 @@ const {
 let asyncOperationId;
 let beforeAllFailed;
 let config;
+let key;
 let queueName;
 let queueUrl;
 let stackName;
@@ -41,7 +42,7 @@ describe('The replay SQS messages API endpoint', () => {
 
       const sqsOptions = { numOfMessages: 10, waitTimeSeconds: 20 };
       const retrievedMessage = await receiveSQSMessages(queueUrl, sqsOptions);
-      const key = getS3KeyForArchivedMessage(stackName, sqsMessage.MessageId, queueName);
+      key = getS3KeyForArchivedMessage(stackName, sqsMessage.MessageId, queueName);
 
       await s3PutObject({
         Bucket: config.bucket,
@@ -54,6 +55,7 @@ describe('The replay SQS messages API endpoint', () => {
   });
 
   afterAll(async () => {
+    await deleteS3Object(config.bucket, key);
     await sqs().deleteQueue({
       QueueUrl: queueUrl,
     }).promise();
