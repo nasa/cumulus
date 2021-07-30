@@ -723,10 +723,14 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       .filter((f) => path.basename(f.key) === granuleFileName);
     t.is(filesNotRenamed.length, 1);
 
-    t.is(output.granule_duplicates.length, 1);
-    t.is(output.granule_duplicates[0].granuleId, output.granules[0].granuleId);
-    t.is(output.granule_duplicates[0].files.length, 1);
-    t.is(path.basename(output.granule_duplicates[0].files[0].key), granuleFileName);
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
     let filesRenamed = output.granules[0].files
       .filter((f) => path.basename(f.key).startsWith(`${granuleFileName}.v`));
@@ -815,7 +819,14 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
-    t.true(output.granules[0].files[0].duplicate_found);
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
     const currentFile = output.granules[0].files[0];
     const currentFileInfo = await headObject(
@@ -872,13 +883,18 @@ async function granuleFilesOverwrittenTest(t) {
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
-    t.true(output.granules[0].files[0].duplicate_found);
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
     const currentFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
     t.is(currentFileInfo.size, randomString().length);
     t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
-
-    t.true(output.granules[0].files[0].duplicate_found);
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }

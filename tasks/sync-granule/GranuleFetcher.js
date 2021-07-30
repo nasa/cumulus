@@ -147,7 +147,7 @@ class GranuleFetcher {
     const files = flatten(downloadFiles);
 
     let granuleDuplicateFiles;
-    if (granuleDuplicates) {
+    if (granuleDuplicates.length > 0) {
       granuleDuplicateFiles = {
         granuleId: granule.granuleId,
         files: granuleDuplicates,

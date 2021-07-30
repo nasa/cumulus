@@ -123,10 +123,18 @@ function syncGranule(event) {
     granules: input.granules,
     syncChecksumFiles,
   }).then((granuleResults) => {
-    const output = {
-      granules: granuleResults.map((gr) => gr.ingestedGranule),
-      granule_duplicates: granuleResults.map((gr) => gr.granuleDuplicateFiles),
-    };
+    // eslint-disable-next-line camelcase
+    const granule_duplicates = {};
+    const granules = [];
+    granuleResults.forEach((gr) => {
+      granules.push(gr.ingestedGranule);
+      if (gr.granuleDuplicateFiles) {
+        granule_duplicates[gr.granuleDuplicateFiles.granuleId] = {
+          files: gr.granuleDuplicateFiles.files,
+        };
+      }
+    });
+    const output = { granules, granule_duplicates };
     if (collection && collection.process) output.process = collection.process;
     if (config.pdr) output.pdr = config.pdr;
     log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
