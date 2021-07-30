@@ -4,6 +4,7 @@ import { BasePgModel } from './base';
 import { tableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
+import { getSortFields } from '../lib/sort';
 
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
@@ -52,13 +53,21 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     executionCumulusIds: Array<number> | number,
     params: { limit: number, offset: number }
   ): Promise<Array<number>> {
-    const { limit, offset } = params || {};
+    const { limit, offset, ...sortQueries } = params || {};
+    const sortFields = getSortFields(sortQueries);
     const executionCumulusIdsArray = [executionCumulusIds].flat();
     const executions = await knexOrTrx(this.tableName)
       .whereIn('cumulus_id', executionCumulusIdsArray)
-      .modify((query) => {
-        if (limit) query.limit(limit);
-        if (offset) query.offset(offset);
+      .modify((queryBuilder) => {
+        if (limit) queryBuilder.limit(limit);
+        if (offset) queryBuilder.offset(offset);
+        if (sortFields.length >= 1) {
+          sortFields.forEach((sortObject: { [key: string]: { order: string } }) => {
+            const sortField = Object.keys(sortObject)[0];
+            const { order } = sortObject[sortField];
+            queryBuilder.orderBy(sortField, order);
+          });
+        }
       });
     return executions;
   }

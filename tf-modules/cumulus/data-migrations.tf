@@ -10,9 +10,9 @@ module "data_migration2" {
 
   dynamo_tables = var.dynamo_tables
 
-  rds_security_group_id = var.rds_security_group
-  rds_user_access_secret_arn = var.rds_user_access_secret_arn
-  rds_connection_heartbeat = var.rds_connection_heartbeat
+  rds_security_group_id               = var.rds_security_group
+  rds_user_access_secret_arn          = var.rds_user_access_secret_arn
+  rds_connection_timing_configuration = var.rds_connection_timing_configuration
 
   system_bucket = var.system_bucket
 
