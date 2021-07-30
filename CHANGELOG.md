@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2373**
+  - Added `replaySqsMessages` lambda to replay archived incoming SQS
+    messages from S3.
+  - Added `/replays/sqs` endpoint to trigger an async operation for
+    the `replaySqsMessages` lambda.
+  - Added unit tests and integration tests for new endpoint and lambda.
+  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
+    for an archived message.
+  - Added new `async_operation` type `SQS Replay`.
+
+### Changed
+
+- **CUMULUS-2373**
+  - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
+    by `queueName`.
+
 ## [v9.3.0] 2021-07-26
 
 ### BREAKING CHANGES
@@ -81,16 +99,6 @@ variable.
   - Added helpers to `@cumulus/api-client`:
     - `pdrs.deletePdr` - Delete a PDR via the API
     - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
-  - Add integration test for cumulus distribution API
-- **CUMULUS-2373**
-  - Added `replayArchivedS3Messages` lambda to replay archived incoming SQS
-    messages from S3.
-  - Added `/replayArchivedS3Messages` endpoint to trigger an async operation for
-    the `replayArchivedS3Messages` lambda.
-  - Added unit tests and integration tests for new endpoint and lambda.
-  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
-    for an archived message.
-  - Added new `async_operation` type `Archived S3 Messages Replay`.
 
 ### Changed
 
@@ -129,9 +137,6 @@ behavior
   - TEA is still available by following instructions in `example/README.md`
 - **CUMULUS-2463**
   - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
-- **CUMULUS-2373**
-  - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
-    by `queueName`.
 
 ### Fixed
 
@@ -162,7 +167,7 @@ behavior
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
-  
+
 ### Fixed
 
 - **CUMULUS-2520**

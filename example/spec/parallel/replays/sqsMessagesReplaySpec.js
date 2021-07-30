@@ -1,7 +1,7 @@
 'use strict';
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { replaySqsMessages } = require('@cumulus/api-client/replaySqsMessages');
+const { replaySqsMessages } = require('@cumulus/api-client/replays');
 const { sqs } = require('@cumulus/aws-client/services');
 const { receiveSQSMessages, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -29,7 +29,7 @@ describe('The replay SQS messages API endpoint', () => {
       config = await loadConfig();
       stackName = config.stackName;
 
-      testName = createTimestampedTestId(config.stackName, 'archivedMessagesReplay');
+      testName = createTimestampedTestId(config.stackName, 'sqsMessagesReplay');
       queueName = `${testName}Queue`;
 
       const { QueueUrl } = await sqs().createQueue({
@@ -65,7 +65,6 @@ describe('The replay SQS messages API endpoint', () => {
       prefix: stackName,
       payload: {
         queueName,
-        type: 'sqs',
       },
     };
     const response = await replaySqsMessages(params);

@@ -1,10 +1,14 @@
 'use strict';
 
+const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
+const { getQueueUrlByName, sqsQueueExists } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
+
+const logger = new Logger({ sender: '@cumulus/api/replays' });
 /**
  * Start an AsyncOperation that will perform kinesis message replay
  *
@@ -43,6 +47,39 @@ async function startKinesisReplayAsyncOperation(req, res) {
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
+async function startSqsMessagesReplay(req, res) {
+  const tableName = process.env.AsyncOperationsTable;
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+
+  const payload = req.body;
+  logger.debug(`Payload is ${JSON.stringify(payload)}`);
+
+  if (!payload.queueName) {
+    return res.boom.badRequest('queueName is required for SQS messages replay');
+  }
+
+  const queueUrl = await getQueueUrlByName(payload.queueName);
+  if (!(await sqsQueueExists(queueUrl))) {
+    logger.error(`Could not find queue ${queueUrl}. Unable to process message.`);
+  }
+  const asyncOperation = await asyncOperations.startAsyncOperation({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    description: 'SQS Replay',
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+    lambdaName: process.env.ReplaySqsMessagesLambda,
+    operationType: 'SQS Replay',
+    payload,
+    stackName,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
+  }, AsyncOperation);
+  return res.status(202).send({ asyncOperationId: asyncOperation.id });
+}
+
 router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
+router.post('/sqs', startSqsMessagesReplay, asyncOperationEndpointErrorHandler);
 
 module.exports = router;
