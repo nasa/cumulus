@@ -380,7 +380,6 @@ class GranuleFetcher {
 
       if (s3ObjAlreadyExists) {
         dupilcateFound = { bucket: destinationBucket, key: destinationKey };
-        stagedFile.duplicate_found = true; // TODO add duplicate configuration key
         const stagedFileKey = `${destinationKey}.${uuidv4()}`;
         // returns renamed files for 'version', otherwise empty array
         versionedFiles = await handleDuplicateFile({

@@ -722,8 +722,12 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     let filesNotRenamed = output.granules[0].files
       .filter((f) => path.basename(f.key) === granuleFileName);
     t.is(filesNotRenamed.length, 1);
-    // TODO update unit/logic to handle updated logic
-    // t.true(filesNotRenamed[0].duplicate_found)
+
+    t.is(output.granule_duplicates.length, 1);
+    t.is(output.granule_duplicates[0].granuleId, output.granules[0].granuleId);
+    t.is(output.granule_duplicates[0].files.length, 1);
+    t.is(path.basename(output.granule_duplicates[0].files[0].key), granuleFileName);
+
     let filesRenamed = output.granules[0].files
       .filter((f) => path.basename(f.key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 1);
