@@ -127,29 +127,27 @@ class GranuleFetcher {
       (f) => syncChecksumFiles || !this.isChecksumFile(f)
     );
 
+    const downloadPromises = filesToDownload.map((file) => this.ingestFile(
+      file,
+      bucket,
+      this.duplicateHandling
+    ));
+    log.debug('awaiting all download.Files');
+    const downloadResults = await Promise.all(downloadPromises);
+    log.debug('finished ingest()');
+
     const downloadFiles = [];
     const granuleDuplicates = [];
-    const downloadPromises = filesToDownload.map(async (file) => {
-      const [downloadFile, granuleDuplicate] = await this.ingestFile(
-        file,
-        bucket,
-        this.duplicateHandling
-      );
-      downloadFiles.push(downloadFile);
-      granuleDuplicates.push(granuleDuplicate);
+    downloadResults.forEach((r) => {
+      downloadFiles.push(r[0]);
+      granuleDuplicates.push(r[1]);
     });
-    log.debug('awaiting all download.Files');
-    await Promise.all(downloadPromises);
 
     // TODO: Updating this to a map->push results in files in completion order
     // sorting them here results in some consistency in output but should consider
     // if retaining input order, or *any* order is actually valuable.
-    const files = flatten(downloadFiles).sort((a, b) => {
-      if (a.key < b.key) return -1;
-      return 1;
-    });
+    const files = flatten(downloadFiles);
 
-    log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
       dataType: collectionName,
