@@ -42,11 +42,9 @@ describe('The replay SQS messages API endpoint', () => {
       queueUrl = QueueUrl;
 
       const sqsMessage = await sendSQSMessage(queueUrl, message);
-      console.log('SENT MESSAGE', sqsMessage);
 
       const sqsOptions = { numOfMessages: 10, waitTimeSeconds: 20 };
       const retrievedMessage = await receiveSQSMessages(queueUrl, sqsOptions);
-      console.log('MESSAGE', retrievedMessage);
       key = getS3KeyForArchivedMessage(stackName, sqsMessage.MessageId, queueName);
 
       await s3PutObject({
