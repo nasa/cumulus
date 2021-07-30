@@ -256,13 +256,17 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+  const {
+    granulePgModel = new GranulePgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
   let result;
   try {
-    result = await (new Granule()).get({ granuleId });
+    result = await granulePgModel.get(knex, { granule_id: granuleId });
   } catch (error) {
-    if (error.message.startsWith('No record found')) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');
     }
 

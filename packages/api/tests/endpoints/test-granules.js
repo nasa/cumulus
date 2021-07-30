@@ -410,7 +410,7 @@ test.serial('GET returns an existing granule', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { granuleId } = response.body;
+  const { granule_id: granuleId } = response.body;
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
