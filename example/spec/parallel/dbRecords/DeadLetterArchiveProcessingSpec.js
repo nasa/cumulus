@@ -102,7 +102,7 @@ describe('A dead letter record archive processing operation', () => {
           timestamp__from: ingestTime,
           'originalPayload.testId': testId,
         },
-        { timeout: 60 }
+        { timeout: 180 }
       );
 
       const cumulusMessage = fakeCumulusMessageFactory({
