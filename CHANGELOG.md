@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+
+### Fixed
+
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+
+## [v9.3.0] 2021-07-26
+
 ### BREAKING CHANGES
 
 - All API requests made by `@cumulus/api-client` will now throw an error if the status code
@@ -20,6 +46,16 @@ period. Reserved concurrency can be configured with the `archive_api_reserved_co
 terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
 The default reserved concurrency value is 8.
 
+### Notable changes
+
+- `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
+  integrate with a custom CMR host name and protocol (e.g.
+  `http://custom-cmr-host.com`). Note that you **must** include a protocol
+  (`http://` or `https://)  if specifying a value for this variable.
+- The cumulus module configuration value`rds_connetion_heartbeat` and it's
+  behavior has been replaced by a more robust database connection 'retry'
+  solution.   Users can remove this value from their configuration, regardless
+  of value.  See the `Changed` section notes on CUMULUS-2528 for more details.
 ### Added
 
 - Added user doc describing new features related to the Cumulus dead letter archive.
@@ -29,6 +65,8 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
@@ -103,12 +141,36 @@ the error object:
 - Added `params.pRetryOptions` parameter to
 `@cumulus/api-client/granules.deleteGranule` to control the retry
 behavior
+- Updated `cmr_custom_host` variable to accept a full protocol and host name
+(e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
 - **CUMULUS-2463**
-  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
-
+  - Increases the duration of allowed backoff times for a successful test from
+    0.5 sec to 1 sec.
+- **CUMULUS-2528**
+  - Removed `rds_connection_heartbeat` as a configuration option from all
+    Cumulus terraform modules
+  - Removed `dbHeartBeat` as an environmental switch from
+    `@cumulus/db.getKnexClient` in favor of more comprehensive general db
+    connect retry solution
+  - Added new `rds_connection_timing_configuration` string map to allow for
+    configuration and tuning of Core's internal database retry/connection
+    timeout behaviors.  These values map to connection pool configuration
+    values for tarn (https://github.com/vincit/tarn.js/) which Core's database
+    module / knex(https://www.npmjs.com/package/knex) use for this purpose:
+    - acquireTimeoutMillis
+    - createRetryIntervalMillis
+    - createTimeoutMillis
+    - idleTimeoutMillis
+    - reapIntervalMillis
+      Connection errors will result in a log line prepended with 'knex failed on
+      attempted connection error' and sent from '@cumulus/db/connection'
+  - Updated `@cumulus/db` and all terraform mdules to set default retry
+    configuration values for the database module to cover existing database
+    heartbeat connection failures as well as all other knex/tarn connection
+    creation failures.
 
 ### Fixed
 
@@ -126,6 +188,12 @@ behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
   endpoint for returning a PDR from the API
 
+## [v9.2.1] 2021-07-29 - [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 ## [v9.2.0] 2021-06-22
 
 ### Added
@@ -134,6 +202,12 @@ behavior
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2476**
   - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+
+### Changed
+
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
 
 ### Fixed
 
@@ -4553,7 +4627,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.2.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
+[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.3.0
+[v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1

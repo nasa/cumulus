@@ -23,6 +23,7 @@ test('nullifyUndefinedProviderValues sets undefined provider values to "null"', 
     private_key: null,
     cm_key_id: null,
     certificate_uri: null,
+    allowed_redirects: null,
   };
 
   const actual = nullifyUndefinedProviderValues(cumulusProviderObject);
