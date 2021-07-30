@@ -138,17 +138,30 @@ class GranuleFetcher {
 
     const downloadFiles = [];
     const granuleDuplicates = [];
-    downloadResults.forEach((r) => {
-      downloadFiles.push(r[0]);
-      granuleDuplicates.push(r[1]);
+    downloadResults.forEach((result) => {
+      downloadFiles.push(result[0]);
+      if (result[1]) {
+        granuleDuplicates.push(result[1]);
+      }
     });
     const files = flatten(downloadFiles);
 
+    let granuleDuplicateFiles;
+    if (granuleDuplicates) {
+      granuleDuplicateFiles = {
+        granuleId: granule.granuleId,
+        files: granuleDuplicates,
+      };
+    }
+
     return {
-      granuleId: granule.granuleId,
-      dataType: collectionName,
-      version: collectionVersion,
-      files,
+      ingestedGranule: {
+        granuleId: granule.granuleId,
+        dataType: collectionName,
+        version: collectionVersion,
+        files,
+      },
+      granuleDuplicateFiles,
     };
   }
 
@@ -333,7 +346,7 @@ class GranuleFetcher {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
-    let dupilcateFound = {};
+    let dupilcateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
