@@ -235,7 +235,7 @@ test('ExecutionPgModel.searchByCumulusIds() returns correct values', async (t) =
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
   let executionCumulusId1;
   let executionCumulusId2;
   await knex.transaction(async (trx) => {
@@ -255,7 +255,7 @@ test('ExecutionPgModel.searchByCumulusIds() works with a transaction', async (t)
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
   await knex.transaction(async (trx) => {
     const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
@@ -272,7 +272,7 @@ test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
   await knex.transaction(async (trx) => {
     const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
@@ -285,5 +285,31 @@ test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
     t.like(firstPage[0], executionRecords[0]);
     t.is(secondPage.length, 1);
     t.like(secondPage[0], executionRecords[1]);
+  });
+});
+
+test('ExecutionPgModel.searchByCumulusIds() supports sorting', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+  } = t.context;
+  const executionRecords = [
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'failed' }),
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'completed' }),
+  ];
+
+  await knex.transaction(async (trx) => {
+    const executionCumulusIds = await Promise.all(executionRecords
+      .map(async (executionRecord) => await executionPgModel.create(trx, executionRecord)));
+
+    const results = await executionPgModel
+      .searchByCumulusIds(trx, executionCumulusIds.flat(), { sort_by: 'status', order: 'desc' });
+
+    // first 3 results should have 'running' status
+    t.is(results[3].status, 'failed');
+    t.is(results[4].status, 'completed');
   });
 });

@@ -75,3 +75,38 @@ export const newestExecutionArnFromGranuleIdWorkflowName = async (
     throw error;
   }
 };
+
+/**
+ * Returns the intersect of workflow names that exist for all granule ids that are passed in
+ * When a single granule is passed in, workflow names are sorted by most recent first
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB Client or transaction
+ * @param {Array<string>} granuleCumulusIds - Array of granule cumulus ids to query
+ * @returns {Promise<string[]>} - Array consisting of workflow names common to all granules.
+ * Sorted by most recent when array includes a single granule
+ * @throws {RecordNotFound}
+ */
+export const getWorkflowNameIntersectFromGranuleIds = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusIds: Array<number> | number
+): Promise<Array<string>> => {
+  const granuleCumulusIdsArray = [granuleCumulusIds].flat();
+  const numberOfGranules = granuleCumulusIdsArray.length;
+  const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = tableNames;
+
+  const aggregatedWorkflowCounts = await knexOrTransaction(executionsTable)
+    .select('workflow_name')
+    .countDistinct('granule_cumulus_id')
+    .innerJoin(granulesExecutionsTable, `${executionsTable}.cumulus_id`, `${granulesExecutionsTable}.execution_cumulus_id`)
+    .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
+    .groupBy('workflow_name')
+    .havingRaw('count(distinct granule_cumulus_id) = ?', [numberOfGranules])
+    .modify((queryBuilder) => {
+      if (numberOfGranules === 1) {
+        queryBuilder.groupBy('timestamp')
+          .orderBy('timestamp', 'desc');
+      }
+    });
+  return aggregatedWorkflowCounts
+    .map((workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name);
+};
