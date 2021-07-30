@@ -724,11 +724,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     t.is(filesNotRenamed.length, 1);
 
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
       1
     );
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
       output.granules[0].files[0].key
     );
 
@@ -820,11 +820,11 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
 
     t.is(output.granules[0].files.length, 1);
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
       1
     );
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
       output.granules[0].files[0].key
     );
 
@@ -884,11 +884,11 @@ async function granuleFilesOverwrittenTest(t) {
 
     t.is(output.granules[0].files.length, 1);
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files.length,
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
       1
     );
     t.is(
-      output.granule_duplicates[output.granules[0].granuleId].files[0].key,
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
       output.granules[0].files[0].key
     );
 

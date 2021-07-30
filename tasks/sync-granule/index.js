@@ -124,17 +124,17 @@ function syncGranule(event) {
     syncChecksumFiles,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
-    const granule_duplicates = {};
+    const granuleDuplicates = {};
     const granules = [];
     granuleResults.forEach((gr) => {
       granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {
-        granule_duplicates[gr.granuleDuplicateFiles.granuleId] = {
+        granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {
           files: gr.granuleDuplicateFiles.files,
         };
       }
     });
-    const output = { granules, granule_duplicates };
+    const output = { granules, granuleDuplicates };
     if (collection && collection.process) output.process = collection.process;
     if (config.pdr) output.pdr = config.pdr;
     log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
