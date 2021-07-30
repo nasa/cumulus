@@ -142,10 +142,6 @@ class GranuleFetcher {
       downloadFiles.push(r[0]);
       granuleDuplicates.push(r[1]);
     });
-
-    // TODO: Updating this to a map->push results in files in completion order
-    // sorting them here results in some consistency in output but should consider
-    // if retaining input order, or *any* order is actually valuable.
     const files = flatten(downloadFiles);
 
     return {
