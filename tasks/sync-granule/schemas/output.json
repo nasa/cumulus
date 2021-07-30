@@ -68,8 +68,12 @@
                 "checksum": {
                   "type": "string"
                 },
-                "checksumType": { "type": "string" },
-                "size": { "type": "number "}
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                }
               }
             }
           }
