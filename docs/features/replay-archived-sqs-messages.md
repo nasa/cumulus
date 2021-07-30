@@ -9,20 +9,19 @@ Cumulus archives all incoming SQS messages to S3 and removes messages once they 
 
 ## Replay archived messages endpoint
 
-The Cumulus API has added a new endpoint, `/replaySQSMessages`. This endpoint will allow you to start a replay operation to requeue all archived SQS messages by `queueName` and returns an AsyncOperationId for operation status tracking.
+The Cumulus API has added a new endpoint, `/replays/sqs`. This endpoint will allow you to start a replay operation to requeue all archived SQS messages by `queueName` and returns an AsyncOperationId for operation status tracking.
 
 ## Start replaying archived SQS messages
 
-In order to start a replay, you must perform a `POST` request to the `replaySQSMessages` endpoint.
+In order to start a replay, you must perform a `POST` request to the `replays/sqs` endpoint.
 
 The required and optional fields that should be part of the body of this request are documented below.
 
 | Field | Type | Required | Description |
 | ------ | ------ | ------ | ------ |
-| `type` | string | required | Currently only accepts `sqs`. |
 | `queueName` | string | for type `sqs` | Any valid SQS queue name (*not* ARN) |
 
 ## Status tracking
 
-A successful response from the `/replaySQSMessages` endpoint will contain an `asyncOperationId` field.
+A successful response from the `/replays/sqs` endpoint will contain an `asyncOperationId` field.
 Use this ID with the `/asyncOperations` endpoint to track the status.
