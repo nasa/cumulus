@@ -20,6 +20,7 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
+      acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
@@ -33,8 +34,9 @@ locals {
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
+      createRetryIntervalMillis        = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis              = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn
-      dbHeartBeat                      = var.rds_connection_heartbeat
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
@@ -47,6 +49,7 @@ locals {
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
+      idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
       invoke                           = var.schedule_sf_function_arn
@@ -64,13 +67,14 @@ locals {
       METRICS_ES_HOST                  = var.metrics_es_host
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
-      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
+      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       public_buckets                   = join(",", local.public_buckets)
+      reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
       ReplaySqsMessagesLambda          = aws_lambda_function.replay_sqs_messages.arn
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
