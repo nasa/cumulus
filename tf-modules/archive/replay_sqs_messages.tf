@@ -68,10 +68,9 @@ resource "aws_lambda_function" "replay_sqs_messages" {
 
   environment {
     variables = {
-      system_bucket   = var.system_bucket
-      stackName       = var.prefix
-      dbHeartBeat     = var.rds_connection_heartbeat
-      databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      system_bucket                = var.system_bucket
+      stackName                    = var.prefix
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
     }
   }
 
