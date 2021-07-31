@@ -3,8 +3,6 @@
 const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const path = require('path');
-
 const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -25,10 +23,8 @@ async function fileObjectFromS3URI(s3URI) {
     key: uriParsed.Key,
   });
   return {
-    name: path.basename(s3URI),
+    key: uriParsed.Key,
     bucket: uriParsed.Bucket,
-    filename: s3URI,
-    fileStagingDir: path.dirname(uriParsed.Key),
     size,
   };
 }
@@ -46,7 +42,7 @@ async function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex
   // create hash list of the granules
   // and a list of files
   const granulesHash = keyBy(inputGranules, 'granuleId');
-  const filesFromInputGranules = flatten(inputGranules.map((g) => g.files.map((f) => f.filename)));
+  const filesFromInputGranules = flatten(inputGranules.map((g) => g.files.map((f) => `s3://${f.bucket}/${f.key}`)));
 
   // add input files to corresponding granules
   // the process involve getting granuleId of each file
