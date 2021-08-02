@@ -165,10 +165,6 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
-### Look up ECS-optimized AMI
-
-Look up the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the [cumulus-tf module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
-
 ### Set up EC2 key pair (optional)
 
 The key pair will be used to SSH into your EC2 instance(s). It is recommended to [create or import a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and specify it in your Cumulus deployment.
@@ -367,30 +363,6 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-### Deploy the Cumulus Message Adapter layer
-
-The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
-
-To deploy a CMA layer to your account:
-
-1. Go to the [CMA releases page](https://github.com/nasa/cumulus-message-adapter/releases) and download the `cumulus-message-adapter.zip` for the desired release
-2. Use the AWS CLI to publish your layer:
-
-```shell
-$ aws lambda publish-layer-version \
-  --layer-name prefix-CMA-layer \
-  --region us-east-1 \
-  --zip-file fileb:///path/to/cumulus-message-adapter.zip
-
-{
-  ... more output ...
-  "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
-  ... more output ...
-}
-```
-
-Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
-
 ### Configure and deploy the `cumulus-tf` root module
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
@@ -413,11 +385,12 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
-- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 - **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
 - **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
+- **`cumulus_message_adapter_version`**: The version number (e.g. `1.3.0`) of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter/releases) to deploy
+- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional). Adding your `key_name` sets the EC2 keypair
+for deployment's EC2 instances and allows you to connect to them via [SSH/SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html).
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
