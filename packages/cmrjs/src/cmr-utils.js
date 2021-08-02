@@ -100,7 +100,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }) {
       // Include etag only if file has one
       ...pick(file, 'etag'),
       // handle both new-style and old-style files model
-      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
+      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename, // TODO - is this still valid in postgres land?   Consider removing phase 2
       granuleId,
     }));
 }

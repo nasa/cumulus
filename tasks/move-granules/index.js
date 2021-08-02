@@ -85,14 +85,14 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
     granulesObject[granuleId].files.forEach((file) => {
       const cmrFileTypeObject = {};
-      if (cmrFileNames.includes(file.name) && !file.type) {
+      if (cmrFileNames.includes(file.name) && !file.type) { // TODO: file.name apparently never got moved.   Big Yikes.
         cmrFileTypeObject.type = 'metadata';
       }
 
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
       validateMatch(match, bucketsConfig, file.name, fileSpecs);
 
-      const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || '';
+      const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || ''; // TODO: url_path isn't valid for granule schema, was removing it in sync granule a bad idea/one that requires another meta object?
       const urlPath = urlPathTemplate(URLPathTemplate, {
         file,
         granule: granulesObject[granuleId],
@@ -102,7 +102,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
       const filepath = s3Join(urlPath, file.name);
 
       updatedFiles.push({
-        ...file, // keeps old info like "name" and "fileStagingDir"
+        ...file, // keeps old info like "name" and "fileStagingDir" // TODO - we need to *not* keep this via not having it in the first place.
         ...cmrFileTypeObject, // Add type if the file is a CMR file
         ...{
           bucket: bucketName,

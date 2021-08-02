@@ -207,7 +207,7 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
 };
 
 /**
- * Write a granule to DynamoDB and PostgreSQL
+ * Write a granule to PostgreSQL
  *
  * @param {Object} params
  * @param {Object} params.granule - An API granule object
