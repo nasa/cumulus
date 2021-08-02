@@ -32,6 +32,7 @@ downloading files protected by Earthdata Login)
 
 ### Fixed
 
+- Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
 - **CUMULUS-2548**
   - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
 properly handle basic auth when redirecting to a different
