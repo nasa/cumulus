@@ -32,7 +32,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(
-    formatAlterTableEnumSql('myTableName', 'myColumnName', [
+    formatAlterTableEnumSql('async_operations', 'operation_type', [
       'ES Index',
       'Bulk Granules',
       'Bulk Granule Reingest',
