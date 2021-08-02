@@ -64,7 +64,7 @@ test('replaySqsMessages queues messages to SQS for each archived message', async
   t.deepEqual(replay, expected);
 });
 
-test('replaySqsMessages queues only valid messages to SQS', async (t) => {
+test('getArchivedMessagesFromQueue only returns valid messages', async (t) => {
   const { queueName, queueUrl, validMessage } = t.context;
   const invalidMessage = { id: uuidv4(), Body: randomString() };
   const key2 = getS3KeyForArchivedMessage(t.context.stackName, invalidMessage.id, queueName);

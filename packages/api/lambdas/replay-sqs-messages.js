@@ -12,7 +12,6 @@ const logger = new Logger({ sender: '@cumulus/replay-sqs-messages' });
 
 // Get messages from S3 using queueName
 const getArchivedMessagesFromQueue = async (queueName) => {
-  let continuationToken;
   const validMessages = [];
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
@@ -20,7 +19,6 @@ const getArchivedMessagesFromQueue = async (queueName) => {
   const params = {
     Bucket: bucket,
     Prefix: prefix,
-    ContinuationToken: continuationToken,
     Delimiter: '/',
   };
   logger.debug(`Params for listS3Keys bucket: ${bucket}, prefix: ${prefix}`);

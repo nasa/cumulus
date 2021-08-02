@@ -60,23 +60,22 @@ async function startSqsMessagesReplay(req, res) {
   }
 
   const queueUrl = await getQueueUrlByName(payload.queueName);
-  if (!(await sqsQueueExists(queueUrl))) {
-    logger.error(`Could not find queue ${queueUrl}. Unable to process message.`);
+  if ((await sqsQueueExists(queueUrl))) {
+    const asyncOperation = await asyncOperations.startAsyncOperation({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      description: 'SQS Replay',
+      dynamoTableName: tableName,
+      knexConfig: process.env,
+      lambdaName: process.env.ReplaySqsMessagesLambda,
+      operationType: 'SQS Replay',
+      payload,
+      stackName,
+      systemBucket,
+      useLambdaEnvironmentVariables: true,
+    }, AsyncOperation);
+    return res.status(202).send({ asyncOperationId: asyncOperation.id });
   }
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
-    description: 'SQS Replay',
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-    lambdaName: process.env.ReplaySqsMessagesLambda,
-    operationType: 'SQS Replay',
-    payload,
-    stackName,
-    systemBucket,
-    useLambdaEnvironmentVariables: true,
-  }, AsyncOperation);
-  return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
 router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);

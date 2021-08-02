@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
-const awsServices = require('@cumulus/aws-client/services');
 const SQS = require('@cumulus/aws-client/SQS');
 const { localStackConnectionEnv } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -15,35 +14,11 @@ const asyncOperations = require('@cumulus/async-operations');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { app } = require('../../app');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken, createSqsQueues, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 const AccessToken = require('../../models/access-tokens');
 
 let accessTokenModel;
 let jwtAuthToken;
-
-/**
- * create a source queue
- *
- * @param {string} queueNamePrefix - prefix of the queue name
- * @param {string} visibilityTimeout - visibility timeout for queue messages
- * @returns {Object} - {queueUrl: <url>} queue created
- */
-async function createSqsQueues(
-  queueNamePrefix,
-  visibilityTimeout = '300'
-) {
-  // source queue
-  const queueName = `${queueNamePrefix}Queue`;
-  const queueParms = {
-    QueueName: queueName,
-    Attributes: {
-      VisibilityTimeout: visibilityTimeout,
-    },
-  };
-
-  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
-  return { queueName, queueUrl };
-}
 
 const envs = {
   TOKEN_SECRET: randomString(),
@@ -198,10 +173,10 @@ test.serial('request to /replays endpoint returns 503 if starting ECS task throw
 
 test.serial('POST /replays/sqs starts an async-operation with specified payload', async (t) => {
   const { queues } = t.context;
+  const id = randomId('asyncOperationId');
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
-    new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
+    new Promise((resolve) => resolve({ id }))
   );
-  asyncOperationStartStub.resetHistory();
   const body = {
     queueName: queues.queueName,
   };
@@ -215,7 +190,7 @@ test.serial('POST /replays/sqs starts an async-operation with specified payload'
       .expect(202);
 
     // expect a returned async operation ID
-    t.truthy(response.body.asyncOperationId);
+    t.is(response.body.asyncOperationId, id);
     const {
       lambdaName,
       cluster,
@@ -236,7 +211,7 @@ test.serial('POST /replays/sqs does not start an async-operation without queueNa
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
   );
-  asyncOperationStartStub.resetHistory();
+
   try {
     await request(app)
       .post('/replays/sqs')
@@ -254,7 +229,7 @@ test.serial('POST /replays/sqs returns Internal Server Error if SQS queue does n
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
   );
-  asyncOperationStartStub.resetHistory();
+
   try {
     await request(app)
       .post('/replays/sqs')

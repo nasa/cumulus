@@ -27,12 +27,6 @@ data "aws_iam_policy_document" "replay_sqs_messages_policy" {
     ]
     resources = ["*"]
   }
-  statement {
-    actions = [
-      "secretsmanager:GetSecretValue"
-    ]
-    resources = [var.rds_user_access_secret_arn]
-  }
 
     statement {
       actions = [
@@ -70,7 +64,6 @@ resource "aws_lambda_function" "replay_sqs_messages" {
     variables = {
       system_bucket                = var.system_bucket
       stackName                    = var.prefix
-      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
     }
   }
 
