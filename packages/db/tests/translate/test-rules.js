@@ -171,16 +171,6 @@ test('translatePostgresRuleToApiRule handles optional fields', async (t) => {
     updated_at: new Date(),
   };
 
-  const fakeDbClient = {};
-  const fakeCollection = { name: 'abc', version: '123' };
-  const fakeCollectionPgModel = {
-    get: () => Promise.resolve(fakeCollection),
-  };
-  const fakeProvider = { name: 'abc' };
-  const fakeProviderPgModel = {
-    get: () => Promise.resolve(fakeProvider),
-  };
-
   const expectedRule = {
     name: pgRecord.name,
     state: 'ENABLED',
@@ -191,12 +181,7 @@ test('translatePostgresRuleToApiRule handles optional fields', async (t) => {
   };
 
   t.deepEqual(
-    await translatePostgresRuleToApiRule(
-      pgRecord,
-      fakeDbClient,
-      fakeCollectionPgModel,
-      fakeProviderPgModel
-    ),
+    await translatePostgresRuleToApiRule(pgRecord),
     expectedRule
   );
 });
