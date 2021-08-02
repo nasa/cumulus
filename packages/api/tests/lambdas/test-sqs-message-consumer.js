@@ -351,7 +351,10 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
-  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
+  t.context.fetchRulesStub.callsFake((params) => {
+    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    return rules.filter((rule) => rule.state === 'ENABLED');
+  });
   const message = { testdata: randomString() };
 
   // Send message to ENABLED queue
