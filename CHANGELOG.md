@@ -71,6 +71,8 @@ database via the API
   - **CUMULUS-2304**
     - Updated API rule GET endpoint to read individual rule records from
       PostgreSQL database instead of DynamoDB
+    - Updated internal consumer lambdas for SNS, SQS and Kinesis to read
+      rules from PostgreSQL.
   - **CUMULUS-2306**
     - Updated API execution GET endpoint to read individual execution records
       from PostgreSQL database instead of DynamoDB
