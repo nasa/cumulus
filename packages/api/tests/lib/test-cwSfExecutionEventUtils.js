@@ -314,7 +314,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
   t.deepEqual(message, expectedMessage);
 });
 
-test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
   const randomFailedStepName = randomFailedStepNameFn();
   const events = [
     {
