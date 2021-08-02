@@ -6,15 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Notable changes
-
-- `@cumulus/sync-granule` task should now properly handle
-syncing files from HTTP/HTTPS providers where basic auth is
-required and involves a redirect to a different host (e.g.
-downloading files protected by Earthdata Login)
-
 ### Added
 
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
 - **CUMULUS-2548**
   - Added `allowed_redirects` field to PostgreSQL `providers` table
   - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
