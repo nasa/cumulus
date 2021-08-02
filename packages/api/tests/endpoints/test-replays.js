@@ -225,19 +225,20 @@ test.serial('POST /replays/sqs does not start an async-operation without queueNa
   }
 });
 
-test.serial('POST /replays/sqs returns Internal Server Error if SQS queue does not exist', async (t) => {
+test.serial('POST /replays/sqs returns an error if SQS queue does not exist', async (t) => {
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
   );
 
   try {
-    await request(app)
+    const response = await request(app)
       .post('/replays/sqs')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ queueName: 'some-queue' })
-      .expect(500);
+      .expect(400);
     t.false(asyncOperationStartStub.called);
+    t.true(response.body.message.includes('AWS.SimpleQueueService.NonExistentQueue'));
   } finally {
     asyncOperationStartStub.restore();
   }

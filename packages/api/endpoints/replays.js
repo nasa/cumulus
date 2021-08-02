@@ -3,7 +3,7 @@
 const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
-const { getQueueUrlByName, sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const { getQueueUrlByName } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
@@ -59,23 +59,26 @@ async function startSqsMessagesReplay(req, res) {
     return res.boom.badRequest('queueName is required for SQS messages replay');
   }
 
-  const queueUrl = await getQueueUrlByName(payload.queueName);
-  if ((await sqsQueueExists(queueUrl))) {
-    const asyncOperation = await asyncOperations.startAsyncOperation({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      description: 'SQS Replay',
-      dynamoTableName: tableName,
-      knexConfig: process.env,
-      lambdaName: process.env.ReplaySqsMessagesLambda,
-      operationType: 'SQS Replay',
-      payload,
-      stackName,
-      systemBucket,
-      useLambdaEnvironmentVariables: true,
-    }, AsyncOperation);
-    return res.status(202).send({ asyncOperationId: asyncOperation.id });
+  try {
+    await getQueueUrlByName(payload.queueName);
+  } catch (error) {
+    return res.boom.badRequest(`Could not retrieve queue URL for ${payload.queueName}. Unable to process message. Error ${error}`);
   }
+
+  const asyncOperation = await asyncOperations.startAsyncOperation({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    description: 'SQS Replay',
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+    lambdaName: process.env.ReplaySqsMessagesLambda,
+    operationType: 'SQS Replay',
+    payload,
+    stackName,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
+  }, AsyncOperation);
+  return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
 router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
