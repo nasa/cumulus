@@ -84,10 +84,17 @@ test.serial('it should enqueue a message for each SNS rule', async (t) => {
     workflow: 'test-workflow-1',
   };
 
+  const expectedRule = {
+    ...rule1,
+    meta: {
+      snsSourceArn: snsArn,
+    },
+  };
+
   fetchEnabledRulesStub.returns(Promise.resolve([rule1]));
   await handler(event, {}, testCallback);
 
   t.is(queueMessageStub.callCount, 1);
-  t.deepEqual(queueMessageStub.getCall(0).args[0], rule1);
+  t.deepEqual(queueMessageStub.getCall(0).args[0], expectedRule);
   t.deepEqual(queueMessageStub.getCall(0).args[1], JSON.parse(messageBody));
 });

@@ -162,7 +162,10 @@ test.serial('processQueues does nothing when no rule matches collection in messa
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
-  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
+  t.context.fetchRulesStub.callsFake((params) => {
+    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    return rules.filter((rule) => rule.state === 'ENABLED');
+  });
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
 
