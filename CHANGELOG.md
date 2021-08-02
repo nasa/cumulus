@@ -14,6 +14,10 @@ downloading files protected by Earthdata Login)
 
 ### Added
 
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
 - **CUMULUS-2548**
   - Added `allowed_redirects` field to PostgreSQL `providers` table
   - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
@@ -79,6 +83,8 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
@@ -200,6 +206,12 @@ behavior
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
   endpoint for returning a PDR from the API
 
+## [v9.2.1] 2021-07-29 - [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 ## [v9.2.0] 2021-06-22
 
 ### Added
@@ -4634,7 +4646,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
-[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.3.0
+[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.3.0
+[v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
 [v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1

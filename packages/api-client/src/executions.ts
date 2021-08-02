@@ -151,3 +151,36 @@ export const searchExecutionsByGranules = async (params: {
     expectedStatusCode: 202,
   });
 };
+
+/**
+ * Gets common workflows for a set of granules
+ * POST /executions/workflows-by-granules
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const workflowsByGranules = async (params: {
+  prefix: string,
+  payload: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, payload, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/workflows-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
+  });
+};
