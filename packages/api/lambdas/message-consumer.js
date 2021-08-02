@@ -175,7 +175,7 @@ function handler(event, context, cb) {
   // fetch enabled rules from the API and cache in memory so we don't need a ton of DB connections
   return fetchEnabledRules()
     .then((rules) => Promise.all(records.map(
-      (r) => processRecord(r, (r.EventSource === 'aws:sns'), rules)
+      (record) => processRecord(record, (record.EventSource === 'aws:sns'), rules)
     )))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((error) => {
