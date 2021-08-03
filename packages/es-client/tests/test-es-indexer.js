@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -659,4 +660,186 @@ test.serial('Create new index with number of shards env var set', async (t) => {
     delete process.env.ES_INDEX_SHARDS;
     await esClient.indices.delete({ index: newIndex });
   }
+});
+
+test.serial('upsertExecution writes new "running" execution', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+
+  const testRecord = {
+    arn: randomString(),
+  };
+  testRecord.status = 'running';
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+});
+
+test.serial('upsertExecution writes new "completed" execution', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+
+  const testRecord = {
+    arn: randomString(),
+  };
+  testRecord.status = 'completed';
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+});
+
+test.serial('upsertExecution updates "running" status to "completed"', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+  const updatedAt = Date.now();
+
+  const testRecord = {
+    arn: randomString(),
+    updatedAt: updatedAt - 1000,
+    status: 'running',
+  };
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.is(record.status, 'running');
+
+  const updates = {
+    ...testRecord,
+    status: 'completed',
+    updatedAt,
+  };
+  await indexer.upsertExecution(
+    esClient,
+    updates.arn,
+    updates,
+    esAlias,
+    type
+  );
+
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
+});
+
+test.serial('upsertExecution does not update "completed" status to "running"', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+
+  const testRecord = {
+    arn: randomString(),
+    status: 'completed',
+  };
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.is(record.status, 'completed');
+
+  const updates = {
+    ...testRecord,
+    status: 'running',
+  };
+  await indexer.upsertExecution(
+    esClient,
+    updates.arn,
+    updates,
+    esAlias,
+    type
+  );
+
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.is(updatedRecord.status, 'completed');
+});
+
+test.serial('upsertExecution sets originalPayload/updatedAt/timestamp for "running" update to "completed" record', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+
+  const testRecord = {
+    arn: randomString(),
+    status: 'completed',
+    finalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+  };
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+
+  const updates = {
+    ...testRecord,
+    originalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+  };
+  await indexer.upsertExecution(
+    esClient,
+    updates.arn,
+    updates,
+    esAlias,
+    type
+  );
+
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
 });

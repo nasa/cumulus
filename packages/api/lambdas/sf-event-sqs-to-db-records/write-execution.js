@@ -4,7 +4,7 @@ const {
   ExecutionPgModel,
 } = require('@cumulus/db');
 const {
-  indexExecution,
+  upsertExecution,
 } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -116,7 +116,12 @@ const writeExecutionToDynamoAndES = async (params) => {
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
     await executionModel.storeExecution(executionApiRecord);
-    await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+    await upsertExecution(
+      esClient,
+      executionApiRecord.arn,
+      executionApiRecord,
+      process.env.ES_INDEX
+    );
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync

@@ -124,6 +124,39 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
 }
 
 /**
+ * Upsert an execution record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} arn - Record ARN
+ * @param  {Object} updates - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: execution)
+ * @returns {Promise} elasticsearch update response
+ */
+async function upsertExecution(esClient, arn, updates, index = defaultIndexAlias, type = 'execution') {
+  const upsertDoc = {
+    ...updates,
+    timestamp: Date.now(),
+  };
+  return await esClient.update({
+    index,
+    type,
+    id: arn,
+    body: {
+      script: {
+        lang: 'painless',
+        source: 'if (params.doc.status == "running") { ctx._source.updatedAt = params.doc.updatedAt; ctx._source.timestamp = params.doc.timestamp; ctx._source.originalPayload = params.doc.originalPayload; } else { ctx._source.putAll(params.doc) }',
+        params: {
+          doc: upsertDoc,
+        },
+      },
+      upsert: upsertDoc,
+    },
+    refresh: inTestMode(),
+  });
+}
+
+/**
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
@@ -557,6 +590,7 @@ module.exports = {
   deleteRecord,
   deleteAsyncOperation,
   updateAsyncOperation,
+  upsertExecution,
   deleteCollection,
   deleteProvider,
   deleteRule,
