@@ -12,7 +12,6 @@ const logger = new Logger({ sender: '@cumulus/replay-sqs-messages' });
 
 // Get messages from S3 using queueName
 const getArchivedMessagesFromQueue = async (queueName) => {
-  const validMessages = [];
   const bucket = envUtils.getRequiredEnvVar('system_bucket', process.env);
   const stackName = envUtils.getRequiredEnvVar('stackName', process.env);
   const prefix = getS3PrefixForArchivedMessage(stackName, queueName);
@@ -24,20 +23,17 @@ const getArchivedMessagesFromQueue = async (queueName) => {
   logger.debug(`Params for listS3Keys bucket: ${bucket}, prefix: ${prefix}`);
 
   const messageObjects = await listS3ObjectsV2(params);
-  const archivedMessages = await Promise.allSettled(messageObjects.map(
+  const archiveRequests = await Promise.allSettled(messageObjects.map(
     async (messageObject) => {
       const sqsMessage = await getJsonS3Object(bucket, messageObject.Key);
       logger.debug(`Message retrieved ${JSON.stringify(sqsMessage)}`);
       return sqsMessage;
     }
   ));
-  archivedMessages.map((message) => {
-    if (message.status === 'fulfilled') {
-      validMessages.push(message.value);
-    }
-    return validMessages;
-  });
-  return validMessages;
+  const archivedMessages = archiveRequests
+    .filter((message) => message.status === 'fulfilled')
+    .map((message) => message.value);
+  return archivedMessages;
 };
 
 async function replaySqsMessages(event) {
