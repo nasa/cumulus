@@ -84,12 +84,11 @@ async function cleanupRulesAndQueues(rules, queues) {
   // Delete queueName for each object in list
   queues.forEach((q) => delete q.queueName);
 
-  const queueUrls = queues.reduce(
-    (accumulator, currentValue) => accumulator.concat(Object.values(currentValue)), []
-  );
-
   await Promise.all(
-    queueUrls.map((queueUrl) => SQS.deleteQueue(queueUrl))
+    queues.map(async (queue) => {
+      await SQS.deleteQueue(queue.queueUrl);
+      await SQS.deleteQueue(queue.deadLetterQueueUrl);
+    })
   );
 }
 
