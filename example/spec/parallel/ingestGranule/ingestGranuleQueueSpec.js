@@ -6,9 +6,6 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
-const {
-  Granule,
-} = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
   parseS3Uri,
@@ -39,7 +36,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
-const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { setDistributionApiEnvVars, waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -49,10 +46,6 @@ const {
   createTestDataPath,
   createTestSuffix,
 } = require('../../helpers/testUtils');
-const {
-  setDistributionApiEnvVars,
-  waitForModelStatus,
-} = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
@@ -85,7 +78,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
-  let granuleModel;
   let inputPayload;
   let pdrFilename;
   let postToCmrOutput;
@@ -105,10 +97,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const newCollectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -276,10 +265,14 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('makes the granule available through the Cumulus API', async () => {
     if (beforeAllError) throw SetupError;
-    await waitForModelStatus(
-      granuleModel,
-      { granuleId: inputPayload.granules[0].granuleId },
-      ['completed']
+
+    await waitForApiStatus(
+      getGranule,
+      {
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+      },
+      ['running', 'completed']
     );
 
     const granule = await getGranule({
