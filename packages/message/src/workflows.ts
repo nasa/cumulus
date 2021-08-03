@@ -91,27 +91,3 @@ export const getWorkflowDuration = (
   startTime: number,
   stopTime?: number
 ): number => (isNil(stopTime) ? 0 : (stopTime - startTime) / 1000);
-
-/**
- * Determine if workflow is in a running state
- *
- * @param {string} status - Workflow status
- * @returns {boolean} True if workflow is running
- *
- * @alias module:workflows
- */
-export const isWorkflowRunningStatus = (
-  status: Message.WorkflowStatus
-): boolean => status === 'running';
-
-/**
- * Determine if workflow is in a terminal state
- *
- * @param {string} status - Workflow status
- * @returns {boolean} True if workflow is in a terminal state
- *
- * @alias module:workflows
- */
-export const isWorkflowTerminalStatus = (
-  status: Message.WorkflowStatus
-): boolean => (status === 'completed' || status === 'failed');

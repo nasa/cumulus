@@ -274,50 +274,6 @@ test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same tim
   t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test('writeExecution() properly sets originalPayload on initial write and finalPayload on subsequent write', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionModel,
-    executionArn,
-    executionPgModel,
-  } = t.context;
-
-  cumulusMessage.meta.status = 'running';
-  const originalPayload = {
-    testId: cryptoRandomString({ length: 10 }),
-  };
-  cumulusMessage.payload = originalPayload;
-
-  await writeExecution({ cumulusMessage, knex });
-
-  const dynamoRecord = await executionModel.get({ arn: executionArn });
-  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const esRecord = await t.context.esExecutionsClient.get(executionArn);
-
-  t.deepEqual(pgRecord.original_payload, originalPayload);
-  t.deepEqual(dynamoRecord.originalPayload, originalPayload);
-  t.deepEqual(esRecord.originalPayload, originalPayload);
-
-  cumulusMessage.meta.status = 'completed';
-  const finalPayload = {
-    testId: cryptoRandomString({ length: 10 }),
-  };
-  cumulusMessage.payload = finalPayload;
-  await writeExecution({ cumulusMessage, knex });
-
-  const updatedDynamoRecord = await executionModel.get({ arn: executionArn });
-  const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  const updatedEsRecord = await t.context.esExecutionsClient.get(executionArn);
-
-  t.deepEqual(updatedPgRecord.original_payload, originalPayload);
-  t.deepEqual(updatedDynamoRecord.originalPayload, originalPayload);
-  t.deepEqual(updatedEsRecord.originalPayload, originalPayload);
-  t.deepEqual(updatedPgRecord.final_payload, finalPayload);
-  t.deepEqual(updatedDynamoRecord.finalPayload, finalPayload);
-  t.deepEqual(updatedEsRecord.finalPayload, finalPayload);
-});
-
 test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,

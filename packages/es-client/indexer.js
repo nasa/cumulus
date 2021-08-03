@@ -124,20 +124,6 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
 }
 
 /**
- * Updates an execution record in Elasticsearch
- *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} arn - Record ARN
- * @param  {Object} updates - Document of updates to apply
- * @param  {string} index - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type - Elasticsearch type (default: execution)
- * @returns {Promise} elasticsearch update response
- */
-function updateExecution(esClient, arn, updates, index = defaultIndexAlias, type = 'execution') {
-  return updateExistingRecord(esClient, arn, updates, index, type);
-}
-
-/**
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
@@ -571,7 +557,6 @@ module.exports = {
   deleteRecord,
   deleteAsyncOperation,
   updateAsyncOperation,
-  updateExecution,
   deleteCollection,
   deleteProvider,
   deleteRule,

@@ -9,8 +9,6 @@ const {
   getMessageWorkflowStopTime,
   getMessageWorkflowName,
   getWorkflowDuration,
-  isWorkflowRunningStatus,
-  isWorkflowTerminalStatus,
 } = require('../workflows');
 
 test('getMetaStatus returns correct status', (t) => {
@@ -135,24 +133,4 @@ test('getWorkflowDuration 0 if no stop time is provided', (t) => {
     ),
     0
   );
-});
-
-test('isWorkflowRunningStatus returns true for running workflow status', (t) => {
-  t.true(isWorkflowRunningStatus('running'));
-});
-
-test('isWorkflowRunningStatus returns false for non-running workflow status', (t) => {
-  t.false(isWorkflowRunningStatus('completed'));
-  t.false(isWorkflowRunningStatus('failed'));
-  t.false(isWorkflowRunningStatus('foo'));
-});
-
-test('isWorkflowTerminalStatus returns true for terminal workflow status', (t) => {
-  t.true(isWorkflowTerminalStatus('completed'));
-  t.true(isWorkflowTerminalStatus('failed'));
-});
-
-test('isWorkflowTerminalStatus returns false for non-running workflow status', (t) => {
-  t.false(isWorkflowTerminalStatus('running'));
-  t.false(isWorkflowTerminalStatus('foo'));
 });
