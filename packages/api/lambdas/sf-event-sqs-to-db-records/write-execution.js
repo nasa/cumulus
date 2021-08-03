@@ -5,6 +5,7 @@ const {
 } = require('@cumulus/db');
 const {
   indexExecution,
+  updateExecution,
 } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -22,6 +23,7 @@ const {
   getMessageWorkflowStartTime,
   getMessageWorkflowStopTime,
   getWorkflowDuration,
+  isWorkflowRunningStatus,
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
 
@@ -116,7 +118,16 @@ const writeExecutionToDynamoAndES = async (params) => {
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
     await executionModel.storeExecution(executionApiRecord);
-    await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+    if (isWorkflowRunningStatus(executionApiRecord.status)) {
+      await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+    } else {
+      await updateExecution(
+        esClient,
+        executionApiRecord.arn,
+        executionApiRecord,
+        process.env.ES_INDEX
+      );
+    }
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
