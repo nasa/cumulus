@@ -50,7 +50,7 @@ export const generateCollectionReportObject = (stats: StatsObject[]) => {
        || esGranulesCount !== pgGranulesCount
        || esExecutionsCount !== pgExecutionsCount) {
       reportObj[statsObj.collectionId] = {
-        pdrsDelta: esPdrCount - counts[3],
+        pdrsDelta: esPdrCount - pgPdrCount,
         totalPdrs: esPdrCount,
         granulesDelta: esGranulesCount - pgGranulesCount,
         totalGranules: esGranulesCount,
