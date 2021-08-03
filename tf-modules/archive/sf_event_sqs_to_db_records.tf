@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 60
+  sf_event_sqs_lambda_timeout = (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -176,12 +176,17 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
-      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      acquireTimeoutMillis           = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      DeadLetterQueue                = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
+      ExecutionsTable                = var.dynamo_tables.executions.name
+      GranulesTable                  = var.dynamo_tables.granules.name
+      idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
+      PdrsTable                      = var.dynamo_tables.pdrs.name
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
+      reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
     }
   }
 

@@ -16,11 +16,12 @@ function filenamify(fileName) {
  * Ensures that the exception is returned as an object
  *
  * @param {*} exception - the exception
- * @returns {string} an stringified exception
+ * @returns {Object} an objectified exception
  */
 function parseException(exception) {
   if (isNil(exception)) return {};
   if (isObject(exception)) return exception;
+  if (exception === 'None') return {};
   return {
     Error: 'Unknown Error',
     Cause: exception,
