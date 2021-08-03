@@ -69,10 +69,12 @@ database via the API
   - **CUMULUS-2303**
     - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
   - **CUMULUS-2304**
-    - Updated API rule GET endpoint to read individual rule records from
-      PostgreSQL database instead of DynamoDB
-    - Updated internal consumer lambdas for SNS, SQS and Kinesis to read
-      rules from PostgreSQL.
+    - Added `@cumulus/es-client/indexer.updateExecution` to update an existing execution
+    record in Elasticsearch
+    - Added `@cumulus/message/workflows.isWorkflowRunningStatus` to determine if workflow
+    status is in a running state
+    - Added `@cumulus/message/workflows.isWorkflowTerminalSTatus` to determine if workflow
+    status is in a terminal state
   - **CUMULUS-2306**
     - Updated API execution GET endpoint to read individual execution records
       from PostgreSQL database instead of DynamoDB
@@ -169,6 +171,11 @@ behavior
       PostgreSQL database instead of DynamoDB
     - Update sf-scheduler lambda to utilize API endpoint to get provider record
       from database via Private API lambda
+  - **CUMULUS-2304**
+    - Updated API rule GET endpoint to read individual rule records from
+      PostgreSQL database instead of DynamoDB
+    - Updated internal consumer lambdas for SNS, SQS and Kinesis to read
+      rules from PostgreSQL.
   - **CUMULUS-2301**
     - Updated `getAsyncOperation` to read from PostgreSQL database instead of
       DynamoDB.
