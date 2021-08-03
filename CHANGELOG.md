@@ -51,6 +51,8 @@ database via the API
 
 - `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - Added `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
+    record to Elasticsearch
   - **CUMULUS-2208**
     - Added `@cumulus/message/utils.parseException` to parse exception objects
     - Added helpers to `@cumulus/message/Granules`:
