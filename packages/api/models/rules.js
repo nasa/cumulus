@@ -478,7 +478,7 @@ class Rule extends Manager {
   async deleteSnsTrigger(item) {
     // If event source mapping is shared by other rules, don't delete it
     if (await this.isEventSourceMappingShared(item, 'arn')) {
-      log.info(`Event source mapping ${arn} is shared by multiple rules, so it will not be deleted.`);
+      log.info(`Event source mapping ${item} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
       return Promise.resolve();
     }
     // delete permission statement
