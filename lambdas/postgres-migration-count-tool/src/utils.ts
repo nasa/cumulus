@@ -39,14 +39,23 @@ export const generateCollectionReportObject = (stats: StatsObject[]) => {
   const reportObj = {} as CollectionReportObject;
   stats.forEach((statsObj) => {
     const counts = statsObj.counts;
-    if (counts[0] !== counts[3] || counts[1] !== counts[4] || counts[2] !== counts[5]) {
+    const esPdrCount = counts[0];
+    const pgPdrCount = counts[3];
+    const esGranulesCount = counts[1];
+    const pgGranulesCount = counts[4];
+    const esExecutionsCount = counts[2];
+    const pgExecutionsCount = counts[5];
+
+    if (esPdrCount !== pgPdrCount
+       || esGranulesCount !== pgGranulesCount
+       || esExecutionsCount !== pgExecutionsCount) {
       reportObj[statsObj.collectionId] = {
-        pdrsDelta: counts[0] - counts[3],
-        totalPdrs: counts[0],
-        granulesDelta: counts[1] - counts[4],
-        totalGranules: counts[1],
-        executionsDelta: counts[2] - counts[5],
-        totalExecutions: counts[2],
+        pdrsDelta: esPdrCount - counts[3],
+        totalPdrs: esPdrCount,
+        granulesDelta: esGranulesCount - pgGranulesCount,
+        totalGranules: esGranulesCount,
+        executionsDelta: esExecutionsCount - pgExecutionsCount,
+        totalExecutions: esExecutionsCount,
       };
     }
   });
