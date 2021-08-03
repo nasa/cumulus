@@ -65,7 +65,7 @@ test('replaySqsMessages queues messages to SQS for each archived message', async
 });
 
 test('getArchivedMessagesFromQueue only returns valid messages', async (t) => {
-  const { queueName, queueUrl, validMessage } = t.context;
+  const { queueName, validMessage } = t.context;
   const invalidMessage = { id: uuidv4(), Body: randomString() };
   const key2 = getS3KeyForArchivedMessage(t.context.stackName, invalidMessage.id, queueName);
   await s3PutObject({
@@ -74,19 +74,10 @@ test('getArchivedMessagesFromQueue only returns valid messages', async (t) => {
     Body: invalidMessage.Body,
   });
 
-  const event = {
-    queueName,
-  };
   const expected = [JSON.parse(validMessage.Body)];
 
-  const replay = (await replaySqsMessages(event));
-  const {
-    numberOfMessagesAvailable,
-    numberOfMessagesNotVisible,
-  } = await getSqsQueueMessageCounts(queueUrl);
-  t.is(numberOfMessagesAvailable, 1);
-  t.is(numberOfMessagesNotVisible, 0);
-  t.deepEqual(replay, expected);
+  const retrievedMessages = await getArchivedMessagesFromQueue(queueName);
+  t.deepEqual(retrievedMessages, expected);
 });
 
 test('getArchivedMessagesFromQueue gets archived messages from S3 with the provided queueName', async (t) => {
