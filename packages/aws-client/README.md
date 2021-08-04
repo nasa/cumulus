@@ -64,6 +64,9 @@ memory at once.  Handles paging.</p>
 <dd><p>Class to efficiently list all of the objects in an S3 bucket, without loading
 them all into memory at once.  Handles paging of listS3ObjectsV2 requests.</p>
 </dd>
+<dt><a href="#S3ObjectStore">S3ObjectStore</a></dt>
+<dd><p>Class to use when interacting with S3</p>
+</dd>
 </dl>
 
 <a name="module_CloudFormation"></a>
@@ -305,6 +308,7 @@ Invoke a Lambda function
     * [.s3ObjectExists(params)](#module_S3.s3ObjectExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
     * [.waitForObjectToExist(params)](#module_S3.waitForObjectToExist) ⇒ <code>Promise.&lt;undefined&gt;</code>
     * [.putFile(bucket, key, filename)](#module_S3.putFile) ⇒ <code>Promise</code>
+    * [.streamS3Upload(uploadStream, uploadParams)](#module_S3.streamS3Upload) ⇒ <code>Promise</code>
     * [.downloadS3File(s3Obj, filepath)](#module_S3.downloadS3File) ⇒ <code>Promise.&lt;string&gt;</code>
     * [.getObjectSize(params)](#module_S3.getObjectSize) ⇒ <code>Promise.&lt;(number\|undefined)&gt;</code>
     * [.getObject(s3, params)](#module_S3.getObject) ⇒ <code>Promise.&lt;AWS.S3.GetObjectOutput&gt;</code>
@@ -533,6 +537,22 @@ Upload a file to S3
 | bucket | <code>string</code> | the destination S3 bucket |
 | key | <code>string</code> | the destination S3 key |
 | filename | <code>filename</code> | the local file to be uploaded |
+
+<a name="module_S3.streamS3Upload"></a>
+
+### S3.streamS3Upload(uploadStream, uploadParams) ⇒ <code>Promise</code>
+Upload data to S3 using a stream
+
+We are not using `s3.upload().promise()` due to errors observed in testing
+with uncaught exceptions. By creating our own promise, we can ensure any
+errors from the streams or upload cause this promise to reject.
+
+**Kind**: static method of [<code>S3</code>](#module_S3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| uploadStream | <code>Readable</code> | Stream of data to upload |
+| uploadParams | <code>Object</code> | see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property) |
 
 <a name="module_S3.downloadS3File"></a>
 
@@ -1070,6 +1090,55 @@ When there are no more items in the queue, returns 'null'.
 
 **Kind**: instance method of [<code>S3ListObjectsV2Queue</code>](#S3ListObjectsV2Queue)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - an S3 object description  
+<a name="S3ObjectStore"></a>
+
+## S3ObjectStore
+Class to use when interacting with S3
+
+**Kind**: global class  
+
+* [S3ObjectStore](#S3ObjectStore)
+    * [.signGetObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signGetObject) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.signHeadObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signHeadObject) ⇒ <code>Promise.&lt;string&gt;</code>
+
+<a name="S3ObjectStore+signGetObject"></a>
+
+### s3ObjectStore.signGetObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a GET on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+
+<a name="S3ObjectStore+signHeadObject"></a>
+
+### s3ObjectStore.signHeadObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a HEAD on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+
 
 ## About Cumulus
 

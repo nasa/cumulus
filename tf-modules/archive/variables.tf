@@ -147,9 +147,9 @@ variable "buckets" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {
