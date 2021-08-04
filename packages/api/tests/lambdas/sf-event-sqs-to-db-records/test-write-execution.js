@@ -419,7 +419,7 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   } = t.context;
 
   const fakeEsClient = {
-    index: () => {
+    update: () => {
       throw new Error('ES error');
     },
   };
