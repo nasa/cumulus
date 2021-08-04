@@ -1,11 +1,63 @@
 import Knex from 'knex';
 
 import { deconstructCollectionId } from '@cumulus/message/Collections';
+import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
+
+/**
+* Translates a PostgresGranule object to a `GranuleRecord` API granule object
+* @param {PostgresGranule} granuleRecord - PostgreSQL granule record to translate
+* @returns {Promise<GranuleRecord>} - Translated record
+*/
+export const translatePostgresGranuleToApiGranule = async (
+  granulePgRecord: PostgresGranule,
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel()
+): Promise<AWS.DynamoDB.DocumentClient.AttributeMap> => {
+  const collection = await collectionPgModel.get(
+    knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
+  );
+  const pdr = await pdrPgModel.get(
+    knexOrTransaction, { cumulus_id: granulePgRecord.pdr_cumulus_id }
+  );
+  const provider = await providerPgModel.get(
+    knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
+  );
+
+  // TODO add files
+
+  return removeNilProperties(({
+    granuleId: granulePgRecord.granule_id,
+    status: granulePgRecord.status,
+    name: collection.name,
+    version: collection.version,
+    published: granulePgRecord.published,
+    duration: granulePgRecord.duration,
+    timeToArchive: granulePgRecord.time_to_archive,
+    timeToPreprocess: granulePgRecord.time_to_process,
+    productVolume: granulePgRecord.product_volume,
+    error: granulePgRecord.error,
+    cmrLink: granulePgRecord.cmr_link,
+    pdrName: pdr.name,
+    provider: provider.name,
+    queryFields: granulePgRecord.query_fields,
+    beginningDateTime: granulePgRecord.beginning_date_time?.getTime(),
+    endingDateTime: granulePgRecord.ending_date_time?.getTime(),
+    lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime(),
+    processingEndDateTime: granulePgRecord.processing_end_date_time?.getTime(),
+    processingStartDateTime: granulePgRecord.processing_start_date_time?.getTime(),
+    productionDateTime: granulePgRecord.production_date_time?.getTime(),
+    timestamp: granulePgRecord.timestamp?.getTime(),
+    createdAt: granulePgRecord.created_at?.getTime(),
+    updatedAt: granulePgRecord.updated_at?.getTime(),
+  }));
+};
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.

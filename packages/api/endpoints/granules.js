@@ -10,6 +10,7 @@ const {
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
+  FilePgModel,
 } = require('@cumulus/db');
 const {
   DeletePublishedGranule,
@@ -258,13 +259,14 @@ async function del(req, res) {
 async function get(req, res) {
   const {
     granulePgModel = new GranulePgModel(),
+    filePgModel = new FilePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
-  let result;
+  let granule;
   try {
-    result = await granulePgModel.get(knex, { granule_id: granuleId });
+    granule = await granulePgModel.get(knex, { granule_id: granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');
@@ -272,6 +274,9 @@ async function get(req, res) {
 
     throw error;
   }
+
+  const files = await filePgModel.get(knex, { granule_id: granuleId });
+  const result = translatePostgresGranuleToApiGranule(granule, files);
 
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)

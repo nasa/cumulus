@@ -299,9 +299,9 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
-  const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   results.forEach((r) => {
-    t.true(granuleIds.includes(r.granuleId));
+    t.true(granuleIds.includes(r.granule_id));
   });
 });
 
@@ -411,7 +411,7 @@ test.serial('GET returns an existing granule', async (t) => {
     .expect(200);
 
   const { granule_id: granuleId } = response.body;
-  t.is(granuleId, t.context.fakeGranules[0].granuleId);
+  t.is(granuleId, t.context.fakePGGranules[0].granule_id);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
