@@ -712,6 +712,52 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
   t.like(record, testRecord);
 });
 
+test.serial('upsertExecution updates "completed" execution', async (t) => {
+  const { esAlias } = t.context;
+  const type = 'execution';
+  const esExecutionsClient = new Search(
+    {},
+    type,
+    esAlias
+  );
+
+  const testRecord = {
+    arn: randomString(),
+    finalPayload: {
+      foo: 'bar',
+    },
+  };
+  testRecord.status = 'completed';
+  await indexer.upsertExecution(
+    esClient,
+    testRecord.arn,
+    testRecord,
+    esAlias,
+    type
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+
+  const newFinalPayload = {
+    foo2: 'baz',
+  };
+  const updates = {
+    ...testRecord,
+    finalPayload: newFinalPayload,
+  };
+  await indexer.upsertExecution(
+    esClient,
+    updates.arn,
+    updates,
+    esAlias,
+    type
+  );
+
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
+});
+
 test.serial('upsertExecution updates "running" status to "completed"', async (t) => {
   const { esAlias } = t.context;
   const type = 'execution';
@@ -822,7 +868,10 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
-  t.like(record, testRecord);
+  t.like(record, {
+    ...testRecord,
+    timestamp: record.timestamp,
+  });
 
   const updates = {
     ...testRecord,
@@ -830,7 +879,6 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
       key: cryptoRandomString({ length: 5 }),
     },
     updatedAt: Date.now(),
-    timestamp: Date.now(),
   };
   await indexer.upsertExecution(
     esClient,
@@ -841,5 +889,8 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   );
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
-  t.like(updatedRecord, updates);
+  t.like(updatedRecord, {
+    ...updates,
+    timestamp: updatedRecord.timestamp,
+  });
 });
