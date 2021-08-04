@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
 
 ### Added
 
@@ -17,6 +23,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
   - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
   of a readable stream to S3 and returning a promise
+- **CUMULUS-2373**
+  - Added `replaySqsMessages` lambda to replay archived incoming SQS
+    messages from S3.
+  - Added `/replays/sqs` endpoint to trigger an async operation for
+    the `replaySqsMessages` lambda.
+  - Added unit tests and integration tests for new endpoint and lambda.
+  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
+    for an archived message.
+  - Added new `async_operation` type `SQS Replay`.
 
 ### Fixed
 
@@ -26,6 +41,12 @@ properly handle basic auth when redirecting to a different
 host and/or host with a different port
 - **CUMULUS-2626**
   - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+
+### Changed
+
+- **CUMULUS-2373**
+  - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
+    by `queueName`.
 
 ## [v9.3.0] 2021-07-26
 
