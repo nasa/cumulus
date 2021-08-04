@@ -23,13 +23,13 @@ const {
   destroyLocalTestDb,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
-  fakeProviderRecordFactory,
   fakeExecutionRecordFactory,
+  fakeProviderRecordFactory,
   generateLocalTestDb,
+  GranulePgModel,
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
-  GranulePgModel,
 } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
@@ -127,13 +127,16 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([
@@ -153,21 +156,21 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     1
   );
 
-  const granuleRecords = await t.context.granulePgModel.search(
-    t.context.knex,
-    { granule_id: fakeGranule.granuleId }
-  );
-  t.is(
-    granuleRecords.length,
-    1
-  );
-
   const pdrRecords = await t.context.pdrPgModel.search(
     t.context.knex,
     { name: testPdr.pdrName }
   );
   t.is(
     pdrRecords.length,
+    1
+  );
+
+  const granuleRecords = await t.context.granulePgModel.search(
+    t.context.knex,
+    { granule_id: fakeGranule.granuleId }
+  );
+  t.is(
+    granuleRecords.length,
     1
   );
 
@@ -194,16 +197,20 @@ test.serial('handler migrates only executions if configured', async (t) => {
   } = t.context;
 
   const collectionId = `${testCollection.name}___${testCollection.version}`;
+
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([

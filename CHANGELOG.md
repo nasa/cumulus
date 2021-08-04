@@ -32,6 +32,9 @@ downloading files protected by Earthdata Login)
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
 
 ### Fixed
 
@@ -41,6 +44,8 @@ properly handle basic auth when redirecting to a different
 host and/or host with a different port
 - **CUMULUS-2626**
   - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules
 
 ### Changed
 
