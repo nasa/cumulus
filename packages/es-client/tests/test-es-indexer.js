@@ -795,7 +795,7 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
   t.is(updatedRecord.status, 'completed');
 });
 
-test.serial('upsertExecution sets originalPayload/updatedAt/timestamp for "running" update to "completed" record', async (t) => {
+test.serial('upsertExecution preserves finalPayload and sets originalPayload/updatedAt/timestamp when "running" event comes after "completed" event', async (t) => {
   const { esAlias } = t.context;
   const type = 'execution';
   const esExecutionsClient = new Search(
