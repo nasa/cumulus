@@ -69,6 +69,7 @@ export {
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
