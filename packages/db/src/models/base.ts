@@ -84,7 +84,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    */
   async getRecordCumulusId(
     knexOrTransaction: Knex | Knex.Transaction,
-    whereClause : Partial<RecordType>
+    whereClause: Partial<RecordType>
   ): Promise<number> {
     const record: RecordType = await knexOrTransaction(this.tableName)
       .select('cumulus_id')
@@ -94,6 +94,26 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
       throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${JSON.stringify(whereClause)} does not exist.`);
     }
     return record.cumulus_id;
+  }
+
+  /**
+   * Get cumulus_id column value for multiple records in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction -
+   *  DB client or transaction
+   * @param {Array<keyof RecordType>} columnNames - column names for whereIn query
+   * @param {Array<string>} values - record values for whereIn query
+   * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
+   */
+  async getRecordsCumulusIds(
+    knexOrTransaction: Knex | Knex.Transaction,
+    columnNames: Array<keyof RecordType>,
+    values: Array<any>
+  ): Promise<Array<number>> {
+    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
+      .select('cumulus_id')
+      .whereIn(columnNames, values);
+    return records.map((record) => record.cumulus_id);
   }
 
   /**

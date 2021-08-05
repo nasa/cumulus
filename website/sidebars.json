@@ -25,6 +25,7 @@
       "deployment/postgres_database_deployment",
       "deployment/components",
       "deployment/thin_egress_app",
+      "deployment/cumulus_distribution",
       "deployment/api-gateway-logging",
       "deployment/share-s3-access-logs",
       "deployment/cloudwatch-logs-delivery",
@@ -86,7 +87,8 @@
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone",
       "upgrade-notes/upgrade_tf_version_0.13.6",
-      "upgrade-notes/upgrade-rds"
+      "upgrade-notes/upgrade-rds",
+      "upgrade-notes/cumulus_distribution_migration"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"

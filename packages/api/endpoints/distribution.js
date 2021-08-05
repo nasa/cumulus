@@ -3,11 +3,12 @@
 const get = require('lodash/get');
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
+const pRetry = require('p-retry');
 const { render } = require('nunjucks');
 const { resolve: pathresolve } = require('path');
 const urljoin = require('url-join');
 
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, s3PutObject } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -15,7 +16,13 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { objectStoreForProtocol } = require('@cumulus/object-store');
 
 const { buildLoginErrorTemplateVars, getConfigurations, useSecureCookies } = require('../lib/distribution');
-const { getBucketMap, getPathsByBucketName, processFileRequestPath, checkPrivateBucket } = require('../lib/bucketMapUtils');
+const {
+  getBucketMap,
+  getPathsByBucketName,
+  getPathsByPrefixedBucketName,
+  processFileRequestPath,
+  checkPrivateBucket,
+} = require('../lib/bucketMapUtils');
 
 const templatesDirectory = (inTestMode())
   ? pathresolve(__dirname, '../app/data/distribution/templates')
@@ -205,7 +212,7 @@ async function handleFileRequest(req, res) {
   const errorTemplate = pathresolve(templatesDirectory, 'error.html');
   const requestid = get(req, 'apiGateway.context.awsRequestId');
   const bucketMap = await getBucketMap();
-  const { bucket, key } = processFileRequestPath(req.params[0], bucketMap);
+  const { bucket, key, headers } = processFileRequestPath(req.params[0], bucketMap);
   if (bucket === undefined) {
     const error = `Unable to locate bucket from bucket map for ${req.params[0]}`;
     return res.boom.notFound(error);
@@ -235,6 +242,9 @@ async function handleFileRequest(req, res) {
   const url = buildS3Uri(bucket, key);
   const objectStore = objectStoreForProtocol('s3');
   const range = req.get('Range');
+
+  // Read custom headers from bucket_map.yaml
+  log.debug(`Bucket map headers for ${bucket}/${key}: ${JSON.stringify(headers)}`);
 
   const options = {
     ...range ? { Range: range } : {},
@@ -281,10 +291,57 @@ async function handleFileRequest(req, res) {
   return res
     .status(307)
     .set({ Location: signedS3Url })
+    .set({ ...headers })
     .send('Redirecting');
 }
 
+/**
+ * Takes a bucketlist and a bucket/key event, gets the mapping path for each bucket from bucket map,
+ * and writes a bucket mapping object to S3.   Returns the bucket map object.
+ *
+ * @param {Object} event              - Event containing
+ * @param {string[]} event.bucketList - An array of buckets to cache values for
+ * @param {string} event.s3Bucket     - Bucket to write .json map cache file to
+ * @param {string} event.s3Key        - Key to write .json map cache file to
+ * @returns {Promise<Object>}         - A bucketmap object {bucket1: mapping1, bucket2: mapping2}
+ */
+async function writeBucketMapCacheToS3({
+  bucketList,
+  s3Bucket,
+  s3Key,
+}) {
+  if (!bucketList || !s3Bucket || !s3Key) {
+    throw new Error('A bucketlist and s3 bucket/key must be provided in the event');
+  }
+
+  const bucketMap = await getBucketMap();
+
+  const bucketMapObjects = bucketList.map((bucket) => {
+    const bucketMapList = getPathsByPrefixedBucketName(bucketMap, bucket);
+    if (bucketMapList.length > 1) {
+      throw new pRetry.AbortError(`BucketMap configured with multiple responses from ${bucket},
+      this package cannot resolve a distirbution URL as configured for this bucket`);
+    }
+    if (bucketMapList.length === 0) {
+      throw new pRetry.AbortError(`No bucket mapping found for ${bucket}`);
+    }
+    return { [bucket]: bucketMapList[0] };
+  });
+
+  const bucketMapCache = bucketMapObjects.reduce((map, obj) => Object.assign(map, obj), {});
+
+  await s3PutObject({
+    Bucket: s3Bucket,
+    Key: s3Key,
+    Body: JSON.stringify(bucketMapCache),
+  });
+
+  log.info(`Wrote bucketmap ${JSON.stringify(bucketMapCache)} to ${s3Bucket}/${s3Key}`);
+  return bucketMapCache;
+}
+
 module.exports = {
+  writeBucketMapCacheToS3,
   handleLocateBucketRequest,
   handleLoginRequest,
   handleLogoutRequest,

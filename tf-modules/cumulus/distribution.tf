@@ -1,4 +1,5 @@
 module "distribution" {
+  count = var.deploy_cumulus_distribution == false ? 1 : 0
   source = "../distribution"
 
   tea_api_gateway_stage         = var.tea_api_gateway_stage

@@ -188,3 +188,58 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
     );
   });
 });
+
+test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct values', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulesExecutionsPgModel,
+    executionCumulusId,
+    joinRecord,
+  } = t.context;
+  let newExecutionCumulusId;
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    [newExecutionCumulusId] = await executionPgModel.create(
+      trx,
+      fakeExecutionRecordFactory()
+    );
+
+    await granulesExecutionsPgModel.create(trx, {
+      ...joinRecord,
+      execution_cumulus_id: newExecutionCumulusId,
+    });
+  });
+
+  const results = await granulesExecutionsPgModel
+    .searchByGranuleCumulusIds(knex, [joinRecord.granule_cumulus_id]);
+
+  t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
+});
+
+test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transaction', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulesExecutionsPgModel,
+    executionCumulusId,
+    joinRecord,
+  } = t.context;
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    const [newExecutionCumulusId] = await executionPgModel.create(
+      trx,
+      fakeExecutionRecordFactory()
+    );
+
+    await granulesExecutionsPgModel.create(trx, {
+      ...joinRecord,
+      execution_cumulus_id: newExecutionCumulusId,
+    });
+
+    const results = await granulesExecutionsPgModel
+      .searchByGranuleCumulusIds(trx, [joinRecord.granule_cumulus_id]);
+
+    t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
+  });
+});

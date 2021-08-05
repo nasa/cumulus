@@ -198,18 +198,19 @@ const convertFileGroupToGranule = async ({
     collectionVersion: version,
   });
 
-  let provider;
+  let providerName;
   if (fileGroup.get('NODE_NAME')) {
     const host = fileGroup.get('NODE_NAME').value;
 
-    provider = await getProviderByHost({ prefix, host });
+    const provider = await getProviderByHost({ prefix, host });
+    providerName = provider.id;
   }
 
   return {
     dataType,
     version,
     files,
-    provider,
+    provider: providerName,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
     granuleSize: files.reduce((total, file) => total + file.size, 0),
   };

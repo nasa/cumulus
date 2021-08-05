@@ -143,7 +143,7 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: execution.arn,
+    execution: execution.url,
   });
   await migratePdrRecord(testPdr, knex);
 
@@ -285,7 +285,7 @@ test.serial('migratePdrRecord updates an already migrated record if the updated 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     provider: testProvider.name,
-    execution: execution.arn,
+    execution: execution.url,
     status: 'completed',
     updatedAt: Date.now() - 1000,
   });
