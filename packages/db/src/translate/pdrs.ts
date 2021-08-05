@@ -17,7 +17,7 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
  * @param {Object} collectionPgModel - Instance of the collection database model
  * @param {Object} providerPgModel   - Instance of the provider database model
  * @param {Object} executionPgModel  - Instance of the execution database model
- * @returns {Object} A PDR PG record
+ * @returns {PostgresPdr} A PDR PG record
  */
 export const translateApiPdrToPostgresPdr = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,

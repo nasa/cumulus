@@ -173,6 +173,10 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     granuleRecords.length,
     1
   );
+  t.is(
+    granuleRecords[0].pdr_cumulus_id,
+    pdrRecords[0].cumulus_id
+  );
 
   t.teardown(() => Promise.all([
     pdrsModel.delete({ pdrName: testPdr.pdrName }),
