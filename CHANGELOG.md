@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v9.2.2] 2021-08-05
+
+### Added
+
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+
+### Fixed
+
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
+
 ## [v9.2.1] 2021-07-28
 
 ### Fixed
