@@ -32,6 +32,9 @@ downloading files protected by Earthdata Login)
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
 
 ### Fixed
 
@@ -41,6 +44,11 @@ properly handle basic auth when redirecting to a different
 host and/or host with a different port
 - **CUMULUS-2626**
   - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
 
 ### Changed
 
@@ -628,6 +636,78 @@ correct a failure in our build script and push out corrected release artifacts. 
 - **CUMULUS-2185** - RDS Migration Epic
   - **CUMULUS-2455**
     - `@cumulus/ingest/moveGranuleFiles`
+
+## [v8.1.2] 2021-07-29
+
+**Please note** changes in 8.1.2 may not yet be released in future versions, as this
+is a backport/patch release on the 8.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Notable changes
+
+- `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
+integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
+that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
+variable.
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+
+### Changed
+
+- Updated `cmr_custom_host` variable to accept a full protocol and host name
+(e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
+
+### Fixed
+
+- Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+
+## [v8.1.1] 2021-04-30 -- Patch Release
+
+**Please note** changes in 8.1.1 may not yet be released in future versions, as this
+is a backport/patch release on the 8.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+
+### Fixed
+
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
+
+### Changed
+
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
+
+- **[2216](https://github.com/nasa/cumulus/issues/2216)**
+  - Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
 
 ## [v8.1.0] 2021-04-29
 

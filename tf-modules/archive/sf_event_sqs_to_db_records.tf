@@ -156,7 +156,7 @@ resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
   name                       = "${var.prefix}-sfEventSqsToDbRecordsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
-  visibility_timeout_seconds = 60
+  visibility_timeout_seconds = (local.sf_event_sqs_lambda_timeout * 6)
   tags                       = var.tags
 }
 
