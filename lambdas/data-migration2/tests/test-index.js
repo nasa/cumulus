@@ -27,6 +27,7 @@ const {
   fakeProviderRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
@@ -77,6 +78,7 @@ test.before(async (t) => {
   t.context.providerPgModel = new ProviderPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -176,6 +178,18 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   t.is(
     granuleRecords[0].pdr_cumulus_id,
     pdrRecords[0].cumulus_id
+  );
+
+  const granulesExecutionRecords = await t.context.granulesExecutionsPgModel.search(
+    t.context.knex,
+    {
+      execution_cumulus_id: executionRecords[0].cumulus_id,
+      granule_cumulus_id: granuleRecords[0].cumulus_id,
+    }
+  );
+  t.is(
+    granulesExecutionRecords.length,
+    1
   );
 
   t.teardown(() => Promise.all([
