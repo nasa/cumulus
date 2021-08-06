@@ -288,6 +288,46 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
 }
 
 /**
+ * Upsert a PDR record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} name - PDR name
+ * @param  {Object} updates - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: execution)
+ * @returns {Promise} elasticsearch update response
+ */
+async function upsertPdr(esClient, name, updates, index = defaultIndexAlias, type = 'pdr') {
+  const upsertDoc = {
+    ...updates,
+    timestamp: Date.now(),
+  };
+  return await esClient.update({
+    index,
+    type,
+    id: name,
+    body: {
+      script: {
+        lang: 'painless',
+        source: `
+          if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
+            && (params.doc.execution != ctx._source.execution || params.doc.progress > ctx._source.progress)) {
+            ctx._source.putAll(params.doc);
+          } else {
+            ctx.op = 'none  ';
+          }
+        `,
+        params: {
+          doc: upsertDoc,
+        },
+      },
+      upsert: upsertDoc,
+    },
+    refresh: inTestMode(),
+  });
+}
+
+/**
  * delete a record from Elasticsearch
  *
  * @param  {Object} params
@@ -585,6 +625,7 @@ module.exports = {
   indexRule,
   indexGranule,
   indexPdr,
+  upsertPdr,
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
