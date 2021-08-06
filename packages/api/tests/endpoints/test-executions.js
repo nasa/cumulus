@@ -5,6 +5,7 @@ const omit = require('lodash/omit');
 const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
+const uuidv4 = require('uuid/v4');
 
 const {
   createBucket,
@@ -24,6 +25,8 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeAsyncOperationRecordFactory,
   fakeExecutionRecordFactory,
+  GranulePgModel,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -41,12 +44,15 @@ const {
   setAuthorizedOAuthUsers,
   createExecutionTestRecords,
   cleanupExecutionTestRecords,
-  fakeExecutionFactory,
+  fakeGranuleFactoryV2,
+  fakeCollectionFactory,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
+process.env.CollectionsTable = randomString();
 process.env.ExecutionsTable = randomString();
+process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -62,10 +68,28 @@ const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
 let executionModel;
+let granuleModel;
+let collectionModel;
 
 test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+    METRICS_ES_HOST: 'fakehost',
+    METRICS_ES_USER: randomId('metricsUser'),
+    METRICS_ES_PASS: randomId('metricsPass'),
+  };
+
   // create a fake bucket
   await createBucket(process.env.system_bucket);
+
+  // create fake Granules table
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
+
+  collectionModel = new models.Collection();
+  await collectionModel.createTable();
 
   // create fake execution table
   executionModel = new models.Execution();
@@ -88,7 +112,10 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
+  t.context.asyncOperationsPgModel = new AsyncOperationPgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -100,16 +127,130 @@ test.before(async (t) => {
   );
 
   // create fake execution records
-  fakeExecutions.push(fakeExecutionFactory('completed'));
-  fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
-  // TODO - this needs updated after postgres->ES work
-  await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
-    .then((record) => indexer.indexExecution(esClient, record, process.env.ES_INDEX))));
+  const asyncOperationId = uuidv4();
+  t.context.asyncOperationId = asyncOperationId;
+  await t.context.asyncOperationsPgModel.create(
+    t.context.knex,
+    {
+      id: asyncOperationId,
+      description: 'fake async operation',
+      status: 'SUCCEEDED',
+      operation_type: 'Bulk Granules',
+    }
+  );
+  fakeExecutions.push(
+    fakeExecutionFactoryV2({
+      status: 'completed',
+      asyncOperationId,
+      arn: 'arn2',
+      type: 'fakeWorkflow',
+      parentArn: undefined,
+    })
+  );
+  fakeExecutions.push(
+    fakeExecutionFactoryV2({ status: 'failed', type: 'workflow2', parentArn: undefined })
+  );
+  fakeExecutions.push(
+    fakeExecutionFactoryV2({ status: 'running', type: 'fakeWorkflow', parentArn: undefined })
+  );
+
+  t.context.fakePGExecutions = await Promise.all(fakeExecutions.map(async (execution) => {
+    const executionPgRecord = await translateApiExecutionToPostgresExecution(
+      execution,
+      t.context.knex
+    );
+    await t.context.executionPgModel.create(
+      t.context.knex,
+      executionPgRecord
+    );
+    const dynamoRecord = await executionModel.create(execution);
+    await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
+    return executionPgRecord;
+  }));
+
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+    duplicateHandling: 'error',
+  });
+  const dynamoCollection = await collectionModel.create(
+    t.context.testCollection
+  );
+  t.context.collectionId = constructCollectionId(
+    dynamoCollection.name,
+    dynamoCollection.version
+  );
+
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+
+  t.context.fakeApiExecutions = await Promise.all(t.context.fakePGExecutions
+    .map(async (fakePGExecution) =>
+      await translatePostgresExecutionToApiExecution(fakePGExecution, t.context.knex)));
+});
+
+test.beforeEach(async (t) => {
+  const { esIndex, esClient, knex, executionPgModel, granulePgModel } = t.context;
+
+  const granuleId1 = randomId('granuleId1');
+  const granuleId2 = randomId('granuleId2');
+
+  // create fake Dynamo granule records
+  t.context.fakeGranules = [
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', collectionId: t.context.collectionId }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
+  ];
+
+  // create fake Postgres granule records
+  t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
+    const dynamoRecord = await granuleModel.create(fakeGranule);
+    await indexer.indexGranule(esClient, dynamoRecord, esIndex);
+    const granulePgRecord = await translateApiGranuleToPostgresGranule(
+      dynamoRecord,
+      t.context.knex
+    );
+    return granulePgRecord;
+  }));
+
+  [t.context.granuleCumulusId] = await Promise.all(
+    t.context.fakePGGranules.map(async (granule) =>
+      await granulePgModel.create(knex, granule))
+  );
+
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], await executionPgModel.getRecordCumulusId(knex, {
+      workflow_name: 'fakeWorkflow',
+      arn: 'arn2',
+    })
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], await executionPgModel.getRecordCumulusId(knex, {
+      workflow_name: 'workflow2',
+    })
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[1], await executionPgModel.getRecordCumulusId(knex, {
+      workflow_name: 'fakeWorkflow',
+      status: 'running',
+    })
+  );
 });
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
+  await granuleModel.deleteTable();
+  await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -187,6 +328,17 @@ test.serial('executions can be filtered by workflow', async (t) => {
   t.is(meta.table, 'execution');
   t.is(meta.count, 1);
   t.is(fakeExecutions[1].arn, results[0].arn);
+});
+
+test.serial('GET executions with asyncOperationId filter returns the correct executions', async (t) => {
+  const response = await request(app)
+    .get(`/executions?asyncOperationId=${t.context.asyncOperationId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.meta.count, 1);
+  t.is(response.body.results[0].arn, 'arn2');
 });
 
 test('GET returns an existing execution', async (t) => {
@@ -639,8 +791,10 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
-    await translatePostgresExecutionToApiExecution(fakePGExecutions
-      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
+    await translatePostgresExecutionToApiExecution(
+      fakePGExecutions.find((fakePGExecution) => fakePGExecution.arn === execution.arn),
+      t.context.knex
+    )
   ));
 });
 
@@ -684,8 +838,10 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   response.body.results.forEach(async (execution) => t.deepEqual(
     execution,
-    await translatePostgresExecutionToApiExecution(fakePGExecutions
-      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
+    await translatePostgresExecutionToApiExecution(
+      fakePGExecutions.find((fakePGExecution) => fakePGExecution.arn === execution.arn),
+      t.context.knex
+    )
   ));
 });
 
