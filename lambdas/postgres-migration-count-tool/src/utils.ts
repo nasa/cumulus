@@ -16,12 +16,13 @@ import {
 
 /**
 * Given a pending API query promise, parses the object count out of the response
+*
 * @param {Promise<ApiGatewayLambdaHttpProxyResponse>} resultPromise - pending
 * gateway proxy response
 * @returns {Promise<number>} - returns the count reported via the
 * API/Elasticsearch
 */
-export const getDbCount = async (
+export const getEsCount = async (
   resultPromise: Promise<ApiGatewayLambdaHttpProxyResponse>
 ): Promise<number> => {
   const result = await resultPromise;
