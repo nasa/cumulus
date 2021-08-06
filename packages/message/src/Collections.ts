@@ -47,21 +47,6 @@ export const deconstructCollectionId = (collectionId: string) => {
 };
 
 /**
- * Returns the name and version of a collection based on
- * the collectionId used in elasticsearch indexing
- *
- * @param {string} collectionId - collectionId used in elasticsearch index
- * @returns {Object} name and version as object
- */
-export const deconstructCollectionId = (collectionId: string) => {
-  const [name, version] = collectionId.split('___');
-  return {
-    name,
-    version,
-  };
-};
-
-/**
  * Get collection name from execution message.
  *
  * @param {Message.CumulusMessage} message - An execution message
