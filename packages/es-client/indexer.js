@@ -314,7 +314,7 @@ async function upsertPdr(esClient, name, updates, index = defaultIndexAlias, typ
             && (params.doc.execution != ctx._source.execution || params.doc.progress > ctx._source.progress)) {
             ctx._source.putAll(params.doc);
           } else {
-            ctx.op = 'none  ';
+            ctx.op = 'none';
           }
         `,
         params: {
