@@ -92,6 +92,10 @@ export {
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 
+export {
+  getExecutionsByGranuleCumulusId,
+} from './lib/execution';
+
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
 export { CollectionPgModel } from './models/collection';

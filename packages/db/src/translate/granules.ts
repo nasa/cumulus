@@ -9,7 +9,22 @@ import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
+import { getExecutionsByGranuleCumulusId } from '../lib/execution';
 
+/**
+ * Generate an API Granule object from a Postgres Granule with associated Files.
+ *
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} granulePgRecord
+ *   Granule from Postgres
+ * @param {Knex | Knex.Transaction} knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Object} collectionPgModel - Instance of the collection database model
+ * @param {Object} pdrPgModel - Instance of the pdr database model
+ * @param {Object} providerPgModel - Instance of the provider database model
+ * @param {Object} filePgModel - Instance of the file database model
+ * @param {Object} executionPgModel - Instance of the execution database model
+ * @returns {Object} An API Granule with associated Files
+ */
 export const translatePostgresGranuleToApiGranule = async (
   granulePgRecord: PostgresGranuleRecord,
   knexOrTransaction: Knex | Knex.Transaction,
@@ -29,6 +44,10 @@ export const translatePostgresGranuleToApiGranule = async (
   );
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
+  );
+  const executions = await getExecutionsByGranuleCumulusId(
+    knexOrTransaction,
+    granulePgRecord.cumulus_id
   );
 
   return removeNilProperties(({
@@ -55,11 +74,12 @@ export const translatePostgresGranuleToApiGranule = async (
     createdAt: granulePgRecord.created_at?.getTime(),
     updatedAt: granulePgRecord.updated_at?.getTime(),
     files: files.map((file) => translatePostgresFileToApiFile(file)),
+    executions: executions,
   }));
 };
 
 /**
- * Generate a Postgres rule record from a DynamoDB record.
+ * Generate a Postgres Granule from a DynamoDB Granule.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB
