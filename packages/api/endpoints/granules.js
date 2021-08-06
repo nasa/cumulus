@@ -275,8 +275,7 @@ async function get(req, res) {
     throw error;
   }
 
-  const files = await filePgModel.get(knex, { granule_id: granuleId });
-  const result = translatePostgresGranuleToApiGranule(granule, files);
+  const result = translatePostgresGranuleToApiGranule(granule);
 
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)

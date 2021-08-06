@@ -2,12 +2,47 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 
-const { translateApiFiletoPostgresFile } = require('../../dist/translate/file');
+const {
+  translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
+} = require('../../dist/translate/file');
 
-const fileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size', 'filename'];
+const apiFileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size', 'filename'];
+const postgresFileOmitKeys = ['checksum_type', 'checksum_value', 'file_name', 'file_size'];
+
+test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
+  const postgresFile = {
+    bucket: 'cumulus-test-sandbox-private',
+    key: 'firstKey',
+    file_name: 's3://cumulus-test-sandbox-private/firstKey',
+    checksum_type: 'md5',
+    checksum_value: 'bogus-value',
+    file_size: 100,
+    path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
+    source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+  };
+
+  t.deepEqual(
+    translatePostgresFileToApiFile(postgresFile),
+    omit(
+      {
+        ...postgresFile,
+        bucket: postgresFile.bucket,
+        key: postgresFile.key,
+        checksumType: postgresFile.checksum_type,
+        checksum: postgresFile.checksum_value,
+        fileName: postgresFile.file_name,
+        size: postgresFile.file_size,
+        path: postgresFile.path,
+        source: postgresFile.source,
+      },
+      postgresFileOmitKeys
+    )
+  );
+});
 
 test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
-  const file = {
+  const apiFile = {
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
     fileName: cryptoRandomString({ length: 3 }),
@@ -17,23 +52,23 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
     source: 'fake-source',
   };
   t.deepEqual(
-    translateApiFiletoPostgresFile(file),
+    translateApiFiletoPostgresFile(apiFile),
     omit(
       {
-        ...file,
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        file_name: file.fileName,
-        file_size: file.size,
+        ...apiFile,
+        checksum_type: apiFile.checksumType,
+        checksum_value: apiFile.checksum,
+        file_name: apiFile.fileName,
+        file_size: apiFile.size,
         path: undefined,
       },
-      fileOmitKeys
+      apiFileOmitKeys
     )
   );
 });
 
 test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) => {
-  const file = {
+  const apiFile = {
     bucket: undefined,
     key: undefined,
     fileName: cryptoRandomString({ length: 3 }),
@@ -44,19 +79,19 @@ test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) =
     source: 'fake-source',
   };
   t.deepEqual(
-    translateApiFiletoPostgresFile(file),
+    translateApiFiletoPostgresFile(apiFile),
     omit(
       {
-        ...file,
+        ...apiFile,
         bucket: 'cumulus-test-sandbox-private',
         key: 'somekey',
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        file_name: file.fileName,
-        file_size: file.size,
+        checksum_type: apiFile.checksumType,
+        checksum_value: apiFile.checksum,
+        file_name: apiFile.fileName,
+        file_size: apiFile.size,
         path: undefined,
       },
-      fileOmitKeys
+      apiFileOmitKeys
     )
   );
 });

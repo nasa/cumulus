@@ -1,24 +1,22 @@
 import Knex from 'knex';
 
-import { deconstructCollectionId } from '@cumulus/message/Collections';
+import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
 import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
-import { PostgresGranule } from '../types/granule';
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
+import { FilePgModel } from '../models/file';
+import { translatePostgresFileToApiFile } from './file';
 
-/**
-* Translates a PostgresGranule object to a `GranuleRecord` API granule object
-* @param {PostgresGranule} granuleRecord - PostgreSQL granule record to translate
-* @returns {Promise<GranuleRecord>} - Translated record
-*/
 export const translatePostgresGranuleToApiGranule = async (
-  granulePgRecord: PostgresGranule,
+  granulePgRecord: PostgresGranuleRecord,
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
-  providerPgModel = new ProviderPgModel()
+  providerPgModel = new ProviderPgModel(),
+  filePgModel = new FilePgModel()
 ): Promise<AWS.DynamoDB.DocumentClient.AttributeMap> => {
   const collection = await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
@@ -29,14 +27,14 @@ export const translatePostgresGranuleToApiGranule = async (
   const provider = await providerPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
   );
-
-  // TODO add files
+  const files = await filePgModel.search(
+    knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
+  );
 
   return removeNilProperties(({
     granuleId: granulePgRecord.granule_id,
     status: granulePgRecord.status,
-    name: collection.name,
-    version: collection.version,
+    collectionId: constructCollectionId(collection.name, collection.version),
     published: granulePgRecord.published,
     duration: granulePgRecord.duration,
     timeToArchive: granulePgRecord.time_to_archive,
@@ -56,6 +54,7 @@ export const translatePostgresGranuleToApiGranule = async (
     timestamp: granulePgRecord.timestamp?.getTime(),
     createdAt: granulePgRecord.created_at?.getTime(),
     updatedAt: granulePgRecord.updated_at?.getTime(),
+    files: files.map((file) => translatePostgresFileToApiFile(file)),
   }));
 };
 
