@@ -66,6 +66,7 @@ export {
 export { translateApiRuleToPostgresRule } from './translate/rules';
 export { translateApiExecutionToPostgresExecution } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
   upsertGranuleWithExecutionJoinRecord,
