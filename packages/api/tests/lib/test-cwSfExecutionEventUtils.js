@@ -2,20 +2,27 @@
 
 const test = require('ava');
 const rewire = require('rewire');
+const cryptoRandomString = require('crypto-random-string');
+
 const cwSfExecutionEventUtils = rewire('../../lib/cwSfExecutionEventUtils');
 
 const getFailedExecutionMessage = cwSfExecutionEventUtils.__get__('getFailedExecutionMessage');
 const getCumulusMessageFromExecutionEvent = cwSfExecutionEventUtils.__get__('getCumulusMessageFromExecutionEvent');
+const getFailedStepName = cwSfExecutionEventUtils.__get__('getFailedStepName');
+const lastFailedEventStep = cwSfExecutionEventUtils.__get__('lastFailedEventStep');
 
-test.serial('getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step', async (t) => {
+const randomFailedStepNameFn = () => `StepName${cryptoRandomString({ length: 10 })}`;
+
+test.serial('getFailedExecutionMessage() returns the Cumulus message from the output of the last failed step with FailedExecutionStepName amended.', async (t) => {
   const inputMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: 'my-execution-name',
     },
   };
-
-  const failedTaskOutput = { a: 1 };
+  const randomFailedStepName = randomFailedStepNameFn();
+  const failedTaskOutput = { a: 1, exception: { Error: 'anError' } };
+  const expected = { a: 1, exception: { Error: 'anError', failedExecutionStepName: randomFailedStepName } };
 
   const result = await cwSfExecutionEventUtils.__with__({
     StepFunctions: {
@@ -26,18 +33,32 @@ test.serial('getFailedExecutionMessage() returns the Cumulus message from the ou
         return {
           events: [
             {
+              type: 'TaskStateEntered',
+              id: 1,
+              previousEventId: 0,
+            },
+            {
+              type: 'TaskStateEntered',
+              id: 2,
+              previousEventId: 1,
+              stateEnteredEventDetails: {
+                name: randomFailedStepName,
+              },
+            },
+            {
               // lastStepFailedEvent
               type: 'LambdaFunctionFailed',
-              id: 1,
+              id: 3,
+              previousEventId: 2,
             },
             {
               // failedStepExitedEvent
               type: 'TaskStateExited',
-              previousEventId: 1,
+              id: 4,
+              previousEventId: 3,
               stateExitedEventDetails: {
                 output: JSON.stringify(failedTaskOutput),
               },
-              resource: 'x',
             },
           ],
         };
@@ -45,7 +66,7 @@ test.serial('getFailedExecutionMessage() returns the Cumulus message from the ou
     },
   })(() => getFailedExecutionMessage(inputMessage));
 
-  t.deepEqual(result, failedTaskOutput);
+  t.deepEqual(result, expected);
 });
 
 test.serial('getFailedExecutionMessage() returns the input message if there is an error fetching the output of the last failed step', async (t) => {
@@ -116,6 +137,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
     ...inputMessage,
     exception: {
       type: 'really bad',
+      failedExecutionStepName: 'UnknownFailedStepName',
     },
   };
 
@@ -129,7 +151,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
       execution_name: 'my-execution-name',
     },
   };
-
+  const randomFailedStepName = randomFailedStepNameFn();
   const actualResult = await cwSfExecutionEventUtils.__with__({
     StepFunctions: {
       getExecutionHistory: ({ executionArn }) => {
@@ -139,9 +161,17 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
         return {
           events: [
             {
+              type: 'TaskStateEntered',
+              id: 1,
+              stateEnteredEventDetails: {
+                name: randomFailedStepName,
+              },
+            },
+            {
               // lastStepFailedEvent
               type: 'ActivityFailed',
-              id: 1,
+              id: 2,
+              previousEventId: 1,
               activityFailedEventDetails: {
                 reason: 'busted',
               },
@@ -156,6 +186,7 @@ test.serial('getFailedExecutionMessage() returns the input message with the deta
     ...inputMessage,
     exception: {
       reason: 'busted',
+      failedExecutionStepName: randomFailedStepName,
     },
   };
 
@@ -251,16 +282,15 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
             {
               // lastStepFailedEvent
               type: 'LambdaFunctionFailed',
-              id: 1,
+              id: 3,
             },
             {
               // failedStepExitedEvent
               type: 'TaskStateExited',
-              previousEventId: 1,
+              previousEventId: 3,
               stateExitedEventDetails: {
                 output: JSON.stringify(failedTaskOutput),
               },
-              resource: 'x',
             },
           ],
         };
@@ -282,4 +312,176 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
   };
 
   t.deepEqual(message, expectedMessage);
+});
+
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
+  const randomFailedStepName = randomFailedStepNameFn();
+  const events = [
+    {
+      type: 'TaskStateEntered',
+      id: 2,
+      previousEventId: 0,
+      stateEnteredEventDetails: {
+        name: randomFailedStepName,
+      },
+    },
+    {
+      type: 'LambdaFunctionScheduled',
+      id: 3,
+      previousEventId: 2,
+      lambdaFunctionScheduledEventDetails: {
+        inputDetails: [],
+      },
+    },
+    {
+      type: 'LambdaFunctionStarted',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'LambdaFunctionFailed',
+      id: 5,
+      previousEventId: 4,
+      lambdaFunctionFailedEventDetails: {
+        error: 'ThisIsTheFailureWeAreTesting',
+        cause: 'something',
+      },
+    },
+    {
+      type: 'TaskStateEntered',
+      id: 6,
+      previousEventId: 5,
+      stateEnteredEventDetails: {
+        name: 'ALaterSuccessfulTaskEntered',
+      },
+    },
+    {
+      type: 'LambdaFunctionExited',
+      id: 7,
+      previousEventId: 6,
+    },
+  ];
+
+  const failedEvent = {
+    type: 'LambdaFunctionFailed',
+    id: 5,
+    previousEventId: 4,
+    lambdaFunctionFailedEventDetails: {
+      error: 'ThisIsTheFailureWeAreTesting',
+      cause: 'something',
+    },
+  };
+
+  const expected = randomFailedStepName;
+  const actual = getFailedStepName(events, failedEvent);
+
+  t.is(actual, expected);
+});
+
+test('getFailedStepName() returns UnknownFailedStepName if no TaskStateEntered events exist before the failed id.', (t) => {
+  const events = [
+    {
+      type: 'LambdaFunctionScheduled',
+      id: 3,
+      previousEventId: 2,
+      lambdaFunctionScheduledEventDetails: {
+        inputDetails: [],
+      },
+    },
+    {
+      type: 'LambdaFunctionStarted',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'LambdaFunctionFailed',
+      id: 5,
+      previousEventId: 4,
+      lambdaFunctionFailedEventDetails: {
+        error: 'CumulusMessageAdapterExecutionError',
+        cause: 'someCause',
+      },
+    },
+  ];
+
+  const expected = 'UnknownFailedStepName';
+  const actual = getFailedStepName(events, 5);
+
+  t.is(actual, expected);
+});
+
+test('lastFailedEventStep() returns the event for a failed lambda.', (t) => {
+  const events = [
+    {
+      type: 'ActivityFailed',
+      id: 3,
+      previousEventId: 0,
+    },
+    {
+      type: 'LambdaFunctionFailed',
+      id: 5,
+      previousEventId: 4,
+    },
+  ];
+
+  const expected = {
+    type: 'LambdaFunctionFailed',
+    id: 5,
+    previousEventId: 4,
+  };
+
+  const actual = lastFailedEventStep(events);
+  t.deepEqual(actual, expected);
+});
+
+test('lastFailedEventStep() returns the event for a failed Activity.', (t) => {
+  const events = [
+    {
+      type: 'ActivityFailed',
+      id: 3,
+      previousEventId: 0,
+    },
+    {
+      type: 'LambdaFunctionFailed',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'ActivityFailed',
+      id: 5,
+      previousEventId: 5,
+    },
+  ];
+
+  const expected = {
+    type: 'ActivityFailed',
+    id: 5,
+    previousEventId: 5,
+  };
+
+  const actual = lastFailedEventStep(events);
+  t.deepEqual(actual, expected);
+});
+
+test('lastFailedEventStep() returns undefined if no failed lambda or activities are found.', (t) => {
+  const events = [
+    {
+      type: 'TaskStateEntered',
+      id: 3,
+      previousEventId: 0,
+    },
+    {
+      type: 'TaskStateExited',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'ExecutionFailed',
+      id: 5,
+      previousEventId: 5,
+    },
+  ];
+  const expected = undefined;
+  const actual = lastFailedEventStep(events);
+  t.is(actual, expected);
 });

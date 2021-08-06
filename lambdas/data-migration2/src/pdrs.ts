@@ -5,11 +5,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import Logger from '@cumulus/logger';
 import {
-  CollectionPgModel,
-  ExecutionPgModel,
   PdrPgModel,
-  PostgresPdr,
-  ProviderPgModel,
+  translateApiPdrToPostgresPdr,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import {
@@ -23,7 +20,6 @@ import { MigrationResult, ParallelScanMigrationParams } from '@cumulus/types/mig
 import { initialMigrationResult } from './common';
 
 const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
-const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
  * Migrate PDR record from Dynamo to RDS.
@@ -39,11 +35,7 @@ export const migratePdrRecord = async (
   dynamoPDR: AWS.DynamoDB.DocumentClient.AttributeMap,
   knex: Knex
 ): Promise<void> => {
-  const { name, version } = deconstructCollectionId(dynamoPDR.collectionId);
-  const collectionPgModel = new CollectionPgModel();
-  const executionPgModel = new ExecutionPgModel();
   const pdrPgModel = new PdrPgModel();
-  const providerPgModel = new ProviderPgModel();
 
   let existingRecord;
 
@@ -62,41 +54,11 @@ export const migratePdrRecord = async (
     throw new RecordAlreadyMigrated(`PDR name ${dynamoPDR.pdrName} was already migrated, skipping.`);
   }
 
-  const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-    knex,
-    { name, version }
-  );
-
-  const providerCumulusId = await providerPgModel.getRecordCumulusId(
-    knex,
-    { name: dynamoPDR.provider }
-  );
-
-  const executionCumulusId = dynamoPDR.execution
-    ? await executionPgModel.getRecordCumulusId(
-      knex,
-      { url: dynamoPDR.execution }
-    )
-    : undefined;
-
   // Map old record to new schema.
-  const updatedRecord: PostgresPdr = {
-    name: dynamoPDR.pdrName,
-    provider_cumulus_id: providerCumulusId,
-    collection_cumulus_id: collectionCumulusId,
-    execution_cumulus_id: executionCumulusId,
-    status: dynamoPDR.status,
-    progress: dynamoPDR.progress,
-    pan_sent: dynamoPDR.PANSent,
-    pan_message: dynamoPDR.PANmessage,
-    stats: dynamoPDR.stats,
-    address: dynamoPDR.address,
-    original_url: dynamoPDR.originalUrl,
-    timestamp: dynamoPDR.timestamp ? new Date(dynamoPDR.timestamp) : undefined,
-    duration: dynamoPDR.duration,
-    created_at: new Date(dynamoPDR.createdAt),
-    updated_at: dynamoPDR.updatedAt ? new Date(dynamoPDR.updatedAt) : undefined,
-  };
+  const updatedRecord = await translateApiPdrToPostgresPdr(
+    dynamoPDR,
+    knex
+  );
 
   const [cumulusId] = await pdrPgModel.upsert(knex, updatedRecord);
 
