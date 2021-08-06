@@ -46,23 +46,23 @@ router.use('/migrationCounts', ensureAuthorized, migrationCounts);
 router.use('/collections', ensureAuthorized, collections.router);
 
 // granules endpoints
-router.use('/granules', ensureAuthorized, granules);
+router.use('/granules', ensureAuthorized, granules.router);
 
 // granule csv endpoints
 router.use('/granule-csv', ensureAuthorized, granuleCsv);
 
 // provider endpoints
-router.use('/providers', ensureAuthorized, providers);
+router.use('/providers', ensureAuthorized, providers.router);
 
 // pdr endpoints
-router.use('/pdrs', ensureAuthorized, pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs.router);
 
 // rules endpoints
 router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
-router.use('/executions', ensureAuthorized, executions);
+router.use('/executions', ensureAuthorized, executions.router);
 
 // async operation endpoint
 router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);

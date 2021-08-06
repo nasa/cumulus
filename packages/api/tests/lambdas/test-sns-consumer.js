@@ -6,9 +6,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
-const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const sandbox = sinon.createSandbox();
@@ -61,8 +59,6 @@ const provider = { id: 'PROV1' };
 let ruleModel;
 
 test.before(async () => {
-  process.env.CollectionsTable = randomString();
-  process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
@@ -90,8 +86,6 @@ test.before(async () => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition,
   }));
-  sandbox.stub(Provider.prototype, 'get').resolves(provider);
-  sandbox.stub(Collection.prototype, 'get').resolves(collection);
 });
 
 test.afterEach.always(() => {

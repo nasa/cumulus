@@ -1,23 +1,31 @@
 'use strict';
 
 const get = require('lodash/get');
-
-const SQS = require('@cumulus/aws-client/SQS');
-const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const isNil = require('lodash/isNil');
-const Collection = require('../models/collections');
-const Provider = require('../models/providers');
 
-const getProvider = (id) => {
-  if (isNil(id)) return undefined;
-  return (new Provider()).get({ id });
+const { getCollection } = require('@cumulus/api-client/collections');
+const SQS = require('@cumulus/aws-client/SQS');
+const { getProvider } = require('@cumulus/api-client/providers');
+const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
+const Logger = require('@cumulus/logger');
+const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
+
+const getApiProvider = (providerId) => {
+  if (isNil(providerId)) return undefined;
+  return getProvider({
+    prefix: process.env.stackName,
+    providerId,
+  });
 };
 
-const getCollection = (collection) => {
+const getApiCollection = (collection) => {
+  logger.debug(`Getting collection from API that matches ${JSON.stringify(collection)}`);
   if (isNil(collection)) return undefined;
-
-  const c = new Collection();
-  return c.get({ name: collection.name, version: collection.version });
+  return getCollection({
+    prefix: process.env.stackName,
+    collectionName: collection.name,
+    collectionVersion: collection.version,
+  });
 };
 
 /**
@@ -30,11 +38,12 @@ const getCollection = (collection) => {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [provider, collection] = await Promise.all([
-    getProvider(event.provider),
-    getCollection(event.collection),
+  const [providerRecord, collection] = await Promise.all([
+    getApiProvider(event.provider),
+    getApiCollection(event.collection),
   ]);
 
+  const provider = providerRecord ? JSON.parse(providerRecord.body) : undefined;
   const messageTemplate = get(event, 'template');
   const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');

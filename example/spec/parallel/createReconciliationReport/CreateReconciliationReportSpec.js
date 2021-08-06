@@ -35,7 +35,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { getCollections } = require('@cumulus/api-client/collections');
-const { getGranule } = require('@cumulus/api-client/granules');
+const { getGranule, updateGranule } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -220,11 +220,12 @@ async function ingestGranuleToCMR(cmrClient) {
 }
 
 // update granule file which matches the regex
-async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
+async function updateGranuleFile(prefix, granule, regex, replacement) {
+  const { granuleId, files } = granule;
   console.log(`update granule file: ${granuleId} regex ${regex} to ${replacement}`);
   let originalGranuleFile;
   let updatedGranuleFile;
-  const updatedFiles = granuleFiles.map((file) => {
+  const updatedFiles = files.map((file) => {
     const updatedFile = cloneDeep(file);
     if (file.fileName.match(regex)) {
       originalGranuleFile = file;
@@ -234,7 +235,14 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
     updatedFile.key = updatedFile.key.replace(regex, replacement);
     return updatedFile;
   });
-  await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
+  await updateGranule({
+    prefix,
+    granuleId,
+    updateParams: {
+      ...granule,
+      files: updatedFiles,
+    },
+  });
   return { originalGranuleFile, updatedGranuleFile };
 }
 
@@ -346,6 +354,9 @@ describe('When there are granule differences and granule reconciliation is run',
         ingestGranuleToCMR(cmrClient),
       ]);
 
+      console.log('dbGranuleId', dbGranuleId);
+      console.log('publishedGranuleId', publishedGranuleId);
+
       console.log('XXXXX Waiting for collections in list');
       const collectionIds = [
         collectionId,
@@ -362,9 +373,14 @@ describe('When there are granule differences and granule reconciliation is run',
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
-      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
-      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, 'jpg2'));
-      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
+      console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
+      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
+        config.stackName,
+        granuleBeforeUpdate,
+        /jpg$/,
+        'jpg2'
+      ));
+      console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
         getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
@@ -413,6 +429,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       inventoryReportAsyncOperationId = responseBody.id;
+      console.log('inventoryReportAsyncOperationId', inventoryReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -593,6 +610,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       internalReportAsyncOperationId = responseBody.id;
+      console.log('internalReportAsyncOperationId', internalReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -697,6 +715,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       granuleInventoryAsyncOpId = responseBody.id;
+      console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 

@@ -165,6 +165,8 @@ async function bulkGranule(payload) {
 
 async function bulkGranuleReingest(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
+  log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granuleIds)}`);
+
   const granuleModel = new GranuleModel();
   const workflowName = payload.workflowName;
   return await pMap(
