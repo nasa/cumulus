@@ -27,6 +27,10 @@ host and/or host with a different port
 - **CUMULUS-2626**
   - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
 
+### Changed
+- **CUMULUS-2630**
+  - Updates the example/cumulus-tf deployment to change `archive_api_reserved_concurrency` from 2 to 8 to prevent throttling with the dashboard.
+
 ## [v9.3.0] 2021-07-26
 
 ### BREAKING CHANGES
