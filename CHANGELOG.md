@@ -55,6 +55,10 @@ host and/or host with a different port
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
+- **CUMULUS-2630**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 2 to 8 to prevent throttling with
+    the dashboard.
 
 ## [v9.3.0] 2021-07-26
 
