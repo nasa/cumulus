@@ -75,6 +75,7 @@ locals {
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       public_buckets                   = join(",", local.public_buckets)
       reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
+      ReplaySqsMessagesLambda          = aws_lambda_function.replay_sqs_messages.arn
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri

@@ -15,10 +15,14 @@ const {
   ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
+  fakePdrRecordFactory,
+  fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  GranulesExecutionsPgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
+  PdrPgModel,
+  ProviderPgModel,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
@@ -126,9 +130,31 @@ test.beforeEach(async (t) => {
   );
   t.context.testExecution = testExecution;
 
+  const providerPgModel = new ProviderPgModel();
+  t.context.testProvider = fakeProviderRecordFactory();
+
+  const providerResponse = await providerPgModel.create(
+    t.context.knex,
+    t.context.testProvider
+  );
+  t.context.providerCumulusId = providerResponse[0];
+
+  const pdrPgModel = new PdrPgModel();
+  const testPdr = fakePdrRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+  [t.context.pdrCumulusId] = await pdrPgModel.create(
+    t.context.knex,
+    testPdr
+  );
+  t.context.testPdr = testPdr;
+  t.context.pdrPgModel = pdrPgModel;
+
   t.context.testGranule = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: t.context.executionUrl,
+    pdrName: testPdr.name,
   });
 });
 
@@ -149,6 +175,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     executionCumulusId,
     granulesExecutionsPgModel,
     granulePgModel,
+    pdrCumulusId,
     knex,
     testGranule,
   } = t.context;
@@ -174,7 +201,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       product_volume: testGranule.productVolume.toString(),
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
-      pdr_cumulus_id: null,
+      pdr_cumulus_id: pdrCumulusId,
       provider_cumulus_id: null,
       query_fields: null,
       beginning_date_time: new Date(testGranule.beginningDateTime),
@@ -952,10 +979,12 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records w
 test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
   const {
     collectionPgModel,
+    pdrPgModel,
     knex,
     testCollection,
     testExecution,
     testGranule,
+    testPdr,
   } = t.context;
   const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
 
@@ -964,6 +993,11 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
     collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
     execution: testExecution.url,
   });
+  // remove PDR record that references collection before removing collection record
+  await pdrPgModel.delete(
+    t.context.knex,
+    testPdr
+  );
 
   // remove collection record references so migration will fail
   await collectionPgModel.delete(
