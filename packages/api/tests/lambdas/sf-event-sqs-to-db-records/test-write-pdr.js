@@ -300,6 +300,14 @@ test('writePdr() does not update PDR record if update is from an older execution
   cumulusMessage.payload.completed = [];
   cumulusMessage.payload.failed = [];
 
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
   const updatedDynamoRecord = await pdrModel.get({ pdrName: pdr.name });
   const updatedPgRecord = await pdrPgModel.get(knex, { name: pdr.name });
   const updatedEsRecord = await t.context.esPdrClient.get(pdr.name);
@@ -485,7 +493,7 @@ test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if E
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    index: () => {
+    update: () => {
       throw new Error('PDR ES error');
     },
   };
