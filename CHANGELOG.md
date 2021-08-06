@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v9.2.2] 2021-08-05
+## [v9.2.2] 2021-08-06
+
+**Please note** changes in 9.2.2 may not yet be released in future versions, as
+this is a backport and patch release on the 9.2.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
 
 ### Added
 
