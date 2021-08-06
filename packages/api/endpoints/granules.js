@@ -32,8 +32,6 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
 
-const log = new Logger({ sender: '@cumulus/api' });
-
 const logger = new Logger({ sender: '@cumulus/api/granules' });
 
 /**
@@ -123,7 +121,7 @@ async function put(req, res) {
     }
 
     if (targetExecution) {
-      log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
+      logger.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
     await granuleModel.reingest({
