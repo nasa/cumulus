@@ -76,10 +76,15 @@ should be configured in the workflow that contains the <code>QueueGranules</code
 <p>In the following excerpt, the <code>QueueGranules</code> <code>config.executionNamePrefix</code>
 property is set using the value configured in the workflow's
 <code>meta.executionNamePrefix</code>.</p>
+<p><strong>Please note</strong>: This <code>meta.executionNamePrefix</code> property should not be confused with the optional rule <code>executionNamePrefix</code> property from the previous section. Setting <code>executionNamePrefix</code> as a root property of the rule will set a prefix for the names of any workflows triggered by the rule. Setting <code>meta.executionNamePrefix</code> on the rule will set <code>meta.executionNamePrefix</code> in the workflow messages generated for this rule, allowing workflow steps like <code>QueueGranules</code> to read from the message <code>meta.executionNamePrefix</code> for their config. Then, workflows scheduled by <code>QueueGranules</code> would use the configured execution name prefix.</p>
 <h3><a class="anchor" aria-hidden="true" id="setting-executionnameprefix-config-for-queuegranules-using-rulemeta"></a><a href="#setting-executionnameprefix-config-for-queuegranules-using-rulemeta" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Setting executionNamePrefix config for QueueGranules using rule.meta</h3>
-<p>If you wanted to use a prefix of &quot;my-prefix&quot;, you would create a rule with a <code>meta</code> property similar to this:</p>
+<p>If you wanted to use a prefix of &quot;my-prefix&quot;, you would create a rule with a <code>meta</code> property similar to the following Rule snippet:</p>
 <pre><code class="hljs css language-json">{
-  <span class="hljs-attr">"executionNamePrefix"</span>: <span class="hljs-string">"my-prefix"</span>
+  ...other rule keys here...
+  "meta":
+    {
+      "executionNamePrefix": "my-prefix"
+    }
 }
 </code></pre>
 <p>The value of <code>meta.executionNamePrefix</code> from the rule will be set as <code>meta.executionNamePrefix</code>  in the workflow message.</p>
