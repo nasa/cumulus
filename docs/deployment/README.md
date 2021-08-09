@@ -165,7 +165,10 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
-### Look up ECS-optimized AMI
+### Look up ECS-optimized AMI (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically determine the AMI ID for you
+based on your `deploy_to_ngap` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
 Look up the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the [cumulus-tf module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
@@ -367,7 +370,9 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-### Deploy the Cumulus Message Adapter layer
+### Deploy the Cumulus Message Adapter layer (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically download the Cumulus Message Adapter and create the layer for you based on your `cumulus_message_adapter_version` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
@@ -381,7 +386,6 @@ $ aws lambda publish-layer-version \
   --layer-name prefix-CMA-layer \
   --region us-east-1 \
   --zip-file fileb:///path/to/cumulus-message-adapter.zip
-
 {
   ... more output ...
   "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
@@ -413,11 +417,12 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
-- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 - **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
 - **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
+- **`cumulus_message_adapter_version`**: The version number (e.g. `1.3.0`) of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter/releases) to deploy
+- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional). Adding your `key_name` sets the EC2 keypair
+for deployment's EC2 instances and allows you to connect to them via [SSH/SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html).
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
