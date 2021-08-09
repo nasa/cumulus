@@ -1,15 +1,64 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { Console } = require('console');
+const { Writable } = require('stream');
+const Logger = require('@cumulus/logger');
 
-const awsServices = require('../services');
+const { sqs } = require('../services');
 const {
   createQueue,
   getQueueNameFromUrl,
   parseSQSMessageBody,
   sqsQueueExists,
+  sendSQSMessage,
 } = require('../SQS');
 
 const randomString = () => cryptoRandomString({ length: 10 });
+class TestStream extends Writable {
+  constructor(options) {
+    super(options);
+
+    this.output = '';
+  }
+
+  _write(chunk, _encoding, callback) {
+    this.output += chunk;
+    callback();
+  }
+}
+
+class TestConsole extends Console {
+  constructor() {
+    const stdoutStream = new TestStream();
+    const stderrStream = new TestStream();
+
+    super(stdoutStream, stderrStream);
+
+    this.stdoutStream = stdoutStream;
+    this.stderrStream = stderrStream;
+  }
+
+  get stdoutLogEntries() {
+    return this.stdoutStream.output
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map(JSON.parse);
+  }
+
+  get stderrLogEntries() {
+    return this.stderrStream.output
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map(JSON.parse);
+  }
+}
+
+test.beforeEach((t) => {
+  t.context.testConsole = new TestConsole();
+  t.context.log = new Logger({ console: t.context.testConsole });
+});
 
 test('parseSQSMessageBody parses messages correctly', (t) => {
   const messageBody = { test: 'value' };
@@ -23,7 +72,19 @@ test('sqsQueueExists detects if the queue does not exist or is not accessible', 
   const queueUrl = await createQueue(randomString());
   t.true(await sqsQueueExists(queueUrl));
   t.false(await sqsQueueExists(randomString()));
-  await awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+});
+
+test('sendSQSMessage logs errors', async (t) => {
+  const { testConsole, log } = t.context;
+
+  await t.throwsAsync(
+    sendSQSMessage('fakequeue', 'Queue message', log),
+    { instanceOf: Error }
+  );
+
+  t.is(testConsole.stderrLogEntries.length, 1);
+  t.regex(testConsole.stderrLogEntries[0].message, /fakequeue/);
 });
 
 test('getQueueNameFromUrl extracts queue name from a queue URL', (t) => {

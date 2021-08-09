@@ -1,7 +1,7 @@
 /**
  * @module SQS
  */
-
+import Logger from '@cumulus/logger';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
@@ -12,6 +12,7 @@ import { sqs } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
+const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
   ReceiptHandle: string
 }
@@ -96,17 +97,22 @@ export const getQueueAttributes = async (queueName: string) => {
  *   object it will be serialized into a JSON string.
  * @returns {Promise} resolves when the messsage has been sent
  **/
-export const sendSQSMessage = (queueUrl: string, message: string | object) => {
-  let messageBody;
-  if (isString(message)) messageBody = message;
-  else if (isObject(message)) messageBody = JSON.stringify(message);
-  else throw new Error('body type is not accepted');
+export const sendSQSMessage = improveStackTrace(
+  (queueUrl: string, message: string | object, logOverride: Logger) => {
+    const logger = logOverride || log;
+    let messageBody;
+    if (isString(message)) messageBody = message;
+    else if (isObject(message)) messageBody = JSON.stringify(message);
+    else throw new Error('body type is not accepted');
 
-  return sqs().sendMessage({
-    MessageBody: messageBody,
-    QueueUrl: queueUrl,
-  }).promise();
-};
+    return sqs().sendMessage({
+      MessageBody: messageBody,
+      QueueUrl: queueUrl,
+    }, (err) => {
+      logger.error(err);
+    }).promise();
+  }
+);
 
 type receiveSQSMessagesOptions = {
   numOfMessages?: number,
