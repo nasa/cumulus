@@ -6,7 +6,7 @@ const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
 } = require('@cumulus/db');
@@ -44,6 +44,8 @@ const {
 const {
   writeGranules,
 } = require('./write-granules');
+
+const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 const writeRecordsToDynamoDb = async ({
   cumulusMessage,
