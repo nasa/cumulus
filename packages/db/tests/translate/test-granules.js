@@ -2,9 +2,26 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const {
+  generateLocalTestDb,
+} = require('../../dist');
+
+const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
+
+const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
+
+const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
+
+test.before(async (t) => {
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+});
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
   const collectionCumulusId = 1;
@@ -111,7 +128,6 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     updatedAt: postgresGranule.updated_at.getTime(),
   };
 
-  const fakeDbClient = {};
   const fakeCollectionPgModel = {
     get: () => Promise.resolve({ name: 'collectionName', version: 'collectionVersion' }),
   };
@@ -154,7 +170,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
 
   const result = await translatePostgresGranuleToApiGranule(
     postgresGranule,
-    fakeDbClient,
+    t.context.knex,
     fakeCollectionPgModel,
     fakePdrPgModel,
     fakeProviderPgModel,

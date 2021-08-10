@@ -9,7 +9,7 @@ import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
-import { getExecutionsByGranuleCumulusId } from '../lib/execution';
+import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
@@ -45,7 +45,7 @@ export const translatePostgresGranuleToApiGranule = async (
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
   );
-  const executions = await getExecutionsByGranuleCumulusId(
+  const executionArns = await getExecutionArnsByGranuleCumulusId(
     knexOrTransaction,
     granulePgRecord.cumulus_id
   );
@@ -74,7 +74,7 @@ export const translatePostgresGranuleToApiGranule = async (
     createdAt: granulePgRecord.created_at?.getTime(),
     updatedAt: granulePgRecord.updated_at?.getTime(),
     files: files.map((file) => translatePostgresFileToApiFile(file)),
-    executions: executions,
+    executions: executionArns,
   }));
 };
 

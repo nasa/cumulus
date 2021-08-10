@@ -93,7 +93,7 @@ export {
 } from './lib/granule';
 
 export {
-  getExecutionsByGranuleCumulusId,
+  getExecutionArnsByGranuleCumulusId,
 } from './lib/execution';
 
 export { AsyncOperationPgModel } from './models/async_operation';

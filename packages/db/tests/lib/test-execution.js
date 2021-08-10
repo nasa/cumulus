@@ -11,12 +11,12 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  getExecutionsByGranuleCumulusId,
+  getExecutionArnsByGranuleCumulusId,
 } = require('../../dist');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
-const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
@@ -46,7 +46,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('getExecutionsByGranule() gets all Executions related to a Granule', async (t) => {
+test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Granule', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -58,11 +58,11 @@ test('getExecutionsByGranule() gets all Executions related to a Granule', async 
   // Create executions
   const [executionACumulusId] = await executionPgModel.create(
     knex,
-    fakeExecutionRecordFactory()
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
   const [executionBCumulusId] = await executionPgModel.create(
     knex,
-    fakeExecutionRecordFactory()
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
   );
 
   // Create Granule
@@ -88,18 +88,22 @@ test('getExecutionsByGranule() gets all Executions related to a Granule', async 
     }
   );
 
-  const exepectedExecutions = [
-    await executionPgModel.get(knex, { cumulus_id: executionACumulusId }),
-    await executionPgModel.get(knex, { cumulus_id: executionBCumulusId }),
-  ];
+  const exepectedExecutionArn1 = await executionPgModel.get(
+    knex,
+    { cumulus_id: executionACumulusId }
+  );
+  const exepectedExecutionArn2 = await executionPgModel.get(
+    knex,
+    { cumulus_id: executionBCumulusId }
+  );
 
-  const result = await getExecutionsByGranuleCumulusId(
+  const result = await getExecutionArnsByGranuleCumulusId(
     knex,
     granuleCumulusId
   );
 
   t.deepEqual(
-    result.sort(),
-    exepectedExecutions.sort()
+    result,
+    [{ arn: exepectedExecutionArn1.arn }, { arn: exepectedExecutionArn2.arn }]
   );
 });
