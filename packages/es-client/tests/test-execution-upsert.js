@@ -7,24 +7,18 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const indexer = require('../indexer');
 const { Search } = require('../search');
-
-const { bootstrapElasticSearch } = require('../bootstrap');
-
-const esIndex = randomString();
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../testUtils');
 
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
-let esClient;
-
 test.before(async (t) => {
-  // create the tables
-  t.context.esAlias = randomString();
-  process.env.ES_INDEX = t.context.esAlias;
-
-  // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
-  esClient = await Search.es();
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
   t.context.esExecutionsClient = new Search(
     {},
@@ -33,12 +27,12 @@ test.before(async (t) => {
   );
 });
 
-test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+test.after.always(async (t) => {
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('upsertExecution writes new "running" execution', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
@@ -48,7 +42,7 @@ test.serial('upsertExecution writes new "running" execution', async (t) => {
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -56,7 +50,7 @@ test.serial('upsertExecution writes new "running" execution', async (t) => {
 });
 
 test.serial('upsertExecution writes new "completed" execution', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
@@ -66,7 +60,7 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -74,7 +68,7 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
 });
 
 test.serial('upsertExecution updates "completed" execution', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
@@ -87,7 +81,7 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -104,7 +98,7 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
     esClient,
     updates.arn,
     updates,
-    esAlias
+    esIndex
   );
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
@@ -112,7 +106,7 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
 });
 
 test.serial('upsertExecution updates "running" status to "completed"', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const updatedAt = Date.now();
 
@@ -125,7 +119,7 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -140,7 +134,7 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
     esClient,
     updates.arn,
     updates,
-    esAlias
+    esIndex
   );
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
@@ -148,7 +142,7 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
 });
 
 test.serial('upsertExecution does not update "completed" status to "running"', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
@@ -158,7 +152,7 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -172,7 +166,7 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
     esClient,
     updates.arn,
     updates,
-    esAlias
+    esIndex
   );
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
@@ -180,7 +174,7 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
 });
 
 test.serial('upsertExecution preserves finalPayload and sets originalPayload/updatedAt/timestamp when "running" event comes after "completed" event', async (t) => {
-  const { esAlias, esExecutionsClient } = t.context;
+  const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
@@ -195,7 +189,7 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
     esClient,
     testRecord.arn,
     testRecord,
-    esAlias
+    esIndex
   );
 
   const record = await esExecutionsClient.get(testRecord.arn);
@@ -215,7 +209,7 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
     esClient,
     updates.arn,
     updates,
-    esAlias
+    esIndex
   );
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
