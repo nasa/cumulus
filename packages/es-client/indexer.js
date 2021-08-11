@@ -145,7 +145,15 @@ async function upsertExecution(esClient, arn, updates, index = defaultIndexAlias
     body: {
       script: {
         lang: 'painless',
-        source: 'if (params.doc.status == "running") { ctx._source.updatedAt = params.doc.updatedAt; ctx._source.timestamp = params.doc.timestamp; ctx._source.originalPayload = params.doc.originalPayload; } else { ctx._source.putAll(params.doc) }',
+        source: `
+          if (params.doc.status == "running") {
+            ctx._source.updatedAt = params.doc.updatedAt;
+            ctx._source.timestamp = params.doc.timestamp;
+            ctx._source.originalPayload = params.doc.originalPayload;
+          } else {
+            ctx._source.putAll(params.doc)
+          }
+        `,
         params: {
           doc: upsertDoc,
         },
