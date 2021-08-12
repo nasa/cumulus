@@ -74,7 +74,7 @@ export const translatePostgresGranuleToApiGranule = async (
     createdAt: granulePgRecord.created_at?.getTime(),
     updatedAt: granulePgRecord.updated_at?.getTime(),
     files: files.map((file) => translatePostgresFileToApiFile(file)),
-    executions: executionArns,
+    executions: executionArns.map((e) => e.arn),
   }));
 };
 

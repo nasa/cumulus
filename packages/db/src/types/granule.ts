@@ -9,7 +9,7 @@ export interface PostgresGranule extends PostgresGranuleUniqueColumns {
   error?: object,
   published?: boolean,
   duration?: number,
-  product_volume?: number,
+  product_volume?: number, // TODO this wouldn't be a number
   time_to_process?: number,
   time_to_archive?: number,
   provider_cumulus_id?: number,

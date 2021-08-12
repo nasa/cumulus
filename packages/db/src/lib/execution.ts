@@ -2,10 +2,14 @@ import Knex from 'knex';
 
 import { tableNames } from '../tables';
 
+export interface arnRecord {
+  arn: string;
+}
+
 export const getExecutionArnsByGranuleCumulusId = (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number
-): Promise<string[]> =>
+): Promise<arnRecord[]> =>
   knexOrTransaction(tableNames.executions)
     .select('arn')
     .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)

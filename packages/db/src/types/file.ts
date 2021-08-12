@@ -5,7 +5,7 @@ export interface PostgresFile {
   checksum_type?: string
   checksum_value?: string
   file_name?: string
-  file_size?: number
+  file_size?: number // TODO this wouldn't be a number
   path?: string
   source?: string
 }
