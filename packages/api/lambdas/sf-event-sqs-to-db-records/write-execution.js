@@ -118,7 +118,6 @@ const writeExecutionToDynamoAndES = async (params) => {
     await executionModel.storeExecution(executionApiRecord);
     await upsertExecution(
       esClient,
-      executionApiRecord.arn,
       executionApiRecord,
       process.env.ES_INDEX
     );

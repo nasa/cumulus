@@ -127,13 +127,12 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * Upsert an execution record in Elasticsearch
  *
  * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} arn - Record ARN
  * @param  {Object} updates - Document of updates to apply
  * @param  {string} index - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-async function upsertExecution(esClient, arn, updates, index = defaultIndexAlias, type = 'execution') {
+async function upsertExecution(esClient, updates, index = defaultIndexAlias, type = 'execution') {
   const upsertDoc = {
     ...updates,
     timestamp: Date.now(),
@@ -141,7 +140,7 @@ async function upsertExecution(esClient, arn, updates, index = defaultIndexAlias
   return await esClient.update({
     index,
     type,
-    id: arn,
+    id: upsertDoc.arn,
     body: {
       script: {
         lang: 'painless',

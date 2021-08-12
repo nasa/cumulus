@@ -40,7 +40,6 @@ test.serial('upsertExecution writes new "running" execution', async (t) => {
   testRecord.status = 'running';
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -58,7 +57,6 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
   testRecord.status = 'completed';
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -79,7 +77,6 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
   testRecord.status = 'completed';
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -96,7 +93,6 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
   };
   await indexer.upsertExecution(
     esClient,
-    updates.arn,
     updates,
     esIndex
   );
@@ -117,7 +113,6 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
   };
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -132,7 +127,6 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
   };
   await indexer.upsertExecution(
     esClient,
-    updates.arn,
     updates,
     esIndex
   );
@@ -150,7 +144,6 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
   };
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -164,7 +157,6 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
   };
   await indexer.upsertExecution(
     esClient,
-    updates.arn,
     updates,
     esIndex
   );
@@ -187,7 +179,6 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   };
   await indexer.upsertExecution(
     esClient,
-    testRecord.arn,
     testRecord,
     esIndex
   );
@@ -207,7 +198,6 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   };
   await indexer.upsertExecution(
     esClient,
-    updates.arn,
     updates,
     esIndex
   );
