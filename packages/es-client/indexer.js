@@ -349,13 +349,12 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
  * Upsert a PDR record in Elasticsearch
  *
  * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} name - PDR name
  * @param  {Object} updates - Document of updates to apply
  * @param  {string} index - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-async function upsertPdr(esClient, name, updates, index = defaultIndexAlias, type = 'pdr') {
+async function upsertPdr(esClient, updates, index = defaultIndexAlias, type = 'pdr') {
   const upsertDoc = {
     ...updates,
     timestamp: Date.now(),
@@ -363,7 +362,7 @@ async function upsertPdr(esClient, name, updates, index = defaultIndexAlias, typ
   return await esClient.update({
     index,
     type,
-    id: name,
+    id: upsertDoc.pdrName,
     body: {
       script: {
         lang: 'painless',
