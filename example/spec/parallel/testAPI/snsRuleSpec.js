@@ -78,6 +78,8 @@ describe('The SNS-type rule', () => {
 
       executionNamePrefix = randomId('prefix');
 
+      console.log('ruleName', ruleName);
+
       snsMessage = JSON.stringify({ Data: {} });
       snsRuleDefinition = await readJson(path.join(__dirname, 'snsRuleDef.json'));
       snsRuleDefinition.name = ruleName;
