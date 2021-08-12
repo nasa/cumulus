@@ -40,6 +40,12 @@ downloading files protected by Earthdata Login)
 - **CUMULUS-2635**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2634**
+    - Added new functions for upserting data to Elasticsearch:
+      - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
+      - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
+      - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
 
 ### Fixed
 
@@ -119,6 +125,9 @@ host and/or host with a different port
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string
       - `record.output` is a string
+  - **CUMULUS-2634**
+    - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
+    to ensure out-of-order writes are handled correctly when writing to Elasticsearch
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
     to `granulesApi` from `@cumulus/integration-tests`.
@@ -210,8 +219,6 @@ The default reserved concurrency value is 8.
 
 - `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - Added `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
-    record to Elasticsearch
   - **CUMULUS-2208**
     - Added `@cumulus/message/utils.parseException` to parse exception objects
     - Added helpers to `@cumulus/message/Granules`:
