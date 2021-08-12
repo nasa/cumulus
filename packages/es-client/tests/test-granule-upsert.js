@@ -30,6 +30,45 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
+test('upsertGranule removes deletedgranule record', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'running',
+  };
+
+  await indexer.upsertGranule(esClient, granule, esIndex);
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  await indexer.deleteGranule({
+    esClient,
+    granuleId: granule.granuleId,
+    collectionId: granule.collectionId,
+    index: esIndex,
+  });
+
+  const deletedGranParams = {
+    index: esIndex,
+    type: 'deletedgranule',
+    id: granule.granuleId,
+    parent: granule.collectionId,
+  };
+
+  let deletedRecord = await esClient.get(deletedGranParams)
+    .then((response) => response.body);
+  t.like(deletedRecord._source, granule);
+
+  await indexer.upsertGranule(esClient, granule, esIndex);
+
+  deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
+    .then((response) => response.body);
+  t.false(deletedRecord.found);
+});
+
 test('upsertGranule creates new "running" record', async (t) => {
   const { esIndex, esClient } = t.context;
 
