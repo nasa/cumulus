@@ -8,6 +8,7 @@ const {
   CollectionPgModel,
   ProviderPgModel,
   ExecutionPgModel,
+  GranulesExecutionsPgModel,
   GranulePgModel,
   FilePgModel,
   fakeCollectionRecordFactory,
@@ -26,12 +27,19 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
+const {
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
 
 const {
   generateFilePgRecord,
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
+  _writeGranule,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
 
@@ -56,8 +64,12 @@ test.before(async (t) => {
   await granuleModel.createTable();
   t.context.granuleModel = granuleModel;
 
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
   t.context.filePgModel = new FilePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
 
@@ -67,8 +79,6 @@ test.before(async (t) => {
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
-
-  t.context.granulePgModel = new GranulePgModel();
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -88,6 +98,10 @@ test.beforeEach(async (t) => {
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
 
   t.context.collection = fakeCollectionRecordFactory();
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
   t.context.provider = fakeProviderRecordFactory();
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
@@ -114,23 +128,20 @@ test.beforeEach(async (t) => {
     },
   };
 
-  const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
 
-  const executionPgModel = new ExecutionPgModel();
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,
   });
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     execution
   );
 
-  const providerPgModel = new ProviderPgModel();
-  [t.context.providerCumulusId] = await providerPgModel.create(
+  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
     t.context.knex,
     t.context.provider
   );
@@ -321,6 +332,115 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
           filePgModel: fakeFilePgModel,
         })
     )
+  );
+});
+
+test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granule,
+    esClient,
+    executionArn,
+    granuleId,
+    provider,
+    workflowStartTime,
+    collectionId,
+  } = t.context;
+
+  const executionUrl = getExecutionUrlFromArn(executionArn);
+  await _writeGranule({
+    collectionId,
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granule,
+    esClient,
+    provider,
+    executionUrl,
+    workflowStartTime,
+    workflowStatus: 'completed',
+  });
+
+  t.like(
+    await granuleModel.get({ granuleId }),
+    {
+      execution: executionUrl,
+      status: 'completed',
+    }
+  );
+  const granulePgRecord = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.like(
+    granulePgRecord,
+    {
+      status: 'completed',
+    }
+  );
+  t.is(
+    (await t.context.granulesExecutionsPgModel.search(
+      t.context.knex,
+      {
+        granule_cumulus_id: granulePgRecord.cumulus_id,
+      }
+    )).length,
+    1
+  );
+  t.like(
+    await t.context.esGranulesClient.get(granuleId),
+    {
+      execution: executionUrl,
+      status: 'completed',
+    }
+  );
+
+  await _writeGranule({
+    collectionId,
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granule,
+    esClient,
+    provider,
+    executionUrl,
+    workflowStartTime,
+    workflowStatus: 'running',
+  });
+
+  t.like(
+    await granuleModel.get({ granuleId }),
+    {
+      execution: executionUrl,
+      status: 'completed',
+    }
+  );
+  t.like(
+    await t.context.granulePgModel.get(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    {
+      status: 'completed',
+    }
+  );
+  t.like(
+    await t.context.esGranulesClient.get(granuleId),
+    {
+      execution: executionUrl,
+      status: 'completed',
+    }
   );
 });
 
@@ -675,7 +795,7 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
   } = t.context;
 
   const fakeEsClient = {
-    index: () => {
+    update: () => {
       throw new Error('Granules ES error');
     },
     delete: () => Promise.resolve(),
