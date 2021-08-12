@@ -77,9 +77,9 @@ module "cumulus" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  rds_security_group         = local.rds_security_group
-  rds_user_access_secret_arn = local.rds_credentials_secret_arn
-  rds_connection_heartbeat   = var.rds_connection_heartbeat
+  rds_security_group                     = local.rds_security_group
+  rds_user_access_secret_arn             = local.rds_credentials_secret_arn
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
@@ -107,6 +107,7 @@ module "cumulus" {
   cmr_username    = var.cmr_username
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
+  cmr_custom_host = var.cmr_custom_host
 
   cmr_oauth_provider = var.cmr_oauth_provider
 
@@ -163,17 +164,22 @@ module "cumulus" {
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
+  archive_api_reserved_concurrency = var.api_reserved_concurrency
 
-  # Thin Egress App settings
+  # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
-  tea_api_gateway_stage = local.tea_stage_name
-
-  tea_rest_api_id               = module.thin_egress_app.rest_api.id
-  tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
-  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
+  # tea_api_gateway_stage         = local.tea_stage_name
+  # tea_rest_api_id               = module.thin_egress_app.rest_api.id
+  # tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
+  # tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  # tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
+
+  # Cumulus Distribution settings. Remove/comment if not using Cumulus Distribution.
+  tea_external_api_endpoint = module.cumulus_distribution.api_uri
+
+  deploy_cumulus_distribution = var.deploy_cumulus_distribution
 
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn

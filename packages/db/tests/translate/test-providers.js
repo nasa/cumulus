@@ -79,6 +79,7 @@ test('translatePostgresProviderToApiProvider does not return encrypted key if us
 
 test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
   const fakeEncryptFunction = () => Promise.resolve('fakeEncryptedString');
+  const allowedRedirects = ['host-1', 'host-2'];
   const cumulusProviderObject = {
     id: 'testId',
     globalConnectionLimit: 1,
@@ -93,6 +94,7 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
     privateKey: 'fakeKey',
     cmKeyId: 'fakecmId',
     certificateUri: 'fakeUri',
+    allowedRedirects,
   };
 
   const expected = {
@@ -108,6 +110,7 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
     protocol: 'fakeProtocol',
     updated_at: new Date(5678),
     username: 'fakeEncryptedString',
+    allowed_redirects: allowedRedirects,
   };
   const result = await translateApiProviderToPostgresProvider(
     cumulusProviderObject,

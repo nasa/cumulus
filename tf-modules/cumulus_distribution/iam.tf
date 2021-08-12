@@ -54,15 +54,25 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
   }
 
   statement {
+    actions   = [
+      "s3:PutObject"
+    ]
+    resources = ["arn:aws:s3:::${var.system_bucket}/${local.distribution_bucket_map_key}"]
+  }
+
+  statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
       aws_secretsmanager_secret.api_oauth_client_password.arn
     ]
   }
 
-  statement {
-    actions   = ["lambda:InvokeFunction"]
-    resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
+  dynamic "statement" {
+    for_each = var.sts_credentials_lambda_function_arn != null ? [1] : []
+    content {
+      actions   = ["lambda:InvokeFunction"]
+      resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
+    }
   }
 }
 

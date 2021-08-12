@@ -71,8 +71,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
-const SetupError = new Error('Test setup failed, aborting');
-
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
@@ -248,8 +246,12 @@ describe('The S3 Ingest Granules workflow', () => {
     ]);
   });
 
-  it('triggers a running execution record being added to DynamoDB', async () => {
-    if (beforeAllError) throw SetupError;
+  beforeEach(() => {
+    if (beforeAllError) fail(beforeAllError);
+  });
+
+  it('triggers an execution record being added to DynamoDB', async () => {
+    if (beforeAllError) fail(beforeAllError);
     const record = await waitForApiStatus(
       getExecution,
       {
@@ -262,7 +264,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('triggers a PDR record being added to the API', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
     const record = await waitForApiStatus(
       getPdr,
       {
@@ -275,7 +277,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
     await waitForModelStatus(
       granuleModel,
       { granuleId: inputPayload.granules[0].granuleId },
@@ -291,14 +293,14 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('completes execution with success status', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
   it('can retrieve the specific provider that was created', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     const providerListResponse = await apiTestUtils.getProviders({ prefix: config.stackName });
     const providerList = JSON.parse(providerListResponse.body);
@@ -310,7 +312,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('can retrieve the specific collection that was created', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     const collectionListResponse = await apiTestUtils.getCollections({ prefix: config.stackName });
     const collectionList = JSON.parse(collectionListResponse.body);
@@ -324,7 +326,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('results in the files being added to the granule files cache table', async () => {
-    if (beforeAllError) throw SetupError;
+    if (beforeAllError) fail(beforeAllError);
 
     process.env.FilesTable = `${config.stackName}-FilesTable`;
 
@@ -370,13 +372,15 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('receives the correct collection and provider configuration', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       expect(lambdaInput.meta.collection.name).toEqual(collection.name);
       expect(lambdaInput.meta.provider.id).toEqual(provider.id);
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
@@ -390,7 +394,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the meta object with input_granules', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
@@ -431,7 +436,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('has a payload with correct buckets, filenames, sizes', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       files.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
@@ -443,14 +449,16 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('moves files to the bucket folder based on metadata', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
     });
 
     it('preserves tags on moved files', () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       movedTaggings.forEach((tagging) => {
         expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
@@ -477,7 +485,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('results in a successful PublishGranuleQueue workflow execution', async () => {
-      if (beforeAllError || subTestSetupError) throw SetupError;
+      if (subTestSetupError) fail(subTestSetupError);
+      if (beforeAllError) fail(beforeAllError);
       const publishGranuleExecutionStatus = await waitForCompletedExecution(
         publishGranuleExecutionArn
       );
@@ -542,7 +551,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('publishes the granule metadata to CMR', async () => {
-        if (beforeAllError || subTestSetupError) throw SetupError;
+        if (subTestSetupError) fail(subTestSetupError);
+        if (beforeAllError) fail(beforeAllError);
         const result = await conceptExists(granule.cmrLink);
 
         expect(granule.published).toEqual(true);
@@ -550,7 +560,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('updates the CMR metadata online resources with the final metadata location', () => {
-        if (beforeAllError || subTestSetupError) throw SetupError;
+        if (subTestSetupError) fail(subTestSetupError);
+        if (beforeAllError) fail(beforeAllError);
 
         console.log('parallel resourceURLs:', resourceURLs);
         console.log('s3CredsUrl:', s3CredsUrl);
@@ -563,7 +574,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('updates the CMR metadata "online resources" with the proper types and urls', () => {
-        if (beforeAllError || subTestSetupError) throw SetupError;
+        if (subTestSetupError) fail(subTestSetupError);
+        if (beforeAllError) fail(beforeAllError);
         const resource = ummCmrResource;
         const expectedTypes = [
           'GET DATA',
@@ -584,7 +596,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('includes the Earthdata login ID for requests to protected science files', async () => {
-        if (beforeAllError || subTestSetupError) throw SetupError;
+        if (subTestSetupError) fail(subTestSetupError);
+        if (beforeAllError) fail(beforeAllError);
         const filepath = `/${files[0].bucket}/${files[0].filepath}`;
         const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
         const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
@@ -592,7 +605,8 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('downloads the requested science file for authorized requests', async () => {
-        if (beforeAllError || subTestSetupError) throw SetupError;
+        if (subTestSetupError) fail(subTestSetupError);
+        if (beforeAllError) fail(beforeAllError);
         const scienceFileUrls = resourceURLs
           .filter((url) =>
             (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||

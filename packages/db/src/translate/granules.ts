@@ -8,7 +8,7 @@ import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 
 /**
- * Generate a Postgres rule record from a DynamoDB record.
+ * Generate a Postgres granule record from a DynamoDB record.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB

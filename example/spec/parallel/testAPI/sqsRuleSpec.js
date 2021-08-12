@@ -14,6 +14,7 @@ const {
   receiveSQSMessages,
   sendSQSMessage,
   getQueueUrlByName,
+  getQueueNameFromUrl,
 } = require('@cumulus/aws-client/SQS');
 const { s3 } = require('@cumulus/aws-client/services');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
@@ -50,14 +51,16 @@ const {
 } = require('../../helpers/testUtils');
 
 let config;
+let executionArn;
 let inputPayload;
+let key;
+let pdrFilename;
+let queueName;
+let ruleOverride;
+let ruleSuffix;
+let testDataFolder;
 let testId;
 let testSuffix;
-let testDataFolder;
-let ruleSuffix;
-let ruleOverride;
-let executionArn;
-let pdrFilename;
 
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 const providersDir = './data/providers/s3/';
@@ -115,6 +118,7 @@ async function cleanUp() {
   ));
 
   await Promise.all([
+    deleteS3Object(config.bucket, key),
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -219,10 +223,11 @@ describe('The SQS rule', () => {
       // post a non-processable message
       const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
       messageId = message.MessageId;
+      queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
+      key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
     });
 
     afterAll(async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
       await deleteS3Object(config.bucket, key);
     });
 
@@ -281,7 +286,6 @@ describe('The SQS rule', () => {
     });
 
     it('stores incoming messages on S3', async () => {
-      const key = getS3KeyForArchivedMessage(config.stackName, messageId);
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: key,
