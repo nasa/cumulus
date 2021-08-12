@@ -277,6 +277,57 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
 }
 
 /**
+ * Upserts a granule in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} updates  - Updates to make
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
+async function upsertGranule(esClient, updates, index = defaultIndexAlias, type = 'granule') {
+  // If the granule exists in 'deletedgranule', delete it first before inserting the granule
+  // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
+  const delGranParams = {
+    index,
+    type: 'deletedgranule',
+    id: updates.granuleId,
+    parent: updates.collectionId,
+    refresh: inTestMode(),
+  };
+  await esClient.delete(delGranParams, { ignore: [404] });
+
+  const upsertDoc = {
+    ...updates,
+    timestamp: Date.now(),
+  };
+  return await esClient.update({
+    index,
+    type,
+    id: updates.granuleId,
+    parent: updates.collectionId,
+    body: {
+      script: {
+        lang: 'painless',
+        source: `
+          if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
+            && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
+            ctx._source.putAll(params.doc);
+          } else {
+            ctx.op = 'none';
+          }
+        `,
+        params: {
+          doc: upsertDoc,
+        },
+      },
+      upsert: upsertDoc,
+    },
+    refresh: inTestMode(),
+  });
+}
+
+/**
  * Indexes the pdr type on Elasticsearch
  *
  * @param  {Object} esClient - Elasticsearch Connection object
@@ -632,6 +683,7 @@ module.exports = {
   indexReconciliationReport,
   indexRule,
   indexGranule,
+  upsertGranule,
   indexPdr,
   upsertPdr,
   indexExecution,
