@@ -40,7 +40,7 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
     QueueName,
-  }, (err) => log.error(err)).promise();
+  }, (err) => (err) && log.error(err)).promise();
 
   if (inTestMode()) {
     if (createQueueResponse.QueueUrl === undefined) {
@@ -108,9 +108,7 @@ export const sendSQSMessage = improveStackTrace(
     return sqs().sendMessage({
       MessageBody: messageBody,
       QueueUrl: queueUrl,
-    }, (err) => {
-      logger.error(err);
-    }).promise();
+    }).promise().catch((error) => logger.error(error));
   }
 );
 
