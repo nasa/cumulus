@@ -96,6 +96,8 @@ git pull origin release-1.14.x
 git checkout -b release-1.14.1
 # cherry pick the commits (or single squashed commit of changes) relevant to the backport
 git cherry-pick [replace-with-commit-SHA]
+# push up the changes to the release branch
+git push
 ```
 
 ### 2. Update the Cumulus version number
