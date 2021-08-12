@@ -70,7 +70,7 @@ describe('Creating a one-time rule via the Cumulus API', () => {
           timestamp__from: ingestTime,
           'originalPayload.testExecutionId': testExecutionId,
         },
-        { timeout: 180 }
+        { timeout: 60 }
       );
     } catch (error) {
       beforeAllError = error;
