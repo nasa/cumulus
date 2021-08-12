@@ -92,6 +92,14 @@ export {
 } from './translate/pdr';
 
 export {
+  executionArnsFromGranuleIdsAndWorkflowNames,
+  newestExecutionArnFromGranuleIdWorkflowName,
+  getWorkflowNameIntersectFromGranuleIds,
+} from './lib/execution';
+
+export {
+  getApiGranuleCumulusIds,
+  getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 

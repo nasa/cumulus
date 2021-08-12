@@ -5,7 +5,7 @@ export interface ApiPdr {
   provider: string,
   collectionId: string,
   status: pdrStatus,
-  createdAt?: number,
+  createdAt: number,
   progress?: number,
   execution?: string,
   PANSent?: boolean,
@@ -21,4 +21,8 @@ export interface ApiPdr {
   timestamp?: number,
   duration?: number,
   updatedAt?: number,
+}
+
+export interface ApiPdrRecord extends ApiPdr {
+  updatedAt: number
 }

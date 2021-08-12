@@ -2,6 +2,8 @@ import Knex from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
 
+import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
+
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
 
@@ -83,14 +85,20 @@ export const fakeCollectionRecordFactory = (
 
 export const fakeExecutionRecordFactory = (
   params: Partial<PostgresExecution>
-): PostgresExecution => ({
-  arn: cryptoRandomString({ length: 10 }),
-  status: 'running',
-  created_at: new Date(),
-  updated_at: new Date(),
-  timestamp: new Date(),
-  ...params,
-});
+): PostgresExecution => {
+  const executionId = uuidv4();
+  const executionARN = `arn:aws:states:us-east-1:12345:execution:test-TestExecution:${executionId}`;
+
+  return {
+    arn: executionARN,
+    url: getExecutionUrlFromArn(executionARN),
+    status: 'running',
+    created_at: new Date(),
+    updated_at: new Date(),
+    timestamp: new Date(),
+    ...params,
+  };
+};
 
 export const fakeProviderRecordFactory = (
   params: Partial<PostgresProvider>

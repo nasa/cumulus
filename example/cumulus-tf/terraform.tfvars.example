@@ -67,9 +67,15 @@ csdap_client_password = "csdap client password"
 ## url for uat: "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 csdap_host_url = "csdap host url"
 
-# Optional
+deploy_cumulus_distribution = true
+
+# Optional. Uncomment if using Cumulus Distribution.
 # toggle this after deployed to put the correct port in. (and hosts and config)
 # cumulus_distribution_url = "cumulus distribution url"
+
+# Optional. Uncomment if using TEA.
+# toggle this after deployed to put the correct port in. (and hosts and config)
+# tea_distribution_url = "TEA distribution URL"
 
 # Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
 /*
@@ -117,7 +123,3 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 */
-
-# Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
-# a knexTimeout occurs
-rds_connection_heartbeat = false

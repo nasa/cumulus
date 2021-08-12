@@ -23,13 +23,14 @@ const {
   destroyLocalTestDb,
   ExecutionPgModel,
   fakeCollectionRecordFactory,
-  fakeProviderRecordFactory,
   fakeExecutionRecordFactory,
+  fakeProviderRecordFactory,
   generateLocalTestDb,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
-  GranulePgModel,
 } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
@@ -77,6 +78,7 @@ test.before(async (t) => {
   t.context.providerPgModel = new ProviderPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -127,13 +129,16 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([
@@ -153,6 +158,15 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     1
   );
 
+  const pdrRecords = await t.context.pdrPgModel.search(
+    t.context.knex,
+    { name: testPdr.pdrName }
+  );
+  t.is(
+    pdrRecords.length,
+    1
+  );
+
   const granuleRecords = await t.context.granulePgModel.search(
     t.context.knex,
     { granule_id: fakeGranule.granuleId }
@@ -161,13 +175,20 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     granuleRecords.length,
     1
   );
+  t.is(
+    granuleRecords[0].pdr_cumulus_id,
+    pdrRecords[0].cumulus_id
+  );
 
-  const pdrRecords = await t.context.pdrPgModel.search(
+  const granulesExecutionRecords = await t.context.granulesExecutionsPgModel.search(
     t.context.knex,
-    { name: testPdr.pdrName }
+    {
+      execution_cumulus_id: executionRecords[0].cumulus_id,
+      granule_cumulus_id: granuleRecords[0].cumulus_id,
+    }
   );
   t.is(
-    pdrRecords.length,
+    granulesExecutionRecords.length,
     1
   );
 
@@ -194,16 +215,20 @@ test.serial('handler migrates only executions if configured', async (t) => {
   } = t.context;
 
   const collectionId = `${testCollection.name}___${testCollection.version}`;
+
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([
