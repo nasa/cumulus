@@ -40,7 +40,7 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
     QueueName,
-  }).promise();
+  }, (err) => log.error(err)).promise();
 
   if (inTestMode()) {
     if (createQueueResponse.QueueUrl === undefined) {
@@ -183,6 +183,7 @@ export const sqsQueueExists = async (queueUrl: string) => {
     await sqs().getQueueUrl({ QueueName }).promise();
     return true;
   } catch (error) {
+    log.error(error);
     if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
     throw error;
   }
