@@ -95,7 +95,7 @@ export const getQueueAttributes = async (queueName: string) => {
  * @param {string} queueUrl - url of the SQS queue
  * @param {string|Object} message - either string or object message. If an
  *   object it will be serialized into a JSON string.
- * @returns {Promise} resolves when the messsage has been sent
+
  **/
 export const sendSQSMessage = improveStackTrace(
   (queueUrl: string, message: string | object, logOverride: Logger) => {
@@ -108,7 +108,8 @@ export const sendSQSMessage = improveStackTrace(
     return sqs().sendMessage({
       MessageBody: messageBody,
       QueueUrl: queueUrl,
-    }).promise().catch((error) => logger.error(error));
+    }).on('error', (error) => logger.error(error))
+      .promise();
   }
 );
 

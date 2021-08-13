@@ -55,11 +55,6 @@ class TestConsole extends Console {
   }
 }
 
-test.beforeEach((t) => {
-  t.context.testConsole = new TestConsole();
-  t.context.log = new Logger({ console: t.context.testConsole });
-});
-
 test('parseSQSMessageBody parses messages correctly', (t) => {
   const messageBody = { test: 'value' };
   const bodyString = JSON.stringify(messageBody);
@@ -75,8 +70,16 @@ test('sqsQueueExists detects if the queue does not exist or is not accessible', 
   await sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
 });
 
+test('getQueueNameFromUrl extracts queue name from a queue URL', (t) => {
+  const queueName = 'MyQueue';
+  const queueUrl = `https://sqs.us-east-2.amazonaws.com/123456789012/${queueName}`;
+  const extractedName = getQueueNameFromUrl(queueUrl);
+  t.is(extractedName, queueName);
+});
+
 test('sendSQSMessage logs errors', async (t) => {
-  const { testConsole, log } = t.context;
+  const testConsole = new TestConsole();
+  const log = new Logger({ console: testConsole });
 
   await t.throwsAsync(
     sendSQSMessage('fakequeue', 'Queue message', log),
@@ -85,11 +88,4 @@ test('sendSQSMessage logs errors', async (t) => {
 
   t.is(testConsole.stderrLogEntries.length, 1);
   t.regex(testConsole.stderrLogEntries[0].message, /fakequeue/);
-});
-
-test('getQueueNameFromUrl extracts queue name from a queue URL', (t) => {
-  const queueName = 'MyQueue';
-  const queueUrl = `https://sqs.us-east-2.amazonaws.com/123456789012/${queueName}`;
-  const extractedName = getQueueNameFromUrl(queueUrl);
-  t.is(extractedName, queueName);
 });
