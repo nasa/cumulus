@@ -11,6 +11,7 @@ test.beforeEach(() => {
 });
 
 test('translatePostgresProviderToApiProvider translates the expected API record', (t) => {
+  const allowedRedirects = ['host-1', 'host-2'];
   const postgresProviderObject = {
     certificate_uri: 'fakeUri',
     cm_key_id: 'fakecmId',
@@ -24,6 +25,7 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     protocol: 'fakeProtocol',
     updated_at: new Date(5678),
     username: 'fakeEncryptedString',
+    allowed_redirects: allowedRedirects,
   };
 
   const expected = {
@@ -40,6 +42,7 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     protocol: 'fakeProtocol',
     updatedAt: 5678,
     username: 'fakeEncryptedString',
+    allowedRedirects,
   };
 
   const result = translatePostgresProviderToApiProvider(postgresProviderObject);
