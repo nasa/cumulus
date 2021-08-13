@@ -40,7 +40,9 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
     QueueName,
-  }, (err) => (err) && log.error(err)).promise();
+  })
+    .on('error', (error) => log.error(error))
+    .promise();
 
   if (inTestMode()) {
     if (createQueueResponse.QueueUrl === undefined) {
@@ -69,7 +71,9 @@ export async function createQueue(QueueName: string) {
 export const deleteQueue = (queueUrl: string) =>
   sqs().deleteQueue({
     QueueUrl: queueUrl,
-  }).promise();
+  })
+    .on('error', (error) => log.error(error))
+    .promise();
 
 export const getQueueAttributes = async (queueName: string) => {
   const queueUrl = await getQueueUrlByName(queueName);
@@ -144,7 +148,8 @@ export const receiveSQSMessages = async (
     MaxNumberOfMessages: options.numOfMessages || 1,
   };
 
-  const messages = await sqs().receiveMessage(params).promise();
+  const messages = await sqs().receiveMessage(params)
+    .on('error', (error) => log.error(error)).promise();
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
@@ -161,7 +166,9 @@ export const parseSQSMessageBody = (message: any): unknown =>
  */
 export const deleteSQSMessage = improveStackTrace(
   (QueueUrl: string, ReceiptHandle: string) =>
-    sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    sqs().deleteMessage({ QueueUrl, ReceiptHandle })
+      .on('error', (error) => log.error(error))
+      .promise()
 );
 
 /**
