@@ -22,7 +22,7 @@
           "granuleId": { "type": "string" },
           "dataType": { "type": "string" },
           "version": { "type": "string" },
-          "provider": { "type": "object" },
+          "provider": { "type": "string" },
           "files": { "type": "array" }
         }
       }

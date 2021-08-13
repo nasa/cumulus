@@ -576,14 +576,14 @@ test('Update preserves nested keys', async (t) => {
 });
 
 test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
-  const queueUrls = await createSqsQueues(randomString());
-  const newQueueUrls = await createSqsQueues(randomString());
+  const queues = await createSqsQueues(randomString());
+  const newQueues = await createSqsQueues(randomString());
 
   const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sqs',
-      value: queueUrls.queueUrl,
+      value: queues.queueUrl,
     },
     state: 'ENABLED',
   });
@@ -605,22 +605,29 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
       retries: 6,
     },
     rule: {
-      value: newQueueUrls.queueUrl,
+      value: newQueues.queueUrl,
     },
   };
 
   const updatedRule = await rulesModel.update(createdRule, updates);
 
   t.deepEqual(updatedRule.meta.testObject, testObject);
-  t.is(updatedRule.rule.value, newQueueUrls.queueUrl);
+  t.is(updatedRule.rule.value, newQueues.queueUrl);
   t.is(get(updatedRule, 'meta.visibilityTimeout'), updates.meta.visibilityTimeout);
   t.is(get(updatedRule, 'meta.retries'), updates.meta.retries);
 
   await rulesModel.delete(updatedRule);
 
-  const queues = Object.values(queueUrls).concat(Object.values(newQueueUrls));
+  const queuesToDelete = [
+    queues.queueUrl,
+    queues.deadLetterQueueUrl,
+    newQueues.queueUrl,
+    newQueues.deadLetterQueueUrl,
+  ];
   await Promise.all(
-    queues.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queuesToDelete.map(
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+    )
   );
 });
 

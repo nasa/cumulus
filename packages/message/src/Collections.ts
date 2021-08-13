@@ -37,6 +37,8 @@ export const constructCollectionId = (name: string, version: string) =>
  *
  * @param {string} collectionId - collectionId used in elasticsearch index
  * @returns {Object} name and version as object
+ *
+ * @alias module:Collections
  */
 export const deconstructCollectionId = (collectionId: string) => {
   const [name, version] = collectionId.split(collectionIdSeparator);

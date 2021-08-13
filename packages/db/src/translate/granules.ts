@@ -80,7 +80,7 @@ export const translatePostgresGranuleToApiGranule = async (
 };
 
 /**
- * Generate a Postgres Granule from a DynamoDB Granule.
+ * Generate a Postgres granule record from a DynamoDB record.
  *
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB

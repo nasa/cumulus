@@ -22,7 +22,7 @@ function getRetryIntervals(executions) {
     const intervalSeconds = (
       executions[i].scheduleEvent.timestamp - executions[i - 1].completeEvent.timestamp
     ) / 1000;
-    retryIntervals.push(Math.round(intervalSeconds));
+    retryIntervals.push(intervalSeconds);
   }
 
   return retryIntervals;
@@ -118,7 +118,12 @@ describe('When a task is configured', () => {
   describe('with a backoff', () => {
     it('and it fails, Cumulus retries it with the configured backoff time', () => {
       const retryIntervals = getRetryIntervals(retryFailLambdaExecutions);
-      expect(retryIntervals).toEqual([2, 4, 8]);
+      const expectedIntervals = [2, 4, 8];
+      expectedIntervals.forEach((expectedInterval, index) => {
+        console.log(`expected interval: ${expectedInterval}, Actual: ${retryIntervals[index]}`);
+        expect((retryIntervals[index] - expectedInterval)).toBeLessThanOrEqual(1);
+        expect((retryIntervals[index] - expectedInterval)).toBeGreaterThanOrEqual(0);
+      });
     });
   });
 });

@@ -78,7 +78,6 @@ describe('Ingesting from PDR', () => {
   let beforeAllFailed;
   let config;
   let nodeName;
-  let nodeNameProvider;
   let nodeNameProviderId;
   let parsePdrExecutionArn;
   let pdrFilename;
@@ -106,7 +105,7 @@ describe('Ingesting from PDR', () => {
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
 
-      const createProviderResponse = await providersApi.createProvider({
+      await providersApi.createProvider({
         prefix: config.stackName,
         provider: {
           id: nodeNameProviderId,
@@ -114,12 +113,6 @@ describe('Ingesting from PDR', () => {
           host: nodeName,
         },
       });
-
-      const createProviderResponseBody = JSON.parse(
-        createProviderResponse.body
-      );
-
-      nodeNameProvider = createProviderResponseBody.record;
 
       await waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime });
 
@@ -282,7 +275,7 @@ describe('Ingesting from PDR', () => {
 
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
-          expectedParsePdrOutput.granules[0].provider = nodeNameProvider;
+          expectedParsePdrOutput.granules[0].provider = nodeNameProviderId;
         } catch (error) {
           beforeAllFailed = true;
           throw error;
@@ -314,9 +307,6 @@ describe('Ingesting from PDR', () => {
               parsePdrExecutionArn,
               'ParsePdr'
             );
-
-            expectedParsePdrOutput.granules[0].provider.timestamp = parseLambdaOutput.payload.granules[0].provider.timestamp;
-
             expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
           });
         }

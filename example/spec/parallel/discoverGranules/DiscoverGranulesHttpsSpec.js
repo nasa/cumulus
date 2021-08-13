@@ -1,5 +1,4 @@
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
@@ -12,6 +11,8 @@ const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
+const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -68,22 +69,17 @@ describe('The Discover Granules workflow with https Protocol', () => {
     // clean up stack state added by test
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
-        await waitForApiStatus(
-          getGranule,
-          {
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          },
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
           'completed'
         );
-        await deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        });
       }
     ));
-    await Promise.all(ingestGranuleWorkflowArns.map((executionArn) =>
-      deleteExecution({ prefix: config.stackName, executionArn })));
+    await Promise.all(ingestGranuleWorkflowArns.map(
+      (executionArn) =>
+        waitForExecutionAndDelete(config.stackName, executionArn, 'completed')
+    ));
 
     await deleteExecution({ prefix: config.stackName, executionArn: httpsWorkflowExecutionArn });
 
@@ -160,10 +156,6 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
       console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArns[0]);
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArns[0]);
-    });
-
-    afterAll(async () => {
-      await Promise.all(ingestGranuleWorkflowArns.map((execution) => waitForCompletedExecution(execution)));
     });
 
     it('executes successfully', () => {

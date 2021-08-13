@@ -1124,9 +1124,14 @@ When there are no more items in the queue, returns 'null'.
 Class to use when interacting with S3
 
 **Kind**: global class  
+
+* [S3ObjectStore](#S3ObjectStore)
+    * [.signGetObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signGetObject) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.signHeadObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signHeadObject) ⇒ <code>Promise.&lt;string&gt;</code>
+
 <a name="S3ObjectStore+signGetObject"></a>
 
-### s3ObjectStore.signGetObject(objectUrl, params) ⇒ <code>Promise.&lt;string&gt;</code>
+### s3ObjectStore.signGetObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
 Returns an HTTPS URL that can be used to perform a GET on the given object
 store URL
 
@@ -1140,7 +1145,27 @@ store URL
 | Param | Type | Description |
 | --- | --- | --- |
 | objectUrl | <code>string</code> | the URL of the object to sign |
-| params | <code>string</code> | an optional mapping of parameter key/values to put in the URL |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+
+<a name="S3ObjectStore+signHeadObject"></a>
+
+### s3ObjectStore.signHeadObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+Returns an HTTPS URL that can be used to perform a HEAD on the given object
+store URL
+
+**Kind**: instance method of [<code>S3ObjectStore</code>](#S3ObjectStore)  
+**Returns**: <code>Promise.&lt;string&gt;</code> - a signed URL  
+**Throws**:
+
+- TypeError - if the URL is not a recognized protocol or cannot be parsed
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| objectUrl | <code>string</code> | the URL of the object to sign |
+| [options] | <code>string</code> | options to pass to S3.getObject |
+| [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
 
 
 ## About Cumulus

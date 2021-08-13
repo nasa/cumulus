@@ -137,6 +137,7 @@ test('waitForGranules retries if status does not match provided status', async (
 });
 
 test('reingestGranule calls the callback with the expected object', async (t) => {
+  const aWorkflow = 'anyWorkflowName';
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -146,7 +147,10 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'reingest' }),
+      body: JSON.stringify({
+        action: 'reingest',
+        workflowName: aWorkflow,
+      }),
     },
   };
 
@@ -157,6 +161,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
   await t.notThrowsAsync(granulesApi.reingestGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    workflowName: aWorkflow,
     callback,
   }));
 });
