@@ -9,7 +9,7 @@ export interface PostgresGranule extends PostgresGranuleUniqueColumns {
   error?: object,
   published?: boolean,
   duration?: number,
-  product_volume?: number, // TODO this wouldn't be a number
+  product_volume?: number,
   time_to_process?: number,
   time_to_archive?: number,
   provider_cumulus_id?: number,
@@ -28,8 +28,11 @@ export interface PostgresGranule extends PostgresGranuleUniqueColumns {
   query_fields?: unknown
 }
 
-export interface PostgresGranuleRecord extends PostgresGranule {
+// product_volume is stored as a BigInt in Postgres. It returns from PG to Node
+// as a "string" type.
+export interface PostgresGranuleRecord extends Omit<PostgresGranule, 'product_volume'> {
   cumulus_id: number,
+  product_volume?: string,
   created_at: Date,
   updated_at: Date
 }

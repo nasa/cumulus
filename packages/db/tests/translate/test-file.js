@@ -17,7 +17,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
     file_name: 's3://cumulus-test-sandbox-private/firstKey',
     checksum_type: 'md5',
     checksum_value: 'bogus-value',
-    file_size: 100,
+    file_size: '100',
     path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
   };
@@ -32,7 +32,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         checksumType: postgresFile.checksum_type,
         checksum: postgresFile.checksum_value,
         fileName: postgresFile.file_name,
-        size: postgresFile.file_size,
+        size: Number.parseInt(postgresFile.file_size, 10),
         path: postgresFile.path,
         source: postgresFile.source,
       },

@@ -58,7 +58,8 @@ export const translatePostgresGranuleToApiGranule = async (
     duration: granulePgRecord.duration,
     timeToArchive: granulePgRecord.time_to_archive,
     timeToPreprocess: granulePgRecord.time_to_process,
-    productVolume: granulePgRecord.product_volume,
+    productVolume: granulePgRecord.product_volume
+      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
     error: granulePgRecord.error,
     cmrLink: granulePgRecord.cmr_link,
     pdrName: pdr.name,
