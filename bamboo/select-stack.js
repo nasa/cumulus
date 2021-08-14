@@ -29,7 +29,7 @@ function determineIntegrationTestStackName(cb) {
     'Jennifer Tran': 'jtran-int',
     'Nate Pauzenga': 'np-ci',
     'Danielle Peters': 'dop-ci',
-    'Anthony Ortega': 'aort'
+    'Anthony Ortega': 'aort',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
