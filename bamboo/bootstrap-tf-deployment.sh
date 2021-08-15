@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-apt-get update allow-releaseinfo-change
+apt-get update --allow-releaseinfo-change
 apt-get install -y python-pip
 pip install awscli
 
