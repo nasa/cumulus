@@ -251,7 +251,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
-    await Lambda.invoke(process.env.invoke, lambdaPayload).catch((error) => logger.error(error));
+    await Lambda.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
