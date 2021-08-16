@@ -82,7 +82,10 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
 export {
   translateApiPdrToPostgresPdr,
   translatePostgresPdrToApiPdr,

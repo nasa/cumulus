@@ -36,12 +36,6 @@ export const translatePostgresGranuleToApiGranule = async (
   const collection = await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
-  const pdr = await pdrPgModel.get(
-    knexOrTransaction, { cumulus_id: granulePgRecord.pdr_cumulus_id }
-  );
-  const provider = await providerPgModel.get(
-    knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
-  );
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
   );
@@ -49,6 +43,22 @@ export const translatePostgresGranuleToApiGranule = async (
     knexOrTransaction,
     granulePgRecord.cumulus_id
   );
+
+  let pdr;
+
+  if (granulePgRecord.pdr_cumulus_id) {
+    pdr = await pdrPgModel.get(
+      knexOrTransaction, { cumulus_id: granulePgRecord.pdr_cumulus_id }
+    );
+  }
+
+  let provider;
+
+  if (granulePgRecord.provider_cumulus_id) {
+    provider = await providerPgModel.get(
+      knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
+    );
+  }
 
   return removeNilProperties(({
     granuleId: granulePgRecord.granule_id,
@@ -62,8 +72,8 @@ export const translatePostgresGranuleToApiGranule = async (
       ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
     error: granulePgRecord.error,
     cmrLink: granulePgRecord.cmr_link,
-    pdrName: pdr.name,
-    provider: provider.name,
+    pdrName: pdr ? pdr.name : undefined,
+    provider: provider ? provider.name : undefined,
     queryFields: granulePgRecord.query_fields,
     beginningDateTime: granulePgRecord.beginning_date_time?.getTime(),
     endingDateTime: granulePgRecord.ending_date_time?.getTime(),

@@ -301,7 +301,7 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.count, 2);
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   results.forEach((r) => {
-    t.true(granuleIds.includes(r.granule_id));
+    t.true(granuleIds.includes(r.granuleId));
   });
 });
 
@@ -410,7 +410,7 @@ test.serial('GET returns an existing granule', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { granule_id: granuleId } = response.body;
+  const { granuleId } = response.body;
   t.is(granuleId, t.context.fakePGGranules[0].granule_id);
 });
 

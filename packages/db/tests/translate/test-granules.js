@@ -227,6 +227,84 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   );
 });
 
+test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+    executions,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  delete postgresGranule.pdr_cumulus_id;
+  delete postgresGranule.provider_cumulus_id;
+
+  const expectedApiGranule = {
+    granuleId: postgresGranule.granule_id,
+    collectionId: 'collectionName___collectionVersion',
+    status: postgresGranule.status,
+    cmrLink: postgresGranule.cmr_link,
+    published: postgresGranule.published,
+    duration: postgresGranule.duration,
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        key: 'firstKey',
+        checksumType: 'md5',
+        checksum: 'bogus-value',
+        fileName: 's3://cumulus-test-sandbox-private/firstKey',
+        size: 2098711627776,
+        path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        key: 'secondKey',
+        checksumType: 'md5',
+        checksum: 'bogus-value',
+        fileName: 's3://cumulus-test-sandbox-private/secondKey',
+        size: 1099511627776,
+        path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+    executions: executions.map((e) => e.arn),
+    error: postgresGranule.error,
+    queryFields: postgresGranule.query_fields,
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    timeToPreprocess: postgresGranule.time_to_process,
+    beginningDateTime: postgresGranule.beginning_date_time.getTime(),
+    endingDateTime: postgresGranule.ending_date_time.getTime(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.getTime(),
+    processingEndDateTime: postgresGranule.processing_end_date_time.getTime(),
+    lastUpdateDateTime: postgresGranule.last_update_date_time.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    productionDateTime: postgresGranule.production_date_time.getTime(),
+    timestamp: postgresGranule.timestamp.getTime(),
+    createdAt: postgresGranule.created_at.getTime(),
+    updatedAt: postgresGranule.updated_at.getTime(),
+  };
+
+  const result = await translatePostgresGranuleToApiGranule(
+    postgresGranule,
+    knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel
+  );
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
 test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
