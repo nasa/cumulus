@@ -5,8 +5,7 @@ const fs = require('fs-extra');
 const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
-const { Granule } = require('@cumulus/api/models');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
@@ -38,7 +37,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutions } = require('@cumulus/api-client/executions');
 
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const {
@@ -236,10 +235,13 @@ describe('The SQS rule', () => {
 
       beforeAll(async () => {
         process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-        const granuleModel = new Granule();
-        record = await waitForModelStatus(
-          granuleModel,
-          { granuleId },
+
+        await waitForApiStatus(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId,
+          },
           'completed'
         );
       });
