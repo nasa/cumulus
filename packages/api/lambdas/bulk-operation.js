@@ -70,8 +70,8 @@ async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
       }
     );
   } catch (error) {
-    log.error(error);
     if (!(error instanceof RecordDoesNotExist)) {
+      log.error(error);
       throw error;
     }
   }
