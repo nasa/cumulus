@@ -12,6 +12,15 @@ export interface arnRecord {
 
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
+/**
+ * Returns a list of executionArns sorted by most recent first, for an input
+ * Granule Cumulus ID.
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {number} granuleCumulusId - The primary ID for a Granule
+ * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ */
 export const getExecutionArnsByGranuleCumulusId = (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number
@@ -68,6 +77,7 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
  *
  * @param {string} granuleId -  granuleIds
  * @param {string} workflowName - workflow name
+ * @param {Knex} testKnex - DB Client
  * @returns {Promise<string>} - most recent exectutionArn for input parameters.
  * @throws {RecordNotFound}
  */
