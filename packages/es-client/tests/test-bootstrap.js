@@ -87,7 +87,7 @@ test('Missing types added to index', async (t) => {
 
   t.deepEqual(
     await findMissingMappings(esClient, indexName, testMappings),
-    ['logs', 'deletedgranule']
+    ['deletedgranule']
   );
 
   await bootstrapElasticSearch('fakehost', indexName, testAlias);
@@ -114,7 +114,7 @@ test('Missing fields added to index', async (t) => {
 
   t.deepEqual(
     await findMissingMappings(esClient, indexName, testMappings),
-    ['logs', 'execution']
+    ['execution']
   );
 
   await bootstrapElasticSearch('fakehost', indexName, testAlias);
