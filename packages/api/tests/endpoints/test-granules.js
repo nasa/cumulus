@@ -405,7 +405,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
 
 test.serial('GET returns an existing granule', async (t) => {
   const response = await request(app)
-    .get(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -428,7 +428,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
 
 test.serial('PUT fails if action is not supported', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
@@ -461,7 +461,7 @@ test.serial('reingest a granule', async (t) => {
   t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -509,7 +509,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -593,11 +593,11 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   sinon.stub(
     CMR.prototype,
     'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+  ).callsFake(() => Promise.resolve({ title: t.context.fakePGGranules[0].granule_id }));
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -608,7 +608,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
     t.is(body.action, 'removeFromCmr');
 
     const updatedGranule = await granuleModel.get({
-      granuleId: t.context.fakeGranules[0].granuleId,
+      granuleId: t.context.fakePGGranules[0].granule_id,
     });
     t.is(updatedGranule.published, false);
     t.is(updatedGranule.cmrLink, undefined);

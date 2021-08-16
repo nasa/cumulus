@@ -294,7 +294,7 @@ async function get(req, res) {
 
   // Get related files, execution ARNs, provider, PDR, and collection and format
   const result = await translatePostgresGranuleToApiGranule(granule, knex);
-  console.log(result);
+
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)
     : undefined;
