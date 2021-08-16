@@ -43,7 +43,7 @@ const {
 
 const {
   writeGranules,
-} = require('./write-granules');
+} = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 

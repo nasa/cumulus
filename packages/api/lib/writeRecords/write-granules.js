@@ -37,16 +37,16 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 
-const FileUtils = require('../../lib/FileUtils');
+const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
   getGranuleProductVolume,
-} = require('../../lib/granules');
+} = require('../granules');
 const {
   parseException,
-} = require('../../lib/utils');
+} = require('../utils');
 const Granule = require('../../models/granules');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-granules' });

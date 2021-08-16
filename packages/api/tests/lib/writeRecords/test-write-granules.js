@@ -26,7 +26,7 @@ const {
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranules,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
+} = require('../../../lib/writeRecords/write-granules');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 
