@@ -3,7 +3,6 @@
 const fs = require('fs-extra');
 const get = require('lodash/get');
 
-const { Granule } = require('@cumulus/api/models');
 const {
   deleteS3Object,
   parseS3Uri,

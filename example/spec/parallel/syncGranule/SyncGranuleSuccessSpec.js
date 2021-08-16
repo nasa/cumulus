@@ -9,7 +9,6 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
