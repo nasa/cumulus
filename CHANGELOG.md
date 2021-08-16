@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v9.4.0] 2021-08-13
+### BREAKING CHANGES
+
+- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
+any adverse impact on existing deployments, even those which still contain `logs` records,
+but technically it is a breaking change to the Elasticsearch mappings.
+
+## [v9.4.0] 2021-08-16
 
 ### Notable changes
 
@@ -14,12 +20,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 syncing files from HTTP/HTTPS providers where basic auth is
 required and involves a redirect to a different host (e.g.
 downloading files protected by Earthdata Login)
-
-### BREAKING CHANGES
-
-- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
-any adverse impact on existing deployments, even those which still contain `logs` records,
-but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
