@@ -60,6 +60,8 @@ host and/or host with a different port
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2308**
+    - Update `/granules/<granule_id>` GET endpoint to return Postgres Granules isntead of DynamoDB Granules
   - **CUMULUS-2302**
     - Update API collection GET endpoint to read individual provider records from
       PostgreSQL database instead of DynamoDB
