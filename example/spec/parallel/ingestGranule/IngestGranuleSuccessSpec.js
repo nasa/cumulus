@@ -12,9 +12,6 @@ const includes = require('lodash/includes');
 const intersection = require('lodash/intersection');
 const isObject = require('lodash/isObject');
 
-const {
-  Granule,
-} = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
@@ -79,10 +76,7 @@ const {
   createTestSuffix,
   getFilesMetadata,
 } = require('../../helpers/testUtils');
-const {
-  setDistributionApiEnvVars,
-  waitForModelStatus,
-} = require('../../helpers/apiUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
@@ -123,7 +117,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let failingWorkflowExecution;
   let granuleCompletedMessageKey;
-  let granuleModel;
   let granuleRunningMessageKey;
   let inputPayload;
   let opendapFilePath;
@@ -147,7 +140,6 @@ describe('The S3 Ingest Granules workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
@@ -341,9 +333,12 @@ describe('The S3 Ingest Granules workflow', () => {
   it('makes the granule available through the Cumulus API', async () => {
     if (beforeAllError) throw SetupError;
 
-    await waitForModelStatus(
-      granuleModel,
-      { granuleId: inputPayload.granules[0].granuleId },
+    await waitForApiStatus(
+      getGranule,
+      {
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+      },
       ['running', 'completed']
     );
 
@@ -735,9 +730,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('triggers the granule record being added to DynamoDB', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const record = await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+      const record = await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'completed'
       );
       expect(record.execution).toEqual(getExecutionUrl(workflowExecutionArn));
@@ -1005,9 +1003,12 @@ describe('The S3 Ingest Granules workflow', () => {
             const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
             nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
 
-            await waitForModelStatus(
-              granuleModel,
-              { granuleId: reingestGranuleId },
+            await waitForApiStatus(
+              getGranule,
+              {
+                prefix: config.stackName,
+                granuleId: reingestGranuleId,
+              },
               'completed'
             );
 
@@ -1135,9 +1136,12 @@ describe('The S3 Ingest Granules workflow', () => {
         console.log(`Wait for completed execution ${updateCmrAccessConstraintsExecutionArn}`);
 
         await waitForCompletedExecution(updateCmrAccessConstraintsExecutionArn);
-        await waitForModelStatus(
-          granuleModel,
-          { granuleId: granule.granuleId },
+        await waitForApiStatus(
+          getGranule,
+          {
+            prefix: config.stackName,
+            granuleId: granule.granuleId,
+          },
           'completed'
         );
 
