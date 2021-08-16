@@ -129,6 +129,48 @@ export const waitForGranule = async (params: {
 };
 
 /**
+ * Update a granule via the Cumulus API
+ *
+ * PUT /granules/granuleId
+ *
+ * @param {Object} params             - params
+ * @param {string} params.prefix      - the prefix configured for the stack
+ * @param {string} params.granuleId   - a granule ID
+ * @param {Object} params.updateParams - Updates to apply to granule
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the granule fetched by the API
+ */
+export const updateGranule = async (params: {
+  prefix: string,
+  granuleId: GranuleId,
+  updateParams: Partial<ApiGranule> & { granuleId: GranuleId },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    granuleId,
+    updateParams,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${granuleId}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateParams),
+    },
+  });
+};
+
+/**
  * Reingest a granule from the Cumulus API
  * PUT /granules/{}
  *

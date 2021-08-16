@@ -1,5 +1,5 @@
 /* functions for transforming and indexing Cumulus Payloads
- * in ElasticSearch. These functions are specifically designed
+ * in Elasticsearch. These functions are specifically designed
  * to transform data for use in cumulus api
  *
  * The module accepts the following kinds of workflows (state machines):
@@ -46,9 +46,9 @@ async function createIndex(esClient, indexName) {
 }
 
 /**
- * Indexes a given record to the specified ElasticSearch index and type
+ * Indexes a given record to the specified Elasticsearch index and type
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {string} id       - the record id
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
@@ -85,10 +85,49 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 }
 
 /**
+ * Updates a given record for the Elasticsearch index and type
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {string} id       - the record id
+ * @param  {Object} doc      - the record
+ * @param  {string} index    - Elasticsearch index alias
+ * @param  {string} type     - Elasticsearch type
+ * @returns {Promise} Elasticsearch response
+ */
+async function updateExistingRecord(esClient, id, doc, index, type) {
+  return await esClient.update({
+    index,
+    type,
+    id,
+    body: {
+      doc: {
+        ...doc,
+        timestamp: Date.now(),
+      },
+    },
+    refresh: inTestMode(),
+  });
+}
+
+/**
+ * Updates an asyncOperation record in Elasticsearch
+ *
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} id - Record ID
+ * @param  {Object} updates - Document of updates to apply
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} elasticsearch update response
+ */
+function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, type = 'asyncOperation') {
+  return updateExistingRecord(esClient, id, updates, index, type);
+}
+
+/**
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: execution)
@@ -99,9 +138,9 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Indexes the asyncOperation type on ElasticSearch
+ * Indexes the asyncOperation type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: asyncOperation)
@@ -112,23 +151,23 @@ function indexAsyncOperation(esClient, payload, index = defaultIndexAlias, type 
 }
 
 /**
- * Indexes the collection on ElasticSearch
+ * Indexes the collection on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {Object} meta     - the collection record
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: collection)
+ * @param  {Object} esClient - Elasticsearch Connection object
+ * @param  {Object} collection - the collection record
+ * @param  {string} index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type - Elasticsearch type (default: collection)
  * @returns {Promise} Elasticsearch response
  */
-function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  const collectionId = constructCollectionId(meta.name, meta.version);
-  return genericRecordUpdate(esClient, collectionId, meta, index, type);
+function indexCollection(esClient, collection, index = defaultIndexAlias, type = 'collection') {
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  return genericRecordUpdate(esClient, collectionId, collection, index, type);
 }
 
 /**
- * Indexes the provider type on ElasticSearch
+ * Indexes the provider type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the provider record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: provider)
@@ -139,9 +178,9 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
 }
 
 /**
- * Indexes the reconciliationReport type on ElasticSearch
+ * Indexes the reconciliationReport type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the ReconciliationReport record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: reconciliationReport)
@@ -152,9 +191,9 @@ function indexReconciliationReport(esClient, payload, index = defaultIndexAlias,
 }
 
 /**
- * Indexes the rule type on ElasticSearch
+ * Indexes the rule type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - the Rule record
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: rule)
@@ -166,9 +205,9 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 }
 
 /**
- * Indexes the granule type on ElasticSearch
+ * Indexes the granule type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
@@ -197,9 +236,9 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
 }
 
 /**
- * Indexes the pdr type on ElasticSearch
+ * Indexes the pdr type on Elasticsearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClient - Elasticsearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: pdr)
@@ -216,10 +255,10 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
 }
 
 /**
- * delete a record from ElasticSearch
+ * delete a record from Elasticsearch
  *
  * @param  {Object} params
- * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.id       - id of the Elasticsearch record
  * @param  {string} params.type     - Elasticsearch type (default: execution)
  * @param  {strint} params.parent   - id of the parent (optional)
@@ -248,26 +287,248 @@ async function deleteRecord({
   if (ignore) options = { ignore };
 
   const actualEsClient = esClient || (await Search.es());
-
-  const getResponse = await actualEsClient.get(params, options);
   const deleteResponse = await actualEsClient.delete(params, options);
-
-  if (type === 'granule' && getResponse.body.found) {
-    const doc = getResponse.body._source;
-    doc.timestamp = Date.now();
-    doc.deletedAt = Date.now();
-
-    // When a 'granule' record is deleted, the record is added to 'deletedgranule' type
-    await genericRecordUpdate(
-      actualEsClient,
-      doc.granuleId,
-      doc,
-      index,
-      'deletedgranule',
-      parent
-    );
-  }
   return deleteResponse.body;
+}
+
+/**
+ * Deletes the collection in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.collectionId - the collection ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: collection)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteCollection({
+  esClient,
+  collectionId,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'collection',
+}) {
+  return deleteRecord({
+    esClient,
+    id: collectionId,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the provider in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.id - the provider ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: provider)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteProvider({
+  esClient,
+  id,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'provider',
+}) {
+  return deleteRecord({
+    esClient,
+    id,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the rule in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.name - the rule name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: rule)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteRule({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'rule',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the PDR in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.name - the PDR name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: PDR)
+ * @returns {Promise} Elasticsearch response
+ */
+function deletePdr({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'pdr',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the execution in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.arn - execution ARN
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: execution)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteExecution({
+  esClient,
+  arn,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'execution',
+}) {
+  return deleteRecord({
+    esClient,
+    id: arn,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the async operation in Elasticsearch
+ *
+ * @param {Object} params
+ * @param {Object} params.esClient - Elasticsearch Connection object
+ * @param {string} params.id - the async operation ID
+ * @param {string[]} [params.ignore] - Array of response codes to ignore
+ * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param {string} params.type - Elasticsearch type (default: asyncOperation)
+ * @returns {Promise} Elasticsearch response
+*/
+function deleteAsyncOperation({
+  esClient,
+  id,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'asyncOperation',
+}) {
+  return deleteRecord({
+    esClient,
+    id,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the reconciliation report from Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.name - reconciliation report name
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: reconciliationReport)
+ * @returns {Promise} Elasticsearch response
+ */
+function deleteReconciliationReport({
+  esClient,
+  name,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'reconciliationReport',
+}) {
+  return deleteRecord({
+    esClient,
+    id: name,
+    index,
+    type,
+    ignore,
+  });
+}
+
+/**
+ * Deletes the granule in Elasticsearch
+ *
+ * @param  {Object} params
+ * @param  {Object} params.esClient - Elasticsearch Connection object
+ * @param  {string} params.granuleId - the granule ID
+ * @param  {string} params.collectionId - the collection ID
+ * @param  {string[]} [params.ignore] - Array of response codes to ignore
+ * @param  {string} params.index - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} params.type - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
+async function deleteGranule({
+  esClient,
+  granuleId,
+  collectionId,
+  ignore,
+  index = defaultIndexAlias,
+  type = 'granule',
+}) {
+  const esGranulesClient = new Search(
+    {},
+    type,
+    index
+  );
+  const granuleEsRecord = await esGranulesClient.get(granuleId, collectionId);
+
+  // When a 'granule' record is deleted, the record is added to 'deletedgranule' type
+  const deletedGranuleDoc = granuleEsRecord;
+  delete deletedGranuleDoc._id;
+  deletedGranuleDoc.timestamp = Date.now();
+  deletedGranuleDoc.deletedAt = Date.now();
+  await genericRecordUpdate(
+    esClient,
+    granuleId,
+    deletedGranuleDoc,
+    index,
+    'deletedgranule',
+    collectionId
+  );
+
+  return await deleteRecord({
+    esClient,
+    id: granuleId,
+    parent: collectionId,
+    index,
+    type,
+    ignore,
+  });
 }
 
 /**
@@ -294,4 +555,13 @@ module.exports = {
   indexExecution,
   indexAsyncOperation,
   deleteRecord,
+  deleteAsyncOperation,
+  updateAsyncOperation,
+  deleteCollection,
+  deleteProvider,
+  deleteRule,
+  deletePdr,
+  deleteGranule,
+  deleteExecution,
+  deleteReconciliationReport,
 };

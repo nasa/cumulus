@@ -17,6 +17,8 @@ type CollectionInfo = {
   version: string
 };
 
+const collectionIdSeparator = '___';
+
 /**
  * Returns the collection ID.
  *
@@ -27,7 +29,7 @@ type CollectionInfo = {
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}___${version}`;
+  `${name}${collectionIdSeparator}${version}`;
 
 /**
  * Returns the name and version of a collection based on
@@ -35,9 +37,11 @@ export const constructCollectionId = (name: string, version: string) =>
  *
  * @param {string} collectionId - collectionId used in elasticsearch index
  * @returns {Object} name and version as object
+ *
+ * @alias module:Collections
  */
 export const deconstructCollectionId = (collectionId: string) => {
-  const [name, version] = collectionId.split('___');
+  const [name, version] = collectionId.split(collectionIdSeparator);
   return {
     name,
     version,

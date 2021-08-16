@@ -1,5 +1,6 @@
 import {
   BasePgModel,
+  BaseRecord,
   CollectionPgModel,
   Knex,
   translateApiCollectionToPostgresCollection,
@@ -99,7 +100,7 @@ export const getEsCutoffQuery = (
 * record array
 * @returns {Promise<number>} - Returns the count (as an integer)
 */
-export const countPostgresRecords = async <T, R extends { cumulus_id: number }>(params: {
+export const countPostgresRecords = async <T, R extends BaseRecord>(params: {
   model: BasePgModel<T, R>,
   knexClient: Knex,
   cutoffIsoString?: string,

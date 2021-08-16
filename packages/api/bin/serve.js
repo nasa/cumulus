@@ -5,8 +5,28 @@ const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
+const {
+  AsyncOperationPgModel,
+  CollectionPgModel,
+  ExecutionPgModel,
+  FilePgModel,
+  getKnexClient,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  PdrPgModel,
+  ProviderPgModel,
+  RulePgModel,
+  localStackConnectionEnv,
+  translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
+  translateApiGranuleToPostgresGranule,
+  translateApiExecutionToPostgresExecution,
+} = require('@cumulus/db');
+
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { localStackConnectionEnv } = require('@cumulus/db');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
@@ -165,11 +185,23 @@ async function initializeLocalElasticsearch(stackName) {
 }
 
 /**
- * Fill dynamo and elastic with fake records for testing.
+ * Fill dynamo, postgres and elastic with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {string} user - username
+ * @param {Object} knexOverride - Used to override knex object for testing
  */
-async function createDBRecords(stackName, user) {
+async function createDBRecords(stackName, user, knexOverride) {
+  let knex = knexOverride;
+  if (!knex) {
+    knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
+  }
+
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const granulePgModel = new GranulePgModel();
+  const providerPgModel = new ProviderPgModel();
+  const rulePgModel = new RulePgModel();
+
   await initializeLocalElasticsearch(stackName);
 
   if (user) {
@@ -177,32 +209,55 @@ async function createDBRecords(stackName, user) {
   }
 
   // add collection records
-  const collection = testUtils.fakeCollectionFactory({ name: `${stackName}-collection` });
+  const collection = testUtils.fakeCollectionFactory({
+    name: `${stackName}-collection`,
+    version: '0.0.0',
+  });
   await serveUtils.addCollections([collection]);
-
-  // add granule records
-  const granule = testUtils.fakeGranuleFactoryV2({ granuleId: `${stackName}-granule` });
-  await serveUtils.addGranules([granule]);
+  const postgresCollection = await translateApiCollectionToPostgresCollection(collection);
+  await collectionPgModel.upsert(knex, postgresCollection);
 
   // add provider records
   const provider = testUtils.fakeProviderFactory({ id: `${stackName}-provider` });
   await serveUtils.addProviders([provider]);
+  const postgresProvider = await translateApiProviderToPostgresProvider(provider);
+  providerPgModel.upsert(knex, postgresProvider);
 
   // add rule records
   const rule = testUtils.fakeRuleFactoryV2({
     name: `${stackName}_rule`,
     workflow: workflowList[0].name,
-    provider: `${stackName}-provider`,
+    provider: provider.name,
     collection: {
-      name: `${stackName}-collection`,
-      version: '0.0.0',
+      name: collection.name,
+      version: collection.version,
+    },
+    rule: {
+      type: 'kinesis',
+      arn: '164ab703-ffaa-413b-ab6a-7f813a9483b7',
     },
   });
   await serveUtils.addRules([rule]);
+  const postgresRule = await translateApiRuleToPostgresRule(rule, knex);
+  await rulePgModel.upsert(knex, postgresRule);
 
   // add fake execution records
   const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
   await serveUtils.addExecutions([execution]);
+
+  const postgresExecution = await translateApiExecutionToPostgresExecution(execution, knex);
+  await executionPgModel.upsert(knex, postgresExecution);
+
+  // add fake granule records
+  const granule = testUtils.fakeGranuleFactoryV2({
+    granuleId: `${stackName}-granule`,
+    collectionId: constructCollectionId(collection.name, collection.version),
+    execution: execution.name,
+    published: false, // Important - we need to be able to delete these.
+  });
+  await serveUtils.addGranules([granule]);
+  const postgresGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+  await granulePgModel.upsert(knex, postgresGranule);
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
@@ -315,9 +370,41 @@ async function serveDistributionApi(stackName = localStackName, done) {
 }
 
 /**
+* Remove all records from api-related postgres tables
+* @param {Object} knex - knex/knex transaction object
+* @returns {[Promise]} - Array of promises with deletion results
+*/
+async function erasePostgresTables(knex) {
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const rulePgModel = new RulePgModel();
+
+  await executionPgModel.delete(knex, {});
+  await asyncOperationPgModel.delete(knex, {});
+  await filePgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await rulePgModel.delete(knex, {});
+
+  const delPromises = [
+    collectionPgModel.delete(knex, {}),
+    granulePgModel.delete(knex, {}),
+    granulesExecutionsPgModel.delete(knex, {}),
+    pdrPgModel.delete(knex, {}),
+    providerPgModel.delete(knex, {}),
+  ];
+  await Promise.all(delPromises);
+}
+
+/**
  * erase all dynamoDB tables
  * @param {string} stackName - stack name (generally 'localrun')
- * @param {string} systemBucket - stystem bucket (generally 'localbucket' )
+ * @param {string} systemBucket - system bucket (generally 'localbucket')
  */
 async function eraseDynamoTables(stackName, systemBucket) {
   setTableEnvVariables(stackName);
@@ -375,11 +462,10 @@ async function resetTables(
   runIt = false
 ) {
   if (inTestMode() || runIt) {
+    const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
     await eraseDynamoTables(stackName, systemBucket);
-    // Populate tables with original test data (localstack)
-    if (inTestMode()) {
-      await createDBRecords(stackName, user);
-    }
+    await erasePostgresTables(knex);
+    await createDBRecords(stackName, user, knex);
   }
 }
 

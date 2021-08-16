@@ -55,14 +55,14 @@ test.before(async (t) => {
   await createBucket(process.env.system_bucket);
 
   t.context.collectionsModel = new Collection();
-  t.context.executionsModel = new Execution();
+  t.context.executionModel = new Execution();
   t.context.granulesModel = new Granule();
   t.context.pdrsModel = new Pdr();
   t.context.providersModel = new Provider();
 
   await Promise.all([
     t.context.collectionsModel.createTable(),
-    t.context.executionsModel.createTable(),
+    t.context.executionModel.createTable(),
     t.context.granulesModel.createTable(),
     t.context.pdrsModel.createTable(),
     t.context.providersModel.createTable(),
@@ -104,7 +104,7 @@ test.after.always(async (t) => {
   await t.context.pdrsModel.deleteTable();
   await t.context.providersModel.deleteTable();
   await t.context.collectionsModel.deleteTable();
-  await t.context.executionsModel.deleteTable();
+  await t.context.executionModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
@@ -161,7 +161,7 @@ async function cleanupRecords({
 
 test.serial('handler migrates executions, granules, files, and PDRs by default', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -185,7 +185,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -248,7 +248,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
 
 test.serial('handler migrates only executions if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -273,7 +273,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -323,7 +323,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
 
 test.serial('handler migrates only granules if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -346,7 +346,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
@@ -396,7 +396,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
 
 test.serial('handler migrates only PDRs if configured', async (t) => {
   const {
-    executionsModel,
+    executionModel,
     granulesModel,
     pdrsModel,
     testCollection,
@@ -418,7 +418,7 @@ test.serial('handler migrates only PDRs if configured', async (t) => {
   });
 
   await Promise.all([
-    executionsModel.create(fakeExecution),
+    executionModel.create(fakeExecution),
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
