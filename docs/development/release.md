@@ -90,14 +90,8 @@ When creating a backport, a minor version base branch should already exist on Gi
 ```bash
 # check out existing minor version base branch
 git checkout release-1.14.x
-# pull to ensure you have the latest changes
-git pull origin release-1.14.x
 # create new release branch for backport
 git checkout -b release-1.14.1
-# cherry pick the commits (or single squashed commit of changes) relevant to the backport
-git cherry-pick [replace-with-commit-SHA]
-# push up the changes to the release branch
-git push
 ```
 
 ### 2. Update the Cumulus version number
@@ -138,7 +132,7 @@ Add a link reference for the github "compare" view at the bottom of the `CHANGEL
 
 Similar to #4, make sure the DATA_MODEL_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
 
-### 6. Update CONTRIBUTORS.md
+### 5. Update CONTRIBUTORS.md
 
 ```bash
 ./bin/update-contributors.sh
@@ -147,7 +141,7 @@ git add CONTRIBUTORS.md
 
 Commit and push these changes, if any.
 
-### 7. Update Cumulus package API documentation
+### 6. Update Cumulus package API documentation
 
 Update auto-generated API documentation for any Cumulus packages that have it:
 
@@ -157,9 +151,9 @@ npm run docs-build-packages
 
 Commit and push these changes, if any.
 
-### 8. Cut new version of Cumulus Documentation
+### 7. Cut new version of Cumulus Documentation
 
-**If this is a backport, do not create a new version of the documentation.** For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
+If this is a backport, do not create a new version of the documentation. For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
 
 ```bash
 cd website
@@ -171,7 +165,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Commit and push these changes.
 
-### 9. Create a pull request against the minor version branch
+### 8. Create a pull request against the minor version branch
 
 1. Push the release branch (e.g. `release-1.2.3`) to GitHub.
 2. Create a PR against the minor version base branch (e.g. `release-1.2.x`).
@@ -188,7 +182,7 @@ Commit and push these changes.
     - It **is safe** to do a squash merge in this instance, but not required
 5. You may delete your release branch (`release-1.2.3`) after merging to the base branch.
 
-### 10. Create a git tag for the release
+### 9. Create a git tag for the release
 
 Check out the minor version base branch now that your changes are merged in and do a `git pull`.
 
@@ -205,7 +199,7 @@ e.g.:
     git push origin v9.1.0
 ```
 
-### 11. Publishing the release
+### 10. Publishing the release
 
 Publishing of new releases is handled by a custom Bamboo branch plan and is manually triggered.
 
@@ -248,7 +242,7 @@ You should have been redirected to the `Branch Details` tab after creating the p
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 12. Create a new Cumulus release on github
+### 11. Create a new Cumulus release on github
 
 The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:
 
@@ -260,7 +254,7 @@ The CI release scripts will automatically create a GitHub release based on the r
 
 Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-### 13. Merge base branch back to master
+### 12. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 

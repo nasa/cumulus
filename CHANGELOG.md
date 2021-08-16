@@ -6,18 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+
 ### Notable changes
 
 - `@cumulus/sync-granule` task should now properly handle
 syncing files from HTTP/HTTPS providers where basic auth is
 required and involves a redirect to a different host (e.g.
 downloading files protected by Earthdata Login)
-
-### BREAKING CHANGES
-
-- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
-any adverse impact on existing deployments, even those which still contain `logs` records,
-but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
@@ -129,10 +127,6 @@ host and/or host with a different port
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
-- **CUMULUS-2630**
-  - Updates the example/cumulus-tf deployment to change
-    `archive_api_reserved_concurrency` from 2 to 8 to prevent throttling with
-    the dashboard.
 
 ## [v9.3.0] 2021-07-26
 
@@ -328,27 +322,6 @@ behavior
   together, preventing the database records from being out of sync with CMR.
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
   endpoint for returning a PDR from the API
-
-## [v9.2.2] 2021-08-06 - [BACKPORT]
-
-**Please note** changes in 9.2.2 may not yet be released in future versions, as
-this is a backport and patch release on the 9.2.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
-
-### Added
-
-- **CUMULUS-2635**
-  - Added helper functions:
-    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
-
-### Fixed
-
-- **CUMULUS-2635**
-  - Update `data-migration2` to migrate PDRs before migrating granules.
-  - Update `data-migration2` unit tests testing granules migration to reference
-    PDR records to better model the DB schema.
-  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
 
 ## [v9.2.1] 2021-07-29 - [BACKPORT]
 
@@ -4865,8 +4838,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
-[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
-[v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
+[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.3.0
 [v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
