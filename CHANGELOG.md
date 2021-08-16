@@ -5,12 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
 ### Notable changes
 
 - `@cumulus/sync-granule` task should now properly handle
 syncing files from HTTP/HTTPS providers where basic auth is
 required and involves a redirect to a different host (e.g.
 downloading files protected by Earthdata Login)
+
+### BREAKING CHANGES
+
+- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
+any adverse impact on existing deployments, even those which still contain `logs` records,
+but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
