@@ -21,15 +21,6 @@ but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
-- **CUMULUS-2591**
-  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
-    This is the name of the Step Function step for the last failed event in the
-    execution's event history.
-- **CUMULUS-2548**
-  - Added `allowed_redirects` field to PostgreSQL `providers` table
-  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
-  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
-  of a readable stream to S3 and returning a promise
 - **CUMULUS-2373**
   - Added `replaySqsMessages` lambda to replay archived incoming SQS
     messages from S3.
@@ -39,6 +30,17 @@ but technically it is a breaking change to the Elasticsearch mappings.
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
 - **CUMULUS-2635**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`

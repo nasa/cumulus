@@ -1,7 +1,7 @@
 const get = require('lodash/get');
 const pMap = require('p-map');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
 
@@ -11,6 +11,8 @@ const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { getGranuleIdsForPayload } = require('../lib/granules');
+
+const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
 async function applyWorkflowToGranules({
   granuleIds,
@@ -31,6 +33,7 @@ async function applyWorkflowToGranules({
       );
       return granuleId;
     } catch (error) {
+      log.error(`Granule ${granuleId} encountered an error`, error);
       return { granuleId, err: error };
     }
   });
@@ -68,6 +71,7 @@ async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
+      log.error(error);
       throw error;
     }
   }
