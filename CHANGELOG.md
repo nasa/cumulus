@@ -9,6 +9,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
+any adverse impact on existing deployments, even those which still contain `logs` records,
+but technically it is a breaking change to the Elasticsearch mappings.
+
+### Added
+
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
+## [v9.4.0] 2021-08-16
 
 ### Notable changes
 
@@ -16,12 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 syncing files from HTTP/HTTPS providers where basic auth is
 required and involves a redirect to a different host (e.g.
 downloading files protected by Earthdata Login)
-
-### BREAKING CHANGES
-
-- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
-any adverse impact on existing deployments, even those which still contain `logs` records,
-but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
@@ -43,6 +47,9 @@ but technically it is a breaking change to the Elasticsearch mappings.
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2635**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
@@ -172,8 +179,6 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
-  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
-  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
@@ -4866,7 +4871,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.0...HEAD
+[v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
 [v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
