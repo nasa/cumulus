@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 any adverse impact on existing deployments, even those which still contain `logs` records,
 but technically it is a breaking change to the Elasticsearch mappings.
 
+### Added
+
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes
