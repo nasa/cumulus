@@ -165,6 +165,51 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
   t.is(updatedRecord.status, 'completed');
 });
 
+test.serial('upsertExecution preserves originalPayload and finalPayload when "completed" event comes after "running" event', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const testRecord = {
+    arn: randomString(),
+    status: 'running',
+    originalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+  };
+  await indexer.upsertExecution(
+    esClient,
+    testRecord,
+    esIndex
+  );
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, {
+    ...testRecord,
+    timestamp: record.timestamp,
+  });
+
+  const updates = {
+    ...testRecord,
+    status: 'completed',
+    finalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+    updatedAt: Date.now(),
+  };
+  await indexer.upsertExecution(
+    esClient,
+    updates,
+    esIndex
+  );
+
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, {
+    ...updates,
+    timestamp: updatedRecord.timestamp,
+  });
+});
+
 test.serial('upsertExecution preserves finalPayload and sets originalPayload/updatedAt/timestamp when "running" event comes after "completed" event', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
@@ -191,6 +236,7 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
 
   const updates = {
     ...testRecord,
+    status: 'running',
     originalPayload: {
       key: cryptoRandomString({ length: 5 }),
     },
@@ -205,6 +251,7 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, {
     ...updates,
+    status: 'completed',
     timestamp: updatedRecord.timestamp,
   });
 });
