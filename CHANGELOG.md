@@ -6,13 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Notable changes
-
-- `@cumulus/sync-granule` task should now properly handle
-syncing files from HTTP/HTTPS providers where basic auth is
-required and involves a redirect to a different host (e.g.
-downloading files protected by Earthdata Login)
-
 ### BREAKING CHANGES
 
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
@@ -21,6 +14,29 @@ but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
+## [v9.4.0] 2021-08-16
+
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
 - **CUMULUS-2373**
   - Added `replaySqsMessages` lambda to replay archived incoming SQS
     messages from S3.
@@ -30,17 +46,9 @@ but technically it is a breaking change to the Elasticsearch mappings.
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
-- **CUMULUS-2591**
-  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
-    This is the name of the Step Function step for the last failed event in the
-    execution's event history.
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-- **CUMULUS-2548**
-  - Added `allowed_redirects` field to PostgreSQL `providers` table
-  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
-  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
-  of a readable stream to S3 and returning a promise
+- **CUMULUS-2460**
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2635**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
@@ -104,8 +112,6 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
-  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
-  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
@@ -4760,7 +4766,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.0...HEAD
+[v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
 [v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
