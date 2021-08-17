@@ -183,8 +183,6 @@ the error object:
 behavior
 - Updated `cmr_custom_host` variable to accept a full protocol and host name
 (e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
-- **CUMULUS-2463**
-  - Increases the duration of allowed backoff times for a successful test from 0.5 sec to 1 sec.
 - **CUMULUS-2482**
   - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
   - TEA is still available by following instructions in `example/README.md`
