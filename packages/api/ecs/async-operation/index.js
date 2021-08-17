@@ -154,6 +154,7 @@ const writeAsyncOperationToPostgres = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
   const asyncOperationPgModel = new AsyncOperationPgModel();
+  console.log('dbOutput', dbOutput);
   return await asyncOperationPgModel
     .update(
       trx,
