@@ -39,7 +39,7 @@ const {
 } = require('../../helpers/testUtils');
 
 describe('A dead letter record archive processing operation', () => {
-  let beforeAllFailed = false;
+  let beforeAllFailed;
   let executionArn;
   let stackName;
   let systemBucket;
@@ -102,11 +102,15 @@ describe('A dead letter record archive processing operation', () => {
         }
       );
 
+      console.log('originalPayload.testId', testId);
       executionArn = await findExecutionArn(
         stackName,
         (execution) =>
           get(execution, 'originalPayload.testId') === testId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testId': testId,
+        },
         { timeout: 60 }
       );
 
@@ -144,7 +148,7 @@ describe('A dead letter record archive processing operation', () => {
       deadLetterRecoveryAsyncOpId = postRecoverResponseBody.id;
       console.log('dead letter recover async operation ID', deadLetterRecoveryAsyncOpId);
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllFailed = error;
       console.log('beforeAll() failed, error:', error);
     }
   });
@@ -206,7 +210,7 @@ describe('A dead letter record archive processing operation', () => {
   });
 
   it('processes a message to create records', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
       await expectAsync(waitForGranule({
         prefix: stackName,
@@ -220,7 +224,7 @@ describe('A dead letter record archive processing operation', () => {
   });
 
   it('deletes the s3 objects corresponding to successfully processed dead letters', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
       await expectAsync(waitForListObjectsV2ResultCount({
         bucket: systemBucket,

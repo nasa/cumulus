@@ -63,7 +63,8 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions = [
-      "sqs:Send*"
+      "sqs:Send*",
+      "sqs:GetQueueUrl",
     ]
     resources = ["arn:aws:sqs:*:*:*"]
   }

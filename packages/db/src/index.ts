@@ -69,13 +69,16 @@ export {
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
+  getWorkflowNameIntersectFromGranuleIds,
 } from './lib/execution';
 
 export {
+  getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
