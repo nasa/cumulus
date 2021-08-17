@@ -188,7 +188,7 @@ describe('A dead letter record archive processing operation', () => {
   });
 
   it('starts a successful async operation', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
 
     deadLetterRecoveryAsyncOperation = await waitForApiStatus(
       getAsyncOperation,
@@ -202,7 +202,7 @@ describe('A dead letter record archive processing operation', () => {
   });
 
   it('returns the correct output for the async operation', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     expect(deadLetterRecoveryAsyncOperation.output).toEqual(JSON.stringify({
       processed: [messageKey],
       failed: [],
