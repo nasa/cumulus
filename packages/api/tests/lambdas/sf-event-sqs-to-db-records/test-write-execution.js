@@ -318,7 +318,7 @@ test('writeExecution() properly sets originalPayload on initial write and finalP
   t.deepEqual(updatedEsRecord.finalPayload, finalPayload);
 });
 
-test('writeExecution() properly handles out of order writes', async (t) => {
+test('writeExecution() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -328,6 +328,10 @@ test('writeExecution() properly handles out of order writes', async (t) => {
   } = t.context;
 
   cumulusMessage.meta.status = 'completed';
+  const finalPayload = {
+    key: cryptoRandomString({ length: 5 }),
+  };
+  cumulusMessage.payload = finalPayload;
 
   await writeExecution({ cumulusMessage, knex });
 
@@ -335,20 +339,45 @@ test('writeExecution() properly handles out of order writes', async (t) => {
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   const esRecord = await t.context.esExecutionsClient.get(executionArn);
 
-  t.is(dynamoRecord.status, 'completed');
-  t.is(pgRecord.status, 'completed');
-  t.is(esRecord.status, 'completed');
+  t.like(dynamoRecord, {
+    status: 'completed',
+    finalPayload,
+  });
+  t.like(pgRecord, {
+    status: 'completed',
+    final_payload: finalPayload,
+  });
+  t.like(esRecord, {
+    status: 'completed',
+    finalPayload,
+  });
 
   cumulusMessage.meta.status = 'running';
+  const originalPayload = {
+    key: cryptoRandomString({ length: 5 }),
+  };
+  cumulusMessage.payload = originalPayload;
   await writeExecution({ cumulusMessage, knex });
 
   const updatedDynamoRecord = await executionModel.get({ arn: executionArn });
   const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
   const updatedEsRecord = await t.context.esExecutionsClient.get(executionArn);
 
-  t.is(updatedDynamoRecord.status, 'completed');
-  t.is(updatedPgRecord.status, 'completed');
-  t.is(updatedEsRecord.status, 'completed');
+  t.like(updatedDynamoRecord, {
+    status: 'completed',
+    finalPayload,
+    originalPayload,
+  });
+  t.like(updatedPgRecord, {
+    status: 'completed',
+    final_payload: finalPayload,
+    original_payload: originalPayload,
+  });
+  t.like(updatedEsRecord, {
+    status: 'completed',
+    finalPayload,
+    originalPayload,
+  });
 });
 
 test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Dynamo write fails', async (t) => {
