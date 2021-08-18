@@ -66,12 +66,12 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
   ).length, 1);
   t.deepEqual(
     {
-      success: output.processed.sort(),
-      failed: [],
+      processingSucceededKeys: output.processingSucceededKeys.sort(),
+      processingFailedKeys: [],
     },
     {
-      success: t.context.messageKeys.sort(),
-      failed: [],
+      processingSucceededKeys: t.context.messageKeys.sort(),
+      processingFailedKeys: [],
     }
   );
 });
@@ -102,12 +102,12 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
   });
   t.deepEqual(
     {
-      success: output.processed.sort(),
-      failed: [],
+      processingSucceededKeys: output.processingSucceededKeys.sort(),
+      processingFailedKeys: [],
     },
     {
-      success: keys.sort(),
-      failed: [],
+      processingSucceededKeys: keys.sort(),
+      processingFailedKeys: [],
     }
   );
   t.is(writeRecordsFunctionSpy.callCount, numberOfDeadLetters);
@@ -132,7 +132,7 @@ test('processDeadLetterArchive only deletes dead letters that process successful
 
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
   t.is(remainingDeadLetters.length, 1);
-  t.deepEqual(output.failed, [failingMessageKey]);
+  t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {

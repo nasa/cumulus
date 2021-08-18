@@ -72,10 +72,10 @@ async function processDeadLetterArchive({
   } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
   // Lambda run as an async operation must have a return
-  // return {
-  //   processed: allSuccessKeys,
-  //   failed: allFailedKeys,
-  // };
+  return {
+    processingSucceededKeys: allSuccessKeys,
+    processingFailedKeys: allFailedKeys,
+  };
 }
 
 /**
