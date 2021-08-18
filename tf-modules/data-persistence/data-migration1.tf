@@ -1,19 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 3.5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.region
-  ignore_tags {
-    key_prefixes = ["gsfc-ngap"]
-  }
-}
-
 data "terraform_remote_state" "data_persistence" {
   backend   = "s3"
   config    = var.data_persistence_remote_state_config
@@ -36,6 +20,7 @@ module "data_migration1" {
   rds_user_access_secret_arn = var.database_credentials_secret_arn
   rds_connection_timing_configuration = var.rds_connection_timing_configuration
 
+  // TODO this comes from archive
   provider_kms_key_id = var.provider_kms_key_id
 
   tags = merge(var.tags, { Deployment = var.prefix })
