@@ -17,6 +17,15 @@ but technically it is a breaking change to the Elasticsearch mappings.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
+### Changed
+
+- Updated `processDeadLetterArchive` Lambda to return an object where
+`processingSucceededKeys` is an array of the S3 keys for succesfully
+processed objects and `processingFailedKeys` is an array of S3 keys
+for objects that could not be processed
+- Updated async operations to handle writing records to the databases
+when output of the operation is `undefined`
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes
@@ -69,8 +78,6 @@ host and/or host with a different port
 
 ### Changed
 
-- Updated `processDeadLetterArchive` Lambda to return an object where `processed` is an array
-of the S3 keys for succesfully processed objects and `failed` is an array of S3 keys for objects that could not be processed
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
