@@ -42,7 +42,10 @@ describe('Creating a one-time rule via the Cumulus API', () => {
       config = await loadConfig();
       prefix = config.stackName;
 
-      collection = await createCollection(prefix);
+      const timestampedTestName = timestampedName('createOneTimeRuleSpec');
+      collection = await createCollection(prefix, {
+        name: timestampedTestName,
+      });
 
       testExecutionId = randomId('test-execution-');
 
@@ -50,12 +53,11 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
       console.log(`Creating rule for HelloWorldWorkflow with testExecutionId ${testExecutionId}`);
 
-      const oneTimeRuleName = timestampedName('OneTimeRule');
-      console.log('created one time rule with name: %s', oneTimeRuleName);
+      console.log('created one time rule with name: %s', timestampedTestName);
       rule = await createOneTimeRule(
         prefix,
         {
-          name: oneTimeRuleName,
+          name: timestampedTestName,
           workflow: 'HelloWorldWorkflow',
           collection: pick(collection, ['name', 'version']),
           payload: { testExecutionId },
