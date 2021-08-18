@@ -94,3 +94,7 @@ variable "vpc_id" {
   type    = string
   default = null
 }
+
+variable "provider_kms_key_id" {
+  type = string
+}

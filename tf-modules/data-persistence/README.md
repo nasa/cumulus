@@ -32,6 +32,11 @@ Configuration variables are shown in [`terraform.tfvars.example`](./terraform.tf
 - `enable_point_in_time_tables` - Names of DynamoDB tables that should have point in time recovery enabled. Any of the table names [listed above](#included-resources) are valid (use the table name without the prefix).
 - `subnet_ids` - Subnet IDs that should be used when deploying Elasticsearch inside of a VPC. **If no subnet IDs are provided, Elasticsearch will not be deployed inside of a VPC.**
 - `tags` - tags to be assigned to all managed resources which support tags
+- ### How to get value for `provider_kms_key_id` Terraform variable
+
+```shell
+  aws lambda get-function --function-name "<prefix>-ApiEndpoints" --query 'Configuration.Environment.Variables.provider_kms_key_id'
+```
 
 ## Example
 
