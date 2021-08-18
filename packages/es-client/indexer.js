@@ -132,7 +132,13 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @param  {string} type - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-async function upsertExecution(esClient, updates, index = defaultIndexAlias, type = 'execution') {
+async function upsertExecution({
+  esClient,
+  updates,
+  index = defaultIndexAlias,
+  type = 'execution',
+  refresh,
+}) {
   const upsertDoc = {
     ...updates,
     timestamp: Date.now(),
@@ -159,7 +165,8 @@ async function upsertExecution(esClient, updates, index = defaultIndexAlias, typ
       },
       upsert: upsertDoc,
     },
-    refresh: inTestMode(),
+    refresh: refresh !== undefined ? refresh : inTestMode(),
+    retry_on_conflict: 3,
   });
 }
 

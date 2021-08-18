@@ -38,11 +38,11 @@ test.serial('upsertExecution writes new "running" execution', async (t) => {
     arn: randomString(),
   };
   testRecord.status = 'running';
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, testRecord);
@@ -55,11 +55,11 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
     arn: randomString(),
   };
   testRecord.status = 'completed';
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, testRecord);
@@ -75,11 +75,11 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
     },
   };
   testRecord.status = 'completed';
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, testRecord);
@@ -91,11 +91,11 @@ test.serial('upsertExecution updates "completed" execution', async (t) => {
     ...testRecord,
     finalPayload: newFinalPayload,
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
     updates,
-    esIndex
-  );
+    index: esIndex,
+  });
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, updates);
@@ -111,11 +111,11 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
     updatedAt: updatedAt - 1000,
     status: 'running',
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.is(record.status, 'running');
@@ -125,11 +125,11 @@ test.serial('upsertExecution updates "running" status to "completed"', async (t)
     status: 'completed',
     updatedAt,
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
     updates,
-    esIndex
-  );
+    index: esIndex,
+  });
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, updates);
@@ -142,11 +142,11 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
     arn: randomString(),
     status: 'completed',
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.is(record.status, 'completed');
@@ -155,11 +155,11 @@ test.serial('upsertExecution does not update "completed" status to "running"', a
     ...testRecord,
     status: 'running',
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
     updates,
-    esIndex
-  );
+    index: esIndex,
+  });
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.is(updatedRecord.status, 'completed');
@@ -177,11 +177,11 @@ test.serial('upsertExecution preserves originalPayload and finalPayload when "co
     updatedAt: Date.now(),
     timestamp: Date.now(),
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, {
@@ -197,11 +197,11 @@ test.serial('upsertExecution preserves originalPayload and finalPayload when "co
     },
     updatedAt: Date.now(),
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
     updates,
-    esIndex
-  );
+    index: esIndex,
+  });
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, {
@@ -222,11 +222,11 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
     updatedAt: Date.now(),
     timestamp: Date.now(),
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
-    testRecord,
-    esIndex
-  );
+    updates: testRecord,
+    index: esIndex,
+  });
 
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, {
@@ -242,11 +242,11 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
     },
     updatedAt: Date.now(),
   };
-  await indexer.upsertExecution(
+  await indexer.upsertExecution({
     esClient,
     updates,
-    esIndex
-  );
+    index: esIndex,
+  });
 
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, {
@@ -254,4 +254,46 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
     status: 'completed',
     timestamp: updatedRecord.timestamp,
   });
+});
+
+test('upsertExecution handles version conflict on parallel updates', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const testRecord = {
+    arn: randomString(),
+    status: 'running',
+    originalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+  };
+
+  const recordUpdates = {
+    ...testRecord,
+    status: 'completed',
+    finalPayload: {
+      key: cryptoRandomString({ length: 5 }),
+    },
+  };
+
+  await Promise.all([
+    indexer.upsertExecution({
+      esClient,
+      updates: testRecord,
+      index: esIndex,
+      refresh: false,
+    }),
+    indexer.upsertExecution({
+      esClient,
+      updates: recordUpdates,
+      index: esIndex,
+      refresh: false,
+    }),
+  ]);
+
+  // Manually refresh index
+  await esClient.indices.refresh({
+    index: esIndex,
+  });
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, recordUpdates);
 });
