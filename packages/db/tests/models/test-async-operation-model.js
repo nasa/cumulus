@@ -50,6 +50,32 @@ test('AsyncOperationPgModel.upsert() creates new async operation', async (t) => 
   );
 });
 
+test.only('AsyncOperationPgModel.update() updates async operation', async (t) => {
+  const {
+    knex,
+    asyncOperationPgModel,
+    asyncOperationRecord,
+  } = t.context;
+
+  await asyncOperationPgModel.upsert(knex, asyncOperationRecord);
+
+  await asyncOperationPgModel.update(knex, {
+    id: asyncOperationRecord.id,
+  }, {
+    status: 'SUCCEEDED',
+    output: undefined,
+  });
+  t.like(
+    await asyncOperationPgModel.get(knex, {
+      id: asyncOperationRecord.id,
+    }),
+    {
+      status: 'SUCCEEDED',
+      output: null,
+    }
+  );
+});
+
 test('AsyncOperationPgModel.upsert() overwrites an async operation record', async (t) => {
   const {
     knex,
