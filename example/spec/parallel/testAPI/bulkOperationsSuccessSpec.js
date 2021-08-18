@@ -175,11 +175,11 @@ describe('POST /granules/bulk', () => {
         console.log(`bulk operations async operation ID: ${postBulkOperationsBody.id}`);
 
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await apiTestUtils.getAsyncOperation({
           prefix,
           id: postBulkOperationsBody.id,
         });
-        ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
+        ({ taskArn } = asyncOperation);
       } catch (error) {
         beforeAllFailed = true;
         console.log(error);
@@ -235,16 +235,11 @@ describe('POST /granules/bulk', () => {
     it('creates an AsyncOperation', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await apiTestUtils.getAsyncOperation({
           prefix,
           id: postBulkOperationsBody.id,
         });
-
-        expect(getAsyncOperationResponse.statusCode).toEqual(200);
-
-        const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-        expect(getAsyncOperationBody.id).toEqual(postBulkOperationsBody.id);
+        expect(asyncOperation.id).toEqual(postBulkOperationsBody.id);
       }
     });
 
@@ -272,26 +267,23 @@ describe('POST /granules/bulk', () => {
           }
         ).promise();
 
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await apiTestUtils.getAsyncOperation({
           prefix,
           id: postBulkOperationsBody.id,
         });
 
-        const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-        expect(getAsyncOperationResponse.statusCode).toEqual(200);
-        expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
+        expect(asyncOperation.status).toEqual('SUCCEEDED');
 
         let output;
         try {
-          output = JSON.parse(getAsyncOperationBody.output);
+          output = JSON.parse(asyncOperation.output);
         } catch (error) {
-          throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+          throw new SyntaxError(`asyncOperation.output is not valid JSON: ${asyncOperation.output}`);
         }
 
         await getGranuleWithStatus({
           prefix,
-          granuleId: JSON.parse(getAsyncOperationBody.output)[0],
+          granuleId: JSON.parse(asyncOperation.output)[0],
           status: 'running',
           timeout: 120,
           updatedAt: ingestedGranule.updatedAt,

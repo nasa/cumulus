@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
 any adverse impact on existing deployments, even those which still contain `logs` records,
 but technically it is a breaking change to the Elasticsearch mappings.
+- Changed `@cumulus/api-client/asyncOperations.getAsyncOperation` to return parsed JSON body
+of response and not the raw API endpoint response
 
 ### Added
 
