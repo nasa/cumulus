@@ -154,7 +154,6 @@ const writeAsyncOperationToPostgres = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
   const asyncOperationPgModel = new AsyncOperationPgModel();
-  console.log('dbOutput', dbOutput);
   return await asyncOperationPgModel
     .update(
       trx,
@@ -169,20 +168,26 @@ const writeAsyncOperationToPostgres = async (params) => {
 
 const writeAsyncOperationToDynamoDb = async (params) => {
   const { env, status, dbOutput, updatedTime } = params;
+  const ExpressionAttributeNames = {
+    '#S': 'status',
+    '#U': 'updatedAt',
+  };
+  const ExpressionAttributeValues = {
+    ':s': { S: status },
+    ':u': { N: updatedTime },
+  };
+  let UpdateExpression = 'SET #S = :s, #U = :u';
+  if (dbOutput) {
+    ExpressionAttributeNames['#O'] = 'output';
+    ExpressionAttributeValues[':o'] = { S: dbOutput };
+    UpdateExpression += ', #O = :o';
+  }
   return await dynamodb().updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
-    ExpressionAttributeNames: {
-      '#S': 'status',
-      '#O': 'output',
-      '#U': 'updatedAt',
-    },
-    ExpressionAttributeValues: {
-      ':s': { S: status },
-      ':o': { S: dbOutput },
-      ':u': { N: updatedTime },
-    },
-    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    UpdateExpression,
   }).promise();
 };
 

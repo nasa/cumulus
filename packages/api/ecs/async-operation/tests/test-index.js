@@ -131,7 +131,7 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
   });
 });
 
-test.only('updateAsyncOperation updates when output is undefined', async (t) => {
+test('updateAsyncOperation updates records correctly when output is undefined', async (t) => {
   const status = 'SUCCEEDED';
   const output = undefined;
   const updateTime = (Number(Date.now())).toString();
@@ -166,13 +166,12 @@ test.only('updateAsyncOperation updates when output is undefined', async (t) => 
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
     status,
-    output,
+    output: null,
     updated_at: new Date(Number(updateTime)),
   });
   t.deepEqual(dynamoResponse, {
     ...t.context.testAsyncOperation,
     status,
-    output,
     updatedAt: Number(updateTime),
   });
 });
