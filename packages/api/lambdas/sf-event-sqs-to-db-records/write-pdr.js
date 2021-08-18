@@ -140,7 +140,7 @@ const writePdrToDynamoAndEs = async (params) => {
     await upsertPdr({
       esClient,
       updates: pdrApiRecord,
-      esIndex: process.env.ES_INDEX,
+      index: process.env.ES_INDEX,
     });
   } catch (error) {
     logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for PDR ${pdrApiRecord.pdrName}`);
