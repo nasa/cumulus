@@ -131,6 +131,7 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @param {Object} params.updates - Document of updates to apply
  * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
  * @param {string} params.type - Elasticsearch type (default: execution)
+ * @param {string} [params.refresh] - whether to refresh the index on update or not
  * @returns {Promise} elasticsearch update response
  */
 async function upsertExecution({
@@ -286,13 +287,21 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
 /**
  * Upserts a granule in Elasticsearch
  *
- * @param  {Object} esClient - Elasticsearch Connection object
- * @param  {Object} updates  - Updates to make
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: granule)
+ * @param {Object} params
+ * @param {Object} params.esClient - Elasticsearch Connection object
+ * @param {Object} params.updates  - Updates to make
+ * @param {string} params.index    - Elasticsearch index alias (default defined in search.js)
+ * @param {string} params.type     - Elasticsearch type (default: granule)
+ * @param {string} [params.refresh] - whether to refresh the index on update or not
  * @returns {Promise} Elasticsearch response
  */
-async function upsertGranule(esClient, updates, index = defaultIndexAlias, type = 'granule') {
+async function upsertGranule({
+  esClient,
+  updates,
+  index = defaultIndexAlias,
+  type = 'granule',
+  refresh,
+}) {
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
   const delGranParams = {
@@ -330,7 +339,8 @@ async function upsertGranule(esClient, updates, index = defaultIndexAlias, type 
       },
       upsert: upsertDoc,
     },
-    refresh: inTestMode(),
+    refresh: refresh !== undefined ? refresh : inTestMode(),
+    retry_on_conflict: 3,
   });
 }
 
@@ -361,6 +371,7 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
  * @param {Object} params.updates - Document to upsert
  * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
  * @param {string} params.type - Elasticsearch type (default: execution)
+ * @param {string} [params.refresh] - whether to refresh the index on update or not
  * @returns {Promise} elasticsearch update response
  */
 async function upsertPdr({

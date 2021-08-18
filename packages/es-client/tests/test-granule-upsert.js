@@ -39,7 +39,11 @@ test('upsertGranule removes deletedgranule record', async (t) => {
     status: 'running',
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -62,7 +66,11 @@ test('upsertGranule removes deletedgranule record', async (t) => {
     .then((response) => response.body);
   t.like(deletedRecord._source, granule);
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
@@ -78,7 +86,11 @@ test('upsertGranule creates new "running" record', async (t) => {
     status: 'running',
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -93,7 +105,11 @@ test('upsertGranule creates new "completed" record', async (t) => {
     status: 'completed',
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -108,7 +124,11 @@ test('upsertGranule creates new "failed" record', async (t) => {
     status: 'failed',
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -124,7 +144,11 @@ test('upsertGranule updates "completed" record for same execution', async (t) =>
     execution: randomString(),
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -133,7 +157,11 @@ test('upsertGranule updates "completed" record for same execution', async (t) =>
     ...granule,
     productVolume: 500,
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
@@ -149,7 +177,11 @@ test('upsertGranule updates "failed" record for same execution', async (t) => {
     error: { foo: 'bar' },
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -158,7 +190,11 @@ test('upsertGranule updates "failed" record for same execution', async (t) => {
     ...granule,
     error: { cause: 'fail' },
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.deepEqual(updatedEsRecord, {
     ...updates,
@@ -180,7 +216,11 @@ test('upsertGranule does not update "completed" granule record to "running" stat
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -189,7 +229,11 @@ test('upsertGranule does not update "completed" granule record to "running" stat
     ...granule,
     status: 'running',
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should NOT have been applied
   t.like(updatedEsRecord, granule);
@@ -208,7 +252,11 @@ test('upsertGranule does not update "failed" granule record to "running" status 
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -217,7 +265,11 @@ test('upsertGranule does not update "failed" granule record to "running" status 
     ...granule,
     status: 'running',
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should NOT have been applied
   t.like(updatedEsRecord, granule);
@@ -236,7 +288,11 @@ test('upsertGranule does not update "running" granule to "failed" for same execu
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -246,7 +302,11 @@ test('upsertGranule does not update "running" granule to "failed" for same execu
     status: 'failed',
     createdAt: createdAt - 1,
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should NOT have been applied
   t.like(updatedEsRecord, granule);
@@ -265,7 +325,11 @@ test('upsertGranule does not update "running" granule to "failed" for different 
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -276,7 +340,11 @@ test('upsertGranule does not update "running" granule to "failed" for different 
     createdAt: createdAt - 1,
     execution: randomString(),
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should NOT have been applied
   t.like(updatedEsRecord, granule);
@@ -295,7 +363,11 @@ test('upsertGranule does not update "completed" granule to "failed" for new exec
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -306,7 +378,11 @@ test('upsertGranule does not update "completed" granule to "failed" for new exec
     execution: randomString(),
     createdAt: createdAt - 1,
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should NOT have been applied
   t.like(updatedEsRecord, granule);
@@ -325,7 +401,11 @@ test('upsertGranule does update "running" granule record to "completed" status f
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -334,7 +414,11 @@ test('upsertGranule does update "running" granule record to "completed" status f
     ...granule,
     status: 'completed',
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
@@ -352,7 +436,11 @@ test('upsertGranule does update "running" granule record to "failed" status for 
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -361,7 +449,11 @@ test('upsertGranule does update "running" granule record to "failed" status for 
     ...granule,
     status: 'failed',
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
@@ -379,7 +471,11 @@ test('upsertGranule does update "completed" granule record to "running" status f
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -389,7 +485,11 @@ test('upsertGranule does update "completed" granule record to "running" status f
     status: 'running',
     execution: randomString(),
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
@@ -407,7 +507,11 @@ test('upsertGranule does update "failed" granule record to "running" status for 
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -417,7 +521,11 @@ test('upsertGranule does update "failed" granule record to "running" status for 
     status: 'running',
     execution: randomString(),
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
@@ -435,7 +543,11 @@ test('upsertGranule does update "completed" granule to "failed" for new executio
     createdAt,
   };
 
-  await indexer.upsertGranule(esClient, granule, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(esRecord, granule);
@@ -446,8 +558,56 @@ test('upsertGranule does update "completed" granule to "failed" for new executio
     execution: randomString(),
     createdAt: createdAt + 1,
   };
-  await indexer.upsertGranule(esClient, updates, esIndex);
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   // updates should have been applied
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule handles version conflicts on parallel updates', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'running',
+    execution,
+    createdAt,
+  };
+
+  const updates = {
+    ...granule,
+    status: 'completed',
+    files: [{
+      bucket: 'fake-bucket',
+      key: 'fake-key',
+    }],
+  };
+
+  await Promise.all([
+    indexer.upsertGranule({
+      esClient,
+      updates: granule,
+      index: esIndex,
+      // disable automatic refresh to force version conflict
+      refresh: false,
+    }),
+    indexer.upsertGranule({
+      esClient,
+      updates,
+      index: esIndex,
+      // disable automatic refresh to force version conflict
+      refresh: false,
+    }),
+  ]);
+
+  await esClient.indices.refresh({ index: esIndex });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });
