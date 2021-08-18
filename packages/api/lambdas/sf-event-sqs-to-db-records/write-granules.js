@@ -425,6 +425,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
     await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
     await upsertGranule(esClient, granuleApiRecord, process.env.ES_INDEX);
   } catch (writeError) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granule.granuleId}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await granuleModel.delete({

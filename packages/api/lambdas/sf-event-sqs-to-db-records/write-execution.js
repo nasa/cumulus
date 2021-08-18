@@ -122,6 +122,7 @@ const writeExecutionToDynamoAndES = async (params) => {
       process.env.ES_INDEX
     );
   } catch (error) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${executionApiRecord.arn}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await executionModel.delete({ arn: executionApiRecord.arn });
