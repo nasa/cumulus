@@ -137,7 +137,11 @@ const writePdrToDynamoAndEs = async (params) => {
   }
   try {
     await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
-    await upsertPdr(esClient, pdrApiRecord, process.env.ES_INDEX);
+    await upsertPdr({
+      esClient,
+      updates: pdrApiRecord,
+      esIndex: process.env.ES_INDEX,
+    });
   } catch (error) {
     logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for PDR ${pdrApiRecord.pdrName}`);
     // On error, delete the Dynamo record to ensure that all systems

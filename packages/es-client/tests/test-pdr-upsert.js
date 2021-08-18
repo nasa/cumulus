@@ -38,7 +38,11 @@ test('upsertPdr creates a new "running" PDR record', async (t) => {
     status: 'running',
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -52,7 +56,11 @@ test('upsertPdr creates a new "completed" PDR record', async (t) => {
     status: 'completed',
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -67,7 +75,11 @@ test('upsertPdr does update a "running" PDR record if execution is different', a
     execution: randomString(),
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -76,7 +88,11 @@ test('upsertPdr does update a "running" PDR record if execution is different', a
     ...pdr,
     execution: randomString(),
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(updatedEsRecord, updates);
 });
@@ -92,7 +108,11 @@ test('upsertPdr does update a "completed" PDR record to "running" if execution i
     createdAt,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -102,7 +122,11 @@ test('upsertPdr does update a "completed" PDR record to "running" if execution i
     execution: randomString(),
     createdAt: createdAt + 1,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(updatedEsRecord, updates);
 });
@@ -117,7 +141,11 @@ test('upsertPdr does not update "completed" PDR record to "running" with same ex
     createdAt,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -127,7 +155,11 @@ test('upsertPdr does not update "completed" PDR record to "running" with same ex
     status: 'running',
     createdAt: createdAt - 1,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should NOT have been applied
   t.like(updatedEsRecord, pdr);
@@ -148,7 +180,11 @@ test('upsertPdr does not update PDR record with same execution if progress is le
     execution,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -162,7 +198,11 @@ test('upsertPdr does not update PDR record with same execution if progress is le
     },
     progress: 0,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should NOT have been applied
   t.like(updatedEsRecord, pdr);
@@ -185,7 +225,11 @@ test('upsertPdr does not update PDR record from different execution with older c
     createdAt,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -201,7 +245,11 @@ test('upsertPdr does not update PDR record from different execution with older c
     createdAt: createdAt - 1,
     execution: updatedExecution,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should NOT have been applied
   t.like(updatedEsRecord, pdr);
@@ -224,7 +272,11 @@ test('upsertPdr does not update PDR record from same execution with older create
     createdAt,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -238,7 +290,11 @@ test('upsertPdr does not update PDR record from same execution with older create
     },
     createdAt: createdAt - 1,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should NOT have been applied
   t.like(updatedEsRecord, pdr);
@@ -261,7 +317,11 @@ test('upsertPdr does update PDR record from same execution if progress was made'
     createdAt,
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -276,7 +336,11 @@ test('upsertPdr does update PDR record from same execution if progress was made'
     },
     progress: 20,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should have been applied
   t.like(updatedEsRecord, updates);
@@ -293,7 +357,11 @@ test('upsertPdr does not update a final (failed) record to a final state (comple
     execution: randomString(),
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -304,7 +372,11 @@ test('upsertPdr does not update a final (failed) record to a final state (comple
     execution: randomString(),
     createdAt: createdAt - 1,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   // updates should NOT have been applied
   t.like(updatedEsRecord, pdr);
@@ -321,7 +393,11 @@ test('upsertPdr does update a final (failed) record to a final state (completed)
     execution: randomString(),
   };
 
-  await indexer.upsertPdr(esClient, pdr, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates: pdr,
+    index: esIndex,
+  });
 
   const esRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(esRecord, pdr);
@@ -332,7 +408,60 @@ test('upsertPdr does update a final (failed) record to a final state (completed)
     execution: randomString(),
     createdAt,
   };
-  await indexer.upsertPdr(esClient, updates, esIndex);
+  await indexer.upsertPdr({
+    esClient,
+    updates,
+    index: esIndex,
+  });
+  const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertPdr handles version conflicts on parallel updates', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const createdAt = Date.now();
+  const pdr = {
+    pdrName: randomString(),
+    status: 'running',
+    createdAt: createdAt - 1,
+    execution: randomString(),
+    stats: {
+      processing: 3,
+      total: 3,
+    },
+  };
+
+  const updates = {
+    ...pdr,
+    status: 'completed',
+    execution: randomString(),
+    createdAt,
+    stats: {
+      completed: 3,
+      total: 3,
+    },
+  };
+  await Promise.all([
+    indexer.upsertPdr({
+      esClient,
+      updates: pdr,
+      index: esIndex,
+      // disable refresh to trigger version conflict
+      refresh: false,
+    }),
+    indexer.upsertPdr({
+      esClient,
+      updates,
+      index: esIndex,
+      // disable refresh to trigger version conflict
+      refresh: false,
+    }),
+  ]);
+
+  await esClient.indices.refresh({
+    index: esIndex,
+  });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
   t.like(updatedEsRecord, updates);
 });
