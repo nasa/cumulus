@@ -28,6 +28,7 @@ export const translatePostgresProviderToApiProvider = (
     updatedAt: record.updated_at.getTime(),
     username: record.username,
     password: record.username,
+    allowedRedirects: record.allowed_redirects,
   } as ApiProvider;
   if (record.username || record.password) {
     apiProvider.encrypted = true;
