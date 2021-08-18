@@ -144,7 +144,7 @@ async function upsertExecution(esClient, updates, index = defaultIndexAlias, typ
     body: {
       script: {
         lang: 'painless',
-        source: `
+        inline: `
           if (params.doc.status == "running") {
             ctx._source.updatedAt = params.doc.updatedAt;
             ctx._source.timestamp = params.doc.timestamp;
@@ -308,7 +308,7 @@ async function upsertGranule(esClient, updates, index = defaultIndexAlias, type 
     body: {
       script: {
         lang: 'painless',
-        source: `
+        inline: `
           if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
             && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
             ctx._source.putAll(params.doc);
@@ -366,7 +366,7 @@ async function upsertPdr(esClient, updates, index = defaultIndexAlias, type = 'p
     body: {
       script: {
         lang: 'painless',
-        source: `
+        inline: `
           if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
             && (params.doc.execution != ctx._source.execution || params.doc.progress > ctx._source.progress)) {
             ctx._source.putAll(params.doc);
