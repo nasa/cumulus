@@ -45,7 +45,7 @@ function updateCmrFileType(payload) {
 }
 
 function granulesToFileURIs(granules) {
-  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
+  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files), []);
   return s3URIs;
 }
 
@@ -60,19 +60,18 @@ function buildPayload(t) {
   newPayload.input.granules.forEach((gran) => {
     gran.files.forEach((file) => {
       file.bucket = t.context.stagingBucket;
-      file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
 
   return newPayload;
 }
 
-function getExpectedOutputFileNames(t) {
+function getExpectedOutputFileKeys() {
   return [
-    `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
-    `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`,
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+    'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
   ];
 }
 /**
@@ -86,12 +85,12 @@ function getExpectedOutputFileNames(t) {
 async function getFilesMetadata(files) {
   const getFileRequests = files.map(async (f) => {
     const s3list = await listS3ObjectsV2(
-      { Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key }
+      { Bucket: f.bucket, Prefix: f.Key }
     );
-    const s3object = s3list.filter((s3file) => s3file.Key === parseS3Uri(f.filename).Key);
+    const s3object = s3list.filter((s3file) => s3file.Key === f.key);
 
     return {
-      filename: f.filename,
+      key: f.key,
       size: s3object[0].Size,
       LastModified: s3object[0].LastModified,
     };
@@ -128,8 +127,7 @@ test.beforeEach(async (t) => {
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, file.key));
   process.env.REINGEST_GRANULE = false;
 });
 
@@ -181,15 +179,15 @@ test.serial('should add input files to returned granule event.moveStagedFiles is
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   newPayload.config.moveStagedFiles = false;
 
-  const inputFiles = [...filesToUpload];
+  const inputFiles = newPayload.input.granules[0].files.map((f) => f.key);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
 
-  const outputFilenames = output.granules[0].files.map((f) => f.filename);
+  const outputFileKeys = output.granules[0].files.map((f) => f.key);
 
   t.true(output.granules[0].files.length === 4);
-  inputFiles.forEach((newFile) => t.true(outputFilenames.includes(newFile), `${newFile} not found in ${JSON.stringify(output.granules[0].files)}`));
+  inputFiles.forEach((newFile) => t.true(outputFileKeys.includes(newFile), `${newFile} not found in ${JSON.stringify(output.granules[0].files)}`));
 });
 
 test.serial('Should move renamed files in staging area to final location.', async (t) => {
@@ -200,10 +198,8 @@ test.serial('Should move renamed files in staging area to final location.', asyn
   filesToUpload.push(renamedFile);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   newPayload.input.granules[0].files.push({
-    name: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
     bucket: t.context.stagingBucket,
-    filename: `s3://${t.context.stagingBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`,
-    fileStagingDir: 'file-staging/subdir',
+    key: 'file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
   });
 
   const output = await moveGranules(newPayload);
@@ -213,7 +209,6 @@ test.serial('Should move renamed files in staging area to final location.', asyn
     Bucket: t.context.protectedBucket,
     Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
   });
-
   t.true(check);
 });
 
@@ -234,14 +229,14 @@ test.serial('Should add metadata type to CMR granule files.', async (t) => {
 
 test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
-  const expectedFilenames = getExpectedOutputFileNames(t);
+  const expectedFileKeys = getExpectedOutputFileKeys(t);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
-  const outputFilenames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames.sort(), outputFilenames.sort());
+  const outputFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
 });
 
 test.serial('Should not overwrite CMR file type if already explicitly set', async (t) => {
@@ -265,8 +260,8 @@ test.serial('Should overwrite files.', async (t) => {
   newPayload.config.duplicateHandling = 'replace';
 
   newPayload.input.granules[0].files = [{
-    filename: `s3://${t.context.stagingBucket}/${sourceKey}`,
-    name: filename,
+    bucket: t.context.stagingBucket,
+    key: sourceKey,
   }];
 
   const uploadParams = {
@@ -360,10 +355,9 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
     const output = await moveGranules(newPayload);
     await validateOutput(t, output);
 
-    expectedErrorMessages = output.granules[0].files.map((file) => {
-      const parsed = parseS3Uri(file.filename);
-      return `${parsed.Key} already exists in ${parsed.Bucket} bucket`;
-    });
+    expectedErrorMessages = output.granules[0].files.map(
+      (file) => `${file.key} already exists in ${file.bucket} bucket`
+    );
 
     await uploadFiles(filesToUpload, t.context.stagingBucket);
     await moveGranules(newPayloadOrig);
@@ -391,17 +385,15 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // payload could be modified
   const newPayloadOrig = cloneDeep(newPayload);
 
-  const expectedFilenames = getExpectedOutputFileNames(t);
+  const expectedFileKeys = getExpectedOutputFileKeys(t);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
-  const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
+  const existingFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), existingFileKeys.sort());
 
-  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
-  const existingHdfFileInfo = await headObject(
-    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
-  );
+  const outputHdfFile = output.granules[0].files.filter((f) => f.key.endsWith('.hdf'))[0];
+  const existingHdfFileInfo = await headObject(outputHdfFile.bucket, outputHdfFile.key);
 
   // When it encounters data with a duplicated filename with duplicate checksum,
   // it does not create a copy of the file.
@@ -421,19 +413,17 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await s3().putObject(params).promise();
 
   output = await moveGranules(newPayload);
-  const currentFileNames = output.granules[0].files.map((f) => f.filename);
-  t.is(currentFileNames.length, 5);
+  const currentFileKeys = output.granules[0].files.map((f) => f.key);
+  t.is(currentFileKeys.length, 5);
 
   // the extra file is the renamed hdf file
-  let extraFiles = currentFileNames.filter((f) => !existingFileNames.includes(f));
+  let extraFiles = currentFileKeys.filter((f) => !existingFileKeys.includes(f));
   t.is(extraFiles.length, 1);
-  t.true(extraFiles[0].startsWith(`${outputHdfFile}.v`));
+  t.true(extraFiles[0].includes(`${path.basename(outputHdfFile.key)}.v`));
 
   // the existing hdf file gets renamed
-  const renamedFile = extraFiles[0];
-  const renamedHdfFileInfo = await headObject(
-    parseS3Uri(renamedFile).Bucket, parseS3Uri(renamedFile).Key
-  );
+  const renamedFile = output.granules[0].files.find((f) => f.key === extraFiles[0]);
+  const renamedHdfFileInfo = await headObject(renamedFile.bucket, renamedFile.key);
 
   t.deepEqual(
     renamedHdfFileInfo,
@@ -441,9 +431,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   );
 
   // new hdf file is moved to destination
-  const newHdfFileInfo = await headObject(
-    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
-  );
+  const newHdfFileInfo = await headObject(outputHdfFile.bucket, outputHdfFile.key);
 
   t.is(newHdfFileInfo.ContentLength, updatedBody.length);
 
@@ -455,16 +443,16 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await s3().putObject(params).promise();
 
   output = await moveGranules(newPayload);
-  const lastFileNames = output.granules[0].files.map((f) => f.filename);
-  t.is(lastFileNames.length, 6);
+  const lastFileKeys = output.granules[0].files.map((f) => f.key);
+  t.is(lastFileKeys.length, 6);
 
   // the extra files are the renamed hdf files
-  extraFiles = lastFileNames.filter((f) => !existingFileNames.includes(f));
+  extraFiles = lastFileKeys.filter((f) => !existingFileKeys.includes(f));
   t.is(extraFiles.length, 2);
-  extraFiles.forEach((f) => t.true(f.startsWith(`${outputHdfFile}.v`)));
+  extraFiles.forEach((f) => t.true(f.includes(`${path.basename(outputHdfFile.key)}.v`)));
 
   output.granules[0].files.forEach((f) => {
-    if (f.filename.startsWith(`${outputHdfFile}.v`) || isCMRFile(f)) {
+    if (f.key.includes(`${path.basename(outputHdfFile.key)}.v`) || isCMRFile(f)) {
       t.falsy(f.duplicate_found);
     } else {
       t.true(f.duplicate_found);
@@ -480,17 +468,15 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   // payload could be modified
   const newPayloadOrig = cloneDeep(newPayload);
 
-  const expectedFilenames = getExpectedOutputFileNames(t);
+  const expectedFileKeys = getExpectedOutputFileKeys(t);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
-  const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
+  const existingFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), existingFileKeys.sort());
 
-  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
-  const existingHdfFileInfo = await headObject(
-    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
-  );
+  const outputHdfFile = output.granules[0].files.filter((f) => f.key.endsWith('.hdf'))[0];
+  const existingHdfFileInfo = await headObject(outputHdfFile.bucket, outputHdfFile.key);
 
   // run 'moveGranules' again with one of the input files updated
   newPayload = cloneDeep(newPayloadOrig);
@@ -504,13 +490,11 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   await s3().putObject(params).promise();
 
   output = await moveGranules(newPayload);
-  const currentFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames.sort(), currentFileNames.sort());
+  const currentFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), currentFileKeys.sort());
 
   // does not overwrite
-  const currentHdfFileInfo = await headObject(
-    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
-  );
+  const currentHdfFileInfo = await headObject(outputHdfFile.bucket, outputHdfFile.key);
 
   t.is(existingHdfFileInfo.ContentLength, currentHdfFileInfo.ContentLength);
   t.not(currentHdfFileInfo.ContentLength, updatedBody.length);
@@ -542,17 +526,17 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   const newPayloadOrig = cloneDeep(newPayload);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
 
-  const expectedFilenames = getExpectedOutputFileNames(t);
+  const expectedFileKeys = getExpectedOutputFileKeys(t);
 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   await validateOutput(t, output);
-  const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
+  const existingFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), existingFileKeys.sort());
 
   const existingFilesMetadata = await getFilesMetadata(output.granules[0].files);
 
-  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
+  const outputHdfFile = existingFileKeys.filter((f) => f.endsWith('.hdf'))[0];
 
   // run 'moveGranules' again with one of the input files updated
   newPayload = cloneDeep(newPayloadOrig);
@@ -566,22 +550,22 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   await s3().putObject(params).promise();
 
   output = await moveGranules(newPayload);
-  const currentFileNames = output.granules[0].files.map((f) => f.filename);
-  t.is(currentFileNames.length, 4);
+  const currentFileKeys = output.granules[0].files.map((f) => f.key);
+  t.is(currentFileKeys.length, 4);
 
   const currentFilesMetadata = await getFilesMetadata(output.granules[0].files);
 
-  const currentHdfFileMeta = currentFilesMetadata.filter((f) => f.filename === outputHdfFile)[0];
+  const currentHdfFileMeta = currentFilesMetadata.filter((f) => f.key === outputHdfFile)[0];
   t.is(currentHdfFileMeta.size, updatedBody.length);
 
   // check timestamps are updated
   currentFilesMetadata.forEach((f) => {
-    const existingFileMeta = existingFilesMetadata.filter((ef) => ef.filename === f.filename)[0];
+    const existingFileMeta = existingFilesMetadata.filter((ef) => ef.key === f.key)[0];
     t.true(new Date(f.LastModified).getTime() > new Date(existingFileMeta.LastModified).getTime());
   });
 
   output.granules[0].files.forEach((f) => {
-    if (f.filename.startsWith(`${outputHdfFile}.v`) || isCMRFile(f)) {
+    if (f.key.includes(`${path.basename(outputHdfFile)}.v`) || isCMRFile(f)) {
       t.falsy(f.duplicate_found);
     } else {
       t.true(f.duplicate_found);
