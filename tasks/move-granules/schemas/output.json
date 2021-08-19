@@ -64,10 +64,6 @@
                 },
                 "size": {
                   "type": "number"
-                },
-                "etag": {
-                  "description": "Entity tag for the current version of the file",
-                  "type": "string"
                 }
               }
             }
