@@ -335,7 +335,9 @@ test.serial('Should overwrite files.', async (t) => {
 
   t.is(updatedFile.ContentLength, content.length);
   t.true(
-    output.granuleDuplicates[output.granules[0].granuleId].includes(output.granules[0].files[0])
+    output.granuleDuplicates[output.granules[0].granuleId].files.includes(
+      output.granules[0].files[0]
+    )
   );
 });
 
@@ -458,9 +460,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   output.granules[0].files.forEach((f) => {
     if (f.key.includes(`${path.basename(outputHdfFile.key)}.v`) || isCMRFile(f)) {
-      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     } else {
-      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     }
   });
 });
@@ -506,9 +508,9 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
 
   output.granules[0].files.forEach((f) => {
     if (isCMRFile(f)) {
-      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     } else {
-      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     }
   });
 });
@@ -571,9 +573,9 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
 
   output.granules[0].files.forEach((f) => {
     if (f.key.includes(`${path.basename(outputHdfFile)}.v`) || isCMRFile(f)) {
-      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     } else {
-      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].files.includes(f));
     }
   });
 }

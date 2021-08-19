@@ -36,14 +36,16 @@ const log = require('@cumulus/common/log');
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   const duplicatesObject = {};
   Object.keys(movedGranulesByGranuleId).forEach((k) => {
-    duplicatesObject[k] = movedGranulesByGranuleId[k].files.filter((file) => {
-      if (file.duplicate_found) {
-        // eslint-disable-next-line no-param-reassign
-        delete file.duplicate_found;
-        return true;
-      }
-      return false;
-    });
+    duplicatesObject[k] = {
+      files: movedGranulesByGranuleId[k].files.filter((file) => {
+        if (file.duplicate_found) {
+          // eslint-disable-next-line no-param-reassign
+          delete file.duplicate_found;
+          return true;
+        }
+        return false;
+      }),
+    };
   });
   return duplicatesObject;
 }
