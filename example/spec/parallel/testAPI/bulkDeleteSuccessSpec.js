@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -13,7 +13,6 @@ const { ecs } = require('@cumulus/aws-client/services');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  api: apiTestUtils,
   getClusterArn,
 } = require('@cumulus/integration-tests');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -165,10 +164,10 @@ describe('POST /granules/bulkDelete', () => {
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
-        const asyncOperation = await apiTestUtils.getAsyncOperation(
+        const asyncOperation = await getAsyncOperation(
           {
             prefix,
-            id: postBulkDeleteBody.id,
+            asyncOperationId: postBulkDeleteBody.id,
           }
         );
         ({ taskArn } = asyncOperation);
@@ -229,9 +228,9 @@ describe('POST /granules/bulkDelete', () => {
     it('creates an AsyncOperation', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      const asyncOperation = await apiTestUtils.getAsyncOperation({
+      const asyncOperation = await getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        asyncOperationId: postBulkDeleteBody.id,
       });
 
       expect(asyncOperation.id).toEqual(postBulkDeleteBody.id);
@@ -260,9 +259,9 @@ describe('POST /granules/bulkDelete', () => {
         }
       ).promise();
 
-      const asyncOperation = await apiTestUtils.getAsyncOperation({
+      const asyncOperation = await getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        asyncOperationId: postBulkDeleteBody.id,
       });
       expect(asyncOperation.status).toEqual('SUCCEEDED');
 

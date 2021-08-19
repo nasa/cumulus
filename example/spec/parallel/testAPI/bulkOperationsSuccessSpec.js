@@ -4,7 +4,7 @@ const get = require('lodash/get');
 const pAll = require('p-all');
 
 const granules = require('@cumulus/api-client/granules');
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
@@ -16,7 +16,6 @@ const {
 } = require('@cumulus/aws-client/SQS');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  api: apiTestUtils,
   getClusterArn,
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
@@ -175,9 +174,9 @@ describe('POST /granules/bulk', () => {
         console.log(`bulk operations async operation ID: ${postBulkOperationsBody.id}`);
 
         // Query the AsyncOperation API to get the task ARN
-        const asyncOperation = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
         ({ taskArn } = asyncOperation);
       } catch (error) {
@@ -235,9 +234,9 @@ describe('POST /granules/bulk', () => {
     it('creates an AsyncOperation', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const asyncOperation = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
         expect(asyncOperation.id).toEqual(postBulkOperationsBody.id);
       }
@@ -267,9 +266,9 @@ describe('POST /granules/bulk', () => {
           }
         ).promise();
 
-        const asyncOperation = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
 
         expect(asyncOperation.status).toEqual('SUCCEEDED');
