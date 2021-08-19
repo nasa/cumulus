@@ -331,7 +331,9 @@ test.serial('Should overwrite files.', async (t) => {
   t.true(itemModified > existingModified);
 
   t.is(updatedFile.ContentLength, content.length);
-  t.true(output.granules[0].files[0].duplicate_found);
+  t.true(
+    output.granuleDuplicates[output.granules[0].granuleId].includes(output.granules[0].files[0])
+  );
 });
 
 // duplicateHandling has default value 'error' if it's not provided in task configuration and
@@ -453,9 +455,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   output.granules[0].files.forEach((f) => {
     if (f.key.includes(`${path.basename(outputHdfFile.key)}.v`) || isCMRFile(f)) {
-      t.falsy(f.duplicate_found);
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     } else {
-      t.true(f.duplicate_found);
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     }
   });
 });
@@ -501,9 +503,9 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
 
   output.granules[0].files.forEach((f) => {
     if (isCMRFile(f)) {
-      t.falsy(f.duplicate_found);
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     } else {
-      t.true(f.duplicate_found);
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     }
   });
 });
@@ -566,9 +568,9 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
 
   output.granules[0].files.forEach((f) => {
     if (f.key.includes(`${path.basename(outputHdfFile)}.v`) || isCMRFile(f)) {
-      t.falsy(f.duplicate_found);
+      t.false(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     } else {
-      t.true(f.duplicate_found);
+      t.true(output.granuleDuplicates[output.granules[0].granuleId].includes(f));
     }
   });
 }
