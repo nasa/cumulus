@@ -93,6 +93,35 @@ test('BasePgModel.get() throws an error when a record is not found', async (t) =
   );
 });
 
+test('BasePgModel.getByOffset() returns correct record', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+
+  const now = Date.now();
+  const updatedAt1 = new Date(now);
+  const updatedAt2 = new Date(now + 1);
+  await knex(tableName).insert({
+    ...defaultDates,
+    updated_at: updatedAt1,
+    info,
+  });
+  await knex(tableName).insert({
+    ...defaultDates,
+    updated_at: updatedAt2,
+    info,
+  });
+
+  t.like(
+    await basePgModel.getByOffset(knex, { info }, ['updated_at']),
+    { ...defaultDates, info, updated_at: updatedAt1 }
+  );
+
+  t.like(
+    await basePgModel.getByOffset(knex, { info }, ['updated_at'], 1),
+    { ...defaultDates, info, updated_at: updatedAt2 }
+  );
+});
+
 test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
