@@ -121,7 +121,6 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {Object} file - granule file to be moved
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @param {boolean} markDuplicates - Override to handle cmr metadata files that
  *                                   shouldn't be marked as duplicates
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
@@ -130,7 +129,6 @@ async function moveFileRequest(
   file,
   sourceBucket,
   duplicateHandling,
-  bucketsConfig,
   markDuplicates = true
 ) {
   const source = {
@@ -188,14 +186,12 @@ async function moveFileRequest(
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Object} the object with updated granules
  */
 async function moveFilesForAllGranules(
   granulesObject,
   sourceBucket,
-  duplicateHandling,
-  bucketsConfig
+  duplicateHandling
 ) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
@@ -203,13 +199,13 @@ async function moveFilesForAllGranules(
     const cmrFiles = granule.files.filter((file) => isCMRFile(file));
     const filesMoved = await Promise.all(
       filesToMove.map(
-        (file) => moveFileRequest(file, sourceBucket, duplicateHandling, bucketsConfig)
+        (file) => moveFileRequest(file, sourceBucket, duplicateHandling)
       )
     );
     const markDuplicates = false;
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, markDuplicates)
+        (file) => moveFileRequest(file, sourceBucket, 'replace', markDuplicates)
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
@@ -261,7 +257,7 @@ async function moveGranules(event) {
 
     // Move files from staging location to final location
     movedGranulesByGranuleId = await moveFilesForAllGranules(
-      granulesToMove, config.bucket, duplicateHandling, bucketsConfig
+      granulesToMove, config.bucket, duplicateHandling
     );
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;
