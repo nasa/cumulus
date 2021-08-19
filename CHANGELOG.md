@@ -391,9 +391,6 @@ releases.
 
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and
-    collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
 
@@ -514,6 +511,9 @@ releases.
   - Update "eslint-plugin-import" to be pinned to 2.22.1
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
 
