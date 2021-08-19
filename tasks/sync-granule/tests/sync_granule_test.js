@@ -11,7 +11,6 @@ const {
   s3Join,
   promiseS3Upload,
   headObject,
-  parseS3Uri,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const errors = require('@cumulus/errors');
@@ -735,11 +734,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     let filesRenamed = output.granules[0].files
       .filter((f) => path.basename(f.key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 1);
-    t.falsy(filesRenamed[0].duplicate_found);
+    t.false(output.granuleDuplicates[output.granules[0].granuleId].files.includes(filesRenamed[0]));
 
-    const renamedFileInfo = await headObject(
-      parseS3Uri(filesRenamed[0].filename).Bucket, parseS3Uri(filesRenamed[0].filename).Key
-    );
+    const renamedFileInfo = await headObject(filesRenamed[0].bucket, filesRenamed[0].key);
     t.deepEqual(
       renamedFileInfo,
       { ...existingFileInfo, LastModified: renamedFileInfo.LastModified }
