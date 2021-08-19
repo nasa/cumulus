@@ -33,6 +33,21 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
 
+function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
+  const duplicatesObject = {};
+  Object.keys(movedGranulesByGranuleId).forEach((k) => {
+    duplicatesObject[k] = movedGranulesByGranuleId[k].files.filter((file) => {
+      if (file.duplicate_found) {
+        // eslint-disable-next-line no-param-reassign
+        delete file.duplicate_found;
+        return true;
+      }
+      return false;
+    });
+  });
+  return duplicatesObject;
+}
+
 /**
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
@@ -263,7 +278,10 @@ async function moveGranules(event) {
     movedGranulesByGranuleId = granulesByGranuleId;
   }
 
+  const granuleDuplicates = buildGranuleDuplicatesObject(movedGranulesByGranuleId);
+
   return {
+    granuleDuplicates,
     granules: Object.values(movedGranulesByGranuleId),
   };
 }

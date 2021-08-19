@@ -172,8 +172,14 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         existingfiles = await getFilesMetadata(files);
         // expect reporting of duplicates
-        expectedPayload.granules[0].files[0].duplicate_found = true;
-        expectedPayload.granules[0].files[1].duplicate_found = true;
+        expectedPayload.granuleDuplicates = {
+          [expectedPayload.granules[0].granuleId]: {
+            files: [
+              expectedPayload.granules[0].files[0],
+              expectedPayload.granules[0].files[1],
+            ],
+          },
+        };
 
         // set collection duplicate handling to 'version'
         await apiTestUtils.updateCollection({
@@ -191,8 +197,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
       afterAll(() => {
         // delete reporting expectations
-        delete expectedPayload.granules[0].files[0].duplicate_found;
-        delete expectedPayload.granules[0].files[1].duplicate_found;
+        delete expectedPayload.granuleDuplicates;
       });
 
       it('does not raise a workflow error', () => {

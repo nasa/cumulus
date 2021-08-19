@@ -3,6 +3,28 @@
   "description": "Describes the output produced by the move-granules task",
   "type": "object",
   "properties": {
+    "granuleDuplicates": {
+      "type": "object",
+      "additionalProperties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["bucket", "key"],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "granules": {
       "type": "array",
       "description": "Array of all granules",
@@ -46,10 +68,6 @@
                 "etag": {
                   "description": "Entity tag for the current version of the file",
                   "type": "string"
-                },
-                "duplicate_found": {
-                  "description": "whether a duplicate for this file was found",
-                  "type": "boolean"
                 }
               }
             }
