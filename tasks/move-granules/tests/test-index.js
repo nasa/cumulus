@@ -44,9 +44,9 @@ function updateCmrFileType(payload) {
   );
 }
 
-function granulesToFileURIs(granules) {
-  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files), []);
-  return s3URIs;
+function granulesToFileURIs(stagingBucket, granules) {
+  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
+  return files.map((file) => buildS3Uri(stagingBucket, file.key));
 }
 
 function buildPayload(t) {
@@ -126,8 +126,11 @@ test.beforeEach(async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) => buildS3Uri(`${t.context.stagingBucket}`, file.key));
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload;
   process.env.REINGEST_GRANULE = false;
 });
 
