@@ -100,7 +100,7 @@ resource "aws_dynamodb_table" "executions_table" {
   name             = local.table_names.executions_table
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "arn"
-  stream_enabled   = true
+  stream_enabled   = false
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {

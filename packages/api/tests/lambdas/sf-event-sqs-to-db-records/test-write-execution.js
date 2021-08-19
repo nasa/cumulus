@@ -15,6 +15,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { sns } = require('@cumulus/aws-client/services');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
@@ -27,6 +28,10 @@ const {
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
+  const topicName = cryptoRandomString({ length: 5 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.execution_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
 
   const executionModel = new Execution();
   await executionModel.createTable();
@@ -97,12 +102,14 @@ test.beforeEach((t) => {
 test.after.always(async (t) => {
   const {
     executionModel,
+    TopicArn,
   } = t.context;
   await executionModel.deleteTable();
   await destroyLocalTestDb({
     ...t.context,
   });
   await cleanupTestIndex(t.context);
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {

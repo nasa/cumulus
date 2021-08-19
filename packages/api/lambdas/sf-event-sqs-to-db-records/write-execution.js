@@ -24,6 +24,7 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
+const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
@@ -108,21 +109,27 @@ const writeExecutionViaTransaction = async ({
 
 const writeExecutionToDynamoAndES = async (params) => {
   const {
-    cumulusMessage,
+    executionApiRecord,
     executionModel,
-    updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
     await executionModel.storeExecution(executionApiRecord);
     await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+    return executionApiRecord;
   } catch (error) {
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await executionModel.delete({ arn: executionApiRecord.arn });
     throw error;
   }
+};
+
+const publishExecutionSnsMessage = async (record) => {
+  const topicArn = process.env.execution_sns_topic_arn;
+  logger.info(`About to publish SNS message for execution to topic ARN ${topicArn}`);
+  await publishSnsMessage(topicArn, record);
+  logger.info(`Successfully published SNS message ${JSON.stringify(record)} to topic ${topicArn}`);
 };
 
 const writeExecution = async ({
@@ -134,7 +141,8 @@ const writeExecution = async ({
   executionModel = new Execution(),
   updatedAt = Date.now(),
   esClient,
-}) =>
+}) => {
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   await knex.transaction(async (trx) => {
     const [executionCumulusId] = await writeExecutionViaTransaction({
       cumulusMessage,
@@ -145,13 +153,14 @@ const writeExecution = async ({
       updatedAt,
     });
     await writeExecutionToDynamoAndES({
-      cumulusMessage,
-      updatedAt,
+      executionApiRecord,
       executionModel,
       esClient,
     });
+    await publishExecutionSnsMessage(executionApiRecord);
     return executionCumulusId;
   });
+};
 
 module.exports = {
   buildExecutionRecord,
