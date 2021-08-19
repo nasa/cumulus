@@ -13,7 +13,7 @@ const {
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const {
-  randomId, randomString, validateConfig, validateInput,
+  randomId, randomString, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -107,6 +107,7 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  await validateOutput(t, output);
 
   output.granules.forEach((g) => g.files
     .filter(isCMRFile)
@@ -123,8 +124,9 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const previousEtag = granuleWithEtag.files.filter(isCMRFile)[0].etag;
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const { granules } = await updateGranulesCmrMetadataFileLinks(newPayload);
-  const updatedGranule = granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
+  const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  await validateOutput(t, output);
+  const updatedGranule = output.granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
   const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
   t.not(newEtag, previousEtag);
 });
