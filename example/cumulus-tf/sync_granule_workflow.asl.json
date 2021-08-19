@@ -22,6 +22,10 @@
                   "destination": "{$.meta.input_granules}"
                 },
                 {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.sync_granules.granule_duplicates}"
+                },
+                {
                   "source": "{$}",
                   "destination": "{$.payload}"
                 },
