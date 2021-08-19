@@ -12,7 +12,9 @@ const {
   promiseS3Upload,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const {
+  randomId, randomString, validateConfig, validateInput,
+} = require('@cumulus/common/test-utils');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -32,9 +34,9 @@ async function uploadFiles(files, bucket) {
   })));
 }
 
-function granulesToFileURIs(granules) {
-  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
-  return s3URIs;
+function granulesToFileURIs(stagingBucket, granules) {
+  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
+  return files.map((file) => buildS3Uri(stagingBucket, file.key));
 }
 
 function buildPayload(t) {
@@ -48,7 +50,6 @@ function buildPayload(t) {
   newPayload.input.granules.forEach((gran) => {
     gran.files.forEach((file) => {
       file.bucket = t.context.stagingBucket;
-      file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
 
@@ -83,9 +84,11 @@ test.beforeEach(async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload;
   process.env.REINGEST_GRANULE = false;
 });
 
@@ -98,6 +101,8 @@ test.afterEach.always(async (t) => {
 
 test.serial('Should add etag to each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
@@ -110,6 +115,8 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
 
 test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   const inputGranules = newPayload.input.granules;
   const granuleWithEtag = inputGranules.find((g) => g.files.some((f) => f.etag));
@@ -124,6 +131,8 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
 
 test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is both and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   delete newPayload.config.distribution_endpoint;
 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
