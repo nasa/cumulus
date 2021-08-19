@@ -50,13 +50,15 @@ test('AsyncOperationPgModel.upsert() creates new async operation', async (t) => 
   );
 });
 
-test.only('AsyncOperationPgModel.update() updates async operation', async (t) => {
+test('AsyncOperationPgModel.update() updates async operation when output is undefined', async (t) => {
   const {
     knex,
     asyncOperationPgModel,
     asyncOperationRecord,
   } = t.context;
 
+  asyncOperationRecord.status = 'RUNNING';
+  delete asyncOperationRecord.output;
   await asyncOperationPgModel.upsert(knex, asyncOperationRecord);
 
   await asyncOperationPgModel.update(knex, {
