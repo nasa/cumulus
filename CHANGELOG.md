@@ -9,6 +9,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### BREAKING CHANGES
 
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
+- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
+any adverse impact on existing deployments, even those which still contain `logs` records,
+but technically it is a breaking change to the Elasticsearch mappings.
+
+### Added
+
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
+## [v9.4.0] 2021-08-16
 
 ### Notable changes
 
@@ -37,9 +47,18 @@ downloading files protected by Earthdata Login)
   - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
     for an archived message.
   - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2635**
   - Added helper functions:
     - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2634**
+    - Added new functions for upserting data to Elasticsearch:
+      - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
+      - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
+      - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
 
 ### Fixed
 
@@ -121,12 +140,19 @@ host and/or host with a different port
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string
       - `record.output` is a string
+  - **CUMULUS-2634**
+    - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
+    to ensure out-of-order writes are handled correctly when writing to Elasticsearch
 - **CUMULUS-2532**
   - Changed integration tests to use `api-client/granules` functions as opposed
     to `granulesApi` from `@cumulus/integration-tests`.
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
+- **CUMULUS-2630**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 2 to 8 to prevent throttling with
+    the dashboard.
 
 ## [v9.3.0] 2021-07-26
 
@@ -164,8 +190,6 @@ The default reserved concurrency value is 8.
 - **CUMULUS-2460**
   - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
   - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
-  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
-  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
 - **CUMULUS-2475**
   - Adds `GET` endpoint to distribution API
 - **CUMULUS-2463**
@@ -322,6 +346,27 @@ behavior
   together, preventing the database records from being out of sync with CMR.
   - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
   endpoint for returning a PDR from the API
+
+## [v9.2.2] 2021-08-06 - [BACKPORT]
+
+**Please note** changes in 9.2.2 may not yet be released in future versions, as
+this is a backport and patch release on the 9.2.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Added
+
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+
+### Fixed
+
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
 
 ## [v9.2.1] 2021-07-29 - [BACKPORT]
 
@@ -4837,8 +4882,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.3.0...HEAD
-[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.3.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.0...HEAD
+[v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
+[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
+[v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
 [v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0

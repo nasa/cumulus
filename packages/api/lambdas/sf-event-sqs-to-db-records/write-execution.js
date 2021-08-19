@@ -4,7 +4,7 @@ const {
   ExecutionPgModel,
 } = require('@cumulus/db');
 const {
-  indexExecution,
+  upsertExecution,
 } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -116,8 +116,13 @@ const writeExecutionToDynamoAndES = async (params) => {
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
     await executionModel.storeExecution(executionApiRecord);
-    await indexExecution(esClient, executionApiRecord, process.env.ES_INDEX);
+    await upsertExecution({
+      esClient,
+      updates: executionApiRecord,
+      index: process.env.ES_INDEX,
+    });
   } catch (error) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${executionApiRecord.arn}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await executionModel.delete({ arn: executionApiRecord.arn });

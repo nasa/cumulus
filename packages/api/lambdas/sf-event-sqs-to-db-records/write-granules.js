@@ -14,7 +14,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 const {
-  indexGranule,
+  upsertGranule,
 } = require('@cumulus/es-client/indexer');
 const {
   Search,
@@ -423,8 +423,13 @@ const writeGranuleToDynamoAndEs = async (params) => {
   });
   try {
     await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
-    await indexGranule(esClient, granuleApiRecord, process.env.ES_INDEX);
+    await upsertGranule({
+      esClient,
+      updates: granuleApiRecord,
+      index: process.env.ES_INDEX,
+    });
   } catch (writeError) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granule.granuleId}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await granuleModel.delete({
@@ -626,5 +631,6 @@ module.exports = {
   generateFilePgRecord,
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
+  _writeGranule,
   writeGranules,
 };
