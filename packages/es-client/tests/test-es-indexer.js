@@ -10,35 +10,30 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const indexer = rewire('../indexer');
 const { Search } = require('../search');
-
-const { bootstrapElasticSearch } = require('../bootstrap');
-
-const esIndex = randomString();
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('../testUtils');
 
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
-let esClient;
-
 test.before(async (t) => {
-  // create the tables
-  t.context.esAlias = randomString();
-  process.env.ES_INDEX = t.context.esAlias;
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
-  // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
-  esClient = await Search.es();
   // create bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 });
 
-test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+test.after.always(async (t) => {
+  await cleanupTestIndex(t.context);
   await s3Utils.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('deleteGranule deletes granule record and creates deletedgranule record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const granuleType = 'granule';
   const granule = {
@@ -52,13 +47,13 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
   granule.collectionId = collectionId;
 
   // create granule record
-  let r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
+  let r = await indexer.indexGranule(esClient, granule, esIndex, granuleType);
   t.is(r.result, 'created');
 
   const esGranulesClient = new Search(
     {},
     granuleType,
-    esAlias
+    esIndex
   );
   t.true(await esGranulesClient.exists(granule.granuleId, collectionId, granuleType));
 
@@ -67,14 +62,14 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
     granuleId: granule.granuleId,
     type: granuleType,
     collectionId,
-    index: esAlias,
+    index: esIndex,
   });
   t.is(r.result, 'deleted');
   t.false(await esGranulesClient.exists(granule.granuleId, collectionId, granuleType));
 
   // the deletedgranule record is added
   const deletedGranParams = {
-    index: esAlias,
+    index: esIndex,
     type: 'deletedgranule',
     id: granule.granuleId,
     parent: collectionId,
@@ -89,7 +84,7 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
   t.truthy(deletedRecord._source.deletedAt);
 
   // the deletedgranule deletedRecord is removed if the granule is ingested again
-  r = await indexer.indexGranule(esClient, granule, esAlias, granuleType);
+  r = await indexer.indexGranule(esClient, granule, esIndex, granuleType);
   t.is(r.result, 'created');
   deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
@@ -97,7 +92,7 @@ test.serial('deleteGranule deletes granule record and creates deletedgranule rec
 });
 
 test.serial('creating multiple deletedgranule records and retrieving them', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const granuleIds = [];
   const granules = [];
@@ -113,7 +108,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   }
 
   // add the records
-  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esAlias)));
+  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
   t.is(response.length, 11);
   await esClient.indices.refresh();
 
@@ -125,7 +120,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
         granuleId: g.granuleId,
         type: 'granule',
         collectionId: g.collectionId,
-        index: esAlias,
+        index: esIndex,
       })));
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
@@ -135,7 +130,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // retrieve deletedgranule records which are deleted within certain range
   // and are from a given collection
   const deletedGranParams = {
-    index: esAlias,
+    index: esIndex,
     type: 'deletedgranule',
     body: {
       query: {
@@ -170,20 +165,20 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
 });
 
 test.serial('indexing a rule record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const testRecord = {
     name: randomString(),
   };
 
-  const r = await indexer.indexRule(esClient, testRecord, esAlias);
+  const r = await indexer.indexRule(esClient, testRecord, esIndex);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'rule',
     id: testRecord.name,
   }).then((response) => response.body);
@@ -193,20 +188,20 @@ test.serial('indexing a rule record', async (t) => {
 });
 
 test.serial('indexing a provider record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const testRecord = {
     id: randomString(),
   };
 
-  const r = await indexer.indexProvider(esClient, testRecord, esAlias);
+  const r = await indexer.indexProvider(esClient, testRecord, esIndex);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'provider',
     id: testRecord.id,
   }).then((response) => response.body);
@@ -216,7 +211,7 @@ test.serial('indexing a provider record', async (t) => {
 });
 
 test.serial('indexing a collection record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const collection = {
     name: randomString(),
@@ -224,14 +219,14 @@ test.serial('indexing a collection record', async (t) => {
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
-  const r = await indexer.indexCollection(esClient, collection, esAlias);
+  const r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // check the record exists
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'collection',
     id: collectionId,
   }).then((response) => response.body);
@@ -243,7 +238,7 @@ test.serial('indexing a collection record', async (t) => {
 });
 
 test.serial('indexing collection records with different versions', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const name = randomString();
   /* eslint-disable no-await-in-loop */
@@ -257,7 +252,7 @@ test.serial('indexing collection records with different versions', async (t) => 
       [`${key}`]: value,
     };
 
-    const r = await indexer.indexCollection(esClient, collection, esAlias);
+    const r = await indexer.indexCollection(esClient, collection, esIndex);
     // make sure record is created
     t.is(r.result, 'created');
   }
@@ -271,7 +266,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     const value = `value${i}`;
     const collectionId = constructCollectionId(name, version);
     const record = await esClient.get({ // eslint-disable-line no-await-in-loop
-      index: esAlias,
+      index: esIndex,
       type: 'collection',
       id: collectionId,
     }).then((response) => response.body);
@@ -285,7 +280,7 @@ test.serial('indexing collection records with different versions', async (t) => 
 });
 
 test.serial('updating a collection record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const collection = {
     name: randomString(),
@@ -308,18 +303,18 @@ test.serial('updating a collection record', async (t) => {
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
-  let r = await indexer.indexCollection(esClient, collection, esAlias);
+  let r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
   t.is(r.result, 'created');
 
   // update the collection record
-  r = await indexer.indexCollection(esClient, updatedCollection, esAlias);
+  r = await indexer.indexCollection(esClient, updatedCollection, esIndex);
   t.is(r.result, 'updated');
 
   // check the record exists
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'collection',
     id: collectionId,
   }).then((response) => response.body);
@@ -333,7 +328,7 @@ test.serial('updating a collection record', async (t) => {
 });
 
 test.serial('delete a provider record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const id = randomString();
   const testRecord = {
@@ -341,7 +336,7 @@ test.serial('delete a provider record', async (t) => {
   };
   const type = 'provider';
 
-  let r = await indexer.indexProvider(esClient, testRecord, esAlias, type);
+  let r = await indexer.indexProvider(esClient, testRecord, esIndex, type);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -356,32 +351,32 @@ test.serial('delete a provider record', async (t) => {
   r = await indexer.deleteProvider({
     esClient,
     id: testRecord.id,
-    index: esAlias,
+    index: esIndex,
   });
 
   t.is(r.result, 'deleted');
 
   await t.throwsAsync(
-    () => esClient.get({ index: esAlias, type, id: testRecord.id }),
+    () => esClient.get({ index: esIndex, type, id: testRecord.id }),
     { message: 'Response Error' }
   );
   t.false(await esProvidersClient.exists(id));
 });
 
 test.serial('deleteExecution deletes an execution record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
   };
   const type = 'execution';
 
-  await indexer.indexExecution(esClient, testRecord, esAlias, type);
+  await indexer.indexExecution(esClient, testRecord, esIndex, type);
 
   const esExecutionsClient = new Search(
     {},
     type,
-    esAlias
+    esIndex
   );
   t.true(await esExecutionsClient.exists(testRecord.arn));
 
@@ -389,21 +384,21 @@ test.serial('deleteExecution deletes an execution record', async (t) => {
     esClient,
     arn: testRecord.arn,
     type,
-    index: esAlias,
+    index: esIndex,
   });
 
   t.false(await esExecutionsClient.exists(testRecord.arn));
 });
 
 test.serial('deleteAsyncOperation deletes an async operation record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const testRecord = {
     id: randomString(),
   };
   const type = 'asyncOperation';
 
-  let r = await indexer.indexAsyncOperation(esClient, testRecord, esAlias, type);
+  let r = await indexer.indexAsyncOperation(esClient, testRecord, esIndex, type);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -411,7 +406,7 @@ test.serial('deleteAsyncOperation deletes an async operation record', async (t) 
   const esAsyncOperationsClient = new Search(
     {},
     'asyncOperation',
-    esAlias
+    esIndex
   );
   t.true(await esAsyncOperationsClient.exists(testRecord.id));
 
@@ -419,7 +414,7 @@ test.serial('deleteAsyncOperation deletes an async operation record', async (t) 
     esClient,
     id: testRecord.id,
     type,
-    index: esAlias,
+    index: esIndex,
   });
 
   t.is(r.result, 'deleted');
@@ -427,14 +422,14 @@ test.serial('deleteAsyncOperation deletes an async operation record', async (t) 
 });
 
 test.serial('deleteReconciliationReport deletes a reconciliation report record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const testRecord = {
     name: randomString(),
   };
   const type = 'reconciliationReport';
 
-  let r = await indexer.indexReconciliationReport(esClient, testRecord, esAlias, type);
+  let r = await indexer.indexReconciliationReport(esClient, testRecord, esIndex, type);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -444,30 +439,30 @@ test.serial('deleteReconciliationReport deletes a reconciliation report record',
     esClient,
     name: testRecord.name,
     type,
-    index: esAlias,
+    index: esIndex,
   });
 
   t.is(r.result, 'deleted');
 
   await t.throwsAsync(
-    () => esClient.get({ index: esAlias, type, id: testRecord.name }),
+    () => esClient.get({ index: esIndex, type, id: testRecord.name }),
     { message: 'Response Error' }
   );
 });
 
 test.serial('indexing a granule record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const granule = {
     granuleId: randomString(),
     collectionId: `${randomString}___1`,
   };
 
-  await indexer.indexGranule(esClient, granule, esAlias);
+  await indexer.indexGranule(esClient, granule, esIndex);
 
   // test granule record is added
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'granule',
     id: granule.granuleId,
     parent: granule.collectionId,
@@ -476,18 +471,18 @@ test.serial('indexing a granule record', async (t) => {
 });
 
 test.serial('indexing a PDR record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const pdr = {
     pdrName: randomString(),
   };
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
-  await indexer.indexPdr(esClient, pdr, esAlias);
+  await indexer.indexPdr(esClient, pdr, esIndex);
 
   // test granule record is added
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'pdr',
     id: pdr.pdrName,
   }).then((response) => response.body);
@@ -496,7 +491,7 @@ test.serial('indexing a PDR record', async (t) => {
 });
 
 test.serial('updateAsyncOperation updates an async operation record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const id = randomString();
   const asyncOperation = {
@@ -504,10 +499,10 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
     status: 'RUNNING',
   };
 
-  await indexer.indexAsyncOperation(esClient, asyncOperation, esAlias);
+  await indexer.indexAsyncOperation(esClient, asyncOperation, esIndex);
 
   const record = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'asyncOperation',
     id,
   }).then((response) => response.body);
@@ -519,11 +514,11 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
     {
       status: 'SUCCEEDED',
     },
-    esAlias
+    esIndex
   );
 
   const updatedRecord = await esClient.get({
-    index: esAlias,
+    index: esIndex,
     type: 'asyncOperation',
     id,
   }).then((response) => response.body);
@@ -531,7 +526,7 @@ test.serial('updateAsyncOperation updates an async operation record', async (t) 
 });
 
 test.serial('deleting a collection record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const collection = {
     name: randomString(),
@@ -539,7 +534,7 @@ test.serial('deleting a collection record', async (t) => {
   };
 
   const collectionId = constructCollectionId(collection.name, collection.version);
-  const r = await indexer.indexCollection(esClient, collection, esAlias);
+  const r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -548,45 +543,45 @@ test.serial('deleting a collection record', async (t) => {
   const esCollectionsClient = new Search(
     {},
     'collection',
-    esAlias
+    esIndex
   );
   t.true(await esCollectionsClient.exists(collectionId));
 
   await indexer.deleteCollection({
     esClient,
     collectionId,
-    index: esAlias,
+    index: esIndex,
   });
   t.false(await esCollectionsClient.exists(collectionId));
 });
 
 test.serial('deleting a rule record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
   const name = randomString();
   const testRecord = {
     name,
   };
 
-  await indexer.indexRule(esClient, testRecord, esAlias);
+  await indexer.indexRule(esClient, testRecord, esIndex);
 
   // check the record exists
   const esRulesClient = new Search(
     {},
     'rule',
-    esAlias
+    esIndex
   );
   t.true(await esRulesClient.exists(name));
 
   await indexer.deleteRule({
     esClient,
     name,
-    index: esAlias,
+    index: esIndex,
   });
   t.false(await esRulesClient.exists(name));
 });
 
 test.serial('deleting a PDR record', async (t) => {
-  const { esAlias } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const pdrName = randomString();
   const pdr = {
@@ -594,25 +589,26 @@ test.serial('deleting a PDR record', async (t) => {
   };
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
-  await indexer.indexPdr(esClient, pdr, esAlias);
+  await indexer.indexPdr(esClient, pdr, esIndex);
 
   // check the record exists
   const esPdrsClient = new Search(
     {},
     'pdr',
-    esAlias
+    esIndex
   );
   t.true(await esPdrsClient.exists(pdrName));
 
   await indexer.deletePdr({
     esClient,
     name: pdrName,
-    index: esAlias,
+    index: esIndex,
   });
   t.false(await esPdrsClient.exists(pdrName));
 });
 
 test.serial('Create new index', async (t) => {
+  const { esClient } = t.context;
   const newIndex = randomId('esindex');
 
   await indexer.createIndex(esClient, newIndex);
@@ -628,6 +624,7 @@ test.serial('Create new index', async (t) => {
 });
 
 test.serial('Create new index - index already exists', async (t) => {
+  const { esClient } = t.context;
   const newIndex = randomId('esindex');
 
   await indexer.createIndex(esClient, newIndex);
@@ -644,6 +641,7 @@ test.serial('Create new index - index already exists', async (t) => {
 });
 
 test.serial('Create new index with number of shards env var set', async (t) => {
+  const { esClient } = t.context;
   const newIndex = randomId('esindex');
 
   process.env.ES_INDEX_SHARDS = 4;

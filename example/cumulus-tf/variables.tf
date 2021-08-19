@@ -166,7 +166,7 @@ variable "api_gateway_stage" {
 
 variable "api_reserved_concurrency" {
   type = number
-  default = 2
+  default = 8
   description = "Archive API Lambda reserved concurrency"
 }
 

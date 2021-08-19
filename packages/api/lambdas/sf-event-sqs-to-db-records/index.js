@@ -5,6 +5,7 @@ const get = require('lodash/get');
 const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
+
 const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
@@ -46,7 +47,7 @@ const {
   writeGranules,
 } = require('./write-granules');
 
-const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-to-db-records' });
+const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 const writeRecordsToDynamoDb = async ({
   cumulusMessage,
@@ -197,7 +198,7 @@ const handler = async (event) => {
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
-      log.fatal(`Writing message failed with error: ${error.name} ---- ${error.message}`);
+      log.fatal(`Writing message failed with error: ${JSON.stringify(error)}`);
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
