@@ -83,9 +83,7 @@ class GranuleFetcher {
 
     // default collectionId, could be overwritten by granule's collection information
     if (collection) {
-      this.collectionId = constructCollectionId(
-        collection.name, collection.version
-      );
+      this.collectionId = constructCollectionId(collection.name, collection.version);
     }
 
     this.provider = provider;
@@ -139,9 +137,9 @@ class GranuleFetcher {
     const downloadFiles = [];
     const granuleDuplicates = [];
     downloadResults.forEach((result) => {
-      downloadFiles.push(result[0]);
-      if (result[1]) {
-        granuleDuplicates.push(result[1]);
+      downloadFiles.push(result.files);
+      if (result.duplicate) {
+        granuleDuplicates.push(result.duplicate);
       }
     });
     const files = flatten(downloadFiles);
@@ -293,18 +291,18 @@ class GranuleFetcher {
         options,
       });
     } else {
-      log.warn(`Could not verify ${file.bucket}/${file.key} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
+      log.warn(`Could not verify ${path.basename(key)} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
     if (file.size) {
       const ingestedSize = await S3.getObjectSize({ s3: s3(), bucket, key });
       if (ingestedSize !== (file.size)) {
         throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.key} failed: Actual file size ${ingestedSize}`
+          `verifyFile ${path.basename(key)} failed: Actual file size ${ingestedSize}`
           + ` did not match expected file size ${(file.size)}`
         );
       }
     } else {
-      log.warn(`Could not verify ${file.key} expected file size: ${file.size}.`);
+      log.warn(`Could not verify ${path.basename(key)} expected file size: ${file.size}.`);
     }
 
     return (file.checksumType || file.checksum)
@@ -346,7 +344,7 @@ class GranuleFetcher {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
-    let dupilcateFound;
+    let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
@@ -379,7 +377,7 @@ class GranuleFetcher {
       );
 
       if (s3ObjAlreadyExists) {
-        dupilcateFound = { bucket: destinationBucket, key: destinationKey };
+        duplicateFound = { bucket: destinationBucket, key: destinationKey };
         const stagedFileKey = `${destinationKey}.${uuidv4()}`;
         // returns renamed files for 'version', otherwise empty array
         versionedFiles = await handleDuplicateFile({
@@ -422,11 +420,9 @@ class GranuleFetcher {
         bucket: f.Bucket,
         key: f.Key,
         source: `${file.path}/${file.key}`,
-        filename: S3.buildS3Uri(f.Bucket, f.Key),
         size: f.size,
-        fileStagingDir: stagingPath,
       })));
-    return [returnVal, dupilcateFound];
+    return { files: returnVal, duplicate: duplicateFound };
   }
 }
 
