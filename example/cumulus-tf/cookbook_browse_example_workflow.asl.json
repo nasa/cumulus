@@ -21,6 +21,10 @@
                   "destination": "{$.meta.input_granules}"
                 },
                 {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.sync_granules.granule_duplicates}"
+                },
+                {
                   "source": "{$}",
                   "destination": "{$.payload}"
                 },
@@ -146,7 +150,19 @@
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.move_granules.granule_duplicates}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
