@@ -50,7 +50,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('PgSearchClient.getNextRecord() returns correct records', async (t) => {
+test('PgSearchClient.getNextRecord() returns next record correctly', async (t) => {
   const { filePgModel, granuleCumulusId, knex } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
@@ -128,7 +128,7 @@ test('PgSearchClient.getNextRecord() re-throws unexpected error', async (t) => {
   );
 });
 
-test('PgSearchClient.getNextRecord() does not increment offset if error is thrown', async (t) => {
+test('PgSearchClient.getNextRecord() does not increment offset if unexpected error is thrown', async (t) => {
   const { knex } = t.context;
 
   const fakePgModel = {
@@ -153,5 +153,104 @@ test('PgSearchClient.getNextRecord() does not increment offset if error is throw
   t.deepEqual(
     await fileSearchClient.getNextRecord(),
     { foo: 'bar' }
+  );
+});
+
+test('PgSearchClient.hasNextRecord() re-throws unexpected error', async (t) => {
+  const { knex } = t.context;
+
+  const error = new Error('fake error');
+  const fakePgModel = {
+    getByOffset: sinon.stub().throws(error),
+  };
+
+  const bucket = cryptoRandomString({ length: 10 });
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: fakePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  await t.throwsAsync(
+    fileSearchClient.hasNextRecord(),
+    { message: 'fake error' }
+  );
+});
+
+test('PgSearchClient.hasNextRecord() correctly returns true if next record exists', async (t) => {
+  const { knex, filePgModel, granuleCumulusId } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  await filePgModel.create(knex, {
+    bucket,
+    key,
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: filePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+});
+
+test('PgSearchClient.hasNextRecord() correctly returns false if next record does not exist', async (t) => {
+  const { knex, filePgModel, granuleCumulusId } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  await filePgModel.create(knex, {
+    bucket,
+    key,
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: filePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+  await fileSearchClient.getNextRecord();
+  t.false(
+    await fileSearchClient.hasNextRecord()
+  );
+});
+
+test('PgSearchClient.hasNextRecord() returns true/false for currently fetched record but does not advance to next record', async (t) => {
+  const { knex, filePgModel, granuleCumulusId } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+
+  await filePgModel.create(knex, {
+    bucket,
+    key: cryptoRandomString({ length: 10 }),
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: filePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+  await fileSearchClient.getNextRecord();
+  t.false(
+    await fileSearchClient.hasNextRecord()
   );
 });
