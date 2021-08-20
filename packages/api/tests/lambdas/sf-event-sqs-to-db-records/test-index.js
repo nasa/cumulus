@@ -41,6 +41,9 @@ const {
 const {
   generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
+const {
+  sns,
+} = require('@cumulus/aws-client/services');
 
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
@@ -182,6 +185,11 @@ test.before(async (t) => {
   t.context.pdrModel = pdrModel;
 
   fixture = await loadFixture('execution-running-event.json');
+
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.execution_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
 });
 
 test.beforeEach(async (t) => {
@@ -256,6 +264,7 @@ test.after.always(async (t) => {
     executionModel,
     pdrModel,
     granuleModel,
+    TopicArn,
   } = t.context;
   await executionModel.deleteTable();
   await pdrModel.deleteTable();
@@ -266,6 +275,7 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
@@ -542,7 +552,7 @@ test('writeRecords() discards an out of order message that is older than an exis
   );
 });
 
-test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+test.only('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -569,6 +579,7 @@ test('writeRecords() discards an out of order message that has an older status w
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
+  console.log(await granulePgModel.get(testKnex, { granule_id: granuleId }));
   t.is('completed', (await granulePgModel.get(testKnex, { granule_id: granuleId })).status);
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });

@@ -109,10 +109,12 @@ const writeExecutionViaTransaction = async ({
 
 const writeExecutionToDynamoAndES = async (params) => {
   const {
-    executionApiRecord,
+    cumulusMessage,
     executionModel,
+    updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
     await executionModel.storeExecution(executionApiRecord);
     await upsertExecution({
@@ -150,7 +152,8 @@ const writeExecution = async ({
       updatedAt,
     });
     await writeExecutionToDynamoAndES({
-      executionApiRecord,
+      cumulusMessage,
+      updatedAt,
       executionModel,
       esClient,
     });
