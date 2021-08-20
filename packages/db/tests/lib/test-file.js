@@ -82,10 +82,12 @@ test('getFilesAndGranuleIdQuery returns expected records', async (t) => {
     bucket,
     key: firstKey,
     granule_cumulus_id: Number.parseInt(granuleCumulusId1, 10),
+    granule_id: testGranule1.granule_id,
   });
   t.like(records[1], {
     bucket,
     key: secondKey,
     granule_cumulus_id: Number.parseInt(granuleCumulusId2, 10),
+    granule_id: testGranule2.granule_id,
   });
 });
