@@ -100,6 +100,10 @@ export {
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 
+export {
+  Search,
+} from './lib/Search';
+
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
 export { CollectionPgModel } from './models/collection';
