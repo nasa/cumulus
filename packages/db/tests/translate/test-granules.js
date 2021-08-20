@@ -95,7 +95,7 @@ test.before(async (t) => {
   );
   const [executionBCumulusId] = await executionPgModel.create(
     knex,
-    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
 
   t.context.executions = [
