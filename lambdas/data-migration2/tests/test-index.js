@@ -24,12 +24,12 @@ const {
   ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
-  fakeExecutionRecordFactory,
   generateLocalTestDb,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
-  GranulePgModel,
 } = require('@cumulus/db');
 
 // eslint-disable-next-line node/no-unpublished-require
@@ -77,6 +77,7 @@ test.before(async (t) => {
   t.context.providerPgModel = new ProviderPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -114,6 +115,50 @@ test.after.always(async (t) => {
   });
 });
 
+async function cleanupRecords({
+  executionsModel,
+  granulesModel,
+  pdrsModel,
+  knex,
+  granulePgModel,
+  pdrPgModel,
+  executionPgModel,
+  granuleRecords,
+  pdrRecords,
+  executionRecords,
+  testPdr,
+  fakeGranule,
+  fakeExecution,
+}) {
+  if (granuleRecords) {
+    await Promise.all(granuleRecords.map(
+      async ({ cumulus_id: cumulusId }) => {
+        await granulePgModel.delete(knex, { cumulus_id: cumulusId });
+      }
+    ));
+  }
+  if (pdrRecords) {
+    await Promise.all(pdrRecords.map(
+      async ({ cumulus_id: cumulusId }) => {
+        await pdrPgModel.delete(knex, { cumulus_id: cumulusId });
+      }
+    ));
+  }
+  if (executionRecords) {
+    await Promise.all(executionRecords.map(
+      async ({ cumulus_id: cumulusId }) => {
+        await executionPgModel.delete(knex, { cumulus_id: cumulusId });
+      }
+    ));
+  }
+
+  await Promise.all([
+    pdrsModel.delete({ pdrName: testPdr.pdrName }),
+    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
+    executionsModel.delete({ arn: fakeExecution.arn }),
+  ]);
+}
+
 test.serial('handler migrates executions, granules, files, and PDRs by default', async (t) => {
   const {
     executionsModel,
@@ -127,13 +172,16 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([
@@ -153,15 +201,6 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     1
   );
 
-  const granuleRecords = await t.context.granulePgModel.search(
-    t.context.knex,
-    { granule_id: fakeGranule.granuleId }
-  );
-  t.is(
-    granuleRecords.length,
-    1
-  );
-
   const pdrRecords = await t.context.pdrPgModel.search(
     t.context.knex,
     { name: testPdr.pdrName }
@@ -171,17 +210,40 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     1
   );
 
-  t.teardown(() => Promise.all([
-    pdrsModel.delete({ pdrName: testPdr.pdrName }),
-    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
-    t.context.executionPgModel.delete(
-      t.context.knex,
-      { cumulus_id: executionRecords[0].cumulus_id }
-    ),
-    t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleRecords[0].cumulus_id }),
-    t.context.pdrPgModel.delete(t.context.knex, { cumulus_id: pdrRecords[0].cumulus_id }),
-  ]));
+  const granuleRecords = await t.context.granulePgModel.search(
+    t.context.knex,
+    { granule_id: fakeGranule.granuleId }
+  );
+  t.is(
+    granuleRecords.length,
+    1
+  );
+  t.is(
+    granuleRecords[0].pdr_cumulus_id,
+    pdrRecords[0].cumulus_id
+  );
+
+  const granulesExecutionRecords = await t.context.granulesExecutionsPgModel.search(
+    t.context.knex,
+    {
+      execution_cumulus_id: executionRecords[0].cumulus_id,
+      granule_cumulus_id: granuleRecords[0].cumulus_id,
+    }
+  );
+  t.is(
+    granulesExecutionRecords.length,
+    1
+  );
+
+  t.teardown(() => cleanupRecords({
+    ...t.context,
+    testPdr,
+    fakeGranule,
+    fakeExecution,
+    executionRecords,
+    granuleRecords,
+    pdrRecords,
+  }));
 });
 
 test.serial('handler migrates only executions if configured', async (t) => {
@@ -194,16 +256,20 @@ test.serial('handler migrates only executions if configured', async (t) => {
   } = t.context;
 
   const collectionId = `${testCollection.name}___${testCollection.version}`;
+
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
-  const fakeGranule = fakeGranuleFactoryV2({
-    collectionId,
-    execution: fakeExecution.execution,
-  });
+
   const testPdr = fakePdrFactoryV2({
     collectionId,
     provider: testProvider.name,
+  });
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    collectionId,
+    execution: fakeExecution.execution,
+    pdrName: testPdr.pdrName,
   });
 
   await Promise.all([
@@ -244,15 +310,15 @@ test.serial('handler migrates only executions if configured', async (t) => {
     0
   );
 
-  t.teardown(() => Promise.all([
-    pdrsModel.delete({ pdrName: testPdr.pdrName }),
-    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
-    t.context.executionPgModel.delete(
-      t.context.knex,
-      { cumulus_id: executionRecords[0].cumulus_id }
-    ),
-  ]));
+  t.teardown(() => cleanupRecords({
+    ...t.context,
+    testPdr,
+    fakeGranule,
+    fakeExecution,
+    executionRecords,
+    granuleRecords,
+    pdrRecords,
+  }));
 });
 
 test.serial('handler migrates only granules if configured', async (t) => {
@@ -270,9 +336,6 @@ test.serial('handler migrates only granules if configured', async (t) => {
   });
 
   const executionUrl = cryptoRandomString({ length: 10 });
-  const pgExecution = fakeExecutionRecordFactory({
-    url: executionUrl,
-  });
   const fakeGranule = fakeGranuleFactoryV2({
     collectionId,
     execution: executionUrl,
@@ -287,11 +350,6 @@ test.serial('handler migrates only granules if configured', async (t) => {
     granulesModel.create(fakeGranule),
     pdrsModel.create(testPdr),
   ]);
-
-  const [executionCumulusId] = await t.context.executionPgModel.create(
-    t.context.knex,
-    pgExecution
-  );
 
   await handler({
     env: process.env,
@@ -325,19 +383,15 @@ test.serial('handler migrates only granules if configured', async (t) => {
     0
   );
 
-  t.teardown(() => Promise.all([
-    pdrsModel.delete({ pdrName: testPdr.pdrName }),
-    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
-    t.context.executionPgModel.delete(
-      t.context.knex,
-      { cumulus_id: executionCumulusId }
-    ),
-    t.context.granulePgModel.delete(
-      t.context.knex,
-      { cumulus_id: granuleRecords[0].cumulus_id }
-    ),
-  ]));
+  t.teardown(() => cleanupRecords({
+    ...t.context,
+    testPdr,
+    fakeGranule,
+    fakeExecution,
+    executionRecords,
+    granuleRecords,
+    pdrRecords,
+  }));
 });
 
 test.serial('handler migrates only PDRs if configured', async (t) => {
@@ -401,13 +455,13 @@ test.serial('handler migrates only PDRs if configured', async (t) => {
     1
   );
 
-  t.teardown(() => Promise.all([
-    pdrsModel.delete({ pdrName: testPdr.pdrName }),
-    granulesModel.delete({ granuleId: fakeGranule.granuleId }),
-    executionsModel.delete({ arn: fakeExecution.arn }),
-    t.context.pdrPgModel.delete(
-      t.context.knex,
-      { cumulus_id: pdrRecords[0].cumulus_id }
-    ),
-  ]));
+  t.teardown(() => cleanupRecords({
+    ...t.context,
+    testPdr,
+    fakeGranule,
+    fakeExecution,
+    executionRecords,
+    granuleRecords,
+    pdrRecords,
+  }));
 });

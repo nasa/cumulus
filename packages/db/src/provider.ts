@@ -25,6 +25,7 @@ export const nullifyUndefinedProviderValues = (
     'private_key',
     'cm_key_id',
     'certificate_uri',
+    'allowed_redirects',
   ];
 
   optionalValues.forEach((value: keyof PostgresProvider) => {

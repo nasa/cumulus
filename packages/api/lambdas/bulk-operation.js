@@ -1,74 +1,18 @@
 const get = require('lodash/get');
 const pMap = require('p-map');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
 
 const { deconstructCollectionId } = require('../lib/utils');
+const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
+const { getGranuleIdsForPayload } = require('../lib/granules');
 
-const SCROLL_SIZE = 500; // default size in Kibana
-
-/**
- * Return a unique list of granule IDs based on the provided list or the response from the
- * query to ES using the provided query and index.
- *
- * @param {Object} payload
- * @param {Object} [payload.query] - Optional parameter of query to send to ES
- * @param {string} [payload.index] - Optional parameter of ES index to query.
- * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
- * @returns {Promise<Array<string>>}
- */
-async function getGranuleIdsForPayload(payload) {
-  const granuleIds = payload.ids || [];
-
-  // query ElasticSearch if needed
-  if (granuleIds.length === 0 && payload.query) {
-    log.info('No granule ids detected. Searching for granules in Elasticsearch.');
-
-    const query = payload.query;
-    const index = payload.index;
-    const responseQueue = [];
-
-    const client = await Search.es(undefined, true);
-    const searchResponse = await client.search({
-      index: index,
-      scroll: '30s',
-      size: SCROLL_SIZE,
-      _source: ['granuleId'],
-      body: query,
-    });
-
-    responseQueue.push(searchResponse);
-
-    while (responseQueue.length) {
-      const { body } = responseQueue.shift();
-
-      body.hits.hits.forEach((hit) => {
-        granuleIds.push(hit._source.granuleId);
-      });
-      if (body.hits.total.value !== granuleIds.length) {
-        responseQueue.push(
-          // eslint-disable-next-line no-await-in-loop
-          await client.scroll({
-            scrollId: body._scroll_id,
-            scroll: '30s',
-          })
-        );
-      }
-    }
-  }
-
-  // Remove duplicate Granule IDs
-  // TODO: could we get unique IDs from the query directly?
-  const uniqueGranuleIds = [...new Set(granuleIds)];
-  return uniqueGranuleIds;
-}
+const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
 async function applyWorkflowToGranules({
   granuleIds,
@@ -89,6 +33,7 @@ async function applyWorkflowToGranules({
       );
       return granuleId;
     } catch (error) {
+      log.error(`Granule ${granuleId} encountered an error`, error);
       return { granuleId, err: error };
     }
   });
@@ -126,6 +71,7 @@ async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
     );
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
+      log.error(error);
       throw error;
     }
   }
@@ -224,15 +170,23 @@ async function bulkGranule(payload) {
 async function bulkGranuleReingest(payload) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
+  const workflowName = payload.workflowName;
   return await pMap(
     granuleIds,
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
-        await granuleModel.reingest(granule, process.env.asyncOperationId);
+        const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
+        await granuleModel.reingest(
+          {
+            ...granule,
+            ...(targetExecution && { execution: targetExecution }),
+          },
+          process.env.asyncOperationId
+        );
         return granuleId;
       } catch (error) {
-        log.debug(`Granule ${granuleId} encountered an error`, error);
+        log.error(`Granule ${granuleId} encountered an error`, error);
         return { granuleId, err: error };
       }
     },
@@ -271,6 +225,5 @@ async function handler(event) {
 module.exports = {
   applyWorkflowToGranules,
   bulkGranuleDelete,
-  getGranuleIdsForPayload,
   handler,
 };

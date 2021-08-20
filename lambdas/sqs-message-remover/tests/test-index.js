@@ -5,7 +5,7 @@ const test = require('ava');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
+const { getQueueNameFromUrl, receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createBucket,
@@ -263,7 +263,8 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
     status: 'SUCCEEDED',
     eventSource,
   });
-  const key = getS3KeyForArchivedMessage(process.env.stackName, eventSource.messageId);
+  const queueName = getQueueNameFromUrl(sqsQueues.queueUrl);
+  const key = getS3KeyForArchivedMessage(process.env.stackName, eventSource.messageId, queueName);
 
   await s3PutObject({
     Bucket: process.env.system_bucket,

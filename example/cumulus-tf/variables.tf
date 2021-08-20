@@ -164,6 +164,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 8
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
@@ -175,7 +181,7 @@ variable "cumulus_distribution_url" {
   description = "The url of cumulus distribution API Gateway endpoint"
 }
 
-variable "distribution_url" {
+variable "tea_distribution_url" {
   type    = string
   default = null
 }
@@ -293,10 +299,16 @@ variable "pdr_node_name_provider_bucket" {
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "async_operation_image_version" {
@@ -369,7 +381,7 @@ variable "database_app_user_pw" {
   description = "ORCA application database user password."
 }
 
-variable "drop_database" {
+variable "orca_drop_database" {
   default = "False"
   type = string
   description = "Tells ORCA to drop the database on deployments."
@@ -411,4 +423,16 @@ variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
+  type        = string
+  default     = null
+}
+
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = true
 }
