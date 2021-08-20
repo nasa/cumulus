@@ -108,11 +108,11 @@ test('PgSearchClient.next() returns undefined if no record exists for current of
 
 test('PgSearchClient.next() re-throws unexpected error', async (t) => {
   const { knex } = t.context;
-  const fakePgModel = {
-    getByOffset: sinon.stub(),
-  };
+
   const error = new Error('fake error');
-  fakePgModel.getByOffset.onFirstCall().throws(error);
+  const fakePgModel = {
+    getByOffset: sinon.stub().throws(error),
+  };
 
   const bucket = cryptoRandomString({ length: 10 });
 
