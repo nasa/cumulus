@@ -50,7 +50,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('PgSearchClient.next() returns the next result', async (t) => {
+test('PgSearchClient.getNextRecord() returns correct records', async (t) => {
   const { filePgModel, granuleCumulusId, knex } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
@@ -74,14 +74,14 @@ test('PgSearchClient.next() returns the next result', async (t) => {
     sortColumns: ['bucket', 'key'],
   });
   t.like(
-    await fileSearchClient.next(),
+    await fileSearchClient.getNextRecord(),
     {
       bucket,
       key: firstKey,
     }
   );
   t.like(
-    await fileSearchClient.next(),
+    await fileSearchClient.getNextRecord(),
     {
       bucket,
       key: secondKey,
@@ -89,7 +89,7 @@ test('PgSearchClient.next() returns the next result', async (t) => {
   );
 });
 
-test('PgSearchClient.next() returns undefined if no record exists for current offset', async (t) => {
+test('PgSearchClient.getNextRecord() returns undefined if no record exists for current offset', async (t) => {
   const { filePgModel, knex } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
@@ -101,12 +101,12 @@ test('PgSearchClient.next() returns undefined if no record exists for current of
     sortColumns: ['bucket', 'key'],
   });
   t.is(
-    await fileSearchClient.next(),
+    await fileSearchClient.getNextRecord(),
     undefined
   );
 });
 
-test('PgSearchClient.next() re-throws unexpected error', async (t) => {
+test('PgSearchClient.getNextRecord() re-throws unexpected error', async (t) => {
   const { knex } = t.context;
 
   const error = new Error('fake error');
@@ -123,12 +123,12 @@ test('PgSearchClient.next() re-throws unexpected error', async (t) => {
     sortColumns: ['bucket', 'key'],
   });
   await t.throwsAsync(
-    fileSearchClient.next(),
+    fileSearchClient.getNextRecord(),
     { message: 'fake error' }
   );
 });
 
-test('PgSearchClient.next() does not increment offset if unexpected error is thrown', async (t) => {
+test('PgSearchClient.getNextRecord() does not increment offset if error is thrown', async (t) => {
   const { knex } = t.context;
 
   const fakePgModel = {
@@ -149,9 +149,9 @@ test('PgSearchClient.next() does not increment offset if unexpected error is thr
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
   });
-  await t.throwsAsync(fileSearchClient.next());
+  await t.throwsAsync(fileSearchClient.getNextRecord());
   t.deepEqual(
-    await fileSearchClient.next(),
+    await fileSearchClient.getNextRecord(),
     { foo: 'bar' }
   );
 });
