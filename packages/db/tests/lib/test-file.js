@@ -11,7 +11,7 @@ const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
-  getFilesAndGranuleIdQuery,
+  getFilesAndGranuleInfoQuery,
 } = require('../../dist');
 
 test.before(async (t) => {
@@ -39,7 +39,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb(t.context);
 });
 
-test('getFilesAndGranuleIdQuery returns expected records', async (t) => {
+test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   const { collectionCumulusId, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -72,10 +72,11 @@ test('getFilesAndGranuleIdQuery returns expected records', async (t) => {
     granule_cumulus_id: granuleCumulusId2,
   });
 
-  const records = await getFilesAndGranuleIdQuery({
+  const records = await getFilesAndGranuleInfoQuery({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
   });
   t.is(records.length, 2);
   t.like(records[0], {

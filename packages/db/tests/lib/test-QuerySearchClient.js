@@ -12,7 +12,7 @@ const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
-  getFilesAndGranuleIdQuery,
+  getFilesAndGranuleInfoQuery,
 } = require('../../dist');
 
 test.before(async (t) => {
@@ -35,12 +35,12 @@ test.before(async (t) => {
     testCollection
   );
 
-  const testGranule = fakeGranuleRecordFactory({
+  t.context.testGranule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
   [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
     t.context.knex,
-    testGranule
+    t.context.testGranule
   );
 });
 
@@ -51,7 +51,7 @@ test.after.always(async (t) => {
 });
 
 test('QuerySearchClient.getNextRecord() returns next record correctly', async (t) => {
-  const { filePgModel, granuleCumulusId, knex } = t.context;
+  const { filePgModel, granuleCumulusId, knex, testGranule } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
@@ -67,10 +67,11 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     granule_cumulus_id: granuleCumulusId,
   });
 
-  const query = getFilesAndGranuleIdQuery({
+  const query = getFilesAndGranuleInfoQuery({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
   });
   const querySearchClient = new QuerySearchClient(
     query
@@ -80,6 +81,7 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     {
       bucket,
       key: firstKey,
+      granule_id: testGranule.granule_id,
     }
   );
   t.like(
@@ -87,6 +89,7 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     {
       bucket,
       key: secondKey,
+      granule_id: testGranule.granule_id,
     }
   );
 });

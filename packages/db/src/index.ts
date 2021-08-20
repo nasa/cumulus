@@ -95,7 +95,7 @@ export {
 } from './lib/execution';
 
 export {
-  getFilesAndGranuleIdQuery,
+  getFilesAndGranuleInfoQuery,
 } from './lib/file';
 
 export {
