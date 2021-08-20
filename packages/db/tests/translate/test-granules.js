@@ -27,6 +27,9 @@ const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda')
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
+const createdAt = new Date(Date.now() - 100 * 1000);
+const updatedAt = new Date(Date.now());
+
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
@@ -130,8 +133,8 @@ test.before(async (t) => {
       file_size: 2098711627776,
       path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-      created_at: new Date(Date.now()),
-      updated_at: new Date(Date.now()),
+      created_at: createdAt,
+      updated_at: updatedAt,
     }),
     fakeFileRecordFactory({
       granule_cumulus_id: 1,
@@ -143,8 +146,8 @@ test.before(async (t) => {
       file_size: 1099511627776,
       path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-      created_at: new Date(Date.now()),
-      updated_at: new Date(Date.now()),
+      created_at: createdAt,
+      updated_at: updatedAt,
     }),
   ];
   files.map(async (file) => await t.context.filePgModel.create(knex, file));
@@ -183,6 +186,8 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
         size: 2098711627776,
         path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        createdAt: createdAt,
+        updatedAt: updatedAt,
       },
       {
         bucket: 'cumulus-test-sandbox-private',
@@ -193,6 +198,8 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
         size: 1099511627776,
         path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        createdAt: createdAt,
+        updatedAt: updatedAt,
       },
     ],
     executions: executions.map((e) => e.arn),
@@ -261,6 +268,8 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         size: 2098711627776,
         path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        createdAt: createdAt,
+        updatedAt: updatedAt,
       },
       {
         bucket: 'cumulus-test-sandbox-private',
@@ -271,6 +280,8 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         size: 1099511627776,
         path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        createdAt: createdAt,
+        updatedAt: updatedAt,
       },
     ],
     executions: executions.map((e) => e.arn),
