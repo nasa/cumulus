@@ -15,69 +15,18 @@ but technically it is a breaking change to the Elasticsearch mappings.
 
 ### Added
 
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-
-## [v9.4.0] 2021-08-16
-
-### Notable changes
-
-- `@cumulus/sync-granule` task should now properly handle
-syncing files from HTTP/HTTPS providers where basic auth is
-required and involves a redirect to a different host (e.g.
-downloading files protected by Earthdata Login)
-
-### Added
-
-- **CUMULUS-2591**
-  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
-    This is the name of the Step Function step for the last failed event in the
-    execution's event history.
-- **CUMULUS-2548**
-  - Added `allowed_redirects` field to PostgreSQL `providers` table
-  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
-  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
-  of a readable stream to S3 and returning a promise
-- **CUMULUS-2373**
-  - Added `replaySqsMessages` lambda to replay archived incoming SQS
-    messages from S3.
-  - Added `/replays/sqs` endpoint to trigger an async operation for
-    the `replaySqsMessages` lambda.
-  - Added unit tests and integration tests for new endpoint and lambda.
-  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
-    for an archived message.
-  - Added new `async_operation` type `SQS Replay`.
-- **CUMULUS-2460**
-  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
-  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
-- **CUMULUS-2635**
-  - Added helper functions:
-    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2634**
     - Added new functions for upserting data to Elasticsearch:
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
       - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
       - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
-
-### Fixed
-
-- **CUMULUS-2548**
-  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
-properly handle basic auth when redirecting to a different
-host and/or host with a different port
-- **CUMULUS-2626**
-  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
-- **CUMULUS-2635**
-  - Update `data-migration2` to migrate PDRs before migrating granules.
-  - Update `data-migration2` unit tests testing granules migration to reference
-    PDR records to better model the DB schema.
-  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
 
 ### Changed
 
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
-
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return Postgres Granules isntead of DynamoDB Granules
@@ -143,9 +92,59 @@ host and/or host with a different port
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
-- **CUMULUS-2532**
-  - Changed integration tests to use `api-client/granules` functions as opposed
-    to `granulesApi` from `@cumulus/integration-tests`.
+
+## [v9.4.0] 2021-08-16
+
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+- **CUMULUS-2373**
+  - Added `replaySqsMessages` lambda to replay archived incoming SQS
+    messages from S3.
+  - Added `/replays/sqs` endpoint to trigger an async operation for
+    the `replaySqsMessages` lambda.
+  - Added unit tests and integration tests for new endpoint and lambda.
+  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
+    for an archived message.
+  - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+
+### Fixed
+
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
+
+### Changed
+
 - **CUMULUS-2373**
   - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
     by `queueName`.
@@ -394,9 +393,6 @@ releases.
 
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
-- **CUMULUS-2532**
-  - Fixed integration tests to have granule deletion occur before provider and
-    collection deletion in test cleanup.
 - **CUMULUS-2558**
   - Fixed issue where executions original_payload would not be retained on successful execution
 
@@ -497,6 +493,8 @@ releases.
       returns temporal info for CMR ISO 19115 SMAP XML files.
     - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
       `isISOFile()`.
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed to granulesApi from `@cumulus/integration-tests`.
 
 ### Fixed
 
@@ -515,6 +513,9 @@ releases.
   - Update "eslint-plugin-import" to be pinned to 2.22.1
 - **CUMULUS-2520**
   - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
 - **[2231](https://github.com/nasa/cumulus/issues/2231)**
   - Fixes broken relative path links in `docs/README.md`
 
