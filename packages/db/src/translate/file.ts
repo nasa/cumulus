@@ -18,7 +18,7 @@ const getKey = (file: ApiFile) => {
 
 export const translatePostgresFileToApiFile = (
   filePgRecord: PostgresFileRecord
-): Omit<ApiFile, 'granuleId'|'createdAt'|'updatedAt'> => ({
+): Omit<ApiFile, 'granuleId'> => ({
   bucket: filePgRecord.bucket,
   key: filePgRecord.key,
   checksumType: filePgRecord.checksum_type,
@@ -27,6 +27,8 @@ export const translatePostgresFileToApiFile = (
   size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
   path: filePgRecord.path,
   source: filePgRecord.source,
+  createdAt: filePgRecord.created_at,
+  updatedAt: filePgRecord.updated_at,
 });
 
 export const translateApiFiletoPostgresFile = (

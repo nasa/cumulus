@@ -35,6 +35,8 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         size: Number.parseInt(postgresFile.file_size, 10),
         path: postgresFile.path,
         source: postgresFile.source,
+        createdAt: postgresFile.created_at,
+        updatedAt: postgresFile.updated_at,
       },
       postgresFileOmitKeys
     )
