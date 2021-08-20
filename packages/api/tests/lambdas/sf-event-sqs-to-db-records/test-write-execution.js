@@ -15,23 +15,24 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-const { sns } = require('@cumulus/aws-client/services');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
 const {
   buildExecutionRecord,
+  publishExecutionSnsMessage,
   shouldWriteExecutionToPostgres,
   writeExecution,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
 
+const {
+  fakeExecutionFactoryV2,
+} = require('../../../lib/testUtils');
+
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-  const topicName = cryptoRandomString({ length: 5 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.execution_sns_topic_arn = TopicArn;
-  t.context.TopicArn = TopicArn;
 
   const executionModel = new Execution();
   await executionModel.createTable();
@@ -59,7 +60,32 @@ test.before(async (t) => {
   t.context.postRDSDeploymentVersion = '9.0.0';
 });
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.execution_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
 
@@ -99,17 +125,21 @@ test.beforeEach((t) => {
   };
 });
 
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
+});
+
 test.after.always(async (t) => {
   const {
     executionModel,
-    TopicArn,
   } = t.context;
   await executionModel.deleteTable();
   await destroyLocalTestDb({
     ...t.context,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test('shouldWriteExecutionToPostgres() returns false if collection from message is not found in Postgres', async (t) => {
@@ -389,4 +419,47 @@ test.serial('writeExecution() correctly sets both original_payload and final_pay
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   t.deepEqual(pgRecord.original_payload, originalPayload);
   t.deepEqual(pgRecord.final_payload, finalPayload);
+});
+
+test.serial('publishExecutionSnsMessage() publishes SNS messages', async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.execution_sns_topic_arn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
+  const executionArn = cryptoRandomString({ length: 10 });
+  const newExecution = fakeExecutionFactoryV2({
+    arn: executionArn,
+    status: 'completed',
+    name: 'test_execution',
+  });
+  await publishExecutionSnsMessage(newExecution);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+
+  t.deepEqual(executionRecord.arn, { S: executionArn });
+  t.deepEqual(executionRecord.status, { S: newExecution.status });
 });
