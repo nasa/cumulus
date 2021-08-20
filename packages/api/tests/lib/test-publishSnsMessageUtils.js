@@ -21,7 +21,7 @@ test.serial('publishExecutionSnsMessage() does not publish an SNS message if exe
   });
   await t.throwsAsync(
     publishExecutionSnsMessage(newExecution),
-    { message: 'The execution_sns_topic_arn environment variable must be set'}
+    { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
 });
 
