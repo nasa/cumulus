@@ -42,7 +42,6 @@ class Search<ItemType, RecordType extends BaseRecord> {
       return record;
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
-        this.offset += 1;
         return undefined;
       }
       throw error;

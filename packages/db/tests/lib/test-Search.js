@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const sinon = require('sinon');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
@@ -102,5 +103,55 @@ test('Search.next() returns undefined if no record exists for current offset', a
   t.is(
     await fileSearchClient.next(),
     undefined
+  );
+});
+
+test('Search.next() re-throws unexpected error', async (t) => {
+  const { knex } = t.context;
+  const fakePgModel = {
+    getByOffset: sinon.stub(),
+  };
+  const error = new Error('fake error');
+  fakePgModel.getByOffset.onFirstCall().throws(error);
+
+  const bucket = cryptoRandomString({ length: 10 });
+
+  const fileSearchClient = new Search({
+    knex,
+    pgModel: fakePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  await t.throwsAsync(
+    fileSearchClient.next(),
+    { message: 'fake error' }
+  );
+});
+
+test('Search.next() does not increment offset if unexpected error is thrown', async (t) => {
+  const { knex } = t.context;
+
+  const fakePgModel = {
+    getByOffset: sinon.stub(),
+  };
+  fakePgModel.getByOffset.onFirstCall().throws();
+  fakePgModel.getByOffset.onSecondCall().callsFake((...args) => {
+    const offset = args.pop();
+    if (offset === 0) return Promise.resolve({ foo: 'bar' });
+    return Promise.resolve(undefined);
+  });
+
+  const bucket = cryptoRandomString({ length: 10 });
+
+  const fileSearchClient = new Search({
+    knex,
+    pgModel: fakePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  await t.throwsAsync(fileSearchClient.next());
+  t.deepEqual(
+    await fileSearchClient.next(),
+    { foo: 'bar' }
   );
 });
