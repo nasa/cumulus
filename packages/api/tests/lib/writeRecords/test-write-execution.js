@@ -18,6 +18,7 @@ const {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
   writeExecution,
+  writeExecutionApiRecord,
 } = require('../../../lib/writeRecords/write-execution');
 
 test.before(async (t) => {
@@ -264,7 +265,7 @@ test.serial('writeExecution() does not persist records to Dynamo or RDS if Dynam
   } = t.context;
 
   const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
+    storeExecutionRecord: () => {
       throw new Error('execution Dynamo error');
     },
   };
@@ -331,4 +332,26 @@ test.serial('writeExecution() correctly sets both original_payload and final_pay
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   t.deepEqual(pgRecord.original_payload, originalPayload);
   t.deepEqual(pgRecord.final_payload, finalPayload);
+});
+
+test('writeExecutionApiRecord() saves execution to Dynamo and RDS with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const apiRecord = Execution.generateRecord(cumulusMessage);
+  await writeExecutionApiRecord({
+    record: apiRecord,
+    knex,
+    executionModel,
+  });
+
+  const dynamoRecord = await executionModel.get({ arn: executionArn });
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
