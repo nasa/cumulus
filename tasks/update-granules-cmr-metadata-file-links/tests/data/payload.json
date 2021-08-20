@@ -19,7 +19,10 @@
           "type": "public"
         }
       },
-      "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/"
+      "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
+      "etags": {
+        "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json": "\"13f2bb38e22496fe9d42e761c42a0e67\""
+      }
     },
     "input": {
       "granules": [
@@ -61,11 +64,10 @@
         {
           "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090722",
           "files": [
-             {
+            {
               "bucket": "cumulus-internal",
               "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json",
-              "type": "metadata",
-              "etag": "\"13f2bb38e22496fe9d42e761c42a0e67\""
+              "type": "metadata"
             }
           ]
         }
