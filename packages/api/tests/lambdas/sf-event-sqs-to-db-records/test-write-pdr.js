@@ -249,6 +249,82 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
+test('writePdr() does not update PDR record if update is from an older execution', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.running = [];
+  cumulusMessage.payload.completed = ['arn1'];
+  cumulusMessage.payload.failed = [];
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const dynamoRecord = await pdrModel.get({ pdrName: pdr.name });
+  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const esRecord = await t.context.esPdrClient.get(pdr.name);
+
+  const stats = {
+    processing: 0,
+    total: 1,
+  };
+  t.like(dynamoRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(pgRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(esRecord, {
+    status: 'completed',
+    stats,
+  });
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload.running = ['arn2'];
+  cumulusMessage.payload.completed = [];
+  cumulusMessage.payload.failed = [];
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const updatedDynamoRecord = await pdrModel.get({ pdrName: pdr.name });
+  const updatedPgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const updatedEsRecord = await t.context.esPdrClient.get(pdr.name);
+  t.like(updatedDynamoRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(updatedPgRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(updatedEsRecord, {
+    status: 'completed',
+    stats,
+  });
+});
+
 test('writePdr() saves a PDR record to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
@@ -417,7 +493,7 @@ test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if E
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    index: () => {
+    update: () => {
       throw new Error('PDR ES error');
     },
   };
