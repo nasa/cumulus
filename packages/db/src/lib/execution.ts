@@ -26,7 +26,7 @@ export const getExecutionArnsByGranuleCumulusId = (
   granuleCumulusId: Number
 ): Promise<arnRecord[]> =>
   knexOrTransaction(tableNames.executions)
-    .select('arn')
+    .select(`${tableNames.executions}.arn`)
     .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
       tableNames.granulesExecutions,
