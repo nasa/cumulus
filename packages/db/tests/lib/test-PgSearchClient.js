@@ -254,3 +254,51 @@ test('PgSearchClient.hasNextRecord() returns true/false for currently fetched re
     await fileSearchClient.hasNextRecord()
   );
 });
+
+test('PgSearchClient.getNextRecord() does not re-fetch already fetched record', async (t) => {
+  const { knex } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  const fakePgModel = {
+    getByOffset: sinon.stub().resolves({ bucket, key }),
+  };
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: fakePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  await fileSearchClient.hasNextRecord();
+  t.like(
+    await fileSearchClient.getNextRecord(),
+    {
+      bucket,
+      key,
+    }
+  );
+  t.is(fakePgModel.getByOffset.callCount, 1);
+});
+
+test('PgSearchClient.hasNextRecord() does not re-fetch already fetched record', async (t) => {
+  const { knex } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  const fakePgModel = {
+    getByOffset: sinon.stub().resolves({ bucket, key }),
+  };
+
+  const fileSearchClient = new PgSearchClient({
+    knex,
+    pgModel: fakePgModel,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  t.true(await fileSearchClient.hasNextRecord());
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+  t.is(fakePgModel.getByOffset.callCount, 1);
+});

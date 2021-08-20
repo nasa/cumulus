@@ -11,7 +11,7 @@ class PgSearchClient<ItemType, RecordType extends BaseRecord> {
   readonly searchParams: Partial<RecordType>;
   readonly sortColumns: (keyof RecordType)[];
   offset: number;
-  lastFetchedOffset?: number;
+  lastFetchedOffset: number;
   record?: RecordType;
 
   constructor({
@@ -30,6 +30,7 @@ class PgSearchClient<ItemType, RecordType extends BaseRecord> {
     this.searchParams = searchParams;
     this.sortColumns = sortColumns;
     this.offset = 0;
+    this.lastFetchedOffset = -1;
   }
 
   /**
@@ -58,12 +59,12 @@ class PgSearchClient<ItemType, RecordType extends BaseRecord> {
   }
 
   async hasNextRecord() {
-    if (!this.lastFetchedOffset || this.offset !== this.lastFetchedOffset) await this.fetchRecord();
+    if (this.offset !== this.lastFetchedOffset) await this.fetchRecord();
     return this.record !== undefined;
   }
 
   async getNextRecord() {
-    if (!this.lastFetchedOffset || this.offset !== this.lastFetchedOffset) await this.fetchRecord();
+    if (this.offset !== this.lastFetchedOffset) await this.fetchRecord();
     this.offset += 1;
     return this.record;
   }
