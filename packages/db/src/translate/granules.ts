@@ -1,7 +1,6 @@
 import Knex from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
-import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
@@ -10,6 +9,8 @@ import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
 import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
+import { ApiGranule, GranuleStatus } from '../../../types';
+import { removeNilProperties } from '../../../common/util';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
@@ -32,7 +33,7 @@ export const translatePostgresGranuleToApiGranule = async (
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
   filePgModel = new FilePgModel()
-): Promise<AWS.DynamoDB.DocumentClient.AttributeMap> => {
+): Promise<ApiGranule> => {
   const collection = await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
@@ -60,9 +61,9 @@ export const translatePostgresGranuleToApiGranule = async (
     );
   }
 
-  return removeNilProperties(({
+  const apiGranule = removeNilProperties({
     granuleId: granulePgRecord.granule_id,
-    status: granulePgRecord.status,
+    status: granulePgRecord.status as GranuleStatus,
     collectionId: constructCollectionId(collection.name, collection.version),
     published: granulePgRecord.published,
     duration: granulePgRecord.duration,
@@ -75,18 +76,20 @@ export const translatePostgresGranuleToApiGranule = async (
     pdrName: pdr ? pdr.name : undefined,
     provider: provider ? provider.name : undefined,
     queryFields: granulePgRecord.query_fields,
-    beginningDateTime: granulePgRecord.beginning_date_time?.getTime(),
-    endingDateTime: granulePgRecord.ending_date_time?.getTime(),
-    lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime(),
-    processingEndDateTime: granulePgRecord.processing_end_date_time?.getTime(),
-    processingStartDateTime: granulePgRecord.processing_start_date_time?.getTime(),
-    productionDateTime: granulePgRecord.production_date_time?.getTime(),
-    timestamp: granulePgRecord.timestamp?.getTime(),
-    createdAt: granulePgRecord.created_at?.getTime(),
-    updatedAt: granulePgRecord.updated_at?.getTime(),
+    beginningDateTime: granulePgRecord.beginning_date_time?.getTime().toString(),
+    endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
+    lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime().toString(),
+    processingEndDateTime: granulePgRecord.processing_end_date_time?.getTime().toString(),
+    processingStartDateTime: granulePgRecord.processing_start_date_time?.getTime().toString(),
+    productionDateTime: granulePgRecord.production_date_time?.getTime().toString(),
+    timestamp: granulePgRecord.timestamp?.getTime().toString(),
+    createdAt: granulePgRecord.created_at?.getTime().toString(),
+    updatedAt: granulePgRecord.updated_at?.getTime().toString(),
     files: files.map((file) => translatePostgresFileToApiFile(file)),
     executions: executionArns.map((e) => e.arn),
-  }));
+  });
+
+  return apiGranule as ApiGranule;
 };
 
 /**
