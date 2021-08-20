@@ -109,9 +109,8 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
   await validateOutput(t, output);
 
-  output.granules.forEach((g) => g.files
-    .filter(isCMRFile)
-    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/)));
+  Object.values(output.etags).forEach((g) => Object.values(g)
+    .forEach((etag = '') => t.regex(etag, /"\S+"/)));
 });
 
 test.serial('Should update existing etag on CMR metadata file', async (t) => {
