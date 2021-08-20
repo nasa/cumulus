@@ -13,30 +13,30 @@ import { BaseRecord } from '../types/base';
 class QuerySearchClient<RecordType extends BaseRecord> {
   // readonly queryFn: QueryFn<RecordType>;
   readonly query: Knex.QueryBuilder;
-  readonly knex: Knex;
-  readonly searchParams: Partial<RecordType>;
-  readonly sortColumns: (keyof RecordType)[];
+  // readonly knex: Knex;
+  // readonly searchParams: Partial<RecordType>;
+  // readonly sortColumns: (keyof RecordType)[];
   offset: number;
   records: RecordType[];
 
   constructor(
     // queryFn: QueryFn<RecordType>,
-    query: Knex.QueryBuilder,
-    {
-      knex,
-      searchParams,
-      sortColumns,
-    }: {
-      knex: Knex,
-      searchParams: Partial<RecordType>,
-      sortColumns: (keyof RecordType)[],
-    }
+    query: Knex.QueryBuilder
+    // {
+    //   knex,
+    //   // searchParams,
+    //   // sortColumns,
+    // }: {
+    //   knex: Knex,
+    //   // searchParams: Partial<RecordType>,
+    //   // sortColumns: (keyof RecordType)[],
+    // }
   ) {
-    this.knex = knex;
+    // this.knex = knex;
     // this.queryFn = queryFn;
     this.query = query;
-    this.searchParams = searchParams;
-    this.sortColumns = sortColumns;
+    // this.searchParams = searchParams;
+    // this.sortColumns = sortColumns;
     this.offset = 0;
     this.records = [];
   }

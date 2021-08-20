@@ -73,12 +73,7 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     sortColumns: ['bucket', 'key'],
   });
   const querySearchClient = new QuerySearchClient(
-    query,
-    {
-      knex,
-      searchParams: { bucket },
-      sortColumns: ['bucket', 'key'],
-    }
+    query
   );
   t.like(
     await querySearchClient.getNextRecord(),
