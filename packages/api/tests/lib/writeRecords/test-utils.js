@@ -17,7 +17,7 @@ const {
   getParentExecutionCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/utils');
+} = require('../../../lib/writeRecords/utils');
 
 test.before(async (t) => {
   t.context.testDbName = `utils_${cryptoRandomString({ length: 10 })}`;

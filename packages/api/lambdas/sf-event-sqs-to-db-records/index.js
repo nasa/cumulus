@@ -30,7 +30,7 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
