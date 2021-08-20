@@ -18,7 +18,7 @@ const {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
   writeExecution,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
+} = require('../../../lib/writeRecords/write-execution');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });

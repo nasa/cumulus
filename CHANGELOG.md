@@ -17,6 +17,9 @@ but technically it is a breaking change to the Elasticsearch mappings.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
+- **CUMULUS-2577**
+  - Adds `POST` to `executions` endpoint to create an execution
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes

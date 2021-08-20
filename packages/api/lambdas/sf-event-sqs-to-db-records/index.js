@@ -35,7 +35,7 @@ const {
 const {
   shouldWriteExecutionToPostgres,
   writeExecution,
-} = require('./write-execution');
+} = require('../../lib/writeRecords/write-execution');
 
 const {
   writePdr,
