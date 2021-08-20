@@ -1,73 +1,67 @@
 import Knex from 'knex';
 
-import { RecordDoesNotExist } from '@cumulus/errors';
-
-import { BasePgModel } from '../models/base';
 import { BaseRecord } from '../types/base';
 
-class PgSearchClient<ItemType, RecordType extends BaseRecord> {
+type QueryFnParams<T> = {
+  knex: Knex,
+  searchParams: Partial<T>,
+  sortColumns: (keyof T)[]
+  limit?: number
+};
+
+type QueryFn<T> = (params: QueryFnParams<T>) => Promise<T[]>;
+
+class QuerySearchClient<RecordType extends BaseRecord> {
+  readonly queryFn: QueryFn<RecordType>;
   readonly knex: Knex;
-  readonly pgModel: BasePgModel<ItemType, RecordType>;
   readonly searchParams: Partial<RecordType>;
   readonly sortColumns: (keyof RecordType)[];
   offset: number;
-  lastFetchedOffset: number;
-  record?: RecordType;
+  records: RecordType[];
 
-  constructor({
-    knex,
-    pgModel,
-    searchParams,
-    sortColumns,
-  }: {
-    knex: Knex,
-    pgModel: BasePgModel<ItemType, RecordType>,
-    searchParams: Partial<RecordType>,
-    sortColumns: (keyof RecordType)[],
-  }) {
+  constructor(
+    queryFn: QueryFn<RecordType>,
+    {
+      knex,
+      searchParams,
+      sortColumns,
+    }: {
+      knex: Knex,
+      searchParams: Partial<RecordType>,
+      sortColumns: (keyof RecordType)[],
+    }
+  ) {
     this.knex = knex;
-    this.pgModel = pgModel;
+    this.queryFn = queryFn;
     this.searchParams = searchParams;
     this.sortColumns = sortColumns;
     this.offset = 0;
-    this.lastFetchedOffset = -1;
+    this.records = [];
   }
 
   /**
-   * Return next item from a set of results (if any) and increment offset of search
-   * client so that successive call to this method will return the next result (if any).
+   * Return next items from a set of results (if any).
    *
-   * @returns {Promise<RecordType>}
+   * @returns {Promise<RecordType[]>}
    * @throws
    */
-  private async fetchRecord() {
-    try {
-      this.record = await this.pgModel.getByOffset(
-        this.knex,
-        this.searchParams,
-        this.sortColumns,
-        this.offset
-      );
-    } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        this.record = undefined;
-      } else {
-        throw error;
-      }
-    }
-    this.lastFetchedOffset = this.offset;
+  private async fetchRecords() {
+    this.records = await this.queryFn({
+      knex: this.knex,
+      searchParams: this.searchParams,
+      sortColumns: this.sortColumns,
+    });
   }
 
   async hasNextRecord() {
-    if (this.offset !== this.lastFetchedOffset) await this.fetchRecord();
-    return this.record !== undefined;
+    if (this.records.length === 0) await this.fetchRecords();
+    return this.records[0];
   }
 
   async getNextRecord() {
-    if (this.offset !== this.lastFetchedOffset) await this.fetchRecord();
-    this.offset += 1;
-    return this.record;
+    if (this.records.length === 0) await this.fetchRecords();
+    return this.records.shift();
   }
 }
 
-export { PgSearchClient };
+export { QuerySearchClient };
