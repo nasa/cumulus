@@ -1,10 +1,9 @@
 'use strict';
 
+const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const mapValues = require('lodash/mapValues');
-const set = require('lodash/set');
 
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -66,14 +65,25 @@ async function updateEachCmrFileAccessURLs(
  *    with CMR file objects updated with the `etag` values supplied via the
  *    array of CMR file objects, matched by `filename`
  */
-function addCmrFileEtags(granulesByGranuleId, cmrFiles) {
+function mapCmrFileEtags(granulesByGranuleId, cmrFiles) {
   const etagsByFilename = Object.fromEntries(cmrFiles
-    .map(({ filename, etag }) => [filename, etag]));
-  const addEtag = (file) => set(file, 'etag', etagsByFilename[file.filename]);
-  const addEtags = (files) => files.map((f) => (isCMRFile(f) ? addEtag(f) : f));
+    .map(({ key, etag }) => [key, etag]));
+  // mapEtag maps filename to etag: { filename: etag }
+  const mapEtag = (file) => {
+    // eslint-disable-next-line no-param-reassign
+    delete file.etag;
+    return { [path.basename(file.key)]: etagsByFilename[file.key] };
+  };
+  // mapEtags combines mapEtag return values into a single object for each granule
+  const mapEtags = (files) => files.filter(isCMRFile).map(mapEtag).reduce(
+    (granuleMap, mappedEtag) => Object.assign(mappedEtag, granuleMap),
+    {}
+  );
 
-  return mapValues(granulesByGranuleId,
-    (granule) => ({ ...granule, files: addEtags(granule.files) }));
+  return Object.values(granulesByGranuleId).reduce((map, granule) => ({
+    ...map,
+    [granule.granuleId]: mapEtags(granule.files),
+  }), {});
 }
 
 async function updateGranulesCmrMetadataFileLinks(event) {
@@ -99,9 +109,10 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   );
 
   // Transfer etag info to granules' CMR files
-  const result = addCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
 
-  return { granules: Object.values(result) };
+  const etags = mapCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
+
+  return { granules: Object.values(granulesByGranuleId), etags };
 }
 
 /**
