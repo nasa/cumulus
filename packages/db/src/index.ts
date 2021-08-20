@@ -101,8 +101,8 @@ export {
 } from './lib/granule';
 
 export {
-  Search,
-} from './lib/Search';
+  PgSearchClient,
+} from './lib/PgSearchClient';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

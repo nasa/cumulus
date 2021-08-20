@@ -5,7 +5,7 @@ import { RecordDoesNotExist } from '@cumulus/errors';
 import { BasePgModel } from '../models/base';
 import { BaseRecord } from '../types/base';
 
-class Search<ItemType, RecordType extends BaseRecord> {
+class PgSearchClient<ItemType, RecordType extends BaseRecord> {
   readonly knex: Knex;
   readonly pgModel: BasePgModel<ItemType, RecordType>;
   readonly searchParams: Partial<RecordType>;
@@ -30,6 +30,13 @@ class Search<ItemType, RecordType extends BaseRecord> {
     this.offset = 0;
   }
 
+  /**
+   * Return next item from a set of results (if any) and increment offset of search
+   * client so that successive call to this method will return the next result (if any).
+   *
+   * @returns {Promise<RecordType>}
+   * @throws
+   */
   async next() {
     try {
       const record = await this.pgModel.getByOffset(
@@ -49,4 +56,4 @@ class Search<ItemType, RecordType extends BaseRecord> {
   }
 }
 
-export { Search };
+export { PgSearchClient };

@@ -8,7 +8,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   FilePgModel,
-  Search,
+  PgSearchClient,
   GranulePgModel,
   CollectionPgModel,
   fakeCollectionRecordFactory,
@@ -50,7 +50,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('Search.next() returns the next result', async (t) => {
+test('PgSearchClient.next() returns the next result', async (t) => {
   const { filePgModel, granuleCumulusId, knex } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
@@ -67,7 +67,7 @@ test('Search.next() returns the next result', async (t) => {
     granule_cumulus_id: granuleCumulusId,
   });
 
-  const fileSearchClient = new Search({
+  const fileSearchClient = new PgSearchClient({
     knex,
     pgModel: filePgModel,
     searchParams: { bucket },
@@ -89,12 +89,12 @@ test('Search.next() returns the next result', async (t) => {
   );
 });
 
-test('Search.next() returns undefined if no record exists for current offset', async (t) => {
+test('PgSearchClient.next() returns undefined if no record exists for current offset', async (t) => {
   const { filePgModel, knex } = t.context;
 
   const bucket = cryptoRandomString({ length: 10 });
 
-  const fileSearchClient = new Search({
+  const fileSearchClient = new PgSearchClient({
     knex,
     pgModel: filePgModel,
     searchParams: { bucket },
@@ -106,7 +106,7 @@ test('Search.next() returns undefined if no record exists for current offset', a
   );
 });
 
-test('Search.next() re-throws unexpected error', async (t) => {
+test('PgSearchClient.next() re-throws unexpected error', async (t) => {
   const { knex } = t.context;
   const fakePgModel = {
     getByOffset: sinon.stub(),
@@ -116,7 +116,7 @@ test('Search.next() re-throws unexpected error', async (t) => {
 
   const bucket = cryptoRandomString({ length: 10 });
 
-  const fileSearchClient = new Search({
+  const fileSearchClient = new PgSearchClient({
     knex,
     pgModel: fakePgModel,
     searchParams: { bucket },
@@ -128,7 +128,7 @@ test('Search.next() re-throws unexpected error', async (t) => {
   );
 });
 
-test('Search.next() does not increment offset if unexpected error is thrown', async (t) => {
+test('PgSearchClient.next() does not increment offset if unexpected error is thrown', async (t) => {
   const { knex } = t.context;
 
   const fakePgModel = {
@@ -143,7 +143,7 @@ test('Search.next() does not increment offset if unexpected error is thrown', as
 
   const bucket = cryptoRandomString({ length: 10 });
 
-  const fileSearchClient = new Search({
+  const fileSearchClient = new PgSearchClient({
     knex,
     pgModel: fakePgModel,
     searchParams: { bucket },
