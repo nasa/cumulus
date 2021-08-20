@@ -95,6 +95,10 @@ export {
 } from './lib/execution';
 
 export {
+  getFilesAndGranuleIdQuery,
+} from './lib/file';
+
+export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
