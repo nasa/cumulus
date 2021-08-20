@@ -16,6 +16,7 @@ const {
   localStackConnectionEnv,
   translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const {
   createTestIndex,
@@ -231,8 +232,8 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const granuleId1 = cryptoRandomString({ length: 6 });
-  const granuleId2 = cryptoRandomString({ length: 6 });
+  const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
@@ -403,15 +404,26 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns an existing granule', async (t) => {
+test.serial('GET returns the expected exisitng granule', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
   const response = await request(app)
     .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { granuleId } = response.body;
-  t.is(granuleId, t.context.fakePGGranules[0].granule_id);
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[0].granule_id,
+    collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
+
+  t.deepEqual(response.body, expectedGranule);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
