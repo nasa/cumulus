@@ -17,6 +17,7 @@ const { Search } = require('@cumulus/es-client/search');
 const Execution = require('../models/executions');
 const { getGranulesForPayload } = require('../lib/granules');
 const { validateGranuleExecutionRequest } = require('../lib/request');
+const { publishExecutionSnsMessage } = require('../lambdas/sf-event-sqs-to-db-records/write-execution');
 
 /**
  * List and search executions
@@ -106,6 +107,7 @@ async function del(req, res) {
         index: process.env.ES_INDEX,
         ignore: [404],
       });
+      await publishExecutionSnsMessage({});
     });
   } catch (error) {
     // Delete is idempotent, so there may not be a DynamoDB
