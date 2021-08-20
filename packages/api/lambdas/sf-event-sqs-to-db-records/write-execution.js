@@ -1,5 +1,4 @@
 const isNil = require('lodash/isNil');
-const { DynamoDB } = require('aws-sdk');
 
 const {
   ExecutionPgModel,
@@ -25,11 +24,11 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
+const { publishExecutionSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-execution' });
@@ -130,13 +129,6 @@ const writeExecutionToDynamoAndES = async (params) => {
   }
 };
 
-const publishExecutionSnsMessage = async (record) => {
-  const topicArn = process.env.execution_sns_topic_arn;
-  const message = DynamoDB.Converter.marshall(record);
-  logger.info(`About to publish SNS message ${JSON.stringify(message)} for execution to topic ARN ${topicArn}`);
-  await publishSnsMessage(topicArn, message);
-};
-
 const writeExecution = async ({
   cumulusMessage,
   knex,
@@ -169,7 +161,6 @@ const writeExecution = async ({
 
 module.exports = {
   buildExecutionRecord,
-  publishExecutionSnsMessage,
   shouldWriteExecutionToPostgres,
   writeExecutionToDynamoAndES,
   writeExecutionViaTransaction,

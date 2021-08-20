@@ -199,7 +199,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
     }
   }
 
-    dynamic "vpc_config" {
+  dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids

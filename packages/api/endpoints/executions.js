@@ -17,7 +17,7 @@ const { Search } = require('@cumulus/es-client/search');
 const Execution = require('../models/executions');
 const { getGranulesForPayload } = require('../lib/granules');
 const { validateGranuleExecutionRequest } = require('../lib/request');
-const { publishExecutionSnsMessage } = require('../lambdas/sf-event-sqs-to-db-records/write-execution');
+const { publishExecutionSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 /**
  * List and search executions

@@ -22,14 +22,9 @@ const Execution = require('../../../models/executions');
 
 const {
   buildExecutionRecord,
-  publishExecutionSnsMessage,
   shouldWriteExecutionToPostgres,
   writeExecution,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
-
-const {
-  fakeExecutionFactoryV2,
-} = require('../../../lib/testUtils');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
@@ -274,7 +269,7 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
+test.serial('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -290,7 +285,7 @@ test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to R
   t.true(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
+test.serial('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -311,7 +306,7 @@ test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same tim
   t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test('writeExecution() properly sets originalPayload on initial write and finalPayload on subsequent write', async (t) => {
+test.serial('writeExecution() properly sets originalPayload on initial write and finalPayload on subsequent write', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -355,7 +350,7 @@ test('writeExecution() properly sets originalPayload on initial write and finalP
   t.deepEqual(updatedEsRecord.finalPayload, finalPayload);
 });
 
-test('writeExecution() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
+test.serial('writeExecution() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -527,37 +522,15 @@ test.serial('writeExecution() correctly sets both original_payload and final_pay
   t.deepEqual(pgRecord.final_payload, finalPayload);
 });
 
-test.serial('publishExecutionSnsMessage() publishes SNS messages', async (t) => {
-  const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.execution_sns_topic_arn = TopicArn;
-
-  const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
-  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+test.serial('writeExecution() calls publishExecutionSnsMessage and successfully publishes an SNS message', async (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    knex,
     QueueUrl,
-    AttributeNames: ['QueueArn'],
-  }).promise();
-  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+  } = t.context;
 
-  const { SubscriptionArn } = await sns().subscribe({
-    TopicArn,
-    Protocol: 'sqs',
-    Endpoint: QueueArn,
-  }).promise();
-
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
-
-  const executionArn = cryptoRandomString({ length: 10 });
-  const newExecution = fakeExecutionFactoryV2({
-    arn: executionArn,
-    status: 'completed',
-    name: 'test_execution',
-  });
-  await publishExecutionSnsMessage(newExecution);
+  await writeExecution({ cumulusMessage, knex });
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
 
@@ -566,6 +539,6 @@ test.serial('publishExecutionSnsMessage() publishes SNS messages', async (t) => 
   const snsMessage = JSON.parse(Messages[0].Body);
   const executionRecord = JSON.parse(snsMessage.Message);
 
-  t.deepEqual(executionRecord.arn, { S: executionArn });
-  t.deepEqual(executionRecord.status, { S: newExecution.status });
+  t.deepEqual(executionRecord.arn, executionArn);
+  t.deepEqual(executionRecord.status, cumulusMessage.meta.status);
 });
