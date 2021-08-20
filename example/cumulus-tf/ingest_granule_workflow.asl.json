@@ -206,7 +206,19 @@
           "event.$": "$",
           "task_config": {
             "buckets": "{$.meta.buckets}",
-            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
