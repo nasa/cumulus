@@ -13,11 +13,11 @@ const postgresFileOmitKeys = ['checksum_type', 'checksum_value', 'file_name', 'f
 test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
   const postgresFile = {
     bucket: 'cumulus-test-sandbox-private',
-    key: 'firstKey',
-    file_name: 's3://cumulus-test-sandbox-private/firstKey',
     checksum_type: 'md5',
     checksum_value: 'bogus-value',
+    file_name: 's3://cumulus-test-sandbox-private/firstKey',
     file_size: '100',
+    key: 'firstKey',
     path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
   };
@@ -28,14 +28,14 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
       {
         ...postgresFile,
         bucket: postgresFile.bucket,
-        key: postgresFile.key,
-        checksumType: postgresFile.checksum_type,
         checksum: postgresFile.checksum_value,
-        fileName: postgresFile.file_name,
-        size: Number.parseInt(postgresFile.file_size, 10),
-        path: postgresFile.path,
-        source: postgresFile.source,
+        checksumType: postgresFile.checksum_type,
         createdAt: postgresFile.created_at,
+        fileName: postgresFile.file_name,
+        key: postgresFile.key,
+        path: postgresFile.path,
+        size: Number.parseInt(postgresFile.file_size, 10),
+        source: postgresFile.source,
         updatedAt: postgresFile.updated_at,
       },
       postgresFileOmitKeys
@@ -72,11 +72,11 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
 test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) => {
   const apiFile = {
     bucket: undefined,
-    key: undefined,
-    fileName: cryptoRandomString({ length: 3 }),
-    filename: 's3://cumulus-test-sandbox-private/somekey',
-    checksumType: 'md5',
     checksum: 'bogus-value',
+    checksumType: 'md5',
+    filename: 's3://cumulus-test-sandbox-private/somekey',
+    fileName: cryptoRandomString({ length: 3 }),
+    key: undefined,
     size: 100,
     source: 'fake-source',
   };
@@ -86,11 +86,11 @@ test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) =
       {
         ...apiFile,
         bucket: 'cumulus-test-sandbox-private',
-        key: 'somekey',
         checksum_type: apiFile.checksumType,
         checksum_value: apiFile.checksum,
         file_name: apiFile.fileName,
         file_size: apiFile.size,
+        key: 'somekey',
         path: undefined,
       },
       apiFileOmitKeys

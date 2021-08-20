@@ -20,14 +20,14 @@ export const translatePostgresFileToApiFile = (
   filePgRecord: PostgresFileRecord
 ): Omit<ApiFile, 'granuleId'> => ({
   bucket: filePgRecord.bucket,
-  key: filePgRecord.key,
-  checksumType: filePgRecord.checksum_type,
   checksum: filePgRecord.checksum_value,
-  fileName: filePgRecord.file_name,
-  size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
-  path: filePgRecord.path,
-  source: filePgRecord.source,
+  checksumType: filePgRecord.checksum_type,
   createdAt: filePgRecord.created_at,
+  fileName: filePgRecord.file_name,
+  key: filePgRecord.key,
+  path: filePgRecord.path,
+  size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
+  source: filePgRecord.source,
   updatedAt: filePgRecord.updated_at,
 });
 

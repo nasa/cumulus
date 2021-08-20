@@ -62,31 +62,31 @@ export const translatePostgresGranuleToApiGranule = async (
   }
 
   const apiGranule = removeNilProperties({
-    granuleId: granulePgRecord.granule_id,
-    status: granulePgRecord.status as GranuleStatus,
-    collectionId: constructCollectionId(collection.name, collection.version),
-    published: granulePgRecord.published,
-    duration: granulePgRecord.duration,
-    timeToArchive: granulePgRecord.time_to_archive,
-    timeToPreprocess: granulePgRecord.time_to_process,
-    productVolume: granulePgRecord.product_volume
-      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
-    error: granulePgRecord.error,
-    cmrLink: granulePgRecord.cmr_link,
-    pdrName: pdr?.name,
-    provider: provider?.name,
-    queryFields: granulePgRecord.query_fields,
     beginningDateTime: granulePgRecord.beginning_date_time?.getTime().toString(),
+    cmrLink: granulePgRecord.cmr_link,
+    collectionId: constructCollectionId(collection.name, collection.version),
+    createdAt: granulePgRecord.created_at?.getTime().toString(),
+    duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
+    error: granulePgRecord.error,
+    executions: executionArns.map((e) => e.arn),
+    files: files.map((file) => translatePostgresFileToApiFile(file)),
+    granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime().toString(),
+    pdrName: pdr?.name,
     processingEndDateTime: granulePgRecord.processing_end_date_time?.getTime().toString(),
     processingStartDateTime: granulePgRecord.processing_start_date_time?.getTime().toString(),
     productionDateTime: granulePgRecord.production_date_time?.getTime().toString(),
+    productVolume: granulePgRecord.product_volume
+      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
+    provider: provider?.name,
+    published: granulePgRecord.published,
+    queryFields: granulePgRecord.query_fields,
+    status: granulePgRecord.status as GranuleStatus,
     timestamp: granulePgRecord.timestamp?.getTime().toString(),
-    createdAt: granulePgRecord.created_at?.getTime().toString(),
+    timeToArchive: granulePgRecord.time_to_archive,
+    timeToPreprocess: granulePgRecord.time_to_process,
     updatedAt: granulePgRecord.updated_at?.getTime().toString(),
-    files: files.map((file) => translatePostgresFileToApiFile(file)),
-    executions: executionArns.map((e) => e.arn),
   });
 
   return apiGranule as ApiGranule;
