@@ -31,6 +31,11 @@
       "type": "string",
       "description": "The api distribution endpoint"
     },
+    "etags": {
+      "type": "object",
+      "description": "map of s3URIs to ETags",
+      "default": {}
+    },
     "cmrGranuleUrlType": {
       "type": "string",
       "description": "The type of URL to add to the Online Access URLs in the CMR file. 'distribution' to point to the distribution API, 's3' to put in the S3 link, and 'none' to not add Online Access URLs for the granules.",

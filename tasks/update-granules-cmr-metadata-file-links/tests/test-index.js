@@ -15,7 +15,6 @@ const {
 const {
   randomId, randomString, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
-const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
@@ -46,6 +45,17 @@ function buildPayload(t) {
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
+
+  const updatedETagConfigObject = {};
+  Object.keys(newPayload.config.etags).forEach((k) => {
+    const ETag = newPayload.config.etags[k];
+    const newURI = buildS3Uri(
+      t.context.stagingBucket,
+      parseS3Uri(k).Key
+    );
+    updatedETagConfigObject[newURI] = ETag;
+  });
+  newPayload.config.etags = updatedETagConfigObject;
 
   newPayload.input.granules.forEach((gran) => {
     gran.files.forEach((file) => {
@@ -99,7 +109,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should add etag to each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
+test.serial('Should map etag for each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
   const newPayload = buildPayload(t);
   await validateConfig(t, newPayload.config);
   await validateInput(t, newPayload.input);
@@ -109,8 +119,7 @@ test.serial('Should add etag to each CMR metadata file by checking that etag is 
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
   await validateOutput(t, output);
 
-  Object.values(output.etags).forEach((g) => Object.values(g)
-    .forEach((etag = '') => t.regex(etag, /"\S+"/)));
+  Object.values(output.etags).forEach((etag) => t.regex(etag, /"\S+"/));
 });
 
 test.serial('Should update existing etag on CMR metadata file', async (t) => {
@@ -118,15 +127,13 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   await validateConfig(t, newPayload.config);
   await validateInput(t, newPayload.input);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
-  const inputGranules = newPayload.input.granules;
-  const granuleWithEtag = inputGranules.find((g) => g.files.some((f) => f.etag));
-  const previousEtag = granuleWithEtag.files.filter(isCMRFile)[0].etag;
+  const ETagS3URI = Object.keys(newPayload.config.etags)[0];
+  const previousEtag = newPayload.config.etags[ETagS3URI];
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
   await validateOutput(t, output);
-  const updatedGranule = output.granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
-  const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
+  const newEtag = output.etags[ETagS3URI];
   t.not(newEtag, previousEtag);
 });
 

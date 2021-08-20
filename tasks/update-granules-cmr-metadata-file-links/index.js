@@ -1,10 +1,10 @@
 'use strict';
 
-const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
 
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -14,6 +14,35 @@ const {
   granulesToCmrFileObjects,
   updateCMRMetadata,
 } = require('@cumulus/cmrjs');
+
+/**
+ * Add ETags to file objects as some downstream functions expect this structure.
+ *
+ * @param {Object} granule - input granule object
+ * @param {Object} etags - map of s3URIs and ETags
+ * @returns {Object} - updated granule object
+ */
+const addEtagsToFileObjects = (granule, etags) => {
+  granule.files.forEach((file) => {
+    const fileURI = buildS3Uri(file.bucket, file.key);
+    // eslint-disable-next-line no-param-reassign
+    if (etags[fileURI]) file.etag = etags[fileURI];
+  });
+  return granule;
+};
+
+/**
+ * Remove ETags to match output schema
+ *
+ * @param {Object} granule - output granule object
+ * @returns {undefined}
+ */
+const removeEtagsFromFileObjects = (granule) => {
+  granule.files.filter(isCMRFile).forEach((file) => {
+    // eslint-disable-next-line no-param-reassign
+    delete file.etag;
+  });
+};
 
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
@@ -55,35 +84,18 @@ async function updateEachCmrFileAccessURLs(
 }
 
 /**
- * Adds etag values to the specified granules' CMR files.
+ * Maps etag values from the specified granules' CMR files.
  *
- * @param {Object} granulesByGranuleId - mapping of granule IDs to granules,
- *    each containing a list of `files`
  * @param {Object[]} cmrFiles - array of CMR file objects with `filename` and
  *    `etag` properties
  * @returns {Object} granule mapping identical to input granule mapping, but
  *    with CMR file objects updated with the `etag` values supplied via the
  *    array of CMR file objects, matched by `filename`
  */
-function mapCmrFileEtags(granulesByGranuleId, cmrFiles) {
-  const etagsByFilename = Object.fromEntries(cmrFiles
-    .map(({ key, etag }) => [key, etag]));
-  // mapEtag maps filename to etag: { filename: etag }
-  const mapEtag = (file) => {
-    // eslint-disable-next-line no-param-reassign
-    delete file.etag;
-    return { [path.basename(file.key)]: etagsByFilename[file.key] };
-  };
-  // mapEtags combines mapEtag return values into a single object for each granule
-  const mapEtags = (files) => files.filter(isCMRFile).map(mapEtag).reduce(
-    (granuleMap, mappedEtag) => Object.assign(mappedEtag, granuleMap),
-    {}
+function mapCmrFileEtags(cmrFiles) {
+  return Object.fromEntries(
+    cmrFiles.map(({ bucket, key, etag }) => [buildS3Uri(bucket, key), etag])
   );
-
-  return Object.values(granulesByGranuleId).reduce((map, granule) => ({
-    ...map,
-    [granule.granuleId]: mapEtags(granule.files),
-  }), {});
 }
 
 async function updateGranulesCmrMetadataFileLinks(event) {
@@ -94,7 +106,8 @@ async function updateGranulesCmrMetadataFileLinks(event) {
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
 
-  const granules = event.input.granules;
+  const incomingETags = event.config.etags;
+  const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
 
@@ -108,11 +121,14 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     distributionBucketMap
   );
 
-  // Transfer etag info to granules' CMR files
-
-  const etags = mapCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
-
-  return { granules: Object.values(granulesByGranuleId), etags };
+  // Map etag info from granules' CMR files
+  const updatedCmrETags = mapCmrFileEtags(updatedCmrFiles);
+  const outputGranules = Object.values(granulesByGranuleId);
+  outputGranules.forEach(removeEtagsFromFileObjects);
+  return {
+    granules: outputGranules,
+    etags: { ...incomingETags, ...updatedCmrETags },
+  };
 }
 
 /**
