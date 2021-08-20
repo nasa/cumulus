@@ -3,6 +3,7 @@ import Knex from 'Knex';
 import { tableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
 
+// TODO: make suport an array of desired granule columns
 export const getFilesAndGranuleIdQuery = ({
   knex,
   searchParams,
