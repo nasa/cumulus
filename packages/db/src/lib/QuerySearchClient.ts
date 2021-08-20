@@ -2,17 +2,17 @@ import Knex from 'knex';
 
 import { BaseRecord } from '../types/base';
 
-type QueryFnParams<T> = {
-  knex: Knex,
-  searchParams: Partial<T>,
-  sortColumns: (keyof T)[]
-  limit?: number
-};
-
-type QueryFn<T> = (params: QueryFnParams<T>) => Promise<T[]>;
+// type QueryFnParams<T> = {
+//   knex: Knex,
+//   searchParams: Partial<T>,
+//   sortColumns: (keyof T)[]
+//   limit?: number
+// };
+// type QueryFn<T> = (params: QueryFnParams<T>) => Promise<T[]>;
 
 class QuerySearchClient<RecordType extends BaseRecord> {
-  readonly queryFn: QueryFn<RecordType>;
+  // readonly queryFn: QueryFn<RecordType>;
+  readonly query: Knex.QueryBuilder;
   readonly knex: Knex;
   readonly searchParams: Partial<RecordType>;
   readonly sortColumns: (keyof RecordType)[];
@@ -20,7 +20,8 @@ class QuerySearchClient<RecordType extends BaseRecord> {
   records: RecordType[];
 
   constructor(
-    queryFn: QueryFn<RecordType>,
+    // queryFn: QueryFn<RecordType>,
+    query: Knex.QueryBuilder,
     {
       knex,
       searchParams,
@@ -32,7 +33,8 @@ class QuerySearchClient<RecordType extends BaseRecord> {
     }
   ) {
     this.knex = knex;
-    this.queryFn = queryFn;
+    // this.queryFn = queryFn;
+    this.query = query;
     this.searchParams = searchParams;
     this.sortColumns = sortColumns;
     this.offset = 0;
@@ -46,11 +48,7 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @throws
    */
   private async fetchRecords() {
-    this.records = await this.queryFn({
-      knex: this.knex,
-      searchParams: this.searchParams,
-      sortColumns: this.sortColumns,
-    });
+    this.records = await this.query;
   }
 
   async hasNextRecord() {

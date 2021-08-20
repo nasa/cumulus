@@ -7,14 +7,14 @@ export const getFilesAndGranuleIdQuery = ({
   knex,
   searchParams,
   sortColumns,
-  limit = 10,
+  limit,
 }: {
   knex: Knex,
   searchParams: Partial<PostgresFileRecord>,
   sortColumns: (keyof PostgresFileRecord)[]
-  limit: number
-}) =>
-  knex(tableNames.files)
+  limit?: number
+}) => {
+  const query = knex(tableNames.files)
     .select(`${tableNames.files}.*`, `${tableNames.granules}.granule_id`)
     .join(
       tableNames.granules,
@@ -23,5 +23,9 @@ export const getFilesAndGranuleIdQuery = ({
       `${tableNames.granules}.cumulus_id`
     )
     .where(searchParams)
-    .orderBy(sortColumns)
-    .limit(limit);
+    .orderBy(sortColumns);
+  if (limit) {
+    query.limit(limit);
+  }
+  return query;
+};

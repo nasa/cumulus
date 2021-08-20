@@ -107,6 +107,9 @@ export {
 export {
   PgSearchClient,
 } from './lib/PgSearchClient';
+export {
+  QuerySearchClient,
+} from './lib/QuerySearchClient';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
