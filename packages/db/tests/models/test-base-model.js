@@ -122,7 +122,7 @@ test('BasePgModel.getByOffset() returns correct record', async (t) => {
   );
 });
 
-test('BasePgModel.getByOffset() throws error when record is not found', async (t) => {
+test('BasePgModel.getByOffset() throws RecordDoesNotExist error when record is not found', async (t) => {
   const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
