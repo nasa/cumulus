@@ -552,7 +552,7 @@ test('writeRecords() discards an out of order message that is older than an exis
   );
 });
 
-test.only('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -579,7 +579,6 @@ test.only('writeRecords() discards an out of order message that has an older sta
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
-  console.log(await granulePgModel.get(testKnex, { granule_id: granuleId }));
   t.is('completed', (await granulePgModel.get(testKnex, { granule_id: granuleId })).status);
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });
