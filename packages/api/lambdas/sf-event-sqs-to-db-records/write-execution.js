@@ -141,6 +141,7 @@ const writeExecution = async ({
   updatedAt = Date.now(),
   esClient,
 }) => {
+  let id;
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   await knex.transaction(async (trx) => {
     const [executionCumulusId] = await writeExecutionViaTransaction({
@@ -158,8 +159,10 @@ const writeExecution = async ({
       esClient,
     });
     await publishExecutionSnsMessage(executionApiRecord);
+    id = executionCumulusId;
     return executionCumulusId;
   });
+  return id;
 };
 
 module.exports = {
