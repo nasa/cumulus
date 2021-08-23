@@ -4,6 +4,7 @@ const test = require('ava');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
+const { fakeExecutionFactoryV2 } = require('../../lib/testUtils');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
@@ -181,6 +182,39 @@ test.serial('_getMutableFieldNames() returns correct fields for completed status
   const updateFields = executionModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
+});
+
+test('storeExecutionRecord() can be used to create a new execution', async (t) => {
+  const { executionModel } = t.context;
+  const execution = fakeExecutionFactoryV2();
+  await executionModel.storeExecutionRecord(execution);
+
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.is(fetchedItem.status, execution.status);
+});
+
+test('storeExecutionRecord() can be used to update an execution', async (t) => {
+  const { executionModel } = t.context;
+  const execution = fakeExecutionFactoryV2({
+    asyncOperationId: '1',
+    status: 'running',
+  });
+
+  await executionModel.storeExecutionRecord(execution);
+
+  const newPayload = { foo: 'bar' };
+  const updatedExecution = {
+    ...execution,
+    asyncOperationId: '2',
+    originalPayload: newPayload,
+    status: 'completed',
+  };
+
+  await executionModel.storeExecutionRecord(updatedExecution);
+
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(fetchedItem.originalPayload, newPayload);
+  t.is(fetchedItem.asyncOperationId, '2');
 });
 
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {

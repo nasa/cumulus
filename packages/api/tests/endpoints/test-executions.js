@@ -15,12 +15,12 @@ const {
   CollectionPgModel,
   destroyLocalTestDb,
   ExecutionPgModel,
-  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
+  translateApiAsyncOperationToPostgresAsyncOperation,
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
   upsertGranuleWithExecutionJoinRecord,
@@ -168,14 +168,17 @@ test.before(async (t) => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // Create AsyncOperation in Dynamo and Postgres
-  const testAsyncOperation = fakeAsyncOperationFactory({ id: uuidv4() });
+  const testAsyncOperation = fakeAsyncOperationFactory({
+    id: uuidv4(),
+    output: JSON.stringify({ test: randomId('output') }),
+  });
   t.context.testAsyncOperation = await asyncOperationModel.create(
     testAsyncOperation
   );
 
-  const testPgAsyncOperation = fakeAsyncOperationRecordFactory({
-    id: t.context.testAsyncOperation.id,
-  });
+  const testPgAsyncOperation = translateApiAsyncOperationToPostgresAsyncOperation(
+    t.context.testAsyncOperation
+  );
 
   [t.context.asyncOperationCumulusId] = await asyncOperationPgModel.create(
     knex,
@@ -834,6 +837,11 @@ test.serial('POST an api execute record creates a new execution in Dynamo and PG
     parentArn: t.context.fakeApiExecutions[1].arn,
   });
 
+  const expectedPgRecord = await translateApiExecutionToPostgresExecution(
+    newExecution,
+    t.context.knex
+  );
+
   await request(app)
     .post('/executions')
     .send(newExecution)
@@ -845,7 +853,7 @@ test.serial('POST an api execute record creates a new execution in Dynamo and PG
     arn: newExecution.arn,
   });
 
-  const executionPgRecord = await executionPgModel.get(
+  const fetchedPgRecord = await executionPgModel.get(
     t.context.knex,
     {
       arn: newExecution.arn,
@@ -856,10 +864,56 @@ test.serial('POST an api execute record creates a new execution in Dynamo and PG
   t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
 
   // PG and Dynamo records have the same timestamps
-  t.is(executionPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(executionPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 
-  t.is(executionPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.truthy(fetchedPgRecord.cumulus_id);
+  t.truthy(fetchedPgRecord.async_operation_cumulus_id);
+  t.truthy(fetchedPgRecord.collection_cumulus_id);
+  t.truthy(fetchedPgRecord.parent_cumulus_id);
+
+  const omitList = ['createdAt', 'updatedAt', 'created_at', 'updated_at', 'cumulus_id'];
+  t.deepEqual(
+    omit(fetchedDynamoRecord, omitList),
+    omit(newExecution, omitList)
+  );
+  t.deepEqual(
+    omit(fetchedPgRecord, omitList),
+    omit(expectedPgRecord, omitList)
+  );
+});
+
+test.serial('POST an api execution record throws error when "arn" is not provided', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+  delete newExecution.arn;
+
+  const response = await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const expectedErrorMessage = 'Field arn is missing';
+  t.truthy(response.body.message.match(expectedErrorMessage));
+});
+
+test.serial('POST an api execution record throws error when the provided execution already exists', async (t) => {
+  const existingArn = t.context.fakeApiExecutions[1].arn;
+  const newExecution = fakeExecutionFactoryV2({
+    arn: existingArn,
+  });
+
+  const response = await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
+
+  const expectedErrorMessage = `A record already exists for ${newExecution.arn}`;
+  t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
 test.serial('POST an api execution record with non-existing asyncOperation throws error', async (t) => {
@@ -876,10 +930,8 @@ test.serial('POST an api execution record with non-existing asyncOperation throw
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  console.log(response.body.message);
-  const re = `Record in async_operations .*${newExecution.asyncOperationId}.* does not exist`;
-  console.log(re);
-  t.truthy(response.body.message.match(re));
+  const expectedErrorMessage = `Record in async_operations .*${newExecution.asyncOperationId}.* does not exist`;
+  t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
 test.serial('POST an api execution record with non-existing collectionId throws error', async (t) => {
@@ -896,10 +948,8 @@ test.serial('POST an api execution record with non-existing collectionId throws 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  console.log(response.body.message);
-  const re = 'Record in collections with identifiers .* does not exist';
-  console.log(re);
-  t.truthy(response.body.message.match(re));
+  const expectedErrorMessage = 'Record in collections with identifiers .* does not exist';
+  t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
 test.serial('POST an api execution record with non-existing parentArn still creates a new execution', async (t) => {
@@ -920,13 +970,13 @@ test.serial('POST an api execution record with non-existing parentArn still crea
     arn: newExecution.arn,
   });
 
-  const executionPgRecord = await executionPgModel.get(
+  const fetchedPgRecord = await executionPgModel.get(
     t.context.knex,
     {
       arn: newExecution.arn,
     }
   );
 
-  t.is(executionPgRecord.arn, fetchedDynamoRecord.arn);
-  t.falsy(executionPgRecord.parent_cumulus_id);
+  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.falsy(fetchedPgRecord.parent_cumulus_id);
 });

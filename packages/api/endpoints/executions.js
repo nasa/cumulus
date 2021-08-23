@@ -20,10 +20,11 @@ const {
 const models = require('../models');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
-const { writeExecutionApiRecord } = require('../lib/writeRecords/write-execution');
+const { writeExecutionRecordsFromApi } = require('../lib/writeRecords/write-execution');
 const { validateGranuleExecutionRequest } = require('../lib/request');
 
-const log = new Logger({ sender: '@cumulus/api/collections' });
+const log = new Logger({ sender: '@cumulus/api/executions' });
+
 /**
  * create an execution
  *
@@ -52,7 +53,7 @@ async function create(req, res) {
   execution.createdAt = Date.now();
 
   try {
-    await writeExecutionApiRecord({ record: execution, knex });
+    await writeExecutionRecordsFromApi({ record: execution, knex });
 
     if (inTestMode()) {
       await addToLocalES(execution, indexExecution);
