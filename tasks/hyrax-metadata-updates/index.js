@@ -4,7 +4,6 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
 const { promisify } = require('util');
 
-const assoc = require('lodash/fp/assoc');
 const get = require('lodash/get');
 const cloneDeep = require('lodash/cloneDeep');
 
@@ -13,11 +12,14 @@ const {
 } = require('@cumulus/cmr-client');
 
 const {
+  addEtagsToFileObjects,
   isECHO10File,
   isUMMGFile,
   isCMRFile,
   generateEcho10XMLString,
   getCmrSettings,
+  getFilename,
+  removeEtagsFromFileObjects,
 } = require('@cumulus/cmrjs/cmr-utils');
 
 const { validateUMMG } = require('@cumulus/cmr-client/UmmUtils');
@@ -29,8 +31,8 @@ const {
   s3GetObjectTagging,
   s3PutObject,
   s3TagSetToQueryString,
-  parseS3Uri,
   waitForObject,
+  buildS3Uri,
 } = require('@cumulus/aws-client/S3');
 
 const xml2js = require('xml2js');
@@ -261,6 +263,8 @@ async function getMetadataObject(metadataFileName, metadata) {
  *    with a hyrax URL
  */
 const updateGranule = (config) => async (granule) => {
+  const { etags } = config;
+  addEtagsToFileObjects(granule, etags);
   // Read in the metadata file
   const metadataFile = granule.files.find(isCMRFile);
   // If there is no metadata file, error out.
@@ -269,8 +273,9 @@ const updateGranule = (config) => async (granule) => {
       `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}`
     );
   }
-  const { Bucket, Key } = parseS3Uri(metadataFile.filename);
-  const etag = metadataFile.etag;
+  const { bucket: Bucket, key: Key } = metadataFile;
+  const metadataFileName = getFilename(metadataFile);
+  const etag = etags[buildS3Uri(Bucket, Key)];
   const params = etag ? { Bucket, Key, IfMatch: etag } : { Bucket, Key };
   const metadataResult = await waitForObject(s3(), params, { retries: 5 });
 
@@ -278,15 +283,15 @@ const updateGranule = (config) => async (granule) => {
 
   // Extract the metadata file object
   const metadata = metadataResult.Body.toString();
-  const { metadataObject, isUmmG } = await getMetadataObject(metadataFile.name, metadata);
+  const { metadataObject, isUmmG } = await getMetadataObject(metadataFileName, metadata);
   // Add OPeNDAP url
   const hyraxUrl = await generateHyraxUrl(config, metadataObject, isUmmG);
   const updatedMetadata = addHyraxUrl(metadataObject, isUmmG, hyraxUrl);
   // Validate updated metadata via CMR
   if (isUmmG) {
-    await validateUMMG(JSON.parse(updatedMetadata), metadataFile.name, config.cmr.provider);
+    await validateUMMG(JSON.parse(updatedMetadata), metadataFileName, config.cmr.provider);
   } else {
-    await validate('granule', updatedMetadata, metadataFile.name, config.cmr.provider);
+    await validate('granule', updatedMetadata, metadataFileName, config.cmr.provider);
   }
   // Write back out to S3 in the same location
   const { ETag: newEtag } = await s3PutObject({
@@ -297,11 +302,12 @@ const updateGranule = (config) => async (granule) => {
     Tagging: s3TagSetToQueryString(tags.TagSet),
   });
 
+  removeEtagsFromFileObjects(granule);
   return {
-    ...granule,
-    files: granule.files.map(
-      (file) => (file === metadataFile ? assoc('etag', newEtag, file) : file)
-    ),
+    granule,
+    etags: {
+      [buildS3Uri(Bucket, Key)]: newEtag,
+    },
   };
 };
 
@@ -312,8 +318,12 @@ const updateGranule = (config) => async (granule) => {
  * @returns {Object} the granules
  */
 async function hyraxMetadataUpdate({ config, input }) {
+  const outputs = await Promise.all(input.granules.map(updateGranule(config)));
   return {
-    granules: await Promise.all(input.granules.map(updateGranule(config))),
+    granules: outputs.map((o) => o.granule),
+    etags: {
+      ...outputs.reduce((etags, o) => ({ ...etags, ...(o.etags) }), config.etags),
+    },
   };
 }
 
