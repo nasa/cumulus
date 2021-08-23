@@ -155,9 +155,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   /**
    * Get cumulus_id column value for multiple records in Postgres
    *
-   * @param {Knex | Knex.Transaction} knexOrTransaction -
-   *  DB client or transaction
-   * @param {Array<keyof RecordType>} columnNames - column names for whereIn query
+   * @param {Knex | Knex.Transaction} knexOrTransaction
+   *   DB client or transaction
+   * @param {Array<string>} columnNames - column names for whereIn query
    * @param {Array<string>} values - record values for whereIn query
    * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
    */

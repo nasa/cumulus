@@ -105,9 +105,6 @@ export {
 } from './lib/granule';
 
 export {
-  PgSearchClient,
-} from './lib/PgSearchClient';
-export {
   QuerySearchClient,
 } from './lib/QuerySearchClient';
 

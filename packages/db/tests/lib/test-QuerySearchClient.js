@@ -71,7 +71,7 @@ const createFileRecords = async ({
   return records;
 };
 
-test('QuerySearchClient.getNextRecord() returns next record from current set of results correctly', async (t) => {
+test('QuerySearchClient.shift() returns next record from current set of results correctly', async (t) => {
   const { knex, bucket, testGranule } = t.context;
 
   const records = await createFileRecords(t.context, 2);
@@ -87,7 +87,7 @@ test('QuerySearchClient.getNextRecord() returns next record from current set of 
     5
   );
   t.like(
-    await querySearchClient.getNextRecord(),
+    await querySearchClient.shift(),
     {
       ...records[0],
       granule_cumulus_id: Number.parseInt(records[0].granule_cumulus_id, 10),
@@ -95,7 +95,7 @@ test('QuerySearchClient.getNextRecord() returns next record from current set of 
     }
   );
   t.like(
-    await querySearchClient.getNextRecord(),
+    await querySearchClient.shift(),
     {
       ...records[1],
       granule_cumulus_id: Number.parseInt(records[1].granule_cumulus_id, 10),
@@ -104,7 +104,7 @@ test('QuerySearchClient.getNextRecord() returns next record from current set of 
   );
 });
 
-test('QuerySearchClient.getNextRecord() returns next record if next record must be fetched', async (t) => {
+test('QuerySearchClient.shift() returns next record if next record must be fetched', async (t) => {
   const { knex, bucket, testGranule } = t.context;
 
   const records = await createFileRecords(t.context, 2);
@@ -123,7 +123,7 @@ test('QuerySearchClient.getNextRecord() returns next record if next record must 
   const queryLimitSpy = sinon.spy(query, 'limit');
 
   t.like(
-    await querySearchClient.getNextRecord(),
+    await querySearchClient.shift(),
     {
       ...records[0],
       granule_cumulus_id: Number.parseInt(records[0].granule_cumulus_id, 10),
@@ -131,7 +131,7 @@ test('QuerySearchClient.getNextRecord() returns next record if next record must 
     }
   );
   t.like(
-    await querySearchClient.getNextRecord(),
+    await querySearchClient.shift(),
     {
       ...records[1],
       granule_cumulus_id: Number.parseInt(records[1].granule_cumulus_id, 10),
@@ -142,7 +142,7 @@ test('QuerySearchClient.getNextRecord() returns next record if next record must 
   t.is(queryLimitSpy.callCount, 2);
 });
 
-test('QuerySearchClient.hasNextRecord() correctly returns true if next record exists in fetched results', async (t) => {
+test('QuerySearchClient.peek() correctly returns true if next record exists in fetched results', async (t) => {
   const { knex, bucket } = t.context;
 
   await createFileRecords(t.context, 1);
@@ -157,12 +157,12 @@ test('QuerySearchClient.hasNextRecord() correctly returns true if next record ex
     query,
     1
   );
-  t.true(
-    await fileSearchClient.hasNextRecord()
+  t.truthy(
+    await fileSearchClient.peek()
   );
 });
 
-test('QuerySearchClient.hasNextRecord() correctly returns true if next record must be fetched', async (t) => {
+test('QuerySearchClient.peek() correctly returns true if next record must be fetched', async (t) => {
   const { knex, bucket } = t.context;
 
   await createFileRecords(t.context, 2);
@@ -180,12 +180,12 @@ test('QuerySearchClient.hasNextRecord() correctly returns true if next record mu
     1
   );
 
-  t.true(
-    await fileSearchClient.hasNextRecord()
+  t.truthy(
+    await fileSearchClient.peek()
   );
-  await fileSearchClient.getNextRecord();
-  t.true(
-    await fileSearchClient.hasNextRecord()
+  await fileSearchClient.shift();
+  t.truthy(
+    await fileSearchClient.peek()
   );
   t.is(queryOffsetSpy.callCount, 2);
   t.is(queryOffsetSpy.getCall(0).args[0], 0);
@@ -195,7 +195,7 @@ test('QuerySearchClient.hasNextRecord() correctly returns true if next record mu
   t.is(queryLimitSpy.getCall(1).args[0], 1);
 });
 
-test('QuerySearchClient.hasNextRecord() correctly returns false if next record does not exist in fetched results', async (t) => {
+test('QuerySearchClient.peek() correctly returns false if next record does not exist in fetched results', async (t) => {
   const { knex, bucket } = t.context;
 
   const query = getFilesAndGranuleInfoQuery({
@@ -208,8 +208,8 @@ test('QuerySearchClient.hasNextRecord() correctly returns false if next record d
     query,
     1
   );
-  t.false(
-    await fileSearchClient.hasNextRecord()
+  t.falsy(
+    await fileSearchClient.peek()
   );
 });
 
@@ -233,8 +233,8 @@ test('QuerySearchClient pages through multiple sets of results', async (t) => {
   );
 
   /* eslint-disable no-await-in-loop */
-  while (await querySearchClient.hasNextRecord()) {
-    await querySearchClient.getNextRecord();
+  while (await querySearchClient.peek()) {
+    await querySearchClient.shift();
   }
   /* eslint-enable no-await-in-loop */
 
