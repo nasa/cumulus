@@ -45,28 +45,36 @@ test.before(async (t) => {
   );
 });
 
+test.beforeEach((t) => {
+  t.context.bucket = cryptoRandomString({ length: 5 });
+});
+
 test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
 });
 
-test('QuerySearchClient.getNextRecord() returns next record correctly', async (t) => {
-  const { filePgModel, granuleCumulusId, knex, testGranule } = t.context;
+const createFileRecords = async ({
+  granuleCumulusId,
+  filePgModel,
+  knex,
+  bucket,
+}, numOfFileRecords) => {
+  const records = [...new Array(numOfFileRecords).keys()]
+    .map((index) => ({
+      bucket,
+      key: `${index}_${cryptoRandomString({ length: 5 })}`,
+      granule_cumulus_id: granuleCumulusId,
+    }));
+  await Promise.all(records.map((record) => filePgModel.create(knex, record)));
+  return records;
+};
 
-  const bucket = cryptoRandomString({ length: 10 });
-  const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
-  await filePgModel.create(knex, {
-    bucket,
-    key: firstKey,
-    granule_cumulus_id: granuleCumulusId,
-  });
-  const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
-  await filePgModel.create(knex, {
-    bucket,
-    key: secondKey,
-    granule_cumulus_id: granuleCumulusId,
-  });
+test('QuerySearchClient.getNextRecord() returns next record from current set of results correctly', async (t) => {
+  const { knex, bucket, testGranule } = t.context;
+
+  const records = await createFileRecords(t.context, 2);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -81,61 +89,62 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
   t.like(
     await querySearchClient.getNextRecord(),
     {
-      bucket,
-      key: firstKey,
+      ...records[0],
+      granule_cumulus_id: Number.parseInt(records[0].granule_cumulus_id, 10),
       granule_id: testGranule.granule_id,
     }
   );
   t.like(
     await querySearchClient.getNextRecord(),
     {
-      bucket,
-      key: secondKey,
+      ...records[1],
+      granule_cumulus_id: Number.parseInt(records[1].granule_cumulus_id, 10),
       granule_id: testGranule.granule_id,
     }
   );
 });
 
-test('QuerySearchClient.getNextRecord() pages through multiple sets of results', async (t) => {
-  const queryLimit = 1;
-  const bucket = cryptoRandomString({ length: 5 });
-  const limitStub = sinon.stub().resolves(
-    [...new Array(queryLimit).keys()].map(() => ({
-      bucket,
-      key: cryptoRandomString({ length: 5 }),
-    }))
-  );
-  const fakeQuery = {
-    offset: sinon.stub().returns({
-      limit: limitStub,
-    }),
-  };
+test('QuerySearchClient pages through multiple sets of results', async (t) => {
+  const { knex, bucket } = t.context;
+
+  await createFileRecords(t.context, 3);
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
+  });
+  const queryOffsetSpy = sinon.spy(query, 'offset');
+  const queryLimitSpy = sinon.spy(query, 'limit');
 
   const querySearchClient = new QuerySearchClient(
-    fakeQuery,
+    query,
     1
   );
-  await querySearchClient.getNextRecord();
-  await querySearchClient.getNextRecord();
 
-  t.is(fakeQuery.offset.callCount, 2);
-  t.is(fakeQuery.offset.getCall(0).args[0], 0);
-  t.is(fakeQuery.offset.getCall(1).args[0], 1);
-  t.is(limitStub.callCount, 2);
-  t.is(limitStub.getCall(0).args[0], 1);
-  t.is(limitStub.getCall(1).args[0], 1);
+  /* eslint-disable no-await-in-loop */
+  while (await querySearchClient.hasNextRecord()) {
+    await querySearchClient.getNextRecord();
+  }
+  /* eslint-enable no-await-in-loop */
+
+  t.is(queryOffsetSpy.callCount, 4);
+  t.is(queryOffsetSpy.getCall(0).args[0], 0);
+  t.is(queryOffsetSpy.getCall(1).args[0], 1);
+  t.is(queryOffsetSpy.getCall(2).args[0], 2);
+  t.is(queryOffsetSpy.getCall(3).args[0], 3);
+  t.is(queryLimitSpy.callCount, 4);
+  t.is(queryLimitSpy.getCall(0).args[0], 1);
+  t.is(queryLimitSpy.getCall(1).args[0], 1);
+  t.is(queryLimitSpy.getCall(2).args[0], 1);
+  t.is(queryLimitSpy.getCall(3).args[0], 1);
 });
 
-test('QuerySearchClient.hasNextRecord() correctly returns true if next record exists', async (t) => {
-  const { knex, filePgModel, granuleCumulusId } = t.context;
+test('QuerySearchClient.hasNextRecord() correctly returns true if next record in fetched results exists', async (t) => {
+  const { knex, bucket } = t.context;
 
-  const bucket = cryptoRandomString({ length: 10 });
-  const key = cryptoRandomString({ length: 10 });
-  await filePgModel.create(knex, {
-    bucket,
-    key,
-    granule_cumulus_id: granuleCumulusId,
-  });
+  await createFileRecords(t.context, 1);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -152,16 +161,10 @@ test('QuerySearchClient.hasNextRecord() correctly returns true if next record ex
   );
 });
 
-test.skip('QuerySearchClient.hasNextRecord() correctly returns true if next record must be fetched', async (t) => {
-  const { knex, filePgModel, granuleCumulusId } = t.context;
+test('QuerySearchClient.hasNextRecord() correctly returns true if next record must be fetched', async (t) => {
+  const { knex, bucket } = t.context;
 
-  const bucket = cryptoRandomString({ length: 10 });
-  const key = cryptoRandomString({ length: 10 });
-  await filePgModel.create(knex, {
-    bucket,
-    key,
-    granule_cumulus_id: granuleCumulusId,
-  });
+  await createFileRecords(t.context, 2);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -169,19 +172,29 @@ test.skip('QuerySearchClient.hasNextRecord() correctly returns true if next reco
     sortColumns: ['bucket', 'key'],
     granuleColumns: ['granule_id'],
   });
+  const queryOffsetSpy = sinon.spy(query, 'offset');
+  const queryLimitSpy = sinon.spy(query, 'limit');
   const fileSearchClient = new QuerySearchClient(
     query,
-    5
+    1
   );
   t.true(
     await fileSearchClient.hasNextRecord()
   );
+  await fileSearchClient.getNextRecord();
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+  t.is(queryOffsetSpy.callCount, 2);
+  t.is(queryOffsetSpy.getCall(0).args[0], 0);
+  t.is(queryOffsetSpy.getCall(1).args[0], 1);
+  t.is(queryLimitSpy.callCount, 2);
+  t.is(queryLimitSpy.getCall(0).args[0], 1);
+  t.is(queryLimitSpy.getCall(1).args[0], 1);
 });
 
-test('QuerySearchClient.hasNextRecord() correctly returns false if next record does not exist', async (t) => {
-  const { knex } = t.context;
-
-  const bucket = cryptoRandomString({ length: 10 });
+test('QuerySearchClient.hasNextRecord() correctly returns false if next record does not exist in current set of results', async (t) => {
+  const { knex, bucket } = t.context;
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
