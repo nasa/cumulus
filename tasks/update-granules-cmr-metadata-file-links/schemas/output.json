@@ -3,6 +3,10 @@
   "description": "Describes the output produced by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "properties": {
+    "etags": {
+      "description": "updated map of s3URIs to ETags",
+      "type": "object"
+    },
     "granules": {
       "type": "array",
       "description": "Array of all granules",

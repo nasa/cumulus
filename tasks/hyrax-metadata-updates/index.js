@@ -19,6 +19,7 @@ const {
   generateEcho10XMLString,
   getCmrSettings,
   getFilename,
+  getS3UrlOfFile,
   removeEtagsFromFileObjects,
 } = require('@cumulus/cmrjs/cmr-utils');
 
@@ -32,7 +33,6 @@ const {
   s3PutObject,
   s3TagSetToQueryString,
   waitForObject,
-  buildS3Uri,
 } = require('@cumulus/aws-client/S3');
 
 const xml2js = require('xml2js');
@@ -275,7 +275,7 @@ const updateGranule = (config) => async (granule) => {
   }
   const { bucket: Bucket, key: Key } = metadataFile;
   const metadataFileName = getFilename(metadataFile);
-  const etag = etags[buildS3Uri(Bucket, Key)];
+  const etag = etags[getS3UrlOfFile(metadataFile)];
   const params = etag ? { Bucket, Key, IfMatch: etag } : { Bucket, Key };
   const metadataResult = await waitForObject(s3(), params, { retries: 5 });
 
@@ -306,7 +306,7 @@ const updateGranule = (config) => async (granule) => {
   return {
     granule,
     etags: {
-      [buildS3Uri(Bucket, Key)]: newEtag,
+      [getS3UrlOfFile(metadataFile)]: newEtag,
     },
   };
 };
