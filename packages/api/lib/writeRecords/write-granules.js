@@ -94,6 +94,7 @@ const generateGranuleRecord = async ({
   cmrUtils = CmrUtils,
   timestamp = Date.now(),
   updatedAt = Date.now(),
+  timeToArchive = undefined,
 }) => {
   const {
     granuleId,
@@ -115,7 +116,7 @@ const generateGranuleRecord = async ({
     duration: getWorkflowDuration(workflowStartTime, timestamp),
     product_volume: getGranuleProductVolume(files),
     time_to_process: getGranuleTimeToPreprocess(granule),
-    time_to_archive: getGranuleTimeToArchive(granule),
+    time_to_archive: timeToArchive || getGranuleTimeToArchive(granule),
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     pdr_cumulus_id: pdrCumulusId,
@@ -252,6 +253,7 @@ const _writeGranuleViaTransaction = async ({
   trx,
   updatedAt,
   files,
+  timeToArchive,
 }) => {
   const granuleRecord = await generateGranuleRecord({
     error,
@@ -265,6 +267,7 @@ const _writeGranuleViaTransaction = async ({
     pdrCumulusId,
     processingTimeInfo,
     updatedAt,
+    timeToArchive,
   });
 
   log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
@@ -424,6 +427,7 @@ const _writeGranule = async ({
   provider,
   workflowStartTime,
   workflowStatus,
+  timeToArchive,
   queryFields,
   collectionCumulusId,
   executionCumulusId,
@@ -437,9 +441,8 @@ const _writeGranule = async ({
   updatedAt = Date.now(),
 }) => {
   const files = await _generateFilesFromGranule({ granule, provider });
-  log.debug(`built files ${JSON.stringify(files)}`);
-  let granuleCumulusId;
 
+  let granuleCumulusId;
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writeGranuleViaTransaction({
       granule,
@@ -448,6 +451,7 @@ const _writeGranule = async ({
       provider,
       workflowStartTime,
       workflowStatus,
+      timeToArchive,
       queryFields,
       collectionCumulusId,
       providerCumulusId,
@@ -464,6 +468,7 @@ const _writeGranule = async ({
       collectionId,
       provider,
       workflowStartTime,
+      timeToArchive,
       error,
       pdrName,
       workflowStatus,
@@ -514,26 +519,40 @@ const _writeGranule = async ({
  * @returns {Promise<>}
  */
 const writeGranule = async ({
+  granuleId,
   collectionId,
-  error,
-  executionUrl,
-  granule,
-  granuleModel = new Granule(),
-  pdrCumulusId,
-  pdrName,
-  processingTimeInfo = {},
-  provider,
-  queryFields,
-  workflowStartTime = new Date(),
-  workflowStatus,
+  status,
+  execution = undefined,
+  cmrLink = undefined,
+  published = undefined,
+  pdrName = undefined,
+  provider  = undefined,
+  error = {},
+  createdAt = new Date().toISOString(),
+  timestamp = undefined,
+  updatedAt = new Date().toISOString(),
+  duration = undefined,
+  productVolume = undefined,
+  timeToPreprocess = undefined,
+  timeToArchive = undefined,
+  files = [ ],
+  beginningDateTime = undefined,
+  endingDateTime = undefined,
+  productionDateTime = undefined,
+  lastUpdateDateTime = undefined,
+  processingStartDateTime = undefined,
+  processingEndDateTime = undefined,
 }) => {
+
   try {
     const knex = await getKnexClient();
 
     const collectionNameVersion = deconstructCollectionId(collectionId);
     const collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
     const providerCumulusId = await getProviderCumulusId(provider.id, knex);
-    const executionCumulusId = await getExecutionCumulusId(executionUrl, knex);
+    const executionCumulusId = await getExecutionCumulusId(execution, knex);
+
+
 
     const result = await _writeGranule({
       collectionCumulusId,
@@ -624,25 +643,31 @@ const writeGranules = async ({
   // so that they can succeed/fail independently
 
   const results = await Promise.allSettled(granules.map(
-    (granule) => _writeGranule({
-      collectionId,
-      granule,
-      processingTimeInfo,
-      error,
-      executionUrl,
-      pdrName,
-      provider,
-      workflowStartTime,
-      workflowStatus,
-      queryFields,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
-      knex,
-      granuleModel,
-    })
+    (granule) => {
+      // granules specific data.
+      const timeToArchive = getGranuleTimeToArchive(granule);
+      return _writeGranule({
+        collectionId,
+        granule,
+        processingTimeInfo,
+        error,
+        executionUrl,
+        pdrName,
+        provider,
+        workflowStartTime,
+        workflowStatus,
+        timeToArchive,
+        queryFields,
+        collectionCumulusId,
+        providerCumulusId,
+        executionCumulusId,
+        pdrCumulusId,
+        knex,
+        granuleModel,
+      });
+    }
   ));
+
   log.debug(`results: ${JSON.stringify(results)}`);
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
