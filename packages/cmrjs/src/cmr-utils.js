@@ -1126,6 +1126,7 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
+  getS3UrlOfFile,
   getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
