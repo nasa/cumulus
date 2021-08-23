@@ -48,12 +48,15 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @throws
    */
   private async fetchRecords() {
-    this.records = await this.query;
+    this.records = await (
+      this.query
+        .offset(this.offset)
+    );
   }
 
   async hasNextRecord() {
     if (this.records.length === 0) await this.fetchRecords();
-    return this.records[0];
+    return this.records[0] !== undefined;
   }
 
   async getNextRecord() {

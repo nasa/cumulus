@@ -93,3 +93,47 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     }
   );
 });
+
+test('QuerySearchClient.hasNextRecord() correctly returns true if next record exists', async (t) => {
+  const { knex, filePgModel, granuleCumulusId } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  await filePgModel.create(knex, {
+    bucket,
+    key,
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
+  });
+  const fileSearchClient = new QuerySearchClient(
+    query
+  );
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+});
+
+test('QuerySearchClient.hasNextRecord() correctly returns false if next record does not exist', async (t) => {
+  const { knex } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
+  });
+  const fileSearchClient = new QuerySearchClient(
+    query
+  );
+  t.false(
+    await fileSearchClient.hasNextRecord()
+  );
+});

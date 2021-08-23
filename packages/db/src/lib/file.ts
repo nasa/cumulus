@@ -13,7 +13,7 @@ export const getFilesAndGranuleInfoQuery = ({
 }: {
   knex: Knex,
   searchParams: Partial<PostgresFileRecord>,
-  sortColumns: (keyof PostgresFileRecord)[]
+  sortColumns: (keyof PostgresFileRecord)[],
   granuleColumns: (keyof PostgresGranuleRecord)[],
   limit?: number
 }) => {
