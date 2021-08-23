@@ -95,7 +95,7 @@ const _writeExecutionRecord = ({
   return executionCumulusId;
 });
 
-const writeExecutionRecordsFromMessage = ({
+const writeExecutionRecordFromMessage = ({
   cumulusMessage,
   knex,
   collectionCumulusId,
@@ -115,7 +115,7 @@ const writeExecutionRecordsFromMessage = ({
   return _writeExecutionRecord({ dynamoRecord, postgresRecord, knex, executionModel });
 };
 
-const writeExecutionRecordsFromApi = async ({
+const writeExecutionRecordFromApi = async ({
   record: dynamoRecord,
   knex,
   executionModel = new Execution(),
@@ -127,6 +127,6 @@ const writeExecutionRecordsFromApi = async ({
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
-  writeExecutionRecordsFromMessage,
-  writeExecutionRecordsFromApi,
+  writeExecutionRecordFromMessage,
+  writeExecutionRecordFromApi,
 };

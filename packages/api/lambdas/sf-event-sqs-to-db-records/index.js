@@ -34,7 +34,7 @@ const {
 
 const {
   shouldWriteExecutionToPostgres,
-  writeExecutionRecordsFromMessage,
+  writeExecutionRecordFromMessage,
 } = require('../../lib/writeRecords/write-execution');
 
 const {
@@ -142,7 +142,7 @@ const writeRecords = async ({
     });
   }
 
-  const executionCumulusId = await writeExecutionRecordsFromMessage({
+  const executionCumulusId = await writeExecutionRecordFromMessage({
     cumulusMessage,
     collectionCumulusId,
     asyncOperationCumulusId,
