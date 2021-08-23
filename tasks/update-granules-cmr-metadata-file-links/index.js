@@ -4,45 +4,18 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
 
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const {
+  addEtagsToFileObjects,
   isCMRFile,
   granulesToCmrFileObjects,
+  mapFileEtags,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
 } = require('@cumulus/cmrjs');
-
-/**
- * Add ETags to file objects as some downstream functions expect this structure.
- *
- * @param {Object} granule - input granule object
- * @param {Object} etags - map of s3URIs and ETags
- * @returns {Object} - updated granule object
- */
-const addEtagsToFileObjects = (granule, etags) => {
-  granule.files.forEach((file) => {
-    const fileURI = buildS3Uri(file.bucket, file.key);
-    // eslint-disable-next-line no-param-reassign
-    if (etags[fileURI]) file.etag = etags[fileURI];
-  });
-  return granule;
-};
-
-/**
- * Remove ETags to match output schema
- *
- * @param {Object} granule - output granule object
- * @returns {undefined}
- */
-const removeEtagsFromFileObjects = (granule) => {
-  granule.files.filter(isCMRFile).forEach((file) => {
-    // eslint-disable-next-line no-param-reassign
-    delete file.etag;
-  });
-};
 
 /**
  * Update each of the CMR files' OnlineAccessURL fields to represent the new
@@ -83,21 +56,6 @@ async function updateEachCmrFileAccessURLs(
   }));
 }
 
-/**
- * Maps etag values from the specified granules' CMR files.
- *
- * @param {Object[]} cmrFiles - array of CMR file objects with `filename` and
- *    `etag` properties
- * @returns {Object} granule mapping identical to input granule mapping, but
- *    with CMR file objects updated with the `etag` values supplied via the
- *    array of CMR file objects, matched by `filename`
- */
-function mapCmrFileEtags(cmrFiles) {
-  return Object.fromEntries(
-    cmrFiles.map(({ bucket, key, etag }) => [buildS3Uri(bucket, key), etag])
-  );
-}
-
 async function updateGranulesCmrMetadataFileLinks(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
@@ -122,7 +80,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
   );
 
   // Map etag info from granules' CMR files
-  const updatedCmrETags = mapCmrFileEtags(updatedCmrFiles);
+  const updatedCmrETags = mapFileEtags(updatedCmrFiles);
   const outputGranules = Object.values(granulesByGranuleId);
   outputGranules.forEach(removeEtagsFromFileObjects);
   return {
