@@ -12,9 +12,10 @@ const {
   FilePgModel,
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
+  getKnexClient,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
+const { getCollectionIdFromMessage, deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -48,8 +49,13 @@ const {
   parseException,
 } = require('../utils');
 const Granule = require('../../models/granules');
+const {
+  getCollectionCumulusId,
+  getExecutionCumulusId,
+  getProviderCumulusId,
+} = require('./utils');
 
-const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-granules' });
+const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 /**
  * Generate a Granule record to save to the core database from a Cumulus message
@@ -169,9 +175,9 @@ const _writeFiles = async ({
 }) => await pMap(
   fileRecords,
   async (fileRecord) => {
-    logger.info('About to write file record to PostgreSQL: %j', fileRecord);
+    log.info('About to write file record to PostgreSQL: %j', fileRecord);
     await filePgModel.upsert(knex, fileRecord);
-    logger.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
+    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
   },
   { stopOnError: false }
 );
@@ -261,7 +267,7 @@ const _writeGranuleViaTransaction = async ({
     updatedAt,
   });
 
-  logger.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
+  log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
@@ -276,7 +282,7 @@ const _writeGranuleViaTransaction = async ({
     granuleRecord,
   });
 
-  logger.info(`
+  log.info(`
     Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId}
     to granule record with cumulus_id ${granuleCumulusId} in PostgreSQL
   `);
@@ -324,9 +330,9 @@ const _writeGranuleFiles = async ({
     });
   } catch (error) {
     if (!isEmpty(workflowError)) {
-      logger.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
+      log.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
     }
-    logger.error('Failed writing files to PostgreSQL, updating granule with error', error);
+    log.error('Failed writing files to PostgreSQL, updating granule with error', error);
     const errorObject = {
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
@@ -340,7 +346,7 @@ const _writeGranuleFiles = async ({
           error: errorObject,
         }
       ).catch((updateError) => {
-        logger.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
+        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
         throw updateError;
       });
 
@@ -351,7 +357,7 @@ const _writeGranuleFiles = async ({
           error: errorObject,
         }
       ).catch((updateError) => {
-        logger.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
+        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
         throw updateError;
       });
     });
@@ -392,7 +398,7 @@ const _generateFilesFromGranule = async ({
  * @param {Object} params.provider - Provider object
  * @param {string} params.workflowStatus - Workflow status
  * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
+ *   Cumulus ID for collection referenced in workflow message
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
@@ -431,7 +437,7 @@ const _writeGranule = async ({
   updatedAt = Date.now(),
 }) => {
   const files = await _generateFilesFromGranule({ granule, provider });
-
+  log.debug(`built files ${JSON.stringify(files)}`);
   let granuleCumulusId;
 
   await knex.transaction(async (trx) => {
@@ -479,6 +485,87 @@ const _writeGranule = async ({
 };
 
 /**
+ * Thin wrapper to _writeGranule used by endpoints/granule to create a granule
+ * directly.
+ *
+ * @param {Object} body
+ * @param {string} body.collectionId, - Cumulus collection id "{name}___{version}"
+ * @param {Object} [body.error = {}] - Error object to write
+ * @param {strung} [body.executionUrl = unknown] - Url of execution to associate with this granule.
+ * @param {Object} body.granule - cumulus granule Object
+ * @param {Object} [body.granuleModel = new Granule()] - Only used for testing,
+ *                  do not provide a value in your call.
+ * @param {integer} [body.pdrCumulusId = unknown] - PostgreSQL cumulus_Id of a
+ *                   PDR to associate with the granule.
+ * @param {string} [body.pdrName = unknown] -  Name of pdr to assocate with the granule.
+ * @param {Object} [body.processingTimeInfo = {}]
+ * @param {Object} [body.processingTimeInfo.processingStartDateTime=unknown] - IsoString
+ *                  formatted date represting the beginning of the processing
+ *                  for the granule.
+ * @param {Object} [body.processingTimeInfo.processingStopDateTime=unknown] - IsoString
+ *                  formatted date represting the ending of the processing
+ *                  for the granule.
+ * @param {Object} body.provider - Valid Cumulus message Provider.
+ * @param {Object} [body.queryFields = {}]
+ * @param {number} [body.workflowStartTime = new Date().valueOf()] Workflow
+ *                  start time numeric representation.
+ * @param {string} [body.workflowStatus = "completed"] The workflow status, one
+ *                  of ['running', 'failed', 'completed']
+ * @returns {Promise<>}
+ */
+const writeGranule = async ({
+  collectionId,
+  error,
+  executionUrl,
+  granule,
+  granuleModel = new Granule(),
+  pdrCumulusId,
+  pdrName,
+  processingTimeInfo = {},
+  provider,
+  queryFields,
+  workflowStartTime = new Date(),
+  workflowStatus,
+}) => {
+  try {
+    const knex = await getKnexClient();
+
+    const collectionNameVersion = deconstructCollectionId(collectionId);
+    const collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
+    const providerCumulusId = await getProviderCumulusId(provider.id, knex);
+    const executionCumulusId = await getExecutionCumulusId(executionUrl, knex);
+
+    const result = await _writeGranule({
+      collectionCumulusId,
+      collectionId,
+      error,
+      executionCumulusId,
+      executionUrl,
+      granule,
+      granuleModel,
+      knex,
+      pdrCumulusId,
+      pdrName,
+      processingTimeInfo,
+      provider,
+      providerCumulusId,
+      queryFields,
+      workflowStartTime,
+      workflowStatus,
+    });
+    if (result && result.status === 'rejected') {
+      const theError = new Error(result.reason);
+      log.error('Failed to _writeGranule', theError);
+      throw theError;
+    }
+    return `Wrote Granule ${granule.granuleId}`;
+  } catch (outerError) {
+    log.error('Failed to write granule', outerError);
+    throw error;
+  }
+};
+
+/**
  * Write granules to DynamoDB and PostgreSQL
  *
  * @param {Object} params
@@ -510,7 +597,7 @@ const writeGranules = async ({
   granuleModel = new Granule(),
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
-    logger.info('No granules to write, skipping writeGranules');
+    log.info('No granules to write, skipping writeGranules');
     return undefined;
   }
   if (!collectionCumulusId) {
@@ -519,7 +606,7 @@ const writeGranules = async ({
 
   const granules = getMessageGranules(cumulusMessage);
   const granuleIds = granules.map((granule) => granule.granuleId);
-  logger.info(`process granule IDs ${granuleIds.join(',')}`);
+  log.info(`process granule IDs ${granuleIds.join(',')}`);
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
@@ -535,6 +622,7 @@ const writeGranules = async ({
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
+
   const results = await Promise.allSettled(granules.map(
     (granule) => _writeGranule({
       collectionId,
@@ -555,11 +643,12 @@ const writeGranules = async ({
       granuleModel,
     })
   ));
+  log.debug(`results: ${JSON.stringify(results)}`);
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    logger.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules to Dynamo', aggregateError);
     throw aggregateError;
   }
   return results;
@@ -569,5 +658,6 @@ module.exports = {
   generateFilePgRecord,
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
+  writeGranule,
   writeGranules,
 };

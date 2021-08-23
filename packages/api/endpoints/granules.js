@@ -22,6 +22,7 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const { writeGranule } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
@@ -53,6 +54,26 @@ async function list(req, res) {
   }
 
   return res.send(result);
+}
+
+/**
+ * Create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+async function post(req, res) {
+  let result;
+  const body = req.body;
+  try {
+    result = await writeGranule(body);
+    log.info(result);
+  } catch (error) {
+    log.error('Could not write granule', error);
+    return res.boom.badRequest(error);
+  }
+  return res.json({ result });
 }
 
 /**
@@ -419,7 +440,9 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/', post);
 router.put('/:granuleName', put);
+
 router.post(
   '/bulk',
   validateBulkGranulesRequest,

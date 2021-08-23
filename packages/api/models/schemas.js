@@ -371,7 +371,6 @@ module.exports.granule = {
     'granuleId',
     'collectionId',
     'status',
-    'execution',
     'createdAt',
     'updatedAt',
   ],
