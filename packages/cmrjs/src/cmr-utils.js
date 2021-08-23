@@ -96,13 +96,16 @@ function isCMRFile(fileobject) {
 function granuleToCmrFileObject({ granuleId, files = [] }) {
   return files
     .filter(isCMRFile)
-    .map((file) => ({
-      // Include etag only if file has one
-      ...pick(file, 'etag'),
-      bucket: file.bucket,
-      key: file.key,
-      granuleId,
-    }));
+    .map((file) => {
+      const { Bucket, Key } = parseS3Uri(getS3UrlOfFile(file));
+      return {
+        // Include etag only if file has one
+        ...pick(file, 'etag'),
+        bucket: Bucket,
+        key: Key,
+        granuleId,
+      };
+    });
 }
 
 /**
@@ -110,7 +113,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }) {
  *
  * @param {Array<Object>} granules - granule objects array
  *
- * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules) {
   return granules.flatMap(granuleToCmrFileObject);
@@ -343,6 +346,48 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
     return 'GET DATA VIA DIRECT ACCESS';
   }
   return mappedType;
+}
+
+/**
+ * Add ETags to file objects as some downstream functions expect this structure.
+ *
+ * @param {Object} granule - input granule object
+ * @param {Object} etags - map of s3URIs and ETags
+ * @returns {Object} - updated granule object
+ */
+const addEtagsToFileObjects = (granule, etags) => {
+  granule.files.forEach((file) => {
+    const fileURI = buildS3Uri(file.bucket, file.key);
+    // eslint-disable-next-line no-param-reassign
+    if (etags[fileURI]) file.etag = etags[fileURI];
+  });
+  return granule;
+};
+
+/**
+ * Remove ETags to match output schema
+ *
+ * @param {Object} granule - output granule object
+ * @returns {undefined}
+ */
+const removeEtagsFromFileObjects = (granule) => {
+  granule.files.forEach((file) => {
+    // eslint-disable-next-line no-param-reassign
+    delete file.etag;
+  });
+};
+
+/**
+ * Maps etag values from the specified granules' files.
+ *
+ * @param {Object[]} files - array of file objects with `bucket`, `key` and
+ *    `etag` properties
+ * @returns {Object} mapping of file S3 URIs to etags
+ */
+function mapFileEtags(files) {
+  return Object.fromEntries(
+    files.map(({ bucket, key, etag }) => [buildS3Uri(bucket, key), etag])
+  );
 }
 
 /**
@@ -1019,7 +1064,7 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
   if (cmrFile.length === 0) return {};
 
-  const cmrFilename = cmrFile[0].filename;
+  const cmrFilename = getS3UrlOfFile(cmrFile[0]);
 
   if (isISOFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
@@ -1069,6 +1114,7 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  addEtagsToFileObjects,
   constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
@@ -1087,9 +1133,11 @@ module.exports = {
   isECHO10File,
   isISOFile,
   isUMMGFile,
+  mapFileEtags,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
