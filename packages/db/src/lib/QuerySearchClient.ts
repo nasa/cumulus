@@ -16,12 +16,14 @@ class QuerySearchClient<RecordType extends BaseRecord> {
   // readonly knex: Knex;
   // readonly searchParams: Partial<RecordType>;
   // readonly sortColumns: (keyof RecordType)[];
+  readonly limit: number;
   offset: number;
   records: RecordType[];
 
   constructor(
     // queryFn: QueryFn<RecordType>,
-    query: Knex.QueryBuilder
+    query: Knex.QueryBuilder,
+    limit: number
     // {
     //   knex,
     //   // searchParams,
@@ -35,6 +37,7 @@ class QuerySearchClient<RecordType extends BaseRecord> {
     // this.knex = knex;
     // this.queryFn = queryFn;
     this.query = query;
+    this.limit = limit;
     // this.searchParams = searchParams;
     // this.sortColumns = sortColumns;
     this.offset = 0;
@@ -51,7 +54,9 @@ class QuerySearchClient<RecordType extends BaseRecord> {
     this.records = await (
       this.query
         .offset(this.offset)
+        .limit(this.limit)
     );
+    this.offset += this.limit;
   }
 
   async hasNextRecord() {

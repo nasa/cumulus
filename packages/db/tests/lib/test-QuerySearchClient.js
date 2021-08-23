@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const sinon = require('sinon');
 
 const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
@@ -74,7 +75,8 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
     granuleColumns: ['granule_id'],
   });
   const querySearchClient = new QuerySearchClient(
-    query
+    query,
+    5
   );
   t.like(
     await querySearchClient.getNextRecord(),
@@ -92,6 +94,36 @@ test('QuerySearchClient.getNextRecord() returns next record correctly', async (t
       granule_id: testGranule.granule_id,
     }
   );
+});
+
+test('QuerySearchClient.getNextRecord() pages through multiple sets of results', async (t) => {
+  const queryLimit = 1;
+  const bucket = cryptoRandomString({ length: 5 });
+  const limitStub = sinon.stub().resolves(
+    [...new Array(queryLimit).keys()].map(() => ({
+      bucket,
+      key: cryptoRandomString({ length: 5 }),
+    }))
+  );
+  const fakeQuery = {
+    offset: sinon.stub().returns({
+      limit: limitStub,
+    }),
+  };
+
+  const querySearchClient = new QuerySearchClient(
+    fakeQuery,
+    1
+  );
+  await querySearchClient.getNextRecord();
+  await querySearchClient.getNextRecord();
+
+  t.is(fakeQuery.offset.callCount, 2);
+  t.is(fakeQuery.offset.getCall(0).args[0], 0);
+  t.is(fakeQuery.offset.getCall(1).args[0], 1);
+  t.is(limitStub.callCount, 2);
+  t.is(limitStub.getCall(0).args[0], 1);
+  t.is(limitStub.getCall(1).args[0], 1);
 });
 
 test('QuerySearchClient.hasNextRecord() correctly returns true if next record exists', async (t) => {
@@ -112,7 +144,34 @@ test('QuerySearchClient.hasNextRecord() correctly returns true if next record ex
     granuleColumns: ['granule_id'],
   });
   const fileSearchClient = new QuerySearchClient(
-    query
+    query,
+    5
+  );
+  t.true(
+    await fileSearchClient.hasNextRecord()
+  );
+});
+
+test.skip('QuerySearchClient.hasNextRecord() correctly returns true if next record must be fetched', async (t) => {
+  const { knex, filePgModel, granuleCumulusId } = t.context;
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const key = cryptoRandomString({ length: 10 });
+  await filePgModel.create(knex, {
+    bucket,
+    key,
+    granule_cumulus_id: granuleCumulusId,
+  });
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+    granuleColumns: ['granule_id'],
+  });
+  const fileSearchClient = new QuerySearchClient(
+    query,
+    5
   );
   t.true(
     await fileSearchClient.hasNextRecord()
@@ -131,7 +190,8 @@ test('QuerySearchClient.hasNextRecord() correctly returns false if next record d
     granuleColumns: ['granule_id'],
   });
   const fileSearchClient = new QuerySearchClient(
-    query
+    query,
+    5
   );
   t.false(
     await fileSearchClient.hasNextRecord()
