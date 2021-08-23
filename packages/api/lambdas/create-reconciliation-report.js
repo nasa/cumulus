@@ -4,25 +4,30 @@ const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
 const camelCase = require('lodash/camelCase');
 const moment = require('moment');
-const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+
+// const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
-
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const {
+  getFilesAndGranuleInfoQuery,
+  getKnexClient,
+  QuerySearchClient,
+} = require('@cumulus/db');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
+const Logger = require('@cumulus/logger');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
-const GranuleFilesCache = require('../lib/GranuleFilesCache');
+// const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
@@ -52,15 +57,15 @@ const linkingFilesToGranules = (reportType) => reportType === 'Granule Not Found
  * @param {string} bucket - bucket name
  * @returns {Array<Object>} the files' queue for a given bucket
  */
-const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
-  {
-    TableName: GranuleFilesCache.cacheTableName(),
-    ExpressionAttributeNames: { '#b': 'bucket' },
-    ExpressionAttributeValues: { ':bucket': bucket },
-    FilterExpression: '#b = :bucket',
-  },
-  'scan'
-);
+// const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
+//   {
+//     TableName: GranuleFilesCache.cacheTableName(),
+//     ExpressionAttributeNames: { '#b': 'bucket' },
+//     ExpressionAttributeValues: { ':bucket': bucket },
+//     FilterExpression: '#b = :bucket',
+//   },
+//   'scan'
+// );
 
 /**
  * Checks to see if any of the included reportParams contains a value that
@@ -144,25 +149,39 @@ async function fetchESCollections(recReportParams) {
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
  * @param {Object} recReportParams - input report params.
+ * @param {Knex} knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForBucket(Bucket, recReportParams) {
+async function createReconciliationReportForBucket(Bucket, recReportParams, knex) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
   const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket: Bucket },
+    sortColumns: ['cumulus_id'],
+    granuleColumns: ['granule_id'],
+  });
+  const pgFileSearchClient = new QuerySearchClient(
+    query,
+    100
+  );
 
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
   const okCountByGranule = {};
 
-  let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
-  while (nextS3Object && nextDynamoDbItem) {
+  let [nextS3Object, nextPgItem] = await Promise.all([
+    s3ObjectsQueue.peek(),
+    pgFileSearchClient.peek(),
+  ]);
+  while (nextS3Object && nextPgItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-    const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+    const nextDynamoDbUri = buildS3Uri(Bucket, nextPgItem.key);
 
-    if (linkFilesAndGranules && !okCountByGranule[nextDynamoDbItem.granuleId]) {
-      okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+    if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
+      okCountByGranule[nextPgItem.granule_id] = 0;
     }
 
     if (nextS3Uri < nextDynamoDbUri) {
@@ -171,22 +190,26 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       s3ObjectsQueue.shift();
     } else if (nextS3Uri > nextDynamoDbUri) {
       // Found an item that is only in DynamoDB and not in S3
-      const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
+      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDynamoDb.push({
-        uri: buildS3Uri(Bucket, dynamoDbItem.key),
-        granuleId: dynamoDbItem.granuleId,
+        uri: buildS3Uri(Bucket, pgItem.key),
+        granuleId: pgItem.granule_id,
       });
     } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
       if (linkFilesAndGranules) {
-        okCountByGranule[nextDynamoDbItem.granuleId] += 1;
+        okCountByGranule[nextPgItem.granule_id] += 1;
       }
       s3ObjectsQueue.shift();
-      dynamoDbFilesLister.shift();
+      pgFileSearchClient.shift();
     }
 
-    [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
+    // eslint-disable-next-line no-await-in-loop
+    [nextS3Object, nextPgItem] = await Promise.all([
+      s3ObjectsQueue.peek(),
+      pgFileSearchClient.peek(),
+    ]);
   }
 
   // Add any remaining S3 items to the report
@@ -196,11 +219,11 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   }
 
   // Add any remaining DynamoDB items to the report
-  while (await dynamoDbFilesLister.peek()) { // eslint-disable-line no-await-in-loop
-    const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop
+  while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
+    const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
     onlyInDynamoDb.push({
-      uri: buildS3Uri(Bucket, dynamoDbItem.key),
-      granuleId: dynamoDbItem.granuleId,
+      uri: buildS3Uri(Bucket, pgItem.key),
+      granuleId: pgItem.granule_id,
     });
   }
 
@@ -588,10 +611,11 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
+ * @param {Knex} knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
-async function createReconciliationReport(recReportParams) {
+async function createReconciliationReport(recReportParams, knex) {
   const {
     reportKey,
     stackName,
@@ -639,7 +663,7 @@ async function createReconciliationReport(recReportParams) {
   if (location !== 'CMR') {
     // Create a report for each bucket
     const promisedBucketReports = dataBuckets.map(
-      (bucket) => createReconciliationReportForBucket(bucket, recReportParams)
+      (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
     );
 
     const bucketReports = await Promise.all(promisedBucketReports);
@@ -712,6 +736,9 @@ async function processRequest(params) {
   };
   await reconciliationReportModel.create(reportRecord);
 
+  const env = params.env ? params.env : process.env;
+  const knex = await getKnexClient(env);
+
   try {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
     if (reportType === 'Internal') {
@@ -720,7 +747,7 @@ async function processRequest(params) {
       await createGranuleInventoryReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams);
+      await createReconciliationReport(recReportParams, knex);
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
