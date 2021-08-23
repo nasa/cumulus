@@ -19,6 +19,21 @@ may result in throttling errors if trying to reach the Cumulus API multiple time
 period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
 terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
 The default reserved concurrency value is 8.
+- **CUMULUS-2388**: In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
+  - sync-granule
+  - add-missing-file-checksums
+  - files-to-granules
+  - move-granules
+  - hyrax-metadata-updates
+  - post-to-cmr
+  - lzards-backup
+  The primary focus of the schema updates was to standardize the format of
+  granules, and particularly their files data. The granule `files` object
+  now matches the file schema in the Cumulus database and thus also matches
+  the `files` object produced by the API with use cases like `applyWorkflow`.
+  This includes removal of `name` and `filename` in favor of `bucket` and `key`,
+  removal of certain properties such as `etag` and `duplicate_found` and outputting
+  them as separate objects stored in `meta`.
 
 ### Notable changes
 
