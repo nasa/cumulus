@@ -31,6 +31,7 @@
               "items": {
                 "type": "object",
                 "required": ["bucket", "key"],
+                "additionalProperties": false,
                 "properties": {
                   "bucket": {
                     "description": "Bucket where file is archived in S3",
