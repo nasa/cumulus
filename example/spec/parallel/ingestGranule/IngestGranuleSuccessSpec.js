@@ -324,6 +324,20 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
+  it('publishes a message for a running execution', async () => {
+    if (beforeAllError) throw SetupError;
+    else {
+      const runningExecutionArn = workflowExecutionArn;
+      const runningExecutionName = runningExecutionArn.split(':').pop();
+      const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}.output`;
+      const executionExists = await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: runningExecutionKey,
+      });
+      expect(executionExists).toEqual(true);
+    }
+  });
+
   it('triggers a running PDR record being added to DynamoDB', async () => {
     if (beforeAllError) throw SetupError;
 
