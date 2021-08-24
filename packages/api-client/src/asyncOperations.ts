@@ -1,3 +1,5 @@
+import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
+
 import { invokeApi } from './cumulusApiClient';
 import { InvokeApiFunction, ApiGatewayLambdaHttpProxyResponse } from './types';
 
@@ -10,13 +12,14 @@ import { InvokeApiFunction, ApiGatewayLambdaHttpProxyResponse } from './types';
  * @param {Function} params.callback   - async function to invoke the api lambda
  *                                     that takes a prefix / user payload.  Defaults
  *                                     to cumulusApiClient.invokeApi
- * @returns {Promise<Object>}          - the response from the callback
+ * @returns {Promise<ApiAsyncOperation>}
+ *   async operation parsed from JSON response body from the callback
  */
 export const getAsyncOperation = async (params: {
   prefix: string,
   asyncOperationId: string,
   callback?: InvokeApiFunction
-}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+}): Promise<ApiAsyncOperation> => {
   const { prefix, asyncOperationId, callback = invokeApi } = params;
 
   const response = await callback({
