@@ -41,7 +41,6 @@ const {
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
@@ -362,7 +361,6 @@ test.beforeEach(async (t) => {
 
   await new models.Collection().createTable();
   await new models.Granule().createTable();
-  await GranuleFilesCache.createCacheTable();
   await new models.ReconciliationReport().createTable();
 
   const testCollection = fakeCollectionRecordFactory();
@@ -396,7 +394,6 @@ test.afterEach.always(async (t) => {
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
       new models.Collection().deleteTable(),
       new models.Granule().deleteTable(),
-      GranuleFilesCache.deleteCacheTable(),
       new models.ReconciliationReport().deleteTable(),
     ])
   );

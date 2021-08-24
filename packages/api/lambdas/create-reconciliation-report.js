@@ -5,7 +5,6 @@ const keyBy = require('lodash/keyBy');
 const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 
-// const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -27,7 +26,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
-// const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
@@ -49,23 +47,6 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
  * granules in the report.
  */
 const linkingFilesToGranules = (reportType) => reportType === 'Granule Not Found';
-
-/**
- * return the queue of the files for a given bucket,
- * the items should be ordered by the range key which is the bucket 'key' attribute
- *
- * @param {string} bucket - bucket name
- * @returns {Array<Object>} the files' queue for a given bucket
- */
-// const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
-//   {
-//     TableName: GranuleFilesCache.cacheTableName(),
-//     ExpressionAttributeNames: { '#b': 'bucket' },
-//     ExpressionAttributeValues: { ':bucket': bucket },
-//     FilterExpression: '#b = :bucket',
-//   },
-//   'scan'
-// );
 
 /**
  * Checks to see if any of the included reportParams contains a value that
