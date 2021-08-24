@@ -565,7 +565,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
 
   const results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
 
-  t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2'].sort());
+  t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
 
 test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for single granule', async (t) => {
