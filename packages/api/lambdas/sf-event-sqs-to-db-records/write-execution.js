@@ -160,7 +160,6 @@ const writeExecution = async ({
     });
     await publishExecutionSnsMessage(executionApiRecord);
     id = executionCumulusId;
-    return executionCumulusId;
   });
   return id;
 };
