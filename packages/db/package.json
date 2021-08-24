@@ -29,6 +29,7 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
+    "crypto-random-string": "^3.2.0",
     "@cumulus/aws-client": "9.4.0",
     "@cumulus/common": "9.4.0",
     "@cumulus/errors": "9.4.0",
@@ -40,8 +41,7 @@
     "lodash": "^4.17.20",
     "pg": "^8.3.0",
     "snake-camel": "^1.0.6",
-    "uuid": "8.3.1",
-    "crypto-random-string": "^3.2.0"
+    "uuid": "8.3.1"
   },
   "devDependencies": {
     "@types/uuid": "^8.0.0"
