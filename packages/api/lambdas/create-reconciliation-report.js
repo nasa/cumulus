@@ -159,7 +159,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams, knex
   const query = getFilesAndGranuleInfoQuery({
     knex,
     searchParams: { bucket: Bucket },
-    sortColumns: ['cumulus_id'],
+    sortColumns: ['key'],
     granuleColumns: ['granule_id'],
   });
   const pgFileSearchClient = new QuerySearchClient(

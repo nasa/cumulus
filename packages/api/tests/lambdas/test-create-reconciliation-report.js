@@ -55,7 +55,7 @@ let esIndex;
 let esClient;
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
-const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
+const testDbName = `create_rec_reports_${cryptoRandomString({ length: 10 })}`;
 
 function createDistributionBucketMapFromBuckets(buckets) {
   let bucketMap = {};
@@ -365,18 +365,18 @@ test.beforeEach(async (t) => {
   await new models.ReconciliationReport().createTable();
 
   const testCollection = fakeCollectionRecordFactory();
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
     t.context.knex,
     testCollection
   );
 
-  t.context.testGranule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-  });
-  [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
-    t.context.knex,
-    t.context.testGranule
-  );
+  // t.context.testGranule = fakeGranuleRecordFactory({
+  //   collection_cumulus_id: t.context.collectionCumulusId,
+  // });
+  // [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
+  //   t.context.knex,
+  //   t.context.testGranule
+  // );
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
@@ -455,8 +455,8 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.is(report.reportEndTime, (new Date(endTimestamp)).toISOString());
 });
 
-test.serial.only('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
-  const { filePgModel, granuleCumulusId, knex } = t.context;
+test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
+  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
 
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
@@ -471,17 +471,22 @@ test.serial.only('Generates valid GNF reconciliation report when everything is i
   );
 
   // Create random files
+  const granules = await granulePgModel.insert(
+    knex,
+    range(10).map(() => fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }))
+  );
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusId,
+    granule_cumulus_id: granules[i],
   }));
 
   // Store the files to S3 and DynamoDB
   await Promise.all([
     storeFilesToS3(files),
-    ...files.map((file) => filePgModel.create(knex, file)),
-    // GranuleFilesCache.batchUpdate({ puts: files }),
+    filePgModel.insert(knex, files),
   ]);
 
   // Create collections that are in sync
