@@ -20,5 +20,5 @@ export async function validateChecksumFromStream(
   options: TransformOptions = {}
 ): Promise<boolean> {
   const calculatedSum = await generateChecksumFromStream(algorithm, stream, options);
-  return expectedSum === calculatedSum;
+  return expectedSum.toString() === calculatedSum.toString();
 }
