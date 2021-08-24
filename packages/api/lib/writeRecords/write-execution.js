@@ -26,7 +26,7 @@ const Logger = require('@cumulus/logger');
 const { parseException } = require('../utils');
 const Execution = require('../../models/executions');
 
-const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-execution' });
+const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
 
 const shouldWriteExecutionToPostgres = ({
   messageCollectionNameVersion,

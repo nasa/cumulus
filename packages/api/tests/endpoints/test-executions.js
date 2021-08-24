@@ -220,8 +220,8 @@ test.before(async (t) => {
       omitExecution,
       knex
     );
-    await executionPgModel.create(knex, executionPgRecord);
-    return executionPgRecord;
+    const executionCumulusIds = await executionPgModel.create(knex, executionPgRecord);
+    return { ...executionPgRecord, cumulus_id: executionCumulusIds[0] };
   }));
 
   t.context.fakeApiExecutions = await Promise.all(t.context.fakePGExecutions
@@ -830,7 +830,36 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST an api execute record creates a new execution in Dynamo and PG with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in Dynamo and PG with correct timestamps', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const fetchedDynamoRecord = await executionModel.get({
+    arn: newExecution.arn,
+  });
+
+  const fetchedPgRecord = await executionPgModel.get(
+    t.context.knex,
+    {
+      arn: newExecution.arn,
+    }
+  );
+
+  t.true(fetchedDynamoRecord.createdAt > newExecution.createdAt);
+  t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+});
+
+test.serial('POST /executions creates the expected record', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -860,18 +889,11 @@ test.serial('POST an api execute record creates a new execution in Dynamo and PG
     }
   );
 
-  t.true(fetchedDynamoRecord.createdAt > newExecution.createdAt);
-  t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
-
-  // PG and Dynamo records have the same timestamps
-  t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
-
   t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
   t.truthy(fetchedPgRecord.cumulus_id);
-  t.truthy(fetchedPgRecord.async_operation_cumulus_id);
-  t.truthy(fetchedPgRecord.collection_cumulus_id);
-  t.truthy(fetchedPgRecord.parent_cumulus_id);
+  t.is(fetchedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
+  t.is(fetchedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
+  t.is(fetchedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[1].cumulus_id);
 
   const omitList = ['createdAt', 'updatedAt', 'created_at', 'updated_at', 'cumulus_id'];
   t.deepEqual(
@@ -884,7 +906,7 @@ test.serial('POST an api execute record creates a new execution in Dynamo and PG
   );
 });
 
-test.serial('POST an api execution record throws error when "arn" is not provided', async (t) => {
+test.serial('POST /executions throws error when "arn" is not provided', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
   delete newExecution.arn;
 
@@ -899,7 +921,7 @@ test.serial('POST an api execution record throws error when "arn" is not provide
   t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
-test.serial('POST an api execution record throws error when the provided execution already exists', async (t) => {
+test.serial('POST /executions throws error when the provided execution already exists', async (t) => {
   const existingArn = t.context.fakeApiExecutions[1].arn;
   const newExecution = fakeExecutionFactoryV2({
     arn: existingArn,
@@ -916,7 +938,7 @@ test.serial('POST an api execution record throws error when the provided executi
   t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
-test.serial('POST an api execution record with non-existing asyncOperation throws error', async (t) => {
+test.serial('POST /executions with non-existing asyncOperation throws error', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: uuidv4(),
     collectionId: t.context.collectionId,
@@ -934,7 +956,7 @@ test.serial('POST an api execution record with non-existing asyncOperation throw
   t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
-test.serial('POST an api execution record with non-existing collectionId throws error', async (t) => {
+test.serial('POST /executions with non-existing collectionId throws error', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: constructCollectionId(randomId('name'), randomId('version')),
@@ -952,7 +974,7 @@ test.serial('POST an api execution record with non-existing collectionId throws 
   t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
-test.serial('POST an api execution record with non-existing parentArn still creates a new execution', async (t) => {
+test.serial('POST /executions with non-existing parentArn still creates a new execution', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,

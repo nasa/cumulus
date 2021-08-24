@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const pick = require('lodash/pick');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
@@ -202,6 +203,10 @@ test('storeExecutionRecord() can be used to update an execution', async (t) => {
 
   await executionModel.storeExecutionRecord(execution);
 
+  const checkList = ['asyncOperationId', 'status', 'originalPayload'];
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedItem, checkList), pick(execution, checkList));
+
   const newPayload = { foo: 'bar' };
   const updatedExecution = {
     ...execution,
@@ -212,9 +217,9 @@ test('storeExecutionRecord() can be used to update an execution', async (t) => {
 
   await executionModel.storeExecutionRecord(updatedExecution);
 
-  const fetchedItem = await executionModel.get({ arn: execution.arn });
-  t.deepEqual(fetchedItem.originalPayload, newPayload);
-  t.is(fetchedItem.asyncOperationId, '2');
+  const fetchedUpdatedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedUpdatedItem, checkList), pick(updatedExecution, checkList));
+  t.notDeepEqual(pick(fetchedUpdatedItem, checkList), pick(fetchedItem, checkList));
 });
 
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {
