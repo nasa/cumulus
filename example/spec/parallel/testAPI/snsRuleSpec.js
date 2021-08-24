@@ -14,6 +14,7 @@ const {
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
@@ -22,7 +23,6 @@ const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
-const { findExecutionArn } = require('../../../../packages/integration-tests/Executions');
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
   const subs = await sns().listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
@@ -161,8 +161,6 @@ describe('The SNS-type rule', () => {
   });
 
   describe('when an SNS message is published', () => {
-    // let execution;
-
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {

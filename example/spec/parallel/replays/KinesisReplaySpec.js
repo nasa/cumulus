@@ -2,6 +2,8 @@
 
 const delay = require('delay');
 const replace = require('lodash/replace');
+const get = require('lodash/get');
+
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
@@ -20,6 +22,7 @@ const {
   readJsonFilesFromDir,
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
+const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 
 const {
   createOrUseTestStream,
@@ -129,11 +132,14 @@ describe('The Kinesis Replay API', () => {
     let startTimestamp;
     let endTimestamp;
     let asyncOperationId;
+    let messagePublishTime;
 
     beforeAll(async () => {
       // delete EventSourceMapping so that our rule, though enabled, does not trigger duplicate executions
       const rule = new Rule();
       await rule.deleteKinesisEventSources(rules[0]);
+
+      messagePublishTime = Date.now() - 30 * 1000;
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
       await delay(10 * 1000);
@@ -178,11 +184,25 @@ describe('The Kinesis Replay API', () => {
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
 
-        const expectedWorkflows = targetedRecords.map((record) => waitForTestSfForRecord(
-          record.identifier,
-          workflowArn,
-          maxWaitForSFExistSecs
-        ).catch((error) => fail(error.message)));
+        const expectedWorkflows = targetedRecords.map(
+          (record) =>
+            findExecutionArn(
+              testConfig.stackName,
+              (execution) =>
+                get(execution, 'originalPayload.identifier') === record.identifier,
+              {
+                timestamp__from: messagePublishTime,
+                'originalPayload.testId': record.identifier,
+              },
+              { timeout: 60 }
+            )
+            // waitForTestSfForRecord(
+            //   record.identifier,
+            //   workflowArn,
+            //   maxWaitForSFExistSecs
+            // )
+              .catch((error) => fail(error.message))
+        );
 
         const tooOldToExpectWorkflows = tooOldToFetchRecords
           .map((r) => waitForTestSfForRecord(
@@ -193,12 +213,16 @@ describe('The Kinesis Replay API', () => {
             .catch((error) => expect(error.message).toBe('Never found started workflow.')));
 
         const tooNewToExpectWorkflows = newRecordsToSkip
-          .map((r) => waitForTestSfForRecord(
-            r.identifier,
-            workflowArn,
-            maxWaitForSFExistSecs
-          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((error) => expect(error.message).toBe('Never found started workflow.')));
+          .map(
+            (r) =>
+              waitForTestSfForRecord(
+                r.identifier,
+                workflowArn,
+                maxWaitForSFExistSecs
+              )
+                .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
+                .catch((error) => expect(error.message).toBe('Never found started workflow.'))
+          );
 
         const workflowExecutions = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
