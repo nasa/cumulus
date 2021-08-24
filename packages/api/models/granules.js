@@ -658,7 +658,6 @@ class Granule extends Manager {
     updatedAt,
   }) {
     const granuleRecord = await this.generateGranuleRecord({
-      s3: awsClients.s3(),
       granule,
       executionUrl,
       collectionId,

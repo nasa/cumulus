@@ -1,6 +1,8 @@
 const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
+const awsClients = require('@cumulus/aws-client/services');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -383,7 +385,7 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
     workflowStatus,
   } = t.context;
 
-  const bucket = randomId('bucket-');
+  const bucket = randomId('bucket');
   await S3.createBucket(bucket);
   t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
 
@@ -393,8 +395,15 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
 
+  const files = await granuleModel.fileUtils.buildDatabaseFiles({
+    s3: awsClients.s3(),
+    providerURL: buildURL(provider),
+    files: granule1.files,
+  });
+
   await granuleModel.storeGranuleFromCumulusMessage({
     granule: granule1,
+    files,
     executionUrl: 'http://execution-url.com',
     collectionId,
     provider,
