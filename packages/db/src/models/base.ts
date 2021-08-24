@@ -84,35 +84,6 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   }
 
   /**
-   * Fetches a single item in a set of results from Postgres
-   *
-   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
-   * @param {Array<string>} sortColumns - The column(s) to use for sorting results
-   * @param {number} offset - The offset to use for returning result
-   * @returns {Promise<RecordType>} The returned record
-   */
-  async getByOffset(
-    knexOrTransaction: Knex | Knex.Transaction,
-    params: Partial<RecordType>,
-    sortColumns: (keyof RecordType)[],
-    offset: number = 0
-  ): Promise<RecordType> {
-    const results: RecordType[] = await knexOrTransaction(this.tableName)
-      .where(params)
-      .orderBy(sortColumns)
-      .offset(offset)
-      .limit(1);
-    const [record] = results;
-
-    if (!isRecordDefined(record)) {
-      throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${JSON.stringify(params)} does not exist.`);
-    }
-
-    return record;
-  }
-
-  /**
    * Fetches multiple items from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
