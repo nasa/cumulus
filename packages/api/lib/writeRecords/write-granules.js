@@ -524,7 +524,7 @@ const _writeGranule = async ({
  *                  of ['running', 'failed', 'completed']
  * @returns {Promise<>}
  */
-const writeGranule = async ({
+const writeGranuleFromApi = async ({
   granuleId,
   collectionId,
   status,
@@ -691,6 +691,6 @@ module.exports = {
   generateFilePgRecord,
   generatePostgresGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
-  writeGranule,
+  writeGranuleFromApi,
   writeGranulesFromMessage,
 };

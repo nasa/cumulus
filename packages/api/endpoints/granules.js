@@ -22,7 +22,7 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranule } = require('../lib/writeRecords/write-granules');
+const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
@@ -67,7 +67,7 @@ async function post(req, res) {
   let result;
   const body = req.body;
   try {
-    result = await writeGranule(body);
+    result = await writeGranuleFromApi(body);
     log.info(result);
   } catch (error) {
     log.error('Could not write granule', error);
