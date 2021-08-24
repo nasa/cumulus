@@ -95,6 +95,7 @@ const generateGranuleRecord = async ({
   timestamp = Date.now(),
   updatedAt = Date.now(),
   timeToArchive = undefined,
+  timeToPreprocess = undefined,
 }) => {
   const {
     granuleId,
@@ -115,7 +116,7 @@ const generateGranuleRecord = async ({
     timestamp: new Date(timestamp),
     duration: getWorkflowDuration(workflowStartTime, timestamp),
     product_volume: getGranuleProductVolume(files),
-    time_to_process: getGranuleTimeToPreprocess(granule),
+    time_to_process: timeToPreprocess || getGranuleTimeToPreprocess(granule),
     time_to_archive: timeToArchive || getGranuleTimeToArchive(granule),
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
@@ -428,6 +429,7 @@ const _writeGranule = async ({
   workflowStartTime,
   workflowStatus,
   timeToArchive,
+  timeToPreprocess,
   queryFields,
   collectionCumulusId,
   executionCumulusId,
@@ -452,6 +454,7 @@ const _writeGranule = async ({
       workflowStartTime,
       workflowStatus,
       timeToArchive,
+      timeToPreprocess,
       queryFields,
       collectionCumulusId,
       providerCumulusId,
@@ -462,20 +465,23 @@ const _writeGranule = async ({
       files,
     });
 
-    return granuleModel.storeGranuleFromCumulusMessage({
+    const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
+      s3: s3(),
       granule,
       executionUrl,
       collectionId,
       provider,
       workflowStartTime,
-      timeToArchive,
+      files,
       error,
       pdrName,
       workflowStatus,
+      timeToArchive,
       processingTimeInfo,
       queryFields,
       updatedAt,
     });
+    return granuleModel.storeGranule(dynamoGranuleRecord);
   });
 
   await _writeGranuleFiles({
@@ -606,7 +612,7 @@ const writeGranule = async ({
  *  results from Promise.allSettled for all granules
  * @throws {Error}
  */
-const writeGranules = async ({
+const writeGranulesFromMessage = async ({
   cumulusMessage,
   collectionCumulusId,
   executionCumulusId,
@@ -641,11 +647,13 @@ const writeGranules = async ({
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
-
   const results = await Promise.allSettled(granules.map(
     (granule) => {
       // granules specific data.
       const timeToArchive = getGranuleTimeToArchive(granule);
+      // const postgresGranuleRecord = buildGranuleRecord({stuff});
+      // const dynamoGranuleRecord = granuleModel.buildRecord({stuff})
+      // return _writeGranule({dynamoGranuleRecord, postgresGranuleRecord, knex, granuleModel});
       return _writeGranule({
         collectionId,
         granule,
@@ -684,5 +692,5 @@ module.exports = {
   generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeGranule,
-  writeGranules,
+  writeGranulesFromMessage,
 };

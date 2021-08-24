@@ -42,7 +42,7 @@ const {
 } = require('./write-pdr');
 
 const {
-  writeGranules,
+  writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
@@ -162,7 +162,7 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
     collectionCumulusId,
     providerCumulusId,

@@ -312,7 +312,9 @@ class Granule extends Manager {
     collectionId,
     provider,
     timeToArchive = undefined,
+    timeToPreprocess = undefined,
     workflowStartTime,
+    files = [],
     error,
     pdrName,
     workflowStatus,
@@ -327,17 +329,23 @@ class Granule extends Manager {
     }
 
     const {
-      files,
+      files: theFiles,
       granuleId,
       cmrLink,
       published = false,
     } = granule;
 
-    const granuleFiles = await this.fileUtils.buildDatabaseFiles({
-      s3,
-      providerURL: buildURL(provider),
-      files,
-    });
+    console.log(`Files were: ${JSON.stringify(files)}`);
+    console.log(`theFiles were ${JSON.stringify(theFiles)}`);
+    let granuleFiles = files.length > 0 && [...files];
+    if (files.length === 0) {
+      granuleFiles = await this.fileUtils.buildDatabaseFiles({
+        s3,
+        providerURL: buildURL(provider),
+        files: theFiles,
+      });
+    }
+    console.log(`GRANULEFILES are: ${JSON.stringify(granuleFiles)}`);
 
     const now = Date.now();
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
@@ -358,7 +366,7 @@ class Granule extends Manager {
       updatedAt: updatedAt || now,
       duration: getWorkflowDuration(workflowStartTime, now),
       productVolume: getGranuleProductVolume(granuleFiles),
-      timeToPreprocess: getGranuleTimeToPreprocess(granule),
+      timeToPreprocess: timeToPreprocess || getGranuleTimeToPreprocess(granule),
       timeToArchive: timeToArchive || getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
       ...temporalInfo,
@@ -616,6 +624,13 @@ class Granule extends Manager {
     return this._storeGranuleRecord(granuleRecord);
   }
 
+  async storeGranule(granuleRecord) {
+    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
+    logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    return response;
+  }
+
   /**
    * Generate a granule record from a Cumulus message and store it in DynamoDB.
    *
@@ -641,6 +656,7 @@ class Granule extends Manager {
     processingTimeInfo,
     provider,
     workflowStartTime,
+    files = [],
     timeToArchive,
     collectionId,
     error,
@@ -656,6 +672,7 @@ class Granule extends Manager {
       collectionId,
       provider,
       workflowStartTime,
+      files,
       error,
       pdrName,
       workflowStatus,
@@ -664,10 +681,7 @@ class Granule extends Manager {
       queryFields,
       updatedAt,
     });
-    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
-    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
-    logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
-    return response;
+    return this.storeGranule(granuleRecord);
   }
 
   async describeGranuleExecution(executionArn) {
@@ -708,19 +722,27 @@ class Granule extends Manager {
     const queryFields = getGranuleQueryFields(cumulusMessage);
 
     return await Promise.all(granules.map(
-      (granule) =>
-        this.storeGranuleFromCumulusMessage({
+      async (granule) => {
+        const files = await this.fileUtils.buildDatabaseFiles({
+          s3: awsClients.s3(),
+          providerURL: buildURL(provider),
+          files: granule.files || [],
+        });
+
+        return this.storeGranuleFromCumulusMessage({
           granule,
           processingTimeInfo,
           executionUrl,
           provider,
           workflowStartTime,
+          files,
           collectionId,
           error,
           pdrName,
           workflowStatus,
           queryFields,
-        }).catch((writeError) => logger.error(writeError))
+        }).catch((writeError) => logger.error(writeError));
+      }
     ));
   }
 }
