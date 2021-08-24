@@ -22,7 +22,7 @@ of response and not the raw API endpoint response
 ### Changed
 
 - Updated `processDeadLetterArchive` Lambda to return an object where
-`processingSucceededKeys` is an array of the S3 keys for succesfully
+`processingSucceededKeys` is an array of the S3 keys for successfully
 processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
