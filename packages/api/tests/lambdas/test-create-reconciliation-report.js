@@ -769,6 +769,8 @@ test.serial('Generates valid reconciliation report when there are extra internal
 });
 
 test.serial('Generates valid reconciliation report when internally, there are both extra DynamoDB and extra S3 files', async (t) => {
+  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -782,30 +784,41 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   );
 
   // Create files that are in sync
-  const matchingFiles = range(10).map(() => ({
+  const granules = range(12).map(() => fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  }));
+  const granuleCumulusIds = await granulePgModel.insert(
+    knex,
+    granules
+  );
+  const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
-    key: randomString(),
-    granuleId: randomString(),
+    key: randomId('key'),
+    granule_cumulus_id: granuleCumulusIds[i],
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
   const extraS3File2 = { bucket: sample(dataBuckets), key: randomString() };
+
   const extraDbFile1 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString(),
+    granule_cumulus_id: granuleCumulusIds[10],
+    granule_id: granules[10].granule_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granuleId: randomString(),
+    granule_cumulus_id: granuleCumulusIds[11],
+    granule_id: granules[11].granule_id,
   };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await GranuleFilesCache.batchUpdate({
-    puts: matchingFiles.concat([extraDbFile1, extraDbFile2]),
-  });
+  await filePgModel.insert(knex, matchingFiles.concat([
+    omit(extraDbFile1, 'granule_id'),
+    omit(extraDbFile2, 'granule_id'),
+  ]));
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -834,10 +847,10 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
-    && f.granuleId === extraDbFile1.granuleId));
+    && f.granuleId === extraDbFile1.granule_id));
   t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
-    && f.granuleId === extraDbFile2.granuleId));
+    && f.granuleId === extraDbFile2.granule_id));
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
@@ -933,6 +946,8 @@ test.serial(
 test.serial(
   'With location param as S3, generates a valid reconcilation report for only S3 and DynamoDB',
   async (t) => {
+    const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+
     const dataBuckets = range(2).map(() => randomId('bucket'));
     await Promise.all(dataBuckets.map((bucket) =>
       createBucket(bucket)
@@ -946,16 +961,23 @@ test.serial(
     );
 
     // Create random files
+    const granules = range(10).map(() => fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }));
+    const granuleCumulusIds = await granulePgModel.insert(
+      knex,
+      granules
+    );
     const files = range(10).map((i) => ({
-      bucket: dataBuckets[i % dataBuckets.length],
+      bucket: sample(dataBuckets),
       key: randomId('key'),
-      granuleId: randomId('granuleId'),
+      granule_cumulus_id: granuleCumulusIds[i],
     }));
 
     // Store the files to S3 and DynamoDB
     await Promise.all([
       storeFilesToS3(files),
-      GranuleFilesCache.batchUpdate({ puts: files }),
+      filePgModel.insert(knex, files),
     ]);
 
     const event = {
