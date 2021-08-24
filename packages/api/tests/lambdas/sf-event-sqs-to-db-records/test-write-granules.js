@@ -21,6 +21,10 @@ const {
   tableNames,
 } = require('@cumulus/db');
 const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
+const {
   Search,
 } = require('@cumulus/es-client/search');
 const {
@@ -91,6 +95,31 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
 
@@ -148,6 +177,11 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
+
   await t.context.knex(tableNames.files).del();
   await t.context.knex(tableNames.granulesExecutions).del();
   await t.context.knex(tableNames.granules).del();
@@ -335,7 +369,7 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
-test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
+test.serial('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -937,4 +971,39 @@ test.serial('writeGranules() stores error on granule if any file fails', async (
   const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
   t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
   t.true(pgGranule.error.Cause.includes('AggregateError'));
+});
+
+test.serial('writeGranules() calls publishGranuleSnsMessage and successfully publishes an SNS message', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    executionCumulusId,
+    granuleId,
+    granuleModel,
+    knex,
+    providerCumulusId,
+    QueueUrl,
+  } = t.context;
+
+  await writeGranules({
+    cumulusMessage,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
+  t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const granuleRecord = JSON.parse(snsMessage.Message);
+
+  t.deepEqual(granuleRecord.granuleId, granuleId);
 });

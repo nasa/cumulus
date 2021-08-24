@@ -225,12 +225,14 @@ resource "aws_sns_topic" "report_granules_topic" {
   tags = var.tags
 }
 
+/*
 resource "aws_lambda_event_source_mapping" "publish_granules" {
   event_source_arn  = data.aws_dynamodb_table.granules.stream_arn
   function_name     = aws_lambda_function.publish_granules.arn
   starting_position = "TRIM_HORIZON"
   batch_size        = 10
 }
+*/
 
 # Report PDRs
 

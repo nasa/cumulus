@@ -112,6 +112,11 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     ]
     resources = [var.rds_user_access_secret_arn]
   }
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.report_granules_topic.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "sf_event_sqs_to_db_records_lambda_role_policy" {
@@ -184,6 +189,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       DeadLetterQueue                = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
       ExecutionsTable                = var.dynamo_tables.executions.name
       GranulesTable                  = var.dynamo_tables.granules.name
+      granules_sns_topic_arn         = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
       PdrsTable                      = var.dynamo_tables.pdrs.name
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"

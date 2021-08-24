@@ -49,6 +49,7 @@ locals {
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
+      granules_sns_topic_arn           = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn

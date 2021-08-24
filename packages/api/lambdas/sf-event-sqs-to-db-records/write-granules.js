@@ -53,6 +53,7 @@ const {
   getExecutionProcessingTimeInfo,
 } = require('../../lib/granules');
 const Granule = require('../../models/granules');
+const { publishGranuleSnsMessage } = require('../../lib/publishSnsMessageUtils');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-granules' });
 
@@ -490,6 +491,21 @@ const _writeGranule = async ({
 }) => {
   let granuleCumulusId;
   const files = await _generateFilesFromGranule({ granule, provider });
+  const granuleApiRecord = await generateGranuleApiRecord({
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    error,
+    pdrName,
+    workflowStatus,
+    processingTimeInfo,
+    queryFields,
+    updatedAt,
+    cmrUtils: CmrUtils,
+    files,
+  });
 
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writeGranuleViaTransaction({
@@ -536,6 +552,7 @@ const _writeGranule = async ({
     knex,
     granuleModel,
   });
+  await publishGranuleSnsMessage(granuleApiRecord);
 };
 
 /**
