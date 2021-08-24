@@ -211,6 +211,22 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   }
 
   /**
+   * Creates multiple items in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {ItemType[]} items - Records to insert into the DB
+   * @returns {Promise<number[]>} List of IDs of the inserted records
+   */
+  async insert(
+    knexOrTransaction: Knex | Knex.Transaction,
+    items: ItemType[]
+  ): Promise<number[]> {
+    return await knexOrTransaction(this.tableName)
+      .insert(items)
+      .returning('cumulus_id');
+  }
+
+  /**
    * Deletes the item from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction

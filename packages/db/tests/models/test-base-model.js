@@ -64,6 +64,61 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
   );
 });
 
+test('BasePgModel.insert() creates records and returns cumulus_id by default', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+
+  const queryResult = await basePgModel.insert(knex, [
+    { ...defaultDates, info },
+    { ...defaultDates, info: info2 },
+  ]);
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    records,
+    [{
+      ...defaultDates,
+      cumulus_id: queryResult[0],
+      info,
+    },
+    {
+      ...defaultDates,
+      cumulus_id: queryResult[1],
+      info: info2,
+    }]
+  );
+});
+
+test('BasePgModel.insert() works with transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+
+  let queryResult;
+  await knex.transaction(async (trx) => {
+    queryResult = await basePgModel.insert(trx, [
+      { ...defaultDates, info },
+      { ...defaultDates, info: info2 },
+    ]);
+  });
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    records,
+    [{
+      ...defaultDates,
+      cumulus_id: queryResult[0],
+      info,
+    },
+    {
+      ...defaultDates,
+      cumulus_id: queryResult[1],
+      info: info2,
+    }]
+  );
+});
+
 test('BasePgModel.get() returns correct record', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
