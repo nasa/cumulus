@@ -20,15 +20,32 @@
             "type": "array",
             "items": {
               "type": "object",
+              "required": ["bucket", "key"],
+              "additionalProperties": false,
               "properties": {
-                "filename": {
-                  "type": "string"
-                },
                 "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "etag": {
+                "key": {
+                  "description": "S3 Key for archived file",
                   "type": "string"
+                },
+                "type": {
+                  "description": "",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
                 }
               }
             }
