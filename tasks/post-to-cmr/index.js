@@ -3,11 +3,14 @@
 const keyBy = require('lodash/keyBy');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
+  addEtagsToFileObjects,
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR,
+  removeEtagsFromFileObjects,
+  mapFileEtags,
 } = require('@cumulus/cmrjs');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { getCmrSettings, getS3UrlOfFile } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
@@ -51,7 +54,7 @@ async function addMetadataObjects(cmrFiles) {
   return await Promise.all(
     cmrFiles.map(async (cmrFile) => {
       const metadataObject = await metadataObjectFromCMRFile(
-        cmrFile.filename,
+        getS3UrlOfFile(cmrFile),
         cmrFile.etag
       );
 
@@ -105,6 +108,7 @@ function checkForMetadata(granules, cmrFiles) {
  * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
+  event.input.granules.forEach((g) => addEtagsToFileObjects(g, event.config.etags));
   // get cmr files and metadata
   const revisionId = event.input.cmrRevisionId;
   const cmrFiles = granulesToCmrFileObjects(event.input.granules);
@@ -128,14 +132,23 @@ async function postToCMR(event) {
 
   const endTime = Date.now();
 
+  const outputGranules = buildOutput(
+    results,
+    event.input.granules
+  ).map((g) => ({
+    ...g,
+    post_to_cmr_duration: endTime - startTime,
+  }));
+  const updatedETags = outputGranules.map(
+    (g) => mapFileEtags(g.files)
+  ).reduce((allNewETags, granuleEtags) => ({ ...allNewETags, ...granuleEtags }), {});
+  outputGranules.forEach(removeEtagsFromFileObjects);
   return {
-    granules: buildOutput(
-      results,
-      event.input.granules
-    ).map((g) => ({
-      ...g,
-      post_to_cmr_duration: endTime - startTime,
-    })),
+    granules: outputGranules,
+    etags: {
+      ...event.config.etags,
+      ...updatedETags,
+    },
   };
 }
 

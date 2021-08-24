@@ -201,12 +201,13 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  */
 async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
+  const cmrFileName = getFilename(cmrPublishObject);
 
   // choose xml or json and do the things.
-  if (isECHO10File(cmrPublishObject.filename)) {
+  if (isECHO10File(cmrFileName)) {
     return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-  if (isUMMGFile(cmrPublishObject.filename)) {
+  if (isUMMGFile(cmrFileName)) {
     return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
@@ -355,14 +356,14 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
  * @param {Object} etags - map of s3URIs and ETags
  * @returns {Object} - updated granule object
  */
-const addEtagsToFileObjects = (granule, etags) => {
+function addEtagsToFileObjects(granule, etags) {
   granule.files.forEach((file) => {
-    const fileURI = buildS3Uri(file.bucket, file.key);
+    const fileURI = getS3UrlOfFile(file);
     // eslint-disable-next-line no-param-reassign
     if (etags[fileURI]) file.etag = etags[fileURI];
   });
   return granule;
-};
+}
 
 /**
  * Remove ETags to match output schema
@@ -370,12 +371,12 @@ const addEtagsToFileObjects = (granule, etags) => {
  * @param {Object} granule - output granule object
  * @returns {undefined}
  */
-const removeEtagsFromFileObjects = (granule) => {
+function removeEtagsFromFileObjects(granule) {
   granule.files.forEach((file) => {
     // eslint-disable-next-line no-param-reassign
     delete file.etag;
   });
-};
+}
 
 /**
  * Maps etag values from the specified granules' files.
@@ -386,7 +387,7 @@ const removeEtagsFromFileObjects = (granule) => {
  */
 function mapFileEtags(files) {
   return Object.fromEntries(
-    files.map(({ bucket, key, etag }) => [buildS3Uri(bucket, key), etag])
+    files.map(({ bucket, key, etag }) => [getS3UrlOfFile({ bucket, key }), etag])
   );
 }
 
