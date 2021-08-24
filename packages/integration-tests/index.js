@@ -75,12 +75,10 @@ async function waitForAsyncOperationStatus({
   let operation;
   return await pRetry(
     async () => {
-      const response = await asyncOperationsApi.getAsyncOperation({
+      operation = await asyncOperationsApi.getAsyncOperation({
         prefix: stackName,
         asyncOperationId: id,
       });
-
-      operation = JSON.parse(response.body);
 
       if (operation.status === status) return operation;
       throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
