@@ -512,3 +512,47 @@ test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records
     searchRecord
   );
 });
+
+test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+
+  const firstPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds[0], 1
+  );
+  const secondPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds[1], 1
+  );
+
+  t.is(firstPageRecords.length, 1);
+  t.is(secondPageRecords.length, 1);
+  t.deepEqual(firstPageRecords[0].info, info1);
+  t.deepEqual(secondPageRecords[0].info, info2);
+});
+
+test.serial('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const testLength = 5;
+  const recordIds = await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
+    .insert({ info: cryptoRandomString({ length: 5 }) })
+    .returning('cumulus_id')));
+  const firstPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds.flat()[0], 3
+  );
+  const secondPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds.flat()[3], 2
+  );
+  t.is(firstPageRecords.length, 3);
+  t.is(secondPageRecords.length, 2);
+});
+
+test.serial('getMaxId returns the next cumulus_id in sequence', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const expected = await knex(tableName).max('cumulus_id').first();
+  const result = await basePgModel.getMaxCumulusId(knex);
+  t.is(result, expected.max);
+});

@@ -1,8 +1,9 @@
 'use strict';
 
-const test = require('ava');
-const sinon = require('sinon');
+const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
+const sinon = require('sinon');
+const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -13,19 +14,30 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const {
+  CollectionPgModel,
+  AsyncOperationPgModel,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  FilePgModel,
+  fakeAsyncOperationRecordFactory,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeFileRecordFactory,
+  fakeGranuleRecordFactory,
+  fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  fakeRuleRecordFactory,
+  generateLocalTestDb,
+  GranulePgModel,
+  PdrPgModel,
+  ProviderPgModel,
+  RulePgModel,
+} = require('@cumulus/db');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');
-
-const models = require('../../models');
+const { migrationDir } = require('../../../../lambdas/db-migration');
 const {
-  fakeCollectionFactory,
-  fakeAsyncOperationFactory,
-  fakeExecutionFactoryV2,
-  fakeGranuleFactoryV2,
-  fakePdrFactoryV2,
-  fakeProviderFactory,
-  fakeReconciliationReportFactory,
-  fakeRuleFactoryV2,
   getWorkflowList,
 } = require('../../lib/testUtils');
 
@@ -34,15 +46,7 @@ const workflowList = getWorkflowList();
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
-
-process.env.ExecutionsTable = randomString();
-process.env.AsyncOperationsTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.GranulesTable = randomString();
-process.env.PdrsTable = randomString();
-process.env.ProvidersTable = randomString();
-process.env.ReconciliationReportsTable = randomString();
-process.env.RulesTable = randomString();
+const testDbName = `test_index_${cryptoRandomString({ length: 10 })}`;
 
 const tables = {
   collectionsTable: process.env.CollectionsTable,
@@ -55,27 +59,14 @@ const tables = {
   rulesTable: process.env.RulesTable,
 };
 
-const executionModel = new models.Execution();
-const asyncOperationModel = new models.AsyncOperation({
-  systemBucket: process.env.system_bucket,
-  stackName: process.env.stackName,
-  tableName: process.env.AsyncOperationsTable,
-});
-const collectionModel = new models.Collection();
-const granuleModel = new models.Granule();
-const pdrModel = new models.Pdr();
-const providersModel = new models.Provider();
-const reconciliationReportModel = new models.ReconciliationReport();
-const rulesModel = new models.Rule();
-
-async function addFakeData(numItems, factory, model, factoryParams = {}) {
+async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
   const items = [];
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < numItems; i += 1) {
     const item = factory(factoryParams);
-    items.push(item);
-    await model.create(item);
+    const createdRecordId = await model.create(knex, item);
+    items.push({ ...item, cumulus_id: Number(createdRecordId) });
   }
   /* eslint-enable no-await-in-loop */
 
@@ -98,7 +89,11 @@ test.before(async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  await executionModel.createTable();
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
+  /* await executionModel.createTable();
   await asyncOperationModel.createTable();
   await collectionModel.createTable();
   await granuleModel.createTable();
@@ -106,7 +101,7 @@ test.before(async (t) => {
   await providersModel.createTable();
   await reconciliationReportModel.createTable();
   await rulesModel.createTable();
-
+ */
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await Promise.all([
@@ -127,16 +122,11 @@ test.after.always(async (t) => {
   const { esClient, esIndex } = t.context;
 
   await esClient.indices.delete({ index: esIndex });
-
-  await executionModel.deleteTable();
-  await asyncOperationModel.deleteTable();
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
-  await pdrModel.deleteTable();
-  await providersModel.deleteTable();
-  await reconciliationReportModel.deleteTable();
-  await rulesModel.deleteTable();
-
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
@@ -220,33 +210,39 @@ test('No error is thrown if nothing is in the database', async (t) => {
 });
 
 test('Lambda successfully indexes records of all types', async (t) => {
+  const knex = t.context.knex;
   const { esAlias } = t.context;
 
   const numItems = 1;
 
-  const fakeData = await Promise.all([
-    addFakeData(numItems, fakeCollectionFactory, collectionModel),
-    addFakeData(numItems, fakeExecutionFactoryV2, executionModel),
-    addFakeData(numItems, fakeAsyncOperationFactory, asyncOperationModel),
-    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
-    addFakeData(numItems, fakePdrFactoryV2, pdrModel),
-    addFakeData(numItems, fakeProviderFactory, providersModel),
-    addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
-    addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name }),
-  ]);
+  const fakeData = [];
+
+  const collectionRecord = await addFakeData(knex, numItems, fakeCollectionRecordFactory, new CollectionPgModel());
+  fakeData.push(collectionRecord);
+  fakeData.push(await addFakeData(knex, numItems, fakeExecutionRecordFactory, new ExecutionPgModel()));
+  const granuleRecord = await addFakeData(knex, numItems, fakeGranuleRecordFactory, new GranulePgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id });
+  fakeData.push(granuleRecord);
+  fakeData.push(await addFakeData(knex, numItems, fakeFileRecordFactory, new FilePgModel(), { granule_cumulus_id: granuleRecord[0].cumulus_id }));
+  const providerRecord = await addFakeData(knex, numItems, fakeProviderRecordFactory, new ProviderPgModel());
+  fakeData.push(providerRecord);
+  fakeData.push(await addFakeData(knex, numItems, fakePdrRecordFactory, new PdrPgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id, provider_cumulus_id: providerRecord[0].cumulus_id }));
+  // TODO - Recon Report
+  //addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
+  fakeData.push(addFakeData(knex, numItems, fakeRuleRecordFactory, new RulePgModel(), { workflow: workflowList[0].name }));
 
   await indexFromDatabase.handler({
     indexName: esAlias,
     tables,
+    knex,
   });
 
   const searchResults = await Promise.all([
     searchEs('collection', esAlias),
     searchEs('execution', esAlias),
-    searchEs('granule', esAlias),
+    //searchEs('granule', esAlias),
     searchEs('pdr', esAlias),
     searchEs('provider', esAlias),
-    searchEs('reconciliationReport', esAlias),
+    //searchEs('reconciliationReport', esAlias),
     searchEs('rule', esAlias),
   ]);
 
@@ -260,10 +256,10 @@ test('Lambda successfully indexes records of all types', async (t) => {
 });
 
 test.serial('failure in indexing record of specific type should not prevent indexing of other records with same type', async (t) => {
-  const { esAlias, esClient } = t.context;
+  const { esAlias, esClient, knex } = t.context;
 
   const numItems = 7;
-  const fakeData = await addFakeData(numItems, fakeGranuleFactoryV2, granuleModel);
+  const fakeData = await addFakeData(knex, numItems, fakeGranuleRecordFactory, granuleModel);
 
   let numCalls = 0;
   const originalIndexGranule = indexer.indexGranule;
@@ -318,12 +314,12 @@ test.serial('failure in indexing record of specific type should not prevent inde
 });
 
 test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
-  const { esAlias, esClient } = t.context;
+  const { esAlias, esClient, knex } = t.context;
 
   const numItems = 2;
   const [fakeProviderData, fakeGranuleData] = await Promise.all([
-    addFakeData(numItems, fakeProviderFactory, providersModel),
-    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
+    addFakeData(knex, numItems, fakeProviderFactory, providersModel),
+    addFakeData(knex, numItems, fakeGranuleFactoryV2, granuleModel),
   ]);
 
   const indexGranuleStub = sinon.stub(indexer, 'indexGranule')

@@ -1,9 +1,9 @@
 import Knex from 'knex';
-import { RuleRecord } from '@cumulus/types/api/rules';
+import { RuleRecord, RuleType } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
-import { PostgresRule } from '../types/rule';
+import { PostgresRule, PostgresRuleRecord } from '../types/rule';
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
@@ -46,4 +46,41 @@ export const translateApiRuleToPostgresRule = async (
   };
 
   return ruleRecord;
+};
+
+export const translatePostgresRuleToApiRule = async (
+  record: PostgresRuleRecord,
+  dbClient: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  providerPgModel = new ProviderPgModel()
+): Promise<RuleRecord> => {
+  let collection: undefined | { name: string, version: string };
+  if (record.collection_cumulus_id) {
+    const { name, version } = await collectionPgModel.get(dbClient, {
+      cumulus_id: record.provider_cumulus_id,
+    });
+    collection = { name, version };
+  }
+  return {
+    name: record.name,
+    workflow: record.workflow,
+    provider: record.provider_cumulus_id ?
+      (await providerPgModel.get(dbClient, { cumulus_id: record.provider_cumulus_id })).name
+      : undefined,
+    collection,
+    meta: record?.meta as { retries?: number, visilibity?: number, [key: string]: unknown},
+    payload: record.payload as any,
+    queueUrl: record.queue_url,
+    rule: {
+      arn: record.arn,
+      type: record.type as RuleType,
+      value: record.value,
+      logEventArn: record.log_event_arn,
+    },
+    state: record.enabled ? 'ENABLED' : 'DISABLED',
+    tags: record.tags ? JSON.parse(record.tags) : undefined,
+    executionNamePrefix: record.execution_name_prefix,
+    createdAt: record.created_at.getTime(),
+    updatedAt: record.updated_at.getTime(),
+  };
 };
