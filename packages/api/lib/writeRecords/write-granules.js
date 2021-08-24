@@ -215,7 +215,7 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
 };
 
 /**
- * Write a granule to DynamoDB and PostgreSQL
+ * Write a granule to PostgreSQL
  *
  * @param {Object} params
  * @param {Object} params.granule - An API granule object
@@ -236,11 +236,12 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
  * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
  * @param {string} params.updatedAt - Update timestamp
  * @param {Array} params.files - List of files to add to Dynamo Granule
+ * TODO [MHS, 08/24/2021] Update Params
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
  */
-const _writeGranuleViaTransaction = async ({
+const _writePostgresGranuleViaTransaction = async ({
   granule,
   processingTimeInfo,
   error,
@@ -446,7 +447,7 @@ const _writeGranule = async ({
 
   let granuleCumulusId;
   await knex.transaction(async (trx) => {
-    granuleCumulusId = await _writeGranuleViaTransaction({
+    granuleCumulusId = await _writePostgresGranuleViaTransaction({
       granule,
       processingTimeInfo,
       error,

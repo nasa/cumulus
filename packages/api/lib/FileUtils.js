@@ -126,10 +126,15 @@ const cleanDatabaseFile = (file) =>
     removeNilProperties,
   ])(file);
 
-const buildDatabaseFiles = async ({ s3, providerURL, files }) =>
-  await Promise.all(
+const buildDatabaseFiles = async ({ s3, providerURL, files }) => {
+  if (files === undefined) {
+    log.warn('No files available to buildDatabaseFiles');
+    return [];
+  }
+  return await Promise.all(
     files.map(partial(buildDatabaseFile, s3, providerURL))
   ).then((newFiles) => newFiles.map(cleanDatabaseFile));
+};
 
 module.exports = {
   setSource,

@@ -306,7 +306,6 @@ class Granule extends Manager {
    * @returns {Promise<Object>} A granule record
    */
   async generateGranuleRecord({
-    s3,
     granule,
     executionUrl,
     collectionId,
@@ -322,30 +321,23 @@ class Granule extends Manager {
     processingTimeInfo = {},
     updatedAt,
   }) {
-    if (!granule.granuleId) throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
+    if (!granule.granuleId) {
+      throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
+    }
 
     if (!collectionId) {
       throw new CumulusModelError('collection required to generate a granule record');
     }
 
+    if (!files || files.length === 0) {
+      throw new Error('Storing a Granule requires at least one file.');
+    }
+
     const {
-      files: theFiles = [],
       granuleId,
       cmrLink,
       published = false,
     } = granule;
-
-    console.log(`Files were: ${JSON.stringify(files)}`);
-    console.log(`theFiles were ${JSON.stringify(theFiles)}`);
-    let granuleFiles = files.length > 0 && [...files];
-    if (files.length === 0) {
-      granuleFiles = await this.fileUtils.buildDatabaseFiles({
-        s3,
-        providerURL: buildURL(provider),
-        files: theFiles,
-      });
-    }
-    console.log(`GRANULEFILES are: ${JSON.stringify(granuleFiles)}`);
 
     const now = Date.now();
     const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
@@ -358,14 +350,14 @@ class Granule extends Manager {
       provider: provider.id,
       execution: executionUrl,
       cmrLink: cmrLink,
-      files: granuleFiles,
+      files,
       error,
       published,
       createdAt: workflowStartTime,
       timestamp: now,
       updatedAt: updatedAt || now,
       duration: getWorkflowDuration(workflowStartTime, now),
-      productVolume: getGranuleProductVolume(granuleFiles),
+      productVolume: getGranuleProductVolume(files),
       timeToPreprocess: timeToPreprocess || getGranuleTimeToPreprocess(granule),
       timeToArchive: timeToArchive || getGranuleTimeToArchive(granule),
       ...processingTimeInfo,
@@ -726,9 +718,8 @@ class Granule extends Manager {
         const files = await this.fileUtils.buildDatabaseFiles({
           s3: awsClients.s3(),
           providerURL: buildURL(provider),
-          files: granule.files || [],
+          files: granule.files,
         });
-
         return this.storeGranuleFromCumulusMessage({
           granule,
           processingTimeInfo,

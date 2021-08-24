@@ -49,14 +49,6 @@ test.before(async (t) => {
   t.context.granuleModel = new Granule({
     cmrUtils: fakeCmrUtils,
   });
-
-  t.context.fakeS3 = {
-    headObject: () => ({
-      promise: () => Promise.resolve({
-        ContentLength: mockedFileSize,
-      }),
-    }),
-  };
 });
 
 test.beforeEach((t) => {
@@ -90,8 +82,8 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
   const processingEndDateTime = new Date(Date.UTC(2019, 6, 28, 1)).toISOString();
   const record = await granuleModel.generateGranuleRecord({
-    s3: t.context.fakeS3,
     granule,
+    files: granule.files,
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
@@ -104,10 +96,7 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
     workflowStatus,
   });
 
-  t.deepEqual(
-    record.files,
-    granule.files.map((file) => granuleFileToRecord(file, provider))
-  );
+  t.deepEqual(record.files, granule.files);
   t.is(record.createdAt, workflowStartTime);
   t.is(typeof record.duration, 'number');
   t.is(record.status, workflowStatus);
@@ -142,11 +131,11 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
     Cause: new Error('error'),
   };
   const record = await granuleModel.generateGranuleRecord({
-    s3: t.context.fakeS3,
     granule,
     message: granuleFailure,
     executionUrl,
     provider,
+    files: granule.files,
     collectionId,
     workflowStartTime,
     workflowStatus: 'failed',
@@ -155,7 +144,7 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
 
   t.deepEqual(
     record.files,
-    granule.files.map((file) => granuleFileToRecord(file, provider))
+    granule.files
   );
   t.is(record.status, 'failed');
   t.is(record.execution, executionUrl);
