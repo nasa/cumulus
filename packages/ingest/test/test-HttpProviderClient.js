@@ -64,7 +64,7 @@ test.serial('sync() downloads remote file to s3 with correct content-type', asyn
       bucket,
       key,
     });
-    t.is(sum, 1435712144);
+    t.is(sum, '1435712144');
 
     const s3HeadResponse = await headObject(bucket, key);
     t.is(expectedContentType, s3HeadResponse.ContentType);
