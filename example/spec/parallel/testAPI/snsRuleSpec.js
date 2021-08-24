@@ -2,14 +2,13 @@
 
 const path = require('path');
 const { readJson } = require('fs-extra');
+const get = require('lodash/get');
 
 const {
   addCollections,
   cleanupCollections,
-  isWorkflowTriggeredByRule,
   removeRuleAddedParams,
   rulesApi: rulesApiTestUtils,
-  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -23,6 +22,7 @@ const {
   loadConfig,
   timestampedName,
 } = require('../../helpers/testUtils');
+const { findExecutionArn } = require('../../../../packages/integration-tests/Executions');
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
   const subs = await sns().listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
@@ -60,6 +60,7 @@ describe('The SNS-type rule', () => {
   let updatedRule;
   let helloWorldExecutionArn;
   let beforeAllFailed;
+  let testId;
 
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
@@ -68,7 +69,7 @@ describe('The SNS-type rule', () => {
       lambdaStep = new LambdaStep();
       SNS = sns();
       config = await loadConfig();
-      const testId = createTimestampedTestId(config.stackName, 'SnsRule');
+      testId = createTimestampedTestId(config.stackName, 'SnsRule');
       testSuffix = createTestSuffix(testId);
       ruleName = timestampedName('SnsRuleIntegrationTestRule');
       expectedStatementId = `${ruleName}Permission`;
@@ -80,7 +81,10 @@ describe('The SNS-type rule', () => {
 
       console.log('ruleName', ruleName);
 
-      snsMessage = JSON.stringify({ Data: {} });
+      console.log('testId', testId);
+      snsMessage = JSON.stringify({
+        testId,
+      });
       snsRuleDefinition = await readJson(path.join(__dirname, 'snsRuleDef.json'));
       snsRuleDefinition.name = ruleName;
       snsRuleDefinition.meta.triggerRule = ruleName;
@@ -158,22 +162,25 @@ describe('The SNS-type rule', () => {
   });
 
   describe('when an SNS message is published', () => {
-    let execution;
+    // let execution;
 
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
-        execution = await waitForTestExecutionStart({
-          workflowName: snsRuleDefinition.workflow,
-          stackName: config.stackName,
-          bucket: config.bucket,
-          findExecutionFn: isWorkflowTriggeredByRule,
-          findExecutionFnParams: { rule: ruleName },
-          startTask: 'HelloWorld',
-        });
+        const messagePublishTime = Date.now() - 1000 * 30;
 
-        helloWorldExecutionArn = execution.executionArn;
+        await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
+
+        helloWorldExecutionArn = await findExecutionArn(
+          config.stackName,
+          (execution) =>
+            get(execution, 'originalPayload.testId') === testId,
+          {
+            timestamp__from: messagePublishTime,
+            'originalPayload.testId': testId,
+          },
+          { timeout: 60 }
+        );
       } catch (error) {
         beforeAllFailed = error;
       }
@@ -181,8 +188,7 @@ describe('The SNS-type rule', () => {
 
     it('triggers the workflow', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      console.log('Execution:', JSON.stringify(execution));
-      expect(execution).toBeDefined();
+      expect(helloWorldExecutionArn).toBeDefined();
     });
 
     it('passes the message as payload', async () => {
