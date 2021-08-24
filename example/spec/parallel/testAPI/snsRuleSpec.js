@@ -81,7 +81,6 @@ describe('The SNS-type rule', () => {
 
       console.log('ruleName', ruleName);
 
-      console.log('testId', testId);
       snsMessage = JSON.stringify({
         testId,
       });
@@ -171,6 +170,7 @@ describe('The SNS-type rule', () => {
 
         await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
 
+        console.log('originalPayload.testId', testId);
         helloWorldExecutionArn = await findExecutionArn(
           config.stackName,
           (execution) =>
