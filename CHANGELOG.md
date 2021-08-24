@@ -91,6 +91,9 @@ but technically it is a breaking change to the Elasticsearch mappings.
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
 
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes
