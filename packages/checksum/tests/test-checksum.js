@@ -5,7 +5,7 @@ const test = require('ava');
 const { generateChecksumFromStream } = require('..');
 
 test('generateChecksumFromStream returns correct cksum for file stream', async (t) => {
-  const dummyFileCksum = 1685297147;
+  const dummyFileCksum = '1685297147';
   const result = await generateChecksumFromStream(
     'CKSUM',
     fs.createReadStream('./tests/data/dummyfile.txt'),
