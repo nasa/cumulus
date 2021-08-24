@@ -369,14 +369,6 @@ test.beforeEach(async (t) => {
     testCollection
   );
 
-  // t.context.testGranule = fakeGranuleRecordFactory({
-  //   collection_cumulus_id: t.context.collectionCumulusId,
-  // });
-  // [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
-  //   t.context.knex,
-  //   t.context.testGranule
-  // );
-
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
