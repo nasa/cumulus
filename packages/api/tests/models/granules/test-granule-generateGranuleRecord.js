@@ -1,35 +1,14 @@
 const test = require('ava');
 const sinon = require('sinon');
 
-const s3Utils = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { removeNilProperties } = require('@cumulus/common/util');
-
-const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 const Granule = require('../../../models/granules');
+const { getGranuleTimeToArchive, getGranuleTimeToPreprocess } = require('../../../lib/granules');
 
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
 
 let sandbox;
-
-const mockedFileSize = 12345;
-
-const granuleFileToRecord = (granuleFile, provider) => {
-  const granuleRecord = {
-    size: mockedFileSize,
-    ...granuleFile,
-    key: s3Utils.parseS3Uri(granuleFile.filename).Key,
-    fileName: granuleFile.name,
-    checksum: granuleFile.checksum,
-  };
-
-  if (granuleFile.path) {
-    granuleRecord.source = `${provider.protocol}://${provider.host}/granules/${granuleFile.name}`;
-  }
-
-  return removeNilProperties(filterDatabaseProperties(granuleRecord));
-};
 
 test.before(async (t) => {
   process.env.GranulesTable = randomString();
@@ -89,6 +68,8 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
       processingStartDateTime,
       processingEndDateTime,
     },
+    timeToArchive: getGranuleTimeToArchive(granule),
+    timeToPreprocess: getGranuleTimeToPreprocess(granule),
     collectionId,
     provider,
     workflowStartTime,
