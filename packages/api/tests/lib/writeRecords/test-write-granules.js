@@ -22,7 +22,7 @@ const {
 
 const {
   generateFilePgRecord,
-  generateGranuleRecord,
+  generatePostgresGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranulesFromMessage,
@@ -136,7 +136,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('generateGranuleRecord() generates the correct granule record', async (t) => {
+test('generatePostgresGranuleRecord() generates the correct granule record', async (t) => {
   const {
     granuleId,
     granule,
@@ -156,7 +156,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   const queryFields = { foo: 'bar' };
 
   t.like(
-    await generateGranuleRecord({
+    await generatePostgresGranuleRecord({
       granule,
       files,
       workflowStartTime,
@@ -188,7 +188,7 @@ test('generateGranuleRecord() generates the correct granule record', async (t) =
   );
 });
 
-test('generateGranuleRecord() includes processing time info, if provided', async (t) => {
+test('generatePostgresGranuleRecord() includes processing time info, if provided', async (t) => {
   const {
     cumulusMessage,
     granule,
@@ -199,7 +199,7 @@ test('generateGranuleRecord() includes processing time info, if provided', async
     processingEndDateTime: new Date().toISOString(),
   };
 
-  const record = await generateGranuleRecord({
+  const record = await generatePostgresGranuleRecord({
     cumulusMessage,
     granule,
     processingTimeInfo,
@@ -208,7 +208,7 @@ test('generateGranuleRecord() includes processing time info, if provided', async
   t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
 });
 
-test('generateGranuleRecord() includes temporal info, if any is returned', async (t) => {
+test('generatePostgresGranuleRecord() includes temporal info, if any is returned', async (t) => {
   const {
     cumulusMessage,
     granule,
@@ -222,7 +222,7 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
     getGranuleTemporalInfo: () => Promise.resolve(temporalInfo),
   };
 
-  const record = await generateGranuleRecord({
+  const record = await generatePostgresGranuleRecord({
     cumulusMessage,
     granule,
     cmrUtils: fakeCmrUtils,
@@ -230,7 +230,7 @@ test('generateGranuleRecord() includes temporal info, if any is returned', async
   t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
 });
 
-test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
+test('generatePostgresGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
   const {
     granule,
   } = t.context;
@@ -240,7 +240,7 @@ test('generateGranuleRecord() includes correct error if cumulus message has an e
     Cause: 'an error occurred',
   };
 
-  const record = await generateGranuleRecord({
+  const record = await generatePostgresGranuleRecord({
     granule,
     error: exception,
   });

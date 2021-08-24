@@ -329,7 +329,7 @@ class Granule extends Manager {
     }
 
     const {
-      files: theFiles,
+      files: theFiles = [],
       granuleId,
       cmrLink,
       published = false,

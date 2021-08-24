@@ -80,7 +80,7 @@ const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' 
  * @param {number} [params.updatedAt] - Updated timestamp for granule record. Defaults to now.
  * @returns {Promise<Object>} - a granule record
  */
-const generateGranuleRecord = async ({
+const generatePostgresGranuleRecord = async ({
   error,
   granule,
   files,
@@ -256,7 +256,7 @@ const _writeGranuleViaTransaction = async ({
   files,
   timeToArchive,
 }) => {
-  const granuleRecord = await generateGranuleRecord({
+  const granuleRecord = await generatePostgresGranuleRecord({
     error,
     granule,
     files,
@@ -689,7 +689,7 @@ const writeGranulesFromMessage = async ({
 
 module.exports = {
   generateFilePgRecord,
-  generateGranuleRecord,
+  generatePostgresGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeGranule,
   writeGranulesFromMessage,
