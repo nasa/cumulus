@@ -16,6 +16,13 @@ but technically it is a breaking change to the Elasticsearch mappings.
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2317**
+    - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
+    records in PostgreSQL and return specified granule information for each file
+    - Added `@cumulus/db/QuerySearchClient` library to handle sequentially fetching and paging
+    through results for an arbitrary PostgreSQL query
+    - Added `insert` method to all `@cumulus/db` models to handle inserting multiple records into
+    the database at once
   - **CUMULUS-2634**
     - Added new functions for upserting data to Elasticsearch:
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
@@ -87,6 +94,8 @@ but technically it is a breaking change to the Elasticsearch mappings.
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string
       - `record.output` is a string
+  - **CUMULUS-2317**
+    - Changed reconciliation reports to read file records from PostgreSQL instead of DynamoDB
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
