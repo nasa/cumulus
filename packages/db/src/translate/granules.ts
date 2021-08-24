@@ -1,6 +1,8 @@
 import Knex from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
+import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
+import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
@@ -9,8 +11,6 @@ import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
 import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
-import { ApiGranule, GranuleStatus } from '../../../types';
-import { removeNilProperties } from '../../../common/util';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
