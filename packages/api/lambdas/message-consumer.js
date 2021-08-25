@@ -108,8 +108,6 @@ async function processRecord(record, fromSNS, enabledRules) {
   let originalMessageSource;
   let ruleParams = {};
 
-  log.debug(`enabledRules: ${JSON.stringify(enabledRules)}`);
-
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
   }
@@ -141,8 +139,7 @@ async function processRecord(record, fromSNS, enabledRules) {
         sourceArn: get(parsed, 'eventSourceARN'),
       };
     } catch (error) {
-      log.error('Caught error parsing JSON:');
-      log.error(error);
+      log.error('Caught error parsing JSON:', error);
       // TODO (out of scope): does it make sense to attempt retrying bad JSON?
       return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
     }
@@ -150,9 +147,7 @@ async function processRecord(record, fromSNS, enabledRules) {
 
   try {
     await validateMessage(eventObject, originalMessageSource, validationSchema);
-    log.debug(`ruleParams: ${JSON.stringify(ruleParams)}`);
     const applicableRules = await filterRulesByRuleParams(enabledRules, ruleParams);
-    log.debug(`applicableRules: ${JSON.stringify(applicableRules)}`);
     return await Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
