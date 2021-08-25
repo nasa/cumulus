@@ -100,13 +100,15 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
  * @returns {[Promises]} Array of promises. Each promise is resolved when a
  * message is queued for all associated kinesis rules.
  */
-function processRecord(record, fromSNS, enabledRules) {
+async function processRecord(record, fromSNS, enabledRules) {
   let eventObject;
   let isKinesisRetry = false;
   let parsed = record;
   let validationSchema;
   let originalMessageSource;
   let ruleParams = {};
+
+  log.debug(`enabledRules: ${JSON.stringify(enabledRules)}`);
 
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
@@ -146,17 +148,19 @@ function processRecord(record, fromSNS, enabledRules) {
     }
   }
 
-  return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => filterRulesByRuleParams(enabledRules, ruleParams))
-    .then((applicableRules) => Promise.all(applicableRules.map((rule) => {
+  try {
+    await validateMessage(eventObject, originalMessageSource, validationSchema);
+    log.debug(`ruleParams: ${JSON.stringify(ruleParams)}`);
+    const applicableRules = await filterRulesByRuleParams(enabledRules, ruleParams);
+    log.debug(`applicableRules: ${JSON.stringify(applicableRules)}`);
+    return await Promise.all(applicableRules.map((rule) => {
       if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
-    })))
-    .catch((error) => {
-      log.error('Caught error in processRecord:');
-      log.error(error);
-      return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
-    });
+    }));
+  } catch (error) {
+    log.error('Caught error in processRecord:', error);
+    return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
+  }
 }
 
 /**
