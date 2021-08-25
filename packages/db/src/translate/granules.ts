@@ -42,7 +42,8 @@ export const translatePostgresGranuleToApiGranule = async (
   );
   const executionArns = await getExecutionArnsByGranuleCumulusId(
     knexOrTransaction,
-    granulePgRecord.cumulus_id
+    granulePgRecord.cumulus_id,
+    1
   );
 
   if (executionArns.length === 0) {
