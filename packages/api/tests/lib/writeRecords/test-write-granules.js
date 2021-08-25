@@ -20,6 +20,8 @@ const {
   tableNames,
 } = require('@cumulus/db');
 
+const { getWorkflowDuration } = require('@cumulus/message/workflows');
+const { getGranuleStatus } = require('@cumulus/message/granules');
 const {
   generateFilePgRecord,
   generatePostgresGranuleRecord,
@@ -32,6 +34,7 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
+const { getGranuleTimeToPreprocess, getGranuleTimeToArchive, getGranuleProductVolume } = require('../../../lib/granules');
 
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
@@ -154,18 +157,23 @@ test('generatePostgresGranuleRecord() generates the correct granule record', asy
   granule.sync_granule_duration = 3000;
   granule.post_to_cmr_duration = 7810;
   const queryFields = { foo: 'bar' };
-
+  const workflowStatus = 'running';
   t.like(
     await generatePostgresGranuleRecord({
       granule,
       files,
       workflowStartTime,
-      workflowStatus: 'running',
+      workflowStatus,
       collectionCumulusId: 1,
       providerCumulusId: 2,
       pdrCumulusId: 4,
       timestamp,
       updatedAt,
+      timeToArchive: getGranuleTimeToArchive(granule),
+      timeToPreprocess: getGranuleTimeToPreprocess(granule),
+      productVolume: getGranuleProductVolume(files),
+      duration: getWorkflowDuration(workflowStartTime, timestamp),
+      status: getGranuleStatus(workflowStatus, granule),
       queryFields,
     }),
     {

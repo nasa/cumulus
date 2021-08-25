@@ -94,8 +94,11 @@ const generatePostgresGranuleRecord = async ({
   cmrUtils = CmrUtils,
   timestamp = Date.now(),
   updatedAt = Date.now(),
-  timeToArchive = undefined,
-  timeToPreprocess = undefined,
+  timeToArchive,
+  timeToPreprocess,
+  productVolume,
+  duration,
+  status,
 }) => {
   const {
     granuleId,
@@ -107,17 +110,17 @@ const generatePostgresGranuleRecord = async ({
 
   return {
     granule_id: granuleId,
-    status: getGranuleStatus(workflowStatus, granule),
+    status,
     cmr_link: cmrLink,
     error,
     published,
     created_at: new Date(workflowStartTime),
     updated_at: new Date(updatedAt),
     timestamp: new Date(timestamp),
-    duration: getWorkflowDuration(workflowStartTime, timestamp),
-    product_volume: getGranuleProductVolume(files),
-    time_to_process: timeToPreprocess || getGranuleTimeToPreprocess(granule),
-    time_to_archive: timeToArchive || getGranuleTimeToArchive(granule),
+    duration,
+    product_volume: productVolume,
+    time_to_process: timeToPreprocess,
+    time_to_archive: timeToArchive,
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     pdr_cumulus_id: pdrCumulusId,
@@ -256,6 +259,10 @@ const _writePostgresGranuleViaTransaction = async ({
   updatedAt,
   files,
   timeToArchive,
+  timeToPreprocess,
+  productVolume,
+  duration,
+  status,
 }) => {
   const granuleRecord = await generatePostgresGranuleRecord({
     error,
@@ -270,6 +277,10 @@ const _writePostgresGranuleViaTransaction = async ({
     processingTimeInfo,
     updatedAt,
     timeToArchive,
+    timeToPreprocess,
+    productVolume,
+    duration,
+    status,
   });
 
   log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
@@ -425,12 +436,16 @@ const _generateFilesFromGranule = async ({
 const _writeGranule = async ({
   collectionId,
   granule,
+  files=[],
   pdrName,
   provider,
   workflowStartTime,
   workflowStatus,
   timeToArchive,
   timeToPreprocess,
+  productVolume,
+  duration,
+  status,
   queryFields,
   collectionCumulusId,
   executionCumulusId,
@@ -443,7 +458,6 @@ const _writeGranule = async ({
   granuleModel,
   updatedAt = Date.now(),
 }) => {
-  const files = await _generateFilesFromGranule({ granule, provider });
 
   let granuleCumulusId;
   await knex.transaction(async (trx) => {
@@ -456,6 +470,9 @@ const _writeGranule = async ({
       workflowStatus,
       timeToArchive,
       timeToPreprocess,
+      productVolume,
+      duration,
+      status,
       queryFields,
       collectionCumulusId,
       providerCumulusId,
@@ -467,7 +484,6 @@ const _writeGranule = async ({
     });
 
     const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
-      s3: s3(),
       granule,
       executionUrl,
       collectionId,
@@ -478,6 +494,10 @@ const _writeGranule = async ({
       pdrName,
       workflowStatus,
       timeToArchive,
+      timeToPreprocess,
+      productVolume,
+      duration,
+      status,
       processingTimeInfo,
       queryFields,
       updatedAt,
@@ -529,26 +549,26 @@ const writeGranuleFromApi = async ({
   granuleId,
   collectionId,
   status,
-  execution = undefined,
-  cmrLink = undefined,
-  published = undefined,
-  pdrName = undefined,
-  provider  = undefined,
+  execution,
+  cmrLink,
+  published,
+  pdrName,
+  provider ,
   error = {},
   createdAt = new Date().toISOString(),
-  timestamp = undefined,
+  timestamp,
   updatedAt = new Date().toISOString(),
-  duration = undefined,
-  productVolume = undefined,
-  timeToPreprocess = undefined,
-  timeToArchive = undefined,
+  duration,
+  productVolume,
+  timeToPreprocess,
+  timeToArchive,
   files = [ ],
-  beginningDateTime = undefined,
-  endingDateTime = undefined,
-  productionDateTime = undefined,
-  lastUpdateDateTime = undefined,
-  processingStartDateTime = undefined,
-  processingEndDateTime = undefined,
+  beginningDateTime,
+  endingDateTime,
+  productionDateTime,
+  lastUpdateDateTime,
+  processingStartDateTime,
+  processingEndDateTime,
 }) => {
 
   try {
@@ -649,15 +669,22 @@ const writeGranulesFromMessage = async ({
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
-    (granule) => {
-      // granules specific data.
+    async (granule) => {
+      // compute granule specific data.
+      const files = await _generateFilesFromGranule({ granule, provider });
       const timeToArchive = getGranuleTimeToArchive(granule);
+      const timeToPreprocess = getGranuleTimeToPreprocess(granule);
+      const productVolume = getGranuleProductVolume(files);
+      const now = Date.now(); // yank me
+      const duration = getWorkflowDuration(workflowStartTime, now);
+      const status = getGranuleStatus(workflowStatus, granule);
       // const postgresGranuleRecord = buildGranuleRecord({stuff});
       // const dynamoGranuleRecord = granuleModel.buildRecord({stuff})
       // return _writeGranule({dynamoGranuleRecord, postgresGranuleRecord, knex, granuleModel});
       return _writeGranule({
         collectionId,
         granule,
+        files,
         processingTimeInfo,
         error,
         executionUrl,
@@ -666,6 +693,10 @@ const writeGranulesFromMessage = async ({
         workflowStartTime,
         workflowStatus,
         timeToArchive,
+        timeToPreprocess,
+        productVolume,
+        duration,
+        status,
         queryFields,
         collectionCumulusId,
         providerCumulusId,

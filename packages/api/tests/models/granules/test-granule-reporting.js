@@ -5,6 +5,7 @@ const awsClients = require('@cumulus/aws-client/services');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { getGranuleStatus } = require('@cumulus/message/Granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -409,6 +410,7 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
     provider,
     workflowStartTime,
     workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule1),
   });
 
   t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));

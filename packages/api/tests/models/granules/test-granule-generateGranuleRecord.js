@@ -2,8 +2,13 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const { randomString } = require('@cumulus/common/test-utils');
+const { getGranuleStatus } = require('@cumulus/message/Granules');
 const Granule = require('../../../models/granules');
-const { getGranuleTimeToArchive, getGranuleTimeToPreprocess } = require('../../../lib/granules');
+const {
+  getGranuleTimeToArchive,
+  getGranuleTimeToPreprocess,
+  getGranuleProductVolume,
+} = require('../../../lib/granules');
 
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
@@ -57,17 +62,21 @@ test('generateGranuleRecord() builds successful granule record', async (t) => {
   } = t.context;
   const granule = granuleSuccess.payload.granules[0];
   const executionUrl = randomString();
+  const status = getGranuleStatus(workflowStatus, granule);
 
   const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
   const processingEndDateTime = new Date(Date.UTC(2019, 6, 28, 1)).toISOString();
   const record = await granuleModel.generateGranuleRecord({
     granule,
     files: granule.files,
+    productVolume: getGranuleProductVolume(granule.files),
+    status,
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
       processingEndDateTime,
     },
+    duration: 4,
     timeToArchive: getGranuleTimeToArchive(granule),
     timeToPreprocess: getGranuleTimeToPreprocess(granule),
     collectionId,
@@ -111,6 +120,7 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
     Error: 'error',
     Cause: new Error('error'),
   };
+  const workflowStatus = 'failed';
   const record = await granuleModel.generateGranuleRecord({
     granule,
     message: granuleFailure,
@@ -119,7 +129,8 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
     files: granule.files,
     collectionId,
     workflowStartTime,
-    workflowStatus: 'failed',
+    workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule),
     error,
   });
 
