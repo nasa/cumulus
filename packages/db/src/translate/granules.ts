@@ -65,7 +65,7 @@ export const translatePostgresGranuleToApiGranule = async (
     beginningDateTime: granulePgRecord.beginning_date_time?.getTime().toString(),
     cmrLink: granulePgRecord.cmr_link,
     collectionId: constructCollectionId(collection.name, collection.version),
-    createdAt: granulePgRecord.created_at?.getTime().toString(),
+    createdAt: granulePgRecord.created_at?.getTime(),
     duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
     error: granulePgRecord.error,

@@ -203,7 +203,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
       },
     ],
     beginningDateTime: postgresGranule.beginning_date_time.getTime().toString(),
-    createdAt: postgresGranule.created_at.getTime().toString(),
+    createdAt: postgresGranule.created_at.getTime(),
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
     error: postgresGranule.error,
     executions: executions.map((e) => e.arn),
@@ -213,10 +213,10 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     productionDateTime: postgresGranule.production_date_time.getTime().toString(),
     productVolume: Number.parseInt(postgresGranule.product_volume, 10),
     queryFields: postgresGranule.query_fields,
-    timestamp: postgresGranule.timestamp.getTime().toString(),
+    timestamp: postgresGranule.timestamp.getTime(),
     timeToArchive: postgresGranule.time_to_archive,
     timeToPreprocess: postgresGranule.time_to_process,
-    updatedAt: postgresGranule.updated_at.getTime().toString(),
+    updatedAt: postgresGranule.updated_at.getTime(),
   };
 
   const result = await translatePostgresGranuleToApiGranule(
@@ -285,7 +285,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
       },
     ],
     beginningDateTime: postgresGranule.beginning_date_time.getTime().toString(),
-    createdAt: postgresGranule.created_at.getTime().toString(),
+    createdAt: postgresGranule.created_at.getTime(),
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
     error: postgresGranule.error,
     executions: executions.map((e) => e.arn),
@@ -295,10 +295,10 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     productionDateTime: postgresGranule.production_date_time.getTime().toString(),
     productVolume: Number.parseInt(postgresGranule.product_volume, 10),
     queryFields: postgresGranule.query_fields,
-    timestamp: postgresGranule.timestamp.getTime().toString(),
+    timestamp: postgresGranule.timestamp.getTime(),
     timeToArchive: postgresGranule.time_to_archive,
     timeToPreprocess: postgresGranule.time_to_process,
-    updatedAt: postgresGranule.updated_at.getTime().toString(),
+    updatedAt: postgresGranule.updated_at.getTime(),
   };
 
   const result = await translatePostgresGranuleToApiGranule(
