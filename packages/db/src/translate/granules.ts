@@ -45,6 +45,10 @@ export const translatePostgresGranuleToApiGranule = async (
     granulePgRecord.cumulus_id
   );
 
+  if (executionArns.length === 0) {
+    throw new Error(`Granule translation attempted for granule without an execution: ${JSON.stringify(granulePgRecord)}`);
+  }
+
   let pdr;
 
   if (granulePgRecord.pdr_cumulus_id) {
@@ -61,7 +65,7 @@ export const translatePostgresGranuleToApiGranule = async (
     );
   }
 
-  const apiGranule = removeNilProperties({
+  const apiGranule: ApiGranule = removeNilProperties({
     beginningDateTime: granulePgRecord.beginning_date_time?.getTime().toString(),
     cmrLink: granulePgRecord.cmr_link,
     collectionId: constructCollectionId(collection.name, collection.version),
@@ -69,8 +73,11 @@ export const translatePostgresGranuleToApiGranule = async (
     duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
     error: granulePgRecord.error,
-    executions: executionArns.map((e) => e.arn),
-    files: files.map((file) => translatePostgresFileToApiFile(file)),
+    execution: executionArns[0].arn,
+    files: files.map((file) => ({
+      ...translatePostgresFileToApiFile(file),
+      granuleId: granulePgRecord.granule_id,
+    })),
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime().toString(),
     pdrName: pdr ? pdr.name : undefined,
@@ -89,7 +96,7 @@ export const translatePostgresGranuleToApiGranule = async (
     updatedAt: granulePgRecord.updated_at?.getTime(),
   });
 
-  return apiGranule as ApiGranule;
+  return apiGranule;
 };
 
 /**
