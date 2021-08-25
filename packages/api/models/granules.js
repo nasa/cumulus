@@ -625,66 +625,6 @@ class Granule extends Manager {
     return response;
   }
 
-  /**
-   * Generate a granule record from a Cumulus message and store it in DynamoDB.
-   *
-   * @param {Object} params
-   * @param {Object} params.granule - Granule object from a Cumulus message
-   * @param {Object} params.cumulusMessage - A workflow message
-   * @param {string} params.executionUrl - Step Function execution URL for the workflow
-   * @param {Object} params.provider - Provider object
-   * @param {number} params.workflowStartTime - Workflow start timestamp
-   * @param {string} params.workflowStatus - Workflow status
-   * @param {string} params.collectionId - Collection ID for the workflow
-   * @param {string} [params.pdrName] - PDR name for the workflow, if any
-   * @param {Object} [params.error] - Workflow error, if any
-   * @param {Object} [params.processingTimeInfo]
-   *   Info describing the processing time for the granule
-   *
-   * @returns {Promise<Object|undefined>}
-   * @throws
-   */
-  async storeGranuleFromCumulusMessage({
-    granule,
-    executionUrl,
-    processingTimeInfo,
-    provider,
-    workflowStartTime,
-    files = [],
-    timeToArchive,
-    timeToPreprocess,
-    productVolume,
-    duration,
-    status,
-    collectionId,
-    error,
-    pdrName,
-    workflowStatus,
-    queryFields,
-    updatedAt,
-  }) {
-    const granuleRecord = await this.generateGranuleRecord({
-      granule,
-      executionUrl,
-      collectionId,
-      provider,
-      workflowStartTime,
-      files,
-      error,
-      pdrName,
-      workflowStatus,
-      timeToArchive,
-      timeToPreprocess,
-      productVolume,
-      duration,
-      status,
-      processingTimeInfo,
-      queryFields,
-      updatedAt,
-    });
-    return this.storeGranule(granuleRecord);
-  }
-
   async describeGranuleExecution(executionArn) {
     let executionDescription;
     try {
@@ -736,24 +676,29 @@ class Granule extends Manager {
         const duration = getWorkflowDuration(workflowStartTime, now);
         const status = getGranuleStatus(workflowStatus, granule);
 
-        return this.storeGranuleFromCumulusMessage({
-          granule,
-          processingTimeInfo,
-          executionUrl,
-          provider,
-          workflowStartTime,
-          files,
-          timeToArchive,
-          timeToPreprocess,
-          productVolume,
-          duration,
-          status,
-          collectionId,
-          error,
-          pdrName,
-          workflowStatus,
-          queryFields,
-        }).catch((writeError) => logger.error(writeError));
+        try {
+          const granuleRecord = await this.generateGranuleRecord({
+            granule,
+            executionUrl,
+            collectionId,
+            provider,
+            workflowStartTime,
+            files,
+            error,
+            pdrName,
+            workflowStatus,
+            timeToArchive,
+            timeToPreprocess,
+            productVolume,
+            duration,
+            status,
+            processingTimeInfo,
+            queryFields,
+          });
+          return this.storeGranule(granuleRecord);
+        } catch (writeError) {
+          return logger.error(writeError);
+        }
       }
     ));
   }

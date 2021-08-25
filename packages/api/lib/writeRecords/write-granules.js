@@ -83,9 +83,7 @@ const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' 
 const generatePostgresGranuleRecord = async ({
   error,
   granule,
-  files,
   workflowStartTime,
-  workflowStatus,
   queryFields,
   collectionCumulusId,
   providerCumulusId,
@@ -245,44 +243,11 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
  * @throws
  */
 const _writePostgresGranuleViaTransaction = async ({
-  granule,
-  processingTimeInfo,
-  error,
-  workflowStartTime,
-  workflowStatus,
-  queryFields,
+  granuleRecord,
   collectionCumulusId,
-  providerCumulusId,
   executionCumulusId,
-  pdrCumulusId,
   trx,
-  updatedAt,
-  files,
-  timeToArchive,
-  timeToPreprocess,
-  productVolume,
-  duration,
-  status,
 }) => {
-  const granuleRecord = await generatePostgresGranuleRecord({
-    error,
-    granule,
-    files,
-    workflowStartTime,
-    workflowStatus,
-    queryFields,
-    collectionCumulusId,
-    providerCumulusId,
-    pdrCumulusId,
-    processingTimeInfo,
-    updatedAt,
-    timeToArchive,
-    timeToPreprocess,
-    productVolume,
-    duration,
-    status,
-  });
-
   log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
@@ -436,7 +401,7 @@ const _generateFilesFromGranule = async ({
 const _writeGranule = async ({
   collectionId,
   granule,
-  files=[],
+  files = [],
   pdrName,
   provider,
   workflowStartTime,
@@ -458,49 +423,50 @@ const _writeGranule = async ({
   granuleModel,
   updatedAt = Date.now(),
 }) => {
-
   let granuleCumulusId;
+  const granuleRecord = await generatePostgresGranuleRecord({
+    error,
+    granule,
+    files,
+    workflowStartTime,
+    workflowStatus,
+    queryFields,
+    collectionCumulusId,
+    providerCumulusId,
+    pdrCumulusId,
+    processingTimeInfo,
+    updatedAt,
+    timeToArchive,
+    timeToPreprocess,
+    productVolume,
+    duration,
+    status,
+  });
+  const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    files,
+    error,
+    pdrName,
+    workflowStatus,
+    timeToArchive,
+    timeToPreprocess,
+    productVolume,
+    duration,
+    status,
+    processingTimeInfo,
+    queryFields,
+    updatedAt,
+  });
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writePostgresGranuleViaTransaction({
-      granule,
-      processingTimeInfo,
-      error,
-      provider,
-      workflowStartTime,
-      workflowStatus,
-      timeToArchive,
-      timeToPreprocess,
-      productVolume,
-      duration,
-      status,
-      queryFields,
+      granuleRecord,
       collectionCumulusId,
-      providerCumulusId,
       executionCumulusId,
-      pdrCumulusId,
       trx,
-      updatedAt,
-      files,
-    });
-
-    const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
-      granule,
-      executionUrl,
-      collectionId,
-      provider,
-      workflowStartTime,
-      files,
-      error,
-      pdrName,
-      workflowStatus,
-      timeToArchive,
-      timeToPreprocess,
-      productVolume,
-      duration,
-      status,
-      processingTimeInfo,
-      queryFields,
-      updatedAt,
     });
     return granuleModel.storeGranule(dynamoGranuleRecord);
   });
@@ -678,6 +644,7 @@ const writeGranulesFromMessage = async ({
       const now = Date.now(); // yank me
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
+
       // const postgresGranuleRecord = buildGranuleRecord({stuff});
       // const dynamoGranuleRecord = granuleModel.buildRecord({stuff})
       // return _writeGranule({dynamoGranuleRecord, postgresGranuleRecord, knex, granuleModel});

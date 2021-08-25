@@ -1064,7 +1064,10 @@ test.serial('When a move granule request fails to move a file correctly, it reco
         (dest) => updatedFiles[0].fileName.match(dest.regex)
       ).bucket);
 
-      t.true(updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
+      t.true(
+        updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
+        `updatedFile[1] ${updatedFiles[1].key}, did not start with ${destinationFilepath}/${granuleFileName}`
+      );
       t.like(newGranule.files[1], omit(updatedFiles[1], ['fileName', 'key', 'bucket']));
       t.is(updatedFiles[1].bucket, destinations.find(
         (dest) => updatedFiles[1].fileName.match(dest.regex)

@@ -357,7 +357,7 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
   await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
-test('storeGranuleFromCumulusMessage() throws an error for a failing record', async (t) => {
+test('generateGranuleRecord() throws an error for a failing record', async (t) => {
   const {
     collectionId,
     granuleModel,
@@ -370,14 +370,14 @@ test('storeGranuleFromCumulusMessage() throws an error for a failing record', as
   // cause record to fail
   delete granule1.granuleId;
 
-  await t.throwsAsync(granuleModel.storeGranuleFromCumulusMessage({
+  await t.throwsAsync(granuleModel.generateGranuleRecord({
     granule: granule1,
     executionUrl: 'http://execution-url.com',
     collectionId,
   }));
 });
 
-test('storeGranuleFromCumulusMessage() correctly stores granule record', async (t) => {
+test('storeGranule() correctly stores granule record', async (t) => {
   const {
     granuleModel,
     collectionId,
@@ -402,7 +402,7 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
     files: granule1.files,
   });
 
-  await granuleModel.storeGranuleFromCumulusMessage({
+  const granuleRecord = await granuleModel.generateGranuleRecord({
     granule: granule1,
     files,
     executionUrl: 'http://execution-url.com',
@@ -412,6 +412,7 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
     workflowStatus,
     status: getGranuleStatus(workflowStatus, granule1),
   });
+  await granuleModel.storeGranule(granuleRecord);
 
   t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
 });
