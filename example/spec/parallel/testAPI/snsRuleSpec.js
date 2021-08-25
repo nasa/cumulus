@@ -3,6 +3,7 @@
 const path = require('path');
 const { readJson } = require('fs-extra');
 const get = require('lodash/get');
+const omit = require('lodash/omit');
 
 const {
   addCollections,
@@ -11,7 +12,13 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteRule, getRule, postRule, updateRule } = require('@cumulus/api-client/rules');
+const {
+  deleteRule,
+  getRule,
+  postRule,
+  updateRule,
+  listRules,
+} = require('@cumulus/api-client/rules');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
@@ -146,6 +153,18 @@ describe('The SNS-type rule', () => {
       await expectAsync(waitForRuleInList(config.stackName, {
         name: ruleName,
       })).toBeResolved();
+      const response = await listRules({
+        prefix: config.stackName,
+        query: { name: ruleName },
+      });
+      const [rule] = JSON.parse(response.body).results;
+      const expectedRule = omit({
+        ...rule,
+        rule: omit({
+          ...rule.rule,
+        }, 'arn'),
+      }, ['createdAt', 'updatedAt', 'timestamp', 'state']);
+      expect(expectedRule).toEqual(snsRuleDefinition);
     });
 
     it('is enabled by default', () => {
