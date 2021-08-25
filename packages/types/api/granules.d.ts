@@ -29,9 +29,9 @@ export type ApiGranule = {
   pdrName?: string
   provider?: string
   error?: Object
-  createdAt: string
-  timestamp?: string
-  updatedAt: string
+  createdAt: number
+  timestamp?: number
+  updatedAt: number
   duration?: number
   productVolume?: number
   timeToPreprocess?: number

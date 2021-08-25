@@ -83,10 +83,10 @@ export const translatePostgresGranuleToApiGranule = async (
     published: granulePgRecord.published,
     queryFields: granulePgRecord.query_fields,
     status: granulePgRecord.status as GranuleStatus,
-    timestamp: granulePgRecord.timestamp?.getTime().toString(),
+    timestamp: granulePgRecord.timestamp?.getTime(),
     timeToArchive: granulePgRecord.time_to_archive,
     timeToPreprocess: granulePgRecord.time_to_process,
-    updatedAt: granulePgRecord.updated_at?.getTime().toString(),
+    updatedAt: granulePgRecord.updated_at?.getTime(),
   });
 
   return apiGranule as ApiGranule;
