@@ -13,6 +13,7 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
   getKnexClient,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage, deconstructCollectionId } = require('@cumulus/message/Collections');
@@ -56,83 +57,6 @@ const {
 } = require('./utils');
 
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
-
-/**
- * Generate a Granule record to save to the core database from a Cumulus message
- * and other contextual information
- *
- * @param {Object} params
- * @param {string} params.collectionId - Collection ID for the workflow
- * @param {Object} params.granule - Granule object from workflow message
- * @param {Array<Object>} params.files - Granule file objects
- * @param {Object} params.queryFields - Arbitrary query fields for the granule
- * @param {number} params.collectionCumulusId
- *   Cumulus ID of collection referenced in workflow message
- * @param {number} params.providerCumulusId
- *   Cumulus ID of provider referenced in workflow message
- * @param {number} params.pdrCumulusId
- *   Cumulus ID of PDR referenced in workflow message
- * @param {Object} [params.processingTimeInfo={}]
- *   Info describing the processing time for the granule
- * @param {Object} [params.cmrUtils=CmrUtils]
- *   Utilities for interacting with CMR
- * @param {number} [params.timestamp] - Timestamp for granule record. Defaults to now.
- * @param {number} [params.updatedAt] - Updated timestamp for granule record. Defaults to now.
- * @returns {Promise<Object>} - a granule record
- */
-const generatePostgresGranuleRecord = async ({
-  error,
-  granule,
-  workflowStartTime,
-  queryFields,
-  collectionCumulusId,
-  providerCumulusId,
-  pdrCumulusId,
-  processingTimeInfo = {},
-  cmrUtils = CmrUtils,
-  timestamp = Date.now(),
-  updatedAt = Date.now(),
-  timeToArchive,
-  timeToPreprocess,
-  productVolume,
-  duration,
-  status,
-}) => {
-  const {
-    granuleId,
-    cmrLink,
-    published = false,
-  } = granule;
-
-  const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-
-  return {
-    granule_id: granuleId,
-    status,
-    cmr_link: cmrLink,
-    error,
-    published,
-    created_at: new Date(workflowStartTime),
-    updated_at: new Date(updatedAt),
-    timestamp: new Date(timestamp),
-    duration,
-    product_volume: productVolume,
-    time_to_process: timeToPreprocess,
-    time_to_archive: timeToArchive,
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    pdr_cumulus_id: pdrCumulusId,
-    // Temporal info from CMR
-    beginning_date_time: temporalInfo.beginningDateTime,
-    ending_date_time: temporalInfo.endingDateTime,
-    production_date_time: temporalInfo.productionDateTime,
-    last_update_date_time: temporalInfo.lastUpdateDateTime,
-    // Processing info from execution
-    processing_start_date_time: processingTimeInfo.processingStartDateTime,
-    processing_end_date_time: processingTimeInfo.processingEndDateTime,
-    query_fields: queryFields,
-  };
-};
 
 /**
  * Generate a file record to save to the core database.
@@ -593,24 +517,6 @@ const writeGranulesFromMessage = async ({
       const status = getGranuleStatus(workflowStatus, granule);
       const updatedAt = Date.now();
 
-      const postgisGranuleRecord = await generatePostgresGranuleRecord({
-        error,
-        granule,
-        files,
-        workflowStartTime,
-        workflowStatus,
-        queryFields,
-        collectionCumulusId,
-        providerCumulusId,
-        pdrCumulusId,
-        processingTimeInfo,
-        updatedAt,
-        timeToArchive,
-        timeToPreprocess,
-        productVolume,
-        duration,
-        status,
-      });
       const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
         granule,
         executionUrl,
@@ -630,6 +536,11 @@ const writeGranulesFromMessage = async ({
         queryFields,
         updatedAt,
       });
+
+      const postgisGranuleRecord = await translateApiGranuleToPostgresGranule(
+        dynamoGranuleRecord,
+        knex
+      );
 
       return _writeGranule({
         postgisGranuleRecord,
@@ -655,7 +566,6 @@ const writeGranulesFromMessage = async ({
 
 module.exports = {
   generateFilePgRecord,
-  generatePostgresGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeGranuleFromApi,
   writeGranulesFromMessage,

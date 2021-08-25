@@ -21,10 +21,9 @@ const {
 } = require('@cumulus/db');
 
 const { getWorkflowDuration } = require('@cumulus/message/workflows');
-const { getGranuleStatus } = require('@cumulus/message/granules');
+const { getGranuleStatus } = require('@cumulus/message/Granules');
 const {
   generateFilePgRecord,
-  generatePostgresGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
   writeGranulesFromMessage,
@@ -137,122 +136,6 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
-});
-
-test('generatePostgresGranuleRecord() generates the correct granule record', async (t) => {
-  const {
-    granuleId,
-    granule,
-    workflowStartTime,
-  } = t.context;
-
-  const timestamp = workflowStartTime + 5000;
-  const updatedAt = Date.now();
-  // Set granule files
-  const files = [
-    fakeFileFactory({
-      size: 10,
-    }),
-  ];
-  granule.sync_granule_duration = 3000;
-  granule.post_to_cmr_duration = 7810;
-  const queryFields = { foo: 'bar' };
-  const workflowStatus = 'running';
-  t.like(
-    await generatePostgresGranuleRecord({
-      granule,
-      files,
-      workflowStartTime,
-      workflowStatus,
-      collectionCumulusId: 1,
-      providerCumulusId: 2,
-      pdrCumulusId: 4,
-      timestamp,
-      updatedAt,
-      timeToArchive: getGranuleTimeToArchive(granule),
-      timeToPreprocess: getGranuleTimeToPreprocess(granule),
-      productVolume: getGranuleProductVolume(files),
-      duration: getWorkflowDuration(workflowStartTime, timestamp),
-      status: getGranuleStatus(workflowStatus, granule),
-      queryFields,
-    }),
-    {
-      granule_id: granuleId,
-      status: 'running',
-      cmr_link: granule.cmrLink,
-      published: granule.published,
-      created_at: new Date(workflowStartTime),
-      timestamp: new Date(timestamp),
-      updated_at: new Date(updatedAt),
-      product_volume: 10,
-      duration: 5,
-      time_to_process: 3,
-      time_to_archive: 7.81,
-      collection_cumulus_id: 1,
-      provider_cumulus_id: 2,
-      pdr_cumulus_id: 4,
-      query_fields: queryFields,
-    }
-  );
-});
-
-test('generatePostgresGranuleRecord() includes processing time info, if provided', async (t) => {
-  const {
-    cumulusMessage,
-    granule,
-  } = t.context;
-
-  const processingTimeInfo = {
-    processingStartDateTime: new Date().toISOString(),
-    processingEndDateTime: new Date().toISOString(),
-  };
-
-  const record = await generatePostgresGranuleRecord({
-    cumulusMessage,
-    granule,
-    processingTimeInfo,
-  });
-  t.is(record.processing_start_date_time, processingTimeInfo.processingStartDateTime);
-  t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
-});
-
-test('generatePostgresGranuleRecord() includes temporal info, if any is returned', async (t) => {
-  const {
-    cumulusMessage,
-    granule,
-  } = t.context;
-
-  const temporalInfo = {
-    beginningDateTime: new Date().toISOString(),
-  };
-
-  const fakeCmrUtils = {
-    getGranuleTemporalInfo: () => Promise.resolve(temporalInfo),
-  };
-
-  const record = await generatePostgresGranuleRecord({
-    cumulusMessage,
-    granule,
-    cmrUtils: fakeCmrUtils,
-  });
-  t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
-});
-
-test('generatePostgresGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
-  const {
-    granule,
-  } = t.context;
-
-  const exception = {
-    Error: new Error('error'),
-    Cause: 'an error occurred',
-  };
-
-  const record = await generatePostgresGranuleRecord({
-    granule,
-    error: exception,
-  });
-  t.deepEqual(record.error, exception);
 });
 
 test('generateFilePgRecord() adds granule cumulus ID', (t) => {
@@ -568,13 +451,11 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
     granuleId,
   } = t.context;
 
-  const fakeGranuleModel = {
-    generateGranuleRecord: () => ({ model: 'any granule model' }),
-    storeGranule: () => {
-      throw new Error('Granules dynamo error');
-    },
-    describeGranuleExecution: () => Promise.resolve({}),
+  const fakeGranuleModel = new Granule();
+  fakeGranuleModel.storeGranule = () => {
+    throw new Error('Granules dynamo error');
   };
+  fakeGranuleModel.describeGranuleExecution = () => Promise.resolve({});
 
   const [error] = await t.throwsAsync(
     writeGranulesFromMessage({
