@@ -4,9 +4,7 @@ const delay = require('delay');
 const replace = require('lodash/replace');
 const get = require('lodash/get');
 
-const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const { postKinesisReplays } = require('@cumulus/api-client/replays');
@@ -31,7 +29,6 @@ const {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
-  waitForTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
 const {
@@ -132,14 +129,11 @@ describe('The Kinesis Replay API', () => {
     let startTimestamp;
     let endTimestamp;
     let asyncOperationId;
-    let messagePublishTime;
 
     beforeAll(async () => {
       // delete EventSourceMapping so that our rule, though enabled, does not trigger duplicate executions
       const rule = new Rule();
       await rule.deleteKinesisEventSources(rules[0]);
-
-      messagePublishTime = Date.now() - 30 * 1000;
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
       await delay(10 * 1000);
@@ -171,72 +165,60 @@ describe('The Kinesis Replay API', () => {
     });
 
     describe('processes messages within the specified time slice', () => {
-      let workflowArn;
-
-      beforeAll(async () => {
-        const workflowDefinition = await getJsonS3Object(
-          testConfig.bucket,
-          getWorkflowFileKey(testConfig.stackName, rules[0].workflow)
-        );
-        workflowArn = workflowDefinition.arn;
-      });
+      let workflowExecutionArns;
 
       it('to start the expected workflows', async () => {
         console.log('Waiting for step functions to start...');
 
         const expectedWorkflows = targetedRecords.map(
-          (record) =>
-            findExecutionArn(
+          (record) => {
+            console.log('originalPayload.identifier', record.identifier);
+            return findExecutionArn(
               testConfig.stackName,
               (execution) =>
                 get(execution, 'originalPayload.identifier') === record.identifier,
               {
-                timestamp__from: messagePublishTime,
-                'originalPayload.testId': record.identifier,
+                timestamp__from: startTimestamp,
+                'originalPayload.identifier': record.identifier,
               },
-              { timeout: 60 }
+              { timeout: maxWaitForSFExistSecs }
             )
-            // waitForTestSfForRecord(
-            //   record.identifier,
-            //   workflowArn,
-            //   maxWaitForSFExistSecs
-            // )
-              .catch((error) => fail(error.message))
+              .catch((error) => fail(error.message));
+          }
         );
 
-        const tooOldToExpectWorkflows = tooOldToFetchRecords
-          .map((r) => waitForTestSfForRecord(
-            r.identifier,
-            workflowArn,
-            maxWaitForSFExistSecs
-          ).then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-            .catch((error) => expect(error.message).toBe('Never found started workflow.')));
-
-        const tooNewToExpectWorkflows = newRecordsToSkip
-          .map(
-            (r) =>
-              waitForTestSfForRecord(
-                r.identifier,
-                workflowArn,
-                maxWaitForSFExistSecs
-              )
-                .then((ex) => fail(`should not find executions but found ${JSON.stringify(ex)}`))
-                .catch((error) => expect(error.message).toBe('Never found started workflow.'))
-          );
-
-        const workflowExecutions = await Promise.all(expectedWorkflows);
+        workflowExecutionArns = await Promise.all(expectedWorkflows);
         // if intermittent failures occur here, consider increasing maxWaitForSFExistSecs
-        expect(workflowExecutions.length).toEqual(2);
-        workflowExecutions.forEach((exec) => expect(exec).toBeDefined());
+        expect(workflowExecutionArns.length).toEqual(2);
+        workflowExecutionArns.forEach((exec) => expect(exec).toBeDefined());
+      });
 
+      it('to not start workflows for records that are too old or too new', async () => {
         console.log('Waiting to ensure workflows expected not to start do not start...');
-        await Promise.all(tooOldToExpectWorkflows);
-        await Promise.all(tooNewToExpectWorkflows);
+        const notExpectedWorkflows = [...tooOldToFetchRecords, ...newRecordsToSkip]
+          .map((record) => {
+            console.log('originalPayload.identifier', record.identifier);
+            return findExecutionArn(
+              testConfig.stackName,
+              (execution) =>
+                get(execution, 'originalPayload.identifier') === record.identifier,
+              {
+                timestamp__from: startTimestamp,
+                'originalPayload.identifier': record.identifier,
+              },
+              { timeout: maxWaitForSFExistSecs }
+            )
+              .then((execution) => fail(`should not find executions but found ${JSON.stringify(execution)}`))
+              .catch((error) => expect(error.message).toBe('Execution never found in API'));
+          });
+        await Promise.all(notExpectedWorkflows);
+      });
 
+      afterAll(async () => {
         console.log('Cleaning up executions...');
         await Promise.all([
-          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[0].executionArn }),
-          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[1].executionArn }),
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutionArns[0] }),
+          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutionArns[1] }),
         ]);
       });
     });
