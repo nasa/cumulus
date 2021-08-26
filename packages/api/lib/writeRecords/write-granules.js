@@ -326,34 +326,34 @@ const _writeGranule = async ({
  * Thin wrapper to _writeGranule used by endpoints/granule to create a granule
  * directly.
  *
- * @param {Object} body
- * @param {string} granuleId
- * @param {string} collectionId
- * @param {GranuleStatus} status - ['running','failed','completed']
- * @param {string} [execution] - Execution URL to associate with this granule
+ * @param {Object} params
+ * @param {string} params.granuleId - granule's id
+ * @param {string} params.collectionId - granule's collection id
+ * @param {GranuleStatus} params.status - ['running','failed','completed']
+ * @param {string} [params.execution] - Execution URL to associate with this granule
  *                               must already exist in database.
- * @param {string} [cmrLink] - url to CMR information for this granule.
- * @param {boolean} [published] - published to cmr
- * @param {string} [pdrName] -
- * @param {string} [provider] -
- * @param {Object} [error] = {} -
- * @param {string} [createdAt] = new Date().toISOString() -
- * @param {string} [timestamp] -
- * @param {string} [updatedAt] = new Date().toISOString() -
- * @param {number} [duration] - seconds
- * @param {integer} [productVolume] - sum of the files sizes in bytes
- * @param {integer} [timeToPreprocess] -  seconds
- * @param {integer} [timeToArchive] - seconds
- * @param {Array<ApiFile>} files - files associated with the granule.
- * @param {string} [beginningDateTime] - CMR Echo10: Temporal.RangeDateTime.BeginningDateTime
- * @param {string} [endingDateTime] - CMR Echo10: Temporal.RangeDateTime.EndingDateTime
- * @param {string} [productionDateTime] - CMR Echo10: DataGranule.ProductionDateTime
- * @param {string} [lastUpdateDateTime] - CMR Echo10: LastUpdate || InsertTime
- * @param {string} [processingStartDateTime] - execution startDate
- * @param {string} [processingEndDateTime] - execution StopDate
- * @param {Object} [queryFields] - query fields
- * @param {Object} [granuleModel] - only used for testing.
- * @returns {Promise<>}
+ * @param {string} [params.cmrLink] - url to CMR information for this granule.
+ * @param {boolean} [params.published] - published to cmr
+ * @param {string} [params.pdrName] - pdr name
+ * @param {string} [params.provider] - provider
+ * @param {Object} [params.error = {}] - workflow errors
+ * @param {string} [params.createdAt = new Date().valueOf()] - time value
+ * @param {string} [params.timestamp] - timestamp
+ * @param {string} [params.updatedAt = new Date().valueOf()] - time value
+ * @param {number} [params.duration] - seconds
+ * @param {integer} [params.productVolume] - sum of the files sizes in bytes
+ * @param {integer} [params.timeToPreprocess] -  seconds
+ * @param {integer} [params.timeToArchive] - seconds
+ * @param {Array<ApiFile>} params.files - files associated with the granule.
+ * @param {string} [params.beginningDateTime] - CMR Echo10: Temporal.RangeDateTime.BeginningDateTime
+ * @param {string} [params.endingDateTime] - CMR Echo10: Temporal.RangeDateTime.EndingDateTime
+ * @param {string} [params.productionDateTime] - CMR Echo10: DataGranule.ProductionDateTime
+ * @param {string} [params.lastUpdateDateTime] - CMR Echo10: LastUpdate || InsertTime
+ * @param {string} [params.processingStartDateTime] - execution startDate
+ * @param {string} [params.processingEndDateTime] - execution StopDate
+ * @param {Object} [params.queryFields] - query fields
+ * @param {Object} [params.granuleModel] - only for testing.
+ * @returns {Promise}
  */
 const writeGranuleFromApi = async ({
   granuleId,
@@ -385,32 +385,18 @@ const writeGranuleFromApi = async ({
     const knex = await getKnexClient();
 
     // Build a objects with correct shape for the granuleModel.generateGranuleRecord.
-    const granule = {
-      granuleId,
-      cmrLink,
-      published,
-      files,
-    };
-    const processingTimeInfo = {
-      processingStartDateTime,
-      processingEndDateTime,
-    };
-    const cmrTemporalInfo = {
-      beginningDateTime, // - from cmr
-      endingDateTime,
-      productionDateTime,
-      lastUpdateDateTime,
-    };
+    const granule = { granuleId, cmrLink, published, files };
+    const processingTimeInfo = { processingStartDateTime, processingEndDateTime };
+    const cmrTemporalInfo = { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
 
     const collectionNameVersion = deconstructCollectionId(collectionId);
-
     const collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
+
     let executionCumulusId;
     if (execution !== undefined) {
       executionCumulusId = await getExecutionCumulusId(execution, knex);
     }
 
-    log.debug('about to geneate dynamo granule ');
     const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
       granule,
       executionUrl: execution,
@@ -431,14 +417,10 @@ const writeGranuleFromApi = async ({
       cmrTemporalInfo,
     });
 
-    log.debug(`dynamoGranuleRecord: ${JSON.stringify(dynamoGranuleRecord)}`);
-
     const postgisGranuleRecord = await translateApiGranuleToPostgresGranule(
       dynamoGranuleRecord,
       knex
     );
-
-    log.debug(`postgisGranuleRecord ${JSON.stringify(postgisGranuleRecord)}`);
 
     const result = await _writeGranule({
       postgisGranuleRecord,
@@ -558,8 +540,6 @@ const writeGranulesFromMessage = async ({
       });
     }
   ));
-
-  log.debug(`results: ${JSON.stringify(results)}`);
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
