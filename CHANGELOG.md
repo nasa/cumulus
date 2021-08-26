@@ -89,6 +89,11 @@ of response and not the raw API endpoint response
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string
       - `record.output` is a string
+  - **CUMULUS-2304**
+    - Updated API rule GET endpoint to read individual rule records from
+      PostgreSQL database instead of DynamoDB
+    - Updated internal consumer lambdas for SNS, SQS and Kinesis to read
+      rules from PostgreSQL.
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
