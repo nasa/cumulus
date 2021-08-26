@@ -10,14 +10,20 @@ const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeGranuleRecordFactory,
   FilePgModel,
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
-  translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
+  translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
+
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -48,12 +54,6 @@ const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-
-// Postgres mock data factories
-const {
-  fakeCollectionRecordFactory,
-  fakeGranuleRecordFactory,
-} = require('@cumulus/db/dist/test-utils');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
@@ -229,6 +229,13 @@ test.before(async (t) => {
     t.context.knex,
     testPgCollection
   );
+
+  // Create execution in Dynamo/Postgres
+  // we need this as granules *should have* a related execution
+
+  t.context.testExecution = fakeExecutionRecordFactory();
+  const executionPgModel = new ExecutionPgModel();
+  t.context.testExecutionCumulusId = (await executionPgModel.create(t.context.knex, t.context.testExecution))[0];
 });
 
 test.beforeEach(async (t) => {
@@ -237,8 +244,8 @@ test.beforeEach(async (t) => {
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.testExecution.arn }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', execution: t.context.testExecution.arn }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
@@ -264,7 +271,7 @@ test.beforeEach(async (t) => {
   ];
 
   await Promise.all(t.context.fakePGGranules.map((granule) =>
-    granulePgModel.create(t.context.knex, granule)));
+    upsertGranuleWithExecutionJoinRecord(t.context.knex, granule, t.context.testExecutionCumulusId, t.context.granulePgModel)))
 });
 
 test.after.always(async (t) => {
@@ -404,7 +411,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns the expected exisitng granule', async (t) => {
+test.only('GET returns the expected exisitng granule', async (t) => {
   const {
     knex,
     fakePGGranules,
