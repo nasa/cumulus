@@ -170,17 +170,17 @@ test('updateAsyncOperation updates records correctly when output is undefined', 
   const status = 'SUCCEEDED';
   const output = undefined;
   const updateTime = (Number(Date.now())).toString();
-  const result = await updateAsyncOperation(
+  const result = await updateAsyncOperation({
     status,
     output,
-    {
+    envOverride: {
       asyncOperationsTable: t.context.dynamoTableName,
       asyncOperationId: t.context.asyncOperationId,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
       updateTime,
-    }
-  );
+    },
+  });
 
   const asyncOperationPgRecord = await t.context.asyncOperationPgModel
     .get(
