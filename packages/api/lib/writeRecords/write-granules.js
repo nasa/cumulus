@@ -11,7 +11,6 @@ const {
   FilePgModel,
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
-  getKnexClient,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
@@ -353,41 +352,51 @@ const _writeGranule = async ({
  * @param {string} [params.processingEndDateTime] - execution StopDate
  * @param {Object} [params.queryFields] - query fields
  * @param {Object} [params.granuleModel] - only for testing.
+ * @param {Knex} knex - knex Client
  * @returns {Promise}
  */
-const writeGranuleFromApi = async ({
-  granuleId,
-  collectionId,
-  status,
-  execution,
-  cmrLink,
-  published,
-  pdrName,
-  provider,
-  error = {},
-  createdAt = new Date().valueOf(),
-  updatedAt = new Date().valueOf(),
-  duration,
-  productVolume,
-  timeToPreprocess,
-  timeToArchive,
-  files = [],
-  beginningDateTime,
-  endingDateTime,
-  productionDateTime,
-  lastUpdateDateTime,
-  processingStartDateTime,
-  processingEndDateTime,
-  queryFields,
-  granuleModel = new Granule(),
-}) => {
+const writeGranuleFromApi = async (
+  {
+    granuleId,
+    collectionId,
+    status,
+    execution,
+    cmrLink,
+    published,
+    pdrName,
+    provider,
+    error = {},
+    createdAt = new Date().valueOf(),
+    updatedAt = new Date().valueOf(),
+    duration,
+    productVolume,
+    timeToPreprocess,
+    timeToArchive,
+    files = [],
+    beginningDateTime,
+    endingDateTime,
+    productionDateTime,
+    lastUpdateDateTime,
+    processingStartDateTime,
+    processingEndDateTime,
+    queryFields,
+    granuleModel = new Granule(),
+  },
+  knex
+) => {
   try {
-    const knex = await getKnexClient();
-
     // Build a objects with correct shape for the granuleModel.generateGranuleRecord.
     const granule = { granuleId, cmrLink, published, files };
-    const processingTimeInfo = { processingStartDateTime, processingEndDateTime };
-    const cmrTemporalInfo = { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+    const processingTimeInfo = {
+      processingStartDateTime,
+      processingEndDateTime,
+    };
+    const cmrTemporalInfo = {
+      beginningDateTime,
+      endingDateTime,
+      productionDateTime,
+      lastUpdateDateTime,
+    };
 
     const collectionNameVersion = deconstructCollectionId(collectionId);
     const collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
@@ -395,6 +404,9 @@ const writeGranuleFromApi = async ({
     let executionCumulusId;
     if (execution !== undefined) {
       executionCumulusId = await getExecutionCumulusId(execution, knex);
+      if (executionCumulusId === undefined) {
+        throw new Error('Cannot associate an execution by url if the exection does not exist in the database.');
+      }
     }
 
     const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({

@@ -64,10 +64,14 @@ async function list(req, res) {
  * @returns {Promise<Object>} promise of an express response object.
  */
 async function create(req, res) {
+  const {
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
   let result;
   const body = req.body;
   try {
-    result = await writeGranuleFromApi(body);
+    result = await writeGranuleFromApi({ record: body, knex });
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error));
