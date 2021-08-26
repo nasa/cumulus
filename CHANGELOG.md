@@ -16,6 +16,9 @@ of response and not the raw API endpoint response
 
 ### Added
 
+- **CUMULUS-2575**
+  - Adds `POST /granules` Api endpoint to create a granule
+
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
@@ -34,6 +37,11 @@ processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
+
+- **CUMULUS-2575**
+  - Updates model/granule to allow a granule created from API to not require an
+    execution to be associated with it. This is a backwards compatable change
+    that will not effect granules created in the normal way.
 
 ## [v9.4.0] 2021-08-16
 
