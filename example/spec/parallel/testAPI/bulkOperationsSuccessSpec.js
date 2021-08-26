@@ -143,7 +143,10 @@ describe('POST /granules/bulk', () => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
-          { timestamp__from: ingestTime },
+          {
+            timestamp__from: ingestTime,
+            'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+          },
           { timeout: 30 }
         );
 
