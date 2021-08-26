@@ -175,7 +175,7 @@ const writeAsyncOperationToPostgres = async (params) => {
 };
 
 const writeAsyncOperationToDynamoDb = async (params) => {
-  const { env, status, dbOutput, updatedTime, dynamoDbClient = dynamodb() } = params;
+  const { env, status, dbOutput, updatedTime, dynamoDbClient } = params;
   const ExpressionAttributeNames = {
     '#S': 'status',
     '#U': 'updatedAt',
