@@ -22,8 +22,9 @@ const Execution = require('../../../models/executions');
 const {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
-  writeExecution,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/write-execution');
+  writeExecutionRecordFromMessage,
+  writeExecutionRecordFromApi,
+} = require('../../../lib/writeRecords/write-execution');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
@@ -237,7 +238,7 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
+test('writeExecutionRecordFromMessage() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -246,14 +247,14 @@ test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch if write to R
     executionPgModel,
   } = t.context;
 
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await executionPgModel.exists(knex, { arn: executionArn }));
   t.true(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
+test('writeExecutionRecordFromMessage() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -262,7 +263,7 @@ test('writeExecution() saves execution to Dynamo/RDS/Elasticsearch with same tim
     executionPgModel,
   } = t.context;
 
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
@@ -289,7 +290,7 @@ test('writeExecution() properly sets originalPayload on initial write and finalP
   };
   cumulusMessage.payload = originalPayload;
 
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
@@ -304,7 +305,7 @@ test('writeExecution() properly sets originalPayload on initial write and finalP
     testId: cryptoRandomString({ length: 10 }),
   };
   cumulusMessage.payload = finalPayload;
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const updatedDynamoRecord = await executionModel.get({ arn: executionArn });
   const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
@@ -333,7 +334,7 @@ test('writeExecution() properly handles out of order writes and correctly preser
   };
   cumulusMessage.payload = finalPayload;
 
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
@@ -357,7 +358,7 @@ test('writeExecution() properly handles out of order writes and correctly preser
     key: cryptoRandomString({ length: 5 }),
   };
   cumulusMessage.payload = originalPayload;
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const updatedDynamoRecord = await executionModel.get({ arn: executionArn });
   const updatedPgRecord = await executionPgModel.get(knex, { arn: executionArn });
@@ -380,7 +381,7 @@ test('writeExecution() properly handles out of order writes and correctly preser
   });
 });
 
-test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Dynamo write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not persist records to Dynamo/RDS/Elasticsearch if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -390,14 +391,14 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   } = t.context;
 
   const fakeExecutionModel = {
-    storeExecution: () => {
+    storeExecutionRecord: () => {
       throw new Error('execution Dynamo error');
     },
     delete: () => Promise.resolve(true),
   };
 
   await t.throwsAsync(
-    writeExecution({
+    writeExecutionRecordFromMessage({
       cumulusMessage,
       knex,
       executionModel: fakeExecutionModel,
@@ -409,7 +410,7 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if RDS write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not persist records to Dynamo/RDS/Elasticsearch if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -430,7 +431,7 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   t.teardown(() => trxStub.restore());
 
   await t.throwsAsync(
-    writeExecution({ cumulusMessage, knex }),
+    writeExecutionRecordFromMessage({ cumulusMessage, knex }),
     { message: 'execution RDS error' }
   );
   t.false(await executionModel.exists({ arn: executionArn }));
@@ -454,7 +455,7 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   };
 
   await t.throwsAsync(
-    writeExecution({
+    writeExecutionRecordFromMessage({
       cumulusMessage,
       knex,
       esClient: fakeEsClient,
@@ -466,7 +467,7 @@ test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsear
   t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecution() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
+test.serial('writeExecutionRecordFromMessage() correctly sets both original_payload and final_payload in postgres when execution records are run in sequence', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -479,13 +480,35 @@ test.serial('writeExecution() correctly sets both original_payload and final_pay
 
   cumulusMessage.meta.status = 'running';
   cumulusMessage.payload = originalPayload;
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   cumulusMessage.meta.status = 'completed';
   cumulusMessage.payload = finalPayload;
-  await writeExecution({ cumulusMessage, knex });
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   t.deepEqual(pgRecord.original_payload, originalPayload);
   t.deepEqual(pgRecord.final_payload, finalPayload);
+});
+
+test('writeExecutionRecordFromApi() saves execution to Dynamo and RDS with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionModel,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const apiRecord = Execution.generateRecord(cumulusMessage);
+  await writeExecutionRecordFromApi({
+    record: apiRecord,
+    knex,
+    executionModel,
+  });
+
+  const dynamoRecord = await executionModel.get({ arn: executionArn });
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });

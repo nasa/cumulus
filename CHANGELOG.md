@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
 any adverse impact on existing deployments, even those which still contain `logs` records,
 but technically it is a breaking change to the Elasticsearch mappings.
+- Changed `@cumulus/api-client/asyncOperations.getAsyncOperation` to return parsed JSON body
+of response and not the raw API endpoint response
 
 ### Added
 
@@ -90,9 +92,24 @@ but technically it is a breaking change to the Elasticsearch mappings.
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
+- **CUMULUS-2577**
+  - Adds `POST /executions` endpoint to create an execution
 
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
+
+- **CUMULUS-2644**
+  - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
+  from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
+
+### Changed
+
+- Updated `processDeadLetterArchive` Lambda to return an object where
+`processingSucceededKeys` is an array of the S3 keys for successfully
+processed objects and `processingFailedKeys` is an array of S3 keys
+for objects that could not be processed
+- Updated async operations to handle writing records to the databases
+when output of the operation is `undefined`
 
 ## [v9.4.0] 2021-08-16
 

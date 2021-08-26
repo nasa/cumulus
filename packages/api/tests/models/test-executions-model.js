@@ -1,7 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
+const pick = require('lodash/pick');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeExecutionFactoryV2 } = require('../../lib/testUtils');
 const Execution = require('../../models/executions');
@@ -47,11 +48,45 @@ test.serial('_getMutableFieldNames() returns correct fields for completed status
   t.deepEqual(updateFields, Object.keys(item));
 });
 
-test.serial('storeExecution() can be used to create a new running execution', async (t) => {
+test('storeExecutionRecord() can be used to create a new execution', async (t) => {
   const { executionModel } = t.context;
-  const executionItem = fakeExecutionFactoryV2({
+  const execution = fakeExecutionFactoryV2();
+  await executionModel.storeExecutionRecord(execution);
+
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.is(fetchedItem.status, execution.status);
+});
+
+test('storeExecutionRecord() can be used to update an execution', async (t) => {
+  const { executionModel } = t.context;
+  const execution = fakeExecutionFactoryV2({
+    asyncOperationId: '1',
     status: 'running',
   });
+
+  await executionModel.storeExecutionRecord(execution);
+
+  const checkList = ['asyncOperationId', 'status', 'originalPayload'];
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedItem, checkList), pick(execution, checkList));
+
+  const newPayload = { foo: 'bar' };
+  const updatedExecution = {
+    ...execution,
+    asyncOperationId: '2',
+    originalPayload: newPayload,
+    status: 'completed',
+  };
+
+  await executionModel.storeExecutionRecord(updatedExecution);
+
+  const fetchedUpdatedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedUpdatedItem, checkList), pick(updatedExecution, checkList));
+  t.notDeepEqual(pick(fetchedUpdatedItem, checkList), pick(fetchedItem, checkList));
+});
+
+test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {
+  const { executionArn, cumulusMessage, executionModel } = t.context;
 
   await executionModel.storeExecution(executionItem);
 
