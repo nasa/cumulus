@@ -175,7 +175,7 @@ const writeAsyncOperationToPostgres = async (params) => {
 };
 
 const writeAsyncOperationToDynamoDb = async (params) => {
-  const { env, status, dbOutput, updatedTime, dynamoDb = dynamodb() } = params;
+  const { env, status, dbOutput, updatedTime, dynamoDbClient = dynamodb() } = params;
   const ExpressionAttributeNames = {
     '#S': 'status',
     '#U': 'updatedAt',
@@ -190,7 +190,7 @@ const writeAsyncOperationToDynamoDb = async (params) => {
     ExpressionAttributeValues[':o'] = { S: dbOutput };
     UpdateExpression += ', #O = :o';
   }
-  return await dynamoDb.updateItem({
+  return await dynamoDbClient.updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
     ExpressionAttributeNames,
