@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const pick = require('lodash/pick');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { fakeExecutionFactoryV2 } = require('../../lib/testUtils');
 const Execution = require('../../models/executions');
@@ -88,37 +88,30 @@ test('storeExecutionRecord() can be used to update an execution', async (t) => {
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {
   const { executionArn, cumulusMessage, executionModel } = t.context;
 
-  await executionModel.storeExecution(executionItem);
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: executionItem.arn });
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'running');
 });
 
-test.serial('storeExecution() can be used to update a running execution', async (t) => {
+test.serial('storeExecutionFromCumulusMessage() can be used to update a running execution', async (t) => {
   const {
+    cumulusMessage,
+    executionArn,
     executionModel,
   } = t.context;
 
-  const executionItem = fakeExecutionFactoryV2({
-    status: 'running',
-    originalPayload: {
-      key: 'value',
-    },
-    asyncOperationId: '1',
-  });
+  cumulusMessage.cumulus_meta.asyncOperationId = '1';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  await executionModel.storeExecution(executionItem);
-
+  cumulusMessage.meta.status = 'running';
   const newPayload = { foo: 'bar' };
-  const updatedItem = {
-    ...executionItem,
-    originalPayload: newPayload,
-    asyncOperationId: '2',
-  };
-  await executionModel.storeExecution(updatedItem);
+  cumulusMessage.payload = newPayload;
+  cumulusMessage.cumulus_meta.asyncOperationId = '2';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: executionItem.arn });
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'running');
   // should have been updated
@@ -127,61 +120,48 @@ test.serial('storeExecution() can be used to update a running execution', async 
   t.is(fetchedItem.asyncOperationId, '1');
 });
 
-test.serial('storeExecution() can be used to create a new completed execution', async (t) => {
-  const { executionModel } = t.context;
+test.serial('storeExecutionFromCumulusMessage() can be used to create a new completed execution', async (t) => {
+  const { executionArn, executionModel, cumulusMessage } = t.context;
 
-  const executionItem = fakeExecutionFactoryV2({
-    status: 'completed',
-  });
-  await executionModel.storeExecution(executionItem);
+  cumulusMessage.meta.status = 'completed';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: executionItem.arn });
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'completed');
 });
 
-test.serial('storeExecution() can be used to update a completed execution', async (t) => {
+test.serial('storeExecutionFromCumulusMessage() can be used to update a completed execution', async (t) => {
   const {
+    cumulusMessage,
+    executionArn,
     executionModel,
   } = t.context;
 
-  const executionItem = fakeExecutionFactoryV2({
-    status: 'completed',
-    finalPayload: {
-      foo: 'bar',
-    },
-  });
-
-  await executionModel.storeExecution(executionItem);
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
   const newFinalPayload = { foo2: 'bar' };
-  const updatedItem = {
-    ...executionItem,
-    finalPayload: newFinalPayload,
-  };
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = newFinalPayload;
 
-  await executionModel.storeExecution(updatedItem);
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: executionItem.arn });
+  const fetchedItem = await executionModel.get({ arn: executionArn });
+
   t.is(fetchedItem.status, 'completed');
   t.deepEqual(fetchedItem.finalPayload, newFinalPayload);
 });
 
-test.serial('storeExecution() will not allow a running status to replace a completed status', async (t) => {
-  const { executionModel } = t.context;
+test.serial('storeExecutionFromCumulusMessage() will not allow a running status to replace a completed status', async (t) => {
+  const { executionArn, cumulusMessage, executionModel } = t.context;
 
-  const executionItem = fakeExecutionFactoryV2({
-    status: 'completed',
-  });
-  await executionModel.storeExecution(executionItem);
+  cumulusMessage.meta.status = 'completed';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const updatedItem = {
-    ...executionItem,
-    status: 'running',
-  };
-  await executionModel.storeExecution(updatedItem);
+  cumulusMessage.meta.status = 'running';
+  await executionModel.storeExecutionFromCumulusMessage(cumulusMessage);
 
-  const fetchedItem = await executionModel.get({ arn: executionItem.arn });
+  const fetchedItem = await executionModel.get({ arn: executionArn });
 
   t.is(fetchedItem.status, 'completed');
 });
