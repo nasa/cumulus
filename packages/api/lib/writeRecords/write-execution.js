@@ -87,31 +87,29 @@ const buildExecutionRecord = ({
 
 const writeExecutionToDynamoAndES = async (params) => {
   const {
-    cumulusMessage,
+    dynamoRecord,
     executionModel,
-    updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
-    await executionModel.storeExecutionRecord(executionApiRecord);
+    await executionModel.storeExecutionRecord(dynamoRecord);
     await upsertExecution({
       esClient,
-      updates: executionApiRecord,
+      updates: dynamoRecord,
       index: process.env.ES_INDEX,
     });
   } catch (error) {
-    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${executionApiRecord.arn}`);
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${dynamoRecord.arn}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
-    await executionModel.delete({ arn: executionApiRecord.arn });
+    await executionModel.delete({ arn: dynamoRecord.arn });
     throw error;
   }
 };
 
 const _writeExecutionRecord = ({
+  dynamoRecord,
   postgresRecord,
-  cumulusMessage,
   knex,
   executionModel = new Execution(),
   executionPgModel = new ExecutionPgModel(),
@@ -122,9 +120,9 @@ const _writeExecutionRecord = ({
   const [executionCumulusId] = await executionPgModel.upsert(trx, postgresRecord);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionCumulusId}`);
   await writeExecutionToDynamoAndES({
-    cumulusMessage,
-    updatedAt,
+    dynamoRecord,
     executionModel,
+    updatedAt,
     esClient,
   });
   return executionCumulusId;
@@ -138,6 +136,7 @@ const writeExecutionRecordFromMessage = ({
   parentExecutionCumulusId,
   executionModel = new Execution(),
   updatedAt = Date.now(),
+  esClient,
 }) => {
   const postgresRecord = buildExecutionRecord({
     cumulusMessage,
@@ -146,12 +145,14 @@ const writeExecutionRecordFromMessage = ({
     parentExecutionCumulusId,
     updatedAt,
   });
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   return _writeExecutionRecord(
     {
+      dynamoRecord: executionApiRecord,
       postgresRecord,
-      cumulusMessage,
       knex,
       executionModel,
+      esClient,
     }
   );
 };

@@ -4,6 +4,7 @@ const get = require('lodash/get');
 
 const AggregateError = require('aggregate-error');
 
+const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -55,13 +56,14 @@ const writeRecordsToDynamoDb = async ({
   executionModel = new Execution(),
   pdrModel = new Pdr(),
 }) => {
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
   const results = await Promise.allSettled([
     writePdrToDynamoAndEs({
       cumulusMessage,
       pdrModel,
     }),
     writeExecutionToDynamoAndES({
-      cumulusMessage,
+      dynamoRecord: executionApiRecord,
       executionModel,
     }),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),

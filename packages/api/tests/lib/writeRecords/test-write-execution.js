@@ -10,11 +10,13 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
 } = require('@cumulus/db');
+
 const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
 const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
@@ -319,7 +321,7 @@ test('writeExecution() properly sets originalPayload on initial write and finalP
   t.deepEqual(updatedEsRecord.finalPayload, finalPayload);
 });
 
-test('writeExecution() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
+test('writeExecutionRecordFromMessage() properly handles out of order writes and correctly preserves originalPayload/finalPayload', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -439,7 +441,7 @@ test.serial('writeExecutionRecordFromMessage() does not persist records to Dynam
   t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecution() does not persist records to Dynamo/RDS/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not persist records to Dynamo/RDS/Elasticsearch if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -500,7 +502,7 @@ test('writeExecutionRecordFromApi() saves execution to Dynamo and RDS with same 
     executionPgModel,
   } = t.context;
 
-  const apiRecord = Execution.generateRecord(cumulusMessage);
+  const apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
   await writeExecutionRecordFromApi({
     record: apiRecord,
     knex,

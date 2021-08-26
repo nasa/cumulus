@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const pick = require('lodash/pick');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeExecutionFactoryV2 } = require('../../lib/testUtils');
 const Execution = require('../../models/executions');
@@ -11,6 +11,29 @@ test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
   t.context.executionModel = new Execution();
   await t.context.executionModel.createTable();
+  t.context.executionName = randomId('execution');
+
+  t.context.workflowStartTime = Date.now();
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
+      execution_name: t.context.executionName,
+      workflow_start_time: t.context.workflowStartTime,
+      cumulus_version: '1.2.3',
+    },
+    meta: {
+      status: 'running',
+      collection: {
+        name: 'my-name',
+        version: 'my-version',
+      },
+    },
+    payload: {
+      value: 'my-payload',
+    },
+  };
+
+  t.context.executionArn = `arn:aws:states:us-east-1:111122223333:execution:HelloWorld-StateMachine:${t.context.executionName}`;
 });
 
 test.after.always(async (t) => {

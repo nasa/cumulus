@@ -71,7 +71,6 @@ const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
 let asyncOperationModel;
-let asyncOperationPgModel;
 let collectionModel;
 let executionModel;
 let granuleModel;
@@ -102,6 +101,7 @@ test.before(async (t) => {
     systemBucket: process.env.system_bucket,
     stackName: process.env.stackName,
   });
+  await asyncOperationModel.createTable();
 
   // create fake Granules table
   granuleModel = new Granule();
@@ -201,7 +201,7 @@ test.before(async (t) => {
     t.context.testAsyncOperation
   );
 
-  [t.context.asyncOperationCumulusId] = await asyncOperationPgModel.create(
+  [t.context.asyncOperationCumulusId] = await t.context.asyncOperationsPgModel.create(
     knex,
     testPgAsyncOperation
   );
@@ -240,7 +240,7 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const { esIndex, esClient, knex, executionPgModel, granulePgModel } = t.context;
+  const { esIndex, esClient, executionPgModel, knex, granulePgModel } = t.context;
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
@@ -445,7 +445,7 @@ test('GET returns an existing execution', async (t) => {
 });
 
 test('GET returns an existing execution without any foreign keys', async (t) => {
-  const executionPgModel = new ExecutionPgModel();
+  const { executionPgModel } = t.context;
   const executionRecord = await fakeExecutionRecordFactory();
   await executionPgModel.create(
     t.context.knex,
