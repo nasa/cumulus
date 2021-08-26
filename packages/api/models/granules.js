@@ -596,8 +596,8 @@ class Granule extends Manager {
     updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
 
     // Only allow "running" granule to replace completed/failed
-    // granule if the execution has changed
-    if (granuleRecord.status === 'running') {
+    // granule if the execution has changed for granules with executions.
+    if (granuleRecord.status === 'running' && granuleRecord.execution !== undefined) {
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
