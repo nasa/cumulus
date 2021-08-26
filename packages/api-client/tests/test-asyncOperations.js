@@ -30,7 +30,7 @@ test('getAsyncOperation calls the callback with the expected object and returns 
     callback,
   });
 
-  t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
+  t.deepEqual(result, { foo: 'bar' });
 });
 
 test('deleteAsyncOperation calls the callback with the expected object and returns the parsed response', async (t) => {

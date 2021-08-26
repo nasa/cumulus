@@ -13,8 +13,10 @@ const Rule = require('../../models/rules');
 
 const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
+const fetchEnabledRulesStub = sandbox.stub();
 const { handler } = proxyquire('../../lambdas/message-consumer', {
   '../lib/rulesHelpers': {
+    fetchEnabledRules: fetchEnabledRulesStub,
     queueMessageForRule: queueMessageStub,
   },
 });
@@ -138,6 +140,7 @@ test.beforeEach(async (t) => {
   process.env.messageConsumer = randomString();
 
   t.context.createdRule = await ruleModel.create(kinesisRule);
+  fetchEnabledRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
 });
 
 test.afterEach.always(() => {
