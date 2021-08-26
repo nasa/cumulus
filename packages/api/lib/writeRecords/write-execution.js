@@ -127,7 +127,6 @@ const _writeExecutionRecord = ({
     executionModel,
     esClient,
   });
-  // await executionModel.storeExecutionRecord(dynamoRecord);
   return executionCumulusId;
 });
 
