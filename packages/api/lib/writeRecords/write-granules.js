@@ -141,25 +141,12 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
  * Write a granule to PostgreSQL
  *
  * @param {Object} params
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.processingTimeInfo
- *   Processing time information for the granule, if any
- * @param {Object} params.error - Workflow error, if any
- * @param {string} params.workflowStartTime - Workflow start time
- * @param {string} params.workflowStatus - Workflow status
- * @param {Object} params.queryFields - Arbitrary query fields for the granule
+ * @param {Object} params.granuleRecord - An postgres granule records
  * @param {string} params.collectionCumulusId
  *   Cumulus ID for collection referenced in workflow message, if any
- * @param {string} params.providerCumulusId
- *   Cumulus ID for provider referenced in workflow message, if any
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
- * @param {string} params.pdrCumulusId
- *   Cumulus ID for PDR referenced in workflow message, if any
  * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
- * @param {string} params.updatedAt - Update timestamp
- * @param {Array} params.files - List of files to add to Dynamo Granule
- * TODO [MHS, 08/24/2021] Update Params
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
@@ -293,32 +280,15 @@ const _generateFilesFromGranule = async ({
 };
 
 /**
- * Write a granule to DynamoDB and PostgreSQL
- *
- * @param {Object} params
- * @param {string} params.collectionId - Collection ID for the workflow
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.provider - Provider object
- * @param {string} params.workflowStatus - Workflow status
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message
- * @param {string} params.executionCumulusId
- *   Cumulus ID for execution referenced in workflow message, if any
- * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {Object} [params.error] - Workflow error, if any
- * @param {string} [params.executionUrl]
- *   Step Function execution URL for the workflow, if any
- * @param {Object} [params.processingTimeInfo]
- *   Processing time information for the granule, if any
- * @param {string} [params.providerCumulusId]
- *   Cumulus ID for provider referenced in workflow message, if any
- * @param {string} [params.pdrCumulusId]
- *   Cumulus ID for PDR referenced in workflow message, if any
- * @param {Object} [params.granuleModel]
- *   Optional override for the granule model writing to DynamoDB
- *
- * @returns {Promise}
- * @throws
+ * Write a granule record to DynamoDB and PostgreSQL
+ * param {PostgresGranule} postgisGranuleRecord,
+ * param {DynamoDBGranule} dynamoGranuleRecord,
+ * param {number} collectionCumulusId,
+ * param {number} executionCumulusId,
+ * param {Knex} knex,
+ * param {Object} granuleModel = new Granule(),
+ * returns {Promise}
+ * throws
  */
 const _writeGranule = async ({
   postgisGranuleRecord,
@@ -340,6 +310,7 @@ const _writeGranule = async ({
   });
 
   const { files, granuleId, status, error } = dynamoGranuleRecord;
+
   await _writeGranuleFiles({
     files,
     granuleCumulusId,
@@ -356,9 +327,9 @@ const _writeGranule = async ({
  * directly.
  *
  * @param {Object} body
- * @param {string} granuleId -
- * @param {string} collectionId -
- * @param {GranuleStatus} status -
+ * @param {string} granuleId
+ * @param {string} collectionId
+ * @param {GranuleStatus} status - ['running','failed','completed']
  * @param {string} [execution] - Execution URL to associate with this granule
  *                               must already exist in database.
  * @param {string} [cmrLink] - url to CMR information for this granule.
@@ -491,7 +462,7 @@ const writeGranuleFromApi = async ({
 };
 
 /**
- * Write granules to DynamoDB and PostgreSQL
+ * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
  * @param {Object} params
  * @param {Object} params.cumulusMessage - A workflow message
@@ -500,17 +471,11 @@ const writeGranuleFromApi = async ({
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {string} [params.providerCumulusId]
- *   Cumulus ID for provider referenced in workflow message, if any
- * @param {string} [params.pdrCumulusId]
- *   Cumulus ID for PDR referenced in workflow message, if any
  * @param {Object} [params.granuleModel]
  *   Optional override for the granule model writing to DynamoDB
- *
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
-// TODO [MHS, 08/26/2021] update this.
  * @throws {Error}
  */
 const writeGranulesFromMessage = async ({
@@ -583,7 +548,7 @@ const writeGranulesFromMessage = async ({
         knex
       );
 
-      return/*?*/ _writeGranule({
+      return _writeGranule({
         postgisGranuleRecord,
         dynamoGranuleRecord,
         collectionCumulusId,

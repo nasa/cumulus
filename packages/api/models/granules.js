@@ -294,17 +294,25 @@ class Granule extends Manager {
    * Build a granule record.
    *
    * @param {Object} params
-   * @param {AWS.S3} params.s3 - an AWS.S3 instance
    * @param {Object} params.granule - A granule object
    * @param {string} params.executionUrl - A Step Function execution URL
+   * @param {string} params.collectionId - Cumulus collection id
    * @param {string} params.provider - Provider id
-   * @param {string} params.workflowStatus - Workflow status
-   * @param {string} params.collectionId - Collection ID for the workflow
-   * @param {string} [params.pdrName] - PDR name for the workflow, if any
-   * @param {Object} [params.error] - Workflow error, if any
-   * @param {Object} [params.processingTimeInfo={}]
+   * @param {number} params.timeToArchive - seconds to post to cmr.
+   * @param {number} [params.timeToPreprocess] -  seconds
+   * @param {integer} [params.productVolume] - sum of the files sizes in bytes
+   * @param {number} [params.duration] - seconds
+   * @param {GranuleStatus} params.status - ['running','failed','completed']
+   * @param {number} params.workflowStartTime
+   * @param {Array<ApiFile>} params.files - files associated with the granule.
+   * @param {Object} [params.error] = {} - workflow error that may have occurred.
+   * @param {string} [params.pdrName]
+   * @param {Object} [params.queryFields] - query fields
+   * @param {Object} [params.processingTimeInfo = {}] - from getExecutionProcessingTimeInfo
+   * @param {number} [params.updatedAt  = Date.now()] -
+   * @param {Object} [params.cmrTemporalInfo = {}] - from cmr.getGranuleTemporalInfo
    *   Info describing the processing time for the granule
-   * @returns {Promise<Object>} A granule record
+   * @returns {Promise<Object>} A dynamoDb granule record
    */
   async generateGranuleRecord({
     granule,
@@ -625,6 +633,12 @@ class Granule extends Manager {
     return this._storeGranuleRecord(granuleRecord);
   }
 
+  /**
+   * Stores a granule in dynamoDB
+   *
+   * @param {Object} granuleRecord - dynamoDB granule
+   * @returns {Object} dynamodbDocClient update responses
+   */
   async storeGranule(granuleRecord) {
     logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
     const response = await this._validateAndStoreGranuleRecord(granuleRecord);
