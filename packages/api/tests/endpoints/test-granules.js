@@ -235,7 +235,9 @@ test.before(async (t) => {
 
   t.context.testExecution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  t.context.testExecutionCumulusId = (await executionPgModel.create(t.context.knex, t.context.testExecution))[0];
+  t.context.testExecutionCumulusId = (
+    await executionPgModel.create(t.context.knex, t.context.testExecution)
+  )[0];
 });
 
 test.beforeEach(async (t) => {
@@ -270,8 +272,15 @@ test.beforeEach(async (t) => {
     ),
   ];
 
-  await Promise.all(t.context.fakePGGranules.map((granule) =>
-    upsertGranuleWithExecutionJoinRecord(t.context.knex, granule, t.context.testExecutionCumulusId, t.context.granulePgModel)))
+  await Promise.all(
+    t.context.fakePGGranules.map((granule) =>
+      upsertGranuleWithExecutionJoinRecord(
+        t.context.knex,
+        granule,
+        t.context.testExecutionCumulusId,
+        t.context.granulePgModel
+      ))
+  );
 });
 
 test.after.always(async (t) => {
@@ -411,7 +420,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.only('GET returns the expected exisitng granule', async (t) => {
+test.serial('GET returns the expected exisitng granule', async (t) => {
   const {
     knex,
     fakePGGranules,
