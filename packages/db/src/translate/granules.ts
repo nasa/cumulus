@@ -46,10 +46,6 @@ export const translatePostgresGranuleToApiGranule = async (
     1
   );
 
-  if (executionArns.length === 0) {
-    throw new Error(`Granule translation attempted for granule without an execution: ${JSON.stringify(granulePgRecord)}`);
-  }
-
   let pdr;
 
   if (granulePgRecord.pdr_cumulus_id) {
@@ -74,7 +70,7 @@ export const translatePostgresGranuleToApiGranule = async (
     duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
     error: granulePgRecord.error,
-    execution: executionArns[0].arn,
+    execution: executionArns[0] ? executionArns[0].arn : undefined,
     files: files.map((file) => ({
       ...translatePostgresFileToApiFile(file),
       granuleId: granulePgRecord.granule_id,
