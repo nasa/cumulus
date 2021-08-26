@@ -90,6 +90,9 @@ but technically it is a breaking change to the Elasticsearch mappings.
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
+  - **CUMULUS-2644**
+    - Changed `erasePostgresTables` in serve.js to ensure granules_executions, granules, pdrs, are
+    deleted before executions
 
 ## [v9.4.0] 2021-08-16
 
