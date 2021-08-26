@@ -88,7 +88,10 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === ingestGranuleRule.payload.testExecutionId;
         },
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+        },
         { timeout: 60 }
       );
 
