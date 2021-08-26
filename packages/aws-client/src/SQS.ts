@@ -1,7 +1,7 @@
 /**
  * @module SQS
  */
-
+import Logger from '@cumulus/logger';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
@@ -12,9 +12,12 @@ import { sqs } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
+const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
   ReceiptHandle: string
 }
+
+export const getQueueNameFromUrl = (queueUrl: string) => queueUrl.split('/').pop();
 
 export const getQueueUrl = (sourceArn: string, queueName: string) => {
   const arnParts = sourceArn.split(':');
@@ -37,7 +40,9 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
     QueueName,
-  }).promise();
+  })
+    .on('error', (error) => log.error(error))
+    .promise();
 
   if (inTestMode()) {
     if (createQueueResponse.QueueUrl === undefined) {
@@ -66,7 +71,9 @@ export async function createQueue(QueueName: string) {
 export const deleteQueue = (queueUrl: string) =>
   sqs().deleteQueue({
     QueueUrl: queueUrl,
-  }).promise();
+  })
+    .on('error', (error) => log.error(error))
+    .promise();
 
 export const getQueueAttributes = async (queueName: string) => {
   const queueUrl = await getQueueUrlByName(queueName);
@@ -92,19 +99,25 @@ export const getQueueAttributes = async (queueName: string) => {
  * @param {string} queueUrl - url of the SQS queue
  * @param {string|Object} message - either string or object message. If an
  *   object it will be serialized into a JSON string.
+ * @param {Logger} [logOverride] - optional Logger passed in for testing
  * @returns {Promise} resolves when the messsage has been sent
- **/
-export const sendSQSMessage = (queueUrl: string, message: string | object) => {
-  let messageBody;
-  if (isString(message)) messageBody = message;
-  else if (isObject(message)) messageBody = JSON.stringify(message);
-  else throw new Error('body type is not accepted');
 
-  return sqs().sendMessage({
-    MessageBody: messageBody,
-    QueueUrl: queueUrl,
-  }).promise();
-};
+ **/
+export const sendSQSMessage = improveStackTrace(
+  (queueUrl: string, message: string | object, logOverride: Logger) => {
+    const logger = logOverride || log;
+    let messageBody;
+    if (isString(message)) messageBody = message;
+    else if (isObject(message)) messageBody = JSON.stringify(message);
+    else throw new Error('body type is not accepted');
+
+    return sqs().sendMessage({
+      MessageBody: messageBody,
+      QueueUrl: queueUrl,
+    }).on('error', (error) => logger.error(error))
+      .promise();
+  }
+);
 
 type receiveSQSMessagesOptions = {
   numOfMessages?: number,
@@ -137,7 +150,8 @@ export const receiveSQSMessages = async (
     MaxNumberOfMessages: options.numOfMessages || 1,
   };
 
-  const messages = await sqs().receiveMessage(params).promise();
+  const messages = await sqs().receiveMessage(params)
+    .on('error', (error) => log.error(error)).promise();
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
@@ -154,28 +168,34 @@ export const parseSQSMessageBody = (message: any): unknown =>
  */
 export const deleteSQSMessage = improveStackTrace(
   (QueueUrl: string, ReceiptHandle: string) =>
-    sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    sqs().deleteMessage({ QueueUrl, ReceiptHandle })
+      .on('error', (error) => log.error(error))
+      .promise()
 );
 
 /**
  * Test if an SQS queue exists
  *
- * @param {Object} queue - queue name or url
- * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
+ * @param {Object} queueUrl     - queue url
+ * @returns {Promise<boolean>}  - a Promise that will resolve to a boolean indicating
  *                               if the queue exists
  */
-export const sqsQueueExists = async (queue: string) => {
-  const QueueName = queue.split('/').pop();
+export const sqsQueueExists = async (queueUrl: string) => {
+  const QueueName = getQueueNameFromUrl(queueUrl);
 
   if (!QueueName) {
-    throw new Error(`Unable to determine QueueName from ${queue}`);
+    throw new Error(`Unable to determine QueueName from ${queueUrl}`);
   }
 
   try {
     await sqs().getQueueUrl({ QueueName }).promise();
     return true;
   } catch (error) {
-    if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') return false;
+    if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') {
+      log.warn(`Queue ${QueueName} does not exist`);
+      return false;
+    }
+    log.error(error);
     throw error;
   }
 };

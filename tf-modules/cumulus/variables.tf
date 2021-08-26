@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:32"
+  default = "cumuluss/async-operation:34"
 }
 
 variable "cmr_client_id" {
@@ -407,10 +407,16 @@ variable "private_archive_api_gateway" {
   default     = true
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "saml_entity_id" {

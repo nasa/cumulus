@@ -166,7 +166,7 @@ variable "api_gateway_stage" {
 
 variable "api_reserved_concurrency" {
   type = number
-  default = 2
+  default = 8
   description = "Archive API Lambda reserved concurrency"
 }
 
@@ -299,16 +299,22 @@ variable "pdr_node_name_provider_bucket" {
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "32"
+  default = "34"
 }
 
 variable "cumulus_process_activity_version" {

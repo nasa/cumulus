@@ -37,6 +37,10 @@ from a Cumulus message</p>
 <dt><a href="#exp_module_Collections--exports.constructCollectionId">exports.constructCollectionId(name, version)</a> ⇒ <code>string</code> ⏏</dt>
 <dd><p>Returns the collection ID.</p>
 </dd>
+<dt><a href="#deconstructCollectionId">deconstructCollectionId(collectionId)</a> ⇒ <code>Object</code></dt>
+<dd><p>Returns the name and version of a collection based on
+the collectionId used in elasticsearch indexing</p>
+</dd>
 <dt><a href="#exp_module_Collections--exports.getCollectionNameAndVersionFromMessage">exports.getCollectionNameAndVersionFromMessage(message)</a> ⇒ <code>CollectionInfo</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get collection name and version from execution message.</p>
 </dd>
@@ -394,6 +398,19 @@ of S3 remote message
 | --- | --- | --- |
 | stepMessage | <code>CMAMessage</code> | Message for the step |
 | stepName | <code>string</code> | Name of the step |
+
+<a name="deconstructCollectionId"></a>
+
+### deconstructCollectionId(collectionId) ⇒ <code>Object</code>
+Returns the name and version of a collection based on
+the collectionId used in elasticsearch indexing
+
+**Kind**: global function
+**Returns**: <code>Object</code> - name and version as object
+
+| Param | Type | Description |
+| --- | --- | --- |
+| collectionId | <code>string</code> | collectionId used in elasticsearch index |
 
 
 ## About Cumulus
