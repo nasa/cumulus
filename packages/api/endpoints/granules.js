@@ -68,7 +68,6 @@ async function create(req, res) {
   const body = req.body;
   try {
     result = await writeGranuleFromApi(body);
-    log.info(result);
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error));

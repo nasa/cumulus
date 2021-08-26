@@ -359,7 +359,8 @@ const _writeGranule = async ({
  * @param {string} granuleId -
  * @param {string} collectionId -
  * @param {GranuleStatus} status -
- * @param {string} [execution] - Execution URL to associate with this granule must already exist in database.
+ * @param {string} [execution] - Execution URL to associate with this granule
+ *                               must already exist in database.
  * @param {string} [cmrLink] - url to CMR information for this granule.
  * @param {boolean} [published] - published to cmr
  * @param {string} [pdrName] -

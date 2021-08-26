@@ -51,9 +51,9 @@ export const destroyLocalTestDb = async ({
   knexAdmin: Knex,
   testDbName: string
 }) => {
-    knex.destroy();
-    await pRetry(async () =>  deleteTestDatabase(knexAdmin, testDbName))
-    knexAdmin.destroy();
+  knex.destroy();
+  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
+  knexAdmin.destroy();
 };
 
 export const fakeRuleRecordFactory = (

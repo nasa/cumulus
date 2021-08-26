@@ -20,8 +20,6 @@ const {
   tableNames,
 } = require('@cumulus/db');
 
-const { getWorkflowDuration } = require('@cumulus/message/workflows');
-const { getGranuleStatus } = require('@cumulus/message/Granules');
 const {
   generateFilePgRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
@@ -33,7 +31,6 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
-const { getGranuleTimeToPreprocess, getGranuleTimeToArchive, getGranuleProductVolume } = require('../../../lib/granules');
 
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
