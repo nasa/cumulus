@@ -3,6 +3,7 @@ const isNil = require('lodash/isNil');
 const {
   ExecutionPgModel,
   translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const {
   upsertExecution,
@@ -29,7 +30,7 @@ const { parseException } = require('@cumulus/message/utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
-const { publishExecutionSnsMessage } = require('../../lib/publishSnsMessageUtils');
+const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
 const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
@@ -118,15 +119,17 @@ const _writeExecutionRecord = ({
   esClient,
 }) => knex.transaction(async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
-  const [executionCumulusId] = await executionPgModel.upsert(trx, postgresRecord);
-  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionCumulusId}`);
+  const [response] = await executionPgModel.upsert(trx, postgresRecord);
+  const translatedExecution = await translatePostgresExecutionToApiExecution(response, trx);
+  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${response.cumulus_id}`);
   await writeExecutionToDynamoAndES({
     dynamoRecord,
     executionModel,
     updatedAt,
     esClient,
   });
-  return executionCumulusId;
+  await publishExecutionSnsMessage(translatedExecution);
+  return response.cumulus_id;
 });
 
 const writeExecutionRecordFromMessage = ({
