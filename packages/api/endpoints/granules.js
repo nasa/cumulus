@@ -63,7 +63,7 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-async function post(req, res) {
+async function create(req, res) {
   let result;
   const body = req.body;
   try {
@@ -71,7 +71,7 @@ async function post(req, res) {
     log.info(result);
   } catch (error) {
     log.error('Could not write granule', error);
-    return res.boom.badRequest(error);
+    return res.boom.badRequest(JSON.stringify(error));
   }
   return res.json({ result });
 }
@@ -440,7 +440,7 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
-router.post('/', post);
+router.post('/', create);
 router.put('/:granuleName', put);
 
 router.post(

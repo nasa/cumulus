@@ -407,7 +407,7 @@ test('storeGranule() correctly stores granule record', async (t) => {
     files,
     executionUrl: 'http://execution-url.com',
     collectionId,
-    provider,
+    provider: provider.id,
     workflowStartTime,
     workflowStatus,
     status: getGranuleStatus(workflowStatus, granule1),

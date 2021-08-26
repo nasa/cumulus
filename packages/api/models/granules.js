@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
+const isEmpty = require('lodash/isEmpty');
 const isString = require('lodash/isString');
 const path = require('path');
 
@@ -296,7 +297,7 @@ class Granule extends Manager {
    * @param {AWS.S3} params.s3 - an AWS.S3 instance
    * @param {Object} params.granule - A granule object
    * @param {string} params.executionUrl - A Step Function execution URL
-   * @param {Object} params.provider - Provider object
+   * @param {string} params.provider - Provider id
    * @param {string} params.workflowStatus - Workflow status
    * @param {string} params.collectionId - Collection ID for the workflow
    * @param {string} [params.pdrName] - PDR name for the workflow, if any
@@ -322,6 +323,7 @@ class Granule extends Manager {
     queryFields,
     processingTimeInfo = {},
     updatedAt,
+    cmrTemporalInfo = {},
   }) {
     if (!granule.granuleId) {
       throw new CumulusModelError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
@@ -342,14 +344,19 @@ class Granule extends Manager {
     } = granule;
 
     const now = Date.now();
-    const temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
+    // Get cmr temporalInfo ( beginningDateTime, endingDateTime,
+    // productionDateTime, lastUpdateDateTime)
+    let temporalInfo = { ...cmrTemporalInfo };
+    if (isEmpty(cmrTemporalInfo)) {
+      temporalInfo = await this.cmrUtils.getGranuleTemporalInfo(granule);
+    }
 
     const record = {
       granuleId,
       pdrName,
       collectionId,
       status,
-      provider: provider.id,
+      provider: provider,
       execution: executionUrl,
       cmrLink: cmrLink,
       files,
@@ -681,7 +688,7 @@ class Granule extends Manager {
             granule,
             executionUrl,
             collectionId,
-            provider,
+            provider: provider.id,
             workflowStartTime,
             files,
             error,
