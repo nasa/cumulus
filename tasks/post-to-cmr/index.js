@@ -8,7 +8,6 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR,
   removeEtagsFromFileObjects,
-  mapFileEtags,
 } = require('@cumulus/cmrjs');
 const { getCmrSettings, getS3UrlOfFile } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
@@ -108,12 +107,15 @@ function checkForMetadata(granules, cmrFiles) {
  * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
-  event.input.granules.forEach((g) => addEtagsToFileObjects(g, event.config.etags));
+  const { cmrRevisionId, granules } = event.input;
+  const { etags = {} } = event.config;
+
+  granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
+
   // get cmr files and metadata
-  const revisionId = event.input.cmrRevisionId;
-  const cmrFiles = granulesToCmrFileObjects(event.input.granules);
+  const cmrFiles = granulesToCmrFileObjects(granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);
-  if (!event.config.skipMetaCheck) checkForMetadata(event.input.granules, cmrFiles);
+  if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
@@ -127,28 +129,21 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, revisionId))
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId))
   );
 
   const endTime = Date.now();
 
   const outputGranules = buildOutput(
     results,
-    event.input.granules
-  ).map((g) => ({
-    ...g,
+    granules
+  ).map((granule) => ({
+    ...granule,
     post_to_cmr_duration: endTime - startTime,
   }));
-  const updatedETags = outputGranules.map(
-    (g) => mapFileEtags(g.files)
-  ).reduce((allNewETags, granuleEtags) => ({ ...allNewETags, ...granuleEtags }), {});
   outputGranules.forEach(removeEtagsFromFileObjects);
   return {
     granules: outputGranules,
-    etags: {
-      ...event.config.etags,
-      ...updatedETags,
-    },
   };
 }
 

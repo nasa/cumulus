@@ -200,7 +200,43 @@ test.serial('postToCMR immediately succeeds using metadata file ETag', async (t)
     await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
-    t.is(output.etags[buildS3Uri(t.context.bucket, key)], etag);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
+    );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+    });
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  }
+});
+
+test.serial('postToCMR succeeds without etags config', async (t) => {
+  const newPayload = cloneDeep(t.context.payload);
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(resultThunk);
+
+  try {
+    await promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml')),
+    });
+
+    delete newPayload.config.etags;
+
+    await validateInput(t, newPayload.input);
+    await validateConfig(t, newPayload.config);
+    const output = await postToCMR(newPayload);
+    await validateOutput(t, output);
+
+    t.is(output.granules.length, 1);
+    // t.is(output.etags[buildS3Uri(t.context.bucket, key)], etag);
     t.is(
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
@@ -262,7 +298,6 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
     await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
-    t.is(output.etags[buildS3Uri(t.context.bucket, key)], newEtag);
     t.is(
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/concepts/${result['concept-id']}.echo10`
