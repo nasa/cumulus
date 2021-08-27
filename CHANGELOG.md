@@ -40,8 +40,8 @@ when output of the operation is `undefined`
 
 - **CUMULUS-2575**
   - Updates model/granule to allow a granule created from API to not require an
-    execution to be associated with it. This is a backwards compatable change
-    that will not effect granules created in the normal way.
+    execution to be associated with it. This is a backwards compatible change
+    that will not affect granules created in the normal way.
 
 ## [v9.4.0] 2021-08-16
 
