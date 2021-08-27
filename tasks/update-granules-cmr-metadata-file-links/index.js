@@ -64,7 +64,7 @@ async function updateGranulesCmrMetadataFileLinks(event) {
 
   const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
 
-  const incomingETags = event.config.etags;
+  const incomingETags = event.config.etags || {};
   const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
