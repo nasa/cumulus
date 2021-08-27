@@ -151,3 +151,19 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
     { message: 'cmrGranuleUrlType is both, but no distribution endpoint is configured.' }
   );
 });
+
+test.serial('update-granules-cmr-metadata-file-links does not throw error if no etags config is provided', async (t) => {
+  const newPayload = buildPayload(t);
+  // remove etags config
+  delete newPayload.config.etags;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await t.notThrowsAsync(
+    () => updateGranulesCmrMetadataFileLinks(newPayload)
+  );
+});
