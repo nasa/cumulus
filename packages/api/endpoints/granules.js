@@ -71,10 +71,10 @@ async function create(req, res) {
   let result;
   const body = req.body;
   try {
-    result = await writeGranuleFromApi({ record: body, knex });
+    result = await writeGranuleFromApi(body, knex);
   } catch (error) {
     log.error('Could not write granule', error);
-    return res.boom.badRequest(JSON.stringify(error));
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
   return res.json({ result });
 }

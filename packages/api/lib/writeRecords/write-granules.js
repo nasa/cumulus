@@ -451,6 +451,7 @@ const writeGranuleFromApi = async (
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
     log.error('Failed to write granule', thrownError);
+    log.debug(`thrownError.message: ${thrownError.message}`);
     throw thrownError;
   }
 };

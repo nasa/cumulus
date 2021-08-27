@@ -8,9 +8,11 @@
  */
 
 const get = require('lodash/get');
-const granulesApi = require('@cumulus/api-client/granules');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
+
+const { randomId } = require('@cumulus/common/test-utils');
+const granulesApi = require('@cumulus/api-client/granules');
 
 class GranuleNotFoundError extends Error {
   constructor(id) {
@@ -75,6 +77,17 @@ const getGranuleWithStatus = async (params = {}) =>
     }
   );
 
+const buildRandomizedGranule = (overrides = {}) => ({
+  granuleId: randomId('granid'),
+  collectionId: `${randomId('name')}___${randomId('vers')}`,
+  status: 'completed',
+  execution: undefined,
+  error: {},
+  files: [{ bucket: randomId('bucket'), key: randomId('key') }],
+  ...overrides,
+});
+
 module.exports = {
   getGranuleWithStatus,
+  buildRandomizedGranule,
 };
