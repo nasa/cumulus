@@ -687,7 +687,7 @@ test.serial('writeGranuleFromApi() throws for a granule with no files', async (t
   t.is(error2.message, 'Storing a Granule requires at least one file.');
 });
 
-test.serial('writeGranuleFromApi() writes a granule to postgres and dynamo.', async (t) => {
+test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.', async (t) => {
   const {
     knex,
     granule,
