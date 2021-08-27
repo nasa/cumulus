@@ -405,7 +405,7 @@ const writeGranuleFromApi = async (
     if (execution !== undefined) {
       executionCumulusId = await getExecutionCumulusId(execution, knex);
       if (executionCumulusId === undefined) {
-        throw new Error('Cannot associate an execution by url if the exection does not exist in the database.');
+        throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
     }
 
