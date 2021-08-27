@@ -280,7 +280,7 @@ const _generateFilesFromGranule = async ({
 
 /**
  * Write a granule record to DynamoDB and PostgreSQL
- * param {PostgresGranule} postgisGranuleRecord,
+ * param {PostgresGranule} postgresGranuleRecord,
  * param {DynamoDBGranule} dynamoGranuleRecord,
  * param {number} collectionCumulusId,
  * param {number} executionCumulusId,
@@ -290,7 +290,7 @@ const _generateFilesFromGranule = async ({
  * throws
  */
 const _writeGranule = async ({
-  postgisGranuleRecord,
+  postgresGranuleRecord,
   dynamoGranuleRecord,
   collectionCumulusId,
   executionCumulusId,
@@ -300,7 +300,7 @@ const _writeGranule = async ({
   let granuleCumulusId;
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writePostgresGranuleViaTransaction({
-      granuleRecord: postgisGranuleRecord,
+      granuleRecord: postgresGranuleRecord,
       collectionCumulusId,
       executionCumulusId,
       trx,
@@ -429,13 +429,13 @@ const writeGranuleFromApi = async (
       cmrTemporalInfo,
     });
 
-    const postgisGranuleRecord = await translateApiGranuleToPostgresGranule(
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
       dynamoGranuleRecord,
       knex
     );
 
     const result = await _writeGranule({
-      postgisGranuleRecord,
+      postgresGranuleRecord,
       dynamoGranuleRecord,
       collectionCumulusId,
       executionCumulusId,
@@ -538,13 +538,13 @@ const writeGranulesFromMessage = async ({
         updatedAt,
       });
 
-      const postgisGranuleRecord = await translateApiGranuleToPostgresGranule(
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
         dynamoGranuleRecord,
         knex
       );
 
       return _writeGranule({
-        postgisGranuleRecord,
+        postgresGranuleRecord,
         dynamoGranuleRecord,
         collectionCumulusId,
         executionCumulusId,
