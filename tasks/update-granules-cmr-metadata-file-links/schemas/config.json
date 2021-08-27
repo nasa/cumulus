@@ -33,8 +33,7 @@
     },
     "etags": {
       "type": "object",
-      "description": "map of s3URIs to ETags",
-      "default": {}
+      "description": "map of s3URIs to ETags"
     },
     "cmrGranuleUrlType": {
       "type": "string",

@@ -23,8 +23,7 @@
     },
     "etags": {
       "description": "map of s3URIs to ETags",
-      "type": "object",
-      "default": {}
+      "type": "object"
     }
   }
 }
