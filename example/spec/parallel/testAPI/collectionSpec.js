@@ -1,6 +1,8 @@
 'use strict';
 
-const { deleteS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
+const omit = require('lodash/omit');
+
+const { deleteS3Object, getJsonS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 
@@ -46,6 +48,10 @@ describe('Collections API', () => {
         bucket: config.bucket,
         key: recordCreatedKey,
       })).toBeResolved();
+      const savedEvent = await getJsonS3Object(config.bucket, recordCreatedKey);
+      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+      expect(message.event).toEqual('Create');
+      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(collection);
     }
   });
 
@@ -53,6 +59,7 @@ describe('Collections API', () => {
     if (beforeAllFailed) {
       fail('beforeAll() failed');
     } else {
+      const timestamp = Date.now();
       await deleteCollection({
         prefix,
         collectionName: collection.name,
@@ -63,6 +70,11 @@ describe('Collections API', () => {
         bucket: config.bucket,
         key: recordDeletedKey,
       })).toBeResolved();
+      const savedEvent = await getJsonS3Object(config.bucket, recordDeletedKey);
+      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+      expect(message.event).toEqual('Delete');
+      expect(message.record).toEqual({ name: collection.name, version: collection.version });
+      expect(message.deletedAt).toBeGreaterThan(timestamp);
     }
   });
 });
