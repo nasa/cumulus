@@ -451,7 +451,6 @@ const writeGranuleFromApi = async (
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
     log.error('Failed to write granule', thrownError);
-    log.debug(`thrownError.message: ${thrownError.message}`);
     throw thrownError;
   }
 };
@@ -513,10 +512,10 @@ const writeGranulesFromMessage = async ({
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = getGranuleProductVolume(files);
-      const now = Date.now(); // yank me
+      const now = Date.now();
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
-      const updatedAt = Date.now();
+      const updatedAt = now;
 
       const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
         granule,
