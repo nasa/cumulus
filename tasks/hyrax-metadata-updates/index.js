@@ -263,7 +263,7 @@ async function getMetadataObject(metadataFileName, metadata) {
  *    with a hyrax URL
  */
 const updateGranule = (config) => async (granule) => {
-  const { etags } = config;
+  const { etags = {} } = config;
   addEtagsToFileObjects(granule, etags);
   // Read in the metadata file
   const metadataFile = granule.files.find(isCMRFile);
