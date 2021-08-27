@@ -392,19 +392,7 @@
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
-            "etags": "{$.meta.file_etags}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$.etags}",
-                  "destination": "{$.meta.file_etags}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            }
+            "etags": "{$.meta.file_etags}"
           }
         }
       },

@@ -240,19 +240,7 @@
             "launchpad": "{$.meta.launchpad}",
             "input_granules": "{$.meta.input_granules}",
             "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
-            "etags": "{$.meta.file_etags}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$.etags}",
-                  "destination": "{$.meta.file_etags}"
-                },
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            }
+            "etags": "{$.meta.file_etags}"
           }
         }
       },
