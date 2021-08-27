@@ -245,7 +245,7 @@ test('getExecutionCumulusId returns undefined if there is no executionUrl passed
   t.is(await getExecutionCumulusId(undefined, knex), undefined);
 });
 
-test('getExecutionCumulusId returns undefined if collection cannot be found.', async (t) => {
+test('getExecutionCumulusId returns undefined if url cannot be found.', async (t) => {
   const { knex } = t.context;
   t.is(await getExecutionCumulusId('https://example.com/still/not/in/db', knex), undefined);
 });
