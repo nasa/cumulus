@@ -111,28 +111,28 @@ function setAccessConstraintMetadataInUMMGJSONMetadata(
  * Update access constraints within CMR Metadata.
  *
  * @param {Object} cmrFileObject - CMR File Object from granule record
- * @param {Object} config - config object
- * @param {Object} config.accessConstraints - access constraints config object
- * @param {number} config.accessConstraintsObject.value - Access constraint value
- * @param {string} [config.accessConstraintsObject.description] - Access constraint description
- * @param {Object} config.etags - map of s3Uris to ETags
+ * @param {Object} etags - map of s3Uris to ETags
+ * @param {Object} accessConstraints - access constraints config object
+ * @param {number} accessConstraints.value - Access constraint value
+ * @param {string} [accessConstraints.description] - Access constraint description
  * @returns {Object} CMR File Object with etag for updated CMR File
  */
 async function updateCmrFileAccessConstraint(
   cmrFileObject,
-  config
+  etags,
+  accessConstraints
 ) {
   const cmrS3Url = getS3UrlOfFile(cmrFileObject);
   const cmrMetadataContentsObject = await metadataObjectFromCMRFile(
     cmrS3Url,
-    config.etags[cmrS3Url]
+    etags[cmrS3Url]
   );
   const { Bucket, Key } = parseS3Uri(cmrS3Url);
   // ECHO10XML logic
   if (isECHO10File(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setRestrictionMetadataInEcho10XMLMetadata(
       cmrMetadataContentsObject,
-      config.accessConstraints
+      accessConstraints
     );
     const updatedGranuleXML = generateEcho10XMLString(updatedCmrMetadataContentsObject.Granule);
     const updatedCmrFile = await uploadEcho10CMRFile(
@@ -145,7 +145,7 @@ async function updateCmrFileAccessConstraint(
   if (isUMMGFile(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setAccessConstraintMetadataInUMMGJSONMetadata(
       cmrMetadataContentsObject,
-      config.accessConstraints
+      accessConstraints
     );
     const updatedCmrFile = await uploadUMMGJSONCMRFile(
       updatedCmrMetadataContentsObject,
@@ -170,16 +170,19 @@ async function updateCmrFileAccessConstraint(
  */
 const updateCmrAccessConstraints = async (event) => {
   const { config, input } = event;
+  const { etags = {}, accessConstraints } = config;
+
   const cmrFileObjects = granulesToCmrFileObjects(input.granules);
   const updatedCmrFileObjectsWithEtags = await Promise.all(
     cmrFileObjects.map(
-      (cmrFileObject) => updateCmrFileAccessConstraint(cmrFileObject, config)
+      (cmrFileObject) => updateCmrFileAccessConstraint(cmrFileObject, etags, accessConstraints)
     )
   );
+
   return {
     ...input,
     etags: {
-      ...config.etags,
+      ...etags,
       ...mapFileEtags(updatedCmrFileObjectsWithEtags),
     },
   };

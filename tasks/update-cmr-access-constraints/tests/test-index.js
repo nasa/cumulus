@@ -65,6 +65,51 @@ test('updateCmrAccessConstraints updates Echo10XML CMR metadata with access cons
   t.is(updatedMetadata.Granule.RestrictionComment, payloadConfig.accessConstraints.description);
 });
 
+test('updateCmrAccessConstraints updates Echo10XML CMR metadata with access constraint when there is no etags config', async (t) => {
+  const key = `${randomString()}.cmr.xml`;
+  const { ETag } = await S3.s3PutObject({
+    Bucket: t.context.bucket,
+    Key: key,
+    Body: fs.readFileSync(
+      path.join(__dirname, 'fixtures/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml')
+    ),
+  });
+  const s3Uri = S3.buildS3Uri(t.context.bucket, key);
+  const payloadInput = {
+    granules: [{
+      granuleId: 'abcd1234',
+      files: [{
+        bucket: t.context.bucket,
+        key: key,
+      }],
+    }],
+  };
+  await validateInput(t, payloadInput);
+  const payloadConfig = {
+    accessConstraints: {
+      value: 17,
+      description: 'Test AccessConstraint Value',
+    },
+  };
+  await validateConfig(t, payloadConfig);
+  delete payloadConfig.etags;
+  const handlerResponse = await updateCmrAccessConstraints({
+    input: payloadInput,
+    config: payloadConfig,
+  });
+  await validateOutput(t, handlerResponse);
+  // ensure updated ETag
+  const newETag = handlerResponse.etags[s3Uri];
+  t.false([ETag, undefined].includes(newETag));
+  // ensure AccessConstraint is set in the metadata
+  const updatedMetadata = await metadataObjectFromCMRFile(
+    S3.buildS3Uri(t.context.bucket, key),
+    newETag
+  );
+  t.is(updatedMetadata.Granule.RestrictionFlag, payloadConfig.accessConstraints.value.toString());
+  t.is(updatedMetadata.Granule.RestrictionComment, payloadConfig.accessConstraints.description);
+});
+
 test('updateCmrAccessConstraints sets Echo10XML RestrictionComment to "None" if undefined', async (t) => {
   const key = `${randomString()}.cmr.xml`;
   const { ETag } = await S3.s3PutObject({
