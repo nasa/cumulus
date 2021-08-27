@@ -24,7 +24,7 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
   let prefix;
   let provider;
   let syncGranuleOutput;
-  let parsedFileUrl;
+  let syncedFile;
 
   const filename = '0byte.dat';
 
@@ -134,12 +134,11 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
       expect(fullTaskOutput.errorMessage).toBe(undefined);
 
       // Confirm that file was synced
-      const syncedFile = parsedPayload.payload.granules[0].files[0];
-      parsedFileUrl = S3.parseS3Uri(syncedFile.filename);
+      syncedFile = parsedPayload.payload.granules[0].files[0];
       expect(
         await S3.s3ObjectExists({
-          Bucket: parsedFileUrl.Bucket,
-          Key: parsedFileUrl.Key,
+          Bucket: syncedFile.bucket,
+          Key: syncedFile.key,
         })
       ).toBeTrue();
     }
@@ -148,7 +147,7 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
   afterAll(async () => {
     await pAll(
       [
-        () => S3.deleteS3Object(parsedFileUrl.Bucket, parsedFileUrl.Key),
+        () => S3.deleteS3Object(syncedFile.bucket, syncedFile.key),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,
