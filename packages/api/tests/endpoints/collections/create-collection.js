@@ -59,7 +59,6 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 let rulesModel;
-let publishStub;
 
 const testDbName = randomString(12);
 

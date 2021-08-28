@@ -26,7 +26,7 @@ const createFakeGranule = async (dbClient) => {
     dbClient,
     fakeCollectionRecordFactory()
   );
-  const = collectionCumulusId = pgCollection.cumulus_id;
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   granulePgModel = new GranulePgModel();
   const [granuleCumulusId] = await granulePgModel.create(

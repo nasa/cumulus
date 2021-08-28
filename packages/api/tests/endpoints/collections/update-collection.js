@@ -527,7 +527,7 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined)
+  t.is(Messages, undefined);
 });
 
 test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
@@ -596,5 +596,5 @@ test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined)
+  t.is(Messages, undefined);
 });

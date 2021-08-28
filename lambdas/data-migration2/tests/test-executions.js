@@ -176,7 +176,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     async_operation_cumulus_id: asyncOperationCumulusId,
-    collection_cumulus_id: collectionCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });
