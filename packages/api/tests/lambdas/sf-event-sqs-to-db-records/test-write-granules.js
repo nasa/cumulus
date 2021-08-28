@@ -128,10 +128,11 @@ test.beforeEach(async (t) => {
     },
   };
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,

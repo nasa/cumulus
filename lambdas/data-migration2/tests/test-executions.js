@@ -135,10 +135,11 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   const existingExecution = await executionsModel.create(fakeExecution);
 
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
-    fakeCollection
+    t.context.collection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const asyncOperationPgModel = new AsyncOperationPgModel();
   const [asyncOperationCumulusId] = await asyncOperationPgModel.create(

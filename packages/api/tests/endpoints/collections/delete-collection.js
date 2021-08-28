@@ -2,7 +2,11 @@
 
 const test = require('ava');
 const request = require('supertest');
-const awsServices = require('@cumulus/aws-client/services');
+const {
+  s3,
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -74,7 +78,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await t.context.collectionModel.createTable();
@@ -91,7 +95,7 @@ test.before(async (t) => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  await awsServices.s3().putObject({
+  await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
@@ -101,6 +105,37 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.testCollection = fakeCollectionFactory();
   await t.context.collectionModel.create(t.context.testCollection);
+
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.collection_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
@@ -144,7 +179,7 @@ test('Attempting to delete a collection with an invalid access token returns an 
 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
-test('Deleting a collection removes it from all data stores', async (t) => {
+test.serial('Deleting a collection removes it from all data stores and publishes an SNS message', async (t) => {
   const { originalCollection } = await createCollectionTestRecords(t.context);
 
   t.true(
@@ -184,9 +219,24 @@ test('Deleting a collection removes it from all data stores', async (t) => {
       constructCollectionId(originalCollection.name, originalCollection.version)
     )
   );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  t.is(message.event, 'Delete');
+  t.truthy(message.deletedAt);
+  t.deepEqual(
+    message.record,
+    { name: originalCollection.name, version: originalCollection.version }
+  );
 });
 
-test('Deleting a collection without a record in RDS succeeds', async (t) => {
+test.serial('Deleting a collection without a record in RDS succeeds', async (t) => {
   const { testCollection } = t.context;
 
   await request(app)
@@ -201,9 +251,23 @@ test('Deleting a collection without a record in RDS succeeds', async (t) => {
       testCollection.version
     )
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  t.is(message.event, 'Delete');
+  t.truthy(message.deletedAt);
+  t.deepEqual(
+    message.record,
+    { name: testCollection.name, version: testCollection.version }
+  );
 });
 
-test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
   const { testCollection } = t.context;
 
   const rule = fakeRuleFactoryV2({
@@ -217,7 +281,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await awsServices.s3().putObject({
+  await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
@@ -235,7 +299,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   t.is(response.body.message, `Cannot delete collection with associated rules: ${rule.name}`);
 });
 
-test('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
   const { testCollection } = t.context;
 
   const rule = fakeRuleFactoryV2({
@@ -249,7 +313,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await awsServices.s3().putObject({
+  await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
@@ -266,7 +330,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
   t.true(await t.context.collectionModel.exists(testCollection.name, testCollection.version));
 });
 
-test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL/Elasticsearch or publish SNS message if removing from Dynamo fails', async (t) => {
   const {
     originalCollection,
   } = await createCollectionTestRecords(
@@ -318,9 +382,16 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
       constructCollectionId(originalCollection.name, originalCollection.version)
     )
   );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS message if removing from PostgreSQL fails', async (t) => {
   const {
     originalCollection,
   } = await createCollectionTestRecords(
@@ -370,9 +441,15 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
       constructCollectionId(originalCollection.name, originalCollection.version)
     )
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from Dynamo/PostgreSQL or publish SNS message if removing from Elasticsearch fails', async (t) => {
   const {
     originalCollection,
   } = await createCollectionTestRecords(
@@ -422,4 +499,10 @@ test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearc
       constructCollectionId(originalCollection.name, originalCollection.version)
     )
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });

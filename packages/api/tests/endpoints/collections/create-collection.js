@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const omit = require('lodash/omit');
 const sinon = require('sinon');
 const request = require('supertest');
 
@@ -15,6 +16,10 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
 } = require('@cumulus/db');
+const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -95,11 +100,39 @@ test.before(async (t) => {
   await rulesModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+});
 
-  process.env.collection_sns_topic_arn = randomString();
-  publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
-    promise: () => Promise.resolve(true),
-  });
+test.beforeEach(async (t) => {
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.collection_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
@@ -108,7 +141,6 @@ test.after.always(async (t) => {
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
-  publishStub.restore();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -150,7 +182,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
-test('POST creates a new collection in all data stores', async (t) => {
+test.serial('POST creates a new collection in all data stores and publishes an SNS message', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)
@@ -180,9 +212,21 @@ test('POST creates a new collection in all data stores', async (t) => {
       version: newCollection.version,
     }
   ));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  const omitFields = ['createdAt', 'updatedAt'];
+  t.is(message.event, 'Create');
+  t.deepEqual(omit(message.record, omitFields), omit(newCollection, omitFields));
 });
 
-test('POST creates a new collection in all data stores with correct timestamps', async (t) => {
+test.serial('POST creates a new collection in all data stores with correct timestamps', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await request(app)
@@ -219,7 +263,7 @@ test('POST creates a new collection in all data stores with correct timestamps',
   t.is(collectionPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test('POST without a name returns a 400 error', async (t) => {
+test.serial('POST without a name returns a 400 error', async (t) => {
   const newCollection = fakeCollectionFactory();
   delete newCollection.name;
 
@@ -234,7 +278,7 @@ test('POST without a name returns a 400 error', async (t) => {
   t.is(message, 'Field name and/or version is missing');
 });
 
-test('POST without a version returns a 400 error', async (t) => {
+test.serial('POST without a version returns a 400 error', async (t) => {
   const newCollection = fakeCollectionFactory();
   delete newCollection.version;
 
@@ -249,7 +293,7 @@ test('POST without a version returns a 400 error', async (t) => {
   t.is(message, 'Field name and/or version is missing');
 });
 
-test('POST for an existing collection returns a 409', async (t) => {
+test.serial('POST for an existing collection returns a 409', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   await collectionModel.create(newCollection);
@@ -264,7 +308,7 @@ test('POST for an existing collection returns a 409', async (t) => {
   t.is(res.body.message, `A record already exists for ${newCollection.name} version: ${newCollection.version}`);
 });
 
-test('POST with non-matching granuleIdExtraction regex returns 400 bad request response', async (t) => {
+test.serial('POST with non-matching granuleIdExtraction regex returns 400 bad request response', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   newCollection.granuleIdExtraction = 'badregex';
@@ -281,7 +325,7 @@ test('POST with non-matching granuleIdExtraction regex returns 400 bad request r
   t.is(res.body.message, 'granuleIdExtraction "badregex" cannot validate "filename.txt"');
 });
 
-test('POST with non-matching file.regex returns 400 bad request repsonse', async (t) => {
+test.serial('POST with non-matching file.regex returns 400 bad request repsonse', async (t) => {
   const newCollection = fakeCollectionFactory();
   const filename = 'filename.txt';
   const regex = 'badregex';
@@ -324,7 +368,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
+test.serial('POST with invalid granuleIdExtraction regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
     granuleIdExtraction: '*',
   });
@@ -339,7 +383,7 @@ test('POST with invalid granuleIdExtraction regex returns 400 bad request', asyn
   t.true(response.body.message.includes('Invalid granuleIdExtraction'));
 });
 
-test('POST with invalid file.regex returns 400 bad request', async (t) => {
+test.serial('POST with invalid file.regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
     files: [{
       bucket: 'test-bucket',
@@ -358,7 +402,7 @@ test('POST with invalid file.regex returns 400 bad request', async (t) => {
   t.true(response.body.message.includes('Invalid regex'));
 });
 
-test('POST with invalid granuleId regex returns 400 bad request', async (t) => {
+test.serial('POST with invalid granuleId regex returns 400 bad request', async (t) => {
   const newCollection = fakeCollectionFactory({
     granuleId: '*',
   });
@@ -373,7 +417,7 @@ test('POST with invalid granuleId regex returns 400 bad request', async (t) => {
   t.true(response.body.message.includes('Invalid granuleId'));
 });
 
-test('POST with non-matching granuleId regex returns 400 bad request response', async (t) => {
+test.serial('POST with non-matching granuleId regex returns 400 bad request response', async (t) => {
   const newCollection = fakeCollectionFactory({
     granuleIdExtraction: '(filename)',
     sampleFileName: 'filename',
@@ -391,7 +435,7 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
 });
 
-test('post() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+test.serial('post() does not write to PostgreSQL/Elasticsearch/SNS if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
 
   const collection = fakeCollectionFactory();
@@ -427,9 +471,16 @@ test('post() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fai
       version: collection.version,
     })
   );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+test.serial('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const collection = fakeCollectionFactory();
 
   const fakeCollectionPgModel = {
@@ -453,9 +504,16 @@ test('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fai
     constructCollectionId(collection.name, collection.version)
   ));
   t.false(await collectionModel.exists(collection.name, collection.version));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('post() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test.serial('post() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const collection = fakeCollectionFactory();
 
   const fakeEsClient = {
@@ -482,4 +540,11 @@ test('post() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fai
     })
   );
   t.false(await collectionModel.exists(collection.name, collection.version));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
