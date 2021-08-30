@@ -226,16 +226,16 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       expect(files.length).toBe(5);
 
       // Make sure the three ingested files are present
-      expect(files.find((file) => file.name === sameChecksumFilename)).toBeDefined();
-      expect(files.find((file) => file.name === differentChecksumFilename)).toBeDefined();
-      expect(files.find((file) => file.name === newFileFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === sameChecksumFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === differentChecksumFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === newFileFilename)).toBeDefined();
 
       // Make sure the generated CMR file is present
-      expect(files.find((file) => file.name === `${granuleId}.cmr.xml`)).toBeDefined();
+      expect(files.find((file) => file.fileName === `${granuleId}.cmr.xml`)).toBeDefined();
 
       // Make sure that the modified file resulted in a versioned file
       expect(
-        files.find((file) => file.name.startsWith(`${differentChecksumFilename}.v`))
+        files.find((file) => file.fileName.startsWith(`${differentChecksumFilename}.v`))
       ).toBeDefined();
     }
   });
