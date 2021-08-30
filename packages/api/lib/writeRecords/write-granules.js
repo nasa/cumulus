@@ -434,7 +434,7 @@ const writeGranuleFromApi = async (
       knex
     );
 
-    const result = await _writeGranule({
+    await _writeGranule({
       postgresGranuleRecord,
       dynamoGranuleRecord,
       collectionCumulusId,
@@ -443,11 +443,6 @@ const writeGranuleFromApi = async (
       granuleModel,
 
     });
-    if (result && result.status === 'rejected') {
-      const theError = new Error(result.reason);
-      log.error('Failed to _writeGranule', theError);
-      throw theError;
-    }
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
     log.error('Failed to write granule', thrownError);
