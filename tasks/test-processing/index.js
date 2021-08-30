@@ -10,23 +10,22 @@ const img = require('./data/testBrowse.jpg');
 async function uploadFakeBrowse(input) {
   const uploadPromises = [];
   input.granules.forEach((granule) => {
-    granule.files.forEach((file) => {
-      if (file.type === 'data') {
+    granule.files
+      .filter((file) => path.extname(file.fileName) !== 'met' && path.extname(file.fileName) !== 'jpg')
+      .forEach((file) => {
         const browseFile = { ...file };
-        const browseName = browseFile.filename;
-        browseFile.filename = browseName.replace(path.extname(browseName), '.jpg');
-        browseFile.name = browseFile.name.replace(path.extname(browseFile.name), '.jpg');
-        browseFile.type = 'browse';
+        const browseName = browseFile.key;
+        browseFile.key = browseName.replace(path.extname(browseName), '.jpg');
+        browseFile.fileName = browseFile.fileName.replace(path.extname(browseFile.fileName), '.jpg');
 
         const browseStream = fs.createReadStream(img);
         uploadPromises.push(promiseS3Upload({
           Bucket: browseFile.bucket,
-          Key: (`${browseFile.fileStagingDir}/${browseFile.name}`),
+          Key: (`${browseFile.fileStagingDir}/${browseFile.fileName}`),
           Body: browseStream,
         }));
         granule.files.push(browseFile);
-      }
-    });
+      });
   });
   await Promise.all(uploadPromises);
   return input.granules;
