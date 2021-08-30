@@ -180,7 +180,7 @@ describe('The S3 Ingest Granules workflow', () => {
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
         s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
-      const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+      const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}/';
 
       const templatedSyncGranuleFilename = templateFile({
         inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',

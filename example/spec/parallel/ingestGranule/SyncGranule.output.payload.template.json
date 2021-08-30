@@ -7,31 +7,31 @@
       "version": "006",
       "files": [
         {
-          "name": "replace-me-granuleId.hdf",
+          "fileName": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
           "size": 1098034,
           "type": "data",
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}"
         },
         {
-          "name": "replace-me-granuleId.hdf.met",
+          "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
           "size": 21708,
           "type": "metadata",
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"
         },
         {
-          "name": "replace-me-granuleId_ndvi.jpg",
+          "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
           "filename": "",
           "size": 9728,
           "type": "browse",
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"
         }
       ]
     }
