@@ -354,7 +354,6 @@ class GranuleFetcher {
     // the staged file expected
     const stagedFile = {
       size: file.size,
-      type: file.type,
       bucket: destinationBucket,
       key: destinationKey,
       source: `${file.path}/${file.name}`,
