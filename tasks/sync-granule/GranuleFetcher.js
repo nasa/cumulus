@@ -358,6 +358,7 @@ class GranuleFetcher {
       bucket: destinationBucket,
       key: destinationKey,
       source: `${file.path}/${file.name}`,
+      fileName: path.basename(destinationKey),
     };
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
@@ -421,6 +422,7 @@ class GranuleFetcher {
         key: f.Key,
         source: `${file.path}/${file.key}`,
         size: f.size,
+        fileName: path.basename(f.Key),
       })));
     return { files: returnVal, duplicate: duplicateFound };
   }
