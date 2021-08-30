@@ -823,11 +823,13 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     knex,
   } = t.context;
 
-  const fakeGranuleModel = new Granule();
-  fakeGranuleModel.storeGranule = () => {
-    throw new Error('Granules dynamo error');
+  const fakeGranuleModel = {
+    generateGranuleRecord: () => t.context.granule,
+    storeGranule: () => {
+      throw new Error('Granules dynamo error');
+    },
+    describeGranuleExecution: () => Promise.resolve({}),
   };
-  fakeGranuleModel.describeGranuleExecution = () => Promise.resolve({});
 
   const error = await t.throwsAsync(
     writeGranuleFromApi({ ...granule, granuleModel: fakeGranuleModel }, knex)
