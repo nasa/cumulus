@@ -675,23 +675,6 @@ test.serial('writeGranuleFromApi() throws for a granule with no collectionId pro
   t.is(error.message, 'Cannot read property \'split\' of undefined');
 });
 
-test.serial('writeGranuleFromApi() throws for a granule with no files', async (t) => {
-  const {
-    knex,
-    granule,
-  } = t.context;
-
-  const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, files: [] }, knex)
-  );
-  t.is(error.message, 'Storing a Granule requires at least one file.');
-
-  const error2 = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, files: undefined }, knex)
-  );
-  t.is(error2.message, 'Storing a Granule requires at least one file.');
-});
-
 test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.', async (t) => {
   const {
     knex,
@@ -720,6 +703,20 @@ test.serial('writeGranuleFromApi() writes a granule without an execution to post
 
   await writeGranuleFromApi({ ...granule, execution: undefined }, knex);
 
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(knex, { granule_id: granuleId }));
+});
+
+test.serial('writeGranuleFromApi() can write a granule with no files associated with it', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, files: [] }, knex);
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await granulePgModel.exists(knex, { granule_id: granuleId }));
 });

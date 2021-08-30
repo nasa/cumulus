@@ -341,10 +341,6 @@ class Granule extends Manager {
       throw new CumulusModelError('collection required to generate a granule record');
     }
 
-    if (!files || files.length === 0) {
-      throw new Error('Storing a Granule requires at least one file.');
-    }
-
     const {
       granuleId,
       cmrLink,
