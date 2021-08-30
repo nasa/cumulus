@@ -155,13 +155,15 @@ const _writePostgresGranuleViaTransaction = async ({
   collectionCumulusId,
   executionCumulusId,
   trx,
+  granulePgModel = new GranulePgModel(),
 }) => {
   log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granuleRecord,
-    executionCumulusId
+    executionCumulusId,
+    granulePgModel
   );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
@@ -296,6 +298,7 @@ const _writeGranule = async ({
   executionCumulusId,
   knex,
   granuleModel = new Granule(),
+  granulePgModel = new GranulePgModel(),
 }) => {
   let granuleCumulusId;
   await knex.transaction(async (trx) => {
@@ -304,6 +307,7 @@ const _writeGranule = async ({
       collectionCumulusId,
       executionCumulusId,
       trx,
+      granulePgModel,
     });
     return granuleModel.storeGranule(dynamoGranuleRecord);
   });
@@ -352,6 +356,7 @@ const _writeGranule = async ({
  * @param {string} [params.processingEndDateTime] - execution StopDate
  * @param {Object} [params.queryFields] - query fields
  * @param {Object} [params.granuleModel] - only for testing.
+ * @param {Object} [params.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
  * @returns {Promise}
  */
@@ -381,6 +386,7 @@ const writeGranuleFromApi = async (
     processingEndDateTime,
     queryFields,
     granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
   },
   knex
 ) => {
@@ -441,7 +447,7 @@ const writeGranuleFromApi = async (
       executionCumulusId,
       knex,
       granuleModel,
-
+      granulePgModel,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
@@ -462,6 +468,8 @@ const writeGranuleFromApi = async (
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granuleModel]
  *   Optional override for the granule model writing to DynamoDB
+ * @param {Object} [params.granulePgModel]
+ *   Optional override for the granule model writing to PostgreSQL database
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
@@ -473,6 +481,7 @@ const writeGranulesFromMessage = async ({
   executionCumulusId,
   knex,
   granuleModel = new Granule(),
+  granulePgModel = new GranulePgModel(),
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
     log.info('No granules to write, skipping writeGranules');
@@ -544,6 +553,7 @@ const writeGranulesFromMessage = async ({
         executionCumulusId,
         knex,
         granuleModel,
+        granulePgModel,
       });
     }
   ));

@@ -488,16 +488,11 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
     granuleId,
   } = t.context;
 
-  const fakeTrxCallback = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('Granules Postgres error');
-      },
-    });
-    return cb(fakeTrx);
+  const testGranulePgModel = {
+    upsert: () => {
+      throw new Error('Granules Postgres error');
+    },
   };
-  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
-  t.teardown(() => trxStub.restore());
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
@@ -506,6 +501,7 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
     providerCumulusId,
     knex,
     granuleModel,
+    granulePgModel: testGranulePgModel,
   }));
 
   t.true(error.message.includes('Granules Postgres error'));
@@ -850,18 +846,16 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     granuleId,
   } = t.context;
 
-  const fakeTrxCallback = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('Granules Postgres error');
-      },
-    });
-    return cb(fakeTrx);
+  const testGranulePgModel = {
+    upsert: () => {
+      throw new Error('Granules Postgres error');
+    },
   };
-  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
-  t.teardown(() => trxStub.restore());
 
-  const error = await t.throwsAsync(writeGranuleFromApi(granule, knex));
+  const error = await t.throwsAsync(writeGranuleFromApi(
+    { ...granule, granulePgModel: testGranulePgModel },
+    knex
+  ));
 
   t.true(error.message.includes('Granules Postgres error'));
   t.false(await granuleModel.exists({ granuleId }));
