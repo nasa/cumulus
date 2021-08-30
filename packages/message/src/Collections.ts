@@ -46,8 +46,8 @@ export const deconstructCollectionId = (collectionId: string) => {
   }
   if (name && version) {
     return {
-	    name,
-	    version,
+      name,
+      version,
     };
   }
   throw new Error(`invalid collectionId: ${collectionId}`);
