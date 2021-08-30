@@ -1484,3 +1484,29 @@ test.serial('PUT with action move returns failure if more than one granule file 
 
   filesExistingStub.restore();
 });
+
+test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({ execution: undefined });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+    }
+  );
+
+  t.is(response.text, `{"result":"Wrote Granule ${newGranule.granuleId}"}`);
+  t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
+  t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+});
