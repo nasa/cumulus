@@ -559,6 +559,7 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
     providerCumulusId,
     granuleModel,
     filePgModel,
+    granulePgModel,
   } = t.context;
 
   cumulusMessage.meta.status = 'completed';
@@ -589,7 +590,11 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
   t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
   t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
 
-  const fileRecords = await filePgModel.search(knex, {});
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    knex,
+    { granule_id: cumulusMessage.payload.granules[0].granuleId }
+  );
+  const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
   t.is(fileRecords.length, validFileCount);
 });
 
@@ -724,11 +729,11 @@ test.serial('writeGranuleFromApi() throws with granule with an execution url tha
     knex,
     granule,
   } = t.context;
-
+  const execution = `execution${cryptoRandomString({ length: 5 })}`;
   const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, execution: 'thisexecutiondoesnotexist' }, knex)
+    writeGranuleFromApi({ ...granule, execution }, knex)
   );
-  t.is(error.message, 'Cannot associate an execution by url if the exection does not exist in the database.');
+  t.is(error.message, `Could not find execution in PostgreSQL database with url ${execution}`);
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres with same timestamps.', async (t) => {
@@ -856,6 +861,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
 test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
   const {
     filePgModel,
+    granulePgModel,
     granule,
     knex,
   } = t.context;
@@ -877,7 +883,11 @@ test.serial('writeGranuleFromApi() writes all valid files if any non-valid file 
   t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
   t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
 
-  const fileRecords = await filePgModel.search(knex, {});
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    knex,
+    { granule_id: granule.granuleId }
+  );
+  const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
   t.is(fileRecords.length, validFileCount);
 });
 
