@@ -712,7 +712,7 @@ class Granule extends Manager {
             processingTimeInfo,
             queryFields,
           });
-          return this.storeGranule(granuleRecord);
+          return await this.storeGranule(granuleRecord);
         } catch (writeError) {
           return logger.error(writeError);
         }

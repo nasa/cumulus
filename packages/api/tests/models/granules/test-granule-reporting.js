@@ -479,10 +479,13 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
 
   const granule1 = fakeGranuleFactoryV2({
     files: [fakeFileFactory({ bucket })],
+    status: 'completed',
   });
-  // Missing files should cause failure to write
+
+  // If both the message's workflow status and the granule status it will fail validation.
   const granule2 = fakeGranuleFactoryV2({
-    files: undefined,
+    files: [fakeFileFactory({ bucket })],
+    status: undefined,
   });
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
@@ -502,7 +505,7 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
         host: 'example-bucket',
         protocol: 's3',
       },
-      status: 'completed',
+      status: undefined,
     },
     payload: {
       granules: [
