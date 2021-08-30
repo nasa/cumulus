@@ -670,8 +670,19 @@ test.serial('writeGranuleFromApi() throws for a granule with no collectionId pro
 
   await t.throwsAsync(
     writeGranuleFromApi({ ...granule, collectionId: undefined }, knex),
-    // That's an ugly error, but that's what's coming out.
-    { message: 'Cannot read property \'split\' of undefined' }
+    { message: 'invalid collectionId: undefined' }
+  );
+});
+
+test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId provided', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+  const badCollectionId = `collectionId${cryptoRandomString({ length: 5 })}`;
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex),
+    { message: `invalid collectionId: ${badCollectionId}` }
   );
 });
 
