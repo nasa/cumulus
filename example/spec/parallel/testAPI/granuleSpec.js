@@ -10,6 +10,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
   createGranule,
   deleteGranule,
+  getGranule,
 } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../../helpers/testUtils');
@@ -22,6 +23,7 @@ describe('The Granules API', () => {
   let granuleId;
   let prefix;
   let granuleFile;
+  let randomGranuleRecord;
 
   beforeAll(async () => {
     try {
@@ -40,6 +42,12 @@ describe('The Granules API', () => {
         Key: granuleFile.key,
         Body: 'testfile',
       });
+
+      randomGranuleRecord = buildRandomizedGranule({
+        collectionId,
+        files: [granuleFile],
+      });
+      granuleId = randomGranuleRecord.granuleId;
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -60,11 +68,6 @@ describe('The Granules API', () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
-        const randomGranuleRecord = buildRandomizedGranule({
-          collectionId,
-          files: [granuleFile],
-        });
-        granuleId = randomGranuleRecord.granuleId;
         const response = await createGranule({
           prefix,
           body: randomGranuleRecord,
@@ -76,16 +79,27 @@ describe('The Granules API', () => {
       }
     });
 
+    it('can discover the granule in the API.', async () => {
+      const granule = await getGranule({
+        prefix,
+        granuleId,
+      });
+      expect(granule.files[0].size).toEqual(jasmine.any(Number));
+      delete granule.files[0].size;
+      granule.execution = undefined;
+      expect(granule).toEqual(jasmine.objectContaining(randomGranuleRecord));
+    });
+
     it('Errors creating a bad granule.', async () => {
       const name = randomId('name');
       const version = randomId('version');
-      const randomGranuleRecord = buildRandomizedGranule({
+      const badRandomGranuleRecord = buildRandomizedGranule({
         collectionId: constructCollectionId(name, version),
       });
       try {
         await createGranule({
           prefix,
-          body: randomGranuleRecord,
+          body: badRandomGranuleRecord,
         });
       } catch (error) {
         const apiError = JSON.parse(error.apiMessage);
