@@ -89,7 +89,6 @@ function validateMatch(match, bucketsConfig, fileName, fileSpecs) {
  */
 async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
   const updatedGranules = {};
-  const cmrFileNames = cmrFiles.map((f) => path.basename(f.key));
   const fileSpecs = collection.files;
 
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
@@ -101,10 +100,6 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
     granulesObject[granuleId].files.forEach((file) => {
       const fileName = path.basename(file.key);
-      const cmrFileTypeObject = {};
-      if (cmrFileNames.includes(fileName) && !file.type) {
-        cmrFileTypeObject.type = 'metadata';
-      }
 
       const match = fileSpecs.filter((cf) => unversionFilename(fileName).match(cf.regex));
       validateMatch(match, bucketsConfig, fileName, fileSpecs);
@@ -120,7 +115,6 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
       updatedFiles.push({
         ...file,
-        ...cmrFileTypeObject, // Add type if the file is a CMR file
         bucket: bucketName,
         sourceKey: file.key,
         key: filepath,
