@@ -164,19 +164,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               files: [
                 {
                   bucket: config.buckets.protected.name,
-                  filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf`,
+                  key: 'MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf',
                 },
                 {
                   bucket: config.buckets.private.name,
-                  filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
+                  key: 'MOD09GQ___006/MOD/replace-me-granuleId.hdf.met',
                 },
                 {
                   bucket: config.buckets.public.name,
-                  filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
+                  key: 'MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg',
                 },
                 {
                   bucket: config.buckets['protected-2'].name,
-                  filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json`,
+                  key: 'MOD09GQ___006/MOD/replace-me-granuleId.cmr.json',
                 },
               ],
             },
