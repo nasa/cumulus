@@ -37,22 +37,20 @@ export const constructCollectionId = (name: string, version: string) =>
  * @returns {Object} name and version as object
  */
 export const deconstructCollectionId = (collectionId: string) => {
-    let name;
-    let version;
-    try {
-	[name, version] = collectionId.split('___');
-    } catch (error) {
-	throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`)
-    }
-    if (name && version) {
-	return {
+  let name;
+  let version;
+  try {
+    [name, version] = collectionId.split('___');
+  } catch (error) {
+    throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
+  }
+  if (name && version) {
+    return {
 	    name,
 	    version,
-	};
-    } else {
-	throw new Error(`invalid collectionId: ${collectionId}`)
-    }
-
+    };
+  }
+  throw new Error(`invalid collectionId: ${collectionId}`);
 };
 
 /**
