@@ -29,7 +29,7 @@
                   "type": "string"
                 },
                 "type": {
-                  "description": "",
+                  "description": "CMR file type (e.g. browse, data, metadata)",
                   "type": "string"
                 },
                 "source": {
@@ -43,6 +43,9 @@
                 },
                 "size": {
                   "type": "number"
+                },
+                "fileName": {
+                  "type": "string"
                 }
               }
             }

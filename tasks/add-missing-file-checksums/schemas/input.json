@@ -15,6 +15,7 @@
             "items": {
               "type": "object",
               "required": ["bucket", "key"],
+              "additionalProperties": false,
               "properties": {
                 "bucket": {
                   "description": "Bucket in-process file is being staged in in S3",
@@ -24,8 +25,25 @@
                   "description": "S3 Key for in-process file",
                   "type": "string"
                 },
-                "checksumType": { "type": "string" },
-                "checksum": { "type": "string" }
+                "type": {
+                  "description": "CMR file type (e.g. browse, data, metadata)",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
+                  "type": "string"
+                }
               }
             }
           }
