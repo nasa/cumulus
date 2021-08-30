@@ -644,10 +644,10 @@ test.serial('writeGranuleFromApi() throws for a granule with no granuleId provid
     granule,
   } = t.context;
 
-  const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, granuleId: undefined }, knex)
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, granuleId: undefined }, knex),
+    { message: 'Could not create granule record, invalid granuleId: undefined' }
   );
-  t.is(error.message, 'Could not create granule record, invalid granuleId: undefined');
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId', async (t) => {
@@ -656,10 +656,10 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
     granule,
   } = t.context;
 
-  const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex)
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex),
+    { message: 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.' }
   );
-  t.is(error.message, 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.');
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with no collectionId provided', async (t) => {
@@ -668,11 +668,11 @@ test.serial('writeGranuleFromApi() throws for a granule with no collectionId pro
     granule,
   } = t.context;
 
-  const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: undefined }, knex)
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: undefined }, knex),
+    // That's an ugly error, but that's what's coming out.
+    { message: 'Cannot read property \'split\' of undefined' }
   );
-  // That's an ugly error, but that's what's coming out.
-  t.is(error.message, 'Cannot read property \'split\' of undefined');
 });
 
 test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.', async (t) => {
@@ -727,10 +727,10 @@ test.serial('writeGranuleFromApi() throws with granule with an execution url tha
     granule,
   } = t.context;
   const execution = `execution${cryptoRandomString({ length: 5 })}`;
-  const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, execution }, knex)
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, execution }, knex),
+    { message: `Could not find execution in PostgreSQL database with url ${execution}` }
   );
-  t.is(error.message, `Could not find execution in PostgreSQL database with url ${execution}`);
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres with same timestamps.', async (t) => {
