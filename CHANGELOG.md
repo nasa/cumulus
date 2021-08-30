@@ -17,7 +17,7 @@ of response and not the raw API endpoint response
 ### Added
 
 - **CUMULUS-2575**
-  - Adds `POST /granules` Api endpoint to create a granule
+  - Adds `POST /granules` API endpoint to create a granule
 
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
