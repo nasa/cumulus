@@ -73,7 +73,7 @@ export const translatePostgresGranuleToApiGranule = async (
     execution: executionArns[0] ? executionArns[0].arn : undefined,
     files: files.map((file) => ({
       ...translatePostgresFileToApiFile(file),
-      granuleId: granulePgRecord.granule_id,
+      //granuleId: granulePgRecord.granule_id,
     })),
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime().toString(),

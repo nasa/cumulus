@@ -125,7 +125,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       });
       // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push(file);
+      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: file.fileName });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
@@ -170,9 +170,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     .reduce(
       (acc, { name, type }) => ({ ...acc, [name]: type }),
       {}
-    );
-
-  const distributionBucketMap = await fetchDistributionBucketMap();
+    ); const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,
@@ -273,6 +271,52 @@ async function getGranuleIdsForPayload(payload) {
   // TODO: could we get unique IDs from the query directly?
   const uniqueGranuleIds = [...new Set(granuleIds)];
   return uniqueGranuleIds;
+}
+
+/**
+  * apply a workflow to a given granule object
+  *
+  * @param {Object} granule - the granule object
+  * @param {string} workflow - the workflow name
+  * @param {Object} [meta] - optional meta object to insert in workflow message
+  * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
+  *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
+  * @param {string} [asyncOperationId] - specify asyncOperationId origin
+  * @returns {Promise<undefined>} undefined
+  */
+async function applyWorkflow(
+  granule,
+  workflow,
+  meta,
+  queueUrl,
+  asyncOperationId
+) {
+  if (!workflow) {
+    throw new TypeError(
+      'granule.applyWorkflow requires a `workflow` parameter'
+    );
+  }
+
+  const { name, version } = deconstructCollectionId(granule.collectionId);
+
+  const lambdaPayload = await Rule.buildPayload({
+    workflow,
+    payload: {
+      granules: [granule],
+    },
+    provider: granule.provider,
+    collection: {
+      name,
+      version,
+    },
+    meta,
+    queueUrl,
+    asyncOperationId,
+  });
+
+  await this.updateStatus({ granuleId: granule.granuleId }, 'running');
+
+  await Lambda.invoke(process.env.invoke, lambdaPayload);
 }
 
 /**

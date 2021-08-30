@@ -1,6 +1,11 @@
 const {
   translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
   translateApiFiletoPostgresFile,
+  fakeGranuleRecordFactory,
+  fakeFileRecordFactory,
+  fakeExecutionRecordFactory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 
 const {
@@ -37,60 +42,44 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     filePgModel,
     granuleModel,
     granuleFileName,
-    createPostgresEntries = true,
   } = params;
-  const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
-  newGranule.files = [
-    fakeFileFactory({
+  const pgGranule = fakeGranuleRecordFactory({ collection_cumulus_id: t.context.collectionCumulusId});
+  const [postgresGranuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(t.context.knex, pgGranule, t.context.testExecutionCumulusId);
+  const pgFiles = [
+    fakeFileRecordFactory({
       bucket,
-      fileName: `${granuleFileName}.txt`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.txt`,
       source: 'fakeSource',
-      size: 9,
+      file_size: 9,
+      granule_cumulus_id: postgresGranuleCumulusId,
     }),
-    fakeFileFactory({
+    fakeFileRecordFactory({
       bucket,
-      fileName: `${granuleFileName}.md`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.md`,
       source: 'fakeSource',
-      size: 9,
+      file_size: 9,
+      granule_cumulus_id: postgresGranuleCumulusId,
     }),
-    fakeFileFactory({
+    fakeFileRecordFactory({
       bucket: secondBucket,
-      fileName: `${granuleFileName}.jpg`,
       key: `${process.env.stackName}/original_filepath/${granuleFileName}.jpg`,
       source: 'fakeSource',
-      size: 9,
+      file_size: 9,
+      granule_cumulus_id: postgresGranuleCumulusId,
     }),
   ];
-
-  await granuleModel.create(newGranule);
-
-  let postgresNewGranule;
-  let postgresGranuleCumulusId;
-  if (createPostgresEntries) {
-    postgresNewGranule = await translateApiGranuleToPostgresGranule(
-      newGranule,
-      t.context.knex
-    );
-    postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
-
-    [postgresGranuleCumulusId] = await granulePgModel.create(
-      t.context.knex, postgresNewGranule
-    );
-    const postgresNewGranuleFiles = newGranule.files.map((file) => {
-      const translatedFile = translateApiFiletoPostgresFile(file);
-      translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
-      return translatedFile;
-    });
-    await Promise.all(
-      postgresNewGranuleFiles.map((file) =>
-        filePgModel.create(t.context.knex, file))
-    );
-  }
+  await Promise.all(pgFiles.map((file) => filePgModel.create(t.context.knex, file)));
+  const apiGranule = await translatePostgresGranuleToApiGranule(
+    {
+      cumulus_id: postgresGranuleCumulusId,
+      ...pgGranule,
+    },
+    t.context.knex
+  );
+  await granuleModel.create(apiGranule);
 
   await Promise.all(
-    newGranule.files.map(
+    apiGranule.files.map(
       (file) =>
         s3PutObject({
           Bucket: file.bucket,
@@ -112,7 +101,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     {}
   );
 
-  return { newGranule, postgresNewGranule, postgresGranuleCumulusId };
+  return { newGranule: apiGranule, postgresNewGranule: pgGranule, postgresGranuleCumulusId };
 };
 
 module.exports = {

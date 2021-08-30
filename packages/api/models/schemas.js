@@ -312,6 +312,8 @@ module.exports.granule = {
           fileName: { type: 'string' },
           source: { type: 'string' },
           type: { type: 'string' },
+          createdAt: { type: 'integer' },
+          updatedAt: { type: 'integer' },
         },
       },
     },

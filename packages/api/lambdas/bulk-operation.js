@@ -2,10 +2,12 @@ const get = require('lodash/get');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
-const { RecordDoesNotExist } = require('@cumulus/errors');
-const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
+const {
+  GranulePgModel,
+  getKnexClient,
+  translatePostgresGranuleToApiGranule,
+} = require('@cumulus/db');
 
-const { deconstructCollectionId } = require('../lib/utils');
 const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
@@ -20,10 +22,18 @@ async function applyWorkflowToGranules({
   meta,
   queueUrl,
   granuleModel = new GranuleModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleTranslateMethod = translatePostgresGranuleToApiGranule,
+  knex,
 }) {
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
-      const granule = await granuleModel.get({ granuleId });
+      // TODO - this still has legacy dynamo behavior where it's not selecting
+      // based on collection/granuleId
+      const pgGranule = await granulePgModel.get(knex, {
+        granule_id: granuleId,
+      });
+      const granule = await granuleTranslateMethod(pgGranule, knex);
       await granuleModel.applyWorkflow(
         granule,
         workflowName,
@@ -40,6 +50,7 @@ async function applyWorkflowToGranules({
   return await Promise.all(applyWorkflowRequests);
 }
 
+// TODO -- consider moving this to a db utility
 /**
  * Fetch a Postgres Granule by granule and collection IDs
  *
@@ -50,7 +61,7 @@ async function applyWorkflowToGranules({
  *   The fetched Postgres Granule, if any exists
  * @private
  */
-async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
+/* async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -78,11 +89,7 @@ async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
 
   return pgGranule;
 }
-
-// FUTURE: the Dynamo Granule is currently the primary record driving the
-// "unpublish from CMR" logic.
-// This should be switched to pgGranule once the postgres
-// reads are implemented.
+ */
 
 /**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
@@ -106,35 +113,37 @@ async function bulkGranuleDelete(
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  const granuleModel = new GranuleModel();
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
 
   await pMap(
     granuleIds,
     async (granuleId) => {
-      let dynamoGranule;
       let pgGranule;
-
-      try {
-        dynamoGranule = await granuleModel.getRecord({ granuleId });
-      } catch (error) {
-        if (error instanceof RecordDoesNotExist) {
-          log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
-          return;
-        }
-        throw error;
+      let dynamoGranule;
+      const granulePgModel = new GranulePgModel();
+      const dynamoGranuleModel = new GranuleModel();
+      const pgGranuleRecords = await granulePgModel.search(knex, {
+        granule_id: granuleId,
+      });
+      if (pgGranuleRecords.length > 1) {
+        log.warn(`Granule ID ${granuleId} is not unique across collections, cannot delete granule`);
+        return;
       }
-
-      if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, dynamoGranule));
+      if (pgGranuleRecords.length === 0) {
+        log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
+        return;
+      }
+      pgGranule = pgGranuleRecords[0];
+      if (pgGranule.published && forceRemoveFromCmr) {
+        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, pgGranule));
+      } else {
+        dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
       }
 
       await deleteGranuleAndFiles({
         knex,
         dynamoGranule,
-        pgGranule: pgGranule || await _getPgGranuleByCollection(
-          knex, granuleId, dynamoGranule.collectionId
-        ),
+        pgGranule,
       });
 
       deletedGranules.push(granuleId);
@@ -162,9 +171,10 @@ async function bulkGranuleDelete(
  * @returns {Promise}
  */
 async function bulkGranule(payload) {
+  const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({ knex, granuleIds, workflowName, meta, queueUrl });
 }
 
 async function bulkGranuleReingest(payload) {

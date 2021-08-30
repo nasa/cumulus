@@ -5,7 +5,18 @@ import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
+
+export const getGranuleCollectionId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granule: PostgresGranule
+) => {
+  const collectionPgModel = new CollectionPgModel();
+  const collection = await collectionPgModel.get(
+    knexOrTransaction, { cumulus_id: granule.collection_cumulus_id }
+  );
+  return constructCollectionId(collection.name, collection.version);
+};
 
 /**
  * Upsert a granule and a record in the granules/executions join table.

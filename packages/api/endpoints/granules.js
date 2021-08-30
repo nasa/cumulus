@@ -66,6 +66,8 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
+//TODO Fix complexity
+// eslint-disable-next-line complexity
 async function put(req, res) {
   const {
     granuleModel = new Granule(),
@@ -77,34 +79,62 @@ async function put(req, res) {
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
+  let newApiGranule;
 
   if (!action) {
     const apiGranule = req.body;
-    const oldGranule = await granuleModel.get({ granuleId });
-    let newGranule;
+    const oldDynamoGranule = await granuleModel.get({ granuleId });
+    // TODO - DRY this up
+    const oldPgGranuleRecords = await granulePgModel.search(knex, {
+      granule_id: granuleId,
+    });
+    if (oldPgGranuleRecords.length > 1) {
+      logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
+      throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
+    }
+    if (oldPgGranuleRecords.length === 0) {
+      throw new Error(`Granule ${granuleId} does not exist or was already deleted, continuing`);
+    }
+    const oldPgGranule = oldPgGranuleRecords[0];
 
     apiGranule.updatedAt = Date.now();
-    apiGranule.createdAt = oldGranule.createdAt;
-    const postgresRule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+    apiGranule.createdAt = oldPgGranule.created_at.getTime();
+    const postgresGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
 
     try {
       await knex.transaction(async (trx) => {
-        await granulePgModel.upsert(trx, postgresRule);
-        newGranule = await granuleModel.create(apiGranule);
-        await indexGranule(esClient, newGranule, process.env.ES_INDEX);
+        await granulePgModel.upsert(trx, postgresGranule);
+        newApiGranule = await granuleModel.create(apiGranule);
+        await indexGranule(esClient, newApiGranule, process.env.ES_INDEX);
       });
     } catch (innerError) {
       // Revert Dynamo record update if any write fails
-      await granuleModel.create(oldGranule);
+      await granuleModel.create(oldDynamoGranule);
       throw innerError;
     }
-    return res.send(newGranule);
+    return res.send(newApiGranule);
   }
 
-  const granule = await granuleModel.get({ granuleId });
+  // TODO - this should pull a PG granule and translate
+
+  const pgGranuleRecords = await granulePgModel.search(knex, {
+    granule_id: granuleId,
+  });
+  if (pgGranuleRecords.length > 1) {
+    logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
+    throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
+  }
+  if (pgGranuleRecords.length === 0) {
+    throw new Error(`Granule ${granuleId} does not exist or was already deleted, continuing`);
+  }
+  const pgGranule = pgGranuleRecords[0];
+  // TODO consider making this apiGranule
+  const granule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
 
   if (action === 'reingest') {
     const collectionPgModel = new CollectionPgModel();
+    // TODO - we have the collection ID from pgGranuleRecords, we should just do a direct lookup from that
+    // and/or consider getting it from the user params
     const { name, version } = deconstructCollectionId(granule.collectionId);
     const collection = translatePostgresCollectionToApiCollection(
       await collectionPgModel.get(knex, { name, version })
@@ -125,6 +155,7 @@ async function put(req, res) {
       logger.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
+    // TODO - this should not be part of the dynamo granule model
     await granuleModel.reingest({
       ...granule,
       ...(targetExecution && { execution: targetExecution }),
@@ -158,7 +189,7 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await unpublishGranule(knex, granule);
+    await unpublishGranule(knex, pgGranule);
 
     return res.send({
       granuleId: granule.granuleId,
@@ -168,6 +199,7 @@ async function put(req, res) {
   }
 
   if (action === 'move') {
+    // TODO this should be removed from the granule model
     const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
       granule,
       body.destinations

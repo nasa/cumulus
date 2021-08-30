@@ -967,7 +967,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-test.serial('When a move granule request fails to move a file correctly, it records the expected granule files in postgres and dynamo', async (t) => {
+test.only('When a move granule request fails to move a file correctly, it records the expected granule files in postgres and dynamo', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
@@ -1022,6 +1022,13 @@ test.serial('When a move granule request fails to move a file correctly, it reco
         .expect(400);
 
       const message = JSON.parse(response.body.message);
+
+      message.granule.files = message.granule.files.sort(
+        (a, b) => (a.key < b.key ? -1 : 1)
+      );
+      newGranule.files = newGranule.files.sort(
+        (a, b) => (a.key < b.key ? -1 : 1)
+      );
 
       t.is(message.reason, 'Failed to move granule');
       t.deepEqual(message.granule, newGranule);
@@ -1696,6 +1703,9 @@ test('put() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fa
     upsert: () => {
       throw new Error('something bad');
     },
+    search: () => [{
+      created_at: new Date(),
+    }],
   };
 
   const updatedGranule = {

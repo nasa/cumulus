@@ -36,5 +36,5 @@ export type ApiGranule = {
   productVolume?: number
   timeToPreprocess?: number
   timeToArchive?: number
-  files?: import('./files').ApiFile[]
+  files?: Omit<import('./files').ApiFile, 'granuleId'>[]
 } & GranuleTemporalInfo & import('./executions').ExecutionProcessingTimes;
