@@ -28,10 +28,6 @@
                   "description": "S3 Key for in-process file",
                   "type": "string"
                 },
-                "type": {
-                  "description": "CMR file type (e.g. browse, data, metadata)",
-                  "type": "string"
-                },
                 "source": {
                   "type": "string"
                 },
