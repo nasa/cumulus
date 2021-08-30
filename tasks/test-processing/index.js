@@ -11,7 +11,10 @@ async function uploadFakeBrowse(input) {
   const uploadPromises = [];
   input.granules.forEach((granule) => {
     granule.files
-      .filter((file) => path.extname(file.fileName) !== 'met' && path.extname(file.fileName) !== 'jpg')
+      .filter((file) =>
+        path.extname(file.fileName) !== 'met'
+        && path.extname(file.fileName) !== 'jpg'
+        && !file.fileName.includes('.cmr'))
       .forEach((file) => {
         const browseFile = { ...file };
         const browseName = browseFile.key;
