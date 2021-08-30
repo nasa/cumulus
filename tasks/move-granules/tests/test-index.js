@@ -34,16 +34,6 @@ async function uploadFiles(files, bucket) {
   })));
 }
 
-function updateCmrFileType(payload) {
-  payload.input.granules.forEach(
-    (g) => {
-      g.files.filter(isCMRFile).forEach((cmrFile) => {
-        cmrFile.type = 'userSetType';
-      });
-    }
-  );
-}
-
 function granulesToFileURIs(stagingBucket, granules) {
   const files = granules.reduce((arr, g) => arr.concat(g.files), []);
   return files.map((file) => buildS3Uri(stagingBucket, file.key));
@@ -225,18 +215,6 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const output = await moveGranules(newPayload);
   const outputFileKeys = output.granules[0].files.map((f) => f.key);
   t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
-});
-
-test.serial('Should not overwrite CMR file type if already explicitly set', async (t) => {
-  const newPayload = buildPayload(t);
-  updateCmrFileType(newPayload);
-  const filesToUpload = cloneDeep(t.context.filesToUpload);
-
-  await uploadFiles(filesToUpload, t.context.stagingBucket);
-
-  const output = await moveGranules(newPayload);
-  const cmrFile = output.granules[0].files.filter(isCMRFile);
-  t.is('userSetType', cmrFile[0].type);
 });
 
 test.serial('Should overwrite files.', async (t) => {
