@@ -297,8 +297,8 @@ const _writeGranule = async ({
   collectionCumulusId,
   executionCumulusId,
   knex,
-  granuleModel = new Granule(),
-  granulePgModel = new GranulePgModel(),
+  granuleModel,
+  granulePgModel,
 }) => {
   let granuleCumulusId;
   await knex.transaction(async (trx) => {
