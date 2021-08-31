@@ -1,12 +1,13 @@
 import Knex from 'knex';
 
 import { tableNames } from '../tables';
-
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
 import { translateDateToUTC } from '../lib/timestamp';
+
+import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
 
 interface RecordSelect {
   cumulus_id: number
@@ -40,10 +41,32 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   }
 
   /**
+   * Checks if a granule is present in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object of PostgresGranuleUniqueColumns or RecordSelect
+   * @returns {Promise<boolean>} True if the granule exists, false otherwise
+   */
+  async exists(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: PostgresGranuleUniqueColumns | RecordSelect,
+  ): Promise<boolean> {
+    try {
+      await this.get(knexOrTransaction, params);
+      return true;
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Fetches a single granule from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {Partial<PostgresGranuleRecord>} params - An object or any portion of an object of type PostgresGranuleRecord
+   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object of PostgresGranuleUniqueColumns or RecordSelect
    * @returns {Promise<PostgresGranuleRecord>} The returned record
    */
   async get(
@@ -53,7 +76,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
 
     if (!isRecordSelect(params)) {
       if ( !(params.granule_id && params.collection_cumulus_id)) {
-	throw new Error(`Cannot get granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
+	throw new InvalidArgument(`Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
       }
     }
       return super.get(knexOrTransaction, params);

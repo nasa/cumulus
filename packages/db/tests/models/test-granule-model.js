@@ -55,7 +55,74 @@ test.after.always(async (t) => {
   });
 });
 
-test('GranulePgModel.get() finds granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
+test('GranulePgModel.exists() finds granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  t.true(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: granule.granule_id,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  ));
+});
+
+test('GranulePgModel.exists() find granule for cumulusId <RecordSelect>', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  const cumulusId = await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  t.true(
+    await granulePgModel.exists(
+      knex,
+      { cumulus_id: Number(cumulusId) }
+    )
+  );
+});
+
+test('GranulePgModel.exists() throws error if params do not satisfy type PostgresGranuleUniqueColumns|{cumulus_id: number}', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+  const searchParams = { granule_id: granule.granule_id };
+
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  await t.throwsAsync(
+    granulePgModel.exists(knex, searchParams),
+    { message: `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
+  );
+});
+
+test('GranulePgModel.get() returns granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -81,7 +148,7 @@ test('GranulePgModel.get() finds granule by granule_id and collection_cumulus_id
   );
 });
 
-test('GranulePgModel.get() gets granule cumulusId <RecordSelect>', async (t) => {
+test('GranulePgModel.get() returns granule for cumulusId <RecordSelect>', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -122,7 +189,7 @@ test('GranulePgModel.get() throws error if params do not satisfy type PostgresGr
 
   await t.throwsAsync(
     granulePgModel.get(knex, searchParams),
-    { message: `Cannot get granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
+    { message: `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
   );
 });
 
