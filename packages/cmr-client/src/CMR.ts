@@ -203,7 +203,7 @@ export class CMR {
     };
 
     if (params.token) {
-      if (this.oauthProvider === 'launchpad') headers.Authorization = `Bearer ${params.token}`;
+      if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
       else headers['Echo-Token'] = params.token;
     }
     if (params.ummgVersion) headers.Accept = 'application/json';
@@ -225,7 +225,7 @@ export class CMR {
     };
 
     if (params.token) {
-      if (this.oauthProvider === 'launchpad') headers.Authorization = `Bearer ${params.token}`;
+      if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
       else headers['Echo-Token'] = params.token;
     }
 

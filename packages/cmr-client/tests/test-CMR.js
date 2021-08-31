@@ -134,7 +134,7 @@ test.only('getWriteHeaders returns token for launchpad', (t) => {
 
   const headers = cmrInstance.getWriteHeaders({ token: '12345' });
 
-  t.is(headers.Authorization, 'Bearer 12345');
+  t.is(headers.Authorization, '12345');
 });
 
 test('getReadHeaders returns clientId and token for earthdata', (t) => {
@@ -162,7 +162,7 @@ test('getReadHeaders returns clientId and token for launchpad', (t) => {
 
   const headers = cmrInstance.getReadHeaders({ token: '12345' });
   t.is(headers['Client-Id'], 'test-client-id');
-  t.is(headers.Authorization, 'Bearer 12345');
+  t.is(headers.Authorization, '12345');
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
