@@ -26,6 +26,7 @@ const {
   parseS3Uri,
   getObject,
 } = require('@cumulus/aws-client/S3');
+const { isCMRFile } = require('@cumulus/cmrjs');
 const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -239,7 +240,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
@@ -284,7 +285,7 @@ test.serial('Test updating ECHO10 metadata file in S3 with no etags config', asy
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
@@ -333,7 +334,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates ECHO10 metadata f
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
@@ -373,7 +374,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const bucket = metadataFile.bucket;
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: bucket,
@@ -429,7 +430,7 @@ test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata wi
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     e.config.etags[buildS3Uri(metadataFile.bucket, metadataFile.key)] = randomString();
 
     const error = await t.throwsAsync(hyraxMetadataUpdate(e));
@@ -458,7 +459,7 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
@@ -499,7 +500,7 @@ test.serial('Test updating UMM-G metadata file in S3 with no etags config', asyn
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
@@ -537,7 +538,7 @@ test.serial('hyraxMetadataUpdate immediately finds and updates UMM-G metadata fi
 
   try {
     const metadataFile = t.context.payload.input.granules[0].files.find((f) =>
-      f.type === 'metadata');
+      isCMRFile(f));
     const { ETag: inputEtag } = await getObject(s3(), {
       Bucket: metadataFile.bucket,
       Key: metadataFile.key,
