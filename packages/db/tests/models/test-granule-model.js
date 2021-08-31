@@ -55,6 +55,77 @@ test.after.always(async (t) => {
   });
 });
 
+test('GranulePgModel.get() finds granule by granule_id and collection_cumulus_id <PostgresGranuleUniqueColumns>', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  t.like(
+    await granulePgModel.get(
+      knex,
+      {
+        granule_id: granule.granule_id,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    ),
+    granule
+  );
+});
+
+test('GranulePgModel.get() gets granule cumulusId <RecordSelect>', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  const cumulusId = await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  t.like(
+    await granulePgModel.get(
+      knex,
+      { cumulus_id: Number(cumulusId) }
+    ),
+    granule
+  );
+});
+
+test('GranulePgModel.get() throws error if params do not satisfy type PostgresGranuleUniqueColumns|{cumulus_id: number}', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    status: 'running',
+  });
+  const searchParams = { granule_id: granule.granule_id };
+
+  await granulePgModel.upsert(knex, granule, executionCumulusId);
+
+  await t.throwsAsync(
+    granulePgModel.get(knex, searchParams),
+    { message: `Cannot get granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
+  );
+});
+
 test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   const {
     knex,
@@ -107,7 +178,10 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
   await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
   t.like(
-    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    await granulePgModel.get(knex, {
+      granule_id: granule.granule_id,
+      collection_cumulus_id: collectionCumulusId,
+    }),
     updatedGranule
   );
 });
@@ -157,7 +231,9 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
   await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
   t.like(
-    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    await granulePgModel.get(knex, {
+      granule_id: granule.granule_id, collection_cumulus_id: collectionCumulusId,
+    }),
     {
       ...updatedGranule,
       product_volume: '100',
@@ -188,7 +264,10 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
   await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
   t.like(
-    await granulePgModel.get(knex, { granule_id: granule.granule_id }),
+    await granulePgModel.get(knex, {
+      granule_id: granule.granule_id,
+      collection_cumulus_id: collectionCumulusId,
+    }),
     updatedGranule
   );
 });
@@ -215,7 +294,10 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
 
   await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
 
-  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
   t.is(record.status, 'completed');
 });
 
@@ -247,7 +329,10 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
-  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
   t.is(record.status, 'running');
 });
 
@@ -280,7 +365,10 @@ test('GranulePgModel.upsert() will not allow a final state from an older executi
 
   await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
-  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
   t.is(record.status, 'completed');
 });
 
@@ -313,7 +401,10 @@ test('GranulePgModel.upsert() will not allow a running state from an older execu
 
   await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
 
-  const record = await granulePgModel.get(knex, { granule_id: granule.granule_id });
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
   t.is(record.status, 'completed');
 });
 

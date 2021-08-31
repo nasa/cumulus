@@ -8,6 +8,14 @@ import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
 import { translateDateToUTC } from '../lib/timestamp';
 
+interface RecordSelect {
+  cumulus_id: number
+}
+
+function isRecordSelect(param: RecordSelect | PostgresGranuleUniqueColumns): param is RecordSelect {
+  return (param as RecordSelect).cumulus_id !== undefined;
+}
+
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
     super({
@@ -30,6 +38,26 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .where(params)
       .del();
   }
+
+  /**
+   * Fetches a single granule from Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<PostgresGranuleRecord>} params - An object or any portion of an object of type PostgresGranuleRecord
+   * @returns {Promise<PostgresGranuleRecord>} The returned record
+   */
+  async get(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: PostgresGranuleUniqueColumns | RecordSelect,
+  ): Promise<PostgresGranuleRecord> {
+
+    if (!isRecordSelect(params)) {
+      if ( !(params.granule_id && params.collection_cumulus_id)) {
+	throw new Error(`Cannot get granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
+      }
+    }
+      return super.get(knexOrTransaction, params);
+    }
 
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
