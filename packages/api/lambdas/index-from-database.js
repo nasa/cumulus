@@ -184,10 +184,6 @@ async function indexFromDatabase(event) {
   const esRequestConcurrency = getEsRequestConcurrency(event);
   const limitEsRequests = pLimit(esRequestConcurrency);
 
-  // TODO - update these to:
-  //pull dynamo record
-  //*run translation on them to get an API record*
-  // index
   await Promise.all([
     indexModel({
       esClient,
