@@ -1038,7 +1038,7 @@ test.serial('PUT /executions updates the record as expected', async (t) => {
   );
 
   await request(app)
-    .put('/executions')
+    .put(`/executions/${updatedExecution.arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -1080,18 +1080,17 @@ test.serial('PUT /executions updates the record as expected', async (t) => {
   t.deepEqual(updatePgRecord.final_payload, updatedExecution.finalPayload);
 });
 
-test.serial('PUT /executions throws error when "arn" is not provided', async (t) => {
+test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
   const updatedExecution = fakeExecutionFactoryV2();
-  delete updatedExecution.arn;
-
+  const arn = randomId('arn');
   const response = await request(app)
-    .put('/executions')
+    .put(`/executions/${arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  const expectedErrorMessage = 'Field arn is missing';
+  const expectedErrorMessage = `Expected execution arn to be '${arn}`;
   t.truthy(response.body.message.match(expectedErrorMessage));
 });
 
@@ -1099,7 +1098,7 @@ test.serial('PUT /executions throws error when the provided execution does not e
   const updatedExecution = fakeExecutionFactoryV2();
 
   const response = await request(app)
-    .put('/executions')
+    .put(`/executions/${updatedExecution.arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -1125,7 +1124,7 @@ test.serial('PUT /executions with non-existing asyncOperation throws error', asy
     .expect(200);
 
   const response = await request(app)
-    .put('/executions')
+    .put(`/executions/${updatedExecution.arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -1151,7 +1150,7 @@ test.serial('PUT /executions with non-existing collectionId throws error', async
     .expect(200);
 
   const response = await request(app)
-    .put('/executions')
+    .put(`/executions/${updatedExecution.arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -1176,7 +1175,7 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
     .expect(200);
 
   await request(app)
-    .put('/executions')
+    .put(`/executions/${updatedExecution.arn}`)
     .send(updatedExecution)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)

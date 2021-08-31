@@ -80,18 +80,20 @@ async function create(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function update(req, res) {
+  const arn = req.params.arn;
+  const execution = req.body || {};
+
+  if (arn !== execution.arn) {
+    return res.boom.badRequest(`Expected execution arn to be '${arn}',`
+      + ` but found '${execution.arn}' in payload`);
+  }
+
   const {
     executionModel = new models.Execution(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
   let oldRecord;
-  const execution = req.body || {};
-  const { arn } = execution;
-
-  if (!arn) {
-    return res.boom.badRequest('Field arn is missing');
-  }
 
   try {
     oldRecord = await executionModel.get({ arn });
@@ -252,7 +254,7 @@ async function workflowsByGranules(req, res) {
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post('/', create);
-router.put('/', update);
+router.put('/:arn', update);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);
