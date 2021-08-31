@@ -28,9 +28,9 @@ describe('The Lzards Backup Task ', () => {
       const config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
-      ingestPath = `${ingestBucket}/${prefix}/lzardsBackupSpec`;
-      await putFile(ingestBucket, `${prefix}/lzardsBackupSpec/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
-      await putFile(ingestBucket, `${prefix}/lzardsBackupSpec/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
+      ingestPath = `${prefix}/lzardsBackupSpec`;
+      await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
