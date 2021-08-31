@@ -10,19 +10,13 @@
           "name": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
-          "size": 1098034,
-          "type": "data",
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}"
+          "size": 1098034
         },
         {
           "name": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
-          "size": 21708,
-          "type": "metadata",
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"
+          "size": 21708
         }
       ]
     }
