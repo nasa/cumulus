@@ -71,6 +71,57 @@ async function create(req, res) {
     return res.boom.badImplementation(error.message);
   }
 }
+
+/**
+ * update an existing execution
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function update(req, res) {
+  const {
+    executionModel = new models.Execution(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  let oldRecord;
+  const execution = req.body || {};
+  const { arn } = execution;
+
+  if (!arn) {
+    return res.boom.badRequest('Field arn is missing');
+  }
+
+  try {
+    oldRecord = await executionModel.get({ arn });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound(`Execution '${arn}' not found`);
+  }
+
+  execution.updatedAt = Date.now();
+  execution.createdAt = oldRecord.createdAt;
+
+  try {
+    await writeExecutionRecordFromApi({ record: execution, knex });
+
+    if (inTestMode()) {
+      await addToLocalES(execution, indexExecution);
+    }
+
+    return res.send(execution);
+  } catch (error) {
+    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(error.message);
+    }
+    log.error('Error occurred while trying to update execution:', error);
+    return res.boom.badImplementation(error.message);
+  }
+}
+
 /**
  * List and search executions
  *
@@ -201,6 +252,7 @@ async function workflowsByGranules(req, res) {
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post('/', create);
+router.put('/', update);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

@@ -19,6 +19,9 @@ of response and not the raw API endpoint response
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
+- **CUMULUS-2578**
+  - Adds `PUT /executions` endpoint to update an execution
+
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
