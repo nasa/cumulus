@@ -24,45 +24,32 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-protected",
             "checksum": 1690464450,
-            "type": "data",
-            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 6703247,
-            "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "fileStagingDir": "file-staging",
-            "url_path": "",
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": 2689375276,
-            "type": "metadata",
-            "filename": "s3://cumulus-private/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+            "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
             "size": 20659,
-            "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "fileStagingDir": "file-staging",
-            "url_path": "",
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met"
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": 4026661056,
-            "type": "browse",
-            "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "key": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 59849,
-            "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "fileStagingDir": "file-staging",
-            "url_path": "",
-            "name": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+            "fileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-post-public",
-            "type": "metadata",
             "checksum": 4026661056,
-            "filename": "s3://cumulus-post-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
+            "key": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "fileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
       }
