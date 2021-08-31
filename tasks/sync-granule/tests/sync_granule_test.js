@@ -201,7 +201,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
     key,
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
-    type: 'data',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 });
@@ -232,7 +232,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
     key,
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
-    type: 'data',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 });
@@ -289,7 +289,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     key,
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
-    type: 'data',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 
@@ -370,7 +370,7 @@ test.serial('download granule from S3 provider with checksum and data file in an
     key,
     size: 1098034,
     source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
-    type: 'data',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
   };
   t.deepEqual(output.granules[0].files[0], expected);
   t.true(
@@ -419,7 +419,7 @@ test.serial('download granule from S3 provider', async (t) => {
       key,
       size: 1098034,
       source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
-      type: 'data',
+      fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
     };
     t.deepEqual(output.granules[0].files[0], expected);
     t.is(
@@ -464,7 +464,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
     key,
     size: 25895363,
     source: '/granules/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
-    type: undefined,
+    fileName: '20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
   };
   t.is(output.granules.length, 1);
   t.deepEqual(output.granules[0].files[0], expected);
