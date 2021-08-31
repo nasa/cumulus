@@ -29,6 +29,7 @@
     "node": ">=12.18.0"
   },
   "dependencies": {
+    "crypto-random-string": "^3.2.0",
     "@cumulus/aws-client": "9.4.0",
     "@cumulus/common": "9.4.0",
     "@cumulus/errors": "9.4.0",
