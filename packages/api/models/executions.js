@@ -153,6 +153,30 @@ class Execution extends Manager {
   }
 
   /**
+   * Store an execution record
+   *
+   * @param {Object} record - an execution record
+   * @returns {Promise}
+   */
+  async storeExecutionRecord(record) {
+    logger.info(`About to write execution ${record.arn} to DynamoDB`);
+
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
+    await this.constructor.recordIsValid(record, this.schema, this.removeAdditional);
+
+    const mutableFieldNames = this._getMutableFieldNames(record);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: record,
+      itemKey: { arn: record.arn },
+      mutableFieldNames,
+    });
+
+    await this.dynamodbDocClient.update(updateParams).promise();
+    logger.info(`Successfully wrote execution ${record.arn} to DynamoDB`);
+  }
+
+  /**
    * Generate and store an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - Cumulus workflow message
@@ -161,22 +185,7 @@ class Execution extends Manager {
    */
   async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
     const executionItem = Execution.generateRecord(cumulusMessage, updatedAt);
-
-    logger.info(`About to write execution ${executionItem.arn} to DynamoDB`);
-
-    // TODO: Refactor this all to use model.update() to avoid having to manually call
-    // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
-
-    const mutableFieldNames = this._getMutableFieldNames(executionItem);
-    const updateParams = this._buildDocClientUpdateParams({
-      item: executionItem,
-      itemKey: { arn: executionItem.arn },
-      mutableFieldNames,
-    });
-
-    await this.dynamodbDocClient.update(updateParams).promise();
-    logger.info(`Successfully wrote execution ${executionItem.arn} to DynamoDB`);
+    await this.storeExecutionRecord(executionItem);
   }
 }
 
