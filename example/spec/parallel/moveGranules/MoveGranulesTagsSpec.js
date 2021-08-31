@@ -20,7 +20,7 @@ const { moveGranules } = require('@cumulus/move-granules');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The MoveGranules task', () => {
-  it('perserves object tags', async () => {
+  it('preserves object tags', async () => {
     let collection;
     let granuleId;
     let movedFile;
@@ -71,8 +71,8 @@ describe('The MoveGranules task', () => {
               files: [
                 {
                   bucket: sourceBucket,
-                  path: stagingDir,
-                  name: stagedFilename,
+                  key: sourceKey,
+                  fileName: stagedFilename,
                 },
               ],
             },
@@ -85,7 +85,7 @@ describe('The MoveGranules task', () => {
 
       const movedFileTags = await s3GetObjectTagging(
         movedFile.bucket,
-        movedFile.filepath
+        movedFile.key
       );
 
       const expectedTagSet = [
