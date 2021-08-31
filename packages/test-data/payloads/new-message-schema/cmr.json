@@ -37,8 +37,8 @@
         },
         {
           "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
-          "http": "http://cumulus-devseed-public.s3.amazonaws.com/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
-          "s3": "s3://cumulus-devseed-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+          "http": "http://cumulus-test-sandbox-public.s3.amazonaws.com/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+          "s3": "s3://cumulus-test-sandbox-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
           "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104_1.jpg",
           "bucket": "public"
         }
@@ -161,7 +161,7 @@
     "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
     "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
     "s3://cumulus-devseed-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
-    "s3://cumulus-devseed-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+    "s3://cumulus-test-sandbox-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
     "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml"
   ]
 }
