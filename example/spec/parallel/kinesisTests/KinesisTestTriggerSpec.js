@@ -175,9 +175,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     const fileDataWithFilename = {
       ...fileData,
-      filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
       bucket: testConfig.buckets.private.name,
-      fileStagingDir: filePrefix,
+      key: `${filePrefix}/${recordFile.name}`,
+      fileName: recordFile.name,
       size: fileData.size,
     };
 
