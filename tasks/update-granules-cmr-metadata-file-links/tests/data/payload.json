@@ -31,23 +31,19 @@
           "files": [
             {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-              "type": "data"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
             },
             {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-              "type": "browse"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg"
             },
             {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-              "type": "browse"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
             },
             {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
-              "type": "metadata"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
             }
           ]
         },
@@ -56,8 +52,7 @@
           "files": [
              {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090723.cmr.json",
-              "type": "metadata"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090723.cmr.json"
             }
           ]
         },
@@ -66,8 +61,7 @@
           "files": [
             {
               "bucket": "cumulus-internal",
-              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json",
-              "type": "metadata"
+              "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090722.cmr.json"
             }
           ]
         }
