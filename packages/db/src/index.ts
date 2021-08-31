@@ -3,6 +3,7 @@ export {
   createTestDatabase,
   deleteTestDatabase,
   destroyLocalTestDb,
+  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,

@@ -243,3 +243,20 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
     t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
   });
 });
+
+test('GranulesExecutionsPgModel.delete() correctly deletes records', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    joinRecord,
+  } = t.context;
+
+  let actual;
+  await knex.transaction(async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    await granulesExecutionsPgModel.delete(trx, joinRecord);
+    actual = await granulesExecutionsPgModel.search(trx, joinRecord);
+  });
+
+  t.deepEqual(actual, []);
+});

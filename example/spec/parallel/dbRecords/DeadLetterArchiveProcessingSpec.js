@@ -8,6 +8,10 @@ const {
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
 const {
+  deleteAsyncOperation,
+  getAsyncOperation,
+} = require('@cumulus/api-client/asyncOperations');
+const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
@@ -27,6 +31,9 @@ const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
 const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
+const {
   createTimestampedTestId,
   loadConfig,
 } = require('../../helpers/testUtils');
@@ -42,6 +49,8 @@ describe('A dead letter record archive processing operation', () => {
   let testGranule;
   let archivePath;
   let messageKey;
+  let deadLetterRecoveryAsyncOpId;
+  let deadLetterRecoveryAsyncOperation;
 
   beforeAll(async () => {
     try {
@@ -136,7 +145,8 @@ describe('A dead letter record archive processing operation', () => {
         }
       );
       const postRecoverResponseBody = JSON.parse(postRecoverResponse.body);
-      console.log('dead letter recover async operation ID', postRecoverResponseBody.id);
+      deadLetterRecoveryAsyncOpId = postRecoverResponseBody.id;
+      console.log('dead letter recover async operation ID', deadLetterRecoveryAsyncOpId);
     } catch (error) {
       beforeAllFailed = error;
       console.log('beforeAll() failed, error:', error);
@@ -154,6 +164,11 @@ describe('A dead letter record archive processing operation', () => {
       await deleteRule({ prefix: stackName, ruleName });
     }
 
+    await deleteAsyncOperation({
+      prefix: stackName,
+      asyncOperationId: deadLetterRecoveryAsyncOpId,
+    });
+
     await deleteExecution({ prefix: stackName, executionArn });
 
     if (testCollection) {
@@ -170,6 +185,28 @@ describe('A dead letter record archive processing operation', () => {
         { prefix: stackName, providerId: testProvider.id }
       );
     }
+  });
+
+  it('starts a successful async operation', async () => {
+    if (beforeAllFailed) fail(beforeAllFailed);
+
+    deadLetterRecoveryAsyncOperation = await waitForApiStatus(
+      getAsyncOperation,
+      {
+        prefix: stackName,
+        asyncOperationId: deadLetterRecoveryAsyncOpId,
+      },
+      'SUCCEEDED'
+    );
+    expect(deadLetterRecoveryAsyncOperation.status).toEqual('SUCCEEDED');
+  });
+
+  it('returns the correct output for the async operation', () => {
+    if (beforeAllFailed) fail(beforeAllFailed);
+    expect(deadLetterRecoveryAsyncOperation.output).toEqual(JSON.stringify({
+      processingSucceededKeys: [messageKey],
+      processingFailedKeys: [],
+    }));
   });
 
   it('processes a message to create records', async () => {

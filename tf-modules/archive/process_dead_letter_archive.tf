@@ -95,11 +95,11 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       createRetryIntervalMillis = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis       = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       ExecutionsTable           = var.dynamo_tables.executions.name
       GranulesTable             = var.dynamo_tables.granules.name
       idleTimeoutMillis         = var.rds_connection_timing_configuration.idleTimeoutMillis
       PdrsTable                 = var.dynamo_tables.pdrs.name
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "5.0.0"
       reapIntervalMillis        = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                 = var.prefix
       system_bucket             = var.system_bucket
