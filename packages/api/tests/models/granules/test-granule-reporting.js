@@ -482,7 +482,7 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
     status: 'completed',
   });
 
-  // If both the message's workflow status and the granule status it will fail validation.
+  // If both the message's workflow status and the granule status are undefined, the granule will fail validation.
   const granule2 = fakeGranuleFactoryV2({
     files: [fakeFileFactory({ bucket })],
     status: undefined,
