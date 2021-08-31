@@ -14,7 +14,7 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresCollection
-  ): Promise<number[]> {
+  ) {
     return await knexOrTransaction(this.tableName)
       .insert(item)
       .returning('*');
