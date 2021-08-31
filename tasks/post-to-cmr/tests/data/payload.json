@@ -25,7 +25,6 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-protected",
             "checksum": "1690464450",
-            "type": "data",
             "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 6703247
           },
@@ -33,7 +32,6 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": "2689375276",
-            "type": "metadata",
             "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
             "size": 20659
           },
@@ -41,14 +39,12 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": "4026661056",
-            "type": "browse",
             "key": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 59849
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-post-public",
-            "type": "metadata",
             "checksum": "4026661056",
             "key": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
