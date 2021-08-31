@@ -229,13 +229,13 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
   const xml = generateCmrXml(granule, collection, additionalUrls);
   const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
 
-  const stagingDir = granule.files[0].fileStagingDir;
+  const stagingDir = 'file-staging';
 
-  const filename = `${stagingDir}/${granule.granuleId}.cmr.xml`;
+  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.xml`;
 
   const params = {
     Bucket: bucket,
-    Key: filename,
+    Key: fileKey,
     Body: xml,
     ContentType: 'application/xml',
     Tagging: `granuleId=${granule.granuleId}`,
@@ -243,8 +243,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 
   await s3().putObject(params).promise();
 
-  granuleFiles.push(`s3://${bucket}/${filename}`);
-  log.info(`s3://${bucket}/${filename}`);
+  granuleFiles.push(`s3://${bucket}/${fileKey}`);
+  log.info(`s3://${bucket}/${fileKey}`);
   log.info(granuleFiles);
   return granuleFiles;
 }
@@ -385,13 +385,13 @@ async function generateAndStoreCmrUmmJson(
     };
   }
 
-  const stagingDir = granule.files[0].fileStagingDir;
+  const stagingDir = 'file-staging';
 
-  const filename = `${stagingDir}/${granule.granuleId}.cmr.json`;
+  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.json`;
 
   const params = {
     Bucket: bucket,
-    Key: filename,
+    Key: fileKey,
     Body: JSON.stringify(jsonObject),
     ContentType: 'application/json',
     Tagging: `granuleId=${granule.granuleId}`,
@@ -400,8 +400,8 @@ async function generateAndStoreCmrUmmJson(
   await s3().putObject(params).promise();
 
   const granuleFiles = granule.files.map((f) => f.filename);
-  granuleFiles.push(`s3://${bucket}/${filename}`);
-  log.info(`s3://${bucket}/${filename}`);
+  granuleFiles.push(`s3://${bucket}/${fileKey}`);
+  log.info(`s3://${bucket}/${fileKey}`);
   log.info(granuleFiles);
   return granuleFiles;
 }
