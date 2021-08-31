@@ -701,7 +701,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.'
   t.true(await granulePgModel.exists(knex, { granule_id: granuleId }));
 });
 
-test.serial('writeGranuleFromApi() writes a granule without an execution to postgres and dynamo.', async (t) => {
+test.serial('writeGranuleFromApi() writes a granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
   const {
     knex,
     granule,
