@@ -5,10 +5,10 @@
     "execution_name": "test6",
     "state_machine": "arn:aws:states:us-east-1:00000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
     "workflow_start_time": 1518507471571,
-    "system_bucket": "cumulus-devseed-internal"
+    "system_bucket": "cumulus-test-sandbox-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
     "status": "running",
     "workflow_name": "IngestGranule",
     "collection": {
@@ -31,7 +31,7 @@
         {
           "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
           "http": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml",
-          "s3": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml",
+          "s3": "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml",
           "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104.cmr.xml",
           "bucket": "protected"
         },
@@ -95,30 +95,30 @@
         "granuleId": "MYD09A1.A2016105.h12v09.006.2016234195422",
         "files": [
           {
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
             "checksum": 3461876482,
-            "filename": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+            "filename": "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
             "size": 79335737,
             "checksumType": "CKSUM",
             "name": "MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
             "url_path": ""
           },
           {
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
             "checksum": 2154528319,
-            "filename": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
+            "filename": "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
             "size": 34455,
             "checksumType": "CKSUM",
             "name": "MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
             "url_path": ""
           },
           {
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
             "checksum": 4146296907,
-            "filename": "s3://cumulus-devseed-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+            "filename": "s3://cumulus-test-sandbox-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
             "size": 40442,
             "checksumType": "CKSUM",
             "name": "BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
@@ -158,10 +158,10 @@
   },
   "exception": "None",
   "payload": [
-    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
-    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
-    "s3://cumulus-devseed-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+    "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+    "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
+    "s3://cumulus-test-sandbox-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
     "s3://cumulus-test-sandbox-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
-    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml"
+    "s3://cumulus-test-sandbox-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml"
   ]
 }
