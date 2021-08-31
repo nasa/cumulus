@@ -1003,7 +1003,7 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 
-test.serial.only('PUT /executions updates the record as expected', async (t) => {
+test.serial('PUT /executions updates the record as expected', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
