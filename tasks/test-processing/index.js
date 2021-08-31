@@ -24,7 +24,7 @@ async function uploadFakeBrowse(input) {
         const browseStream = fs.createReadStream(img);
         uploadPromises.push(promiseS3Upload({
           Bucket: browseFile.bucket,
-          Key: (`${browseFile.fileStagingDir}/${browseFile.fileName}`),
+          Key: (`file-staging/${browseFile.fileName}`),
           Body: browseStream,
         }));
         granule.files.push(browseFile);

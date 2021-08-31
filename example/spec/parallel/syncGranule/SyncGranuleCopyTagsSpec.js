@@ -61,6 +61,7 @@ describe('The SyncGranule task', () => {
       });
 
       // Call syncGranule
+      const fileStagingDir = randomId('staging');
       const syncGranuleResponse = await syncGranule({
         config: {
           stack: config.stackName,
@@ -68,6 +69,7 @@ describe('The SyncGranule task', () => {
           provider,
           collection,
           downloadBucket: config.bucket,
+          fileStagingDir,
         },
         input: {
           granules: [
@@ -91,7 +93,7 @@ describe('The SyncGranule task', () => {
 
       const stagedFileTags = await s3GetObjectTagging(
         stagedFile.bucket,
-        `${stagedFile.fileStagingDir}/${stagedFile.name}`
+        `${fileStagingDir}/${stagedFile.name}`
       );
 
       const expectedTagSet = [
