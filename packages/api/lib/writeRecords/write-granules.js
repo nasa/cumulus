@@ -155,7 +155,7 @@ const _writePostgresGranuleViaTransaction = async ({
   collectionCumulusId,
   executionCumulusId,
   trx,
-  granulePgModel = new GranulePgModel(),
+  granulePgModel,
 }) => {
   log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
 
