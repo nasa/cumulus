@@ -1,7 +1,6 @@
 'use strict';
 
 const cryptoRandomString = require('crypto-random-string');
-const omit = require('lodash/omit');
 const sinon = require('sinon');
 const test = require('ava');
 
@@ -16,11 +15,9 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const {
   CollectionPgModel,
-  AsyncOperationPgModel,
   destroyLocalTestDb,
   ExecutionPgModel,
   FilePgModel,
-  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -33,9 +30,13 @@ const {
   PdrPgModel,
   ProviderPgModel,
   RulePgModel,
-  translatePostgresProviderToApiProvider,
 } = require('@cumulus/db');
 
+const {
+  fakeReconciliationReportFactory,
+} = require('../../lib/testUtils');
+
+const models = require('../../models');
 const indexFromDatabase = require('../../lambdas/index-from-database');
 const { migrationDir } = require('../../../../lambdas/db-migration');
 const {
@@ -43,21 +44,30 @@ const {
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
+process.env.ReconciliationReportsTable = randomString();
+const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 const tables = {
-  collectionsTable: process.env.CollectionsTable,
-  executionsTable: process.env.ExecutionsTable,
-  asyncOperationsTable: process.env.AsyncOperationsTable,
-  granulesTable: process.env.GranulesTable,
-  pdrsTable: process.env.PdrsTable,
-  providersTable: process.env.ProvidersTable,
   reconciliationReportsTable: process.env.ReconciliationReportsTable,
-  rulesTable: process.env.RulesTable,
 };
+
+async function addFakeDynamoData(numItems, factory, model, factoryParams = {}) {
+  const items = [];
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < numItems; i += 1) {
+    const item = factory(factoryParams);
+    items.push(item);
+    await model.create(item);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return items;
+}
 
 async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
   const items = [];
@@ -86,15 +96,8 @@ test.before(async (t) => {
   await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  /* await executionModel.createTable();
-  await asyncOperationModel.createTable();
-  await collectionModel.createTable();
-  await granuleModel.createTable();
-  await pdrModel.createTable();
-  await providersModel.createTable();
   await reconciliationReportModel.createTable();
-  await rulesModel.createTable();
- */
+
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await Promise.all([
@@ -220,7 +223,7 @@ test('Lambda successfully indexes records of all types', async (t) => {
   const knex = t.context.knex;
   const { esAlias } = t.context;
 
-  const numItems = 1;
+  const numItems = 2;
 
   const fakeData = [];
 
@@ -233,10 +236,8 @@ test('Lambda successfully indexes records of all types', async (t) => {
   const providerRecord = await addFakeData(knex, numItems, fakeProviderRecordFactory, new ProviderPgModel());
   fakeData.push(providerRecord);
   fakeData.push(await addFakeData(knex, numItems, fakePdrRecordFactory, new PdrPgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id, provider_cumulus_id: providerRecord[0].cumulus_id }));
-  // TODO - Recon Report
-  //addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
+  fakeData.push(await addFakeDynamoData(numItems, fakeReconciliationReportFactory, reconciliationReportModel));
   fakeData.push(addFakeData(knex, numItems, fakeRuleRecordFactory, new RulePgModel(), { workflow: workflowList[0].name }));
-
   await indexFromDatabase.handler({
     indexName: esAlias,
     tables,
@@ -249,7 +250,7 @@ test('Lambda successfully indexes records of all types', async (t) => {
     searchEs('granule', esAlias),
     searchEs('pdr', esAlias),
     searchEs('provider', esAlias),
-    //searchEs('reconciliationReport', esAlias),
+    searchEs('reconciliationReport', esAlias),
     searchEs('rule', esAlias),
   ]);
 
