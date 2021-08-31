@@ -12,6 +12,14 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
       tableName: tableNames.executions,
     });
   }
+  async create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    execution: PostgresExecution
+  ) {
+    return await knexOrTransaction(this.tableName)
+      .insert(execution)
+      .returning('*');
+  }
 
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
@@ -27,49 +35,13 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
           timestamp: execution.timestamp,
           original_payload: execution.original_payload,
         })
-        .returning([
-          'cumulus_id',
-          'arn',
-          'async_operation_cumulus_id',
-          'collection_cumulus_id',
-          'parent_cumulus_id',
-          'cumulus_version',
-          'url',
-          'status',
-          'tasks',
-          'error',
-          'workflow_name',
-          'duration',
-          'original_payload',
-          'final_payload',
-          'timestamp',
-          'created_at',
-          'updated_at',
-        ]);
+        .returning('*');
     }
     return await knexOrTrx(this.tableName)
       .insert(execution)
       .onConflict('arn')
       .merge()
-      .returning([
-        'cumulus_id',
-        'arn',
-        'async_operation_cumulus_id',
-        'collection_cumulus_id',
-        'parent_cumulus_id',
-        'cumulus_version',
-        'url',
-        'status',
-        'tasks',
-        'error',
-        'workflow_name',
-        'duration',
-        'original_payload',
-        'final_payload',
-        'timestamp',
-        'created_at',
-        'updated_at',
-      ]);
+      .returning('*');
   }
 
   /**

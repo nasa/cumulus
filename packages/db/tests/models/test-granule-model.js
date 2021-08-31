@@ -42,10 +42,11 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -92,10 +93,11 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
 
   await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
-  const [newExecutionCumulusId] = await executionPgModel.create(
+  const [newExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'running' })
   );
+  const newExecutionCumulusId = newExecution.cumulus_id;
 
   const updatedGranule = {
     ...granule,
@@ -235,10 +237,11 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
   await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
-  const [newExecutionCumulusId] = await executionPgModel.create(
+  const [newExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'running' })
   );
+  const newExecutionCumulusId = newExecution.cumulus_id;
 
   const updatedGranule = {
     ...granule,
@@ -267,10 +270,11 @@ test('GranulePgModel.upsert() will not allow a final state from an older executi
 
   await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
-  const [newExecutionCumulusId] = await executionPgModel.create(
+  const [newExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'completed' })
   );
+  const newExecutionCumulusId = newExecution.cumulus_id;
 
   const updatedGranule = {
     ...granule,
@@ -300,10 +304,11 @@ test('GranulePgModel.upsert() will not allow a running state from an older execu
 
   await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
-  const [newExecutionCumulusId] = await executionPgModel.create(
+  const [newExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'failed' })
   );
+  const newExecutionCumulusId = newExecution.cumulus_id;
 
   const updatedGranule = {
     ...granule,

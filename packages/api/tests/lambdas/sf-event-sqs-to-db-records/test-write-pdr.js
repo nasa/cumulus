@@ -76,7 +76,11 @@ test.beforeEach(async (t) => {
 
   const execution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(t.context.knex, execution);
+  const [pgExecution] = await executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   t.context.runningPdrRecord = {
     name: t.context.pdr.name,
