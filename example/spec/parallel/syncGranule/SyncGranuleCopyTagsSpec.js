@@ -93,7 +93,7 @@ describe('The SyncGranule task', () => {
 
       const stagedFileTags = await s3GetObjectTagging(
         stagedFile.bucket,
-        `${fileStagingDir}/${stagedFile.name}`
+        stagedFile.key
       );
 
       const expectedTagSet = [

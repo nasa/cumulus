@@ -194,8 +194,8 @@ describe('The Sync Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       files = lambdaOutput.payload.granules[0].files;
-      key1 = s3Join(files[0].fileStagingDir, files[0].name);
-      key2 = s3Join(files[1].fileStagingDir, files[1].name);
+      key1 = s3Join(files[0].key);
+      key2 = s3Join(files[1].key);
 
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
@@ -234,7 +234,7 @@ describe('The Sync Granules workflow', () => {
 
     it('receives files with custom staging directory', () => {
       files.forEach((file) => {
-        expect(file.fileStagingDir).toMatch('custom-staging-dir\/.*');
+        expect(file.key.startsWith('custom-staging-dir')).toBeTrue();
       });
     });
 
