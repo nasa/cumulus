@@ -1,10 +1,7 @@
 const {
-  translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
-  translateApiFiletoPostgresFile,
   fakeGranuleRecordFactory,
   fakeFileRecordFactory,
-  fakeExecutionRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 
@@ -17,34 +14,37 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
-const {
-  fakeFileFactory,
-  fakeGranuleFactoryV2,
-} = require('../../../lib/testUtils');
+const getPgFilesFromGranuleCumulusId = async (knex, filePgModel, postgresGranuleCumulusId) =>
+  await filePgModel.search(knex, {
+    granule_cumulus_id: postgresGranuleCumulusId,
+  });
 
-const getPostgresFilesInOrder = async (knex, newGranule, filePgModel, postgresGranuleCumulusId) => {
-  const pgFiles = await Promise.all(newGranule.files.map(async (file) => {
-    const [pgFile] = await filePgModel.search(knex, {
-      granule_cumulus_id: postgresGranuleCumulusId,
-      file_name: file.fileName,
-    });
-    return pgFile;
-  }));
-  return pgFiles;
-};
+const getFileNameFromKey = (key) => key.match('[^\/]+$')[0];
 
 const generateMoveGranuleTestFilesAndEntries = async (params) => {
   const {
     t,
     bucket,
     secondBucket,
-    granulePgModel,
     filePgModel,
     granuleModel,
+    granulePgModel,
     granuleFileName,
   } = params;
-  const pgGranule = fakeGranuleRecordFactory({ collection_cumulus_id: t.context.collectionCumulusId});
-  const [postgresGranuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(t.context.knex, pgGranule, t.context.testExecutionCumulusId);
+
+  const fakePgGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+  });
+
+  const [postgresGranuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
+    t.context.knex, fakePgGranule, t.context.testExecutionCumulusId
+  );
+
+  const pgGranule = await granulePgModel.get(
+    t.context.knex,
+    { cumulus_id: postgresGranuleCumulusId }
+  );
+
   const pgFiles = [
     fakeFileRecordFactory({
       bucket,
@@ -70,10 +70,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
   ];
   await Promise.all(pgFiles.map((file) => filePgModel.create(t.context.knex, file)));
   const apiGranule = await translatePostgresGranuleToApiGranule(
-    {
-      cumulus_id: postgresGranuleCumulusId,
-      ...pgGranule,
-    },
+    pgGranule,
     t.context.knex
   );
   await granuleModel.create(apiGranule);
@@ -106,5 +103,6 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
 
 module.exports = {
   generateMoveGranuleTestFilesAndEntries,
-  getPostgresFilesInOrder,
+  getFileNameFromKey,
+  getPgFilesFromGranuleCumulusId,
 };

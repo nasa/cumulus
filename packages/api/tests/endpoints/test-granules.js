@@ -76,7 +76,8 @@ const models = require('../../models');
 
 const {
   generateMoveGranuleTestFilesAndEntries,
-  getPostgresFilesInOrder,
+  getFileNameFromKey,
+  getPgFilesFromGranuleCumulusId,
 } = require('./granules/helpers');
 const { buildFakeExpressResponse } = require('./utils');
 
@@ -946,7 +947,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       // check the granule in postgres is updated
       const pgFiles = await getPostgresFilesInOrder(
         t.context.knex,
-        newGranule,
         filePgModel,
         postgresGranuleCumulusId
       );
@@ -1030,6 +1030,8 @@ test.only('When a move granule request fails to move a file correctly, it record
         (a, b) => (a.key < b.key ? -1 : 1)
       );
 
+      const fileWithInvalidDestination = newGranule.files[0];
+
       t.is(message.reason, 'Failed to move granule');
       t.deepEqual(message.granule, newGranule);
       t.is(message.errors.length, 1);
@@ -1049,8 +1051,13 @@ test.only('When a move granule request fails to move a file correctly, it record
           key: `${destinationFilepath}/${granuleFileName}.txt`,
           fileName: `${granuleFileName}.txt`,
         },
-        newGranule.files[2],
+        {
+          bucket: fileWithInvalidDestination.bucket,
+          key: fileWithInvalidDestination.key,
+          fileName: `${granuleFileName}.jpg`,
+        },
       ];
+
       t.deepEqual(expectedGranuleFileRecord, actualGranuleFileRecord);
 
       // Validate S3 Objects are where they should be
@@ -1078,7 +1085,7 @@ test.only('When a move granule request fails to move a file correctly, it record
 
       // check the granule in dynamoDb is updated and files are replaced
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-      const updatedFiles = updatedGranule.files;
+      const updatedFiles = updatedGranule.files.sort((a, b) => (a.key < b.key ? -1 : 1));
 
       t.true(updatedFiles[0].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
       t.like(newGranule.files[0], omit(updatedFiles[0], ['fileName', 'key', 'bucket']));
@@ -1092,32 +1099,42 @@ test.only('When a move granule request fails to move a file correctly, it record
         (dest) => updatedFiles[1].fileName.match(dest.regex)
       ).bucket);
 
-      t.deepEqual(newGranule.files[2], updatedFiles[2]);
+      t.deepEqual({
+        bucket: fileWithInvalidDestination.bucket,
+        key: fileWithInvalidDestination.key,
+        size: fileWithInvalidDestination.size,
+        fileName: `${granuleFileName}.jpg`,
+      }, updatedFiles[2]);
 
       // Check that the postgres granules are in the correct state
-      const pgFiles = await getPostgresFilesInOrder(
+      const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
-        newGranule,
         filePgModel,
         postgresGranuleCumulusId
       );
 
-      // The .jpg at index 2 should fail and have the original object values as
+      // Sort by only the filename because the paths will have changed
+      const sortedPgFiles = pgFiles.sort(
+        (a, b) => (getFileNameFromKey(a.key) < getFileNameFromKey(b.key) ? -1 : 1)
+      );
+
+      // The .jpg at index 0 should fail and have the original object values as
       // it's assigned `fakeBucket`
-      for (let i = 0; i < 2; i += 1) {
-        const destination = destinations.find((dest) => pgFiles[i].file_name.match(dest.regex));
-        t.is(destination.bucket, pgFiles[i].bucket);
-        t.like(pgFiles[i], {
-          ...omit(newGranule.files[i], ['fileName', 'size']),
-          key: `${destinationFilepath}/${newGranule.files[i].fileName}`,
+      t.like(sortedPgFiles[0], {
+        ...omit(newGranule.files[0], ['fileName', 'size', 'createdAt', 'updatedAt']),
+      });
+
+      for (let i = 1; i <= 2; i += 1) {
+        const fileName = sortedPgFiles[i].file_name;
+        const destination = destinations.find((dest) => fileName.match(dest.regex));
+
+        t.is(destination.bucket, sortedPgFiles[i].bucket);
+        t.like(sortedPgFiles[i], {
+          ...omit(newGranule.files[i], ['fileName', 'size', 'createdAt', 'updatedAt']),
+          key: `${destinationFilepath}/${fileName}`,
           bucket: destination.bucket,
-          file_name: newGranule.files[i].fileName,
         });
       }
-      t.like(pgFiles[2], {
-        ...omit(newGranule.files[2], ['fileName', 'size']),
-        file_name: newGranule.files[2].fileName,
-      });
     }
   );
 });

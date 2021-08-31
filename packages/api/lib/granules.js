@@ -11,6 +11,7 @@ const log = require('@cumulus/common/log');
 const {
   generateMoveFileParams,
   moveGranuleFile,
+  getNameOfFile,
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -125,7 +126,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       });
       // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: file.fileName });
+      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
