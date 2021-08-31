@@ -3,6 +3,8 @@
 const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
+const path = require('path');
+
 const { getObjectSize, parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -24,6 +26,7 @@ async function fileObjectFromS3URI(s3URI) {
   });
   return {
     key: uriParsed.Key,
+    fileName: path.basename(uriParsed.Key),
     bucket: uriParsed.Bucket,
     size,
   };
