@@ -35,6 +35,9 @@ for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
 
+- **CUMULUS-2617**
+  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes
