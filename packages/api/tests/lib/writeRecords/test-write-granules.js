@@ -4,6 +4,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   ProviderPgModel,
@@ -32,6 +33,7 @@ const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
+
 
 test.before(async (t) => {
   process.env.GranulesTable = cryptoRandomString({ length: 10 });
@@ -79,7 +81,7 @@ test.beforeEach(async (t) => {
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
     granuleId: t.context.granuleId,
-    collectionId: `${t.context.collection.name}___${t.context.collection.version}`,
+    collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
   });
 
   t.context.workflowStartTime = Date.now();
