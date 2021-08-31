@@ -5,8 +5,7 @@
       "files": [
         {
           "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-          "bucket": "cumulus-internal",
-          "type": "data"
+          "bucket": "cumulus-internal"
         },
         {
           "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
