@@ -1506,7 +1506,30 @@ test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
     }
   );
 
-  t.is(response.text, `{"result":"Wrote Granule ${newGranule.granuleId}"}`);
+  t.deepEqual(JSON.parse(response.text), { result: `Wrote Granule ${newGranule.granuleId}` });
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+});
+
+test.serial('POST rejects if a granule already exists in postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({ execution: undefined });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(409);
+
+  t.deepEqual(
+    JSON.parse(response.text),
+    { statusCode: 409, error: 'Conflict', message: `A granule already exists for granule_id: ${newGranule.granuleId}` }
+  );
 });

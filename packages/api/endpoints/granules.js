@@ -66,10 +66,16 @@ async function list(req, res) {
 async function create(req, res) {
   const {
     knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
 
   let result;
   const body = req.body;
+
+  if (await granulePgModel.exists(knex, { granule_id: body.granuleId })) {
+    res.boom.conflict(`A granule already exists for granule_id: ${body.granuleId}`);
+  }
+
   try {
     result = await writeGranuleFromApi(body, knex);
   } catch (error) {
