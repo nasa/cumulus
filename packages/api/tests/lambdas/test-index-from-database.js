@@ -33,6 +33,7 @@ const {
   PdrPgModel,
   ProviderPgModel,
   RulePgModel,
+  translatePostgresProviderToApiProvider,
 } = require('@cumulus/db');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');
@@ -46,7 +47,6 @@ const workflowList = getWorkflowList();
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
-const testDbName = `test_index_${cryptoRandomString({ length: 10 })}`;
 
 const tables = {
   collectionsTable: process.env.CollectionsTable,
@@ -79,20 +79,13 @@ function searchEs(type, index) {
 }
 
 test.before(async (t) => {
-  t.context.esIndex = randomString();
-  t.context.esAlias = randomString();
-
-  t.context.esClient = await Search.es('fakehost');
-
+  t.context.esIndices = [];
+  //t.context.esIndex = randomString();
+  //t.context.esAlias = randomString();
   // add fake elasticsearch index
   await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
-
   /* await executionModel.createTable();
   await asyncOperationModel.createTable();
   await collectionModel.createTable();
@@ -118,15 +111,28 @@ test.before(async (t) => {
   ]);
 });
 
-test.after.always(async (t) => {
-  const { esClient, esIndex } = t.context;
+test.beforeEach(async (t) => {
+  t.context.testDbName = `test_index_${cryptoRandomString({ length: 10 })}`;
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  t.context.esIndex = randomString();
+  t.context.esAlias = randomString();
+  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  t.context.esClient = await Search.es('fakehost');
+});
 
+test.afterEach.always(async (t) => {
+  const { esClient, esIndex, testDbName } = t.context;
   await esClient.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+});
+
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
@@ -201,11 +207,12 @@ test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) =
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {
-  const { esAlias } = t.context;
+  const { esAlias, knex } = t.context;
 
   await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
     tables,
+    knex,
   }));
 });
 
@@ -239,7 +246,7 @@ test('Lambda successfully indexes records of all types', async (t) => {
   const searchResults = await Promise.all([
     searchEs('collection', esAlias),
     searchEs('execution', esAlias),
-    //searchEs('granule', esAlias),
+    searchEs('granule', esAlias),
     searchEs('pdr', esAlias),
     searchEs('provider', esAlias),
     //searchEs('reconciliationReport', esAlias),
@@ -257,9 +264,14 @@ test('Lambda successfully indexes records of all types', async (t) => {
 
 test.serial('failure in indexing record of specific type should not prevent indexing of other records with same type', async (t) => {
   const { esAlias, esClient, knex } = t.context;
-
+  const granulePgModel = new GranulePgModel();
   const numItems = 7;
-  const fakeData = await addFakeData(knex, numItems, fakeGranuleRecordFactory, granuleModel);
+  const collectionRecord = await addFakeData(knex, 1, fakeCollectionRecordFactory, new CollectionPgModel());
+  const fakeData = await addFakeData(knex, numItems, fakeGranuleRecordFactory, granulePgModel, {
+    collection_cumulus_id: collectionRecord[0].cumulus_id,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
 
   let numCalls = 0;
   const originalIndexGranule = indexer.indexGranule;
@@ -282,6 +294,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
     await indexFromDatabase.handler({
       indexName: esAlias,
       tables,
+      knex,
     });
 
     searchResults = await searchEs('granule', esAlias);
@@ -289,16 +302,25 @@ test.serial('failure in indexing record of specific type should not prevent inde
     t.is(searchResults.meta.count, successCount);
 
     searchResults.results.forEach((result) => {
-      const sourceData = fakeData.find((data) => data.granuleId === result.granuleId);
-      t.deepEqual(
-        omit(sourceData, ['timestamp', 'updatedAt']),
-        omit(result, ['timestamp', 'updatedAt'])
-      );
+      const sourceData = fakeData.find((data) => data.granule_id === result.granuleId);
+      const expected = {
+        collectionId: `${collectionRecord[0].name}___${collectionRecord[0].version}`,
+        granuleId: sourceData.granule_id,
+        status: sourceData.status,
+      };
+      const actual = {
+        collectionId: result.collectionId,
+        granuleId: result.granuleId,
+        status: result.status,
+      };
+
+      t.deepEqual(expected, actual);
     });
   } finally {
     indexGranuleStub.restore();
     await Promise.all(fakeData.map(
-      ({ granuleId }) => granuleModel.delete({ granuleId })
+      // eslint-disable-next-line camelcase
+      ({ granule_id }) => granulePgModel.delete(knex, { granule_id })
     ));
     await Promise.all(searchResults.results.map(
       (result) =>
@@ -315,11 +337,11 @@ test.serial('failure in indexing record of specific type should not prevent inde
 
 test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
   const { esAlias, esClient, knex } = t.context;
-
   const numItems = 2;
+  const collectionRecord = await addFakeData(knex, 1, fakeCollectionRecordFactory, new CollectionPgModel());
   const [fakeProviderData, fakeGranuleData] = await Promise.all([
-    addFakeData(knex, numItems, fakeProviderFactory, providersModel),
-    addFakeData(knex, numItems, fakeGranuleFactoryV2, granuleModel),
+    addFakeData(knex, numItems, fakeProviderRecordFactory, new ProviderPgModel()),
+    addFakeData(knex, numItems, fakeGranuleRecordFactory, new GranulePgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id }),
   ]);
 
   const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
@@ -330,6 +352,7 @@ test.serial('failure in indexing record of one type should not prevent indexing 
     await indexFromDatabase.handler({
       indexName: esAlias,
       tables,
+      knex,
     });
 
     searchResults = await searchEs('provider', esAlias);
@@ -337,19 +360,21 @@ test.serial('failure in indexing record of one type should not prevent indexing 
     t.is(searchResults.meta.count, numItems);
 
     searchResults.results.forEach((result) => {
-      const sourceData = fakeProviderData.find((data) => data.id === result.id);
+      const sourceData = fakeProviderData.find((data) => data.name === result.id);
       t.deepEqual(
-        omit(sourceData, ['createdAt', 'timestamp', 'updatedAt']),
-        omit(result, ['createdAt', 'timestamp', 'updatedAt'])
+        { host: result.host, id: result.id, protocol: result.protocol },
+        { host: sourceData.host, id: sourceData.name, protocol: sourceData.protocol }
       );
     });
   } finally {
     indexGranuleStub.restore();
-    await Promise.all(fakeProviderData.map(
-      ({ id }) => providersModel.delete({ id })
-    ));
+    await Promise.all(fakeProviderData.map(({ name }) => {
+      const pgModel = new ProviderPgModel();
+      return pgModel.delete(knex, { name });
+    }));
     await Promise.all(fakeGranuleData.map(
-      ({ granuleId }) => granuleModel.delete({ granuleId })
+      // eslint-disable-next-line camelcase
+      ({ granule_id }) => new GranulePgModel().delete(knex, { granule_id })
     ));
     await Promise.all(searchResults.results.map(
       (result) =>

@@ -18,7 +18,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresExecutionToApiExecution,
   translatePostgresAsyncOperationToApiAsyncOperation,
-  // translatePostgresGranuleToApiGranule, // TODO - waiting on a PR for this
+  translatePostgresGranuleToApiGranule,
   translatePostgresProviderToApiProvider,
   translatePostgresPdrToApiPdr,
   translatePostgresRuleToApiRule,
@@ -130,82 +130,86 @@ async function indexFromDatabase(event) {
   //pull dynamo record
   //*run translation on them to get an API record*
   // index
-
-  await Promise.all([
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexCollection,
-      limitEsRequests,
-      postgresModel: new CollectionPgModel(),
-      translationFunction: translatePostgresCollectionToApiCollection,
-      knex,
-    }),
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexExecution,
-      limitEsRequests,
-      postgresModel: new ExecutionPgModel(),
-      translationFunction: translatePostgresExecutionToApiExecution,
-      knex,
-    }),
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexAsyncOperation,
-      limitEsRequests,
-      postgresModel: new AsyncOperationPgModel(),
-      translationFunction: translatePostgresAsyncOperationToApiAsyncOperation,
-      knex,
-    }),
-/*     indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexGranule,
-      limitEsRequests,
-      postgresModel: ,
-      translationFunction: ,
-      knex,
-    }), */
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexPdr,
-      limitEsRequests,
-      postgresModel: new PdrPgModel(),
-      translationFunction: (record) => translatePostgresPdrToApiPdr(record, knex),
-      knex,
-    }),
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexProvider,
-      limitEsRequests,
-      postgresModel: new ProviderPgModel(),
-      translationFunction: translatePostgresProviderToApiProvider,
-      knex,
-    }),
-    /* indexModel({ // TODO - what about this
-      esClient,
-      tableName: tables.reconciliationReportsTable,
-      esIndex,
-      indexFn: indexer.indexReconciliationReport,
-      limitEsRequests,
-      postgresModel: ,
-      translationFunction: ,
-      knex,
-    }), */
-    indexModel({
-      esClient,
-      esIndex,
-      indexFn: indexer.indexRule,
-      limitEsRequests,
-      postgresModel: new RulePgModel(),
-      translationFunction: translatePostgresRuleToApiRule,
-      knex,
-    }),
-  ]);
+  try {
+    await Promise.all([
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexCollection,
+        limitEsRequests,
+        postgresModel: new CollectionPgModel(),
+        translationFunction: translatePostgresCollectionToApiCollection,
+        knex,
+      }),
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexExecution,
+        limitEsRequests,
+        postgresModel: new ExecutionPgModel(),
+        translationFunction: translatePostgresExecutionToApiExecution,
+        knex,
+      }),
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexAsyncOperation,
+        limitEsRequests,
+        postgresModel: new AsyncOperationPgModel(),
+        translationFunction: translatePostgresAsyncOperationToApiAsyncOperation,
+        knex,
+      }),
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexGranule,
+        limitEsRequests,
+        postgresModel: new GranulePgModel(),
+        translationFunction: (record) => translatePostgresGranuleToApiGranule(record, knex),
+        knex,
+      }),
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexPdr,
+        limitEsRequests,
+        postgresModel: new PdrPgModel(),
+        translationFunction: (record) => translatePostgresPdrToApiPdr(record, knex),
+        knex,
+      }),
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexProvider,
+        limitEsRequests,
+        postgresModel: new ProviderPgModel(),
+        translationFunction: translatePostgresProviderToApiProvider,
+        knex,
+      }),
+      /* indexModel({ // TODO - what about this
+        esClient,
+        tableName: tables.reconciliationReportsTable,
+        esIndex,
+        indexFn: indexer.indexReconciliationReport,
+        limitEsRequests,
+        postgresModel: ,
+        translationFunction: ,
+        knex,
+      }), */
+      indexModel({
+        esClient,
+        esIndex,
+        indexFn: indexer.indexRule,
+        limitEsRequests,
+        postgresModel: new RulePgModel(),
+        translationFunction: translatePostgresRuleToApiRule,
+        knex,
+      }),
+    ]);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
 }
 
 async function handler(event) {
