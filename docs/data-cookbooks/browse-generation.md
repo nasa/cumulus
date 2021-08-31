@@ -493,25 +493,15 @@ In our example, the payload would look like the following. **Note**: The types a
         "version": "006",
         "files": [
           {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "type": "data",
+            "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "bucket": "cumulus-test-sandbox-internal",
-            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-            "time": 1553027415000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
+            "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 1908635
           },
           {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "type": "metadata",
+            "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "bucket": "cumulus-test-sandbox-internal",
-            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-            "time": 1553027412000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+            "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 21708
           }
         ]
@@ -582,39 +572,21 @@ The `FilesToGranules` task utilizes the incoming payload to chose which files to
     "version": "006",
     "files": [
       {
-        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-        "type": "data",
+        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
         "bucket": "cumulus-test-sandbox-internal",
-        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-        "time": 1553027415000,
-        "path": "data",
-        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
-        "duplicate_found": true,
+        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
         "size": 1908635
       },
       {
-        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-        "type": "metadata",
+        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
         "bucket": "cumulus-test-sandbox-internal",
-        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-        "time": 1553027412000,
-        "path": "data",
-        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
-        "duplicate_found": true,
+        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
         "size": 21708
       },
       {
-        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-        "type": "browse",
+        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
         "bucket": "cumulus-test-sandbox-internal",
-        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-        "time": 1553027415000,
-        "path": "data",
-        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
-        "duplicate_found": true,
+        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"
       }
     ]
   }
