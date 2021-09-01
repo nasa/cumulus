@@ -188,7 +188,7 @@ test('GranulePgModel.get() throws error if params do not satisfy type PostgresGr
   await granulePgModel.upsert(knex, granule, executionCumulusId);
 
   await t.throwsAsync(
-    granulePgModel.get(knex, searchParams),
+    async () => await granulePgModel.get(knex, searchParams),
     { message: `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(searchParams)})` }
   );
 });
