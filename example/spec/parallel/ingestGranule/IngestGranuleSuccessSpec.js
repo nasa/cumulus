@@ -324,12 +324,12 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(['running', 'completed'].includes(record.status)).toBeTrue();
   });
 
-  it('publishes a message for a running execution', async () => {
+  it('publishes an SNS message for a running execution', async () => {
     if (beforeAllError) throw SetupError;
     else {
       const runningExecutionArn = workflowExecutionArn;
       const runningExecutionName = runningExecutionArn.split(':').pop();
-      const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}.output`;
+      const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
       const executionExists = await s3ObjectExists({
         Bucket: config.bucket,
         Key: runningExecutionKey,
@@ -797,8 +797,8 @@ describe('The S3 Ingest Granules workflow', () => {
       failedExecutionName = failedExecutionArn.split(':').pop();
       executionName = postToCmrOutput.cumulus_meta.execution_name;
 
-      executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}.output`;
-      executionCompletedKey = `${config.stackName}/test-output/${executionName}.output`;
+      executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}-failed.output`;
+      executionCompletedKey = `${config.stackName}/test-output/${executionName}-completed.output`;
 
       granuleCompletedMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-completed.output`;
       granuleRunningMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-running.output`;
