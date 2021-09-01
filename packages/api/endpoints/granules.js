@@ -115,8 +115,6 @@ async function put(req, res) {
     return res.send(newApiGranule);
   }
 
-  // TODO - this should pull a PG granule and translate
-
   const pgGranuleRecords = await granulePgModel.search(knex, {
     granule_id: granuleId,
   });

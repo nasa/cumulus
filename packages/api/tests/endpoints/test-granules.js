@@ -557,13 +557,13 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
   });
 
-  const granuleId = newDynamoGranule.granuleId;
+  const granuleId = newPgGranule.granule_id;
 
   sinon.stub(
     CMR.prototype,
@@ -967,7 +967,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-test.only('When a move granule request fails to move a file correctly, it records the expected granule files in postgres and dynamo', async (t) => {
+test.serial('When a move granule request fails to move a file correctly, it records the expected granule files in postgres and dynamo', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');

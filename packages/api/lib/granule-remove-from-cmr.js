@@ -15,7 +15,7 @@ const models = require('../models');
  */
 const _removeGranuleFromCmr = async (granule, collectionId) => {
   log.info(`granules.removeGranuleFromCmrByGranule ${granule.granule_id}`);
-  if (!granule.published || !granule.cmrLink) {
+  if (!granule.published || !granule.cmr_link) {
     throw new GranuleNotPublished(`Granule ${granule.granule_id} is not published to CMR, so cannot be removed from CMR`);
   }
 
@@ -79,11 +79,11 @@ const unpublishGranule = async (
       const updateParams = {
         published: granule.published,
       };
-      if (granule.cmrLink) {
-        updateParams.cmrLink = granule.cmrLink;
+      if (granule.cmr_link) {
+        updateParams.cmrLink = granule.cmr_link;
       }
       await granuleDynamoModel.update(
-        { granuleId: granule.granuleId },
+        { granuleId: granule.granule_id },
         updateParams
       );
     }
