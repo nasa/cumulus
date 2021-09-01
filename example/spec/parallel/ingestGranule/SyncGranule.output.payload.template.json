@@ -1,5 +1,6 @@
 {
   "process": "modis",
+  "granuleDuplicates": {},
   "granules": [
     {
       "granuleId": "replace-me-granuleId",
@@ -7,18 +8,21 @@
       "version": "006",
       "files": [
         {
+          "source": "replace-me-path/replace-me-granuleId.hdf",
           "fileName": "replace-me-granuleId.hdf",
           "bucket": "",
           "key": "",
           "size": 1098034
         },
         {
+          "source": "replace-me-path/replace-me-granuleId.hdf.met",
           "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "key": "",
           "size": 21708
         },
         {
+          "source": "replace-me-path/replace-me-granuleId_ndvi.jpg",
           "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
           "key": "",

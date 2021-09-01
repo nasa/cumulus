@@ -287,12 +287,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
         movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
         existCheck = await Promise.all(movedFiles.map((fileObject) =>
-          s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
+          s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.key })));
         headObjects = await Promise.all(movedFiles.map(async (fileObject) =>
           ({
             ...fileObject,
-            ...await headObject(fileObject.bucket, fileObject.filepath),
-            expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream',
+            ...await headObject(fileObject.bucket, fileObject.key),
+            expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream',
           })));
       } catch (error) {
         subTestSetupError = error;
@@ -305,11 +305,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       if (subTestSetupError) fail(subTestSetupError);
     });
 
-    it('has a payload with correct buckets, filenames, sizes', () => {
+    it('has a payload with correct buckets, keys, sizes', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
       movedFiles.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
-        expect(file.filename).toEqual(expectedFile.filename);
+        expect(file.key).toEqual(expectedFile.key);
         expect(file.bucket).toEqual(expectedFile.bucket);
         if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
