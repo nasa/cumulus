@@ -125,8 +125,6 @@ async function indexModel({
   knex,
   translationFunction,
 }) {
-  // TODO - should we support optional reindexing after a
-  // particular date (e.g. start at min cumulus ID given a created_at query?)
   let startId = 1;
   let totalItemsIndexed = 0;
   const pageSize = 1;
@@ -178,6 +176,7 @@ async function indexFromDatabase(event) {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
     dynamoTables = { reconciliationReportsTable: process.env.ReconciliationReportsTable },
+    pageSize = process.env.PG_PAGE_SIZE || 10,
   } = event;
   const esClient = await Search.es(esHost);
 
@@ -193,6 +192,7 @@ async function indexFromDatabase(event) {
       postgresModel: new CollectionPgModel(),
       translationFunction: translatePostgresCollectionToApiCollection,
       knex,
+      pageSize,
     }),
     indexModel({
       esClient,
@@ -202,6 +202,7 @@ async function indexFromDatabase(event) {
       postgresModel: new ExecutionPgModel(),
       translationFunction: translatePostgresExecutionToApiExecution,
       knex,
+      pageSize,
     }),
     indexModel({
       esClient,
@@ -211,6 +212,7 @@ async function indexFromDatabase(event) {
       postgresModel: new AsyncOperationPgModel(),
       translationFunction: translatePostgresAsyncOperationToApiAsyncOperation,
       knex,
+      pageSize,
     }),
     indexModel({
       esClient,
@@ -220,6 +222,7 @@ async function indexFromDatabase(event) {
       postgresModel: new GranulePgModel(),
       translationFunction: (record) => translatePostgresGranuleToApiGranule(record, knex),
       knex,
+      pageSize,
     }),
     indexModel({
       esClient,
@@ -229,6 +232,7 @@ async function indexFromDatabase(event) {
       postgresModel: new PdrPgModel(),
       translationFunction: (record) => translatePostgresPdrToApiPdr(record, knex),
       knex,
+      pageSize,
     }),
     indexModel({
       esClient,
@@ -238,6 +242,7 @@ async function indexFromDatabase(event) {
       postgresModel: new ProviderPgModel(),
       translationFunction: translatePostgresProviderToApiProvider,
       knex,
+      pageSize,
     }),
     indexReconciliationReports({
       esClient,
@@ -254,6 +259,7 @@ async function indexFromDatabase(event) {
       postgresModel: new RulePgModel(),
       translationFunction: translatePostgresRuleToApiRule,
       knex,
+      pageSize,
     }),
   ]);
 }

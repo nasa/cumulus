@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import { RuleRecord, RuleType } from '@cumulus/types/api/rules';
+import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
@@ -45,7 +46,7 @@ export const translateApiRuleToPostgresRule = async (
     updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
   };
 
-  return ruleRecord;
+  return removeNilProperties(ruleRecord);
 };
 
 export const translatePostgresRuleToApiRule = async (
@@ -61,7 +62,7 @@ export const translatePostgresRuleToApiRule = async (
     });
     collection = { name, version };
   }
-  return {
+  return removeNilProperties({
     name: record.name,
     workflow: record.workflow,
     provider: record.provider_cumulus_id ?
@@ -71,16 +72,16 @@ export const translatePostgresRuleToApiRule = async (
     meta: record?.meta as { retries?: number, visilibity?: number, [key: string]: unknown},
     payload: record.payload as any,
     queueUrl: record.queue_url,
-    rule: {
+    rule: removeNilProperties({
       arn: record.arn,
       type: record.type as RuleType,
       value: record.value,
       logEventArn: record.log_event_arn,
-    },
+    }),
     state: record.enabled ? 'ENABLED' : 'DISABLED',
     tags: record.tags ? JSON.parse(record.tags) : undefined,
     executionNamePrefix: record.execution_name_prefix,
     createdAt: record.created_at.getTime(),
     updatedAt: record.updated_at.getTime(),
-  };
+  });
 };

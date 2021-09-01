@@ -17,6 +17,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     queueName: 'queue_url',
     payload: { result: { key: 'value' } },
     tags: ['tag1', 'tag2'],
+    queueUrl: 'http://localhost',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
