@@ -1541,7 +1541,10 @@ test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
 });
 
 test.serial('POST rejects if a granule already exists in postgres', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({ execution: undefined });
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
 
   await request(app)
     .post('/granules')
@@ -1557,8 +1560,25 @@ test.serial('POST rejects if a granule already exists in postgres', async (t) =>
     .send(newGranule)
     .expect(409);
 
-  t.deepEqual(
-    JSON.parse(response.text),
-    { statusCode: 409, error: 'Conflict', message: `A granule already exists for granule_id: ${newGranule.granuleId}` }
-  );
+  const errorText = JSON.parse(response.error.text);
+  t.is(errorText.statusCode, 409);
+  t.is(errorText.error, 'Conflict');
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+});
+
+test.serial('POST return bad request if a granule is submitted with a bad collectionId.', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: randomId('collectionId'),
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.statusCode, 400);
+  t.is(response.error.status, 400);
+  t.is(response.error.message, 'cannot POST /granules (400)');
 });
