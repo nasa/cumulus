@@ -235,7 +235,7 @@ describe('When the Sync Granule workflow is configured', () => {
         // update one of the input files, so that the file has different checksum
         const content = randomString();
         const file = inputPayload.granules[0].files[0];
-        fileUpdated = file.name;
+        fileUpdated = file.fileName;
         const updateParams = {
           Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
@@ -259,10 +259,10 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(3);
 
-        const renamedFiles = files.filter((f) => f.name.startsWith(`${fileUpdated}.v`));
+        const renamedFiles = files.filter((f) => f.fileName.startsWith(`${fileUpdated}.v`));
         expect(renamedFiles.length).toEqual(1);
 
-        const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].size;
+        const expectedRenamedFileSize = existingfiles.filter((f) => f.fileName.endsWith(fileUpdated))[0].size;
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
@@ -317,7 +317,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(4);
 
-        const renamedFiles = files.filter((f) => f.name.startsWith(`${updatedFileName}.v`));
+        const renamedFiles = files.filter((f) => f.fileName.startsWith(`${updatedFileName}.v`));
         expect(renamedFiles.length).toEqual(2);
       });
 
