@@ -545,7 +545,11 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newDynamoGranule, newPgGranule: { collection_cumulus_id: collectionCumulusId } } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: true,
   });
@@ -649,7 +653,11 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newDynamoGranule, newPgGranule: { collection_cumulus_id: collectionCumulusId } } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: true,
   });
@@ -670,7 +678,10 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // Verify files still exist in S3 and Postgres
@@ -712,7 +723,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId },
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   ));
   t.false(await granuleModel.exists({ granuleId }));
 

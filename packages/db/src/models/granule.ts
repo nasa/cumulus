@@ -1,13 +1,12 @@
 import Knex from 'knex';
 
+import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
 import { tableNames } from '../tables';
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
 import { translateDateToUTC } from '../lib/timestamp';
-
-import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
 
 interface RecordSelect {
   cumulus_id: number
@@ -44,12 +43,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
    * Checks if a granule is present in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object of PostgresGranuleUniqueColumns or RecordSelect
+   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object
+   *          of PostgresGranuleUniqueColumns or RecordSelect
    * @returns {Promise<boolean>} True if the granule exists, false otherwise
    */
   async exists(
     knexOrTransaction: Knex | Knex.Transaction,
-    params: PostgresGranuleUniqueColumns | RecordSelect,
+    params: PostgresGranuleUniqueColumns | RecordSelect
   ): Promise<boolean> {
     try {
       await this.get(knexOrTransaction, params);
@@ -66,21 +66,21 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
    * Fetches a single granule from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object of PostgresGranuleUniqueColumns or RecordSelect
+   * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object
+   *         of PostgresGranuleUniqueColumns or RecordSelect
    * @returns {Promise<PostgresGranuleRecord>} The returned record
    */
-  async get(
+  get(
     knexOrTransaction: Knex | Knex.Transaction,
-    params: PostgresGranuleUniqueColumns | RecordSelect,
+    params: PostgresGranuleUniqueColumns | RecordSelect
   ): Promise<PostgresGranuleRecord> {
-
     if (!isRecordSelect(params)) {
-      if ( !(params.granule_id && params.collection_cumulus_id)) {
-	throw new InvalidArgument(`Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
+      if (!(params.granule_id && params.collection_cumulus_id)) {
+        throw new InvalidArgument(`Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
       }
     }
-      return super.get(knexOrTransaction, params);
-    }
+    return super.get(knexOrTransaction, params);
+  }
 
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
