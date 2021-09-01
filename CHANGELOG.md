@@ -120,7 +120,9 @@ of response and not the raw API endpoint response
 
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
-  from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
+  from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Changed `erasePostgresTables` in serve.js to ensure granules_executions, granules, pdrs, are
+    deleted before executions
 
 - Updated `processDeadLetterArchive` Lambda to return an object where
 `processingSucceededKeys` is an array of the S3 keys for successfully
