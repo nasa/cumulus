@@ -17,8 +17,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
 
     env.migrationDir = migrationDir;
 
-    console.log(`MigrationDir: ${migrationDir}`);
-
     knex = await getKnexClient({ env });
 
     const command = event.command ?? 'latest';
