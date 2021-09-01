@@ -19,9 +19,8 @@ const {
   destroyLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  migrationDir,
 } = require('@cumulus/db');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
   deleteAsyncOperation,

@@ -6,9 +6,9 @@ const {
   fakeCollectionRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
 

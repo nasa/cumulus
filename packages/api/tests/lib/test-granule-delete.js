@@ -15,6 +15,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 
 const { DeletePublishedGranule } = require('@cumulus/errors');
@@ -36,8 +37,6 @@ const {
 } = require('../../lib/testUtils');
 
 const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 
