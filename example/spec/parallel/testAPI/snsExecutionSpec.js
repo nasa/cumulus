@@ -1,7 +1,6 @@
 'use strict';
 
-const { s3ObjectExists, deleteS3Object } = require('@cumulus/aws-client/S3');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getJsonS3Object, deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { waitForCompletedExecution } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../../helpers/testUtils');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
@@ -10,20 +9,28 @@ describe('An SNS message is published to the report executions topic', () => {
   let beforeAllError;
   let config;
   let executionKey;
-  let workflowExecutionArn;
+  let executionName;
+  let workflowExecution;
 
   beforeAll(async () => {
     try {
       config = await loadConfig();
 
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      const workflowExecutionName = 'IngestAndPublishGranule';
+      const workflowExecutionName = 'HelloWorldWorkflow';
 
-      workflowExecutionArn = await buildAndStartWorkflow(
+      workflowExecution = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
         workflowExecutionName
       );
+      await waitForCompletedExecution(workflowExecution);
+      executionName = workflowExecution.split(':').pop();
+      executionKey = `${config.stackName}/test-output/${executionName}.output`;
+      await s3ObjectExists({
+        Bucket: config.bucket,
+        Key: executionKey,
+      });
     } catch (error) {
       beforeAllError = error;
     }
@@ -37,16 +44,10 @@ describe('An SNS message is published to the report executions topic', () => {
     await deleteS3Object(config.bucket, executionKey);
   });
 
-  it('for a deleted execution', async () => {
-    await waitForCompletedExecution(workflowExecutionArn);
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
-
-    const executionName = workflowExecutionArn.split(':').pop();
-    executionKey = `${config.stackName}/test-output/${executionName}.output`;
-    const executionExists = await s3ObjectExists({
-      Bucket: config.bucket,
-      Key: executionKey,
-    });
-    expect(executionExists).toEqual(true);
+  it('for a created execution', async () => {
+    const savedMessage = await getJsonS3Object(config.bucket, executionKey);
+    const message = JSON.parse(savedMessage.Records[0].Sns.Message);
+    expect(message.arn).toEqual(workflowExecution);
+    expect(message.name).toEqual(executionName);
   });
 });

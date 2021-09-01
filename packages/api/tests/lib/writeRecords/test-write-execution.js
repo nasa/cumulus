@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
@@ -545,4 +546,28 @@ test.serial('writeExecutionRecordFromApi() saves execution to Dynamo and RDS wit
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+});
+
+test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage and successfully publishes an SNS message', async (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    knex,
+    QueueUrl,
+  } = t.context;
+
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, Date.now());
+  const omitFields = ['updatedAt', 'timestamp'];
+
+  t.is(executionRecord.arn, executionArn);
+  t.is(executionRecord.status, cumulusMessage.meta.status);
+  t.deepEqual(omit(executionRecord, omitFields), omit(executionApiRecord, omitFields));
 });

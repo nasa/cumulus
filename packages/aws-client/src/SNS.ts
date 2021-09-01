@@ -36,7 +36,7 @@ export const publishSnsMessage = async (
     },
     {
       maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${JSON.stringify(message)}') failed with ${err.retriesLeft} retries left: ${err.message}, with error ${JSON.stringify(err)}`),
+      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${JSON.stringify(message)}') failed with ${err.retriesLeft} retries left: ${JSON.stringify(err)}`),
       ...retryOptions,
     }
   );
