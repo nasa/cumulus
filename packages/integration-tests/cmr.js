@@ -5,6 +5,7 @@ const got = require('got');
 const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { getSearchUrl } = require('@cumulus/cmr-client');
 
@@ -399,7 +400,7 @@ async function generateAndStoreCmrUmmJson(
 
   await s3().putObject(params).promise();
 
-  const granuleFiles = granule.files.map((f) => f.filename);
+  const granuleFiles = granule.files.map((f) => buildS3Uri(f.bucket, f.key));
   granuleFiles.push(`s3://${bucket}/${fileKey}`);
   log.info(`s3://${bucket}/${fileKey}`);
   log.info(granuleFiles);
