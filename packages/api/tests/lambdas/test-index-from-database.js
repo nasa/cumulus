@@ -135,7 +135,7 @@ test.afterEach.always(async (t) => {
   });
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
@@ -227,17 +227,71 @@ test('Lambda successfully indexes records of all types', async (t) => {
 
   const fakeData = [];
 
-  const collectionRecord = await addFakeData(knex, numItems, fakeCollectionRecordFactory, new CollectionPgModel());
+  const collectionRecord = await addFakeData(
+    knex,
+    numItems,
+    fakeCollectionRecordFactory,
+    new CollectionPgModel()
+  );
   fakeData.push(collectionRecord);
-  fakeData.push(await addFakeData(knex, numItems, fakeExecutionRecordFactory, new ExecutionPgModel()));
-  const granuleRecord = await addFakeData(knex, numItems, fakeGranuleRecordFactory, new GranulePgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id });
+
+  fakeData.push(
+    await addFakeData(
+      knex,
+      numItems,
+      fakeExecutionRecordFactory,
+      new ExecutionPgModel()
+    )
+  );
+
+  const granuleRecord = await addFakeData(
+    knex,
+    numItems,
+    fakeGranuleRecordFactory,
+    new GranulePgModel(),
+    { collection_cumulus_id: collectionRecord[0].cumulus_id }
+  );
   fakeData.push(granuleRecord);
-  fakeData.push(await addFakeData(knex, numItems, fakeFileRecordFactory, new FilePgModel(), { granule_cumulus_id: granuleRecord[0].cumulus_id }));
-  const providerRecord = await addFakeData(knex, numItems, fakeProviderRecordFactory, new ProviderPgModel());
+
+  fakeData.push(
+    await addFakeData(
+      knex,
+      numItems,
+      fakeFileRecordFactory,
+      new FilePgModel(),
+      { granule_cumulus_id: granuleRecord[0].cumulus_id }
+    )
+  );
+
+  const providerRecord = await addFakeData(
+    knex,
+    numItems,
+    fakeProviderRecordFactory,
+    new ProviderPgModel()
+  );
   fakeData.push(providerRecord);
-  fakeData.push(await addFakeData(knex, numItems, fakePdrRecordFactory, new PdrPgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id, provider_cumulus_id: providerRecord[0].cumulus_id }));
-  fakeData.push(await addFakeDynamoData(numItems, fakeReconciliationReportFactory, reconciliationReportModel));
-  fakeData.push(addFakeData(knex, numItems, fakeRuleRecordFactory, new RulePgModel(), { workflow: workflowList[0].name }));
+
+  fakeData.push(
+    await addFakeData(knex, numItems, fakePdrRecordFactory, new PdrPgModel(), {
+      collection_cumulus_id: collectionRecord[0].cumulus_id,
+      provider_cumulus_id: providerRecord[0].cumulus_id,
+    })
+  );
+
+  fakeData.push(
+    await addFakeDynamoData(
+      numItems,
+      fakeReconciliationReportFactory,
+      reconciliationReportModel
+    )
+  );
+
+  fakeData.push(
+    addFakeData(knex, numItems, fakeRuleRecordFactory, new RulePgModel(), {
+      workflow: workflowList[0].name,
+    })
+  );
+
   await indexFromDatabase.handler({
     indexName: esAlias,
     tables,
@@ -267,7 +321,12 @@ test.serial('failure in indexing record of specific type should not prevent inde
   const { esAlias, esClient, knex } = t.context;
   const granulePgModel = new GranulePgModel();
   const numItems = 7;
-  const collectionRecord = await addFakeData(knex, 1, fakeCollectionRecordFactory, new CollectionPgModel());
+  const collectionRecord = await addFakeData(
+    knex,
+    1,
+    fakeCollectionRecordFactory,
+    new CollectionPgModel()
+  );
   const fakeData = await addFakeData(knex, numItems, fakeGranuleRecordFactory, granulePgModel, {
     collection_cumulus_id: collectionRecord[0].cumulus_id,
     created_at: new Date(),
@@ -336,55 +395,85 @@ test.serial('failure in indexing record of specific type should not prevent inde
   }
 });
 
-test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
-  const { esAlias, esClient, knex } = t.context;
-  const numItems = 2;
-  const collectionRecord = await addFakeData(knex, 1, fakeCollectionRecordFactory, new CollectionPgModel());
-  const [fakeProviderData, fakeGranuleData] = await Promise.all([
-    addFakeData(knex, numItems, fakeProviderRecordFactory, new ProviderPgModel()),
-    addFakeData(knex, numItems, fakeGranuleRecordFactory, new GranulePgModel(), { collection_cumulus_id: collectionRecord[0].cumulus_id }),
-  ]);
-
-  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
-    .throws(new Error('error'));
-
-  let searchResults;
-  try {
-    await indexFromDatabase.handler({
-      indexName: esAlias,
-      tables,
+test.serial(
+  'failure in indexing record of one type should not prevent indexing of other records with different type',
+  async (t) => {
+    const { esAlias, esClient, knex } = t.context;
+    const numItems = 2;
+    const collectionRecord = await addFakeData(
       knex,
-    });
+      1,
+      fakeCollectionRecordFactory,
+      new CollectionPgModel()
+    );
+    const [fakeProviderData, fakeGranuleData] = await Promise.all([
+      addFakeData(
+        knex,
+        numItems,
+        fakeProviderRecordFactory,
+        new ProviderPgModel()
+      ),
+      addFakeData(
+        knex,
+        numItems,
+        fakeGranuleRecordFactory,
+        new GranulePgModel(),
+        { collection_cumulus_id: collectionRecord[0].cumulus_id }
+      ),
+    ]);
 
-    searchResults = await searchEs('provider', esAlias);
+    const indexGranuleStub = sinon
+      .stub(indexer, 'indexGranule')
+      .throws(new Error('error'));
 
-    t.is(searchResults.meta.count, numItems);
+    let searchResults;
+    try {
+      await indexFromDatabase.handler({
+        indexName: esAlias,
+        tables,
+        knex,
+      });
 
-    searchResults.results.forEach((result) => {
-      const sourceData = fakeProviderData.find((data) => data.name === result.id);
-      t.deepEqual(
-        { host: result.host, id: result.id, protocol: result.protocol },
-        { host: sourceData.host, id: sourceData.name, protocol: sourceData.protocol }
-      );
-    });
-  } finally {
-    indexGranuleStub.restore();
-    await Promise.all(fakeProviderData.map(({ name }) => {
-      const pgModel = new ProviderPgModel();
-      return pgModel.delete(knex, { name });
-    }));
-    await Promise.all(fakeGranuleData.map(
-      // eslint-disable-next-line camelcase
-      ({ granule_id }) => new GranulePgModel().delete(knex, { granule_id })
-    ));
-    await Promise.all(searchResults.results.map(
-      (result) =>
-        esClient.delete({
-          index: esAlias,
-          type: 'provider',
-          id: result.id,
-          refresh: true,
+      searchResults = await searchEs('provider', esAlias);
+
+      t.is(searchResults.meta.count, numItems);
+
+      searchResults.results.forEach((result) => {
+        const sourceData = fakeProviderData.find(
+          (data) => data.name === result.id
+        );
+        t.deepEqual(
+          { host: result.host, id: result.id, protocol: result.protocol },
+          {
+            host: sourceData.host,
+            id: sourceData.name,
+            protocol: sourceData.protocol,
+          }
+        );
+      });
+    } finally {
+      indexGranuleStub.restore();
+      await Promise.all(
+        fakeProviderData.map(({ name }) => {
+          const pgModel = new ProviderPgModel();
+          return pgModel.delete(knex, { name });
         })
-    ));
+      );
+      await Promise.all(
+        fakeGranuleData.map(
+          // eslint-disable-next-line camelcase
+          ({ granule_id }) => new GranulePgModel().delete(knex, { granule_id })
+        )
+      );
+      await Promise.all(
+        searchResults.results.map((result) =>
+          esClient.delete({
+            index: esAlias,
+            type: 'provider',
+            id: result.id,
+            refresh: true,
+          }))
+      );
+    }
   }
-});
+);
