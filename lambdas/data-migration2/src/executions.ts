@@ -68,7 +68,6 @@ export const migrateExecutionRecord = async (
   }
 
   const [migratedExecution] = await executionPgModel.upsert(knex, updatedRecord);
-  console.log(migratedExecution);
 
   return migratedExecution.cumulus_id;
 };
