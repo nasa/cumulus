@@ -13,6 +13,8 @@ const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
+const { randomId } = require('@cumulus/common/test-utils');
+
 const EXECUTION_LIST_LIMIT = 50;
 
 /**
@@ -141,7 +143,19 @@ const getExecutionWithStatus = async (params) =>
     }
   );
 
+const buildRandomizedExecution = (overrides = {}) => ({
+  arn: randomId('arn'),
+  name: randomId('name'),
+  status: 'completed',
+  collectionId: `${randomId('name')}___${randomId('vers')}`,
+  execution: randomId('execution'),
+  error: {},
+  timestamp: Date.now(),
+  ...overrides,
+});
+
 module.exports = {
+  buildRandomizedExecution,
   findExecutionArn,
   getExecutionWithStatus,
 };

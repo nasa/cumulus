@@ -34,7 +34,7 @@ const log = new Logger({ sender: '@cumulus/api/executions' });
  */
 async function create(req, res) {
   const {
-    executionModel = new models.Execution(),
+    executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
@@ -45,7 +45,7 @@ async function create(req, res) {
     return res.boom.badRequest('Field arn is missing');
   }
 
-  if (await executionModel.exists({ arn })) {
+  if (await executionPgModel.exists(knex, { arn })) {
     return res.boom.conflict(`A record already exists for ${arn}`);
   }
 
@@ -89,23 +89,23 @@ async function update(req, res) {
   }
 
   const {
-    executionModel = new models.Execution(),
+    executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
-  let oldRecord;
-
+  let oldPgRecord;
   try {
-    oldRecord = await executionModel.get({ arn });
+    oldPgRecord = await executionPgModel.get(knex, { arn });
   } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
+    if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
     return res.boom.notFound(`Execution '${arn}' not found`);
   }
 
+  const oldApiRecord = await translatePostgresExecutionToApiExecution(oldPgRecord, knex);
   execution.updatedAt = Date.now();
-  execution.createdAt = oldRecord.createdAt;
+  execution.createdAt = oldApiRecord.createdAt;
 
   try {
     await writeExecutionRecordFromApi({ record: execution, knex });

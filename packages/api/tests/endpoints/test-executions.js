@@ -1003,6 +1003,31 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 
+test.serial('POST /executions creates an execution that is searchable', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .get('/executions')
+    .query({ arn: newExecution.arn })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'execution');
+  t.is(meta.count, 1);
+  t.is(results[0].arn, newExecution.arn);
+});
+
 test.serial('PUT /executions updates the record as expected', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
