@@ -262,6 +262,8 @@ test.beforeEach(async (t) => {
         granule_id: granuleId1,
         status: 'completed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        published: true,
+        cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1224390942-PO_NGP_UAT',
       }
     ),
     fakeGranuleRecordFactory(
@@ -945,7 +947,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       });
 
       // check the granule in postgres is updated
-      const pgFiles = await getPostgresFilesInOrder(
+      const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
         filePgModel,
         postgresGranuleCumulusId
@@ -955,12 +957,13 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 
       for (let i = 0; i < pgFiles.length; i += 1) {
         const destination = destinations.find((dest) => pgFiles[i].file_name.match(dest.regex));
+        const fileName = pgFiles[i].file_name;
+
         t.is(destination.bucket, pgFiles[i].bucket);
         t.like(pgFiles[i], {
-          ...omit(newGranule.files[i], ['fileName', 'size']),
-          key: `${destinationFilepath}/${newGranule.files[i].fileName}`,
+          ...omit(newGranule.files[i], ['fileName', 'size', 'createdAt', 'updatedAt']),
+          key: `${destinationFilepath}/${fileName}`,
           bucket: destination.bucket,
-          file_name: newGranule.files[i].fileName,
         });
       }
     }
@@ -1135,96 +1138,6 @@ test.serial('When a move granule request fails to move a file correctly, it reco
           bucket: destination.bucket,
         });
       }
-    }
-  );
-});
-
-test('When a move granules request attempts to move a granule that is not migrated to postgres, it correctly updates only dynamoDb', async (t) => {
-  const bucket = process.env.system_bucket;
-  const secondBucket = randomId('second');
-  const thirdBucket = randomId('third');
-  await runTestUsingBuckets(
-    [secondBucket, thirdBucket],
-    async () => {
-      const granuleFileName = randomId('granuleFileName');
-      const {
-        newGranule,
-      } = await generateMoveGranuleTestFilesAndEntries({
-        t,
-        bucket,
-        secondBucket,
-        granulePgModel,
-        filePgModel,
-        granuleModel,
-        granuleFileName,
-        createPostgresEntries: false,
-      });
-
-      const destinationFilepath = `${process.env.stackName}/unmigrated_granules_moved`;
-      const destinations = [
-        {
-          regex: '.*.txt$',
-          bucket,
-          filepath: destinationFilepath,
-        },
-        {
-          regex: '.*.md$',
-          bucket: thirdBucket,
-          filepath: destinationFilepath,
-        },
-        {
-          regex: '.*.jpg$',
-          bucket,
-          filepath: destinationFilepath,
-        },
-      ];
-
-      const response = await request(app)
-        .put(`/granules/${newGranule.granuleId}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', `Bearer ${jwtAuthToken}`)
-        .send({
-          action: 'move',
-          destinations,
-        })
-        .expect(200);
-
-      const body = response.body;
-      t.is(body.status, 'SUCCESS');
-      t.is(body.action, 'move');
-
-      const bucketObjects = await s3().listObjects({
-        Bucket: bucket,
-        Prefix: destinationFilepath,
-      }).promise();
-
-      t.is(bucketObjects.Contents.length, 2);
-      bucketObjects.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
-
-      const thirdBucketObjects = await s3().listObjects({
-        Bucket: thirdBucket,
-        Prefix: destinationFilepath,
-      }).promise();
-
-      t.is(thirdBucketObjects.Contents.length, 1);
-      thirdBucketObjects.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
-
-      // check the granule in dynamoDb is updated
-      const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-      updatedGranule.files.forEach((file) => {
-        t.true(file.key.startsWith(destinationFilepath));
-        const destination = destinations.find((dest) => file.fileName.match(dest.regex));
-        t.is(destination.bucket, file.bucket);
-      });
-
-      // check there is no granule in postgresGranuleCumulusId
-      await t.throwsAsync(granulePgModel.getRecordCumulusId(t.context.knex, {
-        granule_id: updatedGranule.granuleId,
-      }), { name: 'RecordDoesNotExist' });
     }
   );
 });
