@@ -23,6 +23,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
 const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { getCollectionCumulusId } = require('../lib/writeRecords/utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
@@ -70,14 +71,24 @@ async function create(req, res) {
   } = req.testContext || {};
 
   let result;
+  let collectionCumulusId;
   const body = req.body;
 
-  if (await granulePgModel.exists(knex, { granule_id: body.granuleId })) {
-    res.boom.conflict(`A granule already exists for granule_id: ${body.granuleId}`);
+  try {
+    const collectionNameVersion = deconstructCollectionId(body.collectionId);
+    collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
+    if (await granulePgModel.exists(knex, {
+      granule_id: body.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })) {
+      return res.boom.conflict(`A granule already exists for granule_id: ${body.granuleId}`);
+    }
+  } catch (error) {
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
 
   try {
-    result = await writeGranuleFromApi(body, knex);
+    result = await writeGranuleFromApi(body, collectionCumulusId, knex);
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));

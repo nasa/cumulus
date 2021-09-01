@@ -14,7 +14,7 @@ const {
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage, deconstructCollectionId } = require('@cumulus/message/Collections');
+const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -49,7 +49,6 @@ const {
 } = require('../utils');
 const Granule = require('../../models/granules');
 const {
-  getCollectionCumulusId,
   getExecutionCumulusId,
 } = require('./utils');
 
@@ -357,6 +356,7 @@ const _writeGranule = async ({
  * @param {Object} [params.queryFields] - query fields
  * @param {Object} [params.granuleModel] - only for testing.
  * @param {Object} [params.granulePgModel] - only for testing.
+ * @param {number} collectionCumulusId - PostGreSQL cumulus_id for this granule's collection
  * @param {Knex} knex - knex Client
  * @returns {Promise}
  */
@@ -388,6 +388,7 @@ const writeGranuleFromApi = async (
     granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
   },
+  collectionCumulusId,
   knex
 ) => {
   try {
@@ -403,9 +404,6 @@ const writeGranuleFromApi = async (
       productionDateTime,
       lastUpdateDateTime,
     };
-
-    const collectionNameVersion = deconstructCollectionId(collectionId);
-    const collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
 
     let executionCumulusId;
     if (execution) {
