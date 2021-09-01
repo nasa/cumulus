@@ -408,7 +408,7 @@ async function eraseDataStack(
  * @param {string} systemBucket - defaults to 'localbucket', localrun
  * @param {bool} runIt - Override check to prevent accidental AWS run.  default: 'false'.
  */
- async function resetTables(
+async function resetTables(
   user = localUserName,
   stackName = localStackName,
   systemBucket = localSystemBucket,
