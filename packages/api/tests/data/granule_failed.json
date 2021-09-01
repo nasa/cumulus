@@ -4,10 +4,10 @@
     "message_source": "sfn",
     "workflow_start_time": 1519157005525,
     "execution_name": "bfa82fe0-c362-40c2-af3e-264ca31cc7a4",
-    "system_bucket": "cumulus-devseed-internal"
+    "system_bucket": "cumulus-test-sandbox-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
     "status": "failed",
     "workflow_name": "IngestGranule",
     "queues": {
@@ -70,9 +70,9 @@
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 17865615,
             "path": "granules",
             "url_path": "",
@@ -80,9 +80,9 @@
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "bucket": "cumulus-devseed-private",
+            "bucket": "cumulus-test-sandbox-private",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 44118,
             "path": "granules",
             "url_path": "",
@@ -118,9 +118,9 @@
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 17865615,
             "path": "granules",
             "url_path": "",
@@ -128,9 +128,9 @@
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "bucket": "cumulus-devseed-private",
+            "bucket": "cumulus-test-sandbox-private",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 44118,
             "path": "granules",
             "url_path": "",
