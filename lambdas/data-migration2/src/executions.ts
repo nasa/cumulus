@@ -67,9 +67,10 @@ export const migrateExecutionRecord = async (
     updatedRecord.parent_cumulus_id = await migrateExecutionRecord(parentExecution, knex);
   }
 
-  const [cumulusId] = await executionPgModel.upsert(knex, updatedRecord);
+  const [migratedExecution] = await executionPgModel.upsert(knex, updatedRecord);
+  console.log(migratedExecution);
 
-  return cumulusId;
+  return migratedExecution.cumulus_id;
 };
 
 const migrateExecutionDynamoRecords = async (
