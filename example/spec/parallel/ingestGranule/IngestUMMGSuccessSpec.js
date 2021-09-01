@@ -15,6 +15,7 @@ const {
   s3ObjectExists,
   parseS3Uri,
   headObject,
+  buildS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -378,20 +379,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const scienceFile = files.find((f) => f.filepath.endsWith('hdf'));
-      const browseFile = files.find((f) => f.filepath.endsWith('jpg'));
+      const scienceFile = files.find((f) => f.fileName.endsWith('hdf'));
+      const browseFile = files.find((f) => f.fileName.endsWith('jpg'));
 
       const scienceFileUrl = getDistributionFileUrl({
-        bucket: scienceFile.bucket, key: scienceFile.filepath,
+        bucket: scienceFile.bucket, key: scienceFile.key,
       });
       const s3ScienceFileUrl = getDistributionFileUrl({
-        bucket: scienceFile.bucket, key: scienceFile.filepath, urlType: 's3',
+        bucket: scienceFile.bucket, key: scienceFile.key, urlType: 's3',
       });
       const browseImageUrl = getDistributionFileUrl({
-        bucket: browseFile.bucket, key: browseFile.filepath,
+        bucket: browseFile.bucket, key: browseFile.key,
       });
       const s3BrowseImageUrl = getDistributionFileUrl({
-        bucket: browseFile.bucket, key: browseFile.filepath, urlType: 's3',
+        bucket: browseFile.bucket, key: browseFile.key, urlType: 's3',
       });
 
       expect(resourceURLs).toContain(scienceFileUrl);
@@ -488,14 +489,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       try {
         file = granule.files[0];
 
-        newS3UMMJsonFileLocation = expectedPayload.granules[0].files.find((f) => f.filename.includes('.cmr.json')).filename;
+        const ummGJsonFile = expectedPayload.granules[0].files.find((f) => f.fileName.includes('.cmr.json'));
+        newS3UMMJsonFileLocation = buildS3Uri(ummGJsonFile.bucket, ummGJsonFile.key);
 
-        destinationKey = `${testDataFolder}/${file.filepath}`;
+        destinationKey = `${testDataFolder}/${file.key}`;
 
         destinations = [{
           regex: '.*.hdf$',
           bucket: config.buckets.protected.name,
-          filepath: `${testDataFolder}/${path.dirname(file.filepath)}`,
+          filepath: `${testDataFolder}/${path.dirname(file.key)}`,
         }];
 
         const originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
