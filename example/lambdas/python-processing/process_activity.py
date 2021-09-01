@@ -28,14 +28,18 @@ class PythonProcess(Process):
             'all': r".*"
         }
 
+    def buildS3Uri(bucket, key):
+        return f's3://{bucket}/{key}'
+
     def process(self):
         granules = copy.deepcopy(self.input['granules'])
-        # We have to reasssgn the class input each time in an activity
+        # We have to reassign the class input each time in an activity
         # as the library doesn't appear to handle download *and* the service
         # case.   This should be fixed.
-        original_file_names = [file['filename'] for granule in granules
+        original_file_names = [self.buildS3Uri(file['bucket'], file['key']) for granule in granules
                                for file in granule['files']]
-        self.input = [file['filename'] for granule in granules
+        # TODO: how to update file['type']?
+        self.input = [self.buildS3Uri(file['bucket'], file['key']) for granule in granules
                       for file in granule['files'] if file['type'] == 'data']
         local_data_file_list = self.fetch('hdf', remote=False)
         metadata_file_list = list(map(self.add_ancillary_file,
