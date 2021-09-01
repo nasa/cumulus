@@ -9,7 +9,6 @@ const {
   migrationDir,
 } = require('../../dist');
 
-
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {

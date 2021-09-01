@@ -10,7 +10,7 @@ const {
   fakeCollectionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
-  migratinoDir,
+  migrationDir,
 } = require('../../dist');
 
 const testDbName = `file_${cryptoRandomString({ length: 10 })}`;
