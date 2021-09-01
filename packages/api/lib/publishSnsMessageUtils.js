@@ -17,7 +17,7 @@ const publishCollectionSnsMessage = async (record, event) => {
   } else if (event === 'Create' || event === 'Update') {
     messageToPublish = { event, record };
   }
-  logger.info(`About to publish SNS message ${JSON.stringify(record)} for collection to topic ARN ${topicArn}`);
+  logger.info(`About to publish SNS message ${JSON.stringify(messageToPublish)} for collection to topic ARN ${topicArn}`);
   await publishSnsMessage(topicArn, messageToPublish);
 };
 
