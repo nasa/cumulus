@@ -9,7 +9,7 @@ const {
 } = require('@cumulus/api-client/executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { buildRandomizedExecution } = require('@cumulus/integration-tests/Executions');
+const { buildRandomizedExecution, findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -21,6 +21,7 @@ describe('The Executions API', () => {
   let executionArn;
   let prefix;
   let randomExecutionRecord;
+  let updatedExecutionRecord;
 
   beforeAll(async () => {
     try {
@@ -34,6 +35,10 @@ describe('The Executions API', () => {
         collectionId,
         status: 'running',
       });
+      updatedExecutionRecord = {
+        ...randomExecutionRecord,
+        status: 'completed',
+      };
       executionArn = randomExecutionRecord.arn;
     } catch (error) {
       beforeAllFailed = true;
@@ -61,13 +66,12 @@ describe('The Executions API', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        const { message, record } = JSON.parse(response.body);
-        expect(message).toBe('Record saved');
-        expect(record).toEqual(jasmine.objectContaining(randomExecutionRecord));
+        const { message } = JSON.parse(response.body);
+        expect(message).toBe(`Successfully wrote execution with arn ${executionArn}`);
       }
     });
 
-    it('can discover the execution in the API.', async () => {
+    it('can get the execution in the API.', async () => {
       const execution = await getExecution({
         prefix,
         arn: executionArn,
@@ -76,18 +80,27 @@ describe('The Executions API', () => {
     });
 
     it('can update the execution in the API.', async () => {
-      const updatedExecutionRecord = {
-        ...randomExecutionRecord,
-        status: 'completed',
-      };
       const response = await updateExecution({
         prefix,
         body: updatedExecutionRecord,
       });
 
       expect(response.statusCode).toBe(200);
-      const result = JSON.parse(response.body);
-      expect(result).toEqual(jasmine.objectContaining(updatedExecutionRecord));
+      const { message } = JSON.parse(response.body);
+      expect(message).toBe(`Successfully updated execution with arn ${executionArn}`);
+    });
+
+    it('can search the execution in the API.', async () => {
+      const arn = await findExecutionArn(
+        prefix,
+        () => true,
+        {
+          arn: executionArn,
+          status: updatedExecutionRecord.status,
+        },
+        { timeout: 30 }
+      );
+      expect(arn).toBe(executionArn);
     });
 
     it('Errors creating a bad execution.', async () => {

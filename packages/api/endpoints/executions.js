@@ -60,14 +60,13 @@ async function create(req, res) {
     }
 
     return res.send({
-      message: 'Record saved',
-      record: execution,
+      message: `Successfully wrote execution with arn ${arn}`,
     });
   } catch (error) {
+    log.error('Error occurred while trying to create execution:', error);
     if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
       return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create execution:', error);
     return res.boom.badImplementation(error.message);
   }
 }
@@ -114,12 +113,14 @@ async function update(req, res) {
       await addToLocalES(execution, indexExecution);
     }
 
-    return res.send(execution);
+    return res.send({
+      message: `Successfully updated execution with arn ${arn}`,
+    });
   } catch (error) {
+    log.error('Error occurred while trying to update execution:', error);
     if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
       return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to update execution:', error);
     return res.boom.badImplementation(error.message);
   }
 }
