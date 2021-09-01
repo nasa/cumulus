@@ -105,9 +105,8 @@ describe('The Granules API', () => {
         const apiError = JSON.parse(error.apiMessage);
         expect(apiError.statusCode).toBe(400);
         expect(apiError.error).toBe('Bad Request');
-        expect(apiError.message).toContain('RecordDoesNotExist');
-        expect(apiError.message).toContain(name);
-        expect(apiError.message).toContain(version);
+        expect(apiError.message).toContain('InvalidArgument');
+        expect(apiError.message).toContain(badRandomGranuleRecord.granuleId);
       }
     });
   });
