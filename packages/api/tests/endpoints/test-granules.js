@@ -545,7 +545,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule, newPgGranule: { collection_cumulus_id: collectionCumulusId } } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: true,
   });
@@ -582,7 +582,7 @@ test.serial('remove a granule from CMR', async (t) => {
     // Should have updated the Postgres granule
     const updatedPgGranule = await granulePgModel.get(
       t.context.knex,
-      { granule_id: granuleId }
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
     );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
@@ -649,7 +649,7 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const { s3Buckets, newDynamoGranule, newPgGranule: { collection_cumulus_id: collectionCumulusId } } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: true,
   });
@@ -670,7 +670,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }));
   t.true(await granuleModel.exists({ granuleId }));
 
   // Verify files still exist in S3 and Postgres
@@ -688,7 +688,11 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 });
 
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: false,
   });
@@ -706,7 +710,10 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const granuleId = newDynamoGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId },
+  ));
   t.false(await granuleModel.exists({ granuleId }));
 
   // verify the files are deleted from S3 and Postgres
@@ -805,7 +812,11 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     published: false,
   });
@@ -827,7 +838,10 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   const granuleId = newDynamoGranule.granuleId;
 
   // granule not have been deleted from Postgres or Dynamo
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // verify the files still exist in S3 and Postgres
@@ -1486,7 +1500,10 @@ test.serial('PUT with action move returns failure if more than one granule file 
 });
 
 test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({ execution: undefined });
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
 
   const response = await request(app)
     .post('/granules')
@@ -1503,6 +1520,7 @@ test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
     t.context.knex,
     {
       granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
 

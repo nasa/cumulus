@@ -116,7 +116,10 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
 
   // Check Dynamo and RDS. The granule should still exist in both.
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
@@ -145,7 +148,12 @@ test.serial('deleteGranuleAndFiles() removes granule and files from Postgres, Dy
 
   // Check Dynamo and RDS. The granule should have been removed from both.
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+
+
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
 
   // Verify files were deleted from S3 and Postgres
   await Promise.all(
@@ -200,9 +208,10 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     await granuleModel.exists({ granuleId: newDynamoGranule.granuleId })
   );
 
-  t.false(
-    await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id })
-  );
+  t.false( await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
 });
 
 test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files if the Postgres file delete fails', async (t) => {
@@ -236,7 +245,10 @@ test.serial('deleteGranuleAndFiles() will not delete a granule or its S3 files i
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   // Verify files still exist in S3 and Postgres
@@ -284,7 +296,10 @@ test.serial('deleteGranuleAndFiles() will not delete Postgres or S3 Files if the
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   // Files will still exist in S3 and Postgres.
@@ -331,7 +346,10 @@ test.serial('deleteGranuleAndFiles() will not delete Postgres granule if the Dyn
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: newPgGranule.granule_id, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   // Files will still exist from S3 and Postgres.
