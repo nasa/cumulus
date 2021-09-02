@@ -14,13 +14,13 @@ const {
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 const Granule = require('../../models/granules');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;

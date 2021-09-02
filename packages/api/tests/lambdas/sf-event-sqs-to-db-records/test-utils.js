@@ -7,9 +7,8 @@ const uuidv4 = require('uuid/v4');
 const {
   localStackConnectionEnv,
   getKnexClient,
+  migrationDir,
 } = require('@cumulus/db');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   isPostRDSDeploymentExecution,
