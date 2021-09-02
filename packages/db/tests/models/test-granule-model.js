@@ -14,9 +14,8 @@ const {
   GranulePgModel,
   GranulesExecutionsPgModel,
   upsertGranuleWithExecutionJoinRecord,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 

@@ -5,11 +5,10 @@ const {
   AsyncOperationPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
 
 const { fakeAsyncOperationRecordFactory } = require('../../dist/test-utils');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `async_operation_${cryptoRandomString({ length: 10 })}`;
 

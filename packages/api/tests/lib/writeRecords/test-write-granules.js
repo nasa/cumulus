@@ -19,6 +19,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -28,8 +29,6 @@ const {
   writeGranuleFromApi,
   writeGranulesFromMessage,
 } = require('../../../lib/writeRecords/write-granules');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');

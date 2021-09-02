@@ -11,9 +11,8 @@ const {
   destroyLocalTestDb,
   GranulePgModel,
   GranulesExecutionsPgModel,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
 
