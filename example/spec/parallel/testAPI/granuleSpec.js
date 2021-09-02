@@ -36,6 +36,7 @@ describe('The Granules API', () => {
       granuleFile = {
         bucket: config.buckets.public.name,
         key: randomId('key'),
+        size: 8,
       };
       await s3PutObject({
         Bucket: granuleFile.bucket,
@@ -84,9 +85,6 @@ describe('The Granules API', () => {
         prefix,
         granuleId,
       });
-      expect(granule.files[0].size).toEqual(jasmine.any(Number));
-      delete granule.files[0].size;
-      granule.execution = undefined;
       expect(granule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 
@@ -105,8 +103,9 @@ describe('The Granules API', () => {
         const apiError = JSON.parse(error.apiMessage);
         expect(apiError.statusCode).toBe(400);
         expect(apiError.error).toBe('Bad Request');
-        expect(apiError.message).toContain('InvalidArgument');
-        expect(apiError.message).toContain(badRandomGranuleRecord.granuleId);
+        expect(apiError.message).toContain('RecordDoesNotExist');
+        expect(apiError.message).toContain(name);
+        expect(apiError.message).toContain(version);
       }
     });
   });

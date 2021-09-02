@@ -81,7 +81,6 @@ const buildRandomizedGranule = (overrides = {}) => ({
   granuleId: randomId('granid'),
   collectionId: `${randomId('name')}___${randomId('vers')}`,
   status: 'completed',
-  execution: undefined,
   error: {},
   files: [{ bucket: randomId('bucket'), key: randomId('key') }],
   ...overrides,
