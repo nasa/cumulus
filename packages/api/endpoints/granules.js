@@ -131,8 +131,8 @@ async function put(req, res) {
 
   if (action === 'reingest') {
     const collectionPgModel = new CollectionPgModel();
-    // TODO - we have the collection ID from pgGranuleRecords, we should just do a direct lookup from that
-    // and/or consider getting it from the user params
+    // TODO - we have the collection ID from pgGranuleRecords, we should just do a
+    // direct lookup from that and/or consider getting it from the user params
     const { name, version } = deconstructCollectionId(granule.collectionId);
     const collection = translatePostgresCollectionToApiCollection(
       await collectionPgModel.get(knex, { name, version })

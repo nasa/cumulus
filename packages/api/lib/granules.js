@@ -275,52 +275,6 @@ async function getGranuleIdsForPayload(payload) {
 }
 
 /**
-  * apply a workflow to a given granule object
-  *
-  * @param {Object} granule - the granule object
-  * @param {string} workflow - the workflow name
-  * @param {Object} [meta] - optional meta object to insert in workflow message
-  * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
-  *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
-  * @param {string} [asyncOperationId] - specify asyncOperationId origin
-  * @returns {Promise<undefined>} undefined
-  */
-async function applyWorkflow(
-  granule,
-  workflow,
-  meta,
-  queueUrl,
-  asyncOperationId
-) {
-  if (!workflow) {
-    throw new TypeError(
-      'granule.applyWorkflow requires a `workflow` parameter'
-    );
-  }
-
-  const { name, version } = deconstructCollectionId(granule.collectionId);
-
-  const lambdaPayload = await Rule.buildPayload({
-    workflow,
-    payload: {
-      granules: [granule],
-    },
-    provider: granule.provider,
-    collection: {
-      name,
-      version,
-    },
-    meta,
-    queueUrl,
-    asyncOperationId,
-  });
-
-  await this.updateStatus({ granuleId: granule.granuleId }, 'running');
-
-  await Lambda.invoke(process.env.invoke, lambdaPayload);
-}
-
-/**
  * Return a unique list of granules based on the provided list or the response from the
  * query to ES using the provided query and index.
  *
