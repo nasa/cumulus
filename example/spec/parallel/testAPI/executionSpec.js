@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
   createExecution,
@@ -7,9 +8,10 @@ const {
   getExecution,
   updateExecution,
 } = require('@cumulus/api-client/executions');
+const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { buildRandomizedExecution, findExecutionArn } = require('@cumulus/integration-tests/Executions');
+const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -31,10 +33,11 @@ describe('The Executions API', () => {
       collection = await createCollection(prefix);
       collectionId = constructCollectionId(collection.name, collection.version);
 
-      randomExecutionRecord = buildRandomizedExecution({
+      randomExecutionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
         status: 'running',
-      });
+      }), ['parentArn', 'createdAt', 'updatedAt']);
+
       updatedExecutionRecord = {
         ...randomExecutionRecord,
         status: 'completed',
@@ -106,7 +109,7 @@ describe('The Executions API', () => {
     it('Errors creating a bad execution.', async () => {
       const name = randomId('name');
       const version = randomId('version');
-      const badRandomExecutionRecord = buildRandomizedExecution({
+      const badRandomExecutionRecord = fakeExecutionFactoryV2({
         collectionId: constructCollectionId(name, version),
       });
       try {

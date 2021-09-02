@@ -143,19 +143,7 @@ const getExecutionWithStatus = async (params) =>
     }
   );
 
-const buildRandomizedExecution = (overrides = {}) => ({
-  arn: randomId('arn'),
-  name: randomId('name'),
-  status: 'completed',
-  collectionId: `${randomId('name')}___${randomId('vers')}`,
-  execution: randomId('execution'),
-  error: {},
-  timestamp: Date.now(),
-  ...overrides,
-});
-
 module.exports = {
-  buildRandomizedExecution,
   findExecutionArn,
   getExecutionWithStatus,
 };
