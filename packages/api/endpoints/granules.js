@@ -126,7 +126,7 @@ async function put(req, res) {
       logger.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    // TODO - this should not be part of the dynamo granule model
+    // FUTURE - this should not be part of the dynamo granule model
     await granuleModel.reingest({
       ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
@@ -170,7 +170,7 @@ async function put(req, res) {
   }
 
   if (action === 'move') {
-    // TODO this should be removed from the granule model
+    // FUTURE - this should be removed from the granule model
     const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
       apiGranule,
       body.destinations
