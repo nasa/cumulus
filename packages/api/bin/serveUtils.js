@@ -14,7 +14,6 @@ const {
   ExecutionPgModel,
   CollectionPgModel,
   ProviderPgModel,
-  PostgresGranuleExecution,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiExecutionToPostgresExecution,
@@ -24,11 +23,10 @@ const {
   getKnexClient,
   localStackConnectionEnv,
   envParams,
-  createTestDatabase
+  createTestDatabase,
+  migrationDir,
 } = require('@cumulus/db');
 const { log } = require('console');
-
-const migrationDir = 'node_modules/@cumulus/db/dist/migrations';
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -40,9 +38,9 @@ async function resetPostgresDb() {
     },
   });
 
-  try{
+  try {
     await createTestDatabase(knexAdmin, 'postgres', localStackConnectionEnv.PG_USER);
-  } catch(error) {
+  } catch (error) {
     log(`Skipping Postgres DB creation because ${error}`);
   }
 
@@ -210,38 +208,38 @@ async function addGranulesExecutions(granulesExecutions) {
 
       // Fetch the Collection ID
       let collectionCumulusId;
-      try{
-        const [ name, version ] = ge.granule.collectionId.split('___');
+      try {
+        const [name, version] = ge.granule.collectionId.split('___');
         const collectionPgModel = new CollectionPgModel();
         collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
           name: name,
           version: version
         });
-      } catch(error) {
-          throw error;
+      } catch (error) {
+        throw error;
       }
 
       // Fetch the Granule ID
       let granuleCumulusId;
-      try{
+      try {
         const granulePgModel = new GranulePgModel();
         granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
           granule_id: ge.granule.granuleId,
           collection_cumulus_id: collectionCumulusId
         });
-      } catch(error) {
-          throw error;
+      } catch (error) {
+        throw error;
       }
 
       // Fetch the Execution ID
       let executionCumulusId;
-      try{
+      try {
         const executionPgModel = new ExecutionPgModel();
         executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
           arn: ge.execution.arn
         });
-      } catch(error) {
-          throw error;
+      } catch (error) {
+        throw error;
       }
 
       // Create and insert the GranuleExecution record into the DB
@@ -252,7 +250,7 @@ async function addGranulesExecutions(granulesExecutions) {
       };
 
       await granulesExecutionsPgModel.create(knex, dbRecord);
-      })
+    })
   );
 }
 
