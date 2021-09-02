@@ -151,12 +151,11 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
  */
 const _writePostgresGranuleViaTransaction = async ({
   granuleRecord,
-  collectionCumulusId,
   executionCumulusId,
   trx,
   granulePgModel,
 }) => {
-  log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
+  log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id} to PostgreSQL`);
 
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
@@ -173,7 +172,7 @@ const _writePostgresGranuleViaTransaction = async ({
   });
 
   log.info(`
-    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId}
+    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     to granule record with cumulus_id ${granuleCumulusId} in PostgreSQL
   `);
   return granuleCumulusId;
@@ -283,7 +282,6 @@ const _generateFilesFromGranule = async ({
  * Write a granule record to DynamoDB and PostgreSQL
  * param {PostgresGranule} postgresGranuleRecord,
  * param {DynamoDBGranule} dynamoGranuleRecord,
- * param {number} collectionCumulusId,
  * param {number} executionCumulusId,
  * param {Knex} knex,
  * param {Object} granuleModel = new Granule(),
@@ -293,7 +291,6 @@ const _generateFilesFromGranule = async ({
 const _writeGranule = async ({
   postgresGranuleRecord,
   dynamoGranuleRecord,
-  collectionCumulusId,
   executionCumulusId,
   knex,
   granuleModel,
@@ -303,7 +300,6 @@ const _writeGranule = async ({
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writePostgresGranuleViaTransaction({
       granuleRecord: postgresGranuleRecord,
-      collectionCumulusId,
       executionCumulusId,
       trx,
       granulePgModel,
@@ -356,7 +352,6 @@ const _writeGranule = async ({
  * @param {Object} [params.queryFields] - query fields
  * @param {Object} [params.granuleModel] - only for testing.
  * @param {Object} [params.granulePgModel] - only for testing.
- * @param {number} collectionCumulusId - PostGreSQL cumulus_id for this granule's collection
  * @param {Knex} knex - knex Client
  * @returns {Promise}
  */
@@ -388,7 +383,6 @@ const writeGranuleFromApi = async (
     granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
   },
-  collectionCumulusId,
   knex
 ) => {
   try {
@@ -441,7 +435,6 @@ const writeGranuleFromApi = async (
     await _writeGranule({
       postgresGranuleRecord,
       dynamoGranuleRecord,
-      collectionCumulusId,
       executionCumulusId,
       knex,
       granuleModel,

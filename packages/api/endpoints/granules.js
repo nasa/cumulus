@@ -71,19 +71,13 @@ async function list(req, res) {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    granulePgModel = new GranulePgModel(),
+    granuleModel = new models.Granule(),
   } = req.testContext || {};
 
-  let collectionCumulusId;
-  const granule = req.body;
+  const granule = req.body || {};
 
   try {
-    const collectionNameVersion = deconstructCollectionId(granule.collectionId);
-    collectionCumulusId = await getCollectionCumulusId(collectionNameVersion, knex);
-    if (await granulePgModel.exists(knex, {
-      granule_id: granule.granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    })) {
+    if (await granuleModel.exists({ granuleId: granule.granuleId })) {
       return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
     }
   } catch (error) {
@@ -91,8 +85,7 @@ const create = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(granule, collectionCumulusId, knex);
-
+    await writeGranuleFromApi(granule, knex);
     if (inTestMode()) {
       await addToLocalES(granule, indexGranule);
     }
