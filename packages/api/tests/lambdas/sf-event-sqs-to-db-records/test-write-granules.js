@@ -18,6 +18,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -27,8 +28,6 @@ const {
   writeFilesViaTransaction,
   writeGranules,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
