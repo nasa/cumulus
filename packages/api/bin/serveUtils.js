@@ -59,12 +59,12 @@ async function addCollections(collections) {
 
   const collectionModel = new models.Collection();
   const es = await getESClientAndIndex();
+  const collectionPgModel = new CollectionPgModel();
   return await Promise.all(
     collections.map(async (c) => {
       const dynamoRecord = await collectionModel.create(c);
       await indexer.indexCollection(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiCollectionToPostgresCollection(c);
-      const collectionPgModel = new CollectionPgModel();
       await collectionPgModel.create(knex, dbRecord);
     })
   );
@@ -80,12 +80,12 @@ async function addGranules(granules) {
 
   const granuleModel = new models.Granule();
   const es = await getESClientAndIndex();
+  const granulePgModel = new GranulePgModel();
   return await Promise.all(
     granules.map(async (g) => {
       const dynamoRecord = await granuleModel.create(g);
       await indexer.indexGranule(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiGranuleToPostgresGranule(dynamoRecord, knex);
-      const granulePgModel = new GranulePgModel();
       await granulePgModel.create(knex, dbRecord);
     })
   );
@@ -101,12 +101,12 @@ async function addProviders(providers) {
 
   const providerModel = new models.Provider();
   const es = await getESClientAndIndex();
+  const providerPgModel = new ProviderPgModel();
   return await Promise.all(
     providers.map(async (p) => {
       const dynamoRecord = await providerModel.create(p);
       await indexer.indexProvider(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiProviderToPostgresProvider(dynamoRecord);
-      const providerPgModel = new ProviderPgModel();
       await providerPgModel.create(knex, dbRecord);
     })
   );
@@ -122,12 +122,12 @@ async function addRules(rules) {
 
   const ruleModel = new models.Rule();
   const es = await getESClientAndIndex();
+  const rulePgModel = new RulePgModel();
   return await Promise.all(
     rules.map(async (r) => {
       const dynamoRecord = await ruleModel.create(r);
       await indexer.indexRule(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiRuleToPostgresRule(dynamoRecord, knex);
-      const rulePgModel = new RulePgModel();
       await rulePgModel.create(knex, dbRecord);
     })
   );
@@ -147,6 +147,7 @@ async function addExecutions(executions) {
   // Since executions has a parent/child relationship with itself
   // a fake promise is used with reduce() to force records to be created
   // synchronously
+  const executionPgModel = new ExecutionPgModel();
   const starterPromise = Promise.resolve(null);
   return await executions.reduce((p, e) => p
     .then(async () => await executionModel.create(e))
@@ -154,7 +155,6 @@ async function addExecutions(executions) {
       indexer.indexExecution(es.client, dynamoRecord, es.index);
       return translateApiExecutionToPostgresExecution(dynamoRecord, knex)
         .then(async (dbRecord) => {
-          const executionPgModel = new ExecutionPgModel();
           return await executionPgModel.create(knex, dbRecord);
         });
     }), starterPromise);
@@ -170,12 +170,12 @@ async function addPdrs(pdrs) {
 
   const pdrModel = new models.Pdr();
   const es = await getESClientAndIndex();
+  const pdrPgModel = new PdrPgModel();
   return await Promise.all(
     pdrs.map(async (p) => {
       const dynamoRecord = await pdrModel.create(p);
       await indexer.indexPdr(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiPdrToPostgresPdr(dynamoRecord, knex);
-      const pdrPgModel = new PdrPgModel();
       await pdrPgModel.create(knex, dbRecord);
     })
   );
@@ -201,11 +201,11 @@ async function addGranulesExecutions(granulesExecutions) {
     },
   });
 
+  const collectionPgModel = new CollectionPgModel();
   return await Promise.all(
     granulesExecutions.map(async (ge) => {
       // Fetch the Collection ID
       const [name, version] = ge.granule.collectionId.split('___');
-      const collectionPgModel = new CollectionPgModel();
       const collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
         name: name,
         version: version,
