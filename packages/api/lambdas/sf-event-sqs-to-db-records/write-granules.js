@@ -202,7 +202,7 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
   trx,
   granulePgModel = new GranulePgModel(),
 }) => {
-  let [granuleCumulusId] = queryResult;
+  let granuleCumulusId = [queryResult].cumulus_id;
   if (!granuleCumulusId) {
     granuleCumulusId = await granulePgModel.getRecordCumulusId(
       trx,

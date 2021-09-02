@@ -72,13 +72,14 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
     status: 'running',
   });
 
-  const [granuleCumulusId] = await knex.transaction(
+  const [pgGranule] = await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
       executionCumulusId
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -119,13 +120,14 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await knex.transaction(
+  const [pgGranule] = await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
       executionCumulusId
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecutionCumulusId] = await executionPgModel.create(
     knex,
@@ -229,11 +231,12 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecutionCumulusId] = await executionPgModel.create(
     knex,
@@ -289,11 +292,12 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const updatedGranule = {
     ...granule,

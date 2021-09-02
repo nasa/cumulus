@@ -16,7 +16,7 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
- * @returns {Promise<number[]>}
+ * @returns {Promise<Object[]>}
  */
 export const upsertGranuleWithExecutionJoinRecord = async (
   knexTransaction: Knex.Transaction,
@@ -24,8 +24,8 @@ export const upsertGranuleWithExecutionJoinRecord = async (
   executionCumulusId?: number,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-): Promise<number[]> => {
-  const [granuleCumulusId] = await granulePgModel.upsert(
+): Promise<Object[]> => {
+  const [pgGranule] = await granulePgModel.upsert(
     knexTransaction,
     granule,
     executionCumulusId
@@ -34,19 +34,19 @@ export const upsertGranuleWithExecutionJoinRecord = async (
   // conditional logic. In that case, we assume that the execution history for the
   // granule was already written and return early. Execution history cannot be written
   // without granuleCumulusId regardless.
-  if (!granuleCumulusId) {
+  if (!pgGranule) {
     return [];
   }
   if (executionCumulusId) {
     await granulesExecutionsPgModel.upsert(
       knexTransaction,
       {
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: pgGranule.cumulus_id,
         execution_cumulus_id: executionCumulusId,
       }
     );
   }
-  return [granuleCumulusId];
+  return [pgGranule];
 };
 
 /**
