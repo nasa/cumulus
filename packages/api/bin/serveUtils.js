@@ -241,7 +241,6 @@ async function addGranulesExecutions(granulesExecutions) {
           arn: ge.execution.arn
         });
       } catch(error) {
-          console.log('ANTHONY: ' + ge.execution.arn);
           throw error;
       }
 
