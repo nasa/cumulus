@@ -29,7 +29,6 @@ process.env.backgroundQueueUrl = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-const fakeCollectionId = 'FakeCollection___006';
 let accessTokenModel;
 let jwtAuthToken;
 

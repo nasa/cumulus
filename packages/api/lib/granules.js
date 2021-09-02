@@ -23,6 +23,7 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
+const Logger = require('@cumulus/logger');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
@@ -310,11 +311,28 @@ async function getGranulesForPayload(payload) {
   return uniqueGranules;
 }
 
+async function getUniquePgGranuleByGranuleId(knex, granulePgModel, granuleId) {
+  const logger = new Logger({ sender: '@cumulus/api/granules' });
+
+  const PgGranuleRecords = await granulePgModel.search(knex, {
+    granule_id: granuleId,
+  });
+  if (PgGranuleRecords.length > 1) {
+    logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
+    throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
+  }
+  if (PgGranuleRecords.length === 0) {
+    throw new Error(`Granule ${granuleId} does not exist or was already deleted`);
+  }
+  return PgGranuleRecords[0];
+}
+
 module.exports = {
   moveGranule,
   translateGranule,
   getExecutionProcessingTimeInfo,
   getGranulesForPayload,
   getGranuleIdsForPayload,
+  getUniquePgGranuleByGranuleId,
   moveGranuleFilesAndUpdateDatastore,
 };

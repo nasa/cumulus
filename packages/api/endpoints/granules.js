@@ -28,7 +28,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
-const { moveGranule } = require('../lib/granules');
+const { moveGranule, getUniquePgGranuleByGranuleId } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
@@ -66,8 +66,6 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-//TODO Fix complexity
-// eslint-disable-next-line complexity
 async function put(req, res) {
   const {
     granuleModel = new Granule(),
@@ -84,18 +82,7 @@ async function put(req, res) {
   if (!action) {
     const apiGranule = req.body;
     const oldDynamoGranule = await granuleModel.get({ granuleId });
-    // TODO - DRY this up
-    const oldPgGranuleRecords = await granulePgModel.search(knex, {
-      granule_id: granuleId,
-    });
-    if (oldPgGranuleRecords.length > 1) {
-      logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
-      throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
-    }
-    if (oldPgGranuleRecords.length === 0) {
-      throw new Error(`Granule ${granuleId} does not exist or was already deleted, continuing`);
-    }
-    const oldPgGranule = oldPgGranuleRecords[0];
+    const oldPgGranule = await getUniquePgGranuleByGranuleId(knex, granulePgModel, granuleId);
 
     apiGranule.updatedAt = Date.now();
     apiGranule.createdAt = oldPgGranule.created_at.getTime();
@@ -115,27 +102,13 @@ async function put(req, res) {
     return res.send(newApiGranule);
   }
 
-  const pgGranuleRecords = await granulePgModel.search(knex, {
-    granule_id: granuleId,
-  });
-  if (pgGranuleRecords.length > 1) {
-    logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
-    throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
-  }
-  if (pgGranuleRecords.length === 0) {
-    throw new Error(`Granule ${granuleId} does not exist or was already deleted, continuing`);
-  }
-  const pgGranule = pgGranuleRecords[0];
-  // TODO consider making this apiGranule
-  const granule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
+  const pgGranule = await getUniquePgGranuleByGranuleId(knex, granulePgModel, granuleId);
+  const apiGranule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
 
   if (action === 'reingest') {
     const collectionPgModel = new CollectionPgModel();
-    // TODO - we have the collection ID from pgGranuleRecords, we should just do a
-    // direct lookup from that and/or consider getting it from the user params
-    const { name, version } = deconstructCollectionId(granule.collectionId);
     const collection = translatePostgresCollectionToApiCollection(
-      await collectionPgModel.get(knex, { name, version })
+      await collectionPgModel.get(knex, { cumulus_id: pgGranule.collection_cumulus_id })
     );
     let targetExecution;
     try {
@@ -155,14 +128,14 @@ async function put(req, res) {
 
     // TODO - this should not be part of the dynamo granule model
     await granuleModel.reingest({
-      ...granule,
+      ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
       queueUrl: process.env.backgroundQueueUrl,
     });
 
     const response = {
       action,
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       status: 'SUCCESS',
     };
 
@@ -174,13 +147,13 @@ async function put(req, res) {
 
   if (action === 'applyWorkflow') {
     await granuleModel.applyWorkflow(
-      granule,
+      apiGranule,
       body.workflow,
       body.meta
     );
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action: `applyWorkflow ${body.workflow}`,
       status: 'SUCCESS',
     });
@@ -190,7 +163,7 @@ async function put(req, res) {
     await unpublishGranule(knex, pgGranule);
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
@@ -199,7 +172,7 @@ async function put(req, res) {
   if (action === 'move') {
     // TODO this should be removed from the granule model
     const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
-      granule,
+      apiGranule,
       body.destinations
     );
 
@@ -211,14 +184,14 @@ async function put(req, res) {
     }
 
     await moveGranule(
-      granule,
+      apiGranule,
       body.destinations,
       process.env.DISTRIBUTION_ENDPOINT,
       granuleModel
     );
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
