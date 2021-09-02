@@ -1,11 +1,6 @@
 'use strict';
 
 const indexer = require('@cumulus/es-client/indexer');
-const models = require('../models');
-const { getESClientAndIndex } = require('./local-test-defaults');
-const {
-  erasePostgresTables,
-} = require('./serve');
 const {
   GranulesExecutionsPgModel,
   RulePgModel,
@@ -27,6 +22,11 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { log } = require('console');
+const models = require('../models');
+const { getESClientAndIndex } = require('./local-test-defaults');
+const {
+  erasePostgresTables,
+} = require('./serve');
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -47,8 +47,6 @@ async function resetPostgresDb() {
   await knex.migrate.latest();
 
   await erasePostgresTables(knex);
-
-  return;
 }
 
 async function addCollections(collections) {
@@ -153,10 +151,10 @@ async function addExecutions(executions) {
   return await executions.reduce((p, e) => p
     .then(async () => await executionModel.create(e))
     .then((dynamoRecord) => {
-      translateApiExecutionToPostgresExecution(dynamoRecord, knex)
+      return translateApiExecutionToPostgresExecution(dynamoRecord, knex)
         .then(async (dbRecord) => {
           const executionPgModel = new ExecutionPgModel();
-          await executionPgModel.create(knex, dbRecord);
+          return await executionPgModel.create(knex, dbRecord);
         });
       indexer.indexExecution(es.client, dynamoRecord, es.index);
     }), starterPromise);
@@ -205,48 +203,35 @@ async function addGranulesExecutions(granulesExecutions) {
 
   return await Promise.all(
     granulesExecutions.map(async (ge) => {
-
       // Fetch the Collection ID
-      let collectionCumulusId;
-      try {
-        const [name, version] = ge.granule.collectionId.split('___');
-        const collectionPgModel = new CollectionPgModel();
-        collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
-          name: name,
-          version: version
-        });
-      } catch (error) {
-        throw error;
-      }
+      const collectionCumulusId;
+      const [name, version] = ge.granule.collectionId.split('___');
+      const collectionPgModel = new CollectionPgModel();
+      collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
+        name: name,
+        version: version,
+      });
 
       // Fetch the Granule ID
-      let granuleCumulusId;
-      try {
-        const granulePgModel = new GranulePgModel();
-        granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
-          granule_id: ge.granule.granuleId,
-          collection_cumulus_id: collectionCumulusId
-        });
-      } catch (error) {
-        throw error;
-      }
+      const granuleCumulusId;
+      const granulePgModel = new GranulePgModel();
+      granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
+        granule_id: ge.granule.granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
 
       // Fetch the Execution ID
-      let executionCumulusId;
-      try {
-        const executionPgModel = new ExecutionPgModel();
-        executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
-          arn: ge.execution.arn
-        });
-      } catch (error) {
-        throw error;
-      }
+      const executionCumulusId;
+      const executionPgModel = new ExecutionPgModel();
+      executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
+        arn: ge.execution.arn,
+      });
 
       // Create and insert the GranuleExecution record into the DB
       const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
       const dbRecord = {
         granule_cumulus_id: granuleCumulusId,
-        execution_cumulus_id: executionCumulusId
+        execution_cumulus_id: executionCumulusId,
       };
 
       await granulesExecutionsPgModel.create(knex, dbRecord);
