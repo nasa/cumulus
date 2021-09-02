@@ -13,8 +13,6 @@ const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
-const { randomId } = require('@cumulus/common/test-utils');
-
 const EXECUTION_LIST_LIMIT = 50;
 
 /**
