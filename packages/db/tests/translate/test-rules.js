@@ -17,7 +17,6 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
     payload: { result: { key: 'value' } },
     tags: ['tag1', 'tag2'],
-    queueUrl: 'http://localhost',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
