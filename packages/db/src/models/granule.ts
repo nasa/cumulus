@@ -63,7 +63,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   }
 
   /**
-   * Fetches a single granule from Postgres
+   * Fetches a single granule from PostgreSQL
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object
