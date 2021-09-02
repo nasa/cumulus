@@ -1535,7 +1535,10 @@ test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
     }
   );
 
-  t.deepEqual(JSON.parse(response.text), { result: `Wrote Granule ${newGranule.granuleId}` });
+  t.deepEqual(
+    JSON.parse(response.text),
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
+  );
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
 });

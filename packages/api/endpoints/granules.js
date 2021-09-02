@@ -30,7 +30,7 @@ const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { getCollectionCumulusId } = require('../lib/writeRecords/utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
@@ -68,13 +68,12 @@ async function list(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-async function create(req, res) {
+const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
 
-  let result;
   let collectionCumulusId;
   const granule = req.body;
 
@@ -88,22 +87,21 @@ async function create(req, res) {
       return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
     }
   } catch (error) {
-    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    return res.boom.badRequest(errorify(error));
   }
 
   try {
-    result = await writeGranuleFromApi(granule, collectionCumulusId, knex);
+    await writeGranuleFromApi(granule, collectionCumulusId, knex);
 
     if (inTestMode()) {
       await addToLocalES(granule, indexGranule);
     }
-
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
-  return res.json({ result });
-}
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+};
 
 /**
  * Update a single granule.
