@@ -16,6 +16,7 @@ const {
   PdrPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
@@ -26,8 +27,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   handler,

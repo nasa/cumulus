@@ -16,6 +16,7 @@ const {
   localStackConnectionEnv,
   translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -68,7 +69,6 @@ const {
 const {
   createJwtToken,
 } = require('../../lib/token');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
   generateMoveGranuleTestFilesAndEntries,
