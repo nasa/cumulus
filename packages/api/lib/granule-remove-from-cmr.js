@@ -31,7 +31,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  * Remove granule record from CMR and update Postgres + Dynamo granules
  *
  * @param {Knex} knex - DB client
- * @param {Object} granule - A granule record
+ * @param {Object} pgGranuleRecord - A Postgres granule record
  * @param {Object} granulePgModel - Instance of granules model for PostgreSQL
  * @param {Object} granuleDynamoModel - Instance of granules model for DynamoDB
  * @returns {Object} - Updated granules
@@ -40,13 +40,13 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  */
 const unpublishGranule = async (
   knex,
-  granule,
+  pgGranuleRecord,
   granulePgModel = new GranulePgModel(),
   granuleDynamoModel = new models.Granule()
 ) => {
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
-  const pgGranuleCumulusId = granule.cumulus_id;
+  const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
   let dynamoGranuleDeleted = false;
   try {
     return await knex.transaction(async (trx) => {
@@ -65,25 +65,25 @@ const unpublishGranule = async (
         ['*']
       );
       const dynamoGranule = await granuleDynamoModel.update(
-        { granuleId: granule.granule_id },
+        { granuleId: pgGranuleRecord.granule_id },
         { published: false },
         ['cmrLink']
       );
       dynamoGranuleDeleted = true;
-      const collectionId = await getGranuleCollectionId(knex, granule);
-      await _removeGranuleFromCmr(granule, collectionId);
+      const collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+      await _removeGranuleFromCmr(pgGranuleRecord, collectionId);
       return { dynamoGranule, pgGranule };
     });
   } catch (error) {
     if (dynamoGranuleDeleted) {
       const updateParams = {
-        published: granule.published,
+        published: pgGranuleRecord.published,
       };
-      if (granule.cmr_link) {
-        updateParams.cmrLink = granule.cmr_link;
+      if (pgGranuleRecord.cmr_link) {
+        updateParams.cmrLink = pgGranuleRecord.cmr_link;
       }
       await granuleDynamoModel.update(
-        { granuleId: granule.granule_id },
+        { granuleId: pgGranuleRecord.granule_id },
         updateParams
       );
     }
