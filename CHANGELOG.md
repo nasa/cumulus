@@ -16,6 +16,23 @@ of response and not the raw API endpoint response
 
 ### Added
 
+- **CUMULUS-2670**
+  - Update ingest tf-module/cumulus core tf module to take lambda_timeouts string map variable that allows ingest tasks to be configurable.
+
+  Configurable values:
+  - discover_granules_task_timeout
+  - discover_pdrs_task_timeout
+  - hyrax_metadata_update_tasks_timeout
+  - lzards_backup_task_timeout
+  - move_granules_task_timeout
+  - parse_pdr_task_timeout
+  - pdr_status_check_task_timeout
+  - post_to_cmr_task_timeout
+  - queue_granules_task_timeout
+  - queue_pdrs_task_timeout
+  - queue_workflow_task_timeout
+  - sync_granule_task_timeout
+
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
