@@ -22,7 +22,7 @@ describe('The Executions API', () => {
   let collectionId;
   let executionArn;
   let prefix;
-  let randomExecutionRecord;
+  let executionRecord;
   let updatedExecutionRecord;
 
   beforeAll(async () => {
@@ -33,16 +33,16 @@ describe('The Executions API', () => {
       collection = await createCollection(prefix);
       collectionId = constructCollectionId(collection.name, collection.version);
 
-      randomExecutionRecord = omit(fakeExecutionFactoryV2({
+      executionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
         status: 'running',
       }), ['parentArn', 'createdAt', 'updatedAt']);
 
       updatedExecutionRecord = {
-        ...randomExecutionRecord,
+        ...executionRecord,
         status: 'completed',
       };
-      executionArn = randomExecutionRecord.arn;
+      executionArn = executionRecord.arn;
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -65,7 +65,7 @@ describe('The Executions API', () => {
       } else {
         const response = await createExecution({
           prefix,
-          body: randomExecutionRecord,
+          body: executionRecord,
         });
 
         expect(response.statusCode).toBe(200);
@@ -79,7 +79,7 @@ describe('The Executions API', () => {
         prefix,
         arn: executionArn,
       });
-      expect(execution).toEqual(jasmine.objectContaining(randomExecutionRecord));
+      expect(execution).toEqual(jasmine.objectContaining(executionRecord));
     });
 
     it('can update the execution in the API.', async () => {
