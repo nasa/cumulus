@@ -27,6 +27,10 @@ of response and not the raw API endpoint response
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
   - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
   and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
+  updated unit test references to migrationDir to be pulled from `@cumulus/db`
+  - Updated `addXXX` methods to include writing to Postgres tables and added
+  `resetPostgresDb` method to support resetting between integration test suite runs
 
 ### Changed
 
