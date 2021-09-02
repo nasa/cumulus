@@ -74,8 +74,8 @@ describe('The Granules API', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        const { result } = JSON.parse(response.body);
-        expect(result).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
+        const { message } = JSON.parse(response.body);
+        expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
       }
     });
 
