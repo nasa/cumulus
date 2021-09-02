@@ -50,47 +50,6 @@ async function applyWorkflowToGranules({
   return await Promise.all(applyWorkflowRequests);
 }
 
-// TODO -- consider moving this to a db utility
-/**
- * Fetch a Postgres Granule by granule and collection IDs
- *
- * @param {Knex } knex - DB client
- * @param {string} granuleId - Granule ID
- * @param {string} collectionId - Collection ID in "name___version" format
- * @returns {Promise<PostgresGranuleRecord|undefined>}
- *   The fetched Postgres Granule, if any exists
- * @private
- */
-/* async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
-  const granulePgModel = new GranulePgModel();
-  const collectionPgModel = new CollectionPgModel();
-
-  let pgGranule;
-
-  try {
-    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-      knex,
-      deconstructCollectionId(collectionId)
-    );
-
-    pgGranule = granulePgModel.get(
-      knex,
-      {
-        granule_id: granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      }
-    );
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      log.error(error);
-      throw error;
-    }
-  }
-
-  return pgGranule;
-}
- */
-
 /**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
