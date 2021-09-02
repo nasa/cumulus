@@ -764,7 +764,6 @@ test.serial('writeGranuleFromApi() throws with granule with an execution url tha
   const {
     knex,
     granule,
-    collectionCumulusId,
   } = t.context;
   const execution = `execution${cryptoRandomString({ length: 5 })}`;
   await t.throwsAsync(
@@ -909,7 +908,6 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
 
 test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
   const {
-    collectionCumulusId,
     filePgModel,
     granulePgModel,
     granule,

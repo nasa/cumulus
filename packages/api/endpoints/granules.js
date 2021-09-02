@@ -27,7 +27,6 @@ const indexer = require('@cumulus/es-client/indexer');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
 const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
-const { getCollectionCumulusId } = require('../lib/writeRecords/utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
