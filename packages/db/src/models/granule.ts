@@ -40,7 +40,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   }
 
   /**
-   * Checks if a granule is present in Postgres
+   * Checks if a granule is present in PostgreSQL
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {PostgresGranuleUniqueColumns | RecordSelect} params - An object
