@@ -8,7 +8,7 @@ const {
 } = require('../../dist/translate/file');
 
 const apiFileOmitKeys = ['checksum', 'checksumType', 'fileName', 'size', 'filename'];
-const postgresFileOmitKeys = ['checksum_type', 'checksum_value', 'file_name', 'file_size'];
+const postgresFileOmitKeys = ['checksum_type', 'checksum_value', 'file_name', 'file_size', 'created_at', 'updated_at'];
 
 test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
   const postgresFile = {
@@ -18,8 +18,9 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
     file_name: 's3://cumulus-test-sandbox-private/firstKey',
     file_size: '100',
     key: 'firstKey',
-    path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+    created_at: new Date(Date.now()),
+    updated_at: new Date(Date.now()),
   };
 
   t.deepEqual(
@@ -30,13 +31,12 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         bucket: postgresFile.bucket,
         checksum: postgresFile.checksum_value,
         checksumType: postgresFile.checksum_type,
-        createdAt: postgresFile.created_at,
+        createdAt: postgresFile.created_at.getTime(),
         fileName: postgresFile.file_name,
         key: postgresFile.key,
-        path: postgresFile.path,
         size: Number.parseInt(postgresFile.file_size, 10),
         source: postgresFile.source,
-        updatedAt: postgresFile.updated_at,
+        updatedAt: postgresFile.updated_at.getTime(),
       },
       postgresFileOmitKeys
     )
