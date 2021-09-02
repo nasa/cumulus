@@ -151,12 +151,12 @@ async function addExecutions(executions) {
   return await executions.reduce((p, e) => p
     .then(async () => await executionModel.create(e))
     .then((dynamoRecord) => {
+      indexer.indexExecution(es.client, dynamoRecord, es.index);
       return translateApiExecutionToPostgresExecution(dynamoRecord, knex)
         .then(async (dbRecord) => {
           const executionPgModel = new ExecutionPgModel();
           return await executionPgModel.create(knex, dbRecord);
         });
-      indexer.indexExecution(es.client, dynamoRecord, es.index);
     }), starterPromise);
 }
 
@@ -204,26 +204,23 @@ async function addGranulesExecutions(granulesExecutions) {
   return await Promise.all(
     granulesExecutions.map(async (ge) => {
       // Fetch the Collection ID
-      const collectionCumulusId;
       const [name, version] = ge.granule.collectionId.split('___');
       const collectionPgModel = new CollectionPgModel();
-      collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
+      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
         name: name,
         version: version,
       });
 
       // Fetch the Granule ID
-      const granuleCumulusId;
       const granulePgModel = new GranulePgModel();
-      granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
+      const granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
         granule_id: ge.granule.granuleId,
         collection_cumulus_id: collectionCumulusId,
       });
 
       // Fetch the Execution ID
-      const executionCumulusId;
       const executionPgModel = new ExecutionPgModel();
-      executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
+      const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
         arn: ge.execution.arn,
       });
 
