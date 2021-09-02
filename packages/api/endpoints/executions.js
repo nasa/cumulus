@@ -2,7 +2,9 @@
 
 const router = require('express-promise-router')();
 
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
   getApiGranuleExecutionCumulusIds,
@@ -14,10 +16,64 @@ const {
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
+const {
+  addToLocalES,
+  indexExecution,
+} = require('@cumulus/es-client/indexer');
 const Execution = require('../models/executions');
+const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
+const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
 const { validateGranuleExecutionRequest } = require('../lib/request');
 
+const log = new Logger({ sender: '@cumulus/api/executions' });
+
+/**
+ * create an execution
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function create(req, res) {
+  const {
+    executionModel = new Execution(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  const execution = req.body || {};
+  const { arn } = execution;
+
+  if (!arn) {
+    return res.boom.badRequest('Field arn is missing');
+  }
+
+  if (await executionModel.exists({ arn })) {
+    return res.boom.conflict(`A record already exists for ${arn}`);
+  }
+
+  execution.updatedAt = Date.now();
+  execution.createdAt = Date.now();
+
+  try {
+    await writeExecutionRecordFromApi({ record: execution, knex });
+
+    if (inTestMode()) {
+      await addToLocalES(execution, indexExecution);
+    }
+
+    return res.send({
+      message: 'Record saved',
+      record: execution,
+    });
+  } catch (error) {
+    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(error.message);
+    }
+    log.error('Error occurred while trying to create execution:', error);
+    return res.boom.badImplementation(error.message);
+  }
+}
 /**
  * List and search executions
  *
@@ -175,6 +231,7 @@ async function workflowsByGranules(req, res) {
 
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
+router.post('/', create);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

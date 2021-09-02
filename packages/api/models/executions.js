@@ -4,6 +4,10 @@ const pLimit = require('p-limit');
 
 const Logger = require('@cumulus/logger');
 
+const {
+  generateExecutionApiRecordFromMessage,
+} = require('@cumulus/message/Executions');
+
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 
@@ -86,25 +90,39 @@ class Execution extends Manager {
   }
 
   /**
-   * Store an execution record.
+   * Store an execution record
    *
-   * @param {Object} executionItem - Execution item
+   * @param {Object} record - an execution record
    * @returns {Promise}
    */
-  async storeExecution(executionItem) {
+  async storeExecutionRecord(record) {
+    logger.info(`About to write execution ${record.arn} to DynamoDB`);
+
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
+    await this.constructor.recordIsValid(record, this.schema, this.removeAdditional);
 
-    const mutableFieldNames = this._getMutableFieldNames(executionItem);
+    const mutableFieldNames = this._getMutableFieldNames(record);
     const updateParams = this._buildDocClientUpdateParams({
-      item: executionItem,
-      itemKey: { arn: executionItem.arn },
+      item: record,
+      itemKey: { arn: record.arn },
       mutableFieldNames,
     });
 
     await this.dynamodbDocClient.update(updateParams).promise();
-    logger.info(`Successfully wrote execution ${executionItem.arn} to DynamoDB`);
+    logger.info(`Successfully wrote execution ${record.arn} to DynamoDB`);
+  }
+
+  /**
+   * Generate and store an execution record from a Cumulus message.
+   *
+   * @param {Object} cumulusMessage - Cumulus workflow message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
+   * @returns {Promise}
+   */
+  async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
+    const executionItem = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
+    await this.storeExecutionRecord(executionItem);
   }
 }
 
