@@ -290,7 +290,7 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
 
   await indexFromDatabase.handler({
     indexName: esAlias,
-    tables,
+    pageSize: 6,
     knex,
   });
 

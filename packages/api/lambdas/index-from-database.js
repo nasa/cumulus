@@ -124,22 +124,14 @@ async function indexModel({
   limitEsRequests,
   knex,
   translationFunction,
+  pageSize,
 }) {
   let startId = 1;
   let totalItemsIndexed = 0;
-  const pageSize = 1;
   let done;
   let maxIndex = await postgresModel.getMaxCumulusId(knex);
   /* eslint-disable no-await-in-loop */
-  while (!done) {
-    if (startId > maxIndex) {
-      log.info('Updating maxIndex to account for new rows');
-      const oldMaxIndex = maxIndex;
-      maxIndex = await postgresModel.getMaxCumulusId(knex);
-      if (maxIndex <= oldMaxIndex) {
-        return true;
-      }
-    }
+  while (done !== true) {
     const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
     log.info(
       `Attempting to index ${pageResults.length} records from ${postgresModel.tableName}`
@@ -165,6 +157,15 @@ async function indexModel({
 
     log.info(`Completed index of ${successfulResults.length} records from ${postgresModel.tableName}`);
     startId += pageSize;
+    if (startId > maxIndex) {
+      startId = maxIndex;
+      log.info(`Updating maxIndex to account for new rows from ${postgresModel.tableName}`);
+      const oldMaxIndex = maxIndex;
+      maxIndex = await postgresModel.getMaxCumulusId(knex);
+      if (maxIndex <= oldMaxIndex) {
+        done = true;
+      }
+    }
   }
   /* eslint-enable no-await-in-loop */
   return totalItemsIndexed;
@@ -176,7 +177,7 @@ async function indexFromDatabase(event) {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
     dynamoTables = { reconciliationReportsTable: process.env.ReconciliationReportsTable },
-    pageSize = process.env.PG_PAGE_SIZE || 10,
+    pageSize = 100,
   } = event;
   const esClient = await Search.es(esHost);
 
