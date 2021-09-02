@@ -154,9 +154,7 @@ async function addExecutions(executions) {
     .then((dynamoRecord) => {
       indexer.indexExecution(es.client, dynamoRecord, es.index);
       return translateApiExecutionToPostgresExecution(dynamoRecord, knex)
-        .then(async (dbRecord) => {
-          return await executionPgModel.create(knex, dbRecord);
-        });
+        .then(async (dbRecord) => await executionPgModel.create(knex, dbRecord));
     }), starterPromise);
 }
 
