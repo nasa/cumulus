@@ -112,6 +112,9 @@ of response and not the raw API endpoint response
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/endpoints/executions` to publish an SNS message
       after a successful execution DELETE.
+    - Updated functions `create` and `upsert` in the `db` model for Executions
+      to return an array of objects containing values of the created or updated
+      columns.
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 

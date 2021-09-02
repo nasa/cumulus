@@ -12,6 +12,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
       tableName: tableNames.executions,
     });
   }
+
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
     execution: PostgresExecution
