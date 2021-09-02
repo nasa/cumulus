@@ -16,6 +16,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  migrationDir,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
@@ -34,8 +35,6 @@ const { post } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const assertions = require('../../lib/assertions');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 [
   'AccessTokensTable',

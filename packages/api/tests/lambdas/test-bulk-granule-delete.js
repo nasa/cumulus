@@ -1,7 +1,12 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { generateLocalTestDb, localStackConnectionEnv, GranulePgModel } = require('@cumulus/db');
+const {
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  GranulePgModel,
+  migrationDir,
+} = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -9,7 +14,6 @@ const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const Granule = require('../../models/granules');
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 const models = require('../../models');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 

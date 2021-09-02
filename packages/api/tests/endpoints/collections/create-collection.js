@@ -14,11 +14,10 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   CollectionPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');

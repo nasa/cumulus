@@ -15,9 +15,8 @@ const {
   fakeGranuleRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
   getApiGranuleExecutionCumulusIds,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 
