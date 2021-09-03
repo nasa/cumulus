@@ -28,6 +28,7 @@ of response and not the raw API endpoint response
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
       publish SNS messages to the report collections topic.
+    - Added `updateCollection` to `@cumulus/api-client`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 

@@ -63,8 +63,9 @@ describe('Collections API', () => {
     if (beforeAllFailed) {
       fail('beforeAll() failed');
     } else {
+      const originalCollection = collection;
       const updatedCollection = {
-        ...collection,
+        ...originalCollection,
         reportToEms: false,
       };
       await updateCollection({
@@ -79,7 +80,8 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordUpdatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Update');
-      expect(omit(message.record, ['createdAt', 'updatedAt', 'files'])).toEqual(omit(updatedCollection, ['createdAt', 'updatedAt', 'files']));
+      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(updatedCollection, ['createdAt', 'updatedAt']));
+      expect(originalCollection.reportToEms).toEqual(true);
       expect(message.record.reportToEms).toEqual(false);
     }
   });
