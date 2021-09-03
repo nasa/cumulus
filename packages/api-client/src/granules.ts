@@ -395,9 +395,6 @@ export const getGranuleStatus = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       path: `/granules/${granuleId}/status`,
     },
   });
