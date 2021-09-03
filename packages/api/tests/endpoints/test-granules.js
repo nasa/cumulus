@@ -1648,7 +1648,9 @@ test.serial('update (PUT) returns an updated granule', async (t) => {
     }
   );
 
-  t.deepEqual(JSON.parse(modifiedResponse.text), { message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}` });
+  t.deepEqual(JSON.parse(modifiedResponse.text), {
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}`,
+  });
 
   t.is(fetchedDynamoRecord.status, 'failed');
   t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
