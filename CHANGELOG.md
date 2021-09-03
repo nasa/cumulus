@@ -18,6 +18,7 @@ of response and not the raw API endpoint response
 
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
+  - Adds helper `createGranule` to `@cumulus/api-client`
 
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
@@ -52,7 +53,6 @@ when output of the operation is `undefined`
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
     if an incorrectly formated collectionId is input.
-  - Adds helper `createGranule` to `@cumulus/api-client`
 
 ## [v9.4.0] 2021-08-16
 

@@ -535,7 +535,6 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
   const {
     cumulusMessage,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleModel,
