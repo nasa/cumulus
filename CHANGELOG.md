@@ -41,7 +41,7 @@ when output of the operation is `undefined`
 - **CUMULUS-2644**
   - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
   updated unit test references to migrationDir to be pulled from `@cumulus/db`
-  - Updated `addXXX` methods to include writing to Postgres tables
+  - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
 
 ## [v9.4.0] 2021-08-16
 
