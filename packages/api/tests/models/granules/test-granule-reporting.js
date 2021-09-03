@@ -3,10 +3,11 @@ const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
 const awsClients = require('@cumulus/aws-client/services');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { getGranuleStatus } = require('@cumulus/message/Granules');
+const { getGranuleStatus, generateGranuleApiRecord } = require('@cumulus/message/Granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -358,26 +359,6 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
   await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
-test('generateGranuleRecord() throws an error for a failing record', async (t) => {
-  const {
-    granuleModel,
-    collectionId,
-  } = t.context;
-
-  const granule1 = fakeGranuleFactoryV2({
-    files: [fakeFileFactory()],
-  });
-
-  // cause record to fail
-  delete granule1.granuleId;
-
-  await t.throwsAsync(granuleModel.generateGranuleRecord({
-    granule: granule1,
-    executionUrl: 'http://execution-url.com',
-    collectionId,
-  }));
-});
-
 test('storeGranule() correctly stores granule record', async (t) => {
   const {
     granuleModel,
@@ -403,7 +384,7 @@ test('storeGranule() correctly stores granule record', async (t) => {
     files: granule1.files,
   });
 
-  const granuleRecord = await granuleModel.generateGranuleRecord({
+  const granuleRecord = await generateGranuleApiRecord({
     granule: granule1,
     files,
     executionUrl: 'http://execution-url.com',
@@ -412,6 +393,7 @@ test('storeGranule() correctly stores granule record', async (t) => {
     workflowStartTime,
     workflowStatus,
     status: getGranuleStatus(workflowStatus, granule1),
+    cmrUtils,
   });
   await granuleModel.storeGranule(granuleRecord);
 
@@ -517,11 +499,11 @@ test.serial('storeGranulesFromCumulusMessage() handles failing and succcessful g
     },
   };
 
-  sinon.stub(Granule.prototype, 'storeGranuleFromCumulusMessage')
+  sinon.stub(Granule.prototype, 'storeGranule')
     .withArgs(sinon.match({ granuleId: granule2.granuleId }))
     .rejects(new Error('fail'));
-  Granule.prototype.storeGranuleFromCumulusMessage.callThrough();
-  t.teardown(() => Granule.prototype.storeGranuleFromCumulusMessage.restore());
+  Granule.prototype.storeGranule.callThrough();
+  t.teardown(() => Granule.prototype.storeGranule.restore());
 
   await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
 
