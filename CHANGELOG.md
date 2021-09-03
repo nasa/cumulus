@@ -21,6 +21,7 @@ of response and not the raw API endpoint response
   - Adds helper `createGranule` to `@cumulus/api-client`
 - **CUMULUS-2576**
   - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client`
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 - **CUMULUS-2592**
