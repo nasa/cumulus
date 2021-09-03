@@ -30,11 +30,11 @@ async function applyWorkflowToGranules({
 }) {
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
-      // TODO - this still has legacy dynamo behavior where it's not selecting
-      // based on collection/granuleId
-      const pgGranule = await granulePgModel.get(knex, {
-        granule_id: granuleId,
-      });
+      const pgGranule = await getUniqueGranuleByGranuleId(
+        knex,
+        granuleId,
+        granulePgModel
+      );
       const granule = await granuleTranslateMethod(pgGranule, knex);
       await granuleModel.applyWorkflow(
         granule,

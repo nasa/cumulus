@@ -215,7 +215,7 @@ test('applyWorkflowToGranules passed on queueUrl to granule.applyWorkflow', asyn
     applyWorkflow: applyWorkflowSpy,
   };
   const fakeGranulePgModel = {
-    get: async () => {},
+    search: () => [{}],
   };
 
   await bulkOperation.applyWorkflowToGranules({
