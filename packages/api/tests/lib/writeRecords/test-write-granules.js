@@ -208,7 +208,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has no gran
   const cumulusMessage = {};
   const actual = await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId: undefined,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -227,33 +226,12 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   const cumulusMessage = { granules: [] };
   const actual = await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId: undefined,
     executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
   });
   t.is(actual, undefined);
-});
-
-test.serial('writeGranulesFromMessage() throws an error if collection is not provided', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionCumulusId,
-    providerCumulusId,
-    granuleModel,
-  } = t.context;
-  await t.throwsAsync(
-    writeGranulesFromMessage({
-      cumulusMessage,
-      collectionCumulusId: undefined,
-      executionCumulusId,
-      providerCumulusId,
-      knex,
-      granuleModel,
-    })
-  );
 });
 
 test.serial('writeGranulesFromMessage() saves granule records to Dynamo and Postgres if Postgres write is enabled', async (t) => {
@@ -269,7 +247,6 @@ test.serial('writeGranulesFromMessage() saves granule records to Dynamo and Post
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -296,7 +273,6 @@ test.serial('writeGranulesFromMessage() saves granule records to Dynamo and Post
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -329,7 +305,6 @@ test.serial('writeGranulesFromMessage() saves file records to Postgres if Postgr
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -366,7 +341,6 @@ test.serial('writeGranulesFromMessage() does not persist file records to Postgre
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -407,7 +381,6 @@ test.serial('writeGranulesFromMessage() handles successful and failing writes in
 
   await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -427,7 +400,6 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
   const {
     cumulusMessage,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleModel,
@@ -441,7 +413,6 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
 
   await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -471,7 +442,6 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
   const [error] = await t.throwsAsync(
     writeGranulesFromMessage({
       cumulusMessage,
-      collectionCumulusId,
       executionCumulusId,
       providerCumulusId,
       knex,
@@ -508,7 +478,6 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -544,7 +513,6 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -593,7 +561,6 @@ test.serial('writeGranulesFromMessage() writes all valid files if any non-valid 
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -639,7 +606,6 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
 
   await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,

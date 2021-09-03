@@ -140,11 +140,10 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
  *
  * @param {Object} params
  * @param {Object} params.granuleRecord - An postgres granule records
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
+ * @param {Object} params.granulePgModel - postgreSQL granule model
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
@@ -452,8 +451,6 @@ const writeGranuleFromApi = async (
  *
  * @param {Object} params
  * @param {Object} params.cumulusMessage - A workflow message
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
@@ -468,7 +465,6 @@ const writeGranuleFromApi = async (
  */
 const writeGranulesFromMessage = async ({
   cumulusMessage,
-  collectionCumulusId,
   executionCumulusId,
   knex,
   granuleModel = new Granule(),
@@ -477,9 +473,6 @@ const writeGranulesFromMessage = async ({
   if (!messageHasGranules(cumulusMessage)) {
     log.info('No granules to write, skipping writeGranules');
     return undefined;
-  }
-  if (!collectionCumulusId) {
-    throw new Error('Collection reference is required for granules');
   }
 
   const granules = getMessageGranules(cumulusMessage);
@@ -540,7 +533,6 @@ const writeGranulesFromMessage = async ({
       return _writeGranule({
         postgresGranuleRecord,
         dynamoGranuleRecord,
-        collectionCumulusId,
         executionCumulusId,
         knex,
         granuleModel,

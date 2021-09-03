@@ -164,7 +164,6 @@ const writeRecords = async ({
 
   return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,
