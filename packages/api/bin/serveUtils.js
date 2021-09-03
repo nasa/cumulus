@@ -78,14 +78,13 @@ async function addGranules(granules) {
   });
 
   const granuleModel = new models.Granule();
+  const executionPgModel = new ExecutionPgModel();
   const es = await getESClientAndIndex();
   return await Promise.all(
     granules.map(async (g) => {
       const dynamoRecord = await granuleModel.create(g);
       await indexer.indexGranule(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiGranuleToPostgresGranule(dynamoRecord, knex);
-
-      const executionPgModel = new ExecutionPgModel();
       const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
         url: g.execution,
       });
