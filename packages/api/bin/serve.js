@@ -427,4 +427,5 @@ module.exports = {
   serveApi,
   serveDistributionApi,
   resetTables,
+  erasePostgresTables,
 };
