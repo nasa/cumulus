@@ -103,8 +103,9 @@ export {
 export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
-  upsertGranuleWithExecutionJoinRecord,
   getGranuleCollectionId,
+  getUniqueGranuleByGranuleId,
+  upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 
 export {

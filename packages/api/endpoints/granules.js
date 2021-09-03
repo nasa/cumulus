@@ -7,6 +7,7 @@ const asyncOperations = require('@cumulus/async-operations');
 const {
   CollectionPgModel,
   getKnexClient,
+  getUniquePgGranuleByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -28,7 +29,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
-const { moveGranule, getUniquePgGranuleByGranuleId } = require('../lib/granules');
+const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
