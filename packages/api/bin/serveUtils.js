@@ -1,5 +1,6 @@
 'use strict';
 
+const pEachSeries = require('p-each-series');
 const indexer = require('@cumulus/es-client/indexer');
 const {
   RulePgModel,
@@ -159,18 +160,15 @@ async function addExecutions(executions) {
     return 1;
   });
 
-  // Since executions has a parent/child relationship with itself
-  // a fake promise is used with reduce() to force records to be created
-  // synchronously
   const executionPgModel = new ExecutionPgModel();
-  const starterPromise = Promise.resolve(null);
-  return await executions.reduce((p, e) => p
-    .then(async () => await executionModel.create(e))
-    .then((dynamoRecord) => {
-      indexer.indexExecution(es.client, dynamoRecord, es.index);
-      return translateApiExecutionToPostgresExecution(dynamoRecord, knex)
-        .then(async (dbRecord) => await executionPgModel.create(knex, dbRecord));
-    }), starterPromise);
+  const executionsIterator = async (execution) => {
+    const dynamoRecord = await executionModel.create(execution);
+    await indexer.indexExecution(es.client, dynamoRecord, es.index);
+    const dbRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
+    await executionPgModel.create(knex, dbRecord);
+  };
+
+  await pEachSeries(executions, executionsIterator);
 }
 
 async function addPdrs(pdrs) {
