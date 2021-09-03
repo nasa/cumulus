@@ -7,6 +7,10 @@ const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
+  addToLocalES,
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
@@ -22,9 +26,10 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
@@ -94,6 +99,41 @@ async function getStatus(req, res) {
 
   return res.send(granule.status);
 }
+
+/**
+ * Create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const create = async (req, res) => {
+  const {
+    knex = await getKnexClient(),
+    granuleModel = new models.Granule(),
+  } = req.testContext || {};
+
+  const granule = req.body || {};
+
+  try {
+    if (await granuleModel.exists({ granuleId: granule.granuleId })) {
+      return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
+    }
+  } catch (error) {
+    return res.boom.badRequest(errorify(error));
+  }
+
+  try {
+    await writeGranuleFromApi(granule, knex);
+    if (inTestMode()) {
+      await addToLocalES(granule, indexGranule);
+    }
+  } catch (error) {
+    log.error('Could not write granule', error);
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  }
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+};
 
 /**
  * Update a single granule.
@@ -460,8 +500,10 @@ async function bulkReingest(req, res) {
 router.get('/:granuleName/status', getStatus);
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/', create);
 router.put('/:granuleName/status', updateStatus);
 router.put('/:granuleName', put);
+
 router.post(
   '/bulk',
   validateBulkGranulesRequest,

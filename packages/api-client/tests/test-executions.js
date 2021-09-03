@@ -97,6 +97,52 @@ test('getExecutionStatus calls the callback with the expected object', async (t)
   }));
 });
 
+test('createExecution calls the callback with the expected object', async (t) => {
+  const execution = { arn: randomId('arn'), foo: 'bar' };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: '/executions',
+      body: JSON.stringify(execution),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+  await t.notThrowsAsync(executionsApi.createExecution({
+    callback,
+    prefix: t.context.testPrefix,
+    body: execution,
+  }));
+});
+
+test('updateExecution calls the callback with the expected object', async (t) => {
+  const execution = { arn: randomId('arn'), foo: 'bar' };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: `/executions/${execution.arn}`,
+      body: JSON.stringify(execution),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+  await t.notThrowsAsync(executionsApi.updateExecution({
+    callback,
+    prefix: t.context.testPrefix,
+    body: execution,
+  }));
+});
+
 test('deleteExecution calls the callback with the expected object and returns the parsed response', async (t) => {
   const prefix = 'unitTestStack';
   const executionArn = 'id-1234';
