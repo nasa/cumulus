@@ -90,7 +90,7 @@ export const translatePostgresGranuleToApiGranule = async (
     timeToArchive: granulePgRecord.time_to_archive,
     timeToPreprocess: granulePgRecord.time_to_process,
     updatedAt: granulePgRecord.updated_at?.getTime(),
-  }) as ApiGranule;
+  });
 
   return apiGranule;
 };
