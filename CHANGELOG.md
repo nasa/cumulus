@@ -18,16 +18,6 @@ of response and not the raw API endpoint response
 
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
-  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
-    enforce parameter checking so that requests include either (granule\_id
-    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
-  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
-    modified to throw a descriptive error if the input `collectionId` is
-    undefined rather than `TypeError: Cannot read property 'split' of
-    undefined`. This function has also been updated to throw descriptive errors
-    if an incorrectly formated collectionId is input.
-  - Adds helper `createGranule` to `@cumulus/api-client`
-
 
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
@@ -54,6 +44,15 @@ when output of the operation is `undefined`
   - Updates model/granule to allow a granule created from API to not require an
     execution to be associated with it. This is a backwards compatible change
     that will not affect granules created in the normal way.
+  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
+    enforce parameter checking so that requests include either (granule\_id
+    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
+  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
+    modified to throw a descriptive error if the input `collectionId` is
+    undefined rather than `TypeError: Cannot read property 'split' of
+    undefined`. This function has also been updated to throw descriptive errors
+    if an incorrectly formated collectionId is input.
+  - Adds helper `createGranule` to `@cumulus/api-client`
 
 ## [v9.4.0] 2021-08-16
 
