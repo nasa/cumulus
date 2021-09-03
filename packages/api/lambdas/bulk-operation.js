@@ -6,7 +6,9 @@ const {
   GranulePgModel,
   getKnexClient,
   translatePostgresGranuleToApiGranule,
+  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
@@ -81,18 +83,17 @@ async function bulkGranuleDelete(
       let dynamoGranule;
       const granulePgModel = new GranulePgModel();
       const dynamoGranuleModel = new GranuleModel();
-      const pgGranuleRecords = await granulePgModel.search(knex, {
-        granule_id: granuleId,
-      });
-      if (pgGranuleRecords.length > 1) {
-        log.warn(`Granule ID ${granuleId} is not unique across collections, cannot delete granule`);
+
+      try {
+        pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          log.info(error.message);
+        }
+
         return;
       }
-      if (pgGranuleRecords.length === 0) {
-        log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
-        return;
-      }
-      pgGranule = pgGranuleRecords[0];
+
       if (pgGranule.published && forceRemoveFromCmr) {
         ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, pgGranule));
       } else {

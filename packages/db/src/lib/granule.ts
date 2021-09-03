@@ -1,5 +1,6 @@
 import Knex from 'knex';
 
+import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
@@ -125,7 +126,7 @@ export const getUniqueGranuleByGranuleId = async (
     throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
   }
   if (PgGranuleRecords.length === 0) {
-    throw new Error(`Granule ${granuleId} does not exist or was already deleted`);
+    throw new RecordDoesNotExist(`Granule ${granuleId} does not exist or was already deleted`);
   }
 
   return PgGranuleRecords[0];

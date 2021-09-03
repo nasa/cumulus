@@ -2,6 +2,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
@@ -538,6 +539,6 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
 
   await t.throwsAsync(
     getUniqueGranuleByGranuleId(knex, 99999, granulePgModel),
-    { instanceOf: Error }
+    { instanceOf: RecordDoesNotExist }
   );
 });
