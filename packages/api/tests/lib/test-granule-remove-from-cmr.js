@@ -29,11 +29,13 @@ const { migrationDir } = require('../../../../lambdas/db-migration');
 const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 
 const createGranuleInDynamoAndPG = async (t, params) => {
+  const collectionId = constructCollectionId(
+    t.context.fakeCollection.name,
+    t.context.fakeCollection.version
+  );
+
   const granule = fakeGranuleFactoryV2({
-    collectionId: constructCollectionId(
-      t.context.fakeCollection.name,
-      t.context.fakeCollection.version
-    ),
+    collectionId,
     ...params,
   });
   const originalDynamoGranule = await t.context.granulesModel.create(granule);
@@ -54,6 +56,7 @@ const createGranuleInDynamoAndPG = async (t, params) => {
     originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
+    collectionId,
   };
 };
 
@@ -114,6 +117,7 @@ test('unpublishGranule() removing a granule from CMR fails if the granule is not
     originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
+    collectionId,
   } = await createGranuleInDynamoAndPG(t, {
     published: false,
     cmrLink: undefined,
@@ -121,7 +125,7 @@ test('unpublishGranule() removing a granule from CMR fails if the granule is not
   try {
     await unpublishGranule(t.context.knex, originalPgGranule);
   } catch (error) {
-    t.is(error.message, `Granule ${originalPgGranule.granule_id} is not published to CMR, so cannot be removed from CMR`);
+    t.is(error.message, `Granule ${originalPgGranule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
   }
 
   t.like(

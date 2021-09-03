@@ -14,9 +14,9 @@ const models = require('../models');
  * @private
  */
 const _removeGranuleFromCmr = async (granule, collectionId) => {
-  log.info(`granules.removeGranuleFromCmrByGranule ${granule.granule_id}`);
+  log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
-    throw new GranuleNotPublished(`Granule ${granule.granule_id} is not published to CMR, so cannot be removed from CMR`);
+    throw new GranuleNotPublished(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
   }
 
   const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
