@@ -11,13 +11,12 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       tableName: tableNames.collections,
     });
   }
-  async create(
+
+  create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresCollection
   ) {
-    return await knexOrTransaction(this.tableName)
-      .insert(item)
-      .returning('*');
+    return super.create(knexOrTransaction, item, '*');
   }
 
   upsert(
