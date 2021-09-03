@@ -17,9 +17,7 @@ of response and not the raw API endpoint response
 ### Added
 
 - **CUMULUS-2670**
-  - Update ingest tf-module/cumulus core tf module to take lambda_timeouts string map variable that allows ingest tasks to be configurable.
-
-  Configurable values:
+  - Updated core `cumulus` module to take lambda_timeouts string map variable that allows timeouts of ingest tasks to be configurable. Allowed properties for the mapping include:
   - discover_granules_task_timeout
   - discover_pdrs_task_timeout
   - hyrax_metadata_update_tasks_timeout
