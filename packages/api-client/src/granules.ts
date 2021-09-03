@@ -325,6 +325,86 @@ export const moveGranule = async (params: {
   });
 };
 
+
+/**
+ * Update a granule status via the API
+ * PUT /granules/{granuleId}/status
+ *
+ * @param {Object} params                       - params
+ * @param {string} params.prefix                - the prefix configured for the stack
+ * @param {string} params.granuleId             - a granule ID
+ * @param {Array<Object>} params.status         - updated granule status
+ * @param {Function} params.callback            - async function to invoke the api lambda
+ *                                                that takes a prefix / user payload.  Defaults
+ *                                                to cumulusApiClient.invokeApifunction to invoke
+ *                                                the api lambda
+ * @returns {Promise<Object>}                   - the move response from the API
+ */
+export const updateGranuleStatus = async (params: {
+  prefix: string,
+  granuleId: GranuleId,
+  status: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    granuleId,
+    status,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: `/granules/${granuleId}/status`,
+      body: JSON.stringify({ status }),
+    },
+  });
+};
+
+/**
+ * Update a granule status via the API
+ * PUT /granules/{granuleId}/status
+ *
+ * @param {Object} params                       - params
+ * @param {string} params.prefix                - the prefix configured for the stack
+ * @param {string} params.granuleId             - a granule ID
+ * @param {Array<Object>} params.status         - updated granule status
+ * @param {Function} params.callback            - async function to invoke the api lambda
+ *                                                that takes a prefix / user payload.  Defaults
+ *                                                to cumulusApiClient.invokeApifunction to invoke
+ *                                                the api lambda
+ * @returns {Promise<Object>}                   - the move response from the API
+ */
+export const getGranuleStatus = async (params: {
+  prefix: string,
+  granuleId: GranuleId,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    granuleId,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: `/granules/${granuleId}/status`,
+    },
+  });
+};
+
 /**
  * Removed a granule from CMR and delete from Cumulus via the API
  *
