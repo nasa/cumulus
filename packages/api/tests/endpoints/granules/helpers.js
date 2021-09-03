@@ -19,7 +19,7 @@ const getPgFilesFromGranuleCumulusId = async (knex, filePgModel, postgresGranule
     granule_cumulus_id: postgresGranuleCumulusId,
   });
 
-const getFileNameFromKey = (key) => key.match('[^\/]+$')[0];
+const getFileNameFromKey = (key) => key.split('/').pop();
 
 const generateMoveGranuleTestFilesAndEntries = async (params) => {
   const {
