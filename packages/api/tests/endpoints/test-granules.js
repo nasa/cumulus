@@ -263,7 +263,7 @@ test.beforeEach(async (t) => {
         status: 'completed',
         collection_cumulus_id: t.context.collectionCumulusId,
         published: true,
-        cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1224390942-PO_NGP_UAT',
+        cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
       }
     ),
     fakeGranuleRecordFactory(
