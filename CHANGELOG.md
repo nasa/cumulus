@@ -105,16 +105,13 @@ of response and not the raw API endpoint response
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
   - **CUMULUS-2510**
-    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
-      definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on executions DynamoDB table.
     - Updated `@cumulus/sfEventSqsToDbRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/endpoints/executions` to publish an SNS message
       after a successful execution DELETE.
     - Updated functions `create` and `upsert` in the `db` model for Executions
-      to return an array of objects containing values of the created or updated
-      columns.
+    to return an array of objects containing all columns of the created or
+    updated records.
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
@@ -133,6 +130,15 @@ processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on executions
+      DynamoDB table.
 
 ## [v9.4.0] 2021-08-16
 

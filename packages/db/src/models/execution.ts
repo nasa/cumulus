@@ -13,13 +13,11 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     });
   }
 
-  async create(
+  create(
     knexOrTransaction: Knex | Knex.Transaction,
-    execution: PostgresExecution
+    item: PostgresExecution
   ) {
-    return await knexOrTransaction(this.tableName)
-      .insert(execution)
-      .returning('*');
+    return super.create(knexOrTransaction, item, '*');
   }
 
   async upsert(

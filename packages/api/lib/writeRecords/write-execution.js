@@ -120,7 +120,6 @@ const _writeExecutionRecord = ({
 }) => knex.transaction(async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [response] = await executionPgModel.upsert(trx, postgresRecord);
-  const translatedExecution = await translatePostgresExecutionToApiExecution(response, trx);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${response.cumulus_id}`);
   await writeExecutionToDynamoAndES({
     dynamoRecord,
@@ -128,11 +127,10 @@ const _writeExecutionRecord = ({
     updatedAt,
     esClient,
   });
-  await publishExecutionSnsMessage(translatedExecution);
-  return response.cumulus_id;
+  return response;
 });
 
-const writeExecutionRecordFromMessage = ({
+const writeExecutionRecordFromMessage = async ({
   cumulusMessage,
   knex,
   collectionCumulusId,
@@ -150,7 +148,7 @@ const writeExecutionRecordFromMessage = ({
     updatedAt,
   });
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
-  return _writeExecutionRecord(
+  const writeExecutionResponse = await _writeExecutionRecord(
     {
       dynamoRecord: executionApiRecord,
       postgresRecord,
@@ -159,6 +157,12 @@ const writeExecutionRecordFromMessage = ({
       esClient,
     }
   );
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    writeExecutionResponse,
+    knex
+  );
+  await publishExecutionSnsMessage(translatedExecution);
+  return writeExecutionResponse.cumulus_id;
 };
 
 const writeExecutionRecordFromApi = async ({

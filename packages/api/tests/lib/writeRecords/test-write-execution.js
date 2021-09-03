@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
@@ -552,6 +551,7 @@ test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage 
   const {
     cumulusMessage,
     executionArn,
+    executionModel,
     knex,
     QueueUrl,
   } = t.context;
@@ -564,10 +564,9 @@ test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage 
 
   const snsMessage = JSON.parse(Messages[0].Body);
   const executionRecord = JSON.parse(snsMessage.Message);
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, Date.now());
-  const omitFields = ['updatedAt', 'timestamp'];
+  const dynamoRecord = await executionModel.get({ arn: executionArn });
 
   t.is(executionRecord.arn, executionArn);
   t.is(executionRecord.status, cumulusMessage.meta.status);
-  t.deepEqual(omit(executionRecord, omitFields), omit(executionApiRecord, omitFields));
+  t.deepEqual(executionRecord, dynamoRecord);
 });

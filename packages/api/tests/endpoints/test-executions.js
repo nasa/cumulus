@@ -184,10 +184,9 @@ test.before(async (t) => {
       t.context.knex,
       executionPgRecord
     );
-    const executionCumulusIds = pgExecution.cumulus_id;
     const dynamoRecord = await executionModel.create(execution);
     await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
-    return { ...executionPgRecord, cumulus_id: executionCumulusIds };
+    return pgExecution;
   }));
 
   // Create AsyncOperation in Dynamo and Postgres
