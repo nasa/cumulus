@@ -14,13 +14,13 @@ const {
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../../lib/create-test-data');
 const Granule = require('../../models/granules');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -93,6 +93,7 @@ const setUpExistingDatabaseRecords = async (t) => {
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = collectionCumulusId;
 
   const granuleCumulusIds = await granulePgModel.create(
     t.context.knex,
@@ -356,12 +357,22 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   );
 
   // Granules should have been deleted from Dynamo
+
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
 
   // Granules should have been deleted from Postgres
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
+  const pgCollectionCumulusId1 = granules[0].newPgGranule.collection_cumulus_id;
+  const pgCollectionCumulusId2 = granules[1].newPgGranule.collection_cumulus_id;
+
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: dynamoGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
+  ));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: dynamoGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
+  ));
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,

@@ -19,6 +19,7 @@ const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 
 // PG mock data factories
@@ -32,9 +33,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const {
   migrateExecutionRecord,

@@ -14,6 +14,7 @@ const {
   ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -22,7 +23,6 @@ const {
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Pdr = require('../../../models/pdrs');
 
 test.before(async (t) => {

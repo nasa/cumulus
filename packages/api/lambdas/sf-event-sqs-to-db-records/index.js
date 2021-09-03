@@ -30,7 +30,7 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
@@ -42,8 +42,8 @@ const {
 } = require('./write-pdr');
 
 const {
-  writeGranules,
-} = require('./write-granules');
+  writeGranulesFromMessage,
+} = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
@@ -162,9 +162,8 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,

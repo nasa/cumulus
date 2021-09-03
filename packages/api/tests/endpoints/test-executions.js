@@ -26,12 +26,12 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeExecutionRecordFactory,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { AccessToken, AsyncOperation, Collection, Execution, Granule } = require('../../models');
 // Dynamo mock data factories
 const {
