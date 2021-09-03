@@ -325,7 +325,6 @@ export const moveGranule = async (params: {
   });
 };
 
-
 /**
  * Update a granule status via the API
  * PUT /granules/{granuleId}/status
@@ -333,7 +332,7 @@ export const moveGranule = async (params: {
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
  * @param {string} params.granuleId             - a granule ID
- * @param {Array<Object>} params.status         - updated granule status
+ * @param {string} params.status                - updated granule status
  * @param {Function} params.callback            - async function to invoke the api lambda
  *                                                that takes a prefix / user payload.  Defaults
  *                                                to cumulusApiClient.invokeApifunction to invoke
@@ -368,18 +367,17 @@ export const updateGranuleStatus = async (params: {
 };
 
 /**
- * Update a granule status via the API
- * PUT /granules/{granuleId}/status
+ * Fetch a granule status via the API
+ * GET /granules/{granuleId}/status
  *
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
  * @param {string} params.granuleId             - a granule ID
- * @param {Array<Object>} params.status         - updated granule status
  * @param {Function} params.callback            - async function to invoke the api lambda
  *                                                that takes a prefix / user payload.  Defaults
  *                                                to cumulusApiClient.invokeApifunction to invoke
  *                                                the api lambda
- * @returns {Promise<Object>}                   - the move response from the API
+ * @returns {Promise<Object>}                   - the granule's status from the api
  */
 export const getGranuleStatus = async (params: {
   prefix: string,
