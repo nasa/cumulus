@@ -423,7 +423,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns the expected exisitng granule', async (t) => {
+test.serial('GET returns the expected existing granule', async (t) => {
   const {
     knex,
     fakePGGranules,
