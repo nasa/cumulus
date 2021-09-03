@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const omit = require('lodash/omit');
 const sinon = require('sinon');
 const request = require('supertest');
 
@@ -220,9 +219,8 @@ test.serial('POST creates a new collection in all data stores and publishes an S
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Create');
-  t.deepEqual(omit(message.record, omitFields), omit(fetchedDynamoRecord, omitFields));
+  t.deepEqual(message.record, fetchedDynamoRecord);
 });
 
 test.serial('POST creates a new collection in all data stores with correct timestamps', async (t) => {

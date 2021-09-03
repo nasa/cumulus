@@ -170,15 +170,16 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {ItemType} item - A record to insert into the DB
-   * @param {string | Array<Ssring>} returningFields - A string or array of strings
+   * @param {string | Array<string>} returningFields - A string or array of strings
    *   of columns to return. Defaults to 'cumulus_id'.
-   * @returns {Promise<number[] | Object[]>} List of IDs of the inserted records
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
+   *   array of values from the specified column from returningFields.
    */
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: ItemType,
     returningFields: string | string[] = 'cumulus_id'
-  ): Promise<number[] | Object[]> {
+  ): Promise<unknown[] | Object[]> {
     return await knexOrTransaction(this.tableName)
       .insert(item)
       .returning(returningFields);

@@ -9,8 +9,9 @@ const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
 const constructSnsMessage = (record, event) => {
   switch (event) {
-  case 'Create': return { event, record };
-  case 'Update': return { event, record };
+  case 'Create':
+  case 'Update':
+    return { event, record };
   case 'Delete': return {
     event,
     record: {

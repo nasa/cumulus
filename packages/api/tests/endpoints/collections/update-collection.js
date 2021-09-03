@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const omit = require('lodash/omit');
 const request = require('supertest');
 const {
   s3,
@@ -233,9 +232,8 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Update');
-  t.deepEqual(omit(message.record, omitFields), omit(actualCollection, omitFields));
+  t.deepEqual(message.record, actualCollection);
 });
 
 test.serial('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
@@ -337,9 +335,8 @@ test.serial('PUT creates a new record in RDS if one does not exist  and sends an
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Update');
-  t.deepEqual(omit(message.record, omitFields), omit(fetchedDynamoRecord, omitFields));
+  t.deepEqual(message.record, fetchedDynamoRecord);
 });
 
 test.serial('PUT returns 404 for non-existent collection', async (t) => {

@@ -127,11 +127,7 @@ test('getCollections calls the callback with the expected object and returns the
 
 test('updateCollection calls the callback with the expected object', async (t) => {
   const collection = fakeCollectionFactory();
-  await t.context.collectionModel.create(collection);
-  const updatedCollection = {
-    ...collection,
-    reportToEms: false,
-  };
+
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -139,7 +135,7 @@ test('updateCollection calls the callback with the expected object', async (t) =
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: `/collections/${collection.name}/${collection.version}`,
-      body: JSON.stringify(updatedCollection),
+      body: JSON.stringify(collection),
     },
   };
 
@@ -149,6 +145,6 @@ test('updateCollection calls the callback with the expected object', async (t) =
   await t.notThrowsAsync(collectionsApi.updateCollection({
     callback,
     prefix: t.context.testPrefix,
-    collection: updatedCollection,
+    collection,
   }));
 });
