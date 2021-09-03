@@ -4,6 +4,7 @@ const test = require('ava');
 
 const {
   constructCollectionId,
+  deconstructCollectionId,
   getCollectionIdFromMessage,
   getCollectionNameAndVersionFromMessage,
 } = require('../Collections');
@@ -56,4 +57,21 @@ test('getCollectionNameAndVersionFromMessage correctly returns undefined', (t) =
       },
     },
   }));
+});
+
+test('deconstructCollectionId throws error if collectionId is undefined', (t) => {
+  t.throws(() => deconstructCollectionId(),
+    { message: 'invalid collectionId: undefined' });
+});
+
+test('deconstructCollectionId throws error if collectionId is bad', (t) => {
+  const badCollectionId = 'anystringwithouttripleunderscores';
+  t.throws(() => deconstructCollectionId(badCollectionId),
+    { message: `invalid collectionId: ${badCollectionId}` });
+});
+
+test('deconstructCollectionId throw error if collectionId is not a string', (t) => {
+  const badCollectionId = { some: 'object' };
+  t.throws(() => deconstructCollectionId(badCollectionId),
+    { message: `invalid collectionId: ${JSON.stringify(badCollectionId)}` });
 });

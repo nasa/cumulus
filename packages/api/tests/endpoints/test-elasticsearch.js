@@ -29,7 +29,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-const esIndex = randomString();
+const esIndex = randomId('esindex');
 
 process.env.AccessTokensTable = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -267,6 +267,12 @@ test.serial('Reindex request returns 400 with the expected message when source i
 test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
   const date = new Date();
   const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+  const idxStatus = await esClient.indices.exists({ index: defaultIndexName });
+  if (idxStatus.body === true) {
+    await esClient.indices.delete({ index: defaultIndexName });
+  }
+
   await esClient.indices.create({
     index: defaultIndexName,
     body: { mappings },
