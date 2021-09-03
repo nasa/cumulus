@@ -346,3 +346,27 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   t.true(removeFromCmrCalled);
   t.true(deleteGranuleCalled);
 });
+
+test('createGranule calls the callback with the expected object', async (t) => {
+  const body = { any: 'object' };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.createGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
