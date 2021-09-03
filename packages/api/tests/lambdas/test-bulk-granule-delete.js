@@ -6,14 +6,19 @@ const {
   localStackConnectionEnv,
   GranulePgModel,
   migrationDir,
+  destroyLocalTestDb,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const Granule = require('../../models/granules');
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
-const models = require('../../models');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 
@@ -26,7 +31,6 @@ const getGranuleCumulusId = (dynamoGranule, granules) => {
 
 test.before(async (t) => {
   process.env.GranulesTable = randomId('granule');
-  process.env.CollectionsTable = randomId('collection');
   process.env.system_bucket = randomId('bucket');
   process.env = {
     ...process.env,
@@ -37,12 +41,25 @@ test.before(async (t) => {
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 
-  await new models.Collection().createTable();
   await new Granule().createTable();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esGranulesClient = new Search({}, 'granule', t.context.esIndex);
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+  await cleanupTestIndex(t.context);
 });
 
 test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
@@ -50,12 +67,22 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const granulePgModel = new GranulePgModel();
 
   const granules = await Promise.all([
-    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
-    createGranuleAndFiles({ dbClient: t.context.knex, published: true }),
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      granuleParams: { published: true },
+      esClient: t.context.esClient,
+    }),
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      granuleParams: { published: true },
+      esClient: t.context.esClient,
+    }),
   ]);
 
-  const dynamoGranuleId1 = granules[0].newDynamoGranule.granuleId;
-  const dynamoGranuleId2 = granules[1].newDynamoGranule.granuleId;
+  const dynamoGranule1 = granules[0].newDynamoGranule;
+  const dynamoGranule2 = granules[1].newDynamoGranule;
+  const dynamoGranuleId1 = dynamoGranule1.granuleId;
+  const dynamoGranuleId2 = dynamoGranule2.granuleId;
 
   const { deletedGranules } = await bulkGranuleDelete(
     {
@@ -66,7 +93,7 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       forceRemoveFromCmr: true,
     },
     (_, dynamoGranule) => ({
-      dynamoGranule: { granuleId: dynamoGranule.granuleId, published: false },
+      dynamoGranule: { ...dynamoGranule, published: false },
       pgGranule: {
         ...getGranuleCumulusId(dynamoGranule, granules),
         published: false,
@@ -98,6 +125,19 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
     t.context.knex,
     { granule_id: dynamoGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
   ));
+
+  t.false(
+    await t.context.esGranulesClient.exists(
+      dynamoGranule1.granuleId,
+      dynamoGranule1.collectionId
+    )
+  );
+  t.false(
+    await t.context.esGranulesClient.exists(
+      dynamoGranule2.granuleId,
+      dynamoGranule2.collectionId
+    )
+  );
 
   const s3Buckets = granules[0].s3Buckets;
   t.teardown(() => deleteS3Buckets([

@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -12,12 +13,14 @@ const {
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
-const Search = require('@cumulus/es-client/search').Search;
+const { deleteExecution } = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const {
   addToLocalES,
   indexExecution,
 } = require('@cumulus/es-client/indexer');
-const models = require('../models');
+const Execution = require('../models/executions');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
@@ -35,6 +38,7 @@ const log = new Logger({ sender: '@cumulus/api/executions' });
 async function create(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
+    executionModel = new Execution(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
@@ -53,7 +57,11 @@ async function create(req, res) {
   execution.createdAt = Date.now();
 
   try {
-    await writeExecutionRecordFromApi({ record: execution, knex });
+    await writeExecutionRecordFromApi({
+      record: execution,
+      knex,
+      executionModel,
+    });
 
     if (inTestMode()) {
       await addToLocalES(execution, indexExecution);
@@ -151,18 +159,20 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-
-  const e = new models.Execution();
-
+  const knex = await getKnexClient({ env: process.env });
+  const executionPgModel = new ExecutionPgModel();
+  let executionRecord;
   try {
-    const response = await e.get({ arn });
-    return res.send(response);
+    executionRecord = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`No record found for ${arn}`);
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
     }
     throw error;
   }
+
+  const translatedRecord = await translatePostgresExecutionToApiExecution(executionRecord, knex);
+  return res.send(translatedRecord);
 }
 
 /**
@@ -174,9 +184,10 @@ async function get(req, res) {
  */
 async function del(req, res) {
   const {
-    executionModel = new models.Execution(),
+    executionModel = new Execution(),
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const { arn } = req.params;
@@ -190,10 +201,35 @@ async function del(req, res) {
     throw error;
   }
 
-  await knex.transaction(async (trx) => {
-    await executionPgModel.delete(trx, { arn });
-    await executionModel.delete({ arn });
-  });
+  let apiExecution;
+  try {
+    apiExecution = await executionModel.get({ arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw error;
+  }
+
+  try {
+    await knex.transaction(async (trx) => {
+      await executionPgModel.delete(trx, { arn });
+      await executionModel.delete({ arn });
+      await deleteExecution({
+        esClient,
+        arn,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+  } catch (error) {
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (apiExecution) {
+      await executionModel.create(apiExecution);
+    }
+    throw error;
+  }
 
   return res.send({ message: 'Record deleted' });
 }
@@ -260,4 +296,7 @@ router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);
 
-module.exports = router;
+module.exports = {
+  del,
+  router,
+};

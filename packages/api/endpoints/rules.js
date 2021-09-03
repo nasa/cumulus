@@ -1,18 +1,17 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const {
   getKnexClient,
   RulePgModel,
-  tableNames,
   translateApiRuleToPostgresRule,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
-const { addToLocalES, indexRule } = require('@cumulus/es-client/indexer');
+const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
@@ -46,10 +45,13 @@ async function list(req, res) {
 async function get(req, res) {
   const name = req.params.name;
 
-  const model = new models.Rule();
+  const {
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
   try {
-    const result = await model.get({ name });
-    delete result.password;
+    const rule = await rulePgModel.get(knex, { name });
+    const result = await translatePostgresRuleToApiRule(rule);
     return res.send(result);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -68,29 +70,36 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    model = new models.Rule(),
-    dbClient = await getKnexClient(),
+    ruleModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   let record;
   const apiRule = req.body || {};
   const name = apiRule.name;
-  const rulePgModel = new RulePgModel();
 
-  if (await model.exists(name)) {
+  if (await ruleModel.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.create(trx, postgresRule);
-      record = await model.create(apiRule);
-    });
-    if (inTestMode()) await addToLocalES(record, indexRule);
+    try {
+      await knex.transaction(async (trx) => {
+        await rulePgModel.create(trx, postgresRule);
+        record = await ruleModel.create(apiRule);
+        await indexRule(esClient, record, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB record in case of any failure
+      await ruleModel.delete(apiRule);
+      throw innerError;
+    }
     return res.send({ message: 'Record saved', record });
   } catch (error) {
     if (isBadRequestError(error)) {
@@ -113,8 +122,16 @@ async function post(req, res) {
  *    name request parameter, or a Not Found (404) if there is no existing rule
  *    with the specified name
  */
-async function put({ params: { name }, body }, res) {
-  const model = new models.Rule();
+async function put(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { name }, body } = req;
+
   const apiRule = { ...body };
   let newRule;
 
@@ -124,14 +141,12 @@ async function put({ params: { name }, body }, res) {
   }
 
   try {
-    const oldRule = await model.get({ name });
-    const dbClient = await getKnexClient();
-    const rulePgModel = new RulePgModel();
+    const oldRule = await ruleModel.get({ name });
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
-    // If rule type is onetime no change is allowed unless it is a rerun
 
+    // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
@@ -139,14 +154,20 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
-    });
+    try {
+      await knex.transaction(async (trx) => {
+        await rulePgModel.upsert(trx, postgresRule);
+        newRule = await ruleModel.update(oldRule, apiRule, fieldsToDelete);
+        await indexRule(esClient, newRule, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Revert Dynamo record update if any write fails
+      await ruleModel.create(oldRule);
+      throw innerError;
+    }
 
-    if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -165,13 +186,18 @@ async function put({ params: { name }, body }, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const name = (req.params.name || '').replace(/%20/g, ' ');
-  const model = new models.Rule();
-  const dbClient = await getKnexClient();
 
   let apiRule;
   try {
-    apiRule = await model.get({ name });
+    apiRule = await ruleModel.get({ name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
@@ -179,19 +205,26 @@ async function del(req, res) {
     throw error;
   }
 
-  await dbClient.transaction(async (trx) => {
-    await trx(tableNames.rules).where({ name }).del();
-    await model.delete(apiRule);
-  });
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await esClient.delete({
-      id: name,
-      index: process.env.ES_INDEX,
-      type: 'rule',
-    }, { ignore: [404] });
+  try {
+    await knex.transaction(async (trx) => {
+      await rulePgModel.delete(trx, { name });
+      await ruleModel.delete(apiRule);
+      await deleteRule({
+        esClient,
+        name,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+  } catch (error) {
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (apiRule) {
+      await ruleModel.create(apiRule);
+    }
+    throw error;
   }
+
   return res.send({ message: 'Record deleted' });
 }
 
@@ -204,4 +237,6 @@ router.delete('/:name', del);
 module.exports = {
   router,
   post,
+  put,
+  del,
 };

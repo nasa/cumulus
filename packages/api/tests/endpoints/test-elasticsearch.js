@@ -17,7 +17,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, IndexExistsError } = require('@cumulus/errors');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
 const mappings = require('@cumulus/es-client/config/mappings.json');
@@ -268,15 +268,11 @@ test.serial('Reindex request returns 400 with the expected message when source i
   const date = new Date();
   const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
-  const idxStatus = await esClient.indices.exists({ index: defaultIndexName });
-  if (idxStatus.body === true) {
-    await esClient.indices.delete({ index: defaultIndexName });
+  try {
+    await createIndex(defaultIndexName);
+  } catch (error) {
+    if (!(error instanceof IndexExistsError)) throw error;
   }
-
-  await esClient.indices.create({
-    index: defaultIndexName,
-    body: { mappings },
-  });
 
   t.teardown(async () => {
     await esClient.indices.delete({ index: defaultIndexName });
@@ -676,7 +672,7 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 503 
 test.serial('indexFromDatabase request completes successfully', async (t) => {
   const fakeRequest = {
     body: {
-      indexName: randomId('index'),
+      indexName: t.context.esAlias,
     },
     testContext: {
       // mock starting the ECS task

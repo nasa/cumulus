@@ -1,20 +1,18 @@
 'use strict';
 
-const get = require('lodash/get');
 const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const Collection = require('../../models/collections');
-const Rule = require('../../models/rules');
-const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const sandbox = sinon.createSandbox();
+const fetchEnabledRulesStub = sandbox.stub();
 const queueMessageStub = sandbox.stub().resolves(true);
 const { handler } = proxyquire('../../lambdas/message-consumer', {
   '../lib/rulesHelpers': {
+    fetchEnabledRules: fetchEnabledRulesStub,
     queueMessageForRule: queueMessageStub,
   },
 });
@@ -58,48 +56,17 @@ const collection = {
 };
 const provider = { id: 'PROV1' };
 
-let ruleModel;
-
-test.before(async () => {
-  process.env.CollectionsTable = randomString();
-  process.env.ProvidersTable = randomString();
-  process.env.RulesTable = randomString();
+test.before(() => {
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
-
-  ruleModel = new Rule();
-  await ruleModel.createTable();
-
-  sandbox.stub(ruleModel, 'addSnsTrigger');
-  sandbox.stub(ruleModel, 'deleteSnsTrigger');
-
-  const workflow = randomString();
-  const stateMachineArn = randomString();
-  const messageTemplate = {};
-  const workflowDefinition = {
-    name: workflow,
-    arn: stateMachineArn,
-  };
-
-  sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: messageTemplate,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {}),
-    definition: workflowDefinition,
-  }));
-  sandbox.stub(Provider.prototype, 'get').resolves(provider);
-  sandbox.stub(Collection.prototype, 'get').resolves(collection);
 });
 
 test.afterEach.always(() => {
   queueMessageStub.resetHistory();
 });
 
-test.after.always(async () => {
-  await ruleModel.deleteTable();
+test.after.always(() => {
   sandbox.restore();
 });
 
@@ -117,13 +84,14 @@ test.serial('it should enqueue a message for each SNS rule', async (t) => {
     workflow: 'test-workflow-1',
   };
 
-  const createdRule = await ruleModel.create(rule1);
   const expectedRule = {
-    ...createdRule,
+    ...rule1,
     meta: {
       snsSourceArn: snsArn,
     },
   };
+
+  fetchEnabledRulesStub.returns(Promise.resolve([rule1]));
   await handler(event, {}, testCallback);
 
   t.is(queueMessageStub.callCount, 1);

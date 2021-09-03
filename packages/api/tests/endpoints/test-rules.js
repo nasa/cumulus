@@ -19,9 +19,12 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -30,8 +33,9 @@ const {
   fakeRuleFactoryV2,
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
+  createRuleTestRecords,
 } = require('../../lib/testUtils');
-const { post } = require('../../endpoints/rules');
+const { post, put, del } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const assertions = require('../../lib/assertions');
@@ -52,7 +56,6 @@ const testDbName = randomString(12);
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-const esIndex = randomString();
 const workflow = randomId('workflow-');
 const testRule = fakeRuleFactoryV2({
   name: randomId('testRule'),
@@ -63,14 +66,15 @@ const testRule = fakeRuleFactoryV2({
     value: 'value',
   },
   state: 'ENABLED',
-  queueUrl: 'queue_url',
+  queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
 });
+delete testRule.collection;
+delete testRule.provider;
 
 const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
 
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
-let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
@@ -87,11 +91,15 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
-  const esAlias = randomString();
-  process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esRulesClient = new Search(
+    {},
+    'rule',
+    t.context.esIndex
+  );
 
-  esClient = await Search.es('fakehost');
   await S3.createBucket(process.env.system_bucket);
 
   buildPayloadStub = setBuildPayloadStub();
@@ -102,9 +110,12 @@ test.before(async (t) => {
 
   ruleModel = new Rule();
   await ruleModel.createTable();
+  t.context.ruleModel = ruleModel;
 
   const ruleRecord = await ruleModel.create(testRule);
-  await indexer.indexRule(esClient, ruleRecord, esAlias);
+  await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
+  t.context.testPgRule = await translateApiRuleToPostgresRule(ruleRecord, knex);
+  t.context.rulePgModel.create(knex, t.context.testPgRule);
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -113,7 +124,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await Search.es('fakehost');
 });
 
 test.beforeEach((t) => {
@@ -127,7 +137,7 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await cleanupTestIndex(t.context);
 
   buildPayloadStub.restore();
   await destroyLocalTestDb({
@@ -257,8 +267,12 @@ test('GET gets a rule', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { name } = response.body;
-  t.is(name, testRule.name);
+  const expectedRule = {
+    ...testRule,
+    updatedAt: response.body.updatedAt,
+    createdAt: response.body.createdAt,
+  };
+  t.deepEqual(response.body, expectedRule);
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
@@ -318,7 +332,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
   t.deepEqual(response.body, record);
 });
 
-test('POST creates a rule', async (t) => {
+test('POST creates a rule in all data stores', async (t) => {
   const { newRule } = t.context;
 
   const fakeCollection = fakeCollectionFactory();
@@ -384,6 +398,11 @@ test('POST creates a rule', async (t) => {
       dynamoRuleOmitList
     )
   );
+
+  const esRecord = await t.context.esRulesClient.get(
+    newRule.name
+  );
+  t.like(esRecord, fetchedDynamoRecord);
 });
 
 test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
@@ -548,25 +567,20 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', async (t) => {
+test.serial('post() does not write to Elasticsearch/DynamoDB if writing to PostgreSQL fails', async (t) => {
   const { newRule, testKnex } = t.context;
 
-  const failingTrx = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('Insert Rule Error');
-      },
-    });
-    return cb(fakeTrx);
+  const fakeRulePgModel = {
+    create: () => {
+      throw new Error('something bad');
+    },
   };
-
-  const trxStub = sinon.stub(testKnex, 'transaction').callsFake(failingTrx);
-  t.teardown(() => trxStub.restore());
 
   const expressRequest = {
     body: newRule,
     testContext: {
-      dbClient: testKnex,
+      knex: testKnex,
+      rulePgModel: fakeRulePgModel,
     },
   };
   const response = buildFakeExpressResponse();
@@ -575,26 +589,30 @@ test.serial('POST does not write to RDS or DynamoDB if writing to RDS fails', as
   const dbRecords = await t.context.rulePgModel
     .search(t.context.testKnex, { name: newRule.name });
 
-  t.true(response.boom.badImplementation.calledWithMatch('Insert Rule Error'));
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
   t.false(await ruleModel.exists(newRule.name));
   t.is(dbRecords.length, 0);
+  t.false(await t.context.esRulesClient.exists(
+    newRule.name
+  ));
 });
 
-test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails', async (t) => {
+test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to DynamoDB fails', async (t) => {
   const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
-    exists: () => false,
+    exists: () => Promise.resolve(false),
     create: () => {
       throw new Error('Rule error');
     },
+    delete: () => Promise.resolve(true),
   };
 
   const expressRequest = {
     body: newRule,
     testContext: {
-      dbClient: testKnex,
-      model: failingRulesModel,
+      knex: testKnex,
+      ruleModel: failingRulesModel,
     },
   };
 
@@ -609,23 +627,58 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
 
   t.is(dbRecords.length, 0);
   t.false(await ruleModel.exists(newRule.name));
+  t.false(await t.context.esRulesClient.exists(
+    newRule.name
+  ));
+});
+
+test.serial('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { newRule, testKnex } = t.context;
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const expressRequest = {
+    body: newRule,
+    testContext: {
+      knex: testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: newRule.name });
+
+  t.is(dbRecords.length, 0);
+  t.false(await ruleModel.exists(newRule.name));
+  t.false(await t.context.esRulesClient.exists(
+    newRule.name
+  ));
 });
 
 test('PUT replaces a rule', async (t) => {
-  const putTestRule = {
-    ...t.context.newRule,
-    queueUrl: 'fake-queue-url',
-  };
-  t.truthy(putTestRule.queueUrl);
-  const postgresRule = await translateApiRuleToPostgresRule(putTestRule, t.context.testKnex);
-
-  await t.context.testKnex.transaction(async (trx) => {
-    await t.context.rulePgModel.create(trx, postgresRule);
-    await ruleModel.create(putTestRule, putTestRule.createdAt);
-  });
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queueUrl: 'fake-queue-url',
+      collection: undefined,
+      provider: undefined,
+    }
+  );
 
   const updateRule = {
-    ...omit(putTestRule, ['queueUrl', 'provider', 'collection']),
+    ...omit(originalDynamoRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
     // these timestamps should not get used
     createdAt: Date.now(),
@@ -640,38 +693,41 @@ test('PUT replaces a rule', async (t) => {
     .expect(200);
 
   const actualRule = await ruleModel.get({ name: updateRule.name });
-
   const actualPostgresRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
-  const postgresExpectedRule = await translateApiRuleToPostgresRule(
-    {
-      ...updateRule,
-      createdAt: actualRule.createdAt,
-    },
-    t.context.testKnex
+  const updatedEsRecord = await t.context.esRulesClient.get(
+    originalDynamoRule.name
   );
-  Object.keys(postgresExpectedRule).forEach((key) => {
-    if (postgresExpectedRule[key] === undefined) {
-      postgresExpectedRule[key] = null;
-    }
-  });
 
   t.true(actualRule.updatedAt > updateRule.updatedAt);
   // PG and Dynamo records have the same timestamps
   t.is(actualPostgresRule.created_at.getTime(), actualRule.createdAt);
   t.is(actualPostgresRule.updated_at.getTime(), actualRule.updatedAt);
+  t.is(actualPostgresRule.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPostgresRule.updated_at.getTime(), updatedEsRecord.updatedAt);
 
   t.like(actualPostgresRule, {
-    ...postgresExpectedRule,
-    created_at: postgresRule.created_at,
+    ...omit(originalPgRecord, ['queue_url']),
+    enabled: true,
+    created_at: new Date(originalDynamoRule.createdAt),
     updated_at: actualPostgresRule.updated_at,
   });
   t.deepEqual(actualRule, {
     // should not contain a queueUrl property
     ...updateRule,
-    createdAt: putTestRule.createdAt,
+    createdAt: originalDynamoRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
+  t.deepEqual(
+    updatedEsRecord,
+    {
+      ...omit(originalEsRecord, ['queueUrl']),
+      state: 'ENABLED',
+      createdAt: originalDynamoRule.createdAt,
+      updatedAt: actualRule.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {
@@ -702,6 +758,196 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
+test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+      queueUrl: 'queue-1',
+    }
+  );
+
+  const fakeRulesModel = {
+    get: () => Promise.resolve(originalDynamoRule),
+    update: () => {
+      throw new Error('something bad');
+    },
+    create: () => Promise.resolve(originalDynamoRule),
+  };
+
+  const updatedRule = {
+    ...omit(originalDynamoRule, ['collection', 'provider']),
+    queueUrl: 'queue-2',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updatedRule,
+    testContext: {
+      knex: testKnex,
+      ruleModel: fakeRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['provider', 'collection'])
+  );
+  t.deepEqual(
+    await t.context.rulePgModel.get(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esRulesClient.get(
+      originalDynamoRule.name
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+      queueUrl: 'queue-1',
+    }
+  );
+
+  const fakerulePgModel = {
+    upsert: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedRule = {
+    ...omit(originalDynamoRule, ['collection', 'provider']),
+    queueUrl: 'queue-2',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updatedRule,
+    testContext: {
+      knex: testKnex,
+      rulePgModel: fakerulePgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['provider', 'collection'])
+  );
+  t.deepEqual(
+    await t.context.rulePgModel.get(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esRulesClient.get(
+      originalDynamoRule.name
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+      queueUrl: 'queue-1',
+    }
+  );
+
+  const fakeEsClient = {
+    index: () => Promise.reject(new Error('something bad')),
+  };
+
+  const updatedRule = {
+    ...omit(originalDynamoRule, ['collection', 'provider']),
+    queueUrl: 'queue-2',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updatedRule,
+    testContext: {
+      knex: testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['provider', 'collection'])
+  );
+  t.deepEqual(
+    await t.context.rulePgModel.get(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esRulesClient.get(
+      originalDynamoRule.name
+    ),
+    originalEsRecord
+  );
+});
+
 test('DELETE deletes a rule', async (t) => {
   const { newRule } = t.context;
 
@@ -724,4 +970,167 @@ test('DELETE deletes a rule', async (t) => {
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
+  t.false(
+    await t.context.esRulesClient.exists(
+      newRule.name
+    )
+  );
+});
+
+test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+  const {
+    originalDynamoRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+    }
+  );
+
+  const fakeRulesModel = {
+    get: () => Promise.resolve(originalDynamoRule),
+    delete: () => {
+      throw new Error('something bad');
+    },
+    create: () => Promise.resolve(true),
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      ruleModel: fakeRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['collection', 'provider'])
+  );
+  t.true(
+    await t.context.rulePgModel.exists(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    })
+  );
+  t.true(
+    await t.context.esRulesClient.exists(
+      originalDynamoRule.name
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
+  const {
+    originalDynamoRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+    }
+  );
+
+  const fakeRulesPgModel = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      rulePgModel: fakeRulesPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['collection', 'provider'])
+  );
+  t.true(
+    await t.context.rulePgModel.exists(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    })
+  );
+  t.true(
+    await t.context.esRulesClient.exists(
+      originalDynamoRule.name
+    )
+  );
+});
+
+test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+  const {
+    originalDynamoRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+    }
+  );
+
+  const fakeEsClient = {
+    delete: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    testContext: {
+      knex: t.context.testKnex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    del(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  t.deepEqual(
+    await t.context.ruleModel.get({
+      name: originalDynamoRule.name,
+    }),
+    omit(originalDynamoRule, ['collection', 'provider'])
+  );
+  t.true(
+    await t.context.rulePgModel.exists(t.context.testKnex, {
+      name: originalDynamoRule.name,
+    })
+  );
+  t.true(
+    await t.context.esRulesClient.exists(
+      originalDynamoRule.name
+    )
+  );
 });

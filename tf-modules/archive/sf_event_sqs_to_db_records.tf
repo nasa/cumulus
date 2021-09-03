@@ -14,6 +14,7 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
     actions = [
+      "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem"
@@ -187,6 +188,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       PdrsTable                      = var.dynamo_tables.pdrs.name
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
+      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 
@@ -194,10 +196,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = compact([
-        aws_security_group.no_ingress_all_egress[0].id,
-        var.rds_security_group
-      ])
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 

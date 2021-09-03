@@ -1,4 +1,5 @@
 const test = require('ava');
+const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
 const awsClients = require('@cumulus/aws-client/services');
@@ -359,8 +360,8 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
 
 test('generateGranuleRecord() throws an error for a failing record', async (t) => {
   const {
-    collectionId,
     granuleModel,
+    collectionId,
   } = t.context;
 
   const granule1 = fakeGranuleFactoryV2({
@@ -470,7 +471,7 @@ test('storeGranulesFromCumulusMessage() stores multiple granules from Cumulus me
   }
 });
 
-test('storeGranulesFromCumulusMessage() handles failing and succcessful granules independently', async (t) => {
+test.serial('storeGranulesFromCumulusMessage() handles failing and succcessful granules independently', async (t) => {
   const { granuleModel } = t.context;
 
   const bucket = randomId('bucket-');
@@ -515,6 +516,12 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
       ],
     },
   };
+
+  sinon.stub(Granule.prototype, 'storeGranuleFromCumulusMessage')
+    .withArgs(sinon.match({ granuleId: granule2.granuleId }))
+    .rejects(new Error('fail'));
+  Granule.prototype.storeGranuleFromCumulusMessage.callThrough();
+  t.teardown(() => Granule.prototype.storeGranuleFromCumulusMessage.restore());
 
   await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
 

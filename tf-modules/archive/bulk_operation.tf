@@ -12,6 +12,7 @@ resource "aws_lambda_function" "bulk_operation" {
       METRICS_ES_HOST  = var.metrics_es_host
       METRICS_ES_USER  = var.metrics_es_username
       METRICS_ES_PASS  = var.metrics_es_password
+      ES_HOST          = var.elasticsearch_hostname
       GranulesTable    = var.dynamo_tables.granules.name
       system_bucket    = var.system_bucket
       invoke           = var.schedule_sf_function_arn

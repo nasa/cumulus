@@ -31,6 +31,7 @@
     "@cumulus/aws-client": "9.4.0",
     "@cumulus/db": "9.4.0",
     "@cumulus/errors": "9.4.0",
+    "@cumulus/es-client": "9.4.0",
     "@cumulus/types": "9.4.0",
     "uuid": "8.3.1"
   },

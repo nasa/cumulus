@@ -12,6 +12,12 @@ const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const {
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
@@ -20,8 +26,8 @@ const {
 } = require('@cumulus/message/Executions');
 const {
   getMessageGranules,
-  getGranuleStatus,
   getGranuleQueryFields,
+  generateGranuleApiRecord,
 } = require('@cumulus/message/Granules');
 const {
   getMessagePdrName,
@@ -31,9 +37,9 @@ const {
 } = require('@cumulus/message/Providers');
 const {
   getMessageWorkflowStartTime,
-  getWorkflowDuration,
   getMetaStatus,
 } = require('@cumulus/message/workflows');
+const { parseException } = require('@cumulus/message/utils');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
@@ -49,17 +55,11 @@ const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
   getExecutionProcessingTimeInfo,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
   translateGranule,
-  getGranuleProductVolume,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
-const {
-  parseException,
-  deconstructCollectionId,
-} = require('../lib/utils');
+const { deconstructCollectionId } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
@@ -678,44 +678,51 @@ class Granule extends Manager {
     const error = parseException(cumulusMessage.exception);
     const workflowStatus = getMetaStatus(cumulusMessage);
     const queryFields = getGranuleQueryFields(cumulusMessage);
+    const esClient = await Search.es();
 
     return await Promise.all(granules.map(
       async (granule) => {
         const files = await this.fileUtils.buildDatabaseFiles({
           s3: awsClients.s3(),
           providerURL: buildURL(provider),
-          files: granule.files,
-        });
-        const timeToArchive = getGranuleTimeToArchive(granule);
-        const timeToPreprocess = getGranuleTimeToPreprocess(granule);
-        const productVolume = getGranuleProductVolume(files);
-        const now = Date.now(); // yank me
-        const duration = getWorkflowDuration(workflowStartTime, now);
-        const status = getGranuleStatus(workflowStatus, granule);
-
-        try {
-          const granuleRecord = await this.generateGranuleRecord({
-            granule,
-            executionUrl,
-            collectionId,
-            provider: provider.id,
-            workflowStartTime,
-            files,
-            error,
-            pdrName,
-            workflowStatus,
-            timeToArchive,
-            timeToPreprocess,
-            productVolume,
-            duration,
-            status,
-            processingTimeInfo,
-            queryFields,
-          });
-          return await this.storeGranule(granuleRecord);
-        } catch (writeError) {
-          return logger.error(writeError);
-        }
+          files: granule.files || [],
+        }).catch((filesError) => logger.error(filesError));
+        // const granuleRecord = await this.generateGranuleRecord({
+        //   granule,
+        //   executionUrl,
+        //   collectionId,
+        //   provider: provider.id,
+        //   workflowStartTime,
+        //   files,
+        //   error,
+        //   pdrName,
+        //   workflowStatus,
+        //   timeToArchive,
+        //   timeToPreprocess,
+        //   productVolume,
+        //   duration,
+        //   status,
+        //   processingTimeInfo,
+        //   queryFields,
+        // });
+        const granuleRecord = await generateGranuleApiRecord({
+          granule,
+          executionUrl,
+          collectionId,
+          provider,
+          workflowStartTime,
+          error,
+          pdrName,
+          workflowStatus,
+          processingTimeInfo,
+          queryFields,
+          cmrUtils: this.cmrUtils,
+          files,
+        }).catch((writeError) => logger.error(writeError));
+        await this.storeGranule(granuleRecord)
+          .catch((writeError) => logger.error(writeError));
+        await indexGranule(esClient, granuleRecord, process.env.ES_INDEX)
+          .catch((esError) => logger.error(esError));
       }
     ));
   }

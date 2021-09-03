@@ -1,10 +1,11 @@
 import Knex from 'knex';
 
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 /**
  * Generate a Postgres granule record from a DynamoDB record.

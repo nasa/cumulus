@@ -1,8 +1,15 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const {
   PdrPgModel,
 } = require('@cumulus/db');
+const {
+  upsertPdr,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 const {
   getMessagePdrName,
   messageHasPdr,
@@ -10,6 +17,7 @@ const {
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
   getPdrPercentCompletion,
+  generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
@@ -116,6 +124,38 @@ const writePdrViaTransaction = async ({
   return [pdrCumulusId];
 };
 
+const writePdrToDynamoAndEs = async (params) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    updatedAt = Date.now(),
+    esClient = await Search.es(),
+  } = params;
+  const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
+  if (!pdrApiRecord) {
+    return;
+  }
+  try {
+    await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
+    await upsertPdr({
+      esClient,
+      updates: pdrApiRecord,
+      index: process.env.ES_INDEX,
+    });
+  } catch (error) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for PDR ${pdrApiRecord.pdrName}`);
+    // On error, delete the Dynamo record to ensure that all systems
+    // stay in sync
+    await pRetry(
+      async () => await pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
+      {
+        retries: 3,
+      }
+    );
+    throw error;
+  }
+};
+
 const writePdr = async ({
   cumulusMessage,
   collectionCumulusId,
@@ -124,6 +164,7 @@ const writePdr = async ({
   knex,
   pdrModel = new Pdr(),
   updatedAt = Date.now(),
+  esClient,
 }) => {
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
@@ -145,7 +186,12 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    await pdrModel.storePdrFromCumulusMessage(cumulusMessage, updatedAt);
+    await writePdrToDynamoAndEs({
+      cumulusMessage,
+      pdrModel,
+      updatedAt,
+      esClient,
+    });
     // eslint-disable-next-line camelcase
     return cumulus_id;
   });
@@ -156,4 +202,5 @@ module.exports = {
   getPdrCumulusIdFromQueryResultOrLookup,
   writePdrViaTransaction,
   writePdr,
+  writePdrToDynamoAndEs,
 };
