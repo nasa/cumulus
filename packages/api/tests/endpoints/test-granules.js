@@ -1510,7 +1510,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
+test.serial('create (POST) creates new granule in dynamoDB and postgres', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1543,7 +1543,7 @@ test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
 });
 
-test.serial('POST rejects if a granule already exists in postgres', async (t) => {
+test.serial('create (POST) rejects if a granule already exists in postgres', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1569,7 +1569,7 @@ test.serial('POST rejects if a granule already exists in postgres', async (t) =>
   t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
 });
 
-test.serial('POST return bad request if a granule is submitted with a bad collectionId.', async (t) => {
+test.serial('create (POST) return bad request if a granule is submitted with a bad collectionId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: randomId('collectionId'),
   });
@@ -1584,4 +1584,78 @@ test.serial('POST return bad request if a granule is submitted with a bad collec
   t.is(response.statusCode, 400);
   t.is(response.error.status, 400);
   t.is(response.error.message, 'cannot POST /granules (400)');
+});
+
+test.serial('update (PUT) returns bad request if granule does not exist', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .put('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.message, `No granule found to update for ${JSON.stringify(newGranule)}`);
+});
+
+test.serial('update (PUT) returns an updated granule', async (t) => {
+  const now = Date.now();
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt: now,
+    timestamp: now,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  t.is(response.statusCode, 200);
+
+  const modifiedGranule = {
+    ...newGranule,
+    status: 'failed',
+    error: { some: 'error' },
+  };
+
+  const modifiedResponse = await request(app)
+    .put('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(modifiedGranule)
+    .expect(200);
+
+  t.is(modifiedResponse.statusCode, 200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.deepEqual(JSON.parse(modifiedResponse.text), { message: 'Success' });
+
+  t.is(fetchedDynamoRecord.status, 'failed');
+  t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
+  t.is(new Date(fetchedDynamoRecord.timestamp).valueOf(), now);
+  t.is(new Date(fetchedDynamoRecord.createdAt).valueOf(), now);
+  t.is(fetchedPostgresRecord.status, 'failed');
+  t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
+  t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), now);
+  t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), now);
 });

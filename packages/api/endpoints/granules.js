@@ -27,6 +27,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
 const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { getCollectionCumulusId } = require('../lib/writeRecords/utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
@@ -93,6 +94,47 @@ const create = async (req, res) => {
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+};
+
+/**
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const update = async (req, res) => {
+  const {
+    granuleModel = new models.Granule(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+  const body = req.body || {};
+
+  let existingGranule;
+  try {
+    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(`No granule found to update for ${JSON.stringify(body)}`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  const updatedGranule = {
+    ...existingGranule,
+    updatedAt: Date.now(),
+    ...body,
+  };
+
+  try {
+    await writeGranuleFromApi(updatedGranule, knex);
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
+  });
 };
 
 /**
@@ -461,6 +503,7 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/', create);
 router.put('/:granuleName', put);
+router.put('/', update);
 
 router.post(
   '/bulk',

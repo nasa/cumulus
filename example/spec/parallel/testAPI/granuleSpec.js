@@ -11,6 +11,7 @@ const {
   createGranule,
   deleteGranule,
   getGranule,
+  updateGranule,
 } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../../helpers/testUtils');
@@ -20,6 +21,7 @@ describe('The Granules API', () => {
   let config;
   let collection;
   let collectionId;
+  let discoveredGranule;
   let granuleId;
   let prefix;
   let granuleFile;
@@ -81,11 +83,31 @@ describe('The Granules API', () => {
     });
 
     it('can discover the granule in the API.', async () => {
-      const granule = await getGranule({
+      discoveredGranule = await getGranule({
         prefix,
         granuleId,
       });
-      expect(granule).toEqual(jasmine.objectContaining(randomGranuleRecord));
+      expect(discoveredGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
+    });
+
+    it('can modify the granule via API.', async () => {
+      const modifiedGranule = {
+        ...discoveredGranule,
+        status: 'failed',
+        error: { message: 'granule now failed' },
+      };
+      const response = await updateGranule({
+        prefix,
+        body: modifiedGranule,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedGranuleFromApi = await getGranule({
+        prefix,
+        granuleId: modifiedGranule.granuleId,
+      });
+      updatedGranuleFromApi.execution = undefined;
+      expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
     });
 
     it('Errors creating a bad granule.', async () => {
