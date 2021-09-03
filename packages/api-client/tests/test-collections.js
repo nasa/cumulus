@@ -1,12 +1,35 @@
 'use strict';
 
 const test = require('ava');
-const collectionsApi = require('../collections');
 
-test.before((t) => {
+const {
+  createBucket,
+  recursivelyDeleteS3Bucket,
+} = require('@cumulus/aws-client/S3');
+
+const collectionsApi = require('../collections');
+const { fakeCollectionFactory } = require('../../api/lib/testUtils');
+const { Collection } = require('../../api/models');
+const { randomId, randomString } = require('../../common/test-utils');
+
+test.before(async (t) => {
+  process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
   t.context.testPrefix = 'unitTestStack';
   t.context.collectionName = 'testCollection';
   t.context.collectionVersion = 1;
+
+  // create a fake bucket
+  await createBucket(process.env.system_bucket);
+
+  process.env.CollectionsTable = randomId('collection');
+  t.context.collectionModel = new Collection();
+  await t.context.collectionModel.createTable();
+});
+
+test.after.always(async (t) => {
+  await t.context.collectionModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('deleteCollection calls the callback with the expected object', async (t) => {
@@ -100,4 +123,32 @@ test('getCollections calls the callback with the expected object and returns the
   });
 
   t.deepEqual(result, { foo: 'bar' });
+});
+
+test('updateCollection calls the callback with the expected object', async (t) => {
+  const collection = fakeCollectionFactory();
+  await t.context.collectionModel.create(collection);
+  const updatedCollection = {
+    ...collection,
+    reportToEms: false,
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: `/collections/${collection.name}/${collection.version}`,
+      body: JSON.stringify(updatedCollection),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+  await t.notThrowsAsync(collectionsApi.updateCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    collection: updatedCollection,
+  }));
 });

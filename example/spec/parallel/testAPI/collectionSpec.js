@@ -3,9 +3,8 @@
 const omit = require('lodash/omit');
 
 const { deleteS3Object, getJsonS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
-const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
-const { deleteCollection } = require('@cumulus/api-client/collections');
+const { fakeCollectionFactory } = require('@cumulus/api/lib/testUtils');
+const { createCollection, deleteCollection, updateCollection } = require('@cumulus/api-client/collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -23,7 +22,8 @@ describe('Collections API', () => {
       config = await loadConfig();
       prefix = config.stackName;
 
-      collection = await createCollection(prefix);
+      collection = fakeCollectionFactory({ reportToEms: false });
+      await createCollection({ prefix, collection });
       const { name, version } = collection;
 
       const reportKeyPrefix = `${config.stackName}/test-output`;
@@ -55,7 +55,7 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordCreatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Create');
-      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(collection);
+      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(collection, ['createdAt', 'updatedAt']));
     }
   });
 
@@ -63,10 +63,13 @@ describe('Collections API', () => {
     if (beforeAllFailed) {
       fail('beforeAll() failed');
     } else {
-      await apiTestUtils.updateCollection({
+      const updatedCollection = {
+        ...collection,
+        reportToEms: false,
+      };
+      await updateCollection({
         prefix: config.stackName,
-        collection,
-        updateParams: { files: [] },
+        collection: updatedCollection,
       });
 
       await expectAsync(waitForObjectToExist({
@@ -76,8 +79,8 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordUpdatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Update');
-      expect(omit(message.record, ['createdAt', 'updatedAt', 'files'])).toEqual(omit(collection, 'files'));
-      expect(message.record.files).toEqual([]);
+      expect(omit(message.record, ['createdAt', 'updatedAt', 'files'])).toEqual(omit(updatedCollection, ['createdAt', 'updatedAt', 'files']));
+      expect(message.record.reportToEms).toEqual(false);
     }
   });
 
