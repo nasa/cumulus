@@ -222,7 +222,7 @@ test.serial('POST creates a new collection in all data stores and publishes an S
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
   const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Create');
-  t.deepEqual(omit(message.record, omitFields), omit(newCollection, omitFields));
+  t.deepEqual(omit(message.record, omitFields), omit(fetchedDynamoRecord, omitFields));
 });
 
 test.serial('POST creates a new collection in all data stores with correct timestamps', async (t) => {

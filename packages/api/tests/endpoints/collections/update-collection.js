@@ -339,7 +339,7 @@ test.serial('PUT creates a new record in RDS if one does not exist  and sends an
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
   const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Update');
-  t.deepEqual(omit(message.record, omitFields), omit(updatedCollection, omitFields));
+  t.deepEqual(omit(message.record, omitFields), omit(fetchedDynamoRecord, omitFields));
 });
 
 test.serial('PUT returns 404 for non-existent collection', async (t) => {
