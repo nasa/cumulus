@@ -5,6 +5,7 @@ const isEmpty = require('lodash/isEmpty');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   translateApiFiletoPostgresFile,
@@ -282,57 +283,26 @@ const _generateFilesFromGranule = async ({
   });
 };
 
-const writeGranuleToDynamoAndEs = async ({
-  dynamoRecord,
-  granuleModel,
-  esClient,
-}) => {
-  // const {
-  //   granule,
-  //   executionUrl,
-  //   collectionId,
-  //   provider,
-  //   workflowStartTime,
-  //   error,
-  //   pdrName,
-  //   workflowStatus,
-  //   processingTimeInfo,
-  //   queryFields,
-  //   granuleModel,
-  //   files,
-  //   cmrUtils = CmrUtils,
-  //   updatedAt = Date.now(),
-  //   esClient = await Search.es(),
-  // } = params;
-  // const granuleApiRecord = await generateGranuleApiRecord({
-  //   granule,
-  //   executionUrl,
-  //   collectionId,
-  //   provider,
-  //   workflowStartTime,
-  //   error,
-  //   pdrName,
-  //   workflowStatus,
-  //   processingTimeInfo,
-  //   queryFields,
-  //   updatedAt,
-  //   cmrUtils,
-  //   files,
-  // });
+const writeGranuleToDynamoAndEs = async (params) => {
+  const {
+    dynamoGranuleRecord,
+    granuleModel,
+    esClient = await Search.es(),
+  } = params;
   try {
-    await granuleModel.storeGranule(dynamoRecord);
+    await granuleModel.storeGranule(dynamoGranuleRecord);
     await upsertGranule({
       esClient,
-      updates: dynamoRecord,
+      updates: dynamoGranuleRecord,
       index: process.env.ES_INDEX,
     });
   } catch (writeError) {
-    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${dynamoRecord.granuleId}`);
+    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${dynamoGranuleRecord.granuleId}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await granuleModel.delete({
-      granuleId: dynamoRecord.granuleId,
-      collectionId: dynamoRecord.collectionId,
+      granuleId: dynamoGranuleRecord.granuleId,
+      collectionId: dynamoGranuleRecord.collectionId,
     });
     throw writeError;
   }
@@ -366,8 +336,8 @@ const _writeGranule = async ({
       trx,
       granulePgModel,
     });
-    return writeGranuleToDynamoAndEs({
-      dynamoRecord: dynamoGranuleRecord,
+    await writeGranuleToDynamoAndEs({
+      dynamoGranuleRecord,
       esClient,
       granuleModel,
     });
@@ -420,6 +390,7 @@ const _writeGranule = async ({
  * @param {Object} [params.granuleModel] - only for testing.
  * @param {Object} [params.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
+ * @param {Object} esClient - Elasticsearch client
  * @returns {Promise}
  */
 const writeGranuleFromApi = async (
@@ -475,7 +446,7 @@ const writeGranuleFromApi = async (
       }
     }
 
-    const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
+    const dynamoGranuleRecord = await generateGranuleApiRecord({
       granule,
       executionUrl: execution,
       collectionId,
@@ -493,7 +464,7 @@ const writeGranuleFromApi = async (
       processingTimeInfo,
       updatedAt,
       cmrTemporalInfo,
-      granuleModel,
+      cmrUtils,
     });
 
     const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
@@ -577,7 +548,7 @@ const writeGranulesFromMessage = async ({
       const status = getGranuleStatus(workflowStatus, granule);
       const updatedAt = now;
 
-      const dynamoGranuleRecord = await granuleModel.generateGranuleRecord({
+      const dynamoGranuleRecord = await generateGranuleApiRecord({
         granule,
         executionUrl,
         collectionId,
@@ -595,6 +566,7 @@ const writeGranulesFromMessage = async ({
         processingTimeInfo,
         queryFields,
         updatedAt,
+        cmrUtils,
       });
 
       const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(

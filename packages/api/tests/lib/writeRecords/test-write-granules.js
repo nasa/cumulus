@@ -21,6 +21,7 @@ const {
   destroyLocalTestDb,
   tableNames,
   migrationDir,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const {
   Search,
@@ -40,7 +41,6 @@ const {
   writeGranuleFromApi,
   writeGranulesFromMessage,
   _writeGranule,
-  writeGranules,
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -94,6 +94,11 @@ test.beforeEach(async (t) => {
 
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
+  t.context.executionUrl = getExecutionUrlFromArn(t.context.executionArn);
+  const execution = fakeExecutionRecordFactory({
+    arn: t.context.executionArn,
+    url: t.context.executionUrl,
+  });
 
   t.context.collection = fakeCollectionRecordFactory();
   t.context.collectionId = constructCollectionId(
@@ -108,6 +113,7 @@ test.beforeEach(async (t) => {
     files: t.context.files,
     granuleId: t.context.granuleId,
     collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
+    execution: execution.url,
   });
 
   t.context.workflowStartTime = Date.now();
@@ -132,10 +138,6 @@ test.beforeEach(async (t) => {
     t.context.collection
   );
 
-  const execution = fakeExecutionRecordFactory({
-    arn: t.context.executionArn,
-  });
-  t.context.granule.execution = execution.url;
   [t.context.executionCumulusId] = await t.context.executionPgModel.create(
     t.context.knex,
     execution
@@ -226,36 +228,31 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
 
 test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
-    cumulusMessage,
-    granuleModel,
-    knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
     granule,
+    executionCumulusId,
     esClient,
-    executionArn,
+    knex,
+    granuleModel,
     granuleId,
-    provider,
-    workflowStartTime,
-    collectionId,
+    collectionCumulusId,
+    executionUrl,
   } = t.context;
 
-  const executionUrl = getExecutionUrlFromArn(executionArn);
+  const dynamoGranuleRecord = {
+    ...granule,
+    status: 'completed',
+  };
+  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
+    dynamoGranuleRecord,
+    knex
+  );
   await _writeGranule({
-    collectionId,
-    cumulusMessage,
+    dynamoGranuleRecord,
+    postgresGranuleRecord,
+    executionCumulusId,
     granuleModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granule,
     esClient,
-    provider,
-    executionUrl,
-    workflowStartTime,
-    workflowStatus: 'completed',
   });
 
   t.like(
@@ -292,20 +289,21 @@ test('_writeGranule will not allow a running status to replace a completed statu
     }
   );
 
+  const updatedDynamoGranuleRecord = {
+    ...granule,
+    status: 'running',
+  };
+  const updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
+    updatedDynamoGranuleRecord,
+    knex
+  );
   await _writeGranule({
-    collectionId,
-    cumulusMessage,
+    dynamoGranuleRecord: updatedDynamoGranuleRecord,
+    postgresGranuleRecord: updatedPgGranuleRecord,
+    executionCumulusId,
     granuleModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granule,
     esClient,
-    provider,
-    executionUrl,
-    workflowStartTime,
-    workflowStatus: 'running',
   });
 
   t.like(
@@ -367,26 +365,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
     granuleModel,
   });
   t.is(actual, undefined);
-});
-
-test.serial('writeGranulesFromMessage() throws an error if collection is not provided', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionCumulusId,
-    providerCumulusId,
-    granuleModel,
-  } = t.context;
-  await t.throwsAsync(
-    writeGranulesFromMessage({
-      cumulusMessage,
-      collectionCumulusId: undefined,
-      executionCumulusId,
-      providerCumulusId,
-      knex,
-      granuleModel,
-    })
-  );
 });
 
 test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
@@ -644,11 +622,12 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    collectionCumulusId,
   } = t.context;
 
   const testGranulePgModel = {
     upsert: () => {
-      throw new Error('Granules Postgres error');
+      throw new Error('Granules PostgreSQL error');
     },
   };
 
@@ -664,12 +643,15 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
   t.true(error.message.includes('Granules PostgreSQL error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -687,7 +669,7 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
     delete: () => Promise.resolve(),
   };
 
-  const [error] = await t.throwsAsync(writeGranules({
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
     collectionCumulusId,
     executionCumulusId,
@@ -864,7 +846,7 @@ test.serial('writeGranuleFromApi() throws for a granule with no collectionId pro
 
   await t.throwsAsync(
     writeGranuleFromApi({ ...granule, collectionId: undefined }, knex),
-    { message: 'collection required to generate a granule record' }
+    { message: 'collectionId required to generate a granule record' }
   );
 });
 
@@ -1033,11 +1015,10 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
   } = t.context;
 
   const fakeGranuleModel = {
-    generateGranuleRecord: () => t.context.granule,
     storeGranule: () => {
       throw new Error('Granules dynamo error');
     },
-    describeGranuleExecution: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
   };
 
   const error = await t.throwsAsync(
