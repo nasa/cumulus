@@ -2,9 +2,7 @@
 
 const indexer = require('@cumulus/es-client/indexer');
 const {
-  GranulesExecutionsPgModel,
   RulePgModel,
-  GranulePgModel,
   PdrPgModel,
   ExecutionPgModel,
   CollectionPgModel,
@@ -15,6 +13,7 @@ const {
   translateApiGranuleToPostgresGranule,
   translateApiPdrToPostgresPdr,
   translateApiRuleToPostgresRule,
+  upsertGranuleWithExecutionJoinRecord,
   getKnexClient,
   localStackConnectionEnv,
   envParams,
@@ -27,7 +26,6 @@ const { getESClientAndIndex } = require('./local-test-defaults');
 const {
   erasePostgresTables,
 } = require('./serve');
-const { deconstructCollectionId } = require('../lib/utils');
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -81,13 +79,18 @@ async function addGranules(granules) {
 
   const granuleModel = new models.Granule();
   const es = await getESClientAndIndex();
-  const granulePgModel = new GranulePgModel();
   return await Promise.all(
     granules.map(async (g) => {
       const dynamoRecord = await granuleModel.create(g);
       await indexer.indexGranule(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiGranuleToPostgresGranule(dynamoRecord, knex);
-      await granulePgModel.create(knex, dbRecord);
+
+      const executionPgModel = new ExecutionPgModel();
+      const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
+        url: g.execution,
+      });
+
+      await upsertGranuleWithExecutionJoinRecord(knex, dbRecord, executionCumulusId);
     })
   );
 }
@@ -145,6 +148,18 @@ async function addExecutions(executions) {
   const executionModel = new models.Execution();
   const es = await getESClientAndIndex();
 
+  executions.sort((firstEl, secondEl) => {
+    if (!firstEl.parentArn && !secondEl.parentArn) {
+      return 0;
+    }
+
+    if ((!firstEl.parentArn && secondEl.parentArn) || firstEl.arn === secondEl.parentArn) {
+      return -1;
+    }
+
+    return 1;
+  });
+
   // Since executions has a parent/child relationship with itself
   // a fake promise is used with reduce() to force records to be created
   // synchronously
@@ -192,49 +207,6 @@ async function addReconciliationReports(reconciliationReports) {
   );
 }
 
-async function addGranulesExecutions(granulesExecutions) {
-  const knex = await getKnexClient({
-    env: {
-      ...envParams,
-      ...localStackConnectionEnv,
-    },
-  });
-
-  const collectionPgModel = new CollectionPgModel();
-  return await Promise.all(
-    granulesExecutions.map(async (ge) => {
-      // Fetch the Collection ID
-      const { name, version } = deconstructCollectionId(ge.granule.collectionId);
-      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
-        name: name,
-        version: version,
-      });
-
-      // Fetch the Granule ID
-      const granulePgModel = new GranulePgModel();
-      const granuleCumulusId = await granulePgModel.getRecordCumulusId(knex, {
-        granule_id: ge.granule.granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      });
-
-      // Fetch the Execution ID
-      const executionPgModel = new ExecutionPgModel();
-      const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
-        arn: ge.execution.arn,
-      });
-
-      // Create and insert the GranuleExecution record into the DB
-      const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
-      const dbRecord = {
-        granule_cumulus_id: granuleCumulusId,
-        execution_cumulus_id: executionCumulusId,
-      };
-
-      await granulesExecutionsPgModel.create(knex, dbRecord);
-    })
-  );
-}
-
 module.exports = {
   resetPostgresDb,
   addProviders,
@@ -244,5 +216,4 @@ module.exports = {
   addPdrs,
   addReconciliationReports,
   addRules,
-  addGranulesExecutions,
 };
