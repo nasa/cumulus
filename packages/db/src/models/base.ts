@@ -173,7 +173,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    * @param {string | Array<string>} returningFields - A string or array of strings
    *   of columns to return. Defaults to 'cumulus_id'.
    * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
-   *   array of values from the specified column from returningFields.
+   *   array of values from the specified column(s) from returningFields.
    */
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
