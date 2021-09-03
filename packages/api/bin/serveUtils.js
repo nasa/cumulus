@@ -27,6 +27,7 @@ const { getESClientAndIndex } = require('./local-test-defaults');
 const {
   erasePostgresTables,
 } = require('./serve');
+const { deconstructCollectionId } = require('../lib/utils');
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -203,7 +204,7 @@ async function addGranulesExecutions(granulesExecutions) {
   return await Promise.all(
     granulesExecutions.map(async (ge) => {
       // Fetch the Collection ID
-      const [name, version] = ge.granule.collectionId.split('___');
+      const { name, version } = deconstructCollectionId(ge.granule.collectionId);
       const collectionCumulusId = await collectionPgModel.getRecordCumulusId(knex, {
         name: name,
         version: version,
