@@ -36,8 +36,6 @@ export const deprecate = (() => {
   };
 })();
 
-//, K extends Array<keyof T>
-
 /**
  * Remove properties whose values are `null` or `undefined`
  *

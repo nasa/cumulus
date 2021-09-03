@@ -133,7 +133,13 @@ async function bulkGranule(payload) {
   const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return await applyWorkflowToGranules({ knex, granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({
+    knex,
+    granuleIds,
+    meta,
+    queueUrl,
+    workflowName,
+  });
 }
 
 async function bulkGranuleReingest(payload) {
