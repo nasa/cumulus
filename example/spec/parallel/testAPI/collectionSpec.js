@@ -4,7 +4,7 @@ const omit = require('lodash/omit');
 
 const { deleteS3Object, getJsonS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
 const { fakeCollectionFactory } = require('@cumulus/api/lib/testUtils');
-const { createCollection, deleteCollection, updateCollection } = require('@cumulus/api-client/collections');
+const { createCollection, deleteCollection, getCollection, updateCollection } = require('@cumulus/api-client/collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -22,7 +22,7 @@ describe('Collections API', () => {
       config = await loadConfig();
       prefix = config.stackName;
 
-      collection = fakeCollectionFactory({ reportToEms: false });
+      collection = fakeCollectionFactory({ reportToEms: true });
       await createCollection({ prefix, collection });
       const { name, version } = collection;
 
@@ -68,9 +68,21 @@ describe('Collections API', () => {
         ...originalCollection,
         reportToEms: false,
       };
+      const originalCollectionFromApi = await getCollection({
+        prefix: config.stackName,
+        collectionName: originalCollection.name,
+        collectionVersion: originalCollection.version,
+      });
+      expect(originalCollectionFromApi.reportToEms).toEqual(true);
+
       await updateCollection({
         prefix: config.stackName,
         collection: updatedCollection,
+      });
+      const updatedCollectionFromApi = await getCollection({
+        prefix: config.stackName,
+        collectionName: updatedCollection.name,
+        collectionVersion: updatedCollection.version,
       });
 
       await expectAsync(waitForObjectToExist({
@@ -80,8 +92,7 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordUpdatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Update');
-      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(updatedCollection, ['createdAt', 'updatedAt']));
-      expect(originalCollection.reportToEms).toEqual(true);
+      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(updatedCollectionFromApi, ['createdAt', 'updatedAt']));
       expect(message.record.reportToEms).toEqual(false);
     }
   });
