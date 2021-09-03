@@ -235,7 +235,7 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
   const omitFields = ['createdAt', 'updatedAt'];
   t.is(message.event, 'Update');
-  t.deepEqual(omit(message.record, omitFields), omit(updatedCollection, omitFields));
+  t.deepEqual(omit(message.record, omitFields), omit(actualCollection, omitFields));
 });
 
 test.serial('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {

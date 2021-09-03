@@ -25,7 +25,7 @@ of response and not the raw API endpoint response
       - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
   - **CUMULUS-2510**
     - Added `collection_sns_topic_arn` environment variable to
-      `api.tf`.
+      `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
       publish SNS messages to the report collections topic.
 - **CUMULUS-2592**
@@ -103,15 +103,11 @@ of response and not the raw API endpoint response
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
   - **CUMULUS-2510**
-    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
-      TF definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on collections
-      DynamoDB table.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
-      to return an array of objects containing values of the created or updated
-      columns.
+      to return an array of objects containing all columns for the created or
+      updated records.
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
@@ -130,6 +126,16 @@ processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
+      TF definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+      DynamoDB table.
+    - Removed lambda `publish_collections` TF resource.
 
 ## [v9.4.0] 2021-08-16
 

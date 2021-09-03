@@ -229,7 +229,7 @@ test.serial('Deleting a collection removes it from all data stores and publishes
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
   t.is(message.event, 'Delete');
-  t.truthy(message.deletedAt);
+  t.true(Date.now() > message.deletedAt);
   t.deepEqual(
     message.record,
     { name: originalCollection.name, version: originalCollection.version }
