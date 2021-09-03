@@ -62,12 +62,14 @@ async function queueGranules(event) {
         executionNamePrefix: event.config.executionNamePrefix,
         additionalCustomMeta: event.config.childWorkflowMeta,
       }).then(
-        async () =>
+        async (result) => {
           await granulesApi.updateGranuleStatus({
             prefix: event.config.stackName,
             granuleId: granule.granuleId,
             status: 'queued',
-          })
+          });
+          return result;
+        }
       );
     },
     { concurrency: get(event, 'config.concurrency', 3) }
