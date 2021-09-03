@@ -7,7 +7,7 @@ const asyncOperations = require('@cumulus/async-operations');
 const {
   CollectionPgModel,
   getKnexClient,
-  getUniquePgGranuleByGranuleId,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -83,7 +83,7 @@ async function put(req, res) {
   if (!action) {
     const apiGranule = req.body;
     const oldDynamoGranule = await granuleModel.get({ granuleId });
-    const oldPgGranule = await getUniquePgGranuleByGranuleId(knex, granulePgModel, granuleId);
+    const oldPgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
 
     apiGranule.updatedAt = Date.now();
     apiGranule.createdAt = oldPgGranule.created_at.getTime();
@@ -103,7 +103,7 @@ async function put(req, res) {
     return res.send(newApiGranule);
   }
 
-  const pgGranule = await getUniquePgGranuleByGranuleId(knex, granulePgModel, granuleId);
+  const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
   const apiGranule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
 
   if (action === 'reingest') {
