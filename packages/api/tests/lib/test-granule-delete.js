@@ -37,14 +37,7 @@ const {
 } = require('../../lib/testUtils');
 
 const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
-
-<<<<<<< HEAD
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
-=======
-const { migrationDir } = require('../../../../lambdas/db-migration');
-
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
->>>>>>> feature/rds-phase-2
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
