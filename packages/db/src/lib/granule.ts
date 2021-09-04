@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-import { PostgresGranule } from '../types/granule';
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -16,7 +16,7 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
- * @returns {Promise<Object[]>}
+ * @returns {Promise<PostgresGranuleRecord[]>}
  */
 export const upsertGranuleWithExecutionJoinRecord = async (
   knexTransaction: Knex.Transaction,
@@ -24,7 +24,7 @@ export const upsertGranuleWithExecutionJoinRecord = async (
   executionCumulusId?: number,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-): Promise<Object[]> => {
+): Promise<PostgresGranuleRecord[]> => {
   const [pgGranule] = await granulePgModel.upsert(
     knexTransaction,
     granule,

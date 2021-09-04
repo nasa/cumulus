@@ -15,6 +15,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresGranule
+  ) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   /**
    * Deletes the item from Postgres
    *
