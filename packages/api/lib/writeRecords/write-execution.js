@@ -120,7 +120,7 @@ const _writeExecutionRecord = ({
 }) => knex.transaction(async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
-  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${response.cumulus_id}`);
+  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
   await writeExecutionToDynamoAndES({
     dynamoRecord,
     executionModel,
