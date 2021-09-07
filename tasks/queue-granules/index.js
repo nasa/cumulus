@@ -47,7 +47,7 @@ async function queueGranules(event) {
         granule.dataType,
         granule.version
       );
-      return enqueueGranuleIngestMessage({
+      const executionArn = await enqueueGranuleIngestMessage({
         granule,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
@@ -61,16 +61,15 @@ async function queueGranules(event) {
         systemBucket: event.config.internalBucket,
         executionNamePrefix: event.config.executionNamePrefix,
         additionalCustomMeta: event.config.childWorkflowMeta,
-      }).then(
-        async (result) => {
-          await granulesApi.updateGranuleStatus({
-            prefix: event.config.stackName,
-            granuleId: granule.granuleId,
-            status: 'queued',
-          });
-          return result;
-        }
-      );
+      });
+      if (executionArn) {
+        await granulesApi.updateGranuleStatus({
+          prefix: event.config.stackName,
+          granuleId: granule.granuleId,
+          status: 'queued',
+        });
+      }
+      return executionArn;
     },
     { concurrency: get(event, 'config.concurrency', 3) }
   );
