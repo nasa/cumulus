@@ -37,6 +37,9 @@ of response and not the raw API endpoint response
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
+- **CUMULUS-2578**
+  - Adds `PUT /executions` endpoint to update an execution
+
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
@@ -45,6 +48,7 @@ of response and not the raw API endpoint response
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
   - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
   and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Added `resetPostgresDb` method to support resetting between integration test suite runs
 
 ### Changed
 
@@ -55,6 +59,10 @@ for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
 
+- **CUMULUS-2644**
+  - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
+  updated unit test references to migrationDir to be pulled from `@cumulus/db`
+  - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
 - **CUMULUS-2575**
   - Updates model/granule to allow a granule created from API to not require an
     execution to be associated with it. This is a backwards compatible change
