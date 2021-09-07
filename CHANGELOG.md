@@ -16,6 +16,20 @@ of response and not the raw API endpoint response
 
 ### Added
 
+- **CUMULUS-2670**
+  - Updated core `cumulus` module to take lambda_timeouts string map variable that allows timeouts of ingest tasks to be configurable. Allowed properties for the mapping include:
+  - discover_granules_task_timeout
+  - discover_pdrs_task_timeout
+  - hyrax_metadata_update_tasks_timeout
+  - lzards_backup_task_timeout
+  - move_granules_task_timeout
+  - parse_pdr_task_timeout
+  - pdr_status_check_task_timeout
+  - post_to_cmr_task_timeout
+  - queue_granules_task_timeout
+  - queue_pdrs_task_timeout
+  - queue_workflow_task_timeout
+  - sync_granule_task_timeout
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
   - Adds helper `createGranule` to `@cumulus/api-client`
