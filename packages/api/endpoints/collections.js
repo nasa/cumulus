@@ -22,6 +22,7 @@ const {
   deleteCollection,
 } = require('@cumulus/es-client/indexer');
 const Collection = require('@cumulus/es-client/collections');
+const { publishCollectionSnsMessage } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
@@ -131,13 +132,15 @@ async function post(req, res) {
 
     try {
       await knex.transaction(async (trx) => {
-        await collectionPgModel.create(trx, dbRecord);
+        const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
+        const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
         dynamoRecord = await collectionsModel.create(
           omit(collection, 'dataType')
         );
         // process.env.ES_INDEX is only used to isolate the index for
         // each unit test suite
         await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+        await publishCollectionSnsMessage(translatedCollection, 'Create');
       });
     } catch (innerError) {
       // Clean up DynamoDB collection record in case of any failure
@@ -204,11 +207,13 @@ async function put(req, res) {
 
   try {
     await knex.transaction(async (trx) => {
-      await collectionPgModel.upsert(trx, postgresCollection);
+      const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
+      const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
       dynamoRecord = await collectionsModel.create(collection);
       // process.env.ES_INDEX is only used to isolate the index for
       // each unit test suite
       await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+      await publishCollectionSnsMessage(translatedCollection, 'Update');
     });
   } catch (error) {
     // Revert Dynamo record update if any write fails
@@ -257,6 +262,7 @@ async function del(req, res) {
           index: process.env.ES_INDEX,
           ignore: [404],
         });
+        await publishCollectionSnsMessage({ name, version }, 'Delete');
       });
     } catch (innerError) {
       // Delete is idempotent, so there may not be a DynamoDB

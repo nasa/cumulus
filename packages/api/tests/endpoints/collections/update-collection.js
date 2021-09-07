@@ -2,7 +2,11 @@
 
 const test = require('ava');
 const request = require('supertest');
-const awsServices = require('@cumulus/aws-client/services');
+const {
+  s3,
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -70,7 +74,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await t.context.collectionModel.createTable();
@@ -82,6 +86,38 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+});
+test.beforeEach(async (t) => {
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.collection_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
@@ -117,7 +153,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT replaces an existing collection', async (t) => {
+test.serial('PUT replaces an existing collection and sends an SNS message', async (t) => {
   const {
     originalCollection,
     originalPgRecord,
@@ -187,9 +223,20 @@ test('PUT replaces an existing collection', async (t) => {
     created_at: originalPgRecord.created_at,
     updated_at: actualPgCollection.updated_at,
   });
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  t.is(message.event, 'Update');
+  t.deepEqual(message.record, actualCollection);
 });
 
-test('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
+test.serial('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
   const { originalCollection } = await createCollectionTestRecords(
     t.context,
     {
@@ -241,7 +288,7 @@ test('PUT replaces an existing collection in all data stores with correct timest
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
-test('PUT creates a new record in RDS if one does not exist', async (t) => {
+test.serial('PUT creates a new record in RDS if one does not exist  and sends an SNS message', async (t) => {
   const knex = t.context.testKnex;
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
@@ -280,9 +327,19 @@ test('PUT creates a new record in RDS if one does not exist', async (t) => {
   t.is(fetchedDbRecord.process, null);
   t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
+  t.is(message.event, 'Update');
+  t.deepEqual(message.record, fetchedDynamoRecord);
 });
 
-test('PUT returns 404 for non-existent collection', async (t) => {
+test.serial('PUT returns 404 for non-existent collection', async (t) => {
   const name = randomString();
   const version = randomString();
   const response = await request(app)
@@ -297,7 +354,7 @@ test('PUT returns 404 for non-existent collection', async (t) => {
   t.falsy(record);
 });
 
-test('PUT returns 400 for name mismatch between params and payload',
+test.serial('PUT returns 400 for name mismatch between params and payload',
   async (t) => {
     const name = randomString();
     const version = randomString();
@@ -313,7 +370,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test('PUT returns 400 for version mismatch between params and payload',
+test.serial('PUT returns 400 for version mismatch between params and payload',
   async (t) => {
     const name = randomString();
     const version = randomString();
@@ -329,7 +386,7 @@ test('PUT returns 400 for version mismatch between params and payload',
     t.falsy(record);
   });
 
-test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+test.serial('put() does not write to PostgreSQL/Elasticsearch or publish SNS message if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
@@ -393,9 +450,15 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
     ),
     originalEsRecord
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
@@ -456,9 +519,15 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
     ),
     originalEsRecord
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
 
-test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
@@ -519,4 +588,10 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
     ),
     originalEsRecord
   );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });

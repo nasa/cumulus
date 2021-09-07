@@ -100,10 +100,11 @@ test.before(async (t) => {
   const testPgCollection = translateApiCollectionToPostgresCollection(
     t.context.testCollection
   );
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.after.always(async (t) => {
