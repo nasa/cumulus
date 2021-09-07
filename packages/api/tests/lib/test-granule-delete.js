@@ -163,7 +163,10 @@ test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/DynamoDB/Elastic
   });
 
   t.true(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: newPgGranule.granule_id }));
+  t.true(await granulePgModel.exists(t.context.knex, {
+    granule_id: newPgGranule.granule_id,
+    collection_cumulus_id: t.context.collectionCumulusId,
+  }));
   t.true(
     await t.context.esGranulesClient.exists(
       newDynamoGranule.granuleId,
