@@ -230,10 +230,11 @@ test.before(async (t) => {
     version: collectionVersion,
   });
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.fakeApiExecutions = await Promise.all(t.context.fakePGExecutions
     .map(async (fakePGExecution) =>
@@ -428,10 +429,11 @@ test('GET returns an existing execution', async (t) => {
   const collectionPgModel = new CollectionPgModel();
   const asyncOperationsPgModel = new AsyncOperationPgModel();
 
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     collectionRecord
   );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
     t.context.knex,

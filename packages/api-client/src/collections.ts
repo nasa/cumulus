@@ -36,6 +36,40 @@ export const createCollection = async (params: {
 };
 
 /**
+ * PUT /collections/{collectionName}/{collectionVersion}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.collection   - collection object to update in the database
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const updateCollection = async (params: {
+  prefix: string,
+  collection: NewCollectionRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    collection,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: `/collections/${collection.name}/${collection.version}`,
+      body: JSON.stringify(collection),
+    },
+  });
+};
+
+/**
  * DELETE /collections/{collectionName}/{collectionVersion}
  *
  * @param {Object} params                     - params

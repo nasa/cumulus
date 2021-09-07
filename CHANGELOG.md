@@ -30,6 +30,11 @@ of response and not the raw API endpoint response
       permissions for SNS publish for `report_executions_topic`
     - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
       publish SNS messages to the report executions topic.
+    - Added `collection_sns_topic_arn` environment variable to
+      `PrivateApiLambda` and `ApiEndpoints` lambdas.
+    - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
+      publish SNS messages to the report collections topic.
+    - Added `updateCollection` to `@cumulus/api-client`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
@@ -112,6 +117,11 @@ of response and not the raw API endpoint response
     - Updated functions `create` and `upsert` in the `db` model for Executions
     to return an array of objects containing all columns of the created or
     updated records.
+    - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
+      after a successful collection delete, update (PUT), create (POST).
+    - Updated functions `create` and `upsert` in the `db` model for Collections
+      to return an array of objects containing all columns for the created or
+      updated records.
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
@@ -139,6 +149,11 @@ when output of the operation is `undefined`
       definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on executions
       DynamoDB table.
+    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
+      TF definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+      DynamoDB table.
+    - Removed lambda `publish_collections` TF resource.
 
 ## [v9.4.0] 2021-08-16
 

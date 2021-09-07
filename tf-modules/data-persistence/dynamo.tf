@@ -71,8 +71,6 @@ resource "aws_dynamodb_table" "collections_table" {
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "name"
   range_key        = "version"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "name"

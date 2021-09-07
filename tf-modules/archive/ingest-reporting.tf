@@ -403,45 +403,6 @@ resource "aws_sqs_queue" "publish_collections_dead_letter_queue" {
   tags                       = var.tags
 }
 
-resource "aws_lambda_function" "publish_collections" {
-  filename         = "${path.module}/../../packages/api/dist/publishCollections/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishCollections/lambda.zip")
-  function_name    = "${var.prefix}-publishCollections"
-  role             = aws_iam_role.publish_collections_lambda_role.arn
-  handler          = "index.handler"
-  runtime          = "nodejs12.x"
-  timeout          = 30
-  memory_size      = 128
-
-  dead_letter_config {
-    target_arn = aws_sqs_queue.publish_collections_dead_letter_queue.arn
-  }
-
-  dynamic "vpc_config" {
-    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
-    content {
-      subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
-    }
-  }
-
-  environment {
-    variables = {
-      collection_sns_topic_arn = aws_sns_topic.report_collections_topic.arn
-    }
-  }
-
-  tags = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "publish_collections_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.publish_collections.function_name}"
-  retention_in_days = 14
-  tags              = var.tags
-}
-
 resource "aws_sns_topic" "report_collections_topic" {
   name = "${var.prefix}-report-collections-topic"
   tags = var.tags
@@ -449,11 +410,4 @@ resource "aws_sns_topic" "report_collections_topic" {
 
 data "aws_dynamodb_table" "collections" {
   name = var.dynamo_tables.collections.name
-}
-
-resource "aws_lambda_event_source_mapping" "publish_collections" {
-  event_source_arn  = data.aws_dynamodb_table.collections.stream_arn
-  function_name     = aws_lambda_function.publish_collections.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
 }
