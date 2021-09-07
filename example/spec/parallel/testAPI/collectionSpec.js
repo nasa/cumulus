@@ -1,7 +1,5 @@
 'use strict';
 
-const omit = require('lodash/omit');
-
 const { deleteS3Object, getJsonS3Object, waitForObjectToExist } = require('@cumulus/aws-client/S3');
 const { fakeCollectionFactory } = require('@cumulus/api/lib/testUtils');
 const { createCollection, deleteCollection, getCollection, updateCollection } = require('@cumulus/api-client/collections');
@@ -12,6 +10,7 @@ describe('Collections API', () => {
   let beforeAllFailed = false;
   let config;
   let collection;
+  let originalCollectionFromApi;
   let prefix;
   let recordCreatedKey;
   let recordUpdatedKey;
@@ -25,6 +24,11 @@ describe('Collections API', () => {
       collection = fakeCollectionFactory({ reportToEms: true });
       await createCollection({ prefix, collection });
       const { name, version } = collection;
+      originalCollectionFromApi = await getCollection({
+        prefix: config.stackName,
+        collectionName: collection.name,
+        collectionVersion: collection.version,
+      });
 
       const reportKeyPrefix = `${config.stackName}/test-output`;
       recordCreatedKey = `${reportKeyPrefix}/${name}-${version}-Create.output`;
@@ -55,7 +59,7 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordCreatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Create');
-      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(collection, ['createdAt', 'updatedAt']));
+      expect(message.record).toEqual(originalCollectionFromApi);
     }
   });
 
@@ -63,16 +67,10 @@ describe('Collections API', () => {
     if (beforeAllFailed) {
       fail('beforeAll() failed');
     } else {
-      const originalCollection = collection;
       const updatedCollection = {
-        ...originalCollection,
+        ...collection,
         reportToEms: false,
       };
-      const originalCollectionFromApi = await getCollection({
-        prefix: config.stackName,
-        collectionName: originalCollection.name,
-        collectionVersion: originalCollection.version,
-      });
       expect(originalCollectionFromApi.reportToEms).toEqual(true);
 
       await updateCollection({
@@ -92,7 +90,7 @@ describe('Collections API', () => {
       const savedEvent = await getJsonS3Object(config.bucket, recordUpdatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
       expect(message.event).toEqual('Update');
-      expect(omit(message.record, ['createdAt', 'updatedAt'])).toEqual(omit(updatedCollectionFromApi, ['createdAt', 'updatedAt']));
+      expect(message.record).toEqual(updatedCollectionFromApi);
       expect(message.record.reportToEms).toEqual(false);
     }
   });
