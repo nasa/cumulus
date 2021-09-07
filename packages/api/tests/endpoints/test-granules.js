@@ -263,7 +263,7 @@ test.beforeEach(async (t) => {
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.executionUrl }),
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
   ];
 
@@ -468,16 +468,16 @@ test.serial('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test.serial('PUT fails if action is not provided', async (t) => {
+test.serial('PUT updates granule if action is not provided', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
+    .expect(200);
 
-  t.is(response.status, 400);
+  t.is(response.status, 200);
   const { message } = response.body;
-  t.is(message, 'Action is missing');
+  t.is(message, `Successfully updated granule with Granule Id: ${t.context.fakeGranules[0].granuleId}`);
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -1650,7 +1650,7 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
   });
 
   const response = await request(app)
-    .put('/granules')
+    .put(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -1685,7 +1685,7 @@ test.serial('update (PUT) returns an updated granule with an undefined execution
   };
 
   const modifiedResponse = await request(app)
-    .put('/granules')
+    .put(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(modifiedGranule)
@@ -1744,7 +1744,7 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   };
 
   const modifiedResponse = await request(app)
-    .put('/granules')
+    .put(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(modifiedGranule)

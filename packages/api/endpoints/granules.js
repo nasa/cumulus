@@ -150,7 +150,8 @@ async function put(req, res) {
   const action = body.action;
 
   if (!action) {
-    return res.boom.badRequest('Action is missing');
+    req.body.granuleId = granuleId;
+    return update(req, res);
   }
 
   const granuleModelClient = new models.Granule();
@@ -247,7 +248,6 @@ async function put(req, res) {
       status: 'SUCCESS',
     });
   }
-
   return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
 }
 
@@ -502,7 +502,7 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/', create);
 router.put('/:granuleName', put);
-router.put('/', update);
+
 
 router.post(
   '/bulk',

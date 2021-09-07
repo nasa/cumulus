@@ -434,7 +434,7 @@ export const updateGranule = async (params: {
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: '/granules',
+      path: `/granules/${body.granuleId}`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
