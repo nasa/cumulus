@@ -503,7 +503,6 @@ router.get('/', list);
 router.post('/', create);
 router.put('/:granuleName', put);
 
-
 router.post(
   '/bulk',
   validateBulkGranulesRequest,
