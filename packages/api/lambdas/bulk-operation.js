@@ -35,7 +35,10 @@ async function applyWorkflowToGranules({
         granuleId,
         granulePgModel
       );
-      const granule = await granuleTranslateMethod(pgGranule, knex);
+      const granule = await granuleTranslateMethod({
+        granulePgRecord: pgGranule,
+        knexOrTransaction: knex,
+      });
       await granuleModel.applyWorkflow(
         granule,
         workflowName,
@@ -95,7 +98,10 @@ async function bulkGranuleDelete(
       }
 
       if (pgGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, pgGranule));
+        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc({
+          knex,
+          pgGranuleRecord: pgGranule,
+        }));
       } else {
         dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
       }

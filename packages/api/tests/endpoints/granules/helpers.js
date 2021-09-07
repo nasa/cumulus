@@ -69,10 +69,10 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     }),
   ];
   await Promise.all(pgFiles.map((file) => filePgModel.create(t.context.knex, file)));
-  const apiGranule = await translatePostgresGranuleToApiGranule(
-    pgGranule,
-    t.context.knex
-  );
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: t.context.knex,
+  });
   await granuleModel.create(apiGranule);
 
   await Promise.all(

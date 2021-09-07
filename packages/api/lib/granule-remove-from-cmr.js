@@ -3,6 +3,7 @@ const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
 const { getGranuleCollectionId, GranulePgModel } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../models');
 
 /**
@@ -30,20 +31,23 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
 /**
  * Remove granule record from CMR and update Postgres + Dynamo granules
  *
- * @param {Knex} knex - DB client
- * @param {Object} pgGranuleRecord - A Postgres granule record
- * @param {Object} granulePgModel - Instance of granules model for PostgreSQL
- * @param {Object} granuleDynamoModel - Instance of granules model for DynamoDB
+ * @param {Object} params
+ * @param {Knex} params.knex - DB client
+ * @param {Object} params.pgGranuleRecord - A Postgres granule record
+ * @param {string} params.pgCollection - A Postgres Collection record
+ * @param {Object} params.granulePgModel - Instance of granules model for PostgreSQL
+ * @param {Object} params.granuleDynamoModel - Instance of granules model for DynamoDB
  * @returns {Object} - Updated granules
  * @returns {Object.dynamoGranule} - Updated Dynamo Granule
  * @returns {Object.pgGranule} - Updated Postgres Granule
  */
-const unpublishGranule = async (
+const unpublishGranule = async ({
   knex,
   pgGranuleRecord,
+  pgCollection,
   granulePgModel = new GranulePgModel(),
-  granuleDynamoModel = new models.Granule()
-) => {
+  granuleDynamoModel = new models.Granule(),
+}) => {
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
   const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
@@ -70,7 +74,15 @@ const unpublishGranule = async (
         ['cmrLink']
       );
       dynamoGranuleDeleted = true;
-      const collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+
+      let collectionId;
+
+      if (pgCollection) {
+        collectionId = constructCollectionId(pgCollection);
+      } else {
+        collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+      }
+
       await _removeGranuleFromCmr(pgGranuleRecord, collectionId);
       return { dynamoGranule, pgGranule };
     });

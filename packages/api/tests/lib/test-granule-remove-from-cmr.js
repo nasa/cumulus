@@ -123,7 +123,7 @@ test('unpublishGranule() removing a granule from CMR fails if the granule is not
     cmrLink: undefined,
   });
   try {
-    await unpublishGranule(t.context.knex, originalPgGranule);
+    await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
   } catch (error) {
     t.is(error.message, `Granule ${originalPgGranule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
   }
@@ -187,7 +187,77 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   const {
     dynamoGranule,
     pgGranule,
-  } = await unpublishGranule(t.context.knex, originalPgGranule);
+  } = await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
+
+  t.true(cmrDeleteStub.called);
+  t.deepEqual(
+    dynamoGranule,
+    omit(
+      {
+        ...originalDynamoGranule,
+        published: false,
+        updatedAt: dynamoGranule.updatedAt,
+      },
+      'cmrLink'
+    )
+  );
+  t.deepEqual(
+    pgGranule,
+    {
+      ...pgGranule,
+      published: false,
+      cmr_link: null,
+    }
+  );
+});
+
+test.serial('unpublishGranule() accepts an optional collection', async (t) => {
+  const { fakeCollection } = t.context;
+
+  const {
+    originalDynamoGranule,
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInDynamoAndPG(t, {
+    published: true,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
+  });
+
+  t.like(
+    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
+    {
+      published: true,
+      cmrLink: originalDynamoGranule.cmrLink,
+    }
+  );
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    foo: 'bar',
+  });
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  const {
+    dynamoGranule,
+    pgGranule,
+  } = await unpublishGranule({
+    knex: t.context.knex,
+    pgGranuleRecord: originalPgGranule,
+    pgCollection: fakeCollection,
+  });
 
   t.true(cmrDeleteStub.called);
   t.deepEqual(
@@ -255,11 +325,11 @@ test.serial('unpublishGranule() does not update granule CMR status or delete fro
   };
 
   await t.throwsAsync(
-    unpublishGranule(
-      t.context.knex,
-      originalPgGranule,
-      fakeGranulePgModel
-    )
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+      granulePgModel: fakeGranulePgModel,
+    })
   );
 
   t.false(cmrDeleteStub.called);
@@ -324,12 +394,12 @@ test.serial('unpublishGranule() does not update granule CMR status or delete fro
   };
 
   await t.throwsAsync(
-    unpublishGranule(
-      t.context.knex,
-      originalPgGranule,
-      t.context.granulePgModel,
-      fakeGranuleDynamoModel
-    )
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+      granulePgModel: t.context.granulePgModel,
+      granuleDynamoModel: fakeGranuleDynamoModel,
+    })
   );
 
   t.false(cmrDeleteStub.called);
@@ -389,10 +459,10 @@ test.serial('unpublishGranule() does not update granule CMR status if CMR remova
   );
 
   await t.throwsAsync(
-    unpublishGranule(
-      t.context.knex,
-      originalPgGranule
-    ),
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+    }),
     { message: 'CMR delete error' }
   );
 
@@ -438,7 +508,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
   ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
 
   try {
-    await unpublishGranule(t.context.knex, originalPgGranule);
+    await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
   } finally {
     CMR.prototype.deleteGranule.restore();
     DefaultProvider.decrypt.restore();
@@ -472,7 +542,7 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
 
   try {
-    await unpublishGranule(t.context.knex, originalPgGranule);
+    await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
 
     t.is(launchpadStub.calledOnce, true);
   } finally {

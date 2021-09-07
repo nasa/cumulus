@@ -104,13 +104,20 @@ async function put(req, res) {
   }
 
   const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
-  const apiGranule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
+
+  const collectionPgModel = new CollectionPgModel();
+  const pgCollection = await collectionPgModel.get(
+    knex,
+    { cumulus_id: pgGranule.collection_cumulus_id }
+  );
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  });
 
   if (action === 'reingest') {
-    const collectionPgModel = new CollectionPgModel();
-    const collection = translatePostgresCollectionToApiCollection(
-      await collectionPgModel.get(knex, { cumulus_id: pgGranule.collection_cumulus_id })
-    );
+    const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
@@ -140,7 +147,7 @@ async function put(req, res) {
       status: 'SUCCESS',
     };
 
-    if (collection.duplicateHandling !== 'replace') {
+    if (apiCollection.duplicateHandling !== 'replace') {
       response.warning = 'The granule files may be overwritten';
     }
     return res.send(response);
@@ -161,7 +168,11 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await unpublishGranule(knex, pgGranule);
+    await unpublishGranule({
+      knex,
+      pgGranuleRecord: pgGranule,
+      pgCollection: pgCollection,
+    });
 
     return res.send({
       granuleId: apiGranule.granuleId,
@@ -297,7 +308,10 @@ async function get(req, res) {
   }
 
   // Get related files, execution ARNs, provider, PDR, and collection and format
-  const result = await translatePostgresGranuleToApiGranule(granule, knex);
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    knexOrTransaction: knex,
+  });
 
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)

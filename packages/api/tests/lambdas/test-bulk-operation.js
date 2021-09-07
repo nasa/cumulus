@@ -308,10 +308,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
   t.is(applyWorkflowStub.callCount, 2);
   // Can't guarantee processing order so test against granule matching by ID
   await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
-    const matchingGranule = await translatePostgresGranuleToApiGranule(
-      granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
-      t.context.knex
-    );
+    const matchingGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
+      knexOrTransaction: t.context.knex,
+    });
     t.deepEqual(matchingGranule, callArgs[0]);
     t.is(callArgs[1], workflowName);
   }));
@@ -385,10 +385,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   t.is(applyWorkflowStub.callCount, 2);
   // Can't guarantee processing order so test against granule matching by ID
   await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
-    const matchingGranule = await translatePostgresGranuleToApiGranule(
-      granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
-      t.context.knex
-    );
+    const matchingGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
+      knexOrTransaction: t.context.knex,
+    });
     t.deepEqual(matchingGranule, callArgs[0]);
     t.is(callArgs[1], workflowName);
   }));

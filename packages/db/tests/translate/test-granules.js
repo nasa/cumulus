@@ -40,8 +40,11 @@ test.before(async (t) => {
 
   // Create collection
   t.context.collectionPgModel = new CollectionPgModel();
-  const collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(knex, collection);
+  t.context.collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
+  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+    knex,
+    t.context.collection
+  );
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
@@ -217,14 +220,95 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     ],
   };
 
-  const result = await translatePostgresGranuleToApiGranule(
-    postgresGranule,
-    knex,
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    knexOrTransaction: knex,
     collectionPgModel,
     pdrPgModel,
     providerPgModel,
-    filePgModel
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
   );
+});
+
+test('translatePostgresGranuleToApiGranule accepts an optional Collection', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+    executions,
+    collection,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.getTime().toString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId: 'collectionName___collectionVersion',
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
+    error: postgresGranule.error,
+    execution: executions[0].arn,
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.getTime().toString(),
+    pdrName: 'pdrName',
+    processingEndDateTime: postgresGranule.processing_end_date_time.getTime().toString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.getTime().toString(),
+    productionDateTime: postgresGranule.production_date_time.getTime().toString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    provider: 'providerName',
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        createdAt: createdAt.getTime(),
+        fileName: 's3://cumulus-test-sandbox-private/firstKey',
+        key: 'firstKey',
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        updatedAt: updatedAt.getTime(),
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        createdAt: createdAt.getTime(),
+        fileName: 's3://cumulus-test-sandbox-private/secondKey',
+        key: 'secondKey',
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+        updatedAt: updatedAt.getTime(),
+      },
+    ],
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    collectionPgRecord: collection,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
 
   t.deepEqual(
     result,
@@ -298,14 +382,14 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     ],
   };
 
-  const result = await translatePostgresGranuleToApiGranule(
-    postgresGranule,
-    knex,
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    knexOrTransaction: knex,
     collectionPgModel,
     pdrPgModel,
     providerPgModel,
-    filePgModel
-  );
+    filePgModel,
+  });
 
   t.deepEqual(
     result,

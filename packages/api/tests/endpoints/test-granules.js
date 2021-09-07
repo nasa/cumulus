@@ -440,7 +440,10 @@ test.serial('GET returns the expected existing granule', async (t) => {
     collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
   });
 
-  const expectedGranule = await translatePostgresGranuleToApiGranule(pgGranule, knex);
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
 
   t.deepEqual(response.body, expectedGranule);
 });
