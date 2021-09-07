@@ -22,6 +22,7 @@ const pMap = require('p-map');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
+const { groupAndBatchGranules } = require('..');
 
 const { queueGranules } = proxyquire('..', {
   'p-map': pMapSpy,
@@ -94,6 +95,48 @@ test.afterEach(async (t) => {
     recursivelyDeleteS3Bucket(t.context.internalBucket),
     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
   ]);
+});
+
+test('groupAndBatchGranules return list of lists of granules by collection', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules batches granules by batchSize', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001' },
+    { granuleId: '3', dataType: 'ABC', version: '001' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+    { granuleId: '5', dataType: 'ABC', version: '002' },
+    { granuleId: '6', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = [
+    [
+      { granuleId: '1', dataType: 'ABC', version: '001' },
+      { granuleId: '2', dataType: 'ABC', version: '001' },
+    ],
+    [
+      { granuleId: '3', dataType: 'ABC', version: '001' },
+    ],
+    [
+      { granuleId: '4', dataType: 'ABC', version: '002' },
+      { granuleId: '5', dataType: 'ABC', version: '002' },
+    ],
+    [
+      { granuleId: '6', dataType: 'XYZ', version: '001' },
+    ],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 2);
+
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
 test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
