@@ -65,6 +65,7 @@ test.serial('publishExecutionSnsMessage() does not publish an SNS message if exe
 });
 
 test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) => {
+  process.env.execution_sns_topic_arn = t.context.TopicArn;
   const executionArn = cryptoRandomString({ length: 10 });
   const newExecution = fakeExecutionFactoryV2({
     arn: executionArn,
