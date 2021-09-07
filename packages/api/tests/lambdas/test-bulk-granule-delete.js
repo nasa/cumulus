@@ -90,15 +90,15 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       ],
       forceRemoveFromCmr: true,
     },
-    async (dbClient, pgGranule) => {
+    async ({ _, pgGranuleRecord }) => {
       const dynamoGranule = await granuleModel.get(
-        { granuleId: pgGranule.granule_id }
+        { granuleId: pgGranuleRecord.granule_id }
       );
 
       return {
         dynamoGranule: { ...dynamoGranule, published: false },
         pgGranule: {
-          ...pgGranule,
+          ...pgGranuleRecord,
           published: false,
         },
       };
