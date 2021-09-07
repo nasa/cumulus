@@ -9,14 +9,16 @@ const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
-  destroyLocalTestDb,
+  ExecutionPgModel,
   FilePgModel,
-  generateLocalTestDb,
   GranulePgModel,
+  destroyLocalTestDb,
+  generateLocalTestDb,
   localStackConnectionEnv,
-  translateApiGranuleToPostgresGranule,
-  translateApiFiletoPostgresFile,
   migrationDir,
+  translateApiExecutionToPostgresExecution,
+  translateApiFiletoPostgresFile,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 
 const {
@@ -64,6 +66,7 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
+  fakeExecutionFactoryV2,
 } = require('../../lib/testUtils');
 
 const {
@@ -79,6 +82,7 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
 let collectionModel;
+let executionModel;
 let esClient;
 let esIndex;
 let filePgModel;
@@ -88,6 +92,7 @@ let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
+process.env.ExecutionsTable = randomId('executions');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
@@ -96,6 +101,7 @@ process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
+const { execution } = require('../../models/schemas');
 
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
@@ -170,6 +176,11 @@ test.before(async (t) => {
   collectionModel = new models.Collection();
   await collectionModel.createTable();
 
+  // create fake execution table
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+  const executionPgModel = new ExecutionPgModel();
+
   // create fake Granules table
   granuleModel = new models.Granule();
   await granuleModel.createTable();
@@ -230,6 +241,19 @@ test.before(async (t) => {
     t.context.knex,
     testPgCollection
   );
+  const newExecution = fakeExecutionFactoryV2({
+    arn: 'arn3',
+    status: 'completed',
+    name: 'test_execution',
+  });
+
+  await executionModel.create(newExecution);
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    newExecution,
+    knex
+  );
+  await executionPgModel.create(knex, executionPgRecord);
+  t.context.executionUrl = executionPgRecord.url;
 });
 
 test.beforeEach(async (t) => {
@@ -273,6 +297,7 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
+  await executionModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -1510,10 +1535,43 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.serial('create (POST) creates new granule in dynamoDB and postgres', async (t) => {
+test.serial('create (POST) creates new granule without an execution in dynamoDB and postgres', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.deepEqual(
+    JSON.parse(response.text),
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
+  );
+  t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
+  t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+});
+
+test.serial('create (POST) creates new granule with associated execution in dynamoDB and postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
   });
 
   const response = await request(app)
@@ -1603,13 +1661,72 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
   t.is(response.body.message, `No granule found to update for ${JSON.stringify(newGranule)}`);
 });
 
-test.serial('update (PUT) returns an updated granule', async (t) => {
+test.serial('update (PUT) returns an updated granule with an undefined execution', async (t) => {
   const now = Date.now();
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     createdAt: now,
     timestamp: now,
     execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  t.is(response.statusCode, 200);
+
+  const modifiedGranule = {
+    ...newGranule,
+    status: 'failed',
+    error: { some: 'error' },
+  };
+
+  const modifiedResponse = await request(app)
+    .put('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(modifiedGranule)
+    .expect(200);
+
+  t.is(modifiedResponse.statusCode, 200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.deepEqual(JSON.parse(modifiedResponse.text), {
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}`,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'failed');
+  t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
+  t.is(new Date(fetchedDynamoRecord.timestamp).valueOf(), now);
+  t.is(new Date(fetchedDynamoRecord.createdAt).valueOf(), now);
+  t.is(fetchedPostgresRecord.status, 'failed');
+  t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
+  t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), now);
+  t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), now);
+});
+
+test.serial('update (PUT) returns an updated granule with associated execution', async (t) => {
+  const now = Date.now();
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt: now,
+    timestamp: now,
+    execution: t.context.executionUrl,
   });
 
   const response = await request(app)
