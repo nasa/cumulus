@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+// const { publishGranuleSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 const asyncOperations = require('@cumulus/async-operations');
 const {
@@ -88,9 +89,12 @@ async function put(req, res) {
 
     try {
       await knex.transaction(async (trx) => {
+        // const [pgGranule] = await granulePgModel.upsert(trx, postgresRule);
         await granulePgModel.upsert(trx, postgresRule);
         newGranule = await granuleModel.create(apiGranule);
         await indexGranule(esClient, newGranule, process.env.ES_INDEX);
+        // const translatedGranule = await translatePostgresGranuleToApiGranule(pgGranule);
+        // await publishGranuleSnsMessage(pgGranule, 'Update');
       });
     } catch (innerError) {
       // Revert Dynamo record update if any write fails
@@ -262,6 +266,7 @@ async function del(req, res) {
     pgGranule,
     esClient,
   });
+  // await publishGranuleSnsMessage(pgGranule, 'Delete');
 
   return res.send({ detail: 'Record deleted' });
 }

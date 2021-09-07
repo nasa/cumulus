@@ -1,11 +1,14 @@
 import Knex from 'knex';
 
-import { deconstructCollectionId } from '@cumulus/message/Collections';
+import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
+import { ApiGranule } from '@cumulus/types/api/granules';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
+import { FilePgModel } from '../models/file';
+import { ExecutionPgModel } from '../models/execution';
 
 /**
  * Generate a Postgres granule record from a DynamoDB record.
@@ -71,4 +74,78 @@ export const translateApiGranuleToPostgresGranule = async (
   };
 
   return granuleRecord;
+};
+
+/**
+ * Generate an API Granule record from a PostgreSQL record.
+ *
+ * @param {Object} postgresGranule - A PostgreSQL Granule record
+ * @param {Knex | Knex.Transaction} knex
+ * @param {Object} collectionPgModel - Instance of the collection database model
+ * @param {Object} filePgModel - Instance of the file database model
+ * @param {Object} pdrPgModel - Instance of the pdr database model
+ * @param {Object} providerPgModel - Instance of the provider database model
+ * @param {Object} executionPgModel - Instance of the execution database model
+ * @returns {Object} A granule API record
+ */
+export const translatePostgresGranuleToApiGranule = async (
+  postgresGranule: PostgresGranuleRecord,
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  filePgModel = new FilePgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel(),
+  executionPgModel = new ExecutionPgModel()
+): Promise<ApiGranule> => {
+  let collectionId;
+  let provider: string | undefined;
+  let pdrName: string | undefined;
+
+  if (postgresGranule.collection_cumulus_id) {
+    const collection = await collectionPgModel.get(knex, {
+      cumulus_id: postgresGranule.collection_cumulus_id,
+    });
+    collectionId = constructCollectionId(collection.name, collection.version);
+  }
+
+  if (postgresGranule.provider_cumulus_id) {
+    const pgProvider = await providerPgModel.get(knex, {
+      cumulus_id: postgresGranule.provider_cumulus_id,
+    });
+    provider = pgProvider.name;
+  }
+
+  if (postgresGranule.pdr_cumulus_id) {
+    const pdr = await pdrPgModel.get(knex, {
+      cumulus_id: postgresGranule.pdr_cumulus_id,
+    });
+    pdrName = pdr.name;
+  }
+
+  const files = await filePgModel.search(knex, {
+    granule_cumulus_id: postgresGranule.cumulus_id,
+  });
+  const execution = await executionPgModel.search(knex, {
+    granule_cumulus_id: postgresGranule.cumulus_id,
+  });
+  const apiGranule = {
+    granuleId: postgresGranule.granule_id,
+    collectionId,
+    status: postgresGranule.status,
+    execution: execution,
+    cmrLink: postgresGranule.cmr_link,
+    published: postgresGranule.published,
+    pdrName,
+    provider,
+    error: postgresGranule.error,
+    createdAt: postgresGranule.created_at?.getTime(),
+    timestamp: postgresGranule.timestamp?.getTime(),
+    updatedAt: postgresGranule.updated_at?.getTime(),
+    duration: postgresGranule.duration,
+    productVolume: postgresGranule.product_volume,
+    timeToPreprocess: postgresGranule.time_to_process,
+    timeToArchive: postgresGranule.time_to_archive,
+    files,
+  };
+  return apiGranule;
 };
