@@ -101,7 +101,6 @@ process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
-const { execution } = require('../../models/schemas');
 
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
