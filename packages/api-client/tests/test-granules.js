@@ -372,13 +372,16 @@ test('createGranule calls the callback with the expected object', async (t) => {
 });
 
 test('updateGranule calls the callback with the expected object', async (t) => {
-  const body = { any: 'object' };
+  const body = {
+    granuleId: t.context.granuleId,
+    any: 'object',
+  };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: '/granules',
+      path: `/granules/${t.context.granuleId}`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
