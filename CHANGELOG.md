@@ -16,6 +16,20 @@ of response and not the raw API endpoint response
 
 ### Added
 
+- **CUMULUS-2670**
+  - Updated core `cumulus` module to take lambda_timeouts string map variable that allows timeouts of ingest tasks to be configurable. Allowed properties for the mapping include:
+  - discover_granules_task_timeout
+  - discover_pdrs_task_timeout
+  - hyrax_metadata_update_tasks_timeout
+  - lzards_backup_task_timeout
+  - move_granules_task_timeout
+  - parse_pdr_task_timeout
+  - pdr_status_check_task_timeout
+  - post_to_cmr_task_timeout
+  - queue_granules_task_timeout
+  - queue_pdrs_task_timeout
+  - queue_workflow_task_timeout
+  - sync_granule_task_timeout
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
   - Adds helper `createGranule` to `@cumulus/api-client`
@@ -33,6 +47,7 @@ of response and not the raw API endpoint response
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
   - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
   and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Added `resetPostgresDb` method to support resetting between integration test suite runs
 
 ### Changed
 
@@ -43,6 +58,10 @@ for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
 
+- **CUMULUS-2644**
+  - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
+  updated unit test references to migrationDir to be pulled from `@cumulus/db`
+  - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
 - **CUMULUS-2575**
   - Updates model/granule to allow a granule created from API to not require an
     execution to be associated with it. This is a backwards compatible change
