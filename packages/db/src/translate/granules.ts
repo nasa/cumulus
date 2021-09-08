@@ -3,6 +3,7 @@ import Knex from 'knex';
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
 import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
 import { removeNilProperties } from '@cumulus/common/util';
+import { ValidationError } from '@cumulus/errors';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
@@ -48,6 +49,10 @@ export const translatePostgresGranuleToApiGranule = async ({
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
+
+  if (granulePgRecord.collection_cumulus_id !== collection.cumulus_id) {
+    throw new ValidationError(`Collection ${collection.cumulus_id} does not match the Granule's Collection ${granulePgRecord.collection_cumulus_id}`);
+  }
 
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }

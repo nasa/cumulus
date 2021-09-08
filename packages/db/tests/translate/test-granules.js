@@ -1,6 +1,8 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
+const { ValidationError } = require('@cumulus/errors');
+
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -245,7 +247,6 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     granulePgModel,
     granuleCumulusId,
     executions,
-    collection,
   } = t.context;
 
   const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
@@ -253,7 +254,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.getTime().toString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId: 'collectionName2___collectionVersion2',
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
@@ -300,6 +301,15 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     ],
   };
 
+  // explicitly set the cumulus_id so that the collection matches the granule's
+  // collection_cumulus_id. This is not in the database and will ensure that the
+  // translate function below skips the DB query and uses this passed-in Collection.
+  const collection = fakeCollectionRecordFactory({
+    cumulus_id: 1,
+    name: 'collectionName2',
+    version: 'collectionVersion2',
+  });
+
   const result = await translatePostgresGranuleToApiGranule({
     granulePgRecord: postgresGranule,
     collectionPgRecord: collection,
@@ -314,6 +324,37 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     result,
     expectedApiGranule
   );
+});
+
+test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  // No cumulus_id set so this will not match the granule's collection_cumulus_id
+  const collection = fakeCollectionRecordFactory({
+    name: 'collectionName2',
+    version: 'collectionVersion2',
+  });
+
+  await t.throwsAsync(translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    collectionPgRecord: collection,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  }),
+  { instanceOf: ValidationError });
 });
 
 test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', async (t) => {
