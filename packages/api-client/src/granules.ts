@@ -413,7 +413,7 @@ export const createGranule = async (params: {
 
 /**
  * Update granule in cumulus.
- * PUT /granules
+ * PUT /granules/{granuleId}
  * @param {Object} params             - params
  * @param {Object} [params.body]      - granule to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
