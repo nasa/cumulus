@@ -25,7 +25,6 @@ const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
 const { validateGranuleExecutionRequest } = require('../lib/request');
-const { publishExecutionSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 const log = new Logger({ sender: '@cumulus/api/executions' });
 
@@ -163,7 +162,6 @@ async function del(req, res) {
         index: process.env.ES_INDEX,
         ignore: [404],
       });
-      await publishExecutionSnsMessage({});
     });
   } catch (error) {
     // Delete is idempotent, so there may not be a DynamoDB

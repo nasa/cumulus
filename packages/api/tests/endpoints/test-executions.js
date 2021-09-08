@@ -11,7 +11,6 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { sns, sqs } = require('@cumulus/aws-client/services');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -249,32 +248,6 @@ test.beforeEach(async (t) => {
     granulePgModel,
     knex,
   } = t.context;
-
-  const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.execution_sns_topic_arn = TopicArn;
-  t.context.TopicArn = TopicArn;
-
-  const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
-  t.context.QueueUrl = QueueUrl;
-  const getQueueAttributesResponse = await sqs().getQueueAttributes({
-    QueueUrl,
-    AttributeNames: ['QueueArn'],
-  }).promise();
-  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-
-  const { SubscriptionArn } = await sns().subscribe({
-    TopicArn,
-    Protocol: 'sqs',
-    Endpoint: QueueArn,
-  }).promise();
-
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
-
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
 
@@ -317,12 +290,6 @@ test.beforeEach(async (t) => {
       status: 'running',
     })
   );
-});
-
-test.afterEach(async (t) => {
-  const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
@@ -517,7 +484,7 @@ test.serial('GET fails if execution is not found', async (t) => {
   t.true(response.body.message.includes(`Execution record with identifiers ${JSON.stringify({ arn: 'unknown' })} does not exist`));
 });
 
-test.serial('DELETE deletes an execution and publishes an SNS message', async (t) => {
+test.serial('DELETE deletes an execution', async (t) => {
   const { originalDynamoExecution } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
@@ -563,13 +530,6 @@ test.serial('DELETE deletes an execution and publishes an SNS message', async (t
       arn
     )
   );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages.length, 1);
 });
 
 test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
@@ -727,129 +687,7 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
   );
 });
 
-test.serial('del() does not publish SNS message if removing from DynamoDB fails', async (t) => {
-  const {
-    originalDynamoExecution,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalDynamoExecution;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeExecutionModel = {
-    get: () => Promise.resolve(originalDynamoExecution),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      executionModel: fakeExecutionModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
-});
-
-test.serial('del() does not publish SNS message if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalDynamoExecution,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalDynamoExecution;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeExecutionPgModel = {
-    delete: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      executionPgModel: fakeExecutionPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
-});
-
-test.serial('del() does not publish SNS message if removing from Elasticsearch fails', async (t) => {
-  const {
-    originalDynamoExecution,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalDynamoExecution;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
-});
-
-test.serial('DELETE removes only specified execution from all data stores and publishes SNS message', async (t) => {
+test.serial('DELETE removes only specified execution from all data stores', async (t) => {
   const { knex, executionPgModel } = t.context;
 
   const newExecution = fakeExecutionFactoryV2({
@@ -898,13 +736,6 @@ test.serial('DELETE removes only specified execution from all data stores and pu
   });
 
   t.is(originalExecution2.length, 1);
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages.length, 1);
 });
 
 test.serial('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
