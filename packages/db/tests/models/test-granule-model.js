@@ -32,10 +32,12 @@ test.before(async (t) => {
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });

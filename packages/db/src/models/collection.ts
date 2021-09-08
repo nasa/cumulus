@@ -12,6 +12,13 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     });
   }
 
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresCollection
+  ) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   upsert(
     knexOrTransaction: Knex | Knex.Transaction,
     collection: PostgresCollection
@@ -20,7 +27,7 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       .insert(collection)
       .onConflict(['name', 'version'])
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

@@ -90,7 +90,7 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.testCollection
   );
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();

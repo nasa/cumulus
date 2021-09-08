@@ -478,11 +478,11 @@ test('Attempting to delete a provider with an associated granule does not delete
     files: {},
   };
 
-  const [collectionCumulusId] = await collectionPgModel
-    .create(
-      t.context.testKnex,
-      collection
-    );
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.testKnex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const pgGranule = fakeGranuleRecordFactory(
     {

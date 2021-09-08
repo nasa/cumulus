@@ -23,6 +23,12 @@ of response and not the raw API endpoint response
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
       - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
       - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
+  - **CUMULUS-2510**
+    - Added `collection_sns_topic_arn` environment variable to
+      `PrivateApiLambda` and `ApiEndpoints` lambdas.
+    - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
+      publish SNS messages to the report collections topic.
+    - Added `updateCollection` to `@cumulus/api-client`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2575**
@@ -106,6 +112,12 @@ of response and not the raw API endpoint response
   - **CUMULUS-2634**
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
+  - **CUMULUS-2510**
+    - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
+      after a successful collection delete, update (PUT), create (POST).
+    - Updated functions `create` and `upsert` in the `db` model for Collections
+      to return an array of objects containing all columns for the created or
+      updated records.
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
@@ -129,6 +141,16 @@ when output of the operation is `undefined`
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
     if an incorrectly formated collectionId is input.
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
+      TF definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+      DynamoDB table.
+    - Removed lambda `publish_collections` TF resource.
 
 ## [v9.4.0] 2021-08-16
 

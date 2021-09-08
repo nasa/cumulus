@@ -351,10 +351,13 @@ test('POST creates a rule in all data stores', async (t) => {
     version: fakeCollection.version,
   };
 
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.testKnex,
     translateApiCollectionToPostgresCollection(fakeCollection)
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  const collectionCumulusId = t.context.collectionCumulusId;
+
   const [providerCumulusId] = await t.context.providerPgModel.create(
     t.context.testKnex,
     await translateApiProviderToPostgresProvider(fakeProvider)
