@@ -21,7 +21,7 @@ async function fetchGranuleProvider(prefix, providerId) {
 }
 
 /**
- * Group granules by collection and split into batches
+ * Group granules by collection and split into batches then split again on provider
  *
  * @param {Array<Object>} granules - list of input granules
  * @param {number} [batchSize] - size of batch of granules to queue
@@ -33,10 +33,13 @@ function groupAndBatchGranules(granules, batchSize = 1) {
     granules,
     (g) => constructCollectionId(g.dataType, g.version)
   );
-  return Object.values(granulesByCollectionMap).reduce(
+  const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, batchSize)),
     []
-  ); // possible TODO - separate batches by provider?
+  );
+  return granulesBatchedByCollection.reduce((arr, granuleBatch) => arr.concat(
+    Object.values(groupBy(granuleBatch, 'provider'))
+  ), []);
 }
 exports.groupAndBatchGranules = groupAndBatchGranules;
 
@@ -75,7 +78,7 @@ async function queueGranules(event) {
         granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
-        provider: granuleBatch[0].provider // TODO: is this a safe assumption?
+        provider: granuleBatch[0].provider
           ? await fetchGranuleProvider(event.config.stackName, granuleBatch[0].provider)
           : event.config.provider,
         collection: collectionConfig,

@@ -97,19 +97,18 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test('groupAndBatchGranules return list of lists of granules by collection', (t) => {
+test('groupAndBatchGranules batches granules by collection', (t) => {
   const granules = [
     { granuleId: '1', dataType: 'ABC', version: '001' },
     { granuleId: '2', dataType: 'ABC', version: '002' },
     { granuleId: '3', dataType: 'XYZ', version: '001' },
   ];
   const expectedBatchGranules = granules.map((g) => [g]);
-
   const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules);
   t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
-test('groupAndBatchGranules batches granules by batchSize', (t) => {
+test('groupAndBatchGranules respects batchSize', (t) => {
   const granules = [
     { granuleId: '1', dataType: 'ABC', version: '001' },
     { granuleId: '2', dataType: 'ABC', version: '001' },
@@ -119,23 +118,28 @@ test('groupAndBatchGranules batches granules by batchSize', (t) => {
     { granuleId: '6', dataType: 'XYZ', version: '001' },
   ];
   const expectedBatchGranules = [
-    [
-      { granuleId: '1', dataType: 'ABC', version: '001' },
-      { granuleId: '2', dataType: 'ABC', version: '001' },
-    ],
-    [
-      { granuleId: '3', dataType: 'ABC', version: '001' },
-    ],
-    [
-      { granuleId: '4', dataType: 'ABC', version: '002' },
-      { granuleId: '5', dataType: 'ABC', version: '002' },
-    ],
-    [
-      { granuleId: '6', dataType: 'XYZ', version: '001' },
-    ],
+    [granules[0], granules[1]],
+    [granules[2]],
+    [granules[3], granules[4]],
+    [granules[5]],
   ];
   const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 2);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
 
+test('groupAndBatchGranules further divides batches by provider if granules have one', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '3', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+  ];
+  const expectedBatchGranules = [
+    [granules[0]],
+    [granules[1], granules[2]],
+    [granules[3]],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 3);
   t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
