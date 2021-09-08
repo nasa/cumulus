@@ -110,7 +110,7 @@ of response and not the raw API endpoint response
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
   - **CUMULUS-2510**
-    - Updated `@cumulus/sfEventSqsToDbRecords/write-execution` to publish SNS
+    - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated functions `create` and `upsert` in the `db` model for Executions
     to return an array of objects containing all columns of the created or
