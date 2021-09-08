@@ -98,57 +98,45 @@ const create = async (req, res) => {
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
 };
 
-/**
- * add execution to a granule
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} promise of an express response object.
- */
-const addGranuleExecution = async (req, res) => {
-  const granuleName = req.params.granuleName;
-
-  const { collectionId, granuleId, execution } = req.body || {};
-  if (!granuleId || !collectionId || !execution) {
-    return res.boom.badRequest('Field granuleId, collectionId or execution is missing');
-  }
-
-  if (granuleName !== granuleId) {
-    return res.boom.badRequest(`Expected granuleId to be '${granuleName}',`
-      + ` but found '${granuleId}' in payload`);
-  }
-
+const update = async (req, res) => {
   const {
-    collectionPgModel = new CollectionPgModel(),
-    executionPgModel = new ExecutionPgModel(),
-    granulePgModel = new GranulePgModel(),
-    granuleExecutionPgModel = new GranulesExecutionsPgModel(),
+    granuleModel = new models.Granule(),
     knex = await getKnexClient(),
   } = req.testContext || {};
+  const body = req.body || {};
+
+  let existingGranule;
+  try {
+    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(`No granule found to update for ${body.granuleId}`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  const updatedGranule = {
+    ...existingGranule,
+    updatedAt: Date.now(),
+    ...body,
+  };
 
   try {
-    await writeGranuleExecutionRecord(
-      granuleId,
-      collectionId,
-      execution,
-      knex,
-      collectionPgModel,
-      executionPgModel,
-      granulePgModel,
-      granuleExecutionPgModel
-    );
+    await writeGranuleFromApi(updatedGranule, knex);
   } catch (error) {
-    log.error('failed to associate an execution with a granule', error);
+    log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully associated execution ${execution} to granule ${granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
   });
 };
 
 /**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
+ * If no action is included on the request, the body is assumed to be an
+ * existing granule to update, and update is called with the input parameters.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -160,7 +148,12 @@ async function put(req, res) {
   const action = body.action;
 
   if (!action) {
-    return res.boom.badRequest('Action is missing');
+    if (req.body.granuleId === req.params.granuleName) {
+      return update(req, res);
+    }
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
   }
 
   const granuleModelClient = new models.Granule();
@@ -177,7 +170,7 @@ async function put(req, res) {
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
-        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+        return res.boom.badRequest(`Cannot reingest granule: ${error.message}`);
       }
       throw error;
     }
@@ -257,9 +250,57 @@ async function put(req, res) {
       status: 'SUCCESS',
     });
   }
-
-  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
+  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
 }
+
+/**
+ * add execution to a granule
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const addGranuleExecution = async (req, res) => {
+  const granuleName = req.params.granuleName;
+
+  const { collectionId, granuleId, execution } = req.body || {};
+  if (!granuleId || !collectionId || !execution) {
+    return res.boom.badRequest('Field granuleId, collectionId or execution is missing');
+  }
+
+  if (granuleName !== granuleId) {
+    return res.boom.badRequest(`Expected granuleId to be '${granuleName}',`
+      + ` but found '${granuleId}' in payload`);
+  }
+
+  const {
+    collectionPgModel = new CollectionPgModel(),
+    executionPgModel = new ExecutionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    granuleExecutionPgModel = new GranulesExecutionsPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  try {
+    await writeGranuleExecutionRecord(
+      granuleId,
+      collectionId,
+      execution,
+      knex,
+      collectionPgModel,
+      executionPgModel,
+      granulePgModel,
+      granuleExecutionPgModel
+    );
+  } catch (error) {
+    log.error('failed to associate an execution with a granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully associated execution ${execution} to granule ${granuleId}`,
+  });
+};
 
 /**
  * Delete a granule

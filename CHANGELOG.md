@@ -33,16 +33,15 @@ of response and not the raw API endpoint response
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
   - Adds helper `createGranule` to `@cumulus/api-client`
-
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client`
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
-
 - **CUMULUS-2578**
   - Adds `PUT /executions` endpoint to update an execution
-
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
-
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
