@@ -12,6 +12,7 @@ const {
   ExecutionPgModel,
   FilePgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   destroyLocalTestDb,
   generateLocalTestDb,
   localStackConnectionEnv,
@@ -82,12 +83,14 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
 let collectionModel;
-let executionModel;
 let esClient;
 let esIndex;
+let executionModel;
+let executionPgModel;
 let filePgModel;
 let granuleModel;
 let granulePgModel;
+let granulesExecutionsPgModel;
 let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
@@ -178,7 +181,7 @@ test.before(async (t) => {
   // create fake execution table
   executionModel = new models.Execution();
   await executionModel.createTable();
-  const executionPgModel = new ExecutionPgModel();
+  executionPgModel = new ExecutionPgModel();
 
   // create fake Granules table
   granuleModel = new models.Granule();
@@ -186,6 +189,7 @@ test.before(async (t) => {
 
   granulePgModel = new GranulePgModel();
   filePgModel = new FilePgModel();
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -240,6 +244,7 @@ test.before(async (t) => {
     t.context.knex,
     testPgCollection
   );
+
   const newExecution = fakeExecutionFactoryV2({
     arn: 'arn3',
     status: 'completed',
@@ -1727,7 +1732,7 @@ test.serial('update (PUT) returns an updated granule with associated execution',
     collectionId: t.context.collectionId,
     createdAt,
     timestamp,
-    execution: t.context.executionUrl,
+    execution: undefined,
   });
 
   const response = await request(app)
@@ -1741,6 +1746,7 @@ test.serial('update (PUT) returns an updated granule with associated execution',
 
   const modifiedGranule = {
     ...newGranule,
+    execution: t.context.executionUrl,
     status: 'failed',
     error: { some: 'error' },
   };
@@ -1766,6 +1772,27 @@ test.serial('update (PUT) returns an updated granule with associated execution',
     }
   );
 
+  // get execution for this record.
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  const granulesExecutionsPgRecord = await granulesExecutionsPgModel.search(
+    t.context.knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+    }
+  );
+
+  const executionPgRecord = await executionPgModel.searchByCumulusIds(
+    t.context.knex,
+    granulesExecutionsPgRecord[0].execution_cumulus_id
+  );
+
   t.deepEqual(JSON.parse(modifiedResponse.text), {
     message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}`,
   });
@@ -1774,10 +1801,14 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
   t.is(fetchedDynamoRecord.timestamp, timestamp);
   t.is(fetchedDynamoRecord.createdAt, createdAt);
+  t.is(fetchedDynamoRecord.execution, modifiedGranule.execution);
+
   t.is(fetchedPostgresRecord.status, 'failed');
   t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
   t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), timestamp);
   t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), createdAt);
+  t.is(executionPgRecord[0].url, modifiedGranule.execution);
+  t.is(executionPgRecord[0].arn, modifiedGranule.arn);
 });
 
 test.serial('update (PUT) returns badRequest when the path param granuleName does not match the json granuleId', async (t) => {
