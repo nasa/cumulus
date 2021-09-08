@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
@@ -568,5 +569,5 @@ test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage 
 
   t.is(executionRecord.arn, executionArn);
   t.is(executionRecord.status, cumulusMessage.meta.status);
-  t.deepEqual(executionRecord, dynamoRecord);
+  t.deepEqual(omit(executionRecord, 'timestamp'), omit(dynamoRecord, 'timestamp'));
 });
