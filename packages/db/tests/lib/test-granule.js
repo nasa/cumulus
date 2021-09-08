@@ -40,7 +40,7 @@ test.before(async (t) => {
     t.context.knex,
     t.context.collection
   );
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });

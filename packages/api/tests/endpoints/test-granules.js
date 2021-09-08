@@ -226,7 +226,7 @@ test.before(async (t) => {
     version: collectionVersion,
   });
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
@@ -239,6 +239,7 @@ test.before(async (t) => {
   t.context.testExecutionCumulusId = (
     await executionPgModel.create(t.context.knex, t.context.testExecution)
   )[0];
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.beforeEach(async (t) => {

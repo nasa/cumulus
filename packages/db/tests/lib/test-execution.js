@@ -93,15 +93,11 @@ test.before(async (t) => {
 
   const collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
-  const collectionResponse = await collectionPgModel.create(
+  const collectionPgRecord = await collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
-  t.context.collectionCumulusId = collectionResponse[0];
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
-    t.context.knex,
-    fakeCollectionRecordFactory()
-  );
+  t.context.collectionCumulusId = collectionPgRecord[0].cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });

@@ -68,7 +68,11 @@ test.beforeEach(async (t) => {
 
   const collection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(t.context.knex, collection);
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const provider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();

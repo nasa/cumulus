@@ -430,9 +430,9 @@ const createCollectionTestRecords = async (context, collectionParams) => {
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
   await collectionModel.create(originalCollection);
-  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await collectionPgModel.get(
-    testKnex, { cumulus_id: collectionCumulusId }
+    testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
   await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
   const originalEsRecord = await esCollectionClient.get(

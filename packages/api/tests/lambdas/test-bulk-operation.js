@@ -93,10 +93,12 @@ const setUpExistingDatabaseRecords = async (t) => {
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   const executionPgModel = new ExecutionPgModel();
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  const collectionCumulusId = t.context.collectionCumulusId;
 
   const granuleCumulusIds = await granulePgModel.create(
     t.context.knex,
