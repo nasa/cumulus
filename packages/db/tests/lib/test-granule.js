@@ -506,7 +506,8 @@ test('getUniqueGranuleByGranuleId() throws an error if more than one granule is 
   const granuleId = 1;
 
   const collection = fakeCollectionRecordFactory({ name: 'collectionName2', version: 'collectionVersion2' });
-  const [collectionCumulusId2] = await collectionPgModel.create(knex, collection);
+  const [collectionPgRecord] = await collectionPgModel.create(knex, collection);
+  const collectionCumulusId2 = collectionPgRecord.cumulus_id;
 
   // 2 records. Same granule ID, different collections
   const fakeGranules = [

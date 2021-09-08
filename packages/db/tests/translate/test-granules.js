@@ -43,10 +43,11 @@ test.before(async (t) => {
   // Create collection
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [collectionPgRecord] = await t.context.collectionPgModel.create(
     knex,
     t.context.collection
   );
+  const collectionCumulusId = collectionPgRecord.cumulus_id;
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
