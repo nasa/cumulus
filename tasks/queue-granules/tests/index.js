@@ -24,7 +24,7 @@ const noop = require('lodash/noop');
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
 const fakeGranulesApi = {
-  updateGranuleStatus: noop,
+  updateGranule: noop,
 };
 
 const { queueGranules } = proxyquire('..', {

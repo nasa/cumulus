@@ -63,10 +63,13 @@ async function queueGranules(event) {
         additionalCustomMeta: event.config.childWorkflowMeta,
       });
       if (executionArn) {
-        await granulesApi.updateGranuleStatus({
-          prefix: event.config.stackName,
-          granuleId: granule.granuleId,
+        const queuedGranule = {
+          ...granule,
           status: 'queued',
+        };
+        await granulesApi.updateGranule({
+          prefix: event.config.stackName,
+          body: queuedGranule,
         });
       }
       return executionArn;
