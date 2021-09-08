@@ -7,6 +7,7 @@ const {
   CollectionPgModel,
   ExecutionPgModel,
   ProviderPgModel,
+  GranulePgModel,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
@@ -20,6 +21,7 @@ const {
 const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
+const { deconstructCollectionId } = require('../utils');
 
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/utils' });
 
@@ -114,6 +116,35 @@ const getCollectionCumulusId = async (
   }
 };
 
+const getGranuleCumulusId = async (
+  granuleId,
+  collectionId,
+  knex,
+  collectionPgModel = new CollectionPgModel(),
+  granulePgModel = new GranulePgModel()
+) => {
+  try {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+
+    return await granulePgModel.getRecordCumulusId(
+      knex,
+      {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    );
+  } catch (error) {
+    if (isFailedLookupError(error)) {
+      log.info(error);
+      return undefined;
+    }
+    throw error;
+  }
+};
+
 /**
  * Looks up an Provider's cumulus_id by providerId.
  *
@@ -183,6 +214,7 @@ module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getExecutionCumulusId,
+  getGranuleCumulusId,
   getParentExecutionCumulusId,
   getProviderCumulusId,
   getCollectionCumulusId,
