@@ -54,6 +54,7 @@ const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const { migrationDir } = require('../../../../lambdas/db-migration');
 
@@ -248,8 +249,16 @@ test.beforeEach(async (t) => {
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.testExecution.arn }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', execution: t.context.testExecution.arn }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId1,
+      status: 'completed',
+      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+    }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId2,
+      status: 'failed',
+      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+    }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>

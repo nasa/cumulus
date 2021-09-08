@@ -1,6 +1,7 @@
 import Knex from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
+import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
 import { removeNilProperties } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
@@ -87,7 +88,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
     error: granulePgRecord.error,
-    execution: executionArns[0] ? executionArns[0].arn : undefined,
+    execution: executionArns[0] ? getExecutionUrlFromArn(executionArns[0].arn) : undefined,
     files: files.map((file) => ({
       ...translatePostgresFileToApiFile(file),
     })),

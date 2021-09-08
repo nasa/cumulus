@@ -2,6 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { ValidationError } = require('@cumulus/errors');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const {
   CollectionPgModel,
@@ -181,7 +182,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
     error: postgresGranule.error,
-    execution: executions[0].arn,
+    execution: getExecutionUrlFromArn(executions[0].arn),
     granuleId: postgresGranule.granule_id,
     lastUpdateDateTime: postgresGranule.last_update_date_time.getTime().toString(),
     pdrName: 'pdrName',
@@ -260,7 +261,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
     error: postgresGranule.error,
-    execution: executions[0].arn,
+    execution: getExecutionUrlFromArn(executions[0].arn),
     granuleId: postgresGranule.granule_id,
     lastUpdateDateTime: postgresGranule.last_update_date_time.getTime().toString(),
     pdrName: 'pdrName',
@@ -383,7 +384,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.getTime().toString(),
     error: postgresGranule.error,
-    execution: executions[0].arn,
+    execution: getExecutionUrlFromArn(executions[0].arn),
     granuleId: postgresGranule.granule_id,
     lastUpdateDateTime: postgresGranule.last_update_date_time.getTime().toString(),
     processingEndDateTime: postgresGranule.processing_end_date_time.getTime().toString(),
