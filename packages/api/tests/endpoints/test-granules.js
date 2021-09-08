@@ -473,6 +473,7 @@ test.serial('PUT updates granule if action is not provided', async (t) => {
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId: t.context.fakeGranules[0].granuleId })
     .expect(200);
 
   t.is(response.status, 200);
@@ -1657,7 +1658,7 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
     .expect(400);
 
   t.is(response.body.error, 'Bad Request');
-  t.is(response.body.message, `No granule found to update for ${JSON.stringify(newGranule)}`);
+  t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
 });
 
 test.serial('update (PUT) returns an updated granule with an undefined execution', async (t) => {
@@ -1776,4 +1777,20 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
   t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), now);
   t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), now);
+});
+
+test.serial('update (PUT) returns badRequest when the path param granuleName does not match the json granuleId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({ });
+  const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
+
+  const { body } = await request(app)
+    .put(`/granules/${granuleName}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(body.statusCode, 400);
+  t.is(body.error, 'Bad Request');
+  t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });

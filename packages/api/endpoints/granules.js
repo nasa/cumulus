@@ -152,8 +152,12 @@ async function put(req, res) {
   const action = body.action;
 
   if (!action) {
-    req.body.granuleId = granuleId;
-    return update(req, res);
+    if (req.body.granuleId === req.params.granuleName) {
+      return update(req, res);
+    }
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
   }
 
   const granuleModelClient = new models.Granule();
@@ -170,7 +174,7 @@ async function put(req, res) {
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
-        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+        return res.boom.badRequest(`Cannot reingest granule: ${error.message}`);
       }
       throw error;
     }
