@@ -1712,8 +1712,8 @@ test.serial('update (PUT) returns an updated granule with an undefined execution
 
   t.is(fetchedDynamoRecord.status, 'failed');
   t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
-  t.is(new Date(fetchedDynamoRecord.timestamp).valueOf(), now);
-  t.is(new Date(fetchedDynamoRecord.createdAt).valueOf(), now);
+  t.is(fetchedDynamoRecord.timestamp, now);
+  t.is(fetchedDynamoRecord.createdAt, now);
   t.is(fetchedPostgresRecord.status, 'failed');
   t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
   t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), now);
@@ -1721,11 +1721,12 @@ test.serial('update (PUT) returns an updated granule with an undefined execution
 });
 
 test.serial('update (PUT) returns an updated granule with associated execution', async (t) => {
-  const now = Date.now();
+  const timestamp = Date.now();
+  const createdAt = timestamp - 1000000;
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
-    createdAt: now,
-    timestamp: now,
+    createdAt,
+    timestamp,
     execution: t.context.executionUrl,
   });
 
@@ -1771,12 +1772,12 @@ test.serial('update (PUT) returns an updated granule with associated execution',
 
   t.is(fetchedDynamoRecord.status, 'failed');
   t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
-  t.is(new Date(fetchedDynamoRecord.timestamp).valueOf(), now);
-  t.is(new Date(fetchedDynamoRecord.createdAt).valueOf(), now);
+  t.is(fetchedDynamoRecord.timestamp, timestamp);
+  t.is(fetchedDynamoRecord.createdAt, createdAt);
   t.is(fetchedPostgresRecord.status, 'failed');
   t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
-  t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), now);
-  t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), now);
+  t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), timestamp);
+  t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), createdAt);
 });
 
 test.serial('update (PUT) returns badRequest when the path param granuleName does not match the json granuleId', async (t) => {
