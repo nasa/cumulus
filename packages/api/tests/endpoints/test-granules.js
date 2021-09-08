@@ -1807,7 +1807,6 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), timestamp);
   t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), createdAt);
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
-  t.is(executionPgRecord[0].arn, modifiedGranule.arn);
 });
 
 test.serial('update (PUT) returns badRequest when the path param granuleName does not match the json granuleId', async (t) => {
