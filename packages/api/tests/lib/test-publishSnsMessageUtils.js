@@ -40,7 +40,6 @@ test.before(async (t) => {
     TopicArn,
     Token: SubscriptionArn,
   }).promise();
-
 });
 
 test.after.always(async (t) => {
