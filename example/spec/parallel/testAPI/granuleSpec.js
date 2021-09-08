@@ -98,7 +98,7 @@ describe('The Granules API', () => {
       expect(discoveredGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 
-    it('can search the granule the API.', async () => {
+    it('can search the granule via the API.', async () => {
       const searchResults = await waitForListGranulesResult({
         prefix,
         query: {
