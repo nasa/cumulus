@@ -72,7 +72,10 @@ describe('The Discover Granules workflow with https Protocol', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
-          ['completed', 'queued']
+          'completed',
+          {
+            retries: 5,
+          }
         );
       }
     ));
