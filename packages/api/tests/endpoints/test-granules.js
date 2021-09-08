@@ -473,17 +473,16 @@ test.serial('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test.serial('PUT updates granule if action is not provided', async (t) => {
+test.serial('PUT without a body, fails to update granule.', async (t) => {
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ granuleId: t.context.fakeGranules[0].granuleId })
-    .expect(200);
+    .expect(400);
 
-  t.is(response.status, 200);
+  t.is(response.status, 400);
   const { message } = response.body;
-  t.is(message, `Successfully updated granule with Granule Id: ${t.context.fakeGranules[0].granuleId}`);
+  t.is(message, `input :granuleName (${t.context.fakeGranules[0].granuleId}) must match body's granuleId (undefined)`);
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
