@@ -47,7 +47,8 @@ test.before(async (t) => {
   const granulePgModel = new GranulePgModel();
 
   const fakeCollection = fakeCollectionRecordFactory({ name: 'FakeCollection', version: '006' });
-  const [collectionCumulusId] = await collectionPgModel.create(t.context.knex, fakeCollection);
+  const [collectionPgRecord] = await collectionPgModel.create(t.context.knex, fakeCollection);
+  const collectionCumulusId = collectionPgRecord.cumulus_id;
 
   const fakeGranule = fakeGranuleRecordFactory(
     {

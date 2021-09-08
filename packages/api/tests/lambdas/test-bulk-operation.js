@@ -264,10 +264,12 @@ test.serial('bulk operation lambda sets env vars provided in payload', async (t)
 test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs', async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   const collection = fakeCollectionRecordFactory();
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [collectionPgRecord] = await t.context.collectionPgModel.create(
     t.context.knex,
     collection
   );
+  const collectionCumulusId = collectionPgRecord.cumulus_id;
+
   const granuleModel = new GranulePgModel();
   const granules = [
     fakeGranuleRecordFactory({
@@ -322,10 +324,12 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
 test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returned by query', async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   const collection = fakeCollectionRecordFactory();
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [collectionPgRecord] = await t.context.collectionPgModel.create(
     t.context.knex,
     collection
   );
+  const collectionCumulusId = collectionPgRecord.cumulus_id;
+
   const granuleModel = new GranulePgModel();
   const granules = [
     fakeGranuleRecordFactory({
