@@ -241,8 +241,9 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
     }
   );
 
+  const metadataTitle = 'title_string';
   const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
-    foo: 'bar',
+    title: metadataTitle,
   });
   const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
   t.teardown(() => {
@@ -259,7 +260,11 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
     pgCollection: fakeCollection,
   });
 
-  t.true(cmrDeleteStub.called);
+  t.is(cmrDeleteStub.calledOnceWith(
+    metadataTitle,
+    constructCollectionId(fakeCollection.name, fakeCollection.version)
+  ), true);
+
   t.deepEqual(
     dynamoGranule,
     omit(
