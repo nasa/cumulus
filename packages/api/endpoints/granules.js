@@ -60,46 +60,6 @@ async function list(req, res) {
   return res.send(result);
 }
 
-async function updateStatus(req, res) {
-  const granuleId = req.params.granuleName;
-  const body = req.body;
-  const granuleModelClient = new models.Granule();
-  let granule;
-  try {
-    granule = await granuleModelClient.get({ granuleId });
-  } catch (error) {
-    if (error.message.startsWith('No record found')) {
-      return res.boom.notFound('Granule not found');
-    }
-    throw error;
-  }
-
-  await granuleModelClient.updateStatus({ granuleId: granule.granuleId }, body.status);
-
-  const response = {
-    granuleId: granule.granuleId,
-    status: 'SUCCESS',
-  };
-
-  return res.send(response);
-}
-
-async function getStatus(req, res) {
-  const granuleId = req.params.granuleName;
-  const granuleModelClient = new models.Granule();
-  let granule;
-  try {
-    granule = await granuleModelClient.get({ granuleId });
-  } catch (error) {
-    if (error.message.startsWith('No record found')) {
-      return res.boom.notFound('Granule not found');
-    }
-    throw error;
-  }
-
-  return res.send(granule.status);
-}
-
 /**
  * Create new granule
  *
@@ -544,11 +504,9 @@ async function bulkReingest(req, res) {
   return res.status(202).send(asyncOperation);
 }
 
-router.get('/:granuleName/status', getStatus);
 router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/', create);
-router.put('/:granuleName/status', updateStatus);
 router.put('/:granuleName', put);
 
 router.post(
