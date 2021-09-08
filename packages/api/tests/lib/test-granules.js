@@ -1,24 +1,12 @@
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
-  CollectionPgModel,
-  fakeCollectionRecordFactory,
-  generateLocalTestDb,
-  GranulePgModel,
-} = require('@cumulus/db');
-
-const {
   getExecutionProcessingTimeInfo,
   moveGranuleFilesAndUpdateDatastore,
 } = require('../../lib/granules');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
-
-const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
 const sandbox = sinon.createSandbox();
 const FakeEsClient = sandbox.stub();
@@ -36,22 +24,6 @@ const { getGranulesForPayload, getGranuleIdsForPayload } = proxyquire('../../lib
   '@cumulus/es-client/search': {
     Search: FakeSearch,
   },
-});
-
-test.before(async (t) => {
-  const { knexAdmin, knex } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-  t.context.knexAdmin = knexAdmin;
-  t.context.knex = knex;
-
-  // Create collection
-  t.context.collectionPgModel = new CollectionPgModel();
-  const collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(knex, collection);
-
-  t.context.granulePgModel = new GranulePgModel();
 });
 
 test.afterEach.always(() => {
