@@ -112,8 +112,6 @@ of response and not the raw API endpoint response
   - **CUMULUS-2510**
     - Updated `@cumulus/sfEventSqsToDbRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
-    - Updated `@cumulus/api/endpoints/executions` to publish an SNS message
-      after a successful execution DELETE.
     - Updated functions `create` and `upsert` in the `db` model for Executions
     to return an array of objects containing all columns of the created or
     updated records.
