@@ -13,6 +13,7 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
+  migrationDir,
 } = require('@cumulus/db');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
@@ -47,8 +48,6 @@ process.env = {
   ...localStackConnectionEnv,
   PG_DATABASE: testDbName,
 };
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);

@@ -9,9 +9,9 @@ const {
   ExecutionPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
 const {

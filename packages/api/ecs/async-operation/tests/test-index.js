@@ -11,13 +11,12 @@ const {
   generateLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  migrationDir,
 } = require('@cumulus/db');
 // eslint-disable-next-line unicorn/import-index
 const { updateAsyncOperation } = require('../index');
 
 const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 test.before(async (t) => {
   t.context.dynamoTableName = cryptoRandomString({ length: 10 });

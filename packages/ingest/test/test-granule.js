@@ -21,6 +21,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -32,8 +33,6 @@ const {
   unversionFilename,
   moveGranuleFile,
 } = require('../granule');
-
-const { migrationDir } = require('../../../lambdas/db-migration');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 

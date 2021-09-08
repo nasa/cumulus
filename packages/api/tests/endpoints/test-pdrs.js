@@ -14,6 +14,7 @@ const {
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   fakePdrRecordFactory,
@@ -31,7 +32,6 @@ const {
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
