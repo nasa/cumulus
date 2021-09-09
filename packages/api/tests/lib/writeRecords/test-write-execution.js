@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
@@ -10,6 +9,7 @@ const {
   ExecutionPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 
 const { Search } = require('@cumulus/es-client/search');
@@ -552,7 +552,7 @@ test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage 
   const {
     cumulusMessage,
     executionArn,
-    executionModel,
+    executionPgModel,
     knex,
     QueueUrl,
   } = t.context;
@@ -565,9 +565,13 @@ test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage 
 
   const snsMessage = JSON.parse(Messages[0].Body);
   const executionRecord = JSON.parse(snsMessage.Message);
-  const dynamoRecord = await executionModel.get({ arn: executionArn });
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
 
   t.is(executionRecord.arn, executionArn);
   t.is(executionRecord.status, cumulusMessage.meta.status);
-  t.deepEqual(omit(executionRecord, 'timestamp'), omit(dynamoRecord, 'timestamp'));
+  t.deepEqual(executionRecord, translatedExecution);
 });
