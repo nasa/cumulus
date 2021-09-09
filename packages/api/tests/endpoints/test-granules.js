@@ -258,6 +258,7 @@ test.before(async (t) => {
   );
   await executionPgModel.create(knex, executionPgRecord);
   t.context.executionUrl = executionPgRecord.url;
+  t.context.executionArn = executionPgRecord.arn;
 });
 
 test.beforeEach(async (t) => {
@@ -1648,7 +1649,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns bad request if granule does not exist', async (t) => {
+test.serial('update (PUT) returns not found if granule does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1659,9 +1660,9 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.error, 'Not Found');
   t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
 });
 
@@ -1809,8 +1810,8 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
 });
 
-test.serial('update (PUT) returns badRequest when the path param granuleName does not match the json granuleId', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({ });
+test.serial('update (PUT) returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({});
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
 
   const { body } = await request(app)
@@ -1833,7 +1834,7 @@ test.serial('associateExecution (POST) returns bad request if fields are missing
     .expect(400);
 
   t.is(response.body.error, 'Bad Request');
-  t.is(response.body.message, 'Field granuleId, collectionId or execution is missing from request body');
+  t.is(response.body.message, 'Field granuleId, collectionId or executionArn is missing from request body');
 });
 
 test.serial('associateExecution (POST) returns bad request when the path param granuleName does not match the granuleId in payload', async (t) => {
@@ -1842,7 +1843,7 @@ test.serial('associateExecution (POST) returns bad request when the path param g
 
   const requestPayload = {
     collectionId: t.context.collectionId,
-    execution: t.context.executionUrl,
+    executionArn: t.context.executionArn,
     granuleId: granuleIdInRquest,
   };
   const response = await request(app)
@@ -1856,11 +1857,11 @@ test.serial('associateExecution (POST) returns bad request when the path param g
   t.is(response.body.message, `Expected granuleId to be ${granuleIdInPath} but found ${granuleIdInRquest} in payload`);
 });
 
-test.serial('associateExecution (POST) returns bad request if granule does not exist', async (t) => {
+test.serial('associateExecution (POST) returns not found if granule does not exist', async (t) => {
   const granuleId = randomId('granuleId');
   const requestPayload = {
     collectionId: t.context.collectionId,
-    execution: t.context.executionUrl,
+    executionArn: t.context.executionArn,
     granuleId,
   };
 
@@ -1869,9 +1870,9 @@ test.serial('associateExecution (POST) returns bad request if granule does not e
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.error, 'Not Found');
   t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId}`);
 });
 
@@ -1894,7 +1895,7 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
 
   const requestPayload = {
     collectionId: t.context.collectionId,
-    execution: t.context.executionUrl,
+    executionArn: t.context.executionArn,
     granuleId: newGranule.granuleId,
   };
 
@@ -1939,19 +1940,19 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
   );
 
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully associated execution ${requestPayload.execution} with granule granuleId ${requestPayload.granuleId} collectionId ${requestPayload.collectionId}`,
+    message: `Successfully associated execution ${requestPayload.executionArn} with granule granuleId ${requestPayload.granuleId} collectionId ${requestPayload.collectionId}`,
   });
 
   t.is(fetchedDynamoRecord.timestamp, timestamp);
   t.is(fetchedDynamoRecord.createdAt, createdAt);
-  t.is(fetchedDynamoRecord.execution, requestPayload.execution);
+  t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
 
   t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), timestamp);
   t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), createdAt);
-  t.is(executionPgRecord[0].url, requestPayload.execution);
+  t.is(executionPgRecord[0].arn, requestPayload.executionArn);
 });
 
-test.serial('associateExecution (POST) returns bad request if execution does not exist', async (t) => {
+test.serial('associateExecution (POST) returns not found if execution does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1964,10 +1965,10 @@ test.serial('associateExecution (POST) returns bad request if execution does not
     .send(newGranule)
     .expect(200);
 
-  const execution = randomId('execution');
+  const executionArn = randomId('executionArn');
   const requestPayload = {
     collectionId: t.context.collectionId,
-    execution,
+    executionArn,
     granuleId: newGranule.granuleId,
   };
 
@@ -1976,13 +1977,13 @@ test.serial('associateExecution (POST) returns bad request if execution does not
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
-  t.true(response.body.message.includes(`Could not find execution in PostgreSQL database with url ${execution}`));
+  t.is(response.body.error, 'Not Found');
+  t.is(response.body.message, `Execution ${executionArn} not found`);
 });
 
-test.serial('associateExecution (POST) returns bad request if collection in payload does not match the granule record', async (t) => {
+test.serial('associateExecution (POST) returns not found if collectionId in payload does not match the granule record', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1998,7 +1999,7 @@ test.serial('associateExecution (POST) returns bad request if collection in payl
   const collectionId = randomId('collectionId');
   const requestPayload = {
     collectionId,
-    execution: t.context.executionUrl,
+    executionArn: t.context.executionArn,
     granuleId: newGranule.granuleId,
   };
 
@@ -2007,8 +2008,8 @@ test.serial('associateExecution (POST) returns bad request if collection in payl
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.error, 'Not Found');
   t.true(response.body.message.includes(`No granule found to associate execution with for granuleId ${newGranule.granuleId} collectionId ${collectionId}`));
 });

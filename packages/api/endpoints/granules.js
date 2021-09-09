@@ -95,6 +95,13 @@ const create = async (req, res) => {
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
 };
 
+/**
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
 const update = async (req, res) => {
   const {
     granuleModel = new models.Granule(),
@@ -107,7 +114,7 @@ const update = async (req, res) => {
     existingGranule = await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(`No granule found to update for ${body.granuleId}`);
+      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
     }
     return res.boom.badRequest(errorify(error));
   }
@@ -260,9 +267,9 @@ async function put(req, res) {
 const associateExecution = async (req, res) => {
   const granuleName = req.params.granuleName;
 
-  const { collectionId, granuleId, execution } = req.body || {};
-  if (!granuleId || !collectionId || !execution) {
-    return res.boom.badRequest('Field granuleId, collectionId or execution is missing from request body');
+  const { collectionId, granuleId, executionArn } = req.body || {};
+  if (!granuleId || !collectionId || !executionArn) {
+    return res.boom.badRequest('Field granuleId, collectionId or executionArn is missing from request body');
   }
 
   if (granuleName !== granuleId) {
@@ -270,38 +277,44 @@ const associateExecution = async (req, res) => {
   }
 
   const {
+    executionModel = new models.Execution(),
     granuleModel = new models.Granule(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
-  let existingGranule;
+  let granule;
+  let execution;
   try {
-    existingGranule = await granuleModel.get({ granuleId });
+    granule = await granuleModel.get({ granuleId });
+    execution = await executionModel.get({ arn: executionArn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(`No granule found to associate execution with for granuleId ${granuleId}`);
+      if (granule === undefined) {
+        return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId}`);
+      }
+      return res.boom.notFound(`Execution ${executionArn} not found`);
     }
     return res.boom.badRequest(errorify(error));
   }
 
-  if (existingGranule.collectionId !== collectionId) {
-    return res.boom.badRequest(`No granule found to associate execution with for granuleId ${granuleId} collectionId ${collectionId}`);
+  if (granule.collectionId !== collectionId) {
+    return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId} collectionId ${collectionId}`);
   }
 
   const updatedGranule = {
-    ...existingGranule,
-    execution,
+    ...granule,
+    execution: execution.execution,
     updatedAt: Date.now(),
   };
 
   try {
     await writeGranuleFromApi(updatedGranule, knex);
   } catch (error) {
-    log.error(`failed to associate execution ${execution} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
+    log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully associated execution ${execution} with granule granuleId ${granuleId} collectionId ${collectionId}`,
+    message: `Successfully associated execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`,
   });
 };
 

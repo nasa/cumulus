@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const { randomId } = require('../../common/test-utils');
 const granulesApi = require('../granules');
 
 test.before((t) => {
@@ -392,6 +393,34 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   };
 
   await t.notThrowsAsync(granulesApi.updateGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
+
+test('associateExecutionWithGranule calls the callback with the expected object', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    collectionId: randomId('collectionId'),
+    execution: randomId('execution'),
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}/execution`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.associateExecutionWithGranule({
     callback,
     prefix: t.context.testPrefix,
     body,
