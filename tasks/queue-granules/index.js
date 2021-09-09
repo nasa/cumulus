@@ -64,7 +64,7 @@ async function queueGranules(event) {
       });
       if (executionArn) {
         const queuedGranule = {
-          ...granule,
+          granuleId: granule.granuleId,
           status: 'queued',
         };
         await granulesApi.updateGranule({
