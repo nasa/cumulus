@@ -403,7 +403,7 @@ test('associateExecutionWithGranule calls the callback with the expected object'
   const body = {
     granuleId: t.context.granuleId,
     collectionId: randomId('collectionId'),
-    execution: randomId('execution'),
+    executionArn: randomId('executionArn'),
   };
   const expected = {
     prefix: t.context.testPrefix,
