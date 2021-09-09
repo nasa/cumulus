@@ -179,13 +179,13 @@ test.before(async (t) => {
       omitExecution,
       t.context.knex
     );
-    const executionCumulusIds = await t.context.executionPgModel.create(
+    const [pgExecution] = await t.context.executionPgModel.create(
       t.context.knex,
       executionPgRecord
     );
     const dynamoRecord = await executionModel.create(execution);
     await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
-    return { ...executionPgRecord, cumulus_id: executionCumulusIds[0] };
+    return pgExecution;
   }));
 
   // Create AsyncOperation in Dynamo and Postgres
@@ -241,8 +241,13 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const { esIndex, esClient, executionPgModel, knex, granulePgModel } = t.context;
-
+  const {
+    esClient,
+    esIndex,
+    executionPgModel,
+    granulePgModel,
+    knex,
+  } = t.context;
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
 
@@ -402,10 +407,11 @@ test('GET returns an existing execution', async (t) => {
     asyncRecord
   );
 
-  const [parentExecutionCumulusId] = await t.context.executionPgModel.create(
+  const [parentPgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     parentExecutionRecord
   );
+  const parentExecutionCumulusId = parentPgExecution.cumulus_id;
 
   const executionRecord = await fakeExecutionRecordFactory({
     async_operation_cumulus_id: asyncOperationCumulusId,
@@ -1052,8 +1058,9 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
     fakePGGranules,
   } = t.context;
 
-  const [mostRecentExecutionCumulusId]
+  const [mostRecentExecution]
     = await executionPgModel.create(knex, fakeExecutionRecordFactory({ workflow_name: 'newWorkflow' }));
+  const mostRecentExecutionCumulusId = mostRecentExecution.cumulus_id;
 
   await upsertGranuleWithExecutionJoinRecord(
     knex, fakePGGranules[0], mostRecentExecutionCumulusId

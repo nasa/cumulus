@@ -109,12 +109,6 @@ resource "aws_sns_topic" "report_executions_topic" {
   tags = var.tags
 }
 
-resource "aws_lambda_event_source_mapping" "publish_executions" {
-  event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
-  function_name     = aws_lambda_function.publish_executions.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
 
 # Report granules
 

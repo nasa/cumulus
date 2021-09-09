@@ -12,6 +12,12 @@ const publishPdrSnsMessage = async (record) => {
   await publishSnsMessage(topicArn, record);
 };
 
+const publishExecutionSnsMessage = async (record) => {
+  const topicArn = envUtils.getRequiredEnvVar('execution_sns_topic_arn', process.env);
+  logger.info(`About to publish SNS message ${JSON.stringify(record)} for execution to topic ARN ${topicArn}`);
+  await publishSnsMessage(topicArn, record);
+};
+
 const constructSnsMessage = (record, event) => {
   switch (event) {
   case 'Create':
@@ -40,4 +46,5 @@ const publishCollectionSnsMessage = async (record, event) => {
 module.exports = {
   publishCollectionSnsMessage,
   publishPdrSnsMessage,
+  publishExecutionSnsMessage,
 };
