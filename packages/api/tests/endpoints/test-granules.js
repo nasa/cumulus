@@ -253,11 +253,13 @@ test.beforeEach(async (t) => {
       granuleId: granuleId1,
       status: 'completed',
       execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      duration: 47.125,
     }),
     fakeGranuleFactoryV2({
       granuleId: granuleId2,
       status: 'failed',
       execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      duration: 52.235,
     }),
   ];
 
@@ -274,6 +276,7 @@ test.beforeEach(async (t) => {
         collection_cumulus_id: t.context.collectionCumulusId,
         published: true,
         cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
+        duration: 47.125,
       }
     ),
     fakeGranuleRecordFactory(
@@ -281,6 +284,7 @@ test.beforeEach(async (t) => {
         granule_id: granuleId2,
         status: 'failed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
       }
     ),
   ];

@@ -51,7 +51,7 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
@@ -94,9 +94,10 @@ const ingestAndPublishGranuleExecutionArns = [];
  *
  * @param {string} prefix - stack Prefix
  * @param {string} sourceBucket - testing source bucket
+ * @param {string} stackName - stack used for testing
  * @returns {Promise<Object>}  The collection created
  */
-const createActiveCollection = async (prefix, sourceBucket) => {
+const createActiveCollection = async (prefix, sourceBucket, stackName) => {
   // The S3 path where granules will be ingested from
   const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
 
@@ -145,9 +146,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 
   ingestGranuleExecutionArn = workflowExecution.executionArn;
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix: stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -186,9 +190,12 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
   ingestAndPublishGranuleExecutionArns.push(executionArn);
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -334,7 +341,7 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
+      extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket, config.stackName);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
