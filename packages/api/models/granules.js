@@ -302,7 +302,7 @@ class Granule extends Manager {
    * @param {number} [params.timeToPreprocess] -  seconds
    * @param {integer} [params.productVolume] - sum of the files sizes in bytes
    * @param {number} [params.duration] - seconds
-   * @param {GranuleStatus} params.status - ['running','failed','completed']
+   * @param {GranuleStatus} params.status - ['running','failed','completed','queued']
    * @param {number} params.workflowStartTime
    * @param {Array<ApiFile>} params.files - files associated with the granule.
    * @param {Object} [params.error] = {} - workflow error that may have occurred.
