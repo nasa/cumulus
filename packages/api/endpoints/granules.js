@@ -17,9 +17,7 @@ const {
 
 const {
   CollectionPgModel,
-  ExecutionPgModel,
   getKnexClient,
-  GranulesExecutionsPgModel,
   GranulePgModel,
 } = require('@cumulus/db');
 
@@ -29,7 +27,6 @@ const indexer = require('@cumulus/es-client/indexer');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
 const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
-const { writeGranuleExecutionRecord } = require('../lib/writeRecords/write-granule-execution');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
@@ -254,51 +251,57 @@ async function put(req, res) {
 }
 
 /**
- * add execution to a granule
- * Update existing granule
+ * associate an execution with a granule
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} promise of an express response object.
+ * @returns {Promise<Object>} promise of an express response object
  */
-const addGranuleExecution = async (req, res) => {
+const associateExecution = async (req, res) => {
   const granuleName = req.params.granuleName;
 
   const { collectionId, granuleId, execution } = req.body || {};
   if (!granuleId || !collectionId || !execution) {
-    return res.boom.badRequest('Field granuleId, collectionId or execution is missing');
+    return res.boom.badRequest('Field granuleId, collectionId or execution is missing from request body');
   }
 
   if (granuleName !== granuleId) {
-    return res.boom.badRequest(`Expected granuleId to be '${granuleName}',`
-      + ` but found '${granuleId}' in payload`);
+    return res.boom.badRequest(`Expected granuleId to be ${granuleName} but found ${granuleId} in payload`);
   }
 
   const {
-    collectionPgModel = new CollectionPgModel(),
-    executionPgModel = new ExecutionPgModel(),
-    granulePgModel = new GranulePgModel(),
-    granuleExecutionPgModel = new GranulesExecutionsPgModel(),
+    granuleModel = new models.Granule(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
+  let existingGranule;
   try {
-    await writeGranuleExecutionRecord(
-      granuleId,
-      collectionId,
-      execution,
-      knex,
-      collectionPgModel,
-      executionPgModel,
-      granulePgModel,
-      granuleExecutionPgModel
-    );
+    existingGranule = await granuleModel.get({ granuleId });
   } catch (error) {
-    log.error('failed to associate an execution with a granule', error);
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(`No granule found to associate execution with for granuleId ${granuleId}`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  if (existingGranule.collectionId !== collectionId) {
+    return res.boom.badRequest(`No granule found to associate execution with for granuleId ${granuleId} collectionId ${collectionId}`);
+  }
+
+  const updatedGranule = {
+    ...existingGranule,
+    execution,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    await writeGranuleFromApi(updatedGranule, knex);
+  } catch (error) {
+    log.error(`failed to associate execution ${execution} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully associated execution ${execution} to granule ${granuleId}`,
+    message: `Successfully associated execution ${execution} with granule granuleId ${granuleId} collectionId ${collectionId}`,
   });
 };
 
@@ -551,7 +554,7 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
-router.post('/:granuleName/execution', addGranuleExecution);
+router.post('/:granuleName/execution', associateExecution);
 router.post('/', create);
 router.put('/:granuleName', put);
 
