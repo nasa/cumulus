@@ -1659,9 +1659,9 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.error, 'Not Found');
   t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
 });
 

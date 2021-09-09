@@ -114,7 +114,7 @@ const update = async (req, res) => {
     existingGranule = await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(`No granule found to update for ${body.granuleId}`);
+      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
     }
     return res.boom.badRequest(errorify(error));
   }
