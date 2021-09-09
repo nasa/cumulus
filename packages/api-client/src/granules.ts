@@ -11,7 +11,7 @@ const logger = new Logger({ sender: '@api-client/granules' });
 type AssociateExecutionRequest = {
   granuleId: string
   collectionId: string
-  execution: string
+  executionArn: string
 };
 
 /**
