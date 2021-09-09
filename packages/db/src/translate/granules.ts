@@ -63,12 +63,12 @@ export const translatePostgresGranuleToApiGranule = async (
   }
 
   const apiGranule: ApiGranule = removeNilProperties({
-    beginningDateTime: granulePgRecord.beginning_date_time?.getTime().toString(),
+    beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
     cmrLink: granulePgRecord.cmr_link,
     collectionId: constructCollectionId(collection.name, collection.version),
     createdAt: granulePgRecord.created_at?.getTime(),
     duration: granulePgRecord.duration,
-    endingDateTime: granulePgRecord.ending_date_time?.getTime().toString(),
+    endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
     error: granulePgRecord.error,
     execution: executionArns[0] ? executionArns[0].arn : undefined,
     files: files.map((file) => ({
@@ -76,11 +76,11 @@ export const translatePostgresGranuleToApiGranule = async (
       //granuleId: granulePgRecord.granule_id,
     })),
     granuleId: granulePgRecord.granule_id,
-    lastUpdateDateTime: granulePgRecord.last_update_date_time?.getTime().toString(),
+    lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
     pdrName: pdr ? pdr.name : undefined,
-    processingEndDateTime: granulePgRecord.processing_end_date_time?.getTime().toString(),
-    processingStartDateTime: granulePgRecord.processing_start_date_time?.getTime().toString(),
-    productionDateTime: granulePgRecord.production_date_time?.getTime().toString(),
+    processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
+    processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
+    productionDateTime: granulePgRecord.production_date_time?.toISOString(),
     productVolume: granulePgRecord.product_volume
       ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
     provider: provider ? provider.name : undefined,
