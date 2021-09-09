@@ -7,10 +7,12 @@ const cryptoRandomString = require('crypto-random-string');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 
 const {
+  publishExecutionSnsMessage,
   publishCollectionSnsMessage,
 } = require('../../lib/publishSnsMessageUtils');
 
 const {
+  fakeExecutionFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
 
@@ -47,6 +49,42 @@ test.after.always(async (t) => {
     sqs().deleteQueue({ QueueUrl }).promise(),
     sns().deleteTopic({ TopicArn }).promise(),
   ]);
+});
+
+test.serial('publishExecutionSnsMessage() does not publish an SNS message if execution_sns_topic_arn is undefined', async (t) => {
+  const newExecution = fakeExecutionFactoryV2({
+    arn: cryptoRandomString({ length: 5 }),
+    status: 'completed',
+    name: 'test_execution',
+  });
+  await t.throwsAsync(
+    publishExecutionSnsMessage(newExecution),
+    { message: 'The execution_sns_topic_arn environment variable must be set' }
+  );
+});
+
+test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) => {
+  process.env.execution_sns_topic_arn = t.context.TopicArn;
+  const executionArn = cryptoRandomString({ length: 10 });
+  const newExecution = fakeExecutionFactoryV2({
+    arn: executionArn,
+    status: 'completed',
+    name: 'test_execution',
+  });
+  await publishExecutionSnsMessage(newExecution);
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+
+  t.deepEqual(executionRecord.arn, executionArn);
+  t.deepEqual(executionRecord.status, newExecution.status);
 });
 
 test.serial('publishCollectionSnsMessage() does not publish an SNS message if collection_sns_topic_arn is undefined', async (t) => {

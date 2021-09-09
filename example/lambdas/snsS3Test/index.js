@@ -17,7 +17,7 @@ async function handleExecutions(event) {
   }
   return await s3.putObject({
     Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/test-output/${executionRecord.name}.output`,
+    Key: `${process.env.stackName}/test-output/${executionRecord.name}-${executionRecord.status}.output`,
     Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }

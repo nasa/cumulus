@@ -138,10 +138,11 @@ test.before(async (t) => {
     collection_cumulus_id: t.context.testPgCollection.cumulus_id,
   });
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     t.context.testPgExecution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {
