@@ -1649,7 +1649,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns not found if granule does not exist', async (t) => {
+test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1857,7 +1857,7 @@ test.serial('associateExecution (POST) returns bad request when the path param g
   t.is(response.body.message, `Expected granuleId to be ${granuleIdInPath} but found ${granuleIdInRquest} in payload`);
 });
 
-test.serial('associateExecution (POST) returns not found if granule does not exist', async (t) => {
+test.serial('associateExecution (POST) returns Not Found if granule does not exist', async (t) => {
   const granuleId = randomId('granuleId');
   const requestPayload = {
     collectionId: t.context.collectionId,
@@ -1952,7 +1952,7 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
   t.is(executionPgRecord[0].arn, requestPayload.executionArn);
 });
 
-test.serial('associateExecution (POST) returns not found if execution does not exist', async (t) => {
+test.serial('associateExecution (POST) returns Not Found if execution does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1983,7 +1983,7 @@ test.serial('associateExecution (POST) returns not found if execution does not e
   t.is(response.body.message, `Execution ${executionArn} not found`);
 });
 
-test.serial('associateExecution (POST) returns not found if collectionId in payload does not match the granule record', async (t) => {
+test.serial('associateExecution (POST) returns Not Found if collectionId in payload does not match the granule record', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
