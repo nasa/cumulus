@@ -1648,7 +1648,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns bad request if granule does not exist', async (t) => {
+test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
