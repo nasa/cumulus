@@ -266,12 +266,13 @@ test.beforeEach(async (t) => {
 
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
+  const granuleId3 = cryptoRandomString({ length: 6 });
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
     fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.executionUrl }),
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'running' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId3, status: 'running' }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
@@ -291,6 +292,13 @@ test.beforeEach(async (t) => {
       {
         granule_id: granuleId2,
         status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'running',
         collection_cumulus_id: t.context.collectionCumulusId,
       }
     ),
