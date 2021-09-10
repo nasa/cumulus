@@ -8,6 +8,12 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
+type AssociateExecutionRequest = {
+  granuleId: string
+  collectionId: string
+  executionArn: string
+};
+
 /**
  * GET raw response from /granules/{granuleName}
  *
@@ -435,6 +441,36 @@ export const updateGranule = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       path: `/granules/${body.granuleId}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
+ * Associate an execution with a granule in cumulus.
+ * POST /granules/{granuleId}/execution
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule and execution info to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const associateExecutionWithGranule = async (params: {
+  prefix: string,
+  body: AssociateExecutionRequest,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: `/granules/${body.granuleId}/execution`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
