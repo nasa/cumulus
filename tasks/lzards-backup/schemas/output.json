@@ -2,35 +2,66 @@
   "title": "LzardsBackupOutput",
   "description": "Describes the output expected by the LzardsBackup task component",
   "type": "object",
-  "required": ["backupResults", "granules"],
+  "required": [
+    "backupResults",
+    "granules"
+  ],
   "properties": {
     "backupResults": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId"],
+        "required": [
+          "filename",
+          "status",
+          "granuleId"
+        ],
         "properties": {
-          "body": { "type": "string" },
-          "filename": { "type": "string" },
-          "status": { "type": "string" },
-          "granuleId": { "type": "string" },
-          "statusCode": { "type": "number" }
+          "body": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "granuleId": {
+            "type": "string"
+          },
+          "statusCode": {
+            "type": "number"
+          }
         }
       },
       "granules": {
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["files", "granuleId", "dataType", "version"],
+          "required": [
+            "files",
+            "granuleId",
+            "dataType",
+            "version"
+          ],
           "properties": {
-            "granuleId": { "type": "string" },
-            "dataType": { "type": "string" },
-            "version": { "type": "string" },
+            "granuleId": {
+              "type": "string"
+            },
+            "dataType": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
             "files": {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["bucket", "key"],
+                "required": [
+                  "bucket",
+                  "key"
+                ],
                 "additionalProperties": false,
                 "properties": {
                   "bucket": {
@@ -39,10 +70,6 @@
                   },
                   "key": {
                     "description": "S3 Key for archived file",
-                    "type": "string"
-                  },
-                  "type": {
-                    "description": "",
                     "type": "string"
                   },
                   "source": {
@@ -56,6 +83,12 @@
                   },
                   "size": {
                     "type": "number"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
                   }
                 }
               }

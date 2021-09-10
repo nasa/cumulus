@@ -2,22 +2,38 @@
   "title": "LzardsBackupInput",
   "description": "Describes the input expected by the LzardsBackup task component",
   "type": "object",
-  "required": ["granules"],
+  "required": [
+    "granules"
+  ],
   "properties": {
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["files", "granuleId", "dataType", "version"],
+        "required": [
+          "files",
+          "granuleId",
+          "dataType",
+          "version"
+        ],
         "properties": {
-          "granuleId": { "type": "string" },
-          "dataType": { "type": "string" },
-          "version": { "type": "string" },
+          "granuleId": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["bucket", "key"],
+              "required": [
+                "bucket",
+                "key"
+              ],
               "additionalProperties": false,
               "properties": {
                 "bucket": {
@@ -41,6 +57,9 @@
                   "type": "number"
                 },
                 "fileName": {
+                  "type": "string"
+                },
+                "type": {
                   "type": "string"
                 }
               }
