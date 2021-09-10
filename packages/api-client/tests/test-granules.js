@@ -376,6 +376,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
     any: 'object',
+    status: t.context.status,
   };
   const expected = {
     prefix: t.context.testPrefix,

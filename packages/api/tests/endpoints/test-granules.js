@@ -1824,3 +1824,16 @@ test.serial('update (PUT) returns badRequest when the path param granuleName doe
   t.is(body.error, 'Bad Request');
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
+
+test.serial('updatae (PUT) can set granule status to queued', async (t) => {
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: t.context.fakeGranules[0].granuleId,
+      status: 'queued',
+    });
+
+  t.is(response.status, 200);
+});
