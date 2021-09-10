@@ -7,7 +7,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": [
+          "granuleId",
+          "files"
+        ],
         "properties": {
           "granuleId": {
             "type": "string"
@@ -16,7 +19,10 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["bucket", "key"],
+              "required": [
+                "bucket",
+                "key"
+              ],
               "additionalProperties": false,
               "properties": {
                 "bucket": {
@@ -40,6 +46,9 @@
                   "type": "number"
                 },
                 "fileName": {
+                  "type": "string"
+                },
+                "type": {
                   "type": "string"
                 }
               }
