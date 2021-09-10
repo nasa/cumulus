@@ -12,7 +12,7 @@ function templateJsonSchema(
 
   const template = parse(schemaTemplate);
 
-  const schemaOutputString = JSON.stringify(template(replacements));
+  const schemaOutputString = JSON.stringify(template(replacements), undefined, 2);
   fs.writeFileSync(schemaOutputPath, schemaOutputString);
 }
 
