@@ -272,7 +272,7 @@ test.beforeEach(async (t) => {
   t.context.fakeGranules = [
     fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.executionUrl }),
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId3, status: 'running' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId3, status: 'running', execution: t.context.executionUrl }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
