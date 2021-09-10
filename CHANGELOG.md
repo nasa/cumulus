@@ -40,6 +40,8 @@ of response and not the raw API endpoint response
   - Adds `POST /executions` endpoint to create an execution
 - **CUMULUS-2578**
   - Adds `PUT /executions` endpoint to update an execution
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2644**
@@ -74,6 +76,8 @@ when output of the operation is `undefined`
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
     if an incorrectly formated collectionId is input.
+- **CUMULUS-2583**
+  - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
 ## [v9.4.0] 2021-08-16
 
