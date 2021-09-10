@@ -22,6 +22,7 @@
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",

@@ -30,10 +30,9 @@ const {
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;

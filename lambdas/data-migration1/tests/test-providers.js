@@ -17,6 +17,7 @@ const {
   destroyLocalTestDb,
   ProviderPgModel,
   nullifyUndefinedProviderValues,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -24,9 +25,6 @@ const {
   migrateProviderRecord,
   migrateProviders,
 } = require('../dist/lambda/providers');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 

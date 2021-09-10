@@ -9,6 +9,7 @@ const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
@@ -21,7 +22,6 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
 const mappings = require('@cumulus/es-client/config/mappings.json');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
@@ -29,7 +29,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-const esIndex = randomString();
+const esIndex = randomId('esindex');
 
 process.env.AccessTokensTable = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -267,6 +267,12 @@ test.serial('Reindex request returns 400 with the expected message when source i
 test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
   const date = new Date();
   const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+  const idxStatus = await esClient.indices.exists({ index: defaultIndexName });
+  if (idxStatus.body === true) {
+    await esClient.indices.delete({ index: defaultIndexName });
+  }
+
   await esClient.indices.create({
     index: defaultIndexName,
     body: { mappings },
