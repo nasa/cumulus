@@ -3,6 +3,7 @@ const isNil = require('lodash/isNil');
 const {
   ExecutionPgModel,
   translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const {
   upsertExecution,
@@ -29,6 +30,7 @@ const { parseException } = require('@cumulus/message/utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
+const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
 const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
@@ -117,18 +119,18 @@ const _writeExecutionRecord = ({
   esClient,
 }) => knex.transaction(async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
-  const [executionCumulusId] = await executionPgModel.upsert(trx, postgresRecord);
-  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionCumulusId}`);
+  const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
+  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
   await writeExecutionToDynamoAndES({
     dynamoRecord,
     executionModel,
     updatedAt,
     esClient,
   });
-  return executionCumulusId;
+  return executionPgRecord;
 });
 
-const writeExecutionRecordFromMessage = ({
+const writeExecutionRecordFromMessage = async ({
   cumulusMessage,
   knex,
   collectionCumulusId,
@@ -146,7 +148,7 @@ const writeExecutionRecordFromMessage = ({
     updatedAt,
   });
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
-  return _writeExecutionRecord(
+  const writeExecutionResponse = await _writeExecutionRecord(
     {
       dynamoRecord: executionApiRecord,
       postgresRecord,
@@ -155,6 +157,12 @@ const writeExecutionRecordFromMessage = ({
       esClient,
     }
   );
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    writeExecutionResponse,
+    knex
+  );
+  await publishExecutionSnsMessage(translatedExecution);
+  return writeExecutionResponse.cumulus_id;
 };
 
 const writeExecutionRecordFromApi = async ({

@@ -139,10 +139,11 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
-  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     execution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   [t.context.providerCumulusId] = await t.context.providerPgModel.create(
     t.context.knex,

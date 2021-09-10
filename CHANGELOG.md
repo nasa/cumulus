@@ -24,6 +24,12 @@ of response and not the raw API endpoint response
       - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
       - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
   - **CUMULUS-2510**
+    - Added `execution_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
+      permissions for SNS publish for `report_executions_topic`
+    - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
+      publish SNS messages to the report executions topic.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
@@ -113,6 +119,11 @@ of response and not the raw API endpoint response
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
   - **CUMULUS-2510**
+    - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+    - Updated functions `create` and `upsert` in the `db` model for Executions
+    to return an array of objects containing all columns of the created or
+    updated records.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
@@ -146,6 +157,10 @@ when output of the operation is `undefined`
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on executions
+      DynamoDB table.
     - Removed `stream_enabled` and `stream_view_type` from `collections_table`
       TF definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
