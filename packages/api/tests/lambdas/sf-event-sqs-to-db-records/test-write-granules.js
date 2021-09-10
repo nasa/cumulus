@@ -528,7 +528,7 @@ test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasti
   t.true(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
+test.only('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -550,12 +550,14 @@ test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasti
 
   const dynamoRecord = await granuleModel.get({ granuleId });
   const pgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
-  t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
-  t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  // t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  // t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  deepComparePgGranuleAndApiGranule(pgRecord, dynamoRecord);
 
   const esRecord = await t.context.esGranulesClient.get(granuleId);
-  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
-  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
+  // t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
+  // t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
+  deepComparePgGranuleAndApiGranule(pgRecord, esRecord);
 });
 
 test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {

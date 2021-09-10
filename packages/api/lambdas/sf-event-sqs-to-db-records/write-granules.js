@@ -91,6 +91,10 @@ const generateGranuleRecord = async ({
   pdrCumulusId,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
+  // TODO write test that ensures Dynamo/PG are the same
+  // TODO pass this down from parent
+  // TODO phase 2 ticket to refactor this - generate postgres record in one place and pass to both
+  // dynamo and PG writes. Should include executions, granules, pdrs
   timestamp = Date.now(),
   updatedAt = Date.now(),
 }) => {
@@ -252,6 +256,7 @@ const _writeGranuleViaTransaction = async ({
   updatedAt,
   files,
 }) => {
+  // TODO this generates the duration
   const granuleRecord = await generateGranuleRecord({
     error,
     granule,
@@ -492,6 +497,7 @@ const _writeGranule = async ({
   const files = await _generateFilesFromGranule({ granule, provider });
 
   await knex.transaction(async (trx) => {
+    // TODO this generates the duration
     granuleCumulusId = await _writeGranuleViaTransaction({
       granule,
       processingTimeInfo,
@@ -509,6 +515,7 @@ const _writeGranule = async ({
       files,
     });
 
+    // TODO this generates the duration
     return writeGranuleToDynamoAndEs({
       granule,
       executionUrl,

@@ -208,7 +208,14 @@ const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQuer
 
 const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => await pWaitFor(
   async () => {
-    const fieldsIgnored = ['timestamp', 'updatedAt'];
+    const fieldsIgnored = [
+      'timestamp',
+      'type', // TODO this should not be ignored once added to PG schema
+      'updatedAt',
+    ];
+
+    // TODO Date.parse() all datetime fields to compare
+
     const resp = await listGranules({
       prefix: stackName,
       query: {
@@ -218,6 +225,10 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
     });
     const results = JSON.parse(resp.body).results;
     if (results && results.length === 1) {
+      console.log('results::::', omit(results[0], fieldsIgnored));
+      console.log('granule:::', omit(granule, fieldsIgnored));
+      const difference = Object.keys(omit(results[0], fieldsIgnored)).filter((k) => omit(results[0], fieldsIgnored)[k] !== omit(granule, fieldsIgnored)[k]);
+      console.log('difference::::', difference);
       return isEqual(omit(results[0], fieldsIgnored), omit(granule, fieldsIgnored));
     }
     return false;

@@ -23,12 +23,10 @@ export const translatePostgresFileToApiFile = (
   bucket: filePgRecord.bucket,
   checksum: filePgRecord.checksum_value,
   checksumType: filePgRecord.checksum_type,
-  createdAt: filePgRecord.created_at.getTime(),
   fileName: filePgRecord.file_name,
   key: filePgRecord.key,
   size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
   source: filePgRecord.source,
-  updatedAt: filePgRecord.updated_at?.getTime(),
 });
 
 export const translateApiFiletoPostgresFile = (
