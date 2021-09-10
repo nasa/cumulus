@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `PUT /granules` API endpoint to update a granule
   - Adds helper `updateGranule` to `@cumulus/api-client/granules`
 - **CUMULUS-2606**
-  - Adds `PUT /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
   - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
 
 ## [v9.5.0] 2021-09-07
