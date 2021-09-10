@@ -7,6 +7,7 @@ const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
 const publishPdrSnsMessage = async (record) => {
+  logger.debug('PROCESS ENV', process.env.pdr_sns_topic_arn);
   const topicArn = envUtils.getRequiredEnvVar('pdr_sns_topic_arn', process.env);
   logger.info(`About to publish SNS message for pdr to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
   await publishSnsMessage(topicArn, record);
