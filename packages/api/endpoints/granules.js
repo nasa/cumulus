@@ -7,6 +7,10 @@ const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
+  addToLocalES,
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
@@ -22,9 +26,10 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
@@ -56,8 +61,86 @@ async function list(req, res) {
 }
 
 /**
+ * Create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const create = async (req, res) => {
+  const {
+    knex = await getKnexClient(),
+    granuleModel = new models.Granule(),
+  } = req.testContext || {};
+
+  const granule = req.body || {};
+
+  try {
+    if (await granuleModel.exists({ granuleId: granule.granuleId })) {
+      return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
+    }
+  } catch (error) {
+    return res.boom.badRequest(errorify(error));
+  }
+
+  try {
+    await writeGranuleFromApi(granule, knex);
+    if (inTestMode()) {
+      await addToLocalES(granule, indexGranule);
+    }
+  } catch (error) {
+    log.error('Could not write granule', error);
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  }
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+};
+
+/**
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const update = async (req, res) => {
+  const {
+    granuleModel = new models.Granule(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+  const body = req.body || {};
+
+  let existingGranule;
+  try {
+    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  const updatedGranule = {
+    ...existingGranule,
+    updatedAt: Date.now(),
+    ...body,
+  };
+
+  try {
+    await writeGranuleFromApi(updatedGranule, knex);
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
+  });
+};
+
+/**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
+ * If no action is included on the request, the body is assumed to be an
+ * existing granule to update, and update is called with the input parameters.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -69,7 +152,12 @@ async function put(req, res) {
   const action = body.action;
 
   if (!action) {
-    return res.boom.badRequest('Action is missing');
+    if (req.body.granuleId === req.params.granuleName) {
+      return update(req, res);
+    }
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
   }
 
   const granuleModelClient = new models.Granule();
@@ -86,7 +174,7 @@ async function put(req, res) {
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
-        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+        return res.boom.badRequest(`Cannot reingest granule: ${error.message}`);
       }
       throw error;
     }
@@ -166,8 +254,7 @@ async function put(req, res) {
       status: 'SUCCESS',
     });
   }
-
-  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
+  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
 }
 
 /**
@@ -419,7 +506,9 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/', create);
 router.put('/:granuleName', put);
+
 router.post(
   '/bulk',
   validateBulkGranulesRequest,

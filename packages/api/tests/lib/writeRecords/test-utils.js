@@ -7,17 +7,17 @@ const uuidv4 = require('uuid/v4');
 const {
   localStackConnectionEnv,
   getKnexClient,
+  migrationDir,
 } = require('@cumulus/db');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
+  getExecutionCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/utils');
+} = require('../../../lib/writeRecords/utils');
 
 test.before(async (t) => {
   t.context.testDbName = `utils_${cryptoRandomString({ length: 10 })}`;
@@ -222,4 +222,29 @@ test('getMessageProviderCumulusId returns undefined if provider cannot be found'
   const { cumulusMessage, knex } = t.context;
   cumulusMessage.meta.provider.id = 'bogus-provider-id';
   t.is(await getMessageProviderCumulusId(cumulusMessage, knex), undefined);
+});
+
+test('getExecutionCumulusId returns correct execution cumulus_id', async (t) => {
+  const executionUrl = `http://${cryptoRandomString({ length: 5 })}`;
+  const fakeExecutionModel = {
+    getRecordCumulusId: (_, url) => {
+      if (url.url === executionUrl) return Promise.resolve(987);
+      return Promise.resolve(undefined);
+    },
+  };
+
+  t.is(
+    await getExecutionCumulusId(executionUrl, {}, fakeExecutionModel),
+    987
+  );
+});
+
+test('getExecutionCumulusId returns undefined if there is no executionUrl passed.', async (t) => {
+  const { knex } = t.context;
+  t.is(await getExecutionCumulusId(undefined, knex), undefined);
+});
+
+test('getExecutionCumulusId returns undefined if url cannot be found.', async (t) => {
+  const { knex } = t.context;
+  t.is(await getExecutionCumulusId('https://example.com/still/not/in/db', knex), undefined);
 });
