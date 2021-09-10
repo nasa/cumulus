@@ -339,10 +339,10 @@ test.serial('default returns list of granules', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(results.length, 2);
+  t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
-  t.is(meta.count, 2);
+  t.is(meta.count, 3);
   const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
