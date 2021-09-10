@@ -894,11 +894,25 @@ errors, to allow more specific handling by the caller.
 ## SQS
 
 * [SQS](#module_SQS)
+    * [.sendSQSMessage](#module_SQS.sendSQSMessage) ⇒ <code>Promise</code>
     * [.deleteSQSMessage](#module_SQS.deleteSQSMessage) ⇒ <code>Promise</code>
     * [.createQueue(QueueName)](#module_SQS.createQueue) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.sendSQSMessage(queueUrl, message)](#module_SQS.sendSQSMessage) ⇒ <code>Promise</code>
     * [.receiveSQSMessages(queueUrl, options)](#module_SQS.receiveSQSMessages) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.sqsQueueExists(queueUrl)](#module_SQS.sqsQueueExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
+
+<a name="module_SQS.sendSQSMessage"></a>
+
+### SQS.sendSQSMessage ⇒ <code>Promise</code>
+Send a message to AWS SQS
+
+**Kind**: static property of [<code>SQS</code>](#module_SQS)  
+**Returns**: <code>Promise</code> - resolves when the messsage has been sent  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| queueUrl | <code>string</code> | url of the SQS queue |
+| message | <code>string</code> \| <code>Object</code> | either string or object message. If an   object it will be serialized into a JSON string. |
+| [logOverride] | <code>Logger</code> | optional Logger passed in for testing |
 
 <a name="module_SQS.deleteSQSMessage"></a>
 
@@ -924,19 +938,6 @@ Create an SQS Queue.  Properly handles localstack queue URLs
 | Param | Type | Description |
 | --- | --- | --- |
 | QueueName | <code>string</code> | queue name |
-
-<a name="module_SQS.sendSQSMessage"></a>
-
-### SQS.sendSQSMessage(queueUrl, message) ⇒ <code>Promise</code>
-Send a message to AWS SQS
-
-**Kind**: static method of [<code>SQS</code>](#module_SQS)  
-**Returns**: <code>Promise</code> - resolves when the messsage has been sent  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| queueUrl | <code>string</code> | url of the SQS queue |
-| message | <code>string</code> \| <code>Object</code> | either string or object message. If an   object it will be serialized into a JSON string. |
 
 <a name="module_SQS.receiveSQSMessages"></a>
 

@@ -370,3 +370,30 @@ test('createGranule calls the callback with the expected object', async (t) => {
     body,
   }));
 });
+
+test('updateGranule calls the callback with the expected object', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    any: 'object',
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.updateGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
