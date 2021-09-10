@@ -304,7 +304,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 Files if the 
     { message: 'PG delete failed' }
   );
 
-  // granule should still exist in Dynamo and Postgres
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(
     t.context.knex,
     {
@@ -366,7 +366,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     { message: 'Dynamo delete failed' }
   );
 
-  // granule should still exist in Dynamo and Postgres
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(
     t.context.knex,
     {
@@ -429,7 +429,7 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     { message: 'ES delete failed' }
   );
 
-  // granule should still exist in Dynamo and Postgres
+  // granule should still exist in DynamoDB and PostgreSQL
   t.true(await granulePgModel.exists(
     t.context.knex,
     {

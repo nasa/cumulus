@@ -341,7 +341,6 @@ const _writeGranule = async ({
       esClient,
       granuleModel,
     });
-    // return granuleModel.storeGranule(dynamoGranuleRecord);
   });
 
   const { files, granuleId, status, error } = dynamoGranuleRecord;
