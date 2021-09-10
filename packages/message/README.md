@@ -405,8 +405,8 @@ of S3 remote message
 Returns the name and version of a collection based on
 the collectionId used in elasticsearch indexing
 
-**Kind**: global function
-**Returns**: <code>Object</code> - name and version as object
+**Kind**: global function  
+**Returns**: <code>Object</code> - name and version as object  
 
 | Param | Type | Description |
 | --- | --- | --- |
