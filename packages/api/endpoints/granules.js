@@ -119,10 +119,21 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
 
+  const { status, ...restOfBody } = body;
+  let updatedBody = body;
+  let message = '';
+
+  // Only set status to queued if granule was running
+  // Prevents race condition of setting granule to queued after completed
+  if (status === 'queued' && existingGranule.status !== 'running') {
+    updatedBody = restOfBody;
+    message = 'Skipped setting status to queued because granule was not running';
+  }
+
   const updatedGranule = {
     ...existingGranule,
     updatedAt: Date.now(),
-    ...body,
+    ...updatedBody,
   };
 
   try {
@@ -132,7 +143,7 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId} ${message}`,
   });
 };
 
