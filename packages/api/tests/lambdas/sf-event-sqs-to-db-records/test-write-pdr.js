@@ -68,7 +68,11 @@ test.beforeEach(async (t) => {
 
   const collection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(t.context.knex, collection);
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const provider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
@@ -76,7 +80,11 @@ test.beforeEach(async (t) => {
 
   const execution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(t.context.knex, execution);
+  const [pgExecution] = await executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   t.context.runningPdrRecord = {
     name: t.context.pdr.name,

@@ -91,7 +91,7 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.testCollection
   );
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();
@@ -134,11 +134,11 @@ test.serial('migratePdrRecord correctly migrates PDR record', async (t) => {
   const executionPgModel = new ExecutionPgModel();
   const execution = fakeExecutionRecordFactory();
 
-  const executionResponse = await executionPgModel.create(
+  const [executionResponse] = await executionPgModel.create(
     knex,
     execution
   );
-  const executionCumulusId = executionResponse[0];
+  const executionCumulusId = executionResponse.cumulus_id;
 
   const testPdr = generateTestPdr({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),

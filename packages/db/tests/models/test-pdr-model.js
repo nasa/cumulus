@@ -30,17 +30,18 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
 
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
-  t.context.collectionCumulusId = collectionCumulusId;
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
-  const [executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  const executionCumulusId = pgExecution.cumulus_id;
   t.context.executionCumulusId = executionCumulusId;
 
   const providerPgModel = new ProviderPgModel();
@@ -141,10 +142,11 @@ test('PdrPgModel.upsert() updates a "completed" record to "running" if execution
   t.is(insertResult.status, 'completed');
 
   // Update PDR status and execution
-  const [executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  const executionCumulusId = pgExecution.cumulus_id;
   const updatedRecord = {
     ...pdrRecord,
     status: 'running',
@@ -179,10 +181,11 @@ test('PdrPgModel.upsert() does not update a "completed" record to "running" if e
   t.is(insertResult.status, 'completed');
 
   // Update PDR status and execution
-  const [executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  const executionCumulusId = pgExecution.cumulus_id;
   const updatedRecord = {
     ...pdrRecord,
     status: 'running',
@@ -217,10 +220,11 @@ test('PdrPgModel.upsert() does not update a final (failed) record to a final sta
   t.is(insertResult.status, 'failed');
 
   // Update PDR status and execution
-  const [executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  const executionCumulusId = pgExecution.cumulus_id;
   const updatedRecord = {
     ...pdrRecord,
     status: 'completed',
@@ -255,10 +259,11 @@ test('PdrPgModel.upsert() does update a final (failed) record to a final state (
   t.is(insertResult.status, 'failed');
 
   // Update PDR status and execution
-  const [executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
+  const executionCumulusId = pgExecution.cumulus_id;
   const updatedRecord = {
     ...pdrRecord,
     status: 'completed',

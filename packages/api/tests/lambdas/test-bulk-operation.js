@@ -92,10 +92,12 @@ const setUpExistingDatabaseRecords = async (t) => {
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   const executionPgModel = new ExecutionPgModel();
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  const collectionCumulusId = t.context.collectionCumulusId;
 
   const granuleCumulusIds = await granulePgModel.create(
     t.context.knex,
@@ -110,7 +112,7 @@ const setUpExistingDatabaseRecords = async (t) => {
       }),
     ]
   );
-  const executionCumulusIds = await executionPgModel.create(
+  const pgExecutions = await executionPgModel.create(
     t.context.knex,
     [
       fakeExecutionRecordFactory({
@@ -125,11 +127,11 @@ const setUpExistingDatabaseRecords = async (t) => {
   );
   const joinRecords = [
     {
-      execution_cumulus_id: executionCumulusIds[0],
+      execution_cumulus_id: pgExecutions[0].cumulus_id,
       granule_cumulus_id: granuleCumulusIds[0],
     },
     {
-      execution_cumulus_id: executionCumulusIds[1],
+      execution_cumulus_id: pgExecutions[1].cumulus_id,
       granule_cumulus_id: granuleCumulusIds[1],
     },
   ];

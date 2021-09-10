@@ -119,10 +119,11 @@ test.before(async (t) => {
   // Create a PG Collection
   t.context.testPgCollection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     t.context.testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   // Create a PG Provider
   t.context.testPgProvider = fakeProviderRecordFactory();
@@ -137,10 +138,11 @@ test.before(async (t) => {
     collection_cumulus_id: t.context.testPgCollection.cumulus_id,
   });
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     t.context.testPgExecution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {

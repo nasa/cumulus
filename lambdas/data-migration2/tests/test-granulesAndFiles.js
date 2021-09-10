@@ -116,7 +116,7 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionPgModel = collectionPgModel;
   t.context.testCollection = testCollection;
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   const executionPgModel = new ExecutionPgModel();
   t.context.executionUrl = cryptoRandomString({ length: 5 });
@@ -124,10 +124,11 @@ test.beforeEach(async (t) => {
     url: t.context.executionUrl,
   });
 
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     testExecution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.testExecution = testExecution;
 
   const providerPgModel = new ProviderPgModel();

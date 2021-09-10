@@ -430,9 +430,9 @@ const createCollectionTestRecords = async (context, collectionParams) => {
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
   await collectionModel.create(originalCollection);
-  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await collectionPgModel.get(
-    testKnex, { cumulus_id: collectionCumulusId }
+    testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
   await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
   const originalEsRecord = await esCollectionClient.get(
@@ -552,7 +552,8 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const originalExecution = fakeExecutionFactoryV2(executionParams);
   const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
   const originalDynamoExecution = await executionModel.create(originalExecution);
-  const [executionCumulusId] = await executionPgModel.create(knex, insertPgRecord);
+  const [pgExecution] = await executionPgModel.create(knex, insertPgRecord);
+  const executionCumulusId = pgExecution.cumulus_id;
   const originalPgRecord = await executionPgModel.get(
     knex, { cumulus_id: executionCumulusId }
   );

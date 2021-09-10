@@ -128,18 +128,20 @@ test.beforeEach(async (t) => {
     },
   };
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,
   });
-  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     execution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   [t.context.providerCumulusId] = await t.context.providerPgModel.create(
     t.context.knex,

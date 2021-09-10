@@ -30,20 +30,21 @@ test.before(async (t) => {
   t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
 test.beforeEach(async (t) => {
-  const [executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
-  t.context.executionCumulusId = executionCumulusId;
+  t.context.executionCumulusId = pgExecution.cumulus_id;
   const [granuleCumulusId] = await t.context.granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory({
@@ -52,7 +53,7 @@ test.beforeEach(async (t) => {
   );
   t.context.granuleCumulusId = granuleCumulusId;
   t.context.joinRecord = {
-    execution_cumulus_id: executionCumulusId,
+    execution_cumulus_id: t.context.executionCumulusId,
     granule_cumulus_id: Number(granuleCumulusId),
   };
 });
@@ -167,10 +168,11 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
 
   await knex.transaction(async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const [newExecutionCumulusId] = await executionPgModel.create(
+    const [newExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    const newExecutionCumulusId = newExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
@@ -200,10 +202,11 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct valu
   let newExecutionCumulusId;
   await knex.transaction(async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    [newExecutionCumulusId] = await executionPgModel.create(
+    const [pgExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    newExecutionCumulusId = pgExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
@@ -227,10 +230,11 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
   } = t.context;
   await knex.transaction(async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const [newExecutionCumulusId] = await executionPgModel.create(
+    const [newExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    const newExecutionCumulusId = newExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
