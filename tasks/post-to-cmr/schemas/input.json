@@ -1,0 +1,68 @@
+{
+  "title": "PostToCmrInput",
+  "description": "Describes the input expected by the post-to-cmr task",
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": [
+          "granuleId",
+          "files"
+        ],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "bucket",
+                "key"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "cmrRevisionId": {
+      "type": "number"
+    }
+  }
+}
