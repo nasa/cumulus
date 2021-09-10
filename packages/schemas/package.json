@@ -13,6 +13,13 @@
   "bin": {
     "generate-task-schemas": "./generate-task-schemas.js"
   },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true,
+    "timeout": "15m"
+  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
