@@ -470,7 +470,7 @@ export const associateExecutionWithGranule = async (params: {
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/${body.granuleId}/execution`,
+      path: `/granules/${body.granuleId}/executions`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
