@@ -470,7 +470,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
-test('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
     cumulusMessage,
     executionModel,
@@ -518,7 +518,7 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -553,7 +553,7 @@ test('writeRecords() discards an out of order message that is older than an exis
   );
 });
 
-test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
     cumulusMessage,
     executionModel,
