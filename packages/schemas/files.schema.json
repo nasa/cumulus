@@ -27,6 +27,9 @@
       },
       "fileName": {
         "type": "string"
+      },
+      "type": {
+        "type": "string"
       }
     }
   }

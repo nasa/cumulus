@@ -11,6 +11,10 @@ const {
 test('templateJsonSchema correctly updates schema template', (t) => {
   const schemaTemplatePath = path.join(__dirname, 'fake-schema-template.json');
   const schemaOutputPath = path.join(__dirname, 'fake-schema-output.json');
+  t.teardown(async () => {
+    await fs.unlink(schemaTemplatePath);
+    await fs.unlink(schemaOutputPath);
+  });
   fs.writeFileSync(
     schemaTemplatePath,
     JSON.stringify({
@@ -30,8 +34,12 @@ test('templateJsonSchema correctly updates schema template', (t) => {
 });
 
 test('templateJsonSchemaWithFiles correctly inserts file schema to template', (t) => {
-  const schemaTemplatePath = path.join(__dirname, 'fake-schema-template.json');
-  const schemaOutputPath = path.join(__dirname, 'fake-schema-output.json');
+  const schemaTemplatePath = path.join(__dirname, 'fake-task-schema-template.json');
+  const schemaOutputPath = path.join(__dirname, 'fake-task-schema-output.json');
+  t.teardown(async () => {
+    await fs.unlink(schemaTemplatePath);
+    await fs.unlink(schemaOutputPath);
+  });
   fs.writeFileSync(
     schemaTemplatePath,
     JSON.stringify({

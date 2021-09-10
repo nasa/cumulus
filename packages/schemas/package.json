@@ -10,6 +10,9 @@
   "engines": {
     "node": ">=12.18.0"
   },
+  "bin": {
+    "generate-task-schemas": "./generate-task-schemas.js"
+  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
