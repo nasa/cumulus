@@ -6,7 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2606**
+  - Adds `PUT /granules/{granuleId}/execution` API endpoint to associate an execution with a granule
+  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+
 ## [v9.5.0] 2021-09-07
+
 ### BREAKING CHANGES
 
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
@@ -34,9 +44,6 @@ of response and not the raw API endpoint response
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
   - Adds helper `createGranule` to `@cumulus/api-client`
-- **CUMULUS-2576**
-  - Adds `PUT /granules` API endpoint to update a granule
-  - Adds helper `updateGranule` to `@cumulus/api-client`
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 - **CUMULUS-2578**
