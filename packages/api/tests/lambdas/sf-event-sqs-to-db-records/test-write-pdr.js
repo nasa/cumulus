@@ -14,6 +14,7 @@ const {
   ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -553,4 +554,38 @@ test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if E
   t.false(await pdrModel.exists({ pdrName: pdr.name }));
   t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
   t.false(await t.context.esPdrClient.exists(pdr.name));
+});
+
+test.serial('writePdr() calls publishPdrSnsMessage and successfully publishes an SNS message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+    QueueUrl,
+  } = t.context;
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const pdrRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const translatedRecord = await translatePostgresPdrToApiPdr(pgRecord, knex);
+
+  t.is(pdrRecord.pdrName, pdr.name);
+  t.is(pdrRecord.status, cumulusMessage.meta.status);
+  t.deepEqual(pdrRecord, translatedRecord);
 });

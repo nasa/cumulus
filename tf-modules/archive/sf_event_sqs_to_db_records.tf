@@ -192,6 +192,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
       GranulesTable                  = var.dynamo_tables.granules.name
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
+      pdrs_sns_topic_arn             = aws_sns_topic.report_pdrs_topic.arn
       PdrsTable                      = var.dynamo_tables.pdrs.name
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
