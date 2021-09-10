@@ -17,7 +17,6 @@ const getKey = (file: ApiFile) => {
   return undefined;
 };
 
-// TODO deal with inonsistency between ApiGraunle type, schema and records
 export const translatePostgresFileToApiFile = (
   filePgRecord: PostgresFileRecord
 ): Omit<ApiFile, 'granuleId'> => removeNilProperties({
