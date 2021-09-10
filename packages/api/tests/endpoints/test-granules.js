@@ -1648,7 +1648,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns bad request if granule does not exist', async (t) => {
+test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1659,9 +1659,9 @@ test.serial('update (PUT) returns bad request if granule does not exist', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(400);
+    .expect(404);
 
-  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.error, 'Not Found');
   t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
 });
 
