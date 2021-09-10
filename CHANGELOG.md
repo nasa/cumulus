@@ -35,6 +35,10 @@ of response and not the raw API endpoint response
     - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
       publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
+    - Added `pdr_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added the new function `publishPdrSnsMessage` in `@cumulus/api` to
+      publish SNS messages to the report PDRs topic.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
@@ -120,6 +124,8 @@ of response and not the raw API endpoint response
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
 
@@ -152,6 +158,10 @@ when output of the operation is `undefined`
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
+    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
+      DynamoDB table.
 
 ## [v9.4.0] 2021-08-16
 

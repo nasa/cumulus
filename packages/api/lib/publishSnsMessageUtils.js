@@ -45,6 +45,6 @@ const publishCollectionSnsMessage = async (record, event) => {
 
 module.exports = {
   publishCollectionSnsMessage,
-  publishPdrSnsMessage,
   publishExecutionSnsMessage,
+  publishPdrSnsMessage,
 };
