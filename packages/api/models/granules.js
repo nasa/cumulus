@@ -300,6 +300,7 @@ class Granule extends Manager {
    * @param {string} params.provider - Provider id
    * @param {number} params.timeToArchive - seconds to post to cmr.
    * @param {number} [params.timeToPreprocess] -  seconds
+   * @param {number} [params.timestamp = Date.now()] - a timestamp
    * @param {integer} [params.productVolume] - sum of the files sizes in bytes
    * @param {number} [params.duration] - seconds
    * @param {GranuleStatus} params.status - ['running','failed','completed']
