@@ -38,10 +38,10 @@
     "@cumulus/cumulus-message-adapter-js": "2.0.0",
     "@cumulus/errors": "9.4.0",
     "@cumulus/launchpad-auth": "9.4.0",
-    "@cumulus/schemas": "9.4.0",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@cumulus/cmr-client": "9.4.0"
+    "@cumulus/cmr-client": "9.4.0",
+    "@cumulus/schemas": "9.4.0"
   }
 }
