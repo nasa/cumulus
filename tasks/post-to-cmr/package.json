@@ -42,6 +42,6 @@
   },
   "devDependencies": {
     "@cumulus/cmr-client": "9.5.0",
-    "@cumulus/schemas": "9.5.0"
+    "@cumulus/schemas": "9.5.0-alpha.0"
   }
 }

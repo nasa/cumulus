@@ -48,7 +48,7 @@
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "9.5.0",
+    "@cumulus/schemas": "9.5.0-alpha.0",
     "@cumulus/test-data": "9.5.0"
   }
 }

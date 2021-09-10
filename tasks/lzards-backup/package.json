@@ -53,7 +53,7 @@
     "got": "11.7.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "9.5.0",
+    "@cumulus/schemas": "9.5.0-alpha.0",
     "@cumulus/types": "9.5.0"
   }
 }
