@@ -189,6 +189,7 @@ test.before(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
   process.env.execution_sns_topic_arn = TopicArn;
+  process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 });
 
