@@ -114,7 +114,7 @@ const update = async (req, res) => {
     existingGranule = await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.badRequest(`No granule found to update for ${body.granuleId}`);
+      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
     }
     return res.boom.badRequest(errorify(error));
   }
@@ -256,6 +256,67 @@ async function put(req, res) {
   }
   return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
 }
+
+/**
+ * associate an execution with a granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object
+ */
+const associateExecution = async (req, res) => {
+  const granuleName = req.params.granuleName;
+
+  const { collectionId, granuleId, executionArn } = req.body || {};
+  if (!granuleId || !collectionId || !executionArn) {
+    return res.boom.badRequest('Field granuleId, collectionId or executionArn is missing from request body');
+  }
+
+  if (granuleName !== granuleId) {
+    return res.boom.badRequest(`Expected granuleId to be ${granuleName} but found ${granuleId} in payload`);
+  }
+
+  const {
+    executionModel = new models.Execution(),
+    granuleModel = new models.Granule(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  let granule;
+  let execution;
+  try {
+    granule = await granuleModel.get({ granuleId });
+    execution = await executionModel.get({ arn: executionArn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (granule === undefined) {
+        return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId}`);
+      }
+      return res.boom.notFound(`Execution ${executionArn} not found`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  if (granule.collectionId !== collectionId) {
+    return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId} collectionId ${collectionId}`);
+  }
+
+  const updatedGranule = {
+    ...granule,
+    execution: execution.execution,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    await writeGranuleFromApi(updatedGranule, knex);
+  } catch (error) {
+    log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully associated execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`,
+  });
+};
 
 /**
  * Delete a granule
@@ -506,6 +567,7 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/:granuleName/execution', associateExecution);
 router.post('/', create);
 router.put('/:granuleName', put);
 
