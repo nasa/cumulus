@@ -127,7 +127,7 @@ const update = async (req, res) => {
   // Prevents race condition of setting granule to queued after completed
   if (status === 'queued' && existingGranule.status !== 'running') {
     updatedBody = restOfBody;
-    message = 'Skipped setting status to queued because granule was not running';
+    message = ' Skipped setting status to queued because granule was not running';
   }
 
   const updatedGranule = {
@@ -143,7 +143,7 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId} ${message}`,
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}${message}`,
   });
 };
 
