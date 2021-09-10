@@ -123,7 +123,7 @@ test('getWriteHeaders returns token for earthdata', (t) => {
   t.is(headers['Echo-Token'], '12345');
 });
 
-test.only('getWriteHeaders returns token for launchpad', (t) => {
+test('getWriteHeaders returns token for launchpad', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
