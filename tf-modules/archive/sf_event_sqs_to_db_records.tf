@@ -115,7 +115,10 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
 
   statement {
     actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.report_executions_topic.arn]
+    resources = [
+      aws_sns_topic.report_executions_topic.arn,
+      aws_sns_topic.report_pdrs_topic.arn,
+    ]
   }
 
 }
