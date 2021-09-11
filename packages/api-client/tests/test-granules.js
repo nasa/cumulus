@@ -412,7 +412,7 @@ test('associateExecutionWithGranule calls the callback with the expected object'
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}/execution`,
+      path: `/granules/${t.context.granuleId}/executions`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
