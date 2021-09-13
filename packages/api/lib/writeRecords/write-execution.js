@@ -2,6 +2,8 @@ const isNil = require('lodash/isNil');
 
 const {
   ExecutionPgModel,
+  translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const {
   upsertExecution,
@@ -28,9 +30,10 @@ const { parseException } = require('@cumulus/message/utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
+const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
 const Execution = require('../../models/executions');
 
-const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-execution' });
+const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
 
 const shouldWriteExecutionToPostgres = ({
   messageCollectionNameVersion,
@@ -84,53 +87,50 @@ const buildExecutionRecord = ({
   });
 };
 
-const writeExecutionViaTransaction = async ({
-  cumulusMessage,
-  collectionCumulusId,
-  asyncOperationCumulusId,
-  parentExecutionCumulusId,
-  trx,
-  executionPgModel = new ExecutionPgModel(),
-  updatedAt,
-}) => {
-  const executionRecord = buildExecutionRecord({
-    cumulusMessage,
-    collectionCumulusId,
-    asyncOperationCumulusId,
-    parentExecutionCumulusId,
-    updatedAt,
-  });
-  logger.info(`About to write execution ${executionRecord.arn} to PostgreSQL`);
-  const upsertResponse = await executionPgModel.upsert(trx, executionRecord);
-  logger.info(`Successfully wrote execution ${executionRecord.arn} to PostgreSQL with cumulus_id ${upsertResponse[0]}`);
-  return upsertResponse;
-};
-
 const writeExecutionToDynamoAndES = async (params) => {
   const {
-    cumulusMessage,
+    dynamoRecord,
     executionModel,
-    updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   try {
-    await executionModel.storeExecution(executionApiRecord);
+    await executionModel.storeExecutionRecord(dynamoRecord);
     await upsertExecution({
       esClient,
-      updates: executionApiRecord,
+      updates: dynamoRecord,
       index: process.env.ES_INDEX,
     });
   } catch (error) {
-    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${executionApiRecord.arn}`);
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${dynamoRecord.arn}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
-    await executionModel.delete({ arn: executionApiRecord.arn });
+    await executionModel.delete({ arn: dynamoRecord.arn });
     throw error;
   }
 };
 
-const writeExecution = async ({
+const _writeExecutionRecord = ({
+  dynamoRecord,
+  postgresRecord,
+  knex,
+  executionModel = new Execution(),
+  executionPgModel = new ExecutionPgModel(),
+  updatedAt = Date.now(),
+  esClient,
+}) => knex.transaction(async (trx) => {
+  logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
+  const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
+  logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
+  await writeExecutionToDynamoAndES({
+    dynamoRecord,
+    executionModel,
+    updatedAt,
+    esClient,
+  });
+  return executionPgRecord;
+});
+
+const writeExecutionRecordFromMessage = async ({
   cumulusMessage,
   knex,
   collectionCumulusId,
@@ -139,29 +139,45 @@ const writeExecution = async ({
   executionModel = new Execution(),
   updatedAt = Date.now(),
   esClient,
-}) =>
-  await knex.transaction(async (trx) => {
-    const [executionCumulusId] = await writeExecutionViaTransaction({
-      cumulusMessage,
-      collectionCumulusId,
-      asyncOperationCumulusId,
-      parentExecutionCumulusId,
-      trx,
-      updatedAt,
-    });
-    await writeExecutionToDynamoAndES({
-      cumulusMessage,
-      updatedAt,
+}) => {
+  const postgresRecord = buildExecutionRecord({
+    cumulusMessage,
+    collectionCumulusId,
+    asyncOperationCumulusId,
+    parentExecutionCumulusId,
+    updatedAt,
+  });
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
+  const writeExecutionResponse = await _writeExecutionRecord(
+    {
+      dynamoRecord: executionApiRecord,
+      postgresRecord,
+      knex,
       executionModel,
       esClient,
-    });
-    return executionCumulusId;
-  });
+    }
+  );
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    writeExecutionResponse,
+    knex
+  );
+  await publishExecutionSnsMessage(translatedExecution);
+  return writeExecutionResponse.cumulus_id;
+};
+
+const writeExecutionRecordFromApi = async ({
+  record: dynamoRecord,
+  knex,
+  executionModel = new Execution(),
+}) => {
+  const postgresRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
+  return _writeExecutionRecord({ dynamoRecord, postgresRecord, knex, executionModel });
+};
 
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
   writeExecutionToDynamoAndES,
-  writeExecutionViaTransaction,
-  writeExecution,
+  writeExecutionRecordFromMessage,
+  writeExecutionRecordFromApi,
 };

@@ -2,8 +2,12 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
+const awsClients = require('@cumulus/aws-client/services');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { getGranuleStatus, generateGranuleApiRecord } = require('@cumulus/message/Granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -355,27 +359,16 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
   await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
-test('storeGranuleFromCumulusMessage() throws an error for a failing record', async (t) => {
+test('storeGranule() correctly stores granule record', async (t) => {
   const {
     granuleModel,
+    collectionId,
+    provider,
+    workflowStartTime,
+    workflowStatus,
   } = t.context;
 
-  const granule1 = fakeGranuleFactoryV2({
-    files: [fakeFileFactory()],
-  });
-
-  // cause record to fail
-  delete granule1.granuleId;
-
-  await t.throwsAsync(granuleModel.storeGranuleFromCumulusMessage(granule1));
-});
-
-test('storeGranuleFromCumulusMessage() correctly stores granule record', async (t) => {
-  const {
-    granuleModel,
-  } = t.context;
-
-  const bucket = randomId('bucket-');
+  const bucket = randomId('bucket');
   await S3.createBucket(bucket);
   t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
 
@@ -385,7 +378,24 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
 
-  await granuleModel.storeGranuleFromCumulusMessage(granule1);
+  const files = await granuleModel.fileUtils.buildDatabaseFiles({
+    s3: awsClients.s3(),
+    providerURL: buildURL(provider),
+    files: granule1.files,
+  });
+
+  const granuleRecord = await generateGranuleApiRecord({
+    granule: granule1,
+    files,
+    executionUrl: 'http://execution-url.com',
+    collectionId,
+    provider: provider.id,
+    workflowStartTime,
+    workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule1),
+    cmrUtils,
+  });
+  await granuleModel.storeGranule(granuleRecord);
 
   t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
 });
@@ -452,8 +462,15 @@ test.serial('storeGranulesFromCumulusMessage() handles failing and succcessful g
 
   const granule1 = fakeGranuleFactoryV2({
     files: [fakeFileFactory({ bucket })],
+    status: 'completed',
   });
-  const granule2 = fakeGranuleFactoryV2();
+
+  // If both the message's workflow status
+  // and the granule status are undefined, the granule will fail validation.
+  const granule2 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })],
+    status: undefined,
+  });
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
 
@@ -472,7 +489,7 @@ test.serial('storeGranulesFromCumulusMessage() handles failing and succcessful g
         host: 'example-bucket',
         protocol: 's3',
       },
-      status: 'completed',
+      status: undefined,
     },
     payload: {
       granules: [
@@ -482,11 +499,11 @@ test.serial('storeGranulesFromCumulusMessage() handles failing and succcessful g
     },
   };
 
-  sinon.stub(Granule.prototype, 'storeGranuleFromCumulusMessage')
+  sinon.stub(Granule.prototype, 'storeGranule')
     .withArgs(sinon.match({ granuleId: granule2.granuleId }))
     .rejects(new Error('fail'));
-  Granule.prototype.storeGranuleFromCumulusMessage.callThrough();
-  t.teardown(() => Granule.prototype.storeGranuleFromCumulusMessage.restore());
+  Granule.prototype.storeGranule.callThrough();
+  t.teardown(() => Granule.prototype.storeGranule.restore());
 
   await granuleModel.storeGranulesFromCumulusMessage(cumulusMessage);
 

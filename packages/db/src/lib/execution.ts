@@ -49,6 +49,7 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
  *
  * @param {string} granuleId -  granuleIds
  * @param {string} workflowName - workflow name
+ * @param {Knex} testKnex - knex for testing
  * @returns {Promise<string>} - most recent exectutionArn for input parameters.
  * @throws {RecordNotFound}
  */

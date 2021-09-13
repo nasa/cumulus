@@ -37,9 +37,9 @@ const {
   GranulePgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
+  migrationDir,
 } = require('@cumulus/db');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,

@@ -29,6 +29,10 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const {
+  buildExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -185,11 +189,15 @@ function fakePdrFactoryV2(params = {}) {
  * @returns {Object} fake execution object
  */
 function fakeExecutionFactoryV2(params = {}) {
+  const stateMachineArn = randomId('stateMachine');
+  const executionName = randomId('name');
+  const executionArn = buildExecutionArn(stateMachineArn, executionName);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
   const execution = {
-    arn: randomId('arn'),
+    arn: executionArn,
     duration: 180.5,
-    name: randomId('name'),
-    execution: randomId('execution'),
+    name: executionName,
+    execution: executionUrl,
     parentArn: randomId('parentArn'),
     error: { test: 'error' },
     status: 'completed',
@@ -430,9 +438,9 @@ const createCollectionTestRecords = async (context, collectionParams) => {
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
   await collectionModel.create(originalCollection);
-  const [collectionCumulusId] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await collectionPgModel.get(
-    testKnex, { cumulus_id: collectionCumulusId }
+    testKnex, { cumulus_id: pgCollection.cumulus_id }
   );
   await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
   const originalEsRecord = await esCollectionClient.get(
@@ -552,7 +560,8 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
   const originalExecution = fakeExecutionFactoryV2(executionParams);
   const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
   const originalDynamoExecution = await executionModel.create(originalExecution);
-  const [executionCumulusId] = await executionPgModel.create(knex, insertPgRecord);
+  const [pgExecution] = await executionPgModel.create(knex, insertPgRecord);
+  const executionCumulusId = pgExecution.cumulus_id;
   const originalPgRecord = await executionPgModel.get(
     knex, { cumulus_id: executionCumulusId }
   );

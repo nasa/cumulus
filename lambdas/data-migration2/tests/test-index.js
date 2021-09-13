@@ -30,10 +30,9 @@ const {
   localStackConnectionEnv,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
@@ -82,10 +81,11 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const testCollection = fakeCollectionRecordFactory();
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
   t.context.testCollection = testCollection;
 
   const testProvider = fakeProviderRecordFactory();

@@ -420,7 +420,7 @@ describe('Ingesting from PDR', () => {
               getExecution,
               {
                 prefix: config.stackName,
-                arn: workflowExecution.executionArn,
+                arn: ingestGranuleWorkflowArn,
               },
               'completed'
             );
@@ -588,7 +588,7 @@ describe('Ingesting from PDR', () => {
         try {
           const parsePdrExecutionName = parsePdrExecutionArn.split(':').pop();
 
-          executionCompletedKey = `${config.stackName}/test-output/${parsePdrExecutionName}.output`;
+          executionCompletedKey = `${config.stackName}/test-output/${parsePdrExecutionName}-completed.output`;
 
           pdrRunningMessageKey = `${config.stackName}/test-output/${pdrFilename}-running.output`;
           pdrCompletedMessageKey = `${config.stackName}/test-output/${pdrFilename}-completed.output`;
