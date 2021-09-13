@@ -13,24 +13,28 @@
           "fileName": "replace-me-granuleId.hdf",
           "bucket": "this-should-be-replaced-with-protected-bucket-name-in-the-test",
           "key": "MOD09GQ/2016/MOD/replace-me-granuleId.hdf",
-          "size": 1098034
+          "size": 1098034,
+          "type": "data"
         },
         {
           "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "this-should-be-replaced-with-private-bucket-name-in-the-test",
           "key": "MOD09GQ/MOD/replace-me-granuleId.hdf.met",
-          "size": 21708
+          "size": 21708,
+          "type": "metadata"
         },
         {
           "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "this-should-be-replaced-with-public-bucket-name-in-the-test",
           "key": "MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
-          "size": 9728
+          "size": 9728,
+          "type": "browse"
         },
         {
           "key": "MOD09GQ/MOD/replace-me-granuleId.cmr.json",
           "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
-          "fileName": "replace-me-granuleId.cmr.json"
+          "fileName": "replace-me-granuleId.cmr.json",
+          "type": "metadata"
         }
       ]
     }

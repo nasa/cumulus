@@ -75,19 +75,23 @@
         "files": [
           {
             "bucket": "cumulus-internal",
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "type": "data"
           },
           {
             "bucket": "cumulus-internal",
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "type": "browse"
           },
           {
             "bucket": "cumulus-internal",
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "type": "browse"
           },
           {
             "bucket": "cumulus-internal",
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "type": "metadata"
           }
         ]
       }

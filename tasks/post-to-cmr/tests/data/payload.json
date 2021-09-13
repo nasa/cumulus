@@ -26,27 +26,31 @@
             "bucket": "cumulus-protected",
             "checksum": "1690464450",
             "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "size": 6703247
+            "size": 6703247,
+            "type": "data"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": "2689375276",
             "key": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
-            "size": 20659
+            "size": 20659,
+            "type": "metadata"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksum": "4026661056",
             "key": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "size": 59849
+            "size": 59849,
+            "type": "browse"
           },
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-post-public",
             "checksum": "4026661056",
-            "key": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
+            "key": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "type": "metadata"
           }
         ]
       }

@@ -12,21 +12,24 @@
           "fileName": "replace-me-granuleId.hdf",
           "bucket": "",
           "key": "",
-          "size": 1098034
+          "size": 1098034,
+          "type": "data"
         },
         {
           "source": "replace-me-path/replace-me-granuleId.hdf.met",
           "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "key": "",
-          "size": 21708
+          "size": 21708,
+          "type": "metadata"
         },
         {
           "source": "replace-me-path/replace-me-granuleId_ndvi.jpg",
           "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
           "key": "",
-          "size": 9728
+          "size": 9728,
+          "type": "browse"
         }
       ]
     }

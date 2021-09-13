@@ -10,13 +10,15 @@
           "name": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
-          "size": 1098034
+          "size": 1098034,
+          "type": "data"
         },
         {
           "name": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
-          "size": 21708
+          "size": 21708,
+          "type": "metadata"
         }
       ]
     }

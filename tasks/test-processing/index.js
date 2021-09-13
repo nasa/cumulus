@@ -11,15 +11,13 @@ async function uploadFakeBrowse(input) {
   const uploadPromises = [];
   input.granules.forEach((granule) => {
     granule.files
-      .filter((file) =>
-        path.extname(file.fileName) !== 'met'
-        && path.extname(file.fileName) !== 'jpg'
-        && !file.fileName.includes('.cmr'))
+      .filter((file) => file.type === 'data')
       .forEach((file) => {
         const browseFile = { ...file };
         const browseName = browseFile.key;
         browseFile.key = browseName.replace(path.extname(browseName), '.jpg');
         browseFile.fileName = browseFile.fileName.replace(path.extname(browseFile.fileName), '.jpg');
+        browseFile.type = 'browse';
 
         const browseStream = fs.createReadStream(img);
         uploadPromises.push(promiseS3Upload({
