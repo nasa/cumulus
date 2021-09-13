@@ -596,6 +596,7 @@ class Granule extends Manager {
           providerURL: buildURL(provider),
           files: granule.files || [],
         }).catch((filesError) => logger.error(filesError));
+        const now = Date.now();
         const granuleRecord = await generateGranuleApiRecord({
           granule,
           executionUrl,
@@ -609,6 +610,8 @@ class Granule extends Manager {
           queryFields,
           cmrUtils: this.cmrUtils,
           files,
+          timestamp: now,
+          updatedAt: now,
         }).catch((writeError) => logger.error(writeError));
         await this.storeGranuleFromCumulusMessage(granuleRecord)
           .catch((writeError) => logger.error(writeError));
