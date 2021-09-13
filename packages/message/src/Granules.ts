@@ -134,6 +134,7 @@ export const generateGranuleApiRecord = async ({
   files,
   processingTimeInfo = {},
   cmrUtils,
+  timestamp,
 }: {
   granule: MessageGranule,
   executionUrl?: string,
@@ -149,7 +150,8 @@ export const generateGranuleApiRecord = async ({
   updatedAt?: string,
   processingTimeInfo?: ExecutionProcessingTimes,
   files?: ApiFile[],
-  cmrUtils: CmrUtilsClass
+  cmrUtils: CmrUtilsClass,
+  timestamp: number,
 }): Promise<ApiGranule> => {
   if (!granule.granuleId) throw new CumulusMessageError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
 
@@ -163,7 +165,7 @@ export const generateGranuleApiRecord = async ({
     published = false,
   } = granule;
 
-  const now = Date.now();
+  // const now = Date.now();
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
   const record = {
@@ -178,9 +180,9 @@ export const generateGranuleApiRecord = async ({
     error,
     published,
     createdAt: workflowStartTime,
-    timestamp: now,
-    updatedAt: updatedAt || now,
-    duration: getWorkflowDuration(workflowStartTime, now),
+    timestamp,
+    updatedAt: updatedAt || timestamp,
+    duration: getWorkflowDuration(workflowStartTime, timestamp),
     productVolume: getGranuleProductVolume(files),
     timeToPreprocess: getGranuleTimeToPreprocess(granule),
     timeToArchive: getGranuleTimeToArchive(granule),

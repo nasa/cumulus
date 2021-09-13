@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const {
   CollectionPgModel,
@@ -19,6 +20,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   tableNames,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const {
   Search,
@@ -528,7 +530,7 @@ test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasti
   t.true(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.only('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
+test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -538,6 +540,11 @@ test.only('writeGranules() saves the same values to DynamoDB, PostgreSQL and Ela
     providerCumulusId,
     granuleId,
   } = t.context;
+
+  // Only test fields that are stored in Postgres on the Granule record.
+  // The following fields are populated by separate queries during translation
+  // or elasticsearch.
+  const omitList = ['files', 'execution', 'pdrName', 'provider', '_id'];
 
   await writeGranules({
     cumulusMessage,
@@ -549,15 +556,17 @@ test.only('writeGranules() saves the same values to DynamoDB, PostgreSQL and Ela
   });
 
   const dynamoRecord = await granuleModel.get({ granuleId });
-  const pgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
-  // t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
-  // t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
-  deepComparePgGranuleAndApiGranule(pgRecord, dynamoRecord);
+  const granulePgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+
+  // translate the PG granule to API granule to directly compare to Dynamo
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(dynamoRecord, omitList));
 
   const esRecord = await t.context.esGranulesClient.get(granuleId);
-  // t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
-  // t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
-  deepComparePgGranuleAndApiGranule(pgRecord, esRecord);
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
 test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {

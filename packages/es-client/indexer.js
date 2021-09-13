@@ -313,10 +313,8 @@ async function upsertGranule({
   };
   await esClient.delete(delGranParams, { ignore: [404] });
 
-  const upsertDoc = {
-    ...updates,
-    timestamp: Date.now(),
-  };
+  const upsertDoc = updates;
+
   return await esClient.update({
     index,
     type,

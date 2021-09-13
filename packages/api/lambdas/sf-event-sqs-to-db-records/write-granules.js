@@ -91,10 +91,6 @@ const generateGranuleRecord = async ({
   pdrCumulusId,
   processingTimeInfo = {},
   cmrUtils = CmrUtils,
-  // TODO write test that ensures Dynamo/PG are the same
-  // TODO pass this down from parent
-  // TODO phase 2 ticket to refactor this - generate postgres record in one place and pass to both
-  // dynamo and PG writes. Should include executions, granules, pdrs
   timestamp = Date.now(),
   updatedAt = Date.now(),
 }) => {
@@ -254,9 +250,9 @@ const _writeGranuleViaTransaction = async ({
   pdrCumulusId,
   trx,
   updatedAt,
+  timestamp,
   files,
 }) => {
-  // TODO this generates the duration
   const granuleRecord = await generateGranuleRecord({
     error,
     granule,
@@ -268,6 +264,7 @@ const _writeGranuleViaTransaction = async ({
     providerCumulusId,
     pdrCumulusId,
     processingTimeInfo,
+    timestamp,
     updatedAt,
   });
 
@@ -407,6 +404,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
     queryFields,
     granuleModel,
     files,
+    timestamp,
     cmrUtils = CmrUtils,
     updatedAt = Date.now(),
     esClient = await Search.es(),
@@ -425,6 +423,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
     updatedAt,
     cmrUtils,
     files,
+    timestamp,
   });
   try {
     await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
@@ -495,9 +494,9 @@ const _writeGranule = async ({
 }) => {
   let granuleCumulusId;
   const files = await _generateFilesFromGranule({ granule, provider });
+  const timestamp = Date.now();
 
   await knex.transaction(async (trx) => {
-    // TODO this generates the duration
     granuleCumulusId = await _writeGranuleViaTransaction({
       granule,
       processingTimeInfo,
@@ -512,10 +511,10 @@ const _writeGranule = async ({
       pdrCumulusId,
       trx,
       updatedAt,
+      timestamp,
       files,
     });
 
-    // TODO this generates the duration
     return writeGranuleToDynamoAndEs({
       granule,
       executionUrl,
@@ -530,6 +529,7 @@ const _writeGranule = async ({
       granuleModel,
       esClient,
       updatedAt,
+      timestamp,
       files,
     });
   });
