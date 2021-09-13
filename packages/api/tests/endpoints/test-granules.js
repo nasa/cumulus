@@ -1873,7 +1873,7 @@ test.serial('update (PUT) does not set status to queued if not running', async (
 
 test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
   const response = await request(app)
-    .post(`/granules/${randomId('granuleId')}/execution`)
+    .post(`/granules/${randomId('granuleId')}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .expect(400);
@@ -1892,7 +1892,7 @@ test.serial('associateExecution (POST) returns bad request when the path param g
     granuleId: granuleIdInRquest,
   };
   const response = await request(app)
-    .post(`/granules/${granuleIdInPath}/execution`)
+    .post(`/granules/${granuleIdInPath}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
@@ -1911,7 +1911,7 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
   };
 
   const response = await request(app)
-    .post(`/granules/${granuleId}/execution`)
+    .post(`/granules/${granuleId}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
@@ -1945,7 +1945,7 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
   };
 
   const response = await request(app)
-    .post(`/granules/${newGranule.granuleId}/execution`)
+    .post(`/granules/${newGranule.granuleId}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
@@ -2018,7 +2018,7 @@ test.serial('associateExecution (POST) returns Not Found if execution does not e
   };
 
   const response = await request(app)
-    .post(`/granules/${newGranule.granuleId}/execution`)
+    .post(`/granules/${newGranule.granuleId}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
@@ -2049,7 +2049,7 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
   };
 
   const response = await request(app)
-    .post(`/granules/${newGranule.granuleId}/execution`)
+    .post(`/granules/${newGranule.granuleId}/executions`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(requestPayload)
