@@ -46,7 +46,8 @@
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-directory=\"./.final_nyc_output\" | coveralls",
     "start-unit-test-stack": "export SSH_USERS=user:$(id -u):$(id -u) && docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack up -d",
-    "stop-unit-test-stack": "docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack down"
+    "stop-unit-test-stack": "docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack down",
+    "view-unit-test-stack-logs": "export SSH_USERS=user:$(id -u):$(id -u) && docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack logs --follow"
   },
   "repository": {
     "type": "git",

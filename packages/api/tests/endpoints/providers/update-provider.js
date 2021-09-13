@@ -15,6 +15,7 @@ const {
   nullifyUndefinedProviderValues,
   translateApiProviderToPostgresProvider,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -48,7 +49,6 @@ process.env = {
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
 let accessTokenModel;

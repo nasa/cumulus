@@ -188,7 +188,7 @@
     </TwoDCoordinateSystem>
     <OnlineAccessURLs>
         <OnlineAccessURL>
-            <URL>http://cumulus-devseed-public.s3.amazonaws.com/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg</URL>
+            <URL>http://cumulus-test-sandbox-public.s3.amazonaws.com/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg</URL>
             <URLDescription>Download MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg</URLDescription>
         </OnlineAccessURL>
         <OnlineAccessURL>

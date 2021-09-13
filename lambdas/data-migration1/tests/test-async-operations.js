@@ -13,6 +13,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -20,9 +21,6 @@ const {
   migrateAsyncOperationRecord,
   migrateAsyncOperations,
 } = require('../dist/lambda/async-operations');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 

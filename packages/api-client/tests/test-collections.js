@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-
+const { randomId } = require('../../common/test-utils');
 const collectionsApi = require('../collections');
 const { fakeCollectionFactory } = require('../../api/lib/testUtils');
 const { randomString } = require('../../common/test-utils');
@@ -36,6 +36,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
 });
 
 test('createCollection calls the callback with the expected object', async (t) => {
+  const collection = { name: randomId('name'), version: randomId('version'), foo: 'bar' };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -43,7 +44,7 @@ test('createCollection calls the callback with the expected object', async (t) =
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
-      body: JSON.stringify(t.context.collection),
+      body: JSON.stringify(collection),
     },
   };
 
@@ -53,7 +54,7 @@ test('createCollection calls the callback with the expected object', async (t) =
   await t.notThrowsAsync(collectionsApi.createCollection({
     callback,
     prefix: t.context.testPrefix,
-    collectionName: t.context.collectionName,
+    collection,
   }));
 });
 
