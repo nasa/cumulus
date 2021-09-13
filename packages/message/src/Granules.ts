@@ -165,7 +165,6 @@ export const generateGranuleApiRecord = async ({
     published = false,
   } = granule;
 
-  // const now = Date.now();
   const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
 
   const record = {
@@ -181,7 +180,7 @@ export const generateGranuleApiRecord = async ({
     published,
     createdAt: workflowStartTime,
     timestamp,
-    updatedAt: updatedAt || timestamp,
+    updatedAt: updatedAt || Date.now(),
     duration: getWorkflowDuration(workflowStartTime, timestamp),
     productVolume: getGranuleProductVolume(files),
     timeToPreprocess: getGranuleTimeToPreprocess(granule),
