@@ -567,7 +567,7 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
-router.post('/:granuleName/execution', associateExecution);
+router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
 router.put('/:granuleName', put);
 
