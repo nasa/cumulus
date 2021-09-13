@@ -31,12 +31,10 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         bucket: postgresFile.bucket,
         checksum: postgresFile.checksum_value,
         checksumType: postgresFile.checksum_type,
-        createdAt: postgresFile.created_at.getTime(),
         fileName: postgresFile.file_name,
         key: postgresFile.key,
         size: Number.parseInt(postgresFile.file_size, 10),
         source: postgresFile.source,
-        updatedAt: postgresFile.updated_at.getTime(),
       },
       postgresFileOmitKeys
     )
