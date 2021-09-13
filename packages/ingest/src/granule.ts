@@ -295,8 +295,7 @@ export const getNameOfFile = (file: File): string | undefined => {
   const fileName = file.fileName ?? file.name;
 
   if (!fileName) {
-    const fileNameFromKey = file.key?.match('[^\/]+$');
-    return fileNameFromKey ? fileNameFromKey[0] : undefined;
+    return file.key?.split('/').pop();
   }
 
   return fileName;

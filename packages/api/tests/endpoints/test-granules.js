@@ -277,6 +277,7 @@ test.beforeEach(async (t) => {
         published: true,
         cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
         duration: 47.125,
+        timestamp: new Date(Date.now()),
       }
     ),
     fakeGranuleRecordFactory(
@@ -285,6 +286,7 @@ test.beforeEach(async (t) => {
         status: 'failed',
         collection_cumulus_id: t.context.collectionCumulusId,
         duration: 52.235,
+        timestamp: new Date(Date.now()),
       }
     ),
   ];

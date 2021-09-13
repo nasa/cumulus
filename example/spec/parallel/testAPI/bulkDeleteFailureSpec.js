@@ -9,6 +9,7 @@ const {
   getClusterArn,
 } = require('@cumulus/integration-tests');
 const { isValidAsyncOperationId, loadConfig } = require('../../helpers/testUtils');
+const { GranulePgModel } = require('../../../../packages/ingest/node_modules/@cumulus/db/dist');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
@@ -32,6 +33,8 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
     const granulesModel = new Granule();
     await granulesModel.create(granule);
+
+    // TODO we need to create the granule in PG
 
     postBulkDeleteResponse = await granules.bulkDeleteGranules({
       prefix: config.stackName,
