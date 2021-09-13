@@ -1671,8 +1671,6 @@ test.serial('update (PUT) returns Not Found if granule does not exist', async (t
     .send(newGranule)
     .expect(404);
 
-  console.log('RESPONSEERONI', response);
-
   t.is(response.body.error, 'Not Found');
   t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
 });
