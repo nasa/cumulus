@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -108,10 +109,17 @@ const update = async (req, res) => {
     knex = await getKnexClient(),
   } = req.testContext || {};
   const body = req.body || {};
+  const { retries = 0, status, ...restOfBody } = body;
 
   let existingGranule;
+
   try {
-    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+    existingGranule = await pRetry(
+      async () => await granuleModel.get({ granuleId: body.granuleId }),
+      {
+        retries,
+      }
+    );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
@@ -119,8 +127,7 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
 
-  const { status, ...restOfBody } = body;
-  let updatedBody = body;
+  let updatedBody = { status, ...body };
   let message = '';
 
   // Only set status to queued if granule was running

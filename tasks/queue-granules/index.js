@@ -66,6 +66,7 @@ async function queueGranules(event) {
         const queuedGranule = {
           granuleId: granule.granuleId,
           status: 'queued',
+          retries: 3,
         };
         await granulesApi.updateGranule({
           prefix: event.config.stackName,
