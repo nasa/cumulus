@@ -16,6 +16,7 @@ const {
   destroyLocalTestDb,
   generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -56,8 +57,6 @@ process.env = {
   ...localStackConnectionEnv,
   PG_DATABASE: testDbName,
 };
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);

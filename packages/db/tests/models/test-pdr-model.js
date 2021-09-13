@@ -13,9 +13,8 @@ const {
   tableNames,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `pdr_${cryptoRandomString({ length: 10 })}`;
 

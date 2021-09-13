@@ -29,6 +29,10 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+const {
+  buildExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -185,11 +189,15 @@ function fakePdrFactoryV2(params = {}) {
  * @returns {Object} fake execution object
  */
 function fakeExecutionFactoryV2(params = {}) {
+  const stateMachineArn = randomId('stateMachine');
+  const executionName = randomId('name');
+  const executionArn = buildExecutionArn(stateMachineArn, executionName);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
   const execution = {
-    arn: randomId('arn'),
+    arn: executionArn,
     duration: 180.5,
-    name: randomId('name'),
-    execution: randomId('execution'),
+    name: executionName,
+    execution: executionUrl,
     parentArn: randomId('parentArn'),
     error: { test: 'error' },
     status: 'completed',

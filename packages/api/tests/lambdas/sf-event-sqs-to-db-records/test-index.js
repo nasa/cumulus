@@ -18,6 +18,7 @@ const {
   PdrPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
@@ -48,8 +49,6 @@ const {
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   handler,
@@ -252,8 +251,9 @@ test.beforeEach(async (t) => {
     },
   };
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel
+  const [pgCollectionRecord] = await t.context.collectionPgModel
     .create(t.context.testKnex, t.context.collection);
+  t.context.collectionCumulusId = pgCollectionRecord.cumulus_id;
 
   [t.context.providerCumulusId] = await t.context.providerPgModel
     .create(t.context.testKnex, {
@@ -286,6 +286,7 @@ test.after.always(async (t) => {
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     testKnex,
     executionModel,
@@ -316,7 +317,10 @@ test('writeRecords() writes records only to Dynamo if message comes from pre-RDS
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
@@ -338,6 +342,7 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
 
 test('writeRecords() writes records to Dynamo/Elasticsearch if requirements to write execution to PostgreSQL are not met', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -434,14 +439,17 @@ test('writeRecords() writes records to Dynamo/Elasticsearch if requirements to w
   t.false(
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
-  t.deepEqual(
-    await t.context.granulePgModel.search(t.context.testKnex, { granule_id: granuleId }),
-    []
+  t.false(
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
 test('writeRecords() does not write granules/PDR if writeExecution() throws general error', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -471,12 +479,16 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
 test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -500,7 +512,10 @@ test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.true(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
@@ -525,6 +540,7 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
 
 test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     granuleModel,
     pdrModel,
@@ -550,7 +566,10 @@ test.serial('writeRecords() discards an out of order message that is older than 
 
   t.deepEqual(
     new Date(timestamp),
-    (await granulePgModel.get(testKnex, { granule_id: granuleId })).created_at
+    (await granulePgModel.get(
+      testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).created_at
   );
   t.deepEqual(
     new Date(timestamp),
@@ -560,6 +579,7 @@ test.serial('writeRecords() discards an out of order message that is older than 
 
 test.serial('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -585,6 +605,9 @@ test.serial('writeRecords() discards an out of order message that has an older s
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
-  t.is('completed', (await granulePgModel.get(testKnex, { granule_id: granuleId })).status);
+  t.is('completed', (await granulePgModel.get(
+    testKnex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  )).status);
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });

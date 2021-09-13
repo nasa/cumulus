@@ -17,6 +17,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
@@ -25,14 +26,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../../lambdas/db-migration');
-
-const {
-  getLambdaEnvironmentVariables,
-  createAsyncOperation,
-  startAsyncOperation,
-} = require('../dist/async_operations');
+const { getLambdaEnvironmentVariables, createAsyncOperation, startAsyncOperation } = require('../dist/async_operations');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
