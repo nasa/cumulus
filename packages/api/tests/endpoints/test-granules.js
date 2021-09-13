@@ -266,11 +266,13 @@ test.beforeEach(async (t) => {
 
   const granuleId1 = cryptoRandomString({ length: 6 });
   const granuleId2 = cryptoRandomString({ length: 6 });
+  const granuleId3 = cryptoRandomString({ length: 6 });
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
     fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.executionUrl }),
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
+    fakeGranuleFactoryV2({ granuleId: granuleId3, status: 'running', execution: t.context.executionUrl }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
@@ -290,6 +292,13 @@ test.beforeEach(async (t) => {
       {
         granule_id: granuleId2,
         status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'running',
         collection_cumulus_id: t.context.collectionCumulusId,
       }
     ),
@@ -330,10 +339,10 @@ test.serial('default returns list of granules', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(results.length, 2);
+  t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
-  t.is(meta.count, 2);
+  t.is(meta.count, 3);
   const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
@@ -1824,6 +1833,40 @@ test.serial('update (PUT) returns bad request when the path param granuleName do
   t.is(body.statusCode, 400);
   t.is(body.error, 'Bad Request');
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
+});
+
+test.serial('update (PUT) can set running granule status to queued', async (t) => {
+  const runningGranuleId = t.context.fakeGranules[2].granuleId;
+  const response = await request(app)
+    .put(`/granules/${runningGranuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: runningGranuleId,
+      status: 'queued',
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${runningGranuleId}`,
+  });
+});
+
+test.serial('update (PUT) does not set status to queued if not running', async (t) => {
+  const granuleId = t.context.fakeGranules[0].granuleId;
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId,
+      status: 'queued',
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${granuleId} Skipped setting status to queued because granule was not running`,
+  });
 });
 
 test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
