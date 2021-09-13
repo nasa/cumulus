@@ -16,6 +16,7 @@ const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const {
@@ -188,7 +189,7 @@ describe('The DiscoverGranules workflow', () => {
       discoverGranulesOutput.payload.granules.forEach((granule) => {
         expect(granule.dataType).toEqual(collection.name);
         expect(granule.version).toEqual(collection.version);
-        expect(granule.files.length).toEqual(3);
+        expect(granule.files.length).toEqual(1);
       });
     }
   });
@@ -210,6 +211,20 @@ describe('The DiscoverGranules workflow', () => {
         queueGranulesOutput.payload.running[0]
       );
       expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    }
+  });
+
+  it('granules become available in the Cumulus API', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
+        getGranule,
+        { prefix: stackName, granuleId },
+        'completed'
+      )));
+      granules.forEach((g) => {
+        expect(g).toBeDefined();
+      });
     }
   });
 });
