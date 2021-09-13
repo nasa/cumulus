@@ -7,7 +7,6 @@ const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
 const randomGranuleId = () => `granuleId_${cryptoRandomString({ length: 10 })}`;
 const randomWorkflow = () => `workflow_${cryptoRandomString({ length: 10 })}`;
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const {
   destroyLocalTestDb,
   generateLocalTestDb,
@@ -22,6 +21,7 @@ const {
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
   upsertGranuleWithExecutionJoinRecord,
+  migrationDir,
 } = require('../../dist');
 
 /**

@@ -14,6 +14,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   CollectionPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   sns,
@@ -27,8 +28,6 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');

@@ -32,9 +32,9 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
+  migrationDir,
 } = require('@cumulus/db');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 const {

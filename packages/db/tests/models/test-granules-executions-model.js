@@ -12,9 +12,8 @@ const {
   GranulePgModel,
   GranulesExecutionsPgModel,
   tableNames,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 

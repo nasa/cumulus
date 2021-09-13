@@ -13,6 +13,9 @@ const {
   getGranuleTimeToPreprocess,
   generateGranuleApiRecord,
 } = require('../Granules');
+const {
+  getWorkflowDuration,
+} = require('../workflows');
 
 const granuleSuccess = require('./fixtures/data/granule_success.json');
 const granuleFailure = require('./fixtures/data/granule_failed.json');
@@ -181,6 +184,12 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
 
   const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
   const processingEndDateTime = new Date(Date.UTC(2019, 6, 28, 1)).toISOString();
+  const timeToArchive = getGranuleTimeToArchive(granule);
+  const timeToPreprocess = getGranuleTimeToPreprocess(granule);
+  const productVolume = getGranuleProductVolume(granule.files);
+  const status = getGranuleStatus(workflowStatus, granule);
+  const duration = getWorkflowDuration(workflowStartTime, Date.now());
+
   const record = await generateGranuleApiRecord({
     granule,
     executionUrl,
@@ -192,12 +201,16 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     provider,
     workflowStartTime,
     pdrName,
-    workflowStatus,
+    status,
+    duration,
     cmrUtils: t.context.fakeCmrUtils,
     // in reality files comes from FileUtils.buildDatabaseFiles
     // and not the raw granule.files, but that functionality is tested
     // elsewhere and doesn't need to be re-verified here
     files: granule.files,
+    timeToArchive,
+    timeToPreprocess,
+    productVolume,
   });
 
   t.deepEqual(
@@ -236,13 +249,14 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
     Error: 'error',
     Cause: new Error('error'),
   };
+  const status = getGranuleStatus('failed', granule);
   const record = await generateGranuleApiRecord({
     granule,
     executionUrl,
     provider,
     collectionId,
     workflowStartTime,
-    workflowStatus: 'failed',
+    status,
     error,
     cmrUtils: t.context.fakeCmrUtils,
     // in reality files comes from FileUtils.buildDatabaseFiles

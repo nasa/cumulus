@@ -8,6 +8,7 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
+import isEmpty from 'lodash/isEmpty';
 import isInteger from 'lodash/isInteger';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
@@ -15,12 +16,14 @@ import omitBy from 'lodash/omitBy';
 import { CumulusMessageError } from '@cumulus/errors';
 import { Message } from '@cumulus/types';
 import { ExecutionProcessingTimes } from '@cumulus/types/api/executions';
-import { ApiGranule, GranuleStatus, MessageGranule } from '@cumulus/types/api/granules';
+import {
+  ApiGranule,
+  GranuleStatus,
+  GranuleTemporalInfo,
+  MessageGranule,
+} from '@cumulus/types/api/granules';
 import { ApiFile } from '@cumulus/types/api/files';
 
-import {
-  getWorkflowDuration,
-} from './workflows';
 import { CmrUtilsClass } from './types';
 
 interface MetaWithGranuleQueryFields extends Message.Meta {
@@ -128,28 +131,36 @@ export const generateGranuleApiRecord = async ({
   workflowStartTime,
   error,
   pdrName,
-  workflowStatus,
+  status,
   queryFields,
   updatedAt,
   files,
   processingTimeInfo = {},
   cmrUtils,
+  duration,
+  productVolume,
+  timeToPreprocess,
+  timeToArchive,
+  cmrTemporalInfo = {},
 }: {
   granule: MessageGranule,
   executionUrl?: string,
   collectionId: string,
-  provider?: {
-    id: string,
-  },
+  provider?: string,
   workflowStartTime: number,
   error?: Object,
   pdrName?: string,
-  workflowStatus: GranuleStatus,
+  status: GranuleStatus,
   queryFields?: Object,
   updatedAt?: string,
   processingTimeInfo?: ExecutionProcessingTimes,
   files?: ApiFile[],
   cmrUtils: CmrUtilsClass
+  cmrTemporalInfo?: GranuleTemporalInfo,
+  duration: number,
+  productVolume: number,
+  timeToPreprocess: number,
+  timeToArchive: number,
 }): Promise<ApiGranule> => {
   if (!granule.granuleId) throw new CumulusMessageError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
 
@@ -164,14 +175,19 @@ export const generateGranuleApiRecord = async ({
   } = granule;
 
   const now = Date.now();
-  const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
+  // Get cmr temporalInfo ( beginningDateTime, endingDateTime,
+  // productionDateTime, lastUpdateDateTime)
+  let temporalInfo = { ...cmrTemporalInfo };
+  if (isEmpty(cmrTemporalInfo)) {
+    temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
+  }
 
   const record = {
     granuleId,
     pdrName,
     collectionId,
-    status: getGranuleStatus(workflowStatus, granule),
-    provider: provider?.id,
+    status,
+    provider,
     execution: executionUrl,
     cmrLink,
     files,
@@ -180,10 +196,10 @@ export const generateGranuleApiRecord = async ({
     createdAt: workflowStartTime,
     timestamp: now,
     updatedAt: updatedAt || now,
-    duration: getWorkflowDuration(workflowStartTime, now),
-    productVolume: getGranuleProductVolume(files),
-    timeToPreprocess: getGranuleTimeToPreprocess(granule),
-    timeToArchive: getGranuleTimeToArchive(granule),
+    duration,
+    productVolume,
+    timeToPreprocess,
+    timeToArchive,
     ...processingTimeInfo,
     ...temporalInfo,
     queryFields,
