@@ -300,9 +300,10 @@ class Granule extends Manager {
    * @param {string} params.provider - Provider id
    * @param {number} params.timeToArchive - seconds to post to cmr.
    * @param {number} [params.timeToPreprocess] -  seconds
+   * @param {number} [params.timestamp = Date.now()] - a timestamp
    * @param {integer} [params.productVolume] - sum of the files sizes in bytes
    * @param {number} [params.duration] - seconds
-   * @param {GranuleStatus} params.status - ['running','failed','completed']
+   * @param {GranuleStatus} params.status - ['running','failed','completed','queued']
    * @param {number} params.workflowStartTime
    * @param {Array<ApiFile>} params.files - files associated with the granule.
    * @param {Object} [params.error] = {} - workflow error that may have occurred.
@@ -321,6 +322,7 @@ class Granule extends Manager {
     provider,
     timeToArchive,
     timeToPreprocess,
+    timestamp,
     productVolume,
     duration,
     status,
@@ -367,8 +369,8 @@ class Granule extends Manager {
       error,
       published,
       createdAt: workflowStartTime,
-      timestamp: now,
-      updatedAt: updatedAt || now,
+      timestamp: new Date(timestamp).valueOf() || now,
+      updatedAt: new Date(updatedAt).valueOf() || now,
       duration,
       productVolume,
       timeToPreprocess,

@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2606**
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
+  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
+
+### Changed
+
+- **CUMULUS-2583**
+  - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
+
+## [v9.5.0] 2021-09-07
+
 ### BREAKING CHANGES
 
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
@@ -35,16 +53,12 @@ of response and not the raw API endpoint response
 - **CUMULUS-2575**
   - Adds `POST /granules` API endpoint to create a granule
   - Adds helper `createGranule` to `@cumulus/api-client`
-
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
-
 - **CUMULUS-2578**
   - Adds `PUT /executions` endpoint to update an execution
-
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
-
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
@@ -4828,7 +4842,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.5.0...HEAD
+[v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2

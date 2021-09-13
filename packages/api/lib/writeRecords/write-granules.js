@@ -204,7 +204,7 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
 
-  if (status !== 'running') {
+  if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
       files: files,
       granuleCumulusId,
@@ -371,6 +371,7 @@ const writeGranuleFromApi = async (
     productVolume,
     timeToPreprocess,
     timeToArchive,
+    timestamp,
     files = [],
     beginningDateTime,
     endingDateTime,
@@ -413,6 +414,7 @@ const writeGranuleFromApi = async (
       provider,
       timeToArchive,
       timeToPreprocess,
+      timestamp,
       productVolume,
       duration,
       status,
