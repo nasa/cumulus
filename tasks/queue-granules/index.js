@@ -98,6 +98,10 @@ async function queueGranules(event) {
           granulesApi.updateGranule({
             prefix: event.config.stackName,
             body: {
+              collectionId: constructCollectionId(
+                queuedGranule.dataType,
+                queuedGranule.version
+              ),
               granuleId: queuedGranule.granuleId,
               status: 'queued',
               retries: 3,
