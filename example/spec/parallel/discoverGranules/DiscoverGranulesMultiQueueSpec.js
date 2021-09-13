@@ -2,6 +2,7 @@
 
 'use strict';
 
+const get = require('lodash/get');
 const pWaitFor = require('p-wait-for');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
@@ -9,6 +10,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
+const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -40,7 +42,7 @@ describe('The DiscoverGranules workflow', () => {
   let queueGranulesOutput;
   let stackName;
   let testGranuleIds;
-  let workflowExecution;
+  let discoverGranulesExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -75,6 +77,8 @@ describe('The DiscoverGranules workflow', () => {
         })
       );
 
+      const ingestTime = Date.now() - 1000 * 30;
+
       // Execute the DiscoverGranules workflow
       discoverGranulesRule = await createOneTimeRule(
         stackName,
@@ -95,17 +99,27 @@ describe('The DiscoverGranules workflow', () => {
         }
       );
 
+      discoverGranulesExecutionArn = await findExecutionArn(
+        stackName,
+        (execution) =>
+          get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': discoverGranulesRule.payload.testExecutionId,
+        },
+        { timeout: 30 }
+      );
       const lambdaStep = new LambdaStep();
 
       discoverGranulesOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn,
+        discoverGranulesExecutionArn,
         'DiscoverGranules'
       );
 
       // Get the output of the QueueGranules task. Doing it here because there are
       // two tests that need it.
       queueGranulesOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn,
+        discoverGranulesExecutionArn,
         'QueueGranules'
       );
     } catch (error) {
@@ -132,13 +146,13 @@ describe('The DiscoverGranules workflow', () => {
       ),
       waitForApiStatus(
         getExecution,
-        { prefix: stackName, arn: workflowExecution.executionArn },
+        { prefix: stackName, arn: discoverGranulesExecutionArn },
         'completed'
       ),
     ]);
     // The order of execution deletes matters. Children must be deleted before parents.
     await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await deleteExecution({ prefix: stackName, executionArn: discoverGranulesExecutionArn });
     await deleteRule({ prefix: stackName, ruleName: discoverGranulesRule.name });
     await Promise.all([
       deleteFolder(bucket, sourcePath),
@@ -154,12 +168,7 @@ describe('The DiscoverGranules workflow', () => {
     ]);
   });
 
-  it('executes successfully', () => {
-    if (beforeAllError) fail(beforeAllError);
-    else expect(workflowExecution.status).toEqual('completed');
-  });
-
-  it('can be fetched from the API', async () => {
+  it('reaches completed state & can be fetched from the API', async () => {
     if (beforeAllError) fail(beforeAllError);
     else {
       await expectAsync(
@@ -167,7 +176,7 @@ describe('The DiscoverGranules workflow', () => {
           async () => {
             const { status } = await getExecution({
               prefix: stackName,
-              arn: workflowExecution.executionArn,
+              arn: discoverGranulesExecutionArn,
             });
 
             return status === 'completed';
