@@ -57,7 +57,7 @@ describe('The DiscoverGranules workflow', () => {
       sourcePath = `${stackName}/tmp/${testId}`;
 
       // Create the collection
-      collection = await createCollection(testId);
+      collection = await createCollection(stackName);
 
       // Create the provider
       provider = await createProvider(stackName, { host: bucket });
