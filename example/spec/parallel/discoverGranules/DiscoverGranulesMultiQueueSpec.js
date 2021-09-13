@@ -109,6 +109,19 @@ describe('The DiscoverGranules workflow', () => {
         },
         { timeout: 30 }
       );
+
+      await pWaitFor(
+        async () => {
+          const { status } = await getExecution({
+            prefix: stackName,
+            arn: discoverGranulesExecutionArn,
+          });
+
+          return status === 'completed';
+        },
+        { interval: 2000, timeout: 60000 }
+      );
+
       const lambdaStep = new LambdaStep();
 
       discoverGranulesOutput = await lambdaStep.getStepOutput(
@@ -166,25 +179,6 @@ describe('The DiscoverGranules workflow', () => {
         provider: provider.id,
       }),
     ]);
-  });
-
-  it('reaches completed state & can be fetched from the API', async () => {
-    if (beforeAllError) fail(beforeAllError);
-    else {
-      await expectAsync(
-        pWaitFor(
-          async () => {
-            const { status } = await getExecution({
-              prefix: stackName,
-              arn: discoverGranulesExecutionArn,
-            });
-
-            return status === 'completed';
-          },
-          { interval: 2000, timeout: 60000 }
-        )
-      ).toBeResolved();
-    }
   });
 
   it('DiscoverGranules outputs the list of discovered granules', () => {
