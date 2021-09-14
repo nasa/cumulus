@@ -236,9 +236,10 @@ test.before(async (t) => {
 
   t.context.testExecution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  t.context.testExecutionCumulusId = (
+  const testExecution = (
     await executionPgModel.create(t.context.knex, t.context.testExecution)
-  )[0];
+  );
+  t.context.testExecutionCumulusId = testExecution.cumulus_id;
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
@@ -618,7 +619,7 @@ test.serial('remove a granule from CMR', async (t) => {
     // Should have updated the Postgres granule
     const updatedPgGranule = await granulePgModel.get(
       t.context.knex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+      { granule_id: granuleId, collection_cumulus_id: t.context.collectionCumulusId }
     );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
