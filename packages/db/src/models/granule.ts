@@ -82,6 +82,25 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return super.get(knexOrTransaction, params);
   }
 
+  /**
+   * FUTURE: This should not be used to fetch unique granules. Granules
+   * can should be queried by cumulus_id or a combination of granule_id +
+   * collection_cumulus_id. This function is provided for legacy support.
+   *
+   * Fetches a single granule from PostgreSQL by a granuleId
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {string} granuleId - A Granule's granule_id
+   * @returns {Promise<PostgresGranuleRecord>} The returned record
+   */
+  getByGranuleId(
+    knexOrTransaction: Knex | Knex.Transaction,
+    granuleId: string
+  ): Promise<PostgresGranuleRecord> {
+    // TODO use getUniqueGranuleByGranuleId?
+    return super.get(knexOrTransaction, { granule_id: granuleId });
+  }
+
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,

@@ -339,7 +339,7 @@ async function get(req, res) {
   const granuleId = req.params.granuleName;
   let granule;
   try {
-    granule = await granulePgModel.get(knex, { granule_id: granuleId });
+    granule = await granulePgModel.getByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');

@@ -120,14 +120,17 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
   } = t.context;
 
   // Create executions
-  const [executionACumulusId] = await executionPgModel.create(
+  const [executionA] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
-  const [executionBCumulusId] = await executionPgModel.create(
+  const [executionB] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
   );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
 
   // Create Granule
   const [granuleCumulusId] = await granulePgModel.create(
@@ -182,14 +185,17 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
   } = t.context;
 
   // Create executions
-  const [executionACumulusId] = await executionPgModel.create(
+  const [executionA] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
-  const [executionBCumulusId] = await executionPgModel.create(
+  const [executionB] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
   );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
 
   // Create Granule
   const [granuleCumulusId] = await granulePgModel.create(
@@ -198,6 +204,7 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
       collection_cumulus_id: collectionCumulusId,
     })
   );
+
   // Create GranulesExecuions JOIN records
   await granulesExecutionsPgModel.create(
     knex,
