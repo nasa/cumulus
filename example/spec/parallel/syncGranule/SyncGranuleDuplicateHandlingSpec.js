@@ -102,10 +102,12 @@ describe('When the Sync Granule workflow is configured', () => {
               {
                 bucket: config.buckets.internal.name,
                 key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.internal.name,
                 key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf.met`,
               },
             ],
           },
@@ -235,7 +237,7 @@ describe('When the Sync Granule workflow is configured', () => {
         // update one of the input files, so that the file has different checksum
         const content = randomString();
         const file = inputPayload.granules[0].files[0];
-        fileUpdated = file.fileName;
+        fileUpdated = file.name;
         const updateParams = {
           Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
@@ -262,7 +264,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const renamedFiles = files.filter((f) => f.fileName.startsWith(`${fileUpdated}.v`));
         expect(renamedFiles.length).toEqual(1);
 
-        const expectedRenamedFileSize = existingfiles.filter((f) => f.fileName.endsWith(fileUpdated))[0].size;
+        const expectedRenamedFileSize = existingfiles.filter((f) => f.key.endsWith(fileUpdated))[0].size;
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 

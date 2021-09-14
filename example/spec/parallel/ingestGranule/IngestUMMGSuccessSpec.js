@@ -309,7 +309,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     it('has a payload with correct buckets, keys, sizes', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
       movedFiles.forEach((file) => {
-        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.fileName === file.fileName);
         expect(file.key).toEqual(expectedFile.key);
         expect(file.bucket).toEqual(expectedFile.bucket);
         if (file.size && expectedFile.size) {

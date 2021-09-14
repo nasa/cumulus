@@ -129,6 +129,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         },
         { timeout: 30 }
       );
+      console.log('ingestGranuleExecution1Arn', ingestGranuleExecution1Arn);
 
       // Wait for the execution to be completed
       await getExecutionWithStatus({
@@ -204,6 +205,8 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         },
         { timeout: 30 }
       );
+
+      console.log('ingestGranuleExecution2Arn', ingestGranuleExecution2Arn);
 
       // Wait for the execution to be completed
       ingestGranuleExecution2 = await getExecutionWithStatus({
