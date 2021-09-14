@@ -19,14 +19,13 @@ const {
   GranulesExecutionsPgModel,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('../../dist');
 
 const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
@@ -96,14 +95,17 @@ test.before(async (t) => {
 
   // Create executions
   const executionPgModel = new ExecutionPgModel();
-  const [executionACumulusId] = await executionPgModel.create(
+  const [executionA] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
-  const [executionBCumulusId] = await executionPgModel.create(
+  const [executionB] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
 
   t.context.executions = [
     await executionPgModel.get(knex, { cumulus_id: executionACumulusId }),
