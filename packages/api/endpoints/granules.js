@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -108,10 +109,17 @@ const update = async (req, res) => {
     knex = await getKnexClient(),
   } = req.testContext || {};
   const body = req.body || {};
+  const { retries = 0, status, ...restOfBody } = body;
 
   let existingGranule;
+
   try {
-    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+    existingGranule = await pRetry(
+      async () => await granuleModel.get({ granuleId: body.granuleId }),
+      {
+        retries,
+      }
+    );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
@@ -119,10 +127,20 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
 
+  let updatedBody = { status, ...body };
+  let message = '';
+
+  // Only set status to queued if granule was running
+  // Prevents race condition of setting granule to queued after completed
+  if (status === 'queued' && existingGranule.status !== 'running') {
+    updatedBody = restOfBody;
+    message = ' Skipped setting status to queued because granule was not running';
+  }
+
   const updatedGranule = {
     ...existingGranule,
     updatedAt: Date.now(),
-    ...body,
+    ...updatedBody,
   };
 
   try {
@@ -132,7 +150,7 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}${message}`,
   });
 };
 
@@ -567,7 +585,7 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
-router.post('/:granuleName/execution', associateExecution);
+router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
 router.put('/:granuleName', put);
 

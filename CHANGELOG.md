@@ -12,8 +12,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds `PUT /granules` API endpoint to update a granule
   - Adds helper `updateGranule` to `@cumulus/api-client/granules`
 - **CUMULUS-2606**
-  - Adds `PUT /granules/{granuleId}/execution` API endpoint to associate an execution with a granule
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
   - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
+
+### Changed
+
+- **CUMULUS-2583**
+  - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
 ### Fixed
 

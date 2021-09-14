@@ -7,6 +7,7 @@ const granulesApi = require('../granules');
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
+  t.context.status = 'queued';
 });
 
 test('getGranule calls the callback with the expected object', async (t) => {
@@ -376,6 +377,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
     any: 'object',
+    status: t.context.status,
   };
   const expected = {
     prefix: t.context.testPrefix,
@@ -410,7 +412,7 @@ test('associateExecutionWithGranule calls the callback with the expected object'
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}/execution`,
+      path: `/granules/${t.context.granuleId}/executions`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
