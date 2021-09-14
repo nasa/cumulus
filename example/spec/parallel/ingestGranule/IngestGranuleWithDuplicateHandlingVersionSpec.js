@@ -3,6 +3,8 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 const pick = require('lodash/pick');
+const path = require('path');
+
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -238,7 +240,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
 
       // Make sure that the modified file resulted in a versioned file
       expect(
-        files.find((file) => file.fileName.startsWith(`${differentChecksumFilename}.v`))
+        files.find((file) => path.basename(file.key).startsWith(`${differentChecksumFilename}.v`))
       ).toBeDefined();
     }
   });
