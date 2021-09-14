@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
+- **CUMULUS-2617**
+  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
+
 ## [v9.5.0] 2021-09-07
 
 ### BREAKING CHANGES
@@ -72,9 +75,6 @@ processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
-
-- **CUMULUS-2617**
-  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
 
 - **CUMULUS-2644**
   - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
