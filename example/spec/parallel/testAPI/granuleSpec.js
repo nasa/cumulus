@@ -1,19 +1,26 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
+  associateExecutionWithGranule,
   createGranule,
   deleteGranule,
   getGranule,
   updateGranule,
 } = require('@cumulus/api-client/granules');
+const {
+  createExecution,
+  deleteExecution,
+} = require('@cumulus/api-client/executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
+  fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
 
@@ -27,6 +34,7 @@ describe('The Granules API', () => {
   let discoveredGranule;
   let granuleId;
   let prefix;
+  let executionRecord;
   let granuleFile;
   let randomGranuleRecord;
 
@@ -37,6 +45,20 @@ describe('The Granules API', () => {
 
       collection = await createCollection(prefix);
       collectionId = constructCollectionId(collection.name, collection.version);
+
+      executionRecord = omit(fakeExecutionFactoryV2({
+        collectionId,
+        status: 'running',
+      }), ['parentArn', 'createdAt', 'updatedAt']);
+
+      const response = await createExecution({
+        prefix,
+        body: executionRecord,
+      });
+
+      if (response.statusCode !== 200) {
+        throw new Error(`failed to createExecution ${response.body.message}`);
+      }
 
       granuleFile = {
         bucket: config.buckets.public.name,
@@ -67,6 +89,7 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteGranule({ prefix, granuleId });
+    await deleteExecution({ prefix, executionArn: executionRecord.arn });
     await deleteCollection({
       prefix,
       collectionName: collection.name,
@@ -128,6 +151,25 @@ describe('The Granules API', () => {
       });
       updatedGranuleFromApi.execution = undefined;
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
+    });
+
+    it('can associate an execution with the granule via API.', async () => {
+      const requestPayload = {
+        granuleId,
+        collectionId,
+        executionArn: executionRecord.arn,
+      };
+      const response = await associateExecutionWithGranule({
+        prefix,
+        body: requestPayload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedGranuleFromApi = await getGranule({
+        prefix,
+        granuleId,
+      });
+      expect(updatedGranuleFromApi.execution).toBe(executionRecord.execution);
     });
 
     it('Errors creating a bad granule.', async () => {
