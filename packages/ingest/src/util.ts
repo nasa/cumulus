@@ -4,7 +4,7 @@ import { S3KeyPairProvider } from '@cumulus/common/key-pair-provider';
 
 import Logger from '@cumulus/logger';
 
-const logger = new Logger({ sender: '@cumulus/ingest/utils' });
+const logger = new Logger({ sender: '@cumulus/ingest/util' });
 
 export const decrypt = async (
   ciphertext: string
