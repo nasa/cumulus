@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');

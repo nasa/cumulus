@@ -142,6 +142,15 @@ describe('The Sync Granules workflow', () => {
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
 
+    expectedPayload.granuleDuplicates = {
+      [expectedPayload.granules[0].granuleId]: {
+        files: [
+          expectedPayload.granules[0].files[0],
+          expectedPayload.granules[0].files[1],
+        ],
+      },
+    };
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
