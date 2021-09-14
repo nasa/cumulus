@@ -7,7 +7,8 @@ export interface PostgresFile {
   file_name?: string
   file_size?: number
   path?: string
-  source?: string
+  source?: string,
+  type?: string,
 }
 
 export interface PostgresFileRecord extends PostgresFile {

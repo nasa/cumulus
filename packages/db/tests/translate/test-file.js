@@ -15,6 +15,7 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
     checksum: 'bogus-value',
     size: 100,
     source: 'fake-source',
+    type: 'data',
   };
   t.deepEqual(
     translateApiFiletoPostgresFile(file),
@@ -26,6 +27,7 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
         file_name: file.fileName,
         file_size: file.size,
         path: undefined,
+        type: 'data',
       },
       fileOmitKeys
     )
@@ -55,6 +57,7 @@ test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) =
         file_name: file.fileName,
         file_size: file.size,
         path: undefined,
+        type: undefined,
       },
       fileOmitKeys
     )

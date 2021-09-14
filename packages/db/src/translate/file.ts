@@ -31,5 +31,6 @@ export const translateApiFiletoPostgresFile = (
     file_size: file.size,
     path: file.path,
     source: file.source,
+    type: file.type,
   };
 };

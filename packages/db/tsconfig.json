@@ -3,5 +3,6 @@
   "compilerOptions": {
     "outDir": "dist"
   },
+  "exclude": ["src/migration-template.ts"],
   "include": ["src"]
 }
