@@ -17,9 +17,8 @@ const {
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 
@@ -46,11 +45,11 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const [executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
-  t.context.executionCumulusId = executionCumulusId;
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -129,10 +128,11 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
     )
   );
 
-  const [secondExecutionCumulusId] = await executionPgModel.create(
+  const [secondExecutionCumulus] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory()
   );
+  const secondExecutionCumulusId = secondExecutionCumulus.cumulus_id;
 
   await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(
@@ -237,10 +237,11 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     executionCumulusId
   );
 
-  const [secondExecutionCumulusId] = await executionPgModel.create(
+  const [secondExecution] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory()
   );
+  const secondExecutionCumulusId = secondExecution.cumulus_id;
 
   const updatedGranule = {
     ...granule,
@@ -359,10 +360,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
     )
   );
 
-  const [secondExecutionCumulusId] = await executionPgModel.create(
+  const [secondExecution] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory()
   );
+  const secondExecutionCumulusId = secondExecution.cumulus_id;
 
   await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(
@@ -428,10 +430,11 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     )
   );
 
-  const [secondExecutionCumulusId] = await executionPgModel.create(
+  const [secondExecution] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory()
   );
+  const secondExecutionCumulusId = secondExecution.cumulus_id;
 
   await knex.transaction(
     (trx) => upsertGranuleWithExecutionJoinRecord(

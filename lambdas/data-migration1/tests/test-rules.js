@@ -12,12 +12,11 @@ const { fakeCollectionFactory, fakeProviderFactory } = require('@cumulus/api/lib
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { migrateRuleRecord, migrateRules } = require('../dist/lambda/rules');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;

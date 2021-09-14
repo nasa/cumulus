@@ -5,6 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   ProviderPgModel,
@@ -21,6 +22,8 @@ const {
   destroyLocalTestDb,
   tableNames,
   translatePostgresGranuleToApiGranule,
+  translateApiGranuleToPostgresGranule,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   Search,
@@ -30,22 +33,17 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const {
-  constructCollectionId,
-} = require('@cumulus/message/Collections');
-const {
   getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 
 const {
   generateFilePgRecord,
-  generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   writeFilesViaTransaction,
+  writeGranuleFromApi,
+  writeGranulesFromMessage,
   _writeGranule,
-  writeGranules,
-} = require('../../../lambdas/sf-event-sqs-to-db-records/write-granules');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
+} = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
@@ -98,6 +96,11 @@ test.beforeEach(async (t) => {
 
   t.context.executionName = cryptoRandomString({ length: 5 });
   t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
+  t.context.executionUrl = getExecutionUrlFromArn(t.context.executionArn);
+  const execution = fakeExecutionRecordFactory({
+    arn: t.context.executionArn,
+    url: t.context.executionUrl,
+  });
 
   t.context.collection = fakeCollectionRecordFactory();
   t.context.collectionId = constructCollectionId(
@@ -111,6 +114,8 @@ test.beforeEach(async (t) => {
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
     granuleId: t.context.granuleId,
+    collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
+    execution: execution.url,
   });
 
   t.context.workflowStartTime = Date.now();
@@ -136,13 +141,11 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
-  const execution = fakeExecutionRecordFactory({
-    arn: t.context.executionArn,
-  });
-  [t.context.executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     execution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   [t.context.providerCumulusId] = await t.context.providerPgModel.create(
     t.context.knex,
@@ -165,117 +168,6 @@ test.after.always(async (t) => {
     ...t.context,
   });
   await cleanupTestIndex(t.context);
-});
-
-test('generateGranuleRecord() generates the correct granule record', async (t) => {
-  const {
-    granuleId,
-    granule,
-    workflowStartTime,
-  } = t.context;
-
-  const timestamp = workflowStartTime + 5000;
-  const updatedAt = Date.now();
-  // Set granule files
-  const files = [
-    fakeFileFactory({
-      size: 10,
-    }),
-  ];
-  granule.sync_granule_duration = 3000;
-  granule.post_to_cmr_duration = 7810;
-  const queryFields = { foo: 'bar' };
-
-  t.like(
-    await generateGranuleRecord({
-      granule,
-      files,
-      workflowStartTime,
-      workflowStatus: 'running',
-      collectionCumulusId: 1,
-      providerCumulusId: 2,
-      pdrCumulusId: 4,
-      timestamp,
-      updatedAt,
-      queryFields,
-    }),
-    {
-      granule_id: granuleId,
-      status: 'running',
-      cmr_link: granule.cmrLink,
-      published: granule.published,
-      created_at: new Date(workflowStartTime),
-      timestamp: new Date(timestamp),
-      updated_at: new Date(updatedAt),
-      product_volume: 10,
-      duration: 5,
-      time_to_process: 3,
-      time_to_archive: 7.81,
-      collection_cumulus_id: 1,
-      provider_cumulus_id: 2,
-      pdr_cumulus_id: 4,
-      query_fields: queryFields,
-    }
-  );
-});
-
-test('generateGranuleRecord() includes processing time info, if provided', async (t) => {
-  const {
-    cumulusMessage,
-    granule,
-  } = t.context;
-
-  const processingTimeInfo = {
-    processingStartDateTime: new Date().toISOString(),
-    processingEndDateTime: new Date().toISOString(),
-  };
-
-  const record = await generateGranuleRecord({
-    cumulusMessage,
-    granule,
-    processingTimeInfo,
-  });
-  t.is(record.processing_start_date_time, processingTimeInfo.processingStartDateTime);
-  t.is(record.processing_end_date_time, processingTimeInfo.processingEndDateTime);
-});
-
-test('generateGranuleRecord() includes temporal info, if any is returned', async (t) => {
-  const {
-    cumulusMessage,
-    granule,
-  } = t.context;
-
-  const temporalInfo = {
-    beginningDateTime: new Date().toISOString(),
-  };
-
-  const fakeCmrUtils = {
-    getGranuleTemporalInfo: () => Promise.resolve(temporalInfo),
-  };
-
-  const record = await generateGranuleRecord({
-    cumulusMessage,
-    granule,
-    cmrUtils: fakeCmrUtils,
-  });
-  t.is(record.beginning_date_time, temporalInfo.beginningDateTime);
-});
-
-test('generateGranuleRecord() includes correct error if cumulus message has an exception', async (t) => {
-  const {
-    granule,
-  } = t.context;
-
-  const exception = {
-    Error: new Error('error'),
-    Cause: 'an error occurred',
-  };
-
-  const record = await generateGranuleRecord({
-    granule,
-    error: exception,
-  });
-  t.deepEqual(record.error, exception);
 });
 
 test('generateFilePgRecord() adds granule cumulus ID', (t) => {
@@ -340,36 +232,31 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
 
 test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
-    cumulusMessage,
-    granuleModel,
-    knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
     granule,
+    executionCumulusId,
     esClient,
-    executionArn,
+    knex,
+    granuleModel,
     granuleId,
-    provider,
-    workflowStartTime,
-    collectionId,
+    collectionCumulusId,
+    executionUrl,
   } = t.context;
 
-  const executionUrl = getExecutionUrlFromArn(executionArn);
+  const dynamoGranuleRecord = {
+    ...granule,
+    status: 'completed',
+  };
+  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
+    dynamoGranuleRecord,
+    knex
+  );
   await _writeGranule({
-    collectionId,
-    cumulusMessage,
+    dynamoGranuleRecord,
+    postgresGranuleRecord,
+    executionCumulusId,
     granuleModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granule,
     esClient,
-    provider,
-    executionUrl,
-    workflowStartTime,
-    workflowStatus: 'completed',
   });
 
   t.like(
@@ -406,20 +293,21 @@ test('_writeGranule will not allow a running status to replace a completed statu
     }
   );
 
+  const updatedDynamoGranuleRecord = {
+    ...granule,
+    status: 'running',
+  };
+  const updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
+    updatedDynamoGranuleRecord,
+    knex
+  );
   await _writeGranule({
-    collectionId,
-    cumulusMessage,
+    dynamoGranuleRecord: updatedDynamoGranuleRecord,
+    postgresGranuleRecord: updatedPgGranuleRecord,
+    executionCumulusId,
     granuleModel,
     knex,
-    collectionCumulusId,
-    executionCumulusId,
-    providerCumulusId,
-    granule,
     esClient,
-    provider,
-    executionUrl,
-    workflowStartTime,
-    workflowStatus: 'running',
   });
 
   t.like(
@@ -447,7 +335,7 @@ test('_writeGranule will not allow a running status to replace a completed statu
   );
 });
 
-test.serial('writeGranules() returns undefined if message has no granules', async (t) => {
+test.serial('writeGranulesFromMessage() returns undefined if message has no granules', async (t) => {
   const {
     knex,
     executionCumulusId,
@@ -455,9 +343,8 @@ test.serial('writeGranules() returns undefined if message has no granules', asyn
     granuleModel,
   } = t.context;
   const cumulusMessage = {};
-  const actual = await writeGranules({
+  const actual = await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId: undefined,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -466,7 +353,7 @@ test.serial('writeGranules() returns undefined if message has no granules', asyn
   t.is(actual, undefined);
 });
 
-test.serial('writeGranules() returns undefined if message has empty granule set', async (t) => {
+test.serial('writeGranulesFromMessage() returns undefined if message has empty granule set', async (t) => {
   const {
     knex,
     executionCumulusId,
@@ -474,9 +361,8 @@ test.serial('writeGranules() returns undefined if message has empty granule set'
     granuleModel,
   } = t.context;
   const cumulusMessage = { granules: [] };
-  const actual = await writeGranules({
+  const actual = await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId: undefined,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -485,27 +371,7 @@ test.serial('writeGranules() returns undefined if message has empty granule set'
   t.is(actual, undefined);
 });
 
-test.serial('writeGranules() throws an error if collection is not provided', async (t) => {
-  const {
-    cumulusMessage,
-    knex,
-    executionCumulusId,
-    providerCumulusId,
-    granuleModel,
-  } = t.context;
-  await t.throwsAsync(
-    writeGranules({
-      cumulusMessage,
-      collectionCumulusId: undefined,
-      executionCumulusId,
-      providerCumulusId,
-      knex,
-      granuleModel,
-    })
-  );
-});
-
-test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -516,9 +382,8 @@ test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasti
     granuleId,
   } = t.context;
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -526,16 +391,19 @@ test.serial('writeGranules() saves granule records to DynamoDB/PostgreSQL/Elasti
   });
 
   t.true(await granuleModel.exists({ granuleId }));
-  t.true(await t.context.granulePgModel.exists(knex, { granule_id: granuleId }));
+  t.true(await t.context.granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await t.context.esGranulesClient.exists(granuleId));
 });
 
 test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     granuleModel,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleId,
@@ -546,9 +414,8 @@ test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and E
   // or elasticsearch.
   const omitList = ['files', 'execution', 'pdrName', 'provider', '_id'];
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -556,7 +423,13 @@ test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and E
   });
 
   const dynamoRecord = await granuleModel.get({ granuleId });
-  const granulePgRecord = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+  const granulePgRecord = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
 
   // translate the PG granule to API granule to directly compare to Dynamo
   const translatedPgRecord = await translatePostgresGranuleToApiGranule({
@@ -569,7 +442,44 @@ test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and E
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if PostgreSQL write is enabled and workflow status is "completed"', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
+  const {
+    cumulusMessage,
+    granuleModel,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.is(granulePgRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(granulePgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+
+  t.is(granulePgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(granulePgRecord.updated_at.getTime(), esRecord.updatedAt);
+});
+
+test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQL if Postgres write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -585,9 +495,8 @@ test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if Postgr
 
   cumulusMessage.meta.status = 'completed';
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -621,7 +530,7 @@ test.serial('writeGranules() saves file records to DynamoDB/PostgreSQL if Postgr
   });
 });
 
-test.serial('writeGranules() does not persist file records to PostgreSQL if the workflow status is "running"', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -636,9 +545,8 @@ test.serial('writeGranules() does not persist file records to PostgreSQL if the 
 
   cumulusMessage.meta.status = 'running';
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -658,7 +566,7 @@ test.serial('writeGranules() does not persist file records to PostgreSQL if the 
   );
 });
 
-test.serial('writeGranules() handles successful and failing writes independently', async (t) => {
+test.serial('writeGranulesFromMessage() handles successful and failing writes independently', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -677,9 +585,8 @@ test.serial('writeGranules() handles successful and failing writes independently
     granule2,
   ];
 
-  await t.throwsAsync(writeGranules({
+  await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -688,15 +595,17 @@ test.serial('writeGranules() handles successful and failing writes independently
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
-test.serial('writeGranules() throws error if any granule writes fail', async (t) => {
+test.serial('writeGranulesFromMessage() throws error if any granule writes fail', async (t) => {
   const {
     cumulusMessage,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleModel,
@@ -708,9 +617,8 @@ test.serial('writeGranules() throws error if any granule writes fail', async (t)
     {},
   ];
 
-  await t.throwsAsync(writeGranules({
+  await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -718,7 +626,7 @@ test.serial('writeGranules() throws error if any granule writes fail', async (t)
   }));
 });
 
-test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if DynamoDB write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -730,7 +638,8 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
   } = t.context;
 
   const fakeGranuleModel = {
-    storeGranuleFromCumulusMessage: () => {
+    generateGranuleRecord: () => t.context.granule,
+    storeGranule: () => {
       throw new Error('Granules dynamo error');
     },
     describeGranuleExecution: () => Promise.resolve({}),
@@ -738,9 +647,8 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
   };
 
   const [error] = await t.throwsAsync(
-    writeGranules({
+    writeGranulesFromMessage({
       cumulusMessage,
-      collectionCumulusId,
       executionCumulusId,
       providerCumulusId,
       knex,
@@ -751,51 +659,52 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
   t.true(error.message.includes('Granules dynamo error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    collectionCumulusId,
   } = t.context;
 
-  const fakeTrxCallback = (cb) => {
-    const fakeTrx = sinon.stub().returns({
-      insert: () => {
-        throw new Error('Granules PostgreSQL error');
-      },
-    });
-    return cb(fakeTrx);
+  const testGranulePgModel = {
+    upsert: () => {
+      throw new Error('Granules PostgreSQL error');
+    },
   };
-  const trxStub = sinon.stub(knex, 'transaction').callsFake(fakeTrxCallback);
-  t.teardown(() => trxStub.restore());
 
-  const [error] = await t.throwsAsync(writeGranules({
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
+    granulePgModel: testGranulePgModel,
   }));
 
   t.true(error.message.includes('Granules PostgreSQL error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -813,7 +722,7 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
     delete: () => Promise.resolve(),
   };
 
-  const [error] = await t.throwsAsync(writeGranules({
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
     collectionCumulusId,
     executionCumulusId,
@@ -826,12 +735,15 @@ test.serial('writeGranules() does not persist records to DynamoDB/PostgreSQL/Ela
   t.true(error.message.includes('Granules ES error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
-    await t.context.granulePgModel.exists(knex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranules() writes a granule and marks as failed if any file writes fail', async (t) => {
+test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -847,9 +759,8 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
   cumulusMessage.payload.granules[0].files[0].bucket = undefined;
   cumulusMessage.payload.granules[0].files[0].key = undefined;
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -868,15 +779,15 @@ test.serial('writeGranules() writes a granule and marks as failed if any file wr
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
 });
 
-test.serial('writeGranules() writes all valid files if any non-valid file fails', async (t) => {
+test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
   const {
     cumulusMessage,
     knex,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleModel,
     filePgModel,
+    granulePgModel,
   } = t.context;
 
   cumulusMessage.meta.status = 'completed';
@@ -895,9 +806,8 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
   }
   const validFileCount = cumulusMessage.payload.granules[0].files.length - invalidFiles.length;
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
@@ -907,11 +817,15 @@ test.serial('writeGranules() writes all valid files if any non-valid file fails'
   t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
   t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
 
-  const fileRecords = await filePgModel.search(knex, {});
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    knex,
+    { granule_id: cumulusMessage.payload.granules[0].granuleId }
+  );
+  const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
   t.is(fileRecords.length, validFileCount);
 });
 
-test.serial('writeGranules() stores error on granule if any file fails', async (t) => {
+test.serial('writeGranulesFromMessage() stores error on granule if any file fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -937,16 +851,335 @@ test.serial('writeGranules() stores error on granule if any file fails', async (
     cumulusMessage.payload.granules[0].files.push(fakeFileFactory());
   }
 
-  await writeGranules({
+  await writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
   });
 
-  const pgGranule = await t.context.granulePgModel.get(knex, { granule_id: granuleId });
+  const pgGranule = await t.context.granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
+  t.true(pgGranule.error.Cause.includes('AggregateError'));
+});
+
+test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, granuleId: undefined }, knex),
+    { message: 'Could not create granule record, invalid granuleId: undefined' }
+  );
+});
+
+test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId', async (t) => {
+  const {
+    granule,
+    knex,
+  } = t.context;
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex),
+    { message: 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.' }
+  );
+});
+
+test.serial('writeGranuleFromApi() throws for a granule with no collectionId provided', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: undefined }, knex),
+    { message: 'collectionId required to generate a granule record' }
+  );
+});
+
+test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId provided', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+  const badCollectionId = `collectionId${cryptoRandomString({ length: 5 })}`;
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex),
+    { message: `invalid collectionId: ${badCollectionId}` }
+  );
+});
+
+test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.', async (t) => {
+  const {
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule }, knex);
+
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+});
+
+test.serial('writeGranuleFromApi() writes a granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
+  const {
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, execution: undefined }, knex);
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+});
+
+test.serial('writeGranuleFromApi() can write a granule with no files associated with it', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    collectionCumulusId,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, files: [] }, knex);
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+});
+
+test.serial('writeGranuleFromApi() throws with granule with an execution url that does not exist.', async (t) => {
+  const {
+    knex,
+    granule,
+  } = t.context;
+  const execution = `execution${cryptoRandomString({ length: 5 })}`;
+  await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, execution }, knex),
+    { message: `Could not find execution in PostgreSQL database with url ${execution}` }
+  );
+});
+
+test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres with same timestamps.', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule }, knex);
+
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+});
+
+test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
+  const {
+    collectionCumulusId,
+    filePgModel,
+    granule,
+    granuleId,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex);
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  t.true(
+    await filePgModel.exists(knex, { granule_cumulus_id: granuleRecord.cumulus_id })
+  );
+});
+
+test.serial('writeGranuleFromApi() does not persist file records to Postgres if workflow status is "running"', async (t) => {
+  const {
+    collectionCumulusId,
+    filePgModel,
+    granule,
+    granuleId,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, status: 'running' }, knex);
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  t.false(
+    await filePgModel.exists(knex, { granule_cumulus_id: granuleRecord.cumulus_id })
+  );
+});
+
+test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
+  const {
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    knex,
+  } = t.context;
+
+  const fakeGranuleModel = {
+    storeGranule: () => {
+      throw new Error('Granules dynamo error');
+    },
+    delete: () => Promise.resolve({}),
+  };
+
+  const error = await t.throwsAsync(
+    writeGranuleFromApi({ ...granule, granuleModel: fakeGranuleModel }, knex)
+  );
+
+  t.true(error.message.includes('Granules dynamo error'));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
+  );
+});
+
+test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
+  const {
+    collectionCumulusId,
+    granule,
+    granuleModel,
+    knex,
+    granuleId,
+  } = t.context;
+
+  const testGranulePgModel = {
+    upsert: () => {
+      throw new Error('Granules Postgres error');
+    },
+  };
+
+  const error = await t.throwsAsync(writeGranuleFromApi(
+    { ...granule, granulePgModel: testGranulePgModel },
+    knex
+  ));
+
+  t.true(error.message.includes('Granules Postgres error'));
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(
+    await t.context.granulePgModel.exists(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
+  );
+});
+
+test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
+  const {
+    filePgModel,
+    granulePgModel,
+    granule,
+    knex,
+  } = t.context;
+
+  const invalidFiles = [
+    fakeFileFactory({ bucket: undefined }),
+    fakeFileFactory({ bucket: undefined }),
+  ];
+  const allfiles = [...t.context.files].concat(invalidFiles);
+
+  const validFiles = 10;
+  for (let i = 0; i < validFiles; i += 1) {
+    allfiles.push(fakeFileFactory());
+  }
+  const validFileCount = allfiles.length - invalidFiles.length;
+
+  await writeGranuleFromApi({ ...granule, files: allfiles }, knex);
+
+  t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
+  t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
+
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    knex,
+    { granule_id: granule.granuleId }
+  );
+  const fileRecords = await filePgModel.search(knex, { granule_cumulus_id: granuleCumulusId });
+  t.is(fileRecords.length, validFileCount);
+});
+
+test.serial('writeGranuleFromApi() stores error on granule if any file fails', async (t) => {
+  const {
+    collectionCumulusId,
+    granule,
+    knex,
+    granuleId,
+  } = t.context;
+
+  const invalidFiles = [
+    fakeFileFactory({ bucket: undefined }),
+    fakeFileFactory({ bucket: undefined }),
+  ];
+
+  const existingFiles = [...t.context.files];
+  const files = existingFiles.concat(invalidFiles);
+
+  const validFiles = 10;
+  for (let i = 0; i < validFiles; i += 1) {
+    files.push(fakeFileFactory());
+  }
+
+  await writeGranuleFromApi(
+    { ...granule, status: 'completed', files },
+    knex
+  );
+
+  const pgGranule = await t.context.granulePgModel.get(
+    knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
   t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });

@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   getKnexClient,
@@ -14,10 +15,13 @@ const {
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const {
+  addToLocalES,
+  indexGranule,
+} = require('@cumulus/es-client/indexer');
+const {
   DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const {
@@ -26,7 +30,9 @@ const {
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
@@ -58,6 +64,41 @@ async function list(req, res) {
 
   return res.send(result);
 }
+
+/**
+ * Create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const create = async (req, res) => {
+  const {
+    knex = await getKnexClient(),
+    granuleModel = new Granule(),
+  } = req.testContext || {};
+
+  const granule = req.body || {};
+
+  try {
+    if (await granuleModel.exists({ granuleId: granule.granuleId })) {
+      return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
+    }
+  } catch (error) {
+    return res.boom.badRequest(errorify(error));
+  }
+
+  try {
+    await writeGranuleFromApi(granule, knex);
+    if (inTestMode()) {
+      await addToLocalES(granule, indexGranule);
+    }
+  } catch (error) {
+    logger.error('Could not write granule', error);
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  }
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+};
 
 /**
  * Update a single granule.
@@ -463,7 +504,9 @@ async function bulkReingest(req, res) {
 
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/', create);
 router.put('/:granuleName', put);
+
 router.post(
   '/bulk',
   validateBulkGranulesRequest,

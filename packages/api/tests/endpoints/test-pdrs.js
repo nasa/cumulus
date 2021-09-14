@@ -18,6 +18,7 @@ const {
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   fakeCollectionRecordFactory,
@@ -41,7 +42,6 @@ const {
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { del } = require('../../endpoints/pdrs');
 const { buildFakeExpressResponse } = require('./utils');
 
@@ -138,10 +138,11 @@ test.before(async (t) => {
     collection_cumulus_id: t.context.testPgCollection.cumulus_id,
   });
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     t.context.testPgExecution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {

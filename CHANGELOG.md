@@ -24,11 +24,26 @@ of response and not the raw API endpoint response
       - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
       - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
   - **CUMULUS-2510**
+    - Added `execution_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
+      permissions for SNS publish for `report_executions_topic`
+    - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
+      publish SNS messages to the report executions topic.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
       publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+- **CUMULUS-2575**
+  - Adds `POST /granules` API endpoint to create a granule
+  - Adds helper `createGranule` to `@cumulus/api-client`
+- **CUMULUS-2577**
+  - Adds `POST /executions` endpoint to create an execution
+- **CUMULUS-2578**
+  - Adds `PUT /executions` endpoint to update an execution
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 
@@ -108,34 +123,48 @@ of response and not the raw API endpoint response
     - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
     to ensure out-of-order writes are handled correctly when writing to Elasticsearch
   - **CUMULUS-2510**
+    - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+    - Updated functions `create` and `upsert` in the `db` model for Executions
+    to return an array of objects containing all columns of the created or
+    updated records.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
-- **CUMULUS-2577**
-  - Adds `POST /executions` endpoint to create an execution
-
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
-  from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
   - Changed `erasePostgresTables` in serve.js to ensure granules_executions, granules, pdrs, are
     deleted before executions
-
 - Updated `processDeadLetterArchive` Lambda to return an object where
 `processingSucceededKeys` is an array of the S3 keys for successfully
 processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
+- **CUMULUS-2575**
+  - Updates model/granule to allow a granule created from API to not require an
+    execution to be associated with it. This is a backwards compatible change
+    that will not affect granules created in the normal way.
+  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
+    enforce parameter checking so that requests include either (granule\_id
+    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
+  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
+    modified to throw a descriptive error if the input `collectionId` is
+    undefined rather than `TypeError: Cannot read property 'split' of
+    undefined`. This function has also been updated to throw descriptive errors
+    if an incorrectly formated collectionId is input.
 
 ### Removed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on executions
+      DynamoDB table.
     - Removed `stream_enabled` and `stream_view_type` from `collections_table`
       TF definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on collections

@@ -17,9 +17,9 @@ const {
   ExecutionPgModel,
   localStackConnectionEnv,
   fakeExecutionRecordFactory,
+  migrationDir,
 } = require('@cumulus/db');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {

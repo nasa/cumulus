@@ -14,6 +14,7 @@ const {
   ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -27,7 +28,6 @@ const {
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Pdr = require('../../../models/pdrs');
 
 test.before(async (t) => {
@@ -80,7 +80,11 @@ test.beforeEach(async (t) => {
 
   const execution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(t.context.knex, execution);
+  const [pgExecution] = await executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   t.context.runningPdrRecord = {
     name: t.context.pdr.name,

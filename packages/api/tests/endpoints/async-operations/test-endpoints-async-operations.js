@@ -15,6 +15,7 @@ const {
   destroyLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -23,8 +24,6 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   del,

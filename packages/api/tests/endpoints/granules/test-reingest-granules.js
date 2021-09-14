@@ -17,9 +17,9 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   GranulePgModel,
+  migrationDir,
 } = require('@cumulus/db');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 const models = require('../../../models');
 const { app } = require('../../../app');

@@ -14,6 +14,7 @@ const {
   fakeGranuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
   destroyLocalTestDb,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
@@ -26,7 +27,6 @@ const {
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const Granule = require('../../models/granules');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -113,7 +113,7 @@ const setUpExistingDatabaseRecords = async (t) => {
       }),
     ]
   );
-  const executionCumulusIds = await executionPgModel.create(
+  const pgExecutions = await executionPgModel.create(
     t.context.knex,
     [
       fakeExecutionRecordFactory({
@@ -128,11 +128,11 @@ const setUpExistingDatabaseRecords = async (t) => {
   );
   const joinRecords = [
     {
-      execution_cumulus_id: executionCumulusIds[0],
+      execution_cumulus_id: pgExecutions[0].cumulus_id,
       granule_cumulus_id: granuleCumulusIds[0],
     },
     {
-      execution_cumulus_id: executionCumulusIds[1],
+      execution_cumulus_id: pgExecutions[1].cumulus_id,
       granule_cumulus_id: granuleCumulusIds[1],
     },
   ];
@@ -441,12 +441,22 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from 
   );
 
   // Granules should have been deleted from Dynamo
+
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
   t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
 
   // Granules should have been deleted from Postgres
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
+  const pgCollectionCumulusId1 = granules[0].newPgGranule.collection_cumulus_id;
+  const pgCollectionCumulusId2 = granules[1].newPgGranule.collection_cumulus_id;
+
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: dynamoGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
+  ));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: dynamoGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
+  ));
 
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
