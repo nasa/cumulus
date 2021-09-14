@@ -1,8 +1,9 @@
 import { ApiFile } from '@cumulus/types/api/files';
 
-import { PostgresFile } from '../types/file';
+import { PostgresFile, PostgresFileRecord } from '../types/file';
 
 const { parseS3Uri } = require('@cumulus/aws-client/S3');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const getBucket = (file: ApiFile): string | undefined => {
   if (file.bucket) return file.bucket;
@@ -15,6 +16,18 @@ const getKey = (file: ApiFile) => {
   if (file.filename) return parseS3Uri(file.filename).Key;
   return undefined;
 };
+
+export const translatePostgresFileToApiFile = (
+  filePgRecord: PostgresFileRecord
+): Omit<ApiFile, 'granuleId'> => removeNilProperties({
+  bucket: filePgRecord.bucket,
+  checksum: filePgRecord.checksum_value,
+  checksumType: filePgRecord.checksum_type,
+  fileName: filePgRecord.file_name,
+  key: filePgRecord.key,
+  size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
+  source: filePgRecord.source,
+});
 
 export const translateApiFiletoPostgresFile = (
   file: ApiFile

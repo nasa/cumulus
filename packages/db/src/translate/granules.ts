@@ -1,14 +1,117 @@
 import Knex from 'knex';
 
-import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
-import { ApiGranule } from '@cumulus/types/api/granules';
+import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
+import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
+import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
+import { removeNilProperties } from '@cumulus/common/util';
+import { ValidationError } from '@cumulus/errors';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
-import { PostgresGranule } from '../types/granule';
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
-import { ExecutionPgModel } from '../models/execution';
+import { translatePostgresFileToApiFile } from './file';
+import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
+import { PostgresCollectionRecord } from '../types/collection';
+
+/**
+ * Generate an API Granule object from a Postgres Granule with associated Files.
+ *
+ * @param {Object} params
+ * @param {PostgresGranuleRecord} params.granulePgRecord - Granule from Postgres
+ * @param {PostgresCollectionRecord} params.collectionPgRecord - Collection from Postgres
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Object} params.collectionPgModel - Instance of the collection database model
+ * @param {Object} params.pdrPgModel - Instance of the pdr database model
+ * @param {Object} params.providerPgModel - Instance of the provider database model
+ * @param {Object} params.filePgModel - Instance of the file database model
+ * @param {Object} params.executionPgModel - Instance of the execution database model
+ * @returns {Object} An API Granule with associated Files
+ */
+export const translatePostgresGranuleToApiGranule = async ({
+  granulePgRecord,
+  collectionPgRecord,
+  knexOrTransaction,
+  collectionPgModel = new CollectionPgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel(),
+  filePgModel = new FilePgModel(),
+}: {
+  granulePgRecord: PostgresGranuleRecord,
+  collectionPgRecord: PostgresCollectionRecord,
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel: CollectionPgModel,
+  pdrPgModel: PdrPgModel,
+  providerPgModel: ProviderPgModel,
+  filePgModel: FilePgModel,
+}): Promise<ApiGranule> => {
+  const collection = collectionPgRecord || await collectionPgModel.get(
+    knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
+  );
+
+  if (granulePgRecord.collection_cumulus_id !== collection.cumulus_id) {
+    throw new ValidationError(`Collection ${collection.cumulus_id} does not match the Granule's Collection ${granulePgRecord.collection_cumulus_id}`);
+  }
+
+  const files = await filePgModel.search(
+    knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
+  );
+  const executionArns = await getExecutionArnsByGranuleCumulusId(
+    knexOrTransaction,
+    granulePgRecord.cumulus_id,
+    1
+  );
+
+  let pdr;
+
+  if (granulePgRecord.pdr_cumulus_id) {
+    pdr = await pdrPgModel.get(
+      knexOrTransaction, { cumulus_id: granulePgRecord.pdr_cumulus_id }
+    );
+  }
+
+  let provider;
+
+  if (granulePgRecord.provider_cumulus_id) {
+    provider = await providerPgModel.get(
+      knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
+    );
+  }
+
+  const apiGranule: ApiGranule = removeNilProperties({
+    beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
+    cmrLink: granulePgRecord.cmr_link,
+    collectionId: constructCollectionId(collection.name, collection.version),
+    createdAt: granulePgRecord.created_at?.getTime(),
+    duration: granulePgRecord.duration,
+    endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
+    error: granulePgRecord.error,
+    execution: executionArns[0] ? getExecutionUrlFromArn(executionArns[0].arn) : undefined,
+    files: files.map((file) => ({
+      ...translatePostgresFileToApiFile(file),
+    })),
+    granuleId: granulePgRecord.granule_id,
+    lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
+    pdrName: pdr ? pdr.name : undefined,
+    processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
+    processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
+    productionDateTime: granulePgRecord.production_date_time?.toISOString(),
+    productVolume: granulePgRecord.product_volume
+      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
+    provider: provider ? provider.name : undefined,
+    published: granulePgRecord.published,
+    queryFields: granulePgRecord.query_fields,
+    status: granulePgRecord.status as GranuleStatus,
+    timestamp: granulePgRecord.timestamp?.getTime(),
+    timeToArchive: granulePgRecord.time_to_archive,
+    timeToPreprocess: granulePgRecord.time_to_process,
+    updatedAt: granulePgRecord.updated_at?.getTime(),
+  });
+
+  return apiGranule;
+};
 
 /**
  * Generate a Postgres granule record from a DynamoDB record.
@@ -74,78 +177,4 @@ export const translateApiGranuleToPostgresGranule = async (
   };
 
   return granuleRecord;
-};
-
-/**
- * Generate an API Granule record from a PostgreSQL record.
- *
- * @param {Object} postgresGranule - A PostgreSQL Granule record
- * @param {Knex | Knex.Transaction} knex
- * @param {Object} collectionPgModel - Instance of the collection database model
- * @param {Object} filePgModel - Instance of the file database model
- * @param {Object} pdrPgModel - Instance of the pdr database model
- * @param {Object} providerPgModel - Instance of the provider database model
- * @param {Object} executionPgModel - Instance of the execution database model
- * @returns {Object} A granule API record
- */
-export const translatePostgresGranuleToApiGranule = async (
-  postgresGranule: PostgresGranuleRecord,
-  knex: Knex,
-  collectionPgModel = new CollectionPgModel(),
-  filePgModel = new FilePgModel(),
-  pdrPgModel = new PdrPgModel(),
-  providerPgModel = new ProviderPgModel(),
-  executionPgModel = new ExecutionPgModel()
-): Promise<ApiGranule> => {
-  let collectionId;
-  let provider: string | undefined;
-  let pdrName: string | undefined;
-
-  if (postgresGranule.collection_cumulus_id) {
-    const collection = await collectionPgModel.get(knex, {
-      cumulus_id: postgresGranule.collection_cumulus_id,
-    });
-    collectionId = constructCollectionId(collection.name, collection.version);
-  }
-
-  if (postgresGranule.provider_cumulus_id) {
-    const pgProvider = await providerPgModel.get(knex, {
-      cumulus_id: postgresGranule.provider_cumulus_id,
-    });
-    provider = pgProvider.name;
-  }
-
-  if (postgresGranule.pdr_cumulus_id) {
-    const pdr = await pdrPgModel.get(knex, {
-      cumulus_id: postgresGranule.pdr_cumulus_id,
-    });
-    pdrName = pdr.name;
-  }
-
-  const files = await filePgModel.search(knex, {
-    granule_cumulus_id: postgresGranule.cumulus_id,
-  });
-  const execution = await executionPgModel.search(knex, {
-    granule_cumulus_id: postgresGranule.cumulus_id,
-  });
-  const apiGranule = {
-    granuleId: postgresGranule.granule_id,
-    collectionId,
-    status: postgresGranule.status,
-    execution: execution,
-    cmrLink: postgresGranule.cmr_link,
-    published: postgresGranule.published,
-    pdrName,
-    provider,
-    error: postgresGranule.error,
-    createdAt: postgresGranule.created_at?.getTime(),
-    timestamp: postgresGranule.timestamp?.getTime(),
-    updatedAt: postgresGranule.updated_at?.getTime(),
-    duration: postgresGranule.duration,
-    productVolume: postgresGranule.product_volume,
-    timeToPreprocess: postgresGranule.time_to_process,
-    timeToArchive: postgresGranule.time_to_archive,
-    files,
-  };
-  return apiGranule;
 };

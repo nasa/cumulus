@@ -41,7 +41,7 @@ const {
 const {
   generateFilePgRecord,
   generateGranuleRecord,
-  getGranuleCumulusIdFromQueryResultOrLookup,
+  getGranuleFromQueryResultOrLookup,
   writeFilesViaTransaction,
   _writeGranule,
   writeGranules,
@@ -318,26 +318,26 @@ test('generateFilePgRecord() adds granule cumulus ID', (t) => {
   t.is(record.granule_cumulus_id, 1);
 });
 
-test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
-  const granuleRecord = fakeGranuleRecordFactory();
+test('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
   const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
+  const granuleRecord = fakeGranuleRecordFactory({ granule_id: fakeGranuleCumulusId });
   const fakeGranulePgModel = {
-    getRecordCumulusId: (_, record) => {
+    get: (_, record) => {
       if (record.granule_id === granuleRecord.granule_id) {
-        return Promise.resolve(fakeGranuleCumulusId);
+        return Promise.resolve(granuleRecord);
       }
       return Promise.resolve();
     },
   };
 
   t.is(
-    await getGranuleCumulusIdFromQueryResultOrLookup({
+    await getGranuleFromQueryResultOrLookup({
       trx: {},
       queryResult: [],
       granuleRecord,
       granulePgModel: fakeGranulePgModel,
     }),
-    fakeGranuleCumulusId
+    granuleRecord
   );
 });
 
@@ -999,11 +999,11 @@ test.serial('writeGranules() calls publishGranuleSnsMessage and successfully pub
   t.true(await t.context.esGranulesClient.exists(granuleId));
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-
   t.is(Messages.length, 1);
 
-  const snsMessage = JSON.parse(Messages[0].Body);
-  const granuleRecord = JSON.parse(snsMessage.Message);
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(granuleRecord.granuleId, granuleId);
+  t.deepEqual(publishedMessage.record.granuleId, granuleId);
+  t.deepEqual(publishedMessage.event, 'Update');
 });
