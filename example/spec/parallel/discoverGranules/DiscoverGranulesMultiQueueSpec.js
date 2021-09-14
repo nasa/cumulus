@@ -52,8 +52,6 @@ describe('The DiscoverGranules workflow', () => {
       process.env.stackName = stackName;
       process.env.system_bucket = bucket;
 
-      process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-
       const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3MultiQueue');
 
       // The S3 path where granules will be ingested from
