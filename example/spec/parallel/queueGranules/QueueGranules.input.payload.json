@@ -1,0 +1,25 @@
+{
+  "granules": [
+    {
+      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+      "dataType": "MOD09GQ",
+      "version": "006",
+      "files": [
+        {
+          "path": "cumulus-test-data/pdrs",
+          "size": 1098034,
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "type": "data",
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "size": 21708,
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "type": "metadata",
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
+        }
+      ]
+    }
+  ]
+}
