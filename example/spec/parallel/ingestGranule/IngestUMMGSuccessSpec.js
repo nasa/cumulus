@@ -165,19 +165,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               files: [
                 {
                   bucket: config.buckets.protected.name,
-                  key: 'MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf',
+                  key: `MOD09GQ___006/2016/MOD/${testId}/replace-me-granuleId.hdf`,
                 },
                 {
                   bucket: config.buckets.private.name,
-                  key: 'MOD09GQ___006/MOD/replace-me-granuleId.hdf.met',
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.hdf.met`,
                 },
                 {
                   bucket: config.buckets.public.name,
-                  key: 'MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg',
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId_ndvi.jpg`,
                 },
                 {
                   bucket: config.buckets['protected-2'].name,
-                  key: 'MOD09GQ___006/MOD/replace-me-granuleId.cmr.json',
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.cmr.json`,
                 },
               ],
             },
@@ -440,7 +440,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const filepath = `/${files[0].bucket}/${files[0].filepath}`;
+      const filepath = `/${files[0].bucket}/${files[0].key}`;
       const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
@@ -460,7 +460,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               'cksum',
               fs.createReadStream(require.resolve(sourceFile))
             );
-            const file = files.find((f) => f.name.endsWith(extension));
+            const file = files.find((f) => f.fileName.endsWith(extension));
 
             const filepath = `/${file.bucket}/${file.filepath}`;
             const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
@@ -493,6 +493,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         newS3UMMJsonFileLocation = buildS3Uri(ummGJsonFile.bucket, ummGJsonFile.key);
 
         destinationKey = `${testDataFolder}/${file.key}`;
+
+        console.log('destinationKey', destinationKey);
+        console.log(`${testDataFolder}/${path.dirname(file.key)}`);
 
         destinations = [{
           regex: '.*.hdf$',

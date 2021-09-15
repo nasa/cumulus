@@ -332,12 +332,10 @@ describe('The S3 Ingest Granules workflow', () => {
     await pMap(
       lambdaOutput.payload.granules[0].files,
       async (file) => {
-        const { Bucket, Key } = parseS3Uri(file.filename);
-
         const granuleId = await pRetry(
           async () => {
-            const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
+            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
             return id;
           },
           { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
