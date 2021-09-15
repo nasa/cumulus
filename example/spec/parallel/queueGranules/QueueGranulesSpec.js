@@ -190,7 +190,7 @@ describe('The Queue Granules workflow', () => {
     });
 
     it('has expected arns output', () => {
-      expect(lambdaOutput.payload.running.length).toEqual(3);
+      expect(lambdaOutput.payload.running.length).toEqual(2);
     });
 
     it('sets granule status to queued', async () => {
