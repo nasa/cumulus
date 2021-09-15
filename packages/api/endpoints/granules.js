@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
-// const { publishGranuleSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 const asyncOperations = require('@cumulus/async-operations');
 const {
@@ -12,6 +11,7 @@ const {
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
+const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
 const {
   DeletePublishedGranule,
   RecordDoesNotExist,
@@ -22,6 +22,7 @@ const Logger = require('@cumulus/logger');
 const {
   deconstructCollectionId,
 } = require('@cumulus/message/Collections');
+const { publishGranuleSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -89,12 +90,15 @@ async function put(req, res) {
 
     try {
       await knex.transaction(async (trx) => {
-        // const [pgGranule] = await granulePgModel.upsert(trx, postgresRule);
+        const [pgGranule] = await granulePgModel.upsert(trx, postgresRule);
         await granulePgModel.upsert(trx, postgresRule);
         newGranule = await granuleModel.create(apiGranule);
         await indexGranule(esClient, newGranule, process.env.ES_INDEX);
-        // const translatedGranule = await translatePostgresGranuleToApiGranule(pgGranule);
-        // await publishGranuleSnsMessage(pgGranule, 'Update');
+        const granuletoPublish = await translatePostgresGranuleToApiGranule({
+          granulePgRecord: pgGranule,
+          knexOrTransaction: knex,
+        });
+        await publishGranuleSnsMessage(granuletoPublish, 'Update');
       });
     } catch (innerError) {
       // Revert Dynamo record update if any write fails

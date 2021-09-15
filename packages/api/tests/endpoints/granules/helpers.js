@@ -75,9 +75,10 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     );
     postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
-    [postgresGranuleCumulusId] = await granulePgModel.create(
+    const [createdGranule] = await granulePgModel.create(
       t.context.knex, postgresNewGranule
     );
+    postgresGranuleCumulusId = createdGranule.cumulus_id;
     const postgresNewGranuleFiles = newGranule.files.map((file) => {
       const translatedFile = translateApiFiletoPostgresFile(file);
       translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
