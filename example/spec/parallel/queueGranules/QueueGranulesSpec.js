@@ -9,6 +9,8 @@ const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { sqs } = require('@cumulus/aws-client/services');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
@@ -43,6 +45,7 @@ describe('The Queue Granules workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let queueUrl;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -62,7 +65,8 @@ describe('The Queue Granules workflow', () => {
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
-    const inputPayloadFilename = './spec/parallel/queueGranules/QueueGranules.input.payload.json';
+    const inputPayloadFilename =
+      './spec/parallel/queueGranules/QueueGranules.input.payload.json';
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
@@ -74,8 +78,19 @@ describe('The Queue Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
+      addCollections(
+        config.stackName,
+        config.bucket,
+        collectionsDir,
+        testSuffix
+      ),
+      addProviders(
+        config.stackName,
+        config.bucket,
+        providersDir,
+        config.bucket,
+        testSuffix
+      ),
     ]);
     await updateCollection({
       prefix: config.stackName,
@@ -83,12 +98,32 @@ describe('The Queue Granules workflow', () => {
       updateParams: { duplicateHandling: 'replace' },
     });
 
+    const QueueName = randomString();
+    const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+    queueUrl = QueueUrl;
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(
+      config.bucket,
+      inputPayloadJson,
+      granuleRegex,
+      testSuffix,
+      testDataFolder
+    );
+
+    const inputMeta = {
+      queueUrl,
+    };
 
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      inputPayload,
+      inputMeta
     );
 
     queueGranulesExecutionArn = workflowExecution.executionArn;
@@ -96,26 +131,47 @@ describe('The Queue Granules workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await Promise.all(inputPayload.granules.map(
-      async (granule) => {
-        await waitForGranuleAndDelete(
-          config.stackName,
-          granule.granuleId,
-          ['completed', 'failed']
-        );
-      }
-    ));
+    await sqs().deleteQueue({
+      QueueUrl: queueUrl,
+    }).promise();
+    await Promise.all(
+      inputPayload.granules.map(async (granule) => {
+        await waitForGranuleAndDelete(config.stackName, granule.granuleId, [
+          'completed',
+          'failed',
+        ]);
+      })
+    );
 
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: queueGranulesExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+      deleteExecution({
+        prefix: config.stackName,
+        executionArn: queueGranulesExecutionArn,
+      }),
+      deleteExecution({
+        prefix: config.stackName,
+        executionArn: reingestGranuleExecutionArn,
+      }),
+      deleteExecution({
+        prefix: config.stackName,
+        executionArn: failingExecutionArn,
+      }),
     ]);
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      cleanupCollections(
+        config.stackName,
+        config.bucket,
+        collectionsDir,
+        testSuffix
+      ),
+      cleanupProviders(
+        config.stackName,
+        config.bucket,
+        providersDir,
+        testSuffix
+      ),
     ]);
   });
 
@@ -127,7 +183,10 @@ describe('The Queue Granules workflow', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'QueueGranules');
+      lambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
     });
 
     it('has expected arns output', () => {
@@ -135,16 +194,16 @@ describe('The Queue Granules workflow', () => {
     });
 
     it('sets granule status to queued', async () => {
-      await Promise.all(inputPayload.granules.map(
-        async (granule) => {
+      await Promise.all(
+        inputPayload.granules.map(async (granule) => {
           const record = await waitForModelStatus(
             granuleModel,
             { granuleId: granule.granuleId },
             'queued'
           );
           expect(record.status).toEqual('queued');
-        }
-      ));
+        })
+      );
     });
   });
 
