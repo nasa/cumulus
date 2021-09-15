@@ -18,7 +18,7 @@ const publishExecutionSnsMessage = async (record) => {
   await publishSnsMessage(topicArn, record);
 };
 
-const constructCollectionSnsMessage = (record, event) => {
+const constructSnsMessage = (record, event) => {
   switch (event) {
   case 'Create':
   case 'Update':
@@ -37,7 +37,7 @@ const constructCollectionSnsMessage = (record, event) => {
 
 const publishCollectionSnsMessage = async (record, event) => {
   const topicArn = envUtils.getRequiredEnvVar('collection_sns_topic_arn', process.env);
-  const messageToPublish = constructCollectionSnsMessage(record, event);
+  const messageToPublish = constructSnsMessage(record, event);
 
   logger.info(`About to publish SNS message for collection to topic ARN ${topicArn}:  ${JSON.stringify(messageToPublish)}`);
   await publishSnsMessage(topicArn, messageToPublish);

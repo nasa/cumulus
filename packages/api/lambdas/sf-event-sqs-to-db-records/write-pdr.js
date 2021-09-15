@@ -86,7 +86,6 @@ const getPdrFromQueryResultOrLookup = async ({
       trx,
       { name: pdrRecord.name }
     );
-    return pdr;
   }
   return pdr;
 };

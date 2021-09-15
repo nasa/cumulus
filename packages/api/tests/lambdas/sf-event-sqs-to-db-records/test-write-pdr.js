@@ -589,3 +589,25 @@ test.serial('writePdr() calls publishPdrSnsMessage and successfully publishes an
   t.is(pdrRecord.status, cumulusMessage.meta.status);
   t.deepEqual(pdrRecord, translatedRecord);
 });
+
+test.serial('writePdr() calls publishPdrSnsMessage and does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
+  process.env.pdr_sns_topic_arn = undefined;
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  await t.throwsAsync(
+    writePdr({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      executionCumulusId: executionCumulusId,
+      knex,
+    }),
+    { message: 'Topic does not exist' }
+  );
+});
