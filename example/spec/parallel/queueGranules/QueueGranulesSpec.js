@@ -137,8 +137,7 @@ describe('The Queue Granules workflow', () => {
     await Promise.all(
       inputPayload.granules.map(async (granule) => {
         await waitForGranuleAndDelete(config.stackName, granule.granuleId, [
-          'completed',
-          'failed',
+          'queued',
         ]);
       })
     );
