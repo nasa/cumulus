@@ -172,12 +172,19 @@ describe('When the Sync Granule workflow is configured', () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
         const files = lambdaOutput.payload.granules[0].files;
         existingfiles = await getFilesMetadata(files);
+        const [file1, file2] = expectedPayload.granules[0].files;
         // expect reporting of duplicates
         expectedPayload.granuleDuplicates = {
           [expectedPayload.granules[0].granuleId]: {
             files: [
-              expectedPayload.granules[0].files[0],
-              expectedPayload.granules[0].files[1],
+              {
+                bucket: file1.bucket,
+                key: file1.key,
+              },
+              {
+                bucket: file2.bucket,
+                key: file2.key,
+              },
             ],
           },
         };
