@@ -321,7 +321,7 @@ function fakeCumulusMessageFactory(params = {}) {
   return merge({
     cumulus_meta: {
       workflow_start_time: 122,
-      cumulus_version: '7.1.0',
+      cumulus_version: '9.2.0',
       state_machine: randomId('arn:aws:states:us-east-1:1234:stateMachine:'),
       execution_name: randomId('cumulus-execution-name'),
     },

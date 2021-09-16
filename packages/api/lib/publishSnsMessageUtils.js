@@ -13,8 +13,8 @@ const publishPdrSnsMessage = async (record) => {
 };
 
 const publishExecutionSnsMessage = async (record) => {
+  logger.info(`About to publish SNS message for execution to topic ARN ${process.env.execution_sns_topic_arn}: ${JSON.stringify(record)} `);
   const topicArn = envUtils.getRequiredEnvVar('execution_sns_topic_arn', process.env);
-  logger.info(`About to publish SNS message for execution to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
   await publishSnsMessage(topicArn, record);
 };
 
