@@ -154,8 +154,6 @@ const _writePostgresGranuleViaTransaction = async ({
   trx,
   granulePgModel,
 }) => {
-  log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id} to PostgreSQL`);
-
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granuleRecord,
@@ -170,10 +168,6 @@ const _writePostgresGranuleViaTransaction = async ({
     granuleRecord,
   });
 
-  log.info(`
-    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
-    to granule record with cumulus_id ${granuleCumulusId} in PostgreSQL
-  `);
   return granuleCumulusId;
 };
 
@@ -204,7 +198,7 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
 
-  if (status !== 'running') {
+  if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
       files: files,
       granuleCumulusId,
@@ -296,6 +290,10 @@ const _writeGranule = async ({
   granulePgModel,
 }) => {
   let granuleCumulusId;
+
+  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
+  log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
+
   await knex.transaction(async (trx) => {
     granuleCumulusId = await _writePostgresGranuleViaTransaction({
       granuleRecord: postgresGranuleRecord,
@@ -305,6 +303,14 @@ const _writeGranule = async ({
     });
     return granuleModel.storeGranule(dynamoGranuleRecord);
   });
+
+  log.info(
+    `
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${granuleCumulusId}.
+    `,
+    postgresGranuleRecord
+  );
+  log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
 
   const { files, granuleId, status, error } = dynamoGranuleRecord;
 

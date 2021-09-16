@@ -42,6 +42,7 @@
     "@cumulus/common": "9.5.0",
     "@cumulus/db": "9.5.0",
     "@cumulus/errors": "9.5.0",
+    "@cumulus/logger": "9.5.0",
     "@cumulus/message": "9.5.0",
     "@cumulus/sftp-client": "9.5.0",
     "aws-sdk": "^2.585.0",
