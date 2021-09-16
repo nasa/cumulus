@@ -144,6 +144,8 @@ const writeRecords = async ({
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
+
+    // TODO - Throw error here in phase 2 instead of writing to Dynamo
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,
