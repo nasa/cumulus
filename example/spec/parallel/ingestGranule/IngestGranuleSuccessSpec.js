@@ -985,7 +985,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
             const files = moveGranuleOutput.payload.granules[0].files;
             const nonCmrFiles = files.filter((f) => !f.fileName.endsWith('.cmr.xml'));
-            const granuleDuplicateFiles = moveGranuleOutput.payload.granuleDuplicates[0].files;
+            const granuleDuplicateFiles = moveGranuleOutput.payload.granuleDuplicates[reingestGranuleId].files;
             const duplicateNonCmrFiles = granuleDuplicateFiles.filter((f) => !f.fileName.endsWith('.cmr.xml'));
             expect(nonCmrFiles.length).toEqual(duplicateNonCmrFiles.length);
 
@@ -1005,8 +1005,8 @@ describe('The S3 Ingest Granules workflow', () => {
             expect(updatedGranule.execution).not.toEqual(oldExecution);
 
             // the updated granule has the same files
-            const oldFileNames = granule.files.map((f) => f.filename);
-            const newFileNames = updatedGranule.files.map((f) => f.filename);
+            const oldFileNames = granule.files.map((f) => f.key);
+            const newFileNames = updatedGranule.files.map((f) => f.key);
             expect(difference(oldFileNames, newFileNames).length).toBe(0);
 
             const currentFiles = await getFilesMetadata(updatedGranule.files);
