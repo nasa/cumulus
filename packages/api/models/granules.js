@@ -3,10 +3,8 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
-const path = require('path');
 
 const awsClients = require('@cumulus/aws-client/services');
-const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
@@ -63,8 +61,6 @@ const {
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
-const { deconstructCollectionId } = require('../lib/utils');
-const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
 const logger = new Logger({ sender: '@cumulus/api/models/granules' });
@@ -174,89 +170,6 @@ class Granule extends Manager {
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
     return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
-  }
-
-  /**
-   * start the re-ingest of a given granule object
-   *
-   * @param {Object} granule - the granule object
-   * @param {string} [asyncOperationId] - specify asyncOperationId origin
-   * @returns {Promise<undefined>} - undefined
-   */
-  async reingest(granule, asyncOperationId = undefined) {
-    const executionArn = path.basename(granule.execution);
-
-    const executionDescription = await StepFunctions.describeExecution({ executionArn });
-    const originalMessage = JSON.parse(executionDescription.input);
-
-    const { name, version } = deconstructCollectionId(granule.collectionId);
-
-    const lambdaPayload = await Rule.buildPayload({
-      workflow: originalMessage.meta.workflow_name,
-      meta: originalMessage.meta,
-      cumulus_meta: {
-        cumulus_context: {
-          reingestGranule: true,
-          forceDuplicateOverwrite: true,
-        },
-      },
-      payload: originalMessage.payload,
-      provider: granule.provider,
-      collection: {
-        name,
-        version,
-      },
-      queueUrl: granule.queueUrl,
-      asyncOperationId,
-    });
-
-    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
-
-    return Lambda.invoke(process.env.invoke, lambdaPayload);
-  }
-
-  /**
-   * apply a workflow to a given granule object
-   *
-   * @param {Object} granule - the granule object
-   * @param {string} workflow - the workflow name
-   * @param {Object} [meta] - optional meta object to insert in workflow message
-   * @param {string} [queueUrl] - URL for SQS queue to use for scheduling workflows
-   *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
-   * @param {string} [asyncOperationId] - specify asyncOperationId origin
-   * @returns {Promise<undefined>} undefined
-   */
-  async applyWorkflow(
-    granule,
-    workflow,
-    meta,
-    queueUrl,
-    asyncOperationId
-  ) {
-    if (!workflow) {
-      throw new TypeError('granule.applyWorkflow requires a `workflow` parameter');
-    }
-
-    const { name, version } = deconstructCollectionId(granule.collectionId);
-
-    const lambdaPayload = await Rule.buildPayload({
-      workflow,
-      payload: {
-        granules: [granule],
-      },
-      provider: granule.provider,
-      collection: {
-        name,
-        version,
-      },
-      meta,
-      queueUrl,
-      asyncOperationId,
-    });
-
-    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
-
-    await Lambda.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**

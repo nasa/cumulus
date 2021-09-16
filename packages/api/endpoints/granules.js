@@ -36,6 +36,7 @@ const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
@@ -114,6 +115,7 @@ async function put(req, res) {
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
+    reingestHandler = reingestGranule,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
@@ -174,12 +176,14 @@ async function put(req, res) {
     if (targetExecution) {
       logger.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
-
-    // FUTURE - this should not be part of the dynamo granule model
-    await granuleModel.reingest({
+    const reingestParams = {
       ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
       queueUrl: process.env.backgroundQueueUrl,
+    };
+
+    await reingestHandler({
+      reingestParams,
     });
 
     const response = {
@@ -195,11 +199,11 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
-    await granuleModel.applyWorkflow(
-      apiGranule,
-      body.workflow,
-      body.meta
-    );
+    await applyWorkflow({
+      granule: apiGranule,
+      workflow: body.workflow,
+      meta: body.meta,
+    });
 
     return res.send({
       granuleId: apiGranule.granuleId,

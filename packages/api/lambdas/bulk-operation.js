@@ -15,6 +15,7 @@ const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { getGranuleIdsForPayload } = require('../lib/granules');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
@@ -23,9 +24,9 @@ async function applyWorkflowToGranules({
   workflowName,
   meta,
   queueUrl,
-  granuleModel = new GranuleModel(),
   granulePgModel = new GranulePgModel(),
   granuleTranslateMethod = translatePostgresGranuleToApiGranule,
+  applyWorkflowHandler = applyWorkflow,
   knex,
 }) {
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
@@ -39,13 +40,13 @@ async function applyWorkflowToGranules({
         granulePgRecord: pgGranule,
         knexOrTransaction: knex,
       });
-      await granuleModel.applyWorkflow(
+      await applyWorkflowHandler({
         granule,
-        workflowName,
+        workflow: workflowName,
         meta,
         queueUrl,
-        process.env.asyncOperationId
-      );
+        asyncOperationId: process.env.asyncOperationId,
+      });
       return granuleId;
     } catch (error) {
       log.error(`Granule ${granuleId} encountered an error`, error);
@@ -134,9 +135,10 @@ async function bulkGranuleDelete(
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {function} [applyWorkflowHandler] - Optional handler for testing
  * @returns {Promise}
  */
-async function bulkGranule(payload) {
+async function bulkGranule(payload, applyWorkflowHandler) {
   const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
@@ -146,10 +148,14 @@ async function bulkGranule(payload) {
     meta,
     queueUrl,
     workflowName,
+    applyWorkflowHandler,
   });
 }
 
-async function bulkGranuleReingest(payload) {
+async function bulkGranuleReingest(
+  payload,
+  reingestHandler = reingestGranule
+) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granuleIds)}`);
 
@@ -161,13 +167,16 @@ async function bulkGranuleReingest(payload) {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
-        await granuleModel.reingest(
-          {
-            ...granule,
-            ...(targetExecution && { execution: targetExecution }),
-          },
-          process.env.asyncOperationId
-        );
+        const granuleForIngest = {
+          ...granule,
+          ...(targetExecution && { execution: targetExecution }),
+        };
+
+        await reingestHandler({
+          granuleForIngest,
+          asyncOperationId: process.env.asyncOperationId,
+        });
+
         return granuleId;
       } catch (error) {
         log.error(`Granule ${granuleId} encountered an error`, error);
@@ -194,13 +203,13 @@ async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
   if (event.type === 'BULK_GRANULE') {
-    return await bulkGranule(event.payload);
+    return await bulkGranule(event.payload, event.applyWorkflowHandler);
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
     return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    return await bulkGranuleReingest(event.payload);
+    return await bulkGranuleReingest(event.payload, event.reingestHandler);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

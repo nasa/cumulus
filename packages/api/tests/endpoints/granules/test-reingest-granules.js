@@ -1,6 +1,5 @@
 'use strict';
 
-const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
@@ -20,9 +19,10 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
+const { setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 const models = require('../../../models');
-const { app } = require('../../../app');
+const { put } = require('../../../endpoints/granules');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.backgroundQueueUrl = randomString();
@@ -30,7 +30,6 @@ process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 let accessTokenModel;
-let jwtAuthToken;
 
 const testDbName = randomString(12);
 
@@ -72,8 +71,6 @@ test.before(async (t) => {
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
-
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
 test.after.always(async (t) => {
@@ -87,31 +84,32 @@ test.after.always(async (t) => {
   });
 });
 
-test('put request with reingest action calls the granuleModel.reingest function with expected parameters', async (t) => {
+test('put request with reingest action calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
   } = t.context;
 
-  const granuleReingestStub = sinon.stub(models.Granule.prototype, 'reingest').returns(
-    new Promise((resolve) => resolve({ response: 'fakeResponse' }))
-  );
+  const granuleReingestStub = sinon.stub().resolves({ response: 'fakeResponse' });
 
   const body = {
     action: 'reingest',
   };
 
-  await request(app)
-    .put(`/granules/${granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(200);
+  await put({
+    body,
+    params: {
+      granuleName: granuleId,
+    },
+    testContext: {
+      reingestHandler: granuleReingestStub,
+    },
+  },
+  buildFakeExpressResponse());
 
   t.is(granuleReingestStub.calledOnce, true);
 
   const reingestArgs = granuleReingestStub.args[0];
-  const { queueUrl } = reingestArgs[0];
-  t.is(queueUrl, process.env.backgroundQueueUrl);
+  const { queueUrl } = reingestArgs[0].reingestParams;
 
-  granuleReingestStub.restore();
+  t.is(queueUrl, process.env.backgroundQueueUrl);
 });

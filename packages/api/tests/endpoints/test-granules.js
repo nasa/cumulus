@@ -61,6 +61,7 @@ const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
+// const Granule = require('../../models/granules');
 
 // Dynamo mock data factories
 const {
@@ -522,13 +523,16 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  // TODO PG isn't being updated
-  // const updatedGranule = await granulePgModel.getByGranuleId(
-  //   t.context.knex,
-  //   t.context.fakePGGranules[0].granule_id
-  // );
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  const updatedPgGranule = await granulePgModel.getByGranuleId(
+    t.context.knex,
+    t.context.fakePGGranules[0].granule_id
+  );
+  const updatedDynamoGranule = await granuleModel.get(
+    { granuleId: t.context.fakeGranules[0].granuleId }
+  );
+
+  t.is(updatedPgGranule.status, 'running');
+  t.is(updatedDynamoGranule.status, 'running');
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -578,8 +582,16 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  const updatedPgGranule = await granulePgModel.getByGranuleId(
+    t.context.knex,
+    t.context.fakePGGranules[0].granule_id
+  );
+  const updatedDynamoGranule = await granuleModel.get(
+    { granuleId: t.context.fakeGranules[0].granuleId }
+  );
+
+  t.is(updatedPgGranule.status, 'running');
+  t.is(updatedDynamoGranule.status, 'running');
 });
 
 test.serial('remove a granule from CMR', async (t) => {

@@ -156,8 +156,8 @@ test.before(async (t) => {
 
   await new Granule().createTable();
 
-  applyWorkflowStub = sandbox.stub(Granule.prototype, 'applyWorkflow');
-  reingestStub = sandbox.stub(Granule.prototype, 'reingest');
+  applyWorkflowStub = sandbox.stub();
+  reingestStub = sandbox.stub();
   sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
@@ -206,16 +206,12 @@ test.after.always(async (t) => {
   sandbox.restore();
 });
 
-test('applyWorkflowToGranules passed on queueUrl to granule.applyWorkflow', async (t) => {
+test('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
   const granuleIds = ['granule-1'];
   const workflowName = 'test-workflow';
   const queueUrl = `${cryptoRandomString({ length: 5 })}_queue`;
 
   const applyWorkflowSpy = sinon.spy();
-  const fakeGranuleModel = {
-    get: async () => {},
-    applyWorkflow: applyWorkflowSpy,
-  };
   const fakeGranulePgModel = {
     search: () => [{}],
   };
@@ -224,11 +220,11 @@ test('applyWorkflowToGranules passed on queueUrl to granule.applyWorkflow', asyn
     granuleIds,
     workflowName,
     queueUrl,
-    granuleModel: fakeGranuleModel,
     granulePgModel: fakeGranulePgModel,
     granuleTranslateMethod: (_granule) => ({}),
+    applyWorkflowHandler: applyWorkflowSpy,
   });
-  t.is(applyWorkflowSpy.getCall(0).args[3], queueUrl);
+  t.is(applyWorkflowSpy.getCall(0).args[0].queueUrl, queueUrl);
 });
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
@@ -308,16 +304,21 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       ],
       workflowName,
     },
+    applyWorkflowHandler: applyWorkflowStub,
   });
+
   t.is(applyWorkflowStub.callCount, 2);
   // Can't guarantee processing order so test against granule matching by ID
   await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
+    const granulePgRecord = granules.find((granule) =>
+      granule.granule_id === callArgs[0].granule.granuleId);
+
     const matchingGranule = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
+      granulePgRecord,
       knexOrTransaction: t.context.knex,
     });
-    t.deepEqual(matchingGranule, callArgs[0]);
-    t.is(callArgs[1], workflowName);
+    t.deepEqual(matchingGranule, callArgs[0].granule);
+    t.is(callArgs[0].workflow, workflowName);
   }));
 });
 
@@ -385,18 +386,23 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       workflowName,
       index: randomId('index'),
     },
+    applyWorkflowHandler: applyWorkflowStub,
   });
 
   t.true(esSearchStub.called);
   t.is(applyWorkflowStub.callCount, 2);
+
   // Can't guarantee processing order so test against granule matching by ID
   await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
+    const granulePgRecord = granules.find((granule) =>
+      granule.granule_id === callArgs[0].granule.granuleId);
+
     const matchingGranule = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: granules.find((granule) => granule.granule_id === callArgs[0].granuleId),
+      granulePgRecord,
       knexOrTransaction: t.context.knex,
     });
-    t.deepEqual(matchingGranule, callArgs[0]);
-    t.is(callArgs[1], workflowName);
+    t.deepEqual(matchingGranule, callArgs[0].granule);
+    t.is(callArgs[0].workflow, workflowName);
   }));
 });
 
@@ -602,13 +608,16 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
         granules[1].granuleId,
       ],
     },
+    reingestHandler: reingestStub,
   });
 
   t.is(reingestStub.callCount, 2);
   reingestStub.args.forEach((callArgs) => {
-    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
-    t.deepEqual(matchingGranule, callArgs[0]);
-    t.is(callArgs[1], process.env.asyncOperationId);
+    const matchingGranule = granules.find((granule) =>
+      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+
+    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
 
@@ -631,6 +640,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
       ],
       workflowName,
     },
+    reingestHandler: reingestStub,
   });
 
   t.is(reingestStub.callCount, 2);
@@ -638,12 +648,16 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     // verify that the call was made with an execution from the database, and
     // then compare all other fields except the execution against the model
     // granules.
-    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
-    t.true(t.context.executionArns.includes(callArgs[0].execution));
+    const matchingGranule = granules.find((granule) =>
+      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+
+    t.true(t.context.executionArns.includes(callArgs[0].granuleForIngest.execution));
+
     delete matchingGranule.execution;
-    delete callArgs[0].execution;
-    t.deepEqual(matchingGranule, callArgs[0]);
-    t.is(callArgs[1], process.env.asyncOperationId);
+    delete callArgs[0].granuleForIngest.execution;
+
+    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
 
@@ -680,13 +694,17 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
       query: 'fake-query',
       index: randomId('index'),
     },
+    reingestHandler: reingestStub,
   });
 
   t.true(esSearchStub.called);
   t.is(reingestStub.callCount, 2);
+
   reingestStub.args.forEach((callArgs) => {
-    const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
-    t.deepEqual(matchingGranule, callArgs[0]);
-    t.is(callArgs[1], process.env.asyncOperationId);
+    const matchingGranule = granules.find((granule) =>
+      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+
+    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });

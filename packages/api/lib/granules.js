@@ -5,8 +5,8 @@ const isNil = require('lodash/isNil');
 const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 
 const {
   generateMoveFileParams,
@@ -26,6 +26,7 @@ const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
+
 const translateGranule = async (
   granule,
   fileUtils = FileUtils
