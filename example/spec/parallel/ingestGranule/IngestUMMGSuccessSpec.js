@@ -462,7 +462,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             );
             const file = files.find((f) => f.fileName.endsWith(extension));
 
-            const filepath = `/${file.bucket}/${file.filepath}`;
+            const filepath = `/${file.bucket}/${file.key}`;
             const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
 
             // Compare checksum of downloaded file with expected checksum.
@@ -493,10 +493,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         newS3UMMJsonFileLocation = buildS3Uri(ummGJsonFile.bucket, ummGJsonFile.key);
 
         destinationKey = `${testDataFolder}/${file.key}`;
-
-        console.log('destinationKey', destinationKey);
-        console.log(`${testDataFolder}/${path.dirname(file.key)}`);
-
         destinations = [{
           regex: '.*.hdf$',
           bucket: config.buckets.protected.name,
