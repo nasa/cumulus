@@ -202,6 +202,9 @@ test.serial('download Granule from FTP endpoint', async (t) => {
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
     fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 });
@@ -233,6 +236,9 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
     fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 });
@@ -290,6 +296,9 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     size: 1098034,
     source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
     fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
   };
   t.deepEqual(output.granules[0].files[0], expected);
 
@@ -371,6 +380,9 @@ test.serial('download granule from S3 provider with checksum and data file in an
     size: 1098034,
     source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
     fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'cksum',
+    type: 'data',
   };
   t.deepEqual(output.granules[0].files[0], expected);
   t.true(
@@ -420,6 +432,9 @@ test.serial('download granule from S3 provider', async (t) => {
       size: 1098034,
       source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
       fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+      checksum: '1435712144',
+      checksumType: 'CKSUM',
+      type: 'data',
     };
     t.deepEqual(output.granules[0].files[0], expected);
     t.is(
@@ -465,6 +480,8 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
     size: 25895363,
     source: '/granules/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
     fileName: '20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
+    checksumType: 'md5',
+    checksum: 'e627cab0d185ed31394f597d524d762d',
   };
   t.is(output.granules.length, 1);
   t.deepEqual(output.granules[0].files[0], expected);

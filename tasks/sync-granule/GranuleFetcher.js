@@ -9,6 +9,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
+const { removeNilProperties } = require('@cumulus/common/util');
 const errors = require('@cumulus/errors');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { handleDuplicateFile } = require('@cumulus/ingest/granule');
@@ -352,16 +353,20 @@ class GranuleFetcher {
     const destinationKey = S3.s3Join(stagingPath, file.name);
 
     // the staged file expected
-    const stagedFile = {
+    const stagedFile = removeNilProperties({
       size: file.size,
       bucket: destinationBucket,
       key: destinationKey,
       source: `${file.path}/${file.name}`,
       fileName: path.basename(destinationKey),
       type: file.type,
-      checksum: file.checksum,
       checksumType: file.checksumType,
-    };
+      checksum: file.checksum ? file.checksum.toString() : file.checksum,
+    });
+
+    // if (file.checksum) {
+    //   stagedFile.checksum = file.checksum.toString();
+    // }
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
       { Bucket: destinationBucket, Key: destinationKey }
@@ -426,8 +431,6 @@ class GranuleFetcher {
         size: f.size,
         fileName: path.basename(f.Key),
         type: f.type,
-        checksum: file.checksum,
-        checksumType: file.checksumType,
       })));
     return { files: returnVal, duplicate: duplicateFound };
   }
