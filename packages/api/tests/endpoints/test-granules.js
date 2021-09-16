@@ -864,6 +864,53 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   ]));
 });
 
+test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
+  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
+  });
+
+  const response = await request(app)
+    .delete(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  const granuleId = newDynamoGranule.granuleId;
+
+  // granule have been deleted from Postgres and Dynamo
+  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granuleModel.exists({ granuleId }));
+
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    newDynamoGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.deepEqual(publishedMessage.record.granuleId, newDynamoGranule.granuleId);
+  t.deepEqual(publishedMessage.event, 'Delete');
+  t.true(publishedMessage.deletedAt < Date.now());
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');

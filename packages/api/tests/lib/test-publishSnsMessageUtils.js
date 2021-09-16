@@ -24,7 +24,7 @@ test.serial('publishGranuleSnsMessage() does not publish an SNS message if granu
   );
 });
 
-test.serial('publishGranuleSnsMessage() publishes an SNS message', async (t) => {
+test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete event', async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
   process.env.granule_sns_topic_arn = TopicArn;
@@ -55,14 +55,16 @@ test.serial('publishGranuleSnsMessage() publishes an SNS message', async (t) => 
     granuleId,
     published: false,
   });
-  await publishGranuleSnsMessage(newGranule);
+  await publishGranuleSnsMessage(newGranule, 'Delete');
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
 
   t.is(Messages.length, 1);
 
-  const snsMessage = JSON.parse(Messages[0].Body);
-  const granuleRecord = JSON.parse(snsMessage.Message);
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(granuleRecord.granuleId, granuleId);
+  t.deepEqual(publishedMessage.record.granuleId, granuleId);
+  t.deepEqual(publishedMessage.event, 'Delete');
+  t.true(publishedMessage.deletedAt < Date.now());
 });

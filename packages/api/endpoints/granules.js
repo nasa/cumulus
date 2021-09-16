@@ -225,6 +225,7 @@ async function del(req, res) {
 
   let dynamoGranule;
   let pgGranule;
+  let granuleToPublishToSns;
 
   // If the granule does not exist in Dynamo, throw an error
   try {
@@ -270,7 +271,17 @@ async function del(req, res) {
     pgGranule,
     esClient,
   });
-  // await publishGranuleSnsMessage(pgGranule, 'Delete');
+
+  if (pgGranule) {
+    granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+  } else {
+    granuleToPublishToSns = dynamoGranule;
+  }
+
+  await publishGranuleSnsMessage(granuleToPublishToSns, 'Delete');
 
   return res.send({ detail: 'Record deleted' });
 }

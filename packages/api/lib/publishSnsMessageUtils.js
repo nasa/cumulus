@@ -6,7 +6,7 @@ const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
-const constructGranuleSnsMessage = (record, event) => {
+const constructSnsMessage = (record, event) => {
   switch (event) {
   case 'Create':
   case 'Update':
@@ -22,7 +22,7 @@ const constructGranuleSnsMessage = (record, event) => {
 
 const publishGranuleSnsMessage = async (record, event) => {
   const topicArn = envUtils.getRequiredEnvVar('granule_sns_topic_arn', process.env);
-  const messageToPublish = constructGranuleSnsMessage(record, event);
+  const messageToPublish = constructSnsMessage(record, event);
 
   logger.info(`About to publish SNS message ${JSON.stringify(record)} for granule to topic ARN ${topicArn}`);
   await publishSnsMessage(topicArn, messageToPublish);
