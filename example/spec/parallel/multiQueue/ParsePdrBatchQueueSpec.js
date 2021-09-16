@@ -156,14 +156,13 @@ describe('Parsing a PDR with multiple data types and node names', () => {
 
       const nodeNameGranules = [`${testId}-gran1`, `${testId}-gran2`, `${testId}-gran3`, `${testId}-gran4`];
       const internalBucketGranules = [`${testId}-gran5`, `${testId}-gran6`];
+      testGranuleIds = nodeNameGranules.concat(internalBucketGranules);
 
-      await Promise.all(nodeNameGranules.map((granuleId) => {
-        return s3PutObject({
-          Bucket: nodeNameBucket,
-          Key: `${testId}/test-data/${granuleId}.hdf`,
-          Body: 'abc',
-        });
-      }));
+      await Promise.all(nodeNameGranules.map((granuleId) => s3PutObject({
+        Bucket: nodeNameBucket,
+        Key: `${testId}/test-data/${granuleId}.hdf`,
+        Body: 'abc',
+      })));
       await Promise.all(internalBucketGranules.map((granuleId) => s3PutObject({
         Bucket: bucket,
         Key: `${testId}/test-data/${granuleId}.hdf`,
