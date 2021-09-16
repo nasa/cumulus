@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2617**
   - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
 
+### Fixed
+
+- Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
+to allow `kms:Decrypt` on the KMS key used to encrypt provider credentials. Adding this permission fixes the `sync-granule` task when run as an ECS activity in a Step Function, which previously failed trying to decrypt credentials for providers.
+
 ## [v9.5.0] 2021-09-07
 
 ### BREAKING CHANGES
