@@ -3,6 +3,12 @@
 const isIp = require('is-ip');
 const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
+const { listGranules, removePublishedGranule, deleteGranule } = require('@cumulus/api-client/granules');
+const { listRules, deleteRule } = require('@cumulus/api-client/rules');
+const pdrsApi = require('@cumulus/api-client/pdrs');
+
+const { Granule } = require('@cumulus/api/models');
+
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
 
 const fetchFakeS3ProviderBuckets = async () => {
@@ -95,19 +101,19 @@ const throwIfApiReturnFail = (apiResult) => {
 };
 
 const createProvider = async (stackName, provider) => {
-  const deleteProviderResult = await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
-  const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
+  const deleteProviderResult = await providersApi.deleteProvider({ stackName, providerId: provider.id });
+  const createProviderResult = await providersApi.createProvider({ stackName, provider });
   throwIfApiReturnFail(deleteProviderResult);
   throwIfApiReturnFail(createProviderResult);
   return createProviderResult;
 };
 
 const waitForProviderRecordInOrNotInList = async (
-  stackName, id, recordIsIncluded = true, additionalQueryParams = {}
+  prefix, id, recordIsIncluded = true, additionalQueryParams = {}
 ) => await pWaitFor(
   async () => {
     const resp = await providersApi.getProviders({
-      prefix: stackName,
+      prefix,
       queryStringParameters: {
         fields: 'id',
         id,
@@ -123,9 +129,9 @@ const waitForProviderRecordInOrNotInList = async (
   }
 );
 
-const deleteProvidersByHost = async (stackName, host) => {
+const deleteProvidersByHost = async (prefix, host) => {
   const resp = await providersApi.getProviders({
-    prefix: stackName,
+    prefix,
     queryStringParameters: {
       fields: 'id',
       host,
@@ -133,11 +139,117 @@ const deleteProvidersByHost = async (stackName, host) => {
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
   const deletes = ids.map((id) => providersApi.deleteProvider({
-    prefix: stackName,
+    prefix,
     providerId: id,
   }));
   await Promise.all(deletes).catch(console.error);
-  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(stackName, id, false)));
+  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
+};
+
+const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
+  const resp = await providersApi.getProviders({
+    prefix,
+    queryStringParameters: {
+      fields: 'id',
+      host,
+      limit: 100, // TODO paginate, ugh.
+    },
+  });
+
+  const ids = JSON.parse(resp.body).results.map((p) => p.id);
+
+  // Get provider granules and delete
+  const granuleResponse = await Promise.all(ids.map((id) => listGranules({
+    prefix,
+    query: {
+      fields: ['published', 'granuleId'],
+      'provider.keyword': id,
+    },
+    limit: 100,
+  })));
+
+  // TODO - Dry this up re: collections.js
+  const granulesForDeletion = granuleResponse.map((r) => JSON.parse(r.body).results).flat();
+  const granuleModel = new Granule();
+  await Promise.all(
+    granulesForDeletion.map(async (granule) => {
+      // Temporary fix to handle granules that are in a bad state
+      // and cannot be deleted via the API
+      try {
+        if (granule.published === true) {
+          return await removePublishedGranule({
+            prefix,
+            granuleId: granule.granuleId,
+          });
+        }
+        return await deleteGranule({
+          prefix,
+          granuleId: granule.granuleId,
+        });
+      } catch (error) {
+        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
+          return await granuleModel.delete({ granuleId: granule.granuleId });
+        }
+        throw error;
+      }
+    })
+  );
+
+  console.log('Granule Deletion Complete');
+
+  console.log('Starting PDR deletion');
+
+  const pdrResponse = await Promise.all(
+    ids.map((id) =>
+      pdrsApi.getPdrs({
+        prefix,
+        query: {
+          'provider.keyword': id,
+        },
+        limit: 100,
+      }))
+  );
+  const pdrsToDelete = pdrResponse.map((r) => JSON.parse(r.body).results).flat();
+  if (pdrsToDelete.length > 0) {
+    const pdrNames = await Promise.all(pdrsToDelete.map((body) => body.pdrName));
+    await Promise.all(pdrNames.map((pdrName) => pdrsApi.deletePdr({
+      prefix,
+      pdrName,
+    })));
+  }
+  console.log('PDR deletion complete');
+
+  console.log('Starting Rule deletion');
+
+  const ruleResponse = await Promise.all(
+    ids.map((id) =>
+      listRules({
+        prefix,
+        query: {
+          'provider.keyword': id,
+        },
+      }))
+  );
+  const rulesForDeletion = ruleResponse.map((r) => JSON.parse(r.body).results).flat();
+  await Promise.all(rulesForDeletion.map((rule) => deleteRule({
+    prefix,
+    ruleName: rule.name,
+  })));
+
+  console.log('Rule deletion complete');
+
+  console.log('Deleting provider');
+
+  const providerDeletes = ids.map((id) => providersApi.deleteProvider({
+    prefix,
+    providerId: id,
+  }));
+  try {
+    await Promise.all(providerDeletes);
+  } catch (e) {
+    console.error(e);
+  }
+  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
 };
 
 module.exports = {
@@ -147,4 +259,5 @@ module.exports = {
   deleteProvidersByHost,
   fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,
+  deleteProvidersAndAllDependenciesByHost,
 };
