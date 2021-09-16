@@ -20,11 +20,11 @@ const {
   destroyLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const assertions = require('../../../lib/assertions');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
 const { buildFakeExpressResponse } = require('../utils');
 const { post } = require('../../../endpoints/async-operations');

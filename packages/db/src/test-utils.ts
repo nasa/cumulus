@@ -1,6 +1,7 @@
 import Knex from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
+import pRetry from 'p-retry';
 
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 
@@ -51,7 +52,7 @@ export const destroyLocalTestDb = async ({
   testDbName: string
 }) => {
   knex.destroy();
-  await deleteTestDatabase(knexAdmin, testDbName);
+  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
   knexAdmin.destroy();
 };
 

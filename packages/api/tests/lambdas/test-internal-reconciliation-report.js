@@ -22,6 +22,7 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
+  migrationDir,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -32,7 +33,6 @@ const {
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const models = require('../../models');
 const { deconstructCollectionId } = require('../../lib/utils');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 let esAlias;
 let esIndex;

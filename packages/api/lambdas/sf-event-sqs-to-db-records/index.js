@@ -4,6 +4,7 @@ const get = require('lodash/get');
 
 const AggregateError = require('aggregate-error');
 
+const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -30,13 +31,13 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
-  writeExecution,
   writeExecutionToDynamoAndES,
-} = require('./write-execution');
+  writeExecutionRecordFromMessage,
+} = require('../../lib/writeRecords/write-execution');
 
 const {
   writePdr,
@@ -44,8 +45,8 @@ const {
 } = require('./write-pdr');
 
 const {
-  writeGranules,
-} = require('./write-granules');
+  writeGranulesFromMessage,
+} = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
@@ -55,13 +56,14 @@ const writeRecordsToDynamoDb = async ({
   executionModel = new Execution(),
   pdrModel = new Pdr(),
 }) => {
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
   const results = await Promise.allSettled([
     writePdrToDynamoAndEs({
       cumulusMessage,
       pdrModel,
     }),
     writeExecutionToDynamoAndES({
-      cumulusMessage,
+      dynamoRecord: executionApiRecord,
       executionModel,
     }),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
@@ -150,7 +152,7 @@ const writeRecords = async ({
     });
   }
 
-  const executionCumulusId = await writeExecution({
+  const executionCumulusId = await writeExecutionRecordFromMessage({
     cumulusMessage,
     collectionCumulusId,
     asyncOperationCumulusId,
@@ -170,9 +172,8 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,

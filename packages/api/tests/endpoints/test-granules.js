@@ -16,6 +16,7 @@ const {
   localStackConnectionEnv,
   translateApiGranuleToPostgresGranule,
   translateApiFiletoPostgresFile,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   createTestIndex,
@@ -56,11 +57,10 @@ const {
   fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
-
 const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
+const models = require('../../models');
 
 // Dynamo mock data factories
 const {
@@ -73,7 +73,6 @@ const {
 const {
   createJwtToken,
 } = require('../../lib/token');
-const models = require('../../models');
 
 const {
   generateMoveGranuleTestFilesAndEntries,
@@ -226,10 +225,11 @@ test.before(async (t) => {
     version: collectionVersion,
   });
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.beforeEach(async (t) => {
@@ -561,7 +561,11 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
@@ -599,7 +603,7 @@ test.serial('remove a granule from CMR', async (t) => {
     // Should have updated the Postgres granule
     const updatedPgGranule = await granulePgModel.get(
       t.context.knex,
-      { granule_id: granuleId }
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
     );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
@@ -666,7 +670,11 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: true },
     esClient: t.context.esClient,
@@ -688,7 +696,10 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // Verify files still exist in S3 and Postgres
@@ -706,7 +717,11 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 });
 
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: false },
     esClient: t.context.esClient,
@@ -725,7 +740,10 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const granuleId = newDynamoGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.false(await granuleModel.exists({ granuleId }));
 
   // verify the files are deleted from S3 and Postgres
@@ -824,7 +842,11 @@ test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', 
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: true },
     esClient: t.context.esClient,
@@ -847,7 +869,10 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   const granuleId = newDynamoGranule.granuleId;
 
   // granule not have been deleted from Postgres or Dynamo
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // verify the files still exist in S3 and Postgres
@@ -1131,7 +1156,10 @@ test.serial('When a move granule request fails to move a file correctly, it reco
         (dest) => updatedFiles[0].fileName.match(dest.regex)
       ).bucket);
 
-      t.true(updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
+      t.true(
+        updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
+        `updatedFile[1] ${updatedFiles[1].key}, did not start with ${destinationFilepath}/${granuleFileName}`
+      );
       t.like(newGranule.files[1], omit(updatedFiles[1], ['fileName', 'key', 'bucket']));
       t.is(updatedFiles[1].bucket, destinations.find(
         (dest) => updatedFiles[1].fileName.match(dest.regex)
@@ -1549,7 +1577,87 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
+<<<<<<< HEAD
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
+=======
+test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.deepEqual(
+    JSON.parse(response.text),
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
+  );
+  t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
+  t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+});
+
+test.serial('POST rejects if a granule already exists in postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(409);
+
+  const errorText = JSON.parse(response.error.text);
+  t.is(errorText.statusCode, 409);
+  t.is(errorText.error, 'Conflict');
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+});
+
+test.serial('POST return bad request if a granule is submitted with a bad collectionId.', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: randomId('collectionId'),
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.statusCode, 400);
+  t.is(response.error.status, 400);
+  t.is(response.error.message, 'cannot POST /granules (400)');
+});
+
+test('PUT replaces an existing granule in all data stores', async (t) => {
+>>>>>>> feature/rds-phase-2
   const { esClient, knex } = t.context;
   const {
     newPgGranule,

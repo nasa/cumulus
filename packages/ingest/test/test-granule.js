@@ -21,6 +21,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -32,8 +33,6 @@ const {
   unversionFilename,
   moveGranuleFile,
 } = require('../granule');
-
-const { migrationDir } = require('../../../lambdas/db-migration');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
@@ -57,10 +56,12 @@ test.before(async (t) => {
   });
 
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.after.always(async (t) => {
