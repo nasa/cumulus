@@ -11,7 +11,22 @@ test.beforeEach(() => {
 
 test.afterEach.always(() => {
   delete process.env.AWS_REGION;
+  delete process.env.AWS_DEFAULT_REGION;
   process.env.NODE_ENV = 'test';
+});
+
+test.serial('client respects AWS_DEFAULT_REGION when creating service clients', (t) => {
+  process.env.AWS_DEFAULT_REGION = 'us-west-2';
+
+  const s3client = client(AWS.S3)();
+  t.is(s3client.config.region, 'us-west-2');
+});
+
+test.serial('client defaults region to us-east-1 if AWS_DEFAULT_REGION env var is an empty string', (t) => {
+  process.env.AWS_DEFAULT_REGION = '';
+
+  const s3client = client(AWS.S3)();
+  t.is(s3client.config.region, 'us-east-1');
 });
 
 test.serial('client respects AWS_REGION when creating service clients', (t) => {
@@ -21,7 +36,7 @@ test.serial('client respects AWS_REGION when creating service clients', (t) => {
   t.is(s3client.config.region, 'us-west-2');
 });
 
-test.serial('client defaults region to us-east-1 if AWS_REGION env var is not set', (t) => {
+test.serial('client defaults region to us-east-1 if no env var is not set', (t) => {
   const s3client = client(AWS.S3)();
   t.is(s3client.config.region, 'us-east-1');
 });
