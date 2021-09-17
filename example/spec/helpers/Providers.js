@@ -154,7 +154,6 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     queryStringParameters: {
       fields: 'id',
       host,
-      limit: 100, // TODO paginate, ugh.
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
@@ -167,7 +166,6 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
       fields: ['published', 'granuleId'],
       'provider.keyword': id,
     },
-    limit: 100,
   })));
 
   const granulesForDeletion = granuleResponse.map((r) => JSON.parse(r.body).results).flat();
@@ -184,7 +182,6 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
         query: {
           'provider.keyword': id,
         },
-        limit: 100,
       }))
   );
   const pdrsToDelete = pdrResponse.map((r) => JSON.parse(r.body).results).flat();
