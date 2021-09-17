@@ -35,7 +35,11 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { getCollections } = require('@cumulus/api-client/collections');
-const { getGranule, updateGranule } = require('@cumulus/api-client/granules');
+const {
+  createGranule,
+  getGranule,
+  updateGranule,
+} = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -326,13 +330,25 @@ describe('When there are granule differences and granule reconciliation is run',
       await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
 
       // Write an extra file to the DynamoDB Files table
-      extraFileInDb = {
-        bucket: protectedBucket,
-        key: randomString(),
-        granuleId: randomString(),
-      };
-      process.env.FilesTable = `${config.stackName}-FilesTable`;
-      await GranuleFilesCache.put(extraFileInDb);
+      // extraFileInDb = {
+      //   bucket: protectedBucket,
+      //   key: randomString(),
+      //   granuleId: randomString(),
+      // };
+      // process.env.FilesTable = `${config.stackName}-FilesTable`;
+      // await GranuleFilesCache.put(extraFileInDb);
+
+      await createGranule({
+        prefix: config.stackName,
+        body: {
+          granuleId: randomString(),
+          collectionId,
+          files: [{
+            bucket: protectedBucket,
+            key: randomString(),
+          }],
+        },
+      });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
