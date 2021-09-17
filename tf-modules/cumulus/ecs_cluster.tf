@@ -144,6 +144,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     resources = [
       module.archive.report_executions_sns_topic_arn,
       module.archive.report_pdrs_sns_topic_arn,
+      module.archive.report_granules_sns_topic_arn,
     ]
   }
 }
