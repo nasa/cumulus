@@ -238,14 +238,12 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
 const filterDuplicates = async (granuleIds, duplicateHandling, concurrency) => {
-  const keysPromises = await pMap(
+  const checkResults = await pMap(
     granuleIds,
     (key) => checkGranuleHasNoDuplicate(key, duplicateHandling),
     { concurrency }
   );
-
-  const filteredKeys = await Promise.all(keysPromises);
-  return filteredKeys.filter(Boolean);
+  return checkResults.filter(Boolean);
 };
 
 /**
