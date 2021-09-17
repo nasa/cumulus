@@ -37,8 +37,10 @@ of response and not the raw API endpoint response
     - Added `updateCollection` to `@cumulus/api-client`.
     - Added `pdr_sns_topic_arn` environment variable to
       `sf_event_sqs_to_db_records` lambda TF definition.
-    - Added the new function `publishPdrSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report PDRs topic.
+    - Added the new function `publishPdrSnsMessage` in `@cumulus/api` to publish
+      SNS messages to the report PDRs topic.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_topic` and `report_pdrs_topic`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2575**
