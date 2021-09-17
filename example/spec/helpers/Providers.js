@@ -101,8 +101,8 @@ const throwIfApiReturnFail = (apiResult) => {
 };
 
 const createProvider = async (stackName, provider) => {
-  const deleteProviderResult = await providersApi.deleteProvider({ stackName, providerId: provider.id });
-  const createProviderResult = await providersApi.createProvider({ stackName, provider });
+  const deleteProviderResult = await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+  const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
   throwIfApiReturnFail(deleteProviderResult);
   throwIfApiReturnFail(createProviderResult);
   return createProviderResult;
