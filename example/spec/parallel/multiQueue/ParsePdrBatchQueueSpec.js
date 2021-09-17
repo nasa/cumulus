@@ -114,7 +114,6 @@ describe('Parsing a PDR with multiple data types and node names', () => {
   beforeAll(async () => {
     try {
       config = await loadConfig();
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       ({ stackName, bucket } = config);
       nodeNameBucket = config.pdrNodeNameProviderBucket;
 

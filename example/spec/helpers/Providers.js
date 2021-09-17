@@ -2,14 +2,14 @@
 
 const isIp = require('is-ip');
 const pWaitFor = require('p-wait-for');
+
 const providersApi = require('@cumulus/api-client/providers');
-const { listGranules, removePublishedGranule, deleteGranule } = require('@cumulus/api-client/granules');
+const { listGranules } = require('@cumulus/api-client/granules');
 const { listRules, deleteRule } = require('@cumulus/api-client/rules');
 const pdrsApi = require('@cumulus/api-client/pdrs');
-
-const { Granule } = require('@cumulus/api/models');
-
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
+
+const { deleteGranules } = require('./granuleUtils');
 
 const fetchFakeS3ProviderBuckets = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
@@ -147,6 +147,8 @@ const deleteProvidersByHost = async (prefix, host) => {
 };
 
 const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
+  console.log('Starting Provider/Dependency Deletion');
+
   const resp = await providersApi.getProviders({
     prefix,
     queryStringParameters: {
@@ -155,10 +157,10 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
       limit: 100, // TODO paginate, ugh.
     },
   });
-
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
 
-  // Get provider granules and delete
+  console.log('Starting Granule Deletion');
+
   const granuleResponse = await Promise.all(ids.map((id) => listGranules({
     prefix,
     query: {
@@ -168,32 +170,8 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     limit: 100,
   })));
 
-  // TODO - Dry this up re: collections.js
   const granulesForDeletion = granuleResponse.map((r) => JSON.parse(r.body).results).flat();
-  const granuleModel = new Granule();
-  await Promise.all(
-    granulesForDeletion.map(async (granule) => {
-      // Temporary fix to handle granules that are in a bad state
-      // and cannot be deleted via the API
-      try {
-        if (granule.published === true) {
-          return await removePublishedGranule({
-            prefix,
-            granuleId: granule.granuleId,
-          });
-        }
-        return await deleteGranule({
-          prefix,
-          granuleId: granule.granuleId,
-        });
-      } catch (error) {
-        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
-          return await granuleModel.delete({ granuleId: granule.granuleId });
-        }
-        throw error;
-      }
-    })
-  );
+  await deleteGranules(prefix, granulesForDeletion);
 
   console.log('Granule Deletion Complete');
 
@@ -244,11 +222,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     prefix,
     providerId: id,
   }));
-  try {
-    await Promise.all(providerDeletes);
-  } catch (e) {
-    console.error(e);
-  }
+  await Promise.all(providerDeletes);
   await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
 };
 
