@@ -43,7 +43,7 @@ async function _updateGranuleStatus(
    * start the re-ingest of a given granule object
    *
    * @param {Object} params
-   * @param {Object} params.granule - the granule object
+   * @param {Object} params.reingestParams - the granule object with additional params
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
    * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
    * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model

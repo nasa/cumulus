@@ -614,9 +614,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
   t.is(reingestStub.callCount, 2);
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) =>
-      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+      granule.granuleId === callArgs[0].reingestParams.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.deepEqual(matchingGranule, callArgs[0].reingestParams);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
@@ -649,14 +649,14 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     // then compare all other fields except the execution against the model
     // granules.
     const matchingGranule = granules.find((granule) =>
-      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+      granule.granuleId === callArgs[0].reingestParams.granuleId);
 
-    t.true(t.context.executionArns.includes(callArgs[0].granuleForIngest.execution));
+    t.true(t.context.executionArns.includes(callArgs[0].reingestParams.execution));
 
     delete matchingGranule.execution;
-    delete callArgs[0].granuleForIngest.execution;
+    delete callArgs[0].reingestParams.execution;
 
-    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.deepEqual(matchingGranule, callArgs[0].reingestParams);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
@@ -702,9 +702,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
 
   reingestStub.args.forEach((callArgs) => {
     const matchingGranule = granules.find((granule) =>
-      granule.granuleId === callArgs[0].granuleForIngest.granuleId);
+      granule.granuleId === callArgs[0].reingestParams.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].granuleForIngest);
+    t.deepEqual(matchingGranule, callArgs[0].reingestParams);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
