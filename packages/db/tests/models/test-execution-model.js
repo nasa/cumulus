@@ -176,9 +176,10 @@ test('ExecutionPgModel.delete() deletes execution and granule/execution join rec
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
-  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranuleRecordFactory({
+  const [pgGranule] = await granulePgModel.create(knex, fakeGranuleRecordFactory({
     collection_cumulus_id: t.context.collectionCumulusId,
   }));
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const executionCumulusId = await knex.transaction(async (trx) => {
     const [executionCreateResponse] = await executionPgModel.create(trx, executionRecord);

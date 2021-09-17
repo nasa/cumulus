@@ -41,10 +41,11 @@ const createGranuleInDynamoAndPG = async (t, params) => {
     granule,
     t.context.knex
   );
-  const [pgGranuleCumulusId] = await t.context.granulePgModel.create(
+  const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     originalPgGranule
   );
+  const pgGranuleCumulusId = pgGranule.cumulus_id;
   return {
     originalDynamoGranule,
     originalPgGranule,

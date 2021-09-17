@@ -241,9 +241,11 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     }
   );
   fakePGGranule.published = false;
-  const [granuleCumulusId] = await granulePgModel.create(t.context.knex, fakePGGranule);
+  const [pgGranule] = await granulePgModel.create(t.context.knex, fakePGGranule);
 
-  const newPgGranule = await granulePgModel.get(t.context.knex, { cumulus_id: granuleCumulusId });
+  const newPgGranule = await granulePgModel.get(t.context.knex, {
+    cumulus_id: pgGranule.cumulus_id,
+  });
   const newDynamoGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
 
   await deleteGranuleAndFiles({

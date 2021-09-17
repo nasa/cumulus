@@ -63,13 +63,14 @@ const newGranuleAssociatedWithExecution = async (
   executionParams,
   granuleParams
 ) => {
-  const [granuleCumulusId] = await t.context.granulePgModel.create(
+  const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: t.context.collectionCumulusId,
       ...granuleParams,
     })
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
   const executionCumulusId = await linkNewExecutionToGranule(
     t,
     granuleCumulusId,

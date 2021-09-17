@@ -890,7 +890,11 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 });
 
 test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     granuleParams: { published: false },
     esClient: t.context.esClient,
@@ -909,7 +913,13 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const granuleId = newDynamoGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: newPgGranule.collection_cumulus_id,
+    }
+  ));
   t.false(await granuleModel.exists({ granuleId }));
 
   // verify the files are deleted from S3 and Postgres

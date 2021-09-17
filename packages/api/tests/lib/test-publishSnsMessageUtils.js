@@ -179,12 +179,7 @@ test.serial('publishGranuleSnsMessage() does not publish an SNS message if granu
 });
 
 test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete event', async (t) => {
-  const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.granule_sns_topic_arn = TopicArn;
-
-  const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
 
   const granuleId = cryptoRandomString({ length: 10 });
   const files = [fakeFileFactory()];
@@ -195,7 +190,10 @@ test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete 
   });
   await publishGranuleSnsMessage(newGranule, 'Delete');
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
 
   t.is(Messages.length, 1);
 
