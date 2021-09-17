@@ -14,7 +14,7 @@
     "granuleIngestWorkflow": { "type": "string" },
     "internalBucket": { "type": "string" },
     "provider": { "type": "object" },
-    "preferredQueueBatchSize": { "type": "number" },
+    "preferredQueueBatchSize": { "type": ["number", "None"] },
     "queueUrl": { "type": "string" },
     "stackName": { "type": "string" },
     "concurrency": { "type": "number" },
