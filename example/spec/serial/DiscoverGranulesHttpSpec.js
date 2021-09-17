@@ -2,7 +2,6 @@
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
-const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
@@ -21,6 +20,7 @@ const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Provide
 const {
   waitForApiStatus,
 } = require('../helpers/apiUtils');
+const { waitForGranuleAndDelete } = require('../helpers/granuleUtils');
 
 const workflowName = 'DiscoverGranules';
 
@@ -113,23 +113,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     await Promise.all(discoverGranulesLambdaOutput.payload.granules.map(
       async (granule) => {
-        try {
-          await waitForApiStatus(
-            getGranule,
-            {
-              prefix: config.stackName,
-              granuleId: granule.granuleId,
-            },
-            'completed'
-          );
-        } catch (error) {
-          console.log(`Error waiting for API status on granule ${JSON.stringify(granule)}`);
-          throw error;
-        }
-        await deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId,
-        });
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
+          'completed',
+          {
+            retries: 5,
+          }
+        );
       }
     ));
 
