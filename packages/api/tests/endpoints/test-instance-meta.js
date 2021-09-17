@@ -20,9 +20,11 @@ const {
 
 const CMR_ENVIRONMENT = randomString();
 const CMR_PROVIDER = randomString();
+const CMR_OAUTH_PROVIDER = randomString();
 const STACKNAME = randomId('stack');
 process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
 process.env.cmr_provider = CMR_PROVIDER;
+process.env.cmr_oauth_provider = CMR_OAUTH_PROVIDER;
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = STACKNAME;
 let accessTokenModel;
@@ -61,6 +63,7 @@ test('GET returns expected metadata', async (t) => {
     cmr: {
       provider: CMR_PROVIDER,
       environment: CMR_ENVIRONMENT,
+      oauth_provider: CMR_OAUTH_PROVIDER,
     },
     cumulus: {
       stackName: STACKNAME,

@@ -138,6 +138,11 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       var.rds_user_access_secret_arn
     ]
   }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [module.archive.provider_kms_key_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_cluster_instance" {

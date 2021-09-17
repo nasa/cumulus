@@ -273,9 +273,8 @@ module.exports.granule = {
     },
     status: {
       title: 'Ingest status of the granule',
-      enum: ['running', 'completed', 'failed'],
+      enum: ['running', 'completed', 'failed', 'queued'],
       type: 'string',
-      readonly: true,
     },
     execution: {
       title: 'Step Function Execution link',
