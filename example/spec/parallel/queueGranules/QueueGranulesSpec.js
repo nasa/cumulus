@@ -143,7 +143,7 @@ describe('The Queue Granules workflow', () => {
     await deleteExecution({
       prefix: config.stackName,
       executionArn: queueGranulesExecutionArn,
-    })
+    });
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
