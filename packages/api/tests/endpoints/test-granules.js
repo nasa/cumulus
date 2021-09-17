@@ -1577,9 +1577,6 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-<<<<<<< HEAD
-test.serial('PUT replaces an existing granule in all data stores', async (t) => {
-=======
 test.serial('POST creates new granule in dynamoDB and postgres', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
@@ -1657,7 +1654,6 @@ test.serial('POST return bad request if a granule is submitted with a bad collec
 });
 
 test('PUT replaces an existing granule in all data stores', async (t) => {
->>>>>>> feature/rds-phase-2
   const { esClient, knex } = t.context;
   const {
     newPgGranule,

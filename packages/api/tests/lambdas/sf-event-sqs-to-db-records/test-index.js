@@ -46,9 +46,6 @@ const {
 const {
   generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
-const {
-  sns,
-} = require('@cumulus/aws-client/services');
 
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
