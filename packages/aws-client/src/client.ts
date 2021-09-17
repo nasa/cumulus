@@ -3,7 +3,7 @@ import { inTestMode, testAwsClient } from './test-utils';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
-const getRegion = () => process.env.AWS_REGION || 'us-east-1';
+const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74
 // @ts-ignore - AWS.util is not part of the public API and may break

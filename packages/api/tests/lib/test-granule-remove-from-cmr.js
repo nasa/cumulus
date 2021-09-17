@@ -19,12 +19,12 @@ const {
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   fakeCollectionRecordFactory,
+  migrationDir,
 } = require('@cumulus/db');
 
 const Granule = require('../../models/granules');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 

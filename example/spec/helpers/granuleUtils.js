@@ -228,14 +228,15 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
-const waitForGranuleAndDelete = async (prefix, granuleId, status) => {
+const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = {}) => {
   await waitForApiStatus(
     getGranule,
     {
       prefix,
       granuleId,
     },
-    status
+    status,
+    retryConfig
   );
   // clean up stack state added by test
   await deleteGranule({

@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2606**
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
+  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
+
+### Changed
+
+- **CUMULUS-2583**
+  - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
+
+### Fixed
+
+- Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
+to allow `kms:Decrypt` on the KMS key used to encrypt provider credentials. Adding this permission fixes the `sync-granule` task when run as an ECS activity in a Step Function, which previously failed trying to decrypt credentials for providers.
+
+## [v9.5.0] 2021-09-07
+
 ### BREAKING CHANGES
 
 - Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
@@ -16,15 +39,35 @@ of response and not the raw API endpoint response
 
 ### Added
 
+- **CUMULUS-2670**
+  - Updated core `cumulus` module to take lambda_timeouts string map variable that allows timeouts of ingest tasks to be configurable. Allowed properties for the mapping include:
+  - discover_granules_task_timeout
+  - discover_pdrs_task_timeout
+  - hyrax_metadata_update_tasks_timeout
+  - lzards_backup_task_timeout
+  - move_granules_task_timeout
+  - parse_pdr_task_timeout
+  - pdr_status_check_task_timeout
+  - post_to_cmr_task_timeout
+  - queue_granules_task_timeout
+  - queue_pdrs_task_timeout
+  - queue_workflow_task_timeout
+  - sync_granule_task_timeout
+- **CUMULUS-2575**
+  - Adds `POST /granules` API endpoint to create a granule
+  - Adds helper `createGranule` to `@cumulus/api-client`
 - **CUMULUS-2577**
   - Adds `POST /executions` endpoint to create an execution
-
+- **CUMULUS-2578**
+  - Adds `PUT /executions` endpoint to update an execution
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
-
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
+  - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
+  and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Added `resetPostgresDb` method to support resetting between integration test suite runs
 
 ### Changed
 
@@ -34,6 +77,23 @@ processed objects and `processingFailedKeys` is an array of S3 keys
 for objects that could not be processed
 - Updated async operations to handle writing records to the databases
 when output of the operation is `undefined`
+
+- **CUMULUS-2644**
+  - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
+  updated unit test references to migrationDir to be pulled from `@cumulus/db`
+  - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
+- **CUMULUS-2575**
+  - Updates model/granule to allow a granule created from API to not require an
+    execution to be associated with it. This is a backwards compatible change
+    that will not affect granules created in the normal way.
+  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
+    enforce parameter checking so that requests include either (granule\_id
+    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
+  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
+    modified to throw a descriptive error if the input `collectionId` is
+    undefined rather than `TypeError: Cannot read property 'split' of
+    undefined`. This function has also been updated to throw descriptive errors
+    if an incorrectly formated collectionId is input.
 
 ## [v9.4.0] 2021-08-16
 
@@ -4785,7 +4845,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.5.0...HEAD
+[v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2

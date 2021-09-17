@@ -100,6 +100,12 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string

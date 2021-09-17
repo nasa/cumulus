@@ -8,6 +8,12 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
 
 const logger = new Logger({ sender: '@api-client/granules' });
 
+type AssociateExecutionRequest = {
+  granuleId: string
+  collectionId: string
+  executionArn: string
+};
+
 /**
  * GET raw response from /granules/{granuleName}
  *
@@ -382,10 +388,100 @@ export const listGranules = async (params: {
 };
 
 /**
+ * Create granule into cumulus.
+ * POST /granules
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const createGranule = async (params: {
+  prefix: string,
+  body: ApiGranule,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
+ * Update granule in cumulus.
+ * PUT /granules/{granuleId}
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const updateGranule = async (params: {
+  prefix: string,
+  body: ApiGranule,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${body.granuleId}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
+ * Associate an execution with a granule in cumulus.
+ * POST /granules/{granuleId}/execution
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule and execution info to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const associateExecutionWithGranule = async (params: {
+  prefix: string,
+  body: AssociateExecutionRequest,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: `/granules/${body.granuleId}/executions`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
  * Bulk operations on granules stored in cumulus
  * POST /granules/bulk
  * @param {Object} params             - params
- * @param {Object} params.body       - body to pass the API lambda
+ * @param {Object} params.body        - body to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
  *                                      to cumulusApiClient.invokeApifunction to invoke the
