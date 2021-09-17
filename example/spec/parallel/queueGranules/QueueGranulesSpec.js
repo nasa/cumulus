@@ -35,12 +35,10 @@ describe('The Queue Granules workflow', () => {
   let collection;
   let config;
   let executionModel;
-  let failingExecutionArn;
   let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
-  let reingestGranuleExecutionArn;
   let queueGranulesExecutionArn;
   let testDataFolder;
   let testSuffix;
@@ -146,15 +144,7 @@ describe('The Queue Granules workflow', () => {
       deleteExecution({
         prefix: config.stackName,
         executionArn: queueGranulesExecutionArn,
-      }),
-      deleteExecution({
-        prefix: config.stackName,
-        executionArn: reingestGranuleExecutionArn,
-      }),
-      deleteExecution({
-        prefix: config.stackName,
-        executionArn: failingExecutionArn,
-      }),
+      })
     ]);
 
     await Promise.all([
@@ -189,7 +179,7 @@ describe('The Queue Granules workflow', () => {
     });
 
     it('has expected arns output', () => {
-      expect(lambdaOutput.payload.running.length).toEqual(2);
+      expect(lambdaOutput.payload.running.length).toEqual(1);
     });
 
     it('sets granule status to queued', async () => {
