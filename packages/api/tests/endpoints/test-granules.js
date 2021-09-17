@@ -61,7 +61,6 @@ const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
-// const Granule = require('../../models/granules');
 
 // Dynamo mock data factories
 const {
