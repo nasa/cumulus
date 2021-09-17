@@ -576,7 +576,7 @@ test.serial('A default concurrency of 3 is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledThrice);
   t.true(pMapSpy.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
@@ -605,7 +605,7 @@ test.serial('A configured concurrency is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledThrice);
   t.true(pMapSpy.calledWithMatch(
     sinon.match.any,
     sinon.match.any,

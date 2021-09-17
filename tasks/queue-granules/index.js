@@ -29,7 +29,7 @@ async function fetchGranuleProvider(prefix, providerId) {
  * Group granules by collection and split into batches then split again on provider
  *
  * @param {Array<Object>} granules - list of input granules
- * @param {number} [batchSize] - size of batch of granules to queue
+ * @param {number} batchSize - size of batch of granules to queue
  * @returns {Array<Object>} list of lists of granules: each list contains granules which belong
  *                          to the same collection, and each list's max length is set by batchSize
  */
@@ -74,6 +74,7 @@ async function queueGranules(event) {
     event.config.preferredQueueBatchSize
   );
 
+  const pMapConcurrency = get(event, 'config.concurrency', 3);
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatch) => {
@@ -97,8 +98,9 @@ async function queueGranules(event) {
         additionalCustomMeta: event.config.childWorkflowMeta,
       });
       if (executionArn) {
-        await Promise.all(granuleBatch.map((queuedGranule) =>
-          granulesApi.updateGranule({
+        await pMap(
+          granuleBatch,
+          (queuedGranule) => granulesApi.updateGranule({
             prefix: event.config.stackName,
             body: {
               collectionId: constructCollectionId(
@@ -109,18 +111,19 @@ async function queueGranules(event) {
               status: 'queued',
               retries: 3,
             },
-          })));
+          }),
+          { concurrency: pMapConcurrency }
+        );
       }
       return executionArn;
     },
-    { concurrency: get(event, 'config.concurrency', 3) }
+    { concurrency: pMapConcurrency }
   );
 
   const result = { running: executionArns };
   if (event.input.pdr) result.pdr = event.input.pdr;
   return result;
 }
-exports.queueGranules = queueGranules;
 
 /**
  * Lambda handler
@@ -137,4 +140,9 @@ async function handler(event, context) {
     context
   );
 }
-exports.handler = handler;
+
+module.exports = {
+  groupAndBatchGranules,
+  handler,
+  queueGranules,
+};

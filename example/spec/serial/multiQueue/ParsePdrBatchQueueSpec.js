@@ -12,7 +12,6 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
-const pWaitFor = require('p-wait-for');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
@@ -144,8 +143,6 @@ describe('Parsing a PDR with multiple data types and node names', () => {
         nodeNameProvider
       );
 
-      testGranuleIds = [`${testId}-gran1`, `${testId}-gran2`, `${testId}-gran3`, `${testId}-gran4`, `${testId}-gran5`, `${testId}-gran6`];
-
       // populate PDR on S3
       await s3PutObject({
         Bucket: bucket,
@@ -180,16 +177,13 @@ describe('Parsing a PDR with multiple data types and node names', () => {
 
       const lambdaStep = new LambdaStep();
 
-      await pWaitFor(
-        async () => {
-          const { status } = await getExecution({
-            prefix: stackName,
-            arn: parsePdrExecutionArn,
-          });
-
-          return status === 'completed';
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: stackName,
+          arn: parsePdrExecutionArn,
         },
-        { interval: 2000, timeout: 60000 }
+        'completed'
       );
 
       parsePdrOutput = await lambdaStep.getStepOutput(
@@ -258,7 +252,11 @@ describe('Parsing a PDR with multiple data types and node names', () => {
       else {
         const executionArns = queueGranulesOutput.payload.running;
         const inputs = await Promise.all(executionArns.map(getExecutionInputObject));
-        const granuleIds = inputs.map((input) => input.payload.granules.map((granule) => granule.granuleId)).flat();
+        const granuleIds = inputs.map((input) => {
+          const granules = input.payload.granules;
+          expect(granules.length).toBe(2);
+          return granules.map((granule) => granule.granuleId);
+        }).flat();
         expect(granuleIds.sort()).toEqual(testGranuleIds);
       }
     });

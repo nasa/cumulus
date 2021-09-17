@@ -1,9 +1,6 @@
 'use strict';
 
-'use strict';
-
 const get = require('lodash/get');
-const pWaitFor = require('p-wait-for');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
   getExecutionInputObject,
@@ -109,16 +106,13 @@ describe('The DiscoverGranules workflow', () => {
         { timeout: 30 }
       );
 
-      await pWaitFor(
-        async () => {
-          const { status } = await getExecution({
-            prefix: stackName,
-            arn: discoverGranulesExecutionArn,
-          });
-
-          return status === 'completed';
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: stackName,
+          arn: discoverGranulesExecutionArn,
         },
-        { interval: 2000, timeout: 60000 }
+        'completed'
       );
 
       const lambdaStep = new LambdaStep();
