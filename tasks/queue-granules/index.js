@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
@@ -65,6 +66,10 @@ async function queueGranules(event) {
       if (executionArn) {
         const queuedGranule = {
           granuleId: granule.granuleId,
+          collectionId: constructCollectionId(
+            granule.dataType,
+            granule.version
+          ),
           status: 'queued',
           retries: 3,
         };
