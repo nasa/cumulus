@@ -102,6 +102,17 @@ test.afterEach(async (t) => {
   ]);
 });
 
+test('groupAndBatchGranules uses default if batchSize is NaN', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, null);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
 test('groupAndBatchGranules batches granules by collection', (t) => {
   const granules = [
     { granuleId: '1', dataType: 'ABC', version: '001' },

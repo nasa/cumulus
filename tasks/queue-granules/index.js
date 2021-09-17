@@ -3,7 +3,9 @@
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const chunk = require('lodash/chunk');
+const isNumber = require('lodash/isNumber');
 const pMap = require('p-map');
+
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -31,13 +33,14 @@ async function fetchGranuleProvider(prefix, providerId) {
  * @returns {Array<Object>} list of lists of granules: each list contains granules which belong
  *                          to the same collection, and each list's max length is set by batchSize
  */
-function groupAndBatchGranules(granules, batchSize = 1) {
+function groupAndBatchGranules(granules, batchSize) {
+  const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
   const granulesByCollectionMap = groupBy(
     granules,
     (g) => constructCollectionId(g.dataType, g.version)
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
-    (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, batchSize)),
+    (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
     []
   );
   return granulesBatchedByCollection.reduce((arr, granuleBatch) => arr.concat(
