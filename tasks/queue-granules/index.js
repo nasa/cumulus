@@ -47,7 +47,6 @@ function groupAndBatchGranules(granules, batchSize) {
     Object.values(groupBy(granuleBatch, 'provider'))
   ), []);
 }
-exports.groupAndBatchGranules = groupAndBatchGranules;
 
 /**
  * See schemas/input.json and schemas/config.json for detailed event description

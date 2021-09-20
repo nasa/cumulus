@@ -53,7 +53,8 @@
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
       "workflow_tasks/move_granules",
-      "workflow_tasks/parse_pdr"
+      "workflow_tasks/parse_pdr",
+      "workflow_tasks/queue-granules"
     ],
     "Features": [
       "features/backup_and_restore",

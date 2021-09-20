@@ -577,11 +577,11 @@ test.serial('A default concurrency of 3 is used', async (t) => {
   await queueGranules(event);
 
   t.true(pMapSpy.calledThrice);
-  t.true(pMapSpy.calledWithMatch(
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 3 })
-  ));
+  )));
 });
 
 test.serial('A configured concurrency is used', async (t) => {
@@ -606,11 +606,11 @@ test.serial('A configured concurrency is used', async (t) => {
   await queueGranules(event);
 
   t.true(pMapSpy.calledThrice);
-  t.true(pMapSpy.calledWithMatch(
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 99 })
-  ));
+  )));
 });
 
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {

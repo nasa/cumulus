@@ -38,27 +38,23 @@ For the most recent config.json schema, please see the [Cumulus Tasks page](../t
 
 Below are expanded descriptions of selected config keys:
 
-#### Provider
+#### `provider`
 
-A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.  Used to define connection information for a location to scan for granule discovery.
+A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object for the originating provider. Will be passed along to the ingest workflow. This will be overruled by more specific provider information that may exist on a granule.
 
-#### Buckets
+#### `internalBucket`
 
-A list of buckets with types that will be used to assign bucket targets based on the collection configuration.
+The Cumulus internal system bucket.
 
-#### Collection
-
-A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
-
-#### Granule Ingest Workflow
+#### `granuleIngestWorkflow`
 
 A string property that denotes the name of the ingest workflow into which granules should be queued.
 
-#### Queue Url
+#### `queueUrl`
 
 A string property that denotes the name of the queue to which scheduled execution messages are sent.
 
-#### Preferred Queue Batch Size
+#### `preferredQueueBatchSize`
 
 A number property that sets an upper bound on the size of each batch of granules queued into the payload of an ingest execution. Setting this property to a value higher than 1 allows queueing of multiple granules per ingest workflow.
 
@@ -68,7 +64,7 @@ This means batches may be smaller than the preferred size if collection or provi
 
 The default value if none is specified is 1, which will queue one ingest execution per granule.
 
-#### Concurrency
+#### `concurrency`
 
 A number property that determines the level of concurrency with which ingest executions are scheduled.
 Granules or batches of granules will be queued up into executions at this level of concurrency.
@@ -81,11 +77,11 @@ We do not recommend increasing this value to a level at which you may encounter 
 
 The default value is 3.
 
-#### Execution Name Prefix
+#### `executionNamePrefix`
 
 A string property that will prefix the names of scheduled executions.
 
-#### Child Workflow Meta
+#### `childWorkflowMeta`
 
 An object property that will be merged into the scheduled execution input's `meta` field.
 
