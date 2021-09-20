@@ -11,7 +11,6 @@ const moment = require('moment');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
 
-const { getGranule } = require('@cumulus/api-client/granules');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -21,9 +20,9 @@ const {
   CollectionPgModel,
   translatePostgresCollectionToApiCollection,
   getKnexClient,
+  GranulePgModel,
 } = require('@cumulus/db');
 
-const { Granule } = require('../models');
 const {
   convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
@@ -169,24 +168,25 @@ async function getAllCollections() {
  * @param {string} params.stackName - stack name
  * @returns {Promise<Array<string>>} list of collectionIds
  */
-async function getCollectionsForGranules({ granuleIds, stackName }) {
+async function getCollectionsForGranules({
+  granuleIds,
+  granulePgModel = new GranulePgModel(),
+}) {
   const dbCollections = await pMap(
     granuleIds,
     async (granuleId) => {
-      const granule = await getGranule({
-        prefix: stackName,
-        granuleId,
-      });
-      return granule.collectionId;
+      try {
+        const granule = await granulePgModel.get({
+          granuleId,
+        });
+        return granule.collectionId;
+      } catch (error) {
+        if (error instanceof RecordDoesNotExist) {
+          return undefined;
+        }
+        throw error;
+      }
     },
-    // new Granule().get({ granuleId })
-    //   .then((granule) => (granule ? granule.collectionId : undefined))
-    //   .catch((error) => {
-    //     if (error instanceof RecordDoesNotExist) {
-    //       return undefined;
-    //     }
-    //     throw error;
-    //   }),
     {
       concurrency: process.env.CONCURRENCY || 3,
     }
@@ -208,7 +208,7 @@ async function getCollectionsForGranules({ granuleIds, stackName }) {
  * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getCollectionsForGranuleSearch(recReportParams) {
-  const { collectionIds, granuleIds, stackName } = recReportParams;
+  const { collectionIds, granuleIds } = recReportParams;
   // get collections list in ES and dynamoDB combined
   let collections = [];
   if (granuleIds) {
