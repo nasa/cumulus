@@ -90,6 +90,11 @@
       "description": "flag to set DiscoverGranules duplicate handling behavior",
       "default": "replace",
       "type": "string"
+    },
+    "concurrency": {
+      "description": "concurrency used when querying Cumulus API for already discovered granules",
+      "default": 3,
+      "type": "number"
     }
   }
 }
