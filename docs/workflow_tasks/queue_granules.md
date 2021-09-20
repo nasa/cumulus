@@ -12,7 +12,7 @@ Links to the npm package, task input, output and configuration schema definition
 
 The purpose of this task is to schedule ingest of granules that were discovered on a remote host, whether via the [DiscoverGranules](./discover_granules) task or the [ParsePDR](./parse_pdr) task.
 
-The task utilizes a defined [collection](../data-cookbooks/setup#collections) in concert with a defined [provider](../data-cookbooks/setup#providers), either on each granule, or passed in via config to queue up ingest executions for each granule, or for batches of granules.
+The task utilizes a defined [collection](../configuration/data-management-types#collections) in concert with a defined [provider](../configuration/data-management-types#providers), either on each granule, or passed in via config to queue up ingest executions for each granule, or for batches of granules.
 
 The constructed granules object is defined by the collection passed in the configuration, and has impacts to other provided core [Cumulus Tasks](../tasks).
 
