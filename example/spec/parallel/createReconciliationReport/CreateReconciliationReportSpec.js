@@ -21,8 +21,6 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString, randomId, randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -42,7 +40,9 @@ const {
 } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -55,7 +55,8 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
@@ -149,9 +150,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 
   ingestGranuleExecutionArn = workflowExecution.executionArn;
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -190,9 +194,12 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
   ingestAndPublishGranuleExecutionArns.push(executionArn);
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -297,9 +304,9 @@ describe('When there are granule differences and granule reconciliation is run',
   let dbGranuleId;
   let extraCumulusCollection;
   let extraFileInDb;
+  let extraGranuleInDb;
   let extraS3Object;
   let granuleBeforeUpdate;
-  let granuleModel;
   let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
@@ -315,7 +322,6 @@ describe('When there are granule differences and granule reconciliation is run',
       config = await loadConfig();
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
 
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
@@ -329,27 +335,6 @@ describe('When there are granule differences and granule reconciliation is run',
       extraS3Object = { Bucket: protectedBucket, Key: randomString() };
       await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
 
-      // Write an extra file to the DynamoDB Files table
-      // extraFileInDb = {
-      //   bucket: protectedBucket,
-      //   key: randomString(),
-      //   granuleId: randomString(),
-      // };
-      // process.env.FilesTable = `${config.stackName}-FilesTable`;
-      // await GranuleFilesCache.put(extraFileInDb);
-
-      await createGranule({
-        prefix: config.stackName,
-        body: {
-          granuleId: randomString(),
-          collectionId,
-          files: [{
-            bucket: protectedBucket,
-            key: randomString(),
-          }],
-        },
-      });
-
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
@@ -359,6 +344,22 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log('XXX Waiting for setupCollectionAndTestData');
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed for setupCollectionAndTestData');
+
+      // Write an extra file to the DynamoDB Files table
+      extraFileInDb = {
+        bucket: protectedBucket,
+        key: randomString(),
+      };
+      extraGranuleInDb = {
+        granuleId: randomString(),
+        collectionId,
+        status: 'completed',
+        files: [extraFileInDb],
+      };
+      await createGranule({
+        prefix: config.stackName,
+        body: extraGranuleInDb,
+      });
 
       [
         publishedGranuleId,
@@ -479,13 +480,13 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.status).toBe('SUCCESS');
     });
 
-    it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
+    it('generates a report showing cumulus files that are in S3 but not in the Cumulus files table', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
       expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
     });
 
-    it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
+    it('generates a report showing cumulus files that are in the Cumulus files table but not in S3', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
       const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
@@ -816,13 +817,19 @@ describe('When there are granule differences and granule reconciliation is run',
 
   afterAll(async () => {
     const activeCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
-    await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
+    // await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
+    await updateGranule({
+      prefix: config.stackName,
+      granuleId: publishedGranuleId,
+      updateParams: granuleBeforeUpdate,
+    });
+
     const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: collection }),
       s3().deleteObject(extraS3Object).promise(),
-      GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
     ]);
