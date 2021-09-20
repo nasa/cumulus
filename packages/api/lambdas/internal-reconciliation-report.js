@@ -9,6 +9,9 @@ const union = require('lodash/union');
 const omit = require('lodash/omit');
 const moment = require('moment');
 const pLimit = require('p-limit');
+const pMap = require('p-map');
+
+const { getGranule } = require('@cumulus/api-client/granules');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -161,22 +164,32 @@ async function getAllCollections() {
 /**
  * Get list of collections for the given granuleIds
  *
- * @param {Array<string>} granuleIds - list of granuleIds
+ * @param {Object} params
+ * @param {Array<string>} params.granuleIds - list of granuleIds
+ * @param {string} params.stackName - stack name
  * @returns {Promise<Array<string>>} list of collectionIds
  */
-async function getCollectionsForGranules(granuleIds) {
-  const limit = pLimit(process.env.CONCURRENCY || 3);
-
-  const dbCollections = await Promise.all(
-    granuleIds.map((granuleId) => limit(() =>
-      new Granule().get({ granuleId })
-        .then((granule) => (granule ? granule.collectionId : undefined))
-        .catch((error) => {
-          if (error instanceof RecordDoesNotExist) {
-            return undefined;
-          }
-          throw error;
-        })))
+async function getCollectionsForGranules({ granuleIds, stackName }) {
+  const dbCollections = await pMap(
+    granuleIds,
+    async (granuleId) => {
+      const granule = await getGranule({
+        prefix: stackName,
+        granuleId,
+      });
+      return granule.collectionId;
+    },
+    // new Granule().get({ granuleId })
+    //   .then((granule) => (granule ? granule.collectionId : undefined))
+    //   .catch((error) => {
+    //     if (error instanceof RecordDoesNotExist) {
+    //       return undefined;
+    //     }
+    //     throw error;
+    //   }),
+    {
+      concurrency: process.env.CONCURRENCY || 3,
+    }
   );
 
   const esGranulesIterator = new ESSearchQueue(
@@ -195,11 +208,11 @@ async function getCollectionsForGranules(granuleIds) {
  * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getCollectionsForGranuleSearch(recReportParams) {
-  const { collectionIds, granuleIds } = recReportParams;
+  const { collectionIds, granuleIds, stackName } = recReportParams;
   // get collections list in ES and dynamoDB combined
   let collections = [];
   if (granuleIds) {
-    const collectionIdsForGranules = await getCollectionsForGranules(granuleIds);
+    const collectionIdsForGranules = await getCollectionsForGranules(recReportParams);
     collections = (collectionIds)
       ? intersection(collectionIds, collectionIdsForGranules)
       : collectionIdsForGranules;
