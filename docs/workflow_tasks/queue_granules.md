@@ -52,7 +52,7 @@ A string property that denotes the name of the ingest workflow into which granul
 
 #### `queueUrl`
 
-A string property that denotes the name of the queue to which scheduled execution messages are sent.
+A string property that denotes the URL of the queue to which scheduled execution messages are sent.
 
 #### `preferredQueueBatchSize`
 
