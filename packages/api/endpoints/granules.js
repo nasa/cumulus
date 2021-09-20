@@ -109,7 +109,9 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   const {
     granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
   const body = req.body || {};
   const { retries = 0, status, ...restOfBody } = body;
@@ -144,10 +146,12 @@ const update = async (req, res) => {
     ...existingGranule,
     updatedAt: Date.now(),
     ...updatedBody,
+    granuleModel,
+    granulePgModel,
   };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex);
+    await writeGranuleFromApi(updatedGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
