@@ -2,6 +2,8 @@
 
 const path = require('path');
 const test = require('ava');
+const sinon = require('sinon');
+const pMap = require('p-map');
 const proxyquire = require('proxyquire');
 const { readJson } = require('fs-extra');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
@@ -61,6 +63,8 @@ const fakeGranulesModule = {
   },
 };
 
+const pMapSpy = sinon.spy(pMap);
+
 // Import the discover-granules functions that we'll be testing, configuring them to use the fake
 // granules module and the fake logger.
 const {
@@ -71,6 +75,7 @@ const {
 } = proxyquire(
   '..',
   {
+    'p-map': pMapSpy,
     '@cumulus/api-client/granules': fakeGranulesModule,
     '@cumulus/logger': FakeLogger,
   }
@@ -84,6 +89,7 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
+  pMapSpy.resetHistory();
   process.env.oauth_provider = 'earthdata';
 
   t.context.event = await readJson(path.join(__dirname, 'fixtures', 'mur.json'));
@@ -377,6 +383,59 @@ test(
 test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return', async (t) => {
   const error = await t.throwsAsync(checkGranuleHasNoDuplicate('unexpected-response', 'skip'));
   t.true(error.message.startsWith('Unexpected return from Private API lambda'));
+});
+
+test.serial('discover granules uses default concurrency of 3', async (t) => {
+  const { event } = t.context;
+
+  event.config.provider_path = '/granules/fake_granules';
+
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  event.config.duplicateGranuleHandling = 'skip';
+
+  await validateConfig(t, event.config);
+
+  await discoverGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 3 })
+  ));
+});
+
+test.serial('discover granules uses configured concurrency', async (t) => {
+  const { event } = t.context;
+
+  event.config.provider_path = '/granules/fake_granules';
+
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+
+  event.config.duplicateGranuleHandling = 'skip';
+  event.config.concurrency = 17;
+
+  await validateConfig(t, event.config);
+
+  await discoverGranules(event);
+
+  console.log('calls %j', pMapSpy.getCalls());
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 17 })
+  ));
 });
 
 test.serial('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {
