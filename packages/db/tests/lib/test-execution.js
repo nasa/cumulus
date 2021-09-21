@@ -22,6 +22,7 @@ const {
   getWorkflowNameIntersectFromGranuleIds,
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
+  getExecutionArnsByGranuleCumulusId,
 } = require('../../dist');
 
 /**
@@ -105,6 +106,138 @@ test.after.always(async (t) => {
     ...t.context,
     testDbName,
   });
+});
+
+test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Granule', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    executionPgModel,
+    granulePgModel,
+    granulesExecutionsPgModel,
+  } = t.context;
+
+  // Create executions
+  const [executionA] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
+  );
+  const [executionB] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
+  );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
+
+  // Create Granule
+  const [granuleCumulusId] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+  // Create GranulesExecuions JOIN records
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionACumulusId,
+    }
+  );
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionBCumulusId,
+    }
+  );
+
+  const exepectedExecutionArn1 = await executionPgModel.get(
+    knex,
+    { cumulus_id: executionACumulusId }
+  );
+  const exepectedExecutionArn2 = await executionPgModel.get(
+    knex,
+    { cumulus_id: executionBCumulusId }
+  );
+
+  const result = await getExecutionArnsByGranuleCumulusId(
+    knex,
+    granuleCumulusId
+  );
+
+  t.deepEqual(
+    result,
+    [{ arn: exepectedExecutionArn1.arn }, { arn: exepectedExecutionArn2.arn }]
+  );
+});
+
+test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Granule with limit configuration', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    executionPgModel,
+    granulePgModel,
+    granulesExecutionsPgModel,
+  } = t.context;
+
+  // Create executions
+  const [executionA] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
+  );
+  const [executionB] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 200 * 1000) })
+  );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
+
+  // Create Granule
+  const [granuleCumulusId] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+
+  // Create GranulesExecuions JOIN records
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionACumulusId,
+    }
+  );
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionBCumulusId,
+    }
+  );
+
+  const exepectedExecutionArn1 = await executionPgModel.get(
+    knex,
+    { cumulus_id: executionACumulusId }
+  );
+  await executionPgModel.get(
+    knex,
+    { cumulus_id: executionBCumulusId }
+  );
+
+  const result = await getExecutionArnsByGranuleCumulusId(
+    knex,
+    granuleCumulusId,
+    1
+  );
+
+  t.deepEqual(
+    result,
+    [{ arn: exepectedExecutionArn1.arn }]
+  );
 });
 
 test('executionArnsFromGranuleIdsAndWorkflowNames() returns arn by workflow and granuleId for a linked granule execution.', async (t) => {

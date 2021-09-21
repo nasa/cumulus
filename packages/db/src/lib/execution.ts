@@ -22,7 +22,7 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  * @param {number} limit - limit to number of executions to query
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
- export const getExecutionArnsByGranuleCumulusId = async (
+export const getExecutionArnsByGranuleCumulusId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number,
   limit?: number
