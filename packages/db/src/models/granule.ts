@@ -84,7 +84,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
 
   /**
    * FUTURE: This should not be used to fetch unique granules. Granules
-   * can should be queried by cumulus_id or a combination of granule_id +
+   * should be queried by cumulus_id or a combination of granule_id +
    * collection_cumulus_id. This function is provided for legacy support.
    *
    * Fetches a single granule from PostgreSQL by a granuleId
