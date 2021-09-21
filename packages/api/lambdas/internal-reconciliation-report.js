@@ -80,10 +80,9 @@ async function internalRecReportForCollections(recReportParams) {
 
   const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
   let nextEsItem = await esCollectionsIterator.peek();
-  let nextDbItem =
-    dbCollectionItems.length !== 0
-      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-      : undefined;
+  let nextDbItem = dbCollectionItems.length !== 0
+    ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+    : undefined;
 
   while (nextEsItem && nextDbItem) {
     const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
@@ -117,10 +116,9 @@ async function internalRecReportForCollections(recReportParams) {
     }
 
     nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-    nextDbItem =
-      dbCollectionItems.length !== 0
-        ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-        : undefined;
+    nextDbItem = dbCollectionItems.length !== 0
+      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+      : undefined;
   }
 
   // Add any remaining ES items to the report
@@ -194,25 +192,7 @@ async function getCollectionsForGranules(recReportParams) {
   const {
     granuleIds,
   } = recReportParams;
-  // const dbCollections = await pMap(
-  //   granuleIds,
-  //   async (granuleId) => {
-  //     try {
-  //       const granule = await granulePgModel.get({
-  //         granuleId,
-  //       });
-  //       return granule.collectionId;
-  //     } catch (error) {
-  //       if (error instanceof RecordDoesNotExist) {
-  //         return undefined;
-  //       }
-  //       throw error;
-  //     }
-  //   },
-  //   {
-  //     concurrency,
-  //   }
-  // );
+
   const dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
 
   const esGranulesIterator = new ESSearchQueue(
@@ -368,7 +348,7 @@ exports.internalRecReportForGranules = internalRecReportForGranules;
  * Create a Internal Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
- * @param {Object} params.collectionIds - array of collectionIds
+ * @param {Object} recReportParams.collectionIds - array of collectionIds
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
