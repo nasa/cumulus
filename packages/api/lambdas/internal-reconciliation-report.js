@@ -32,7 +32,6 @@ const {
   filterDBCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
-const { DbGranuleSearchQueues } = require('../lib/reconciliationReport/DbGranuleSearchQueues');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
@@ -247,8 +246,6 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
     { ...esSearchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
   );
 
-  // const moo = await esGranulesIterator.empty();
-
   const searchParams = convertToDBGranuleSearchParams(recReportParams);
   const granulesSearchQuery = searchGranulesByApiProperties(
     recReportParams.knex,
@@ -259,10 +256,6 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
     granulesSearchQuery,
     100 // arbitrary limit on how items are fetched at once
   );
-
-  // const foo = await pgGranulesSearchClient.peek();
-
-  // const dbGranulesIterator = new DbGranuleSearchQueues(collectionId, searchParams);
 
   let okCount = 0;
   const withConflicts = [];
