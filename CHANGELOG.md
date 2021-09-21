@@ -56,7 +56,7 @@ of response and not the raw API endpoint response
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
     - Update `unpublishGranule` (used in /granules PUT) to use PostgreSQL Granule as source rather than DynamoDB Granule
     - Update integration tests to use `waitForApiStatus` instead of `waitForModelStatus`
-    - Update Granule Ingest to update the Postgres Granule status as well as the DynamoDB Granule status
+    - Update Granule ingest to update the Postgres Granule status as well as the DynamoDB Granule status
   - **CUMULUS-2302**
     - Update API collection GET endpoint to read individual provider records from
       PostgreSQL database instead of DynamoDB
