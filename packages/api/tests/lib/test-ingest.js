@@ -49,6 +49,7 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+  t.context.granuleId = randomString();
 
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
@@ -73,7 +74,7 @@ test.before(async (t) => {
     payload: {
       granules: [
         {
-          granuleId: randomString(),
+          granuleId: t.context.granuleId,
           sync_granule_duration: 123,
           post_to_cmr_duration: 456,
           files: [],
@@ -133,37 +134,49 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-  const getPgGranuleStub = sinon.stub(granuleLib, 'getUniqueGranuleByGranuleId');
-  const upsertPgGranuleStub = sinon.stub(granulePgModel, 'upsert');
   const queueUrl = 'testqueueUrl';
+  const fileExists = () => Promise.resolve(true);
+  const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
+  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
+
+  const granule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+  });
+  const dynamoGranule = await granuleModel.create(granule);
+  await granulePgModel.create(
+    t.context.knex,
+    await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
+  );
+
   const reingestParams = {
+    granuleId: granule.granuleId,
     execution: 'some/execution',
     collectionId: 'MyCollection___006',
     provider: 'someProvider',
     queueUrl,
   };
-  const fileExists = () => Promise.resolve(true);
-  const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
-  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-
   try {
     await reingestGranule({
       reingestParams,
       granuleModel,
       granulePgModel,
-      getPgGranuleHandler: getPgGranuleStub,
     });
     // Rule.buildPayload has its own unit tests to ensure the queue name
     // is used properly, so just ensure that we pass the correct argument
     // to that function.
     t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
-    t.true(upsertPgGranuleStub.called);
+
+    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
+      t.context.knex,
+      granule.granuleId
+    );
+    t.is(updatedPgGranule.status, 'running');
+  } catch (error) {
+    console.log(error);
   } finally {
     fileExistsStub.restore();
     buildPayloadSpy.restore();
     updateStatusStub.restore();
-    upsertPgGranuleStub.restore();
-    getPgGranuleStub.restore();
   }
 });
 
