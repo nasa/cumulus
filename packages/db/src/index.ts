@@ -95,6 +95,10 @@ export {
 } from './translate/pdr';
 
 export {
+  getCollectionsByGranuleIds,
+} from './lib/collection';
+
+export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
