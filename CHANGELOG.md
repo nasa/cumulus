@@ -169,6 +169,8 @@ when output of the operation is `undefined`
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
+    - Removed `aws_lambda_event_source_mapping` TF definition on granules
+      DynamoDB table.
 
 ## [v9.4.0] 2021-08-16
 
