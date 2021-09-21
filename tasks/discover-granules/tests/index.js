@@ -429,7 +429,6 @@ test.serial('discover granules uses configured concurrency', async (t) => {
 
   await discoverGranules(event);
 
-  console.log('calls %j', pMapSpy.getCalls());
   t.true(pMapSpy.calledOnce);
   t.true(pMapSpy.calledWithMatch(
     sinon.match.any,
