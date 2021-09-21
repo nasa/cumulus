@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sftp-client",
-  "version": "9.5.0",
+  "version": "9.6.0-alpha.1",
   "description": "A Promise-based SFTP client",
   "keywords": [
     "GIBS",
