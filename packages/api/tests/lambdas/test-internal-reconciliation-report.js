@@ -23,6 +23,11 @@ const {
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
   migrationDir,
+  translateApiGranuleToPostgresGranule,
+  GranulePgModel,
+  fakeProviderRecordFactory,
+  fakeCollectionRecordFactory,
+  ProviderPgModel,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -37,6 +42,12 @@ const { deconstructCollectionId } = require('../../lib/utils');
 let esAlias;
 let esIndex;
 let esClient;
+
+test.before((t) => {
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+});
 
 test.beforeEach(async (t) => {
   process.env.GranulesTable = randomId('granulesTable');
@@ -68,7 +79,6 @@ test.beforeEach(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: t.context.testDbName,
   };
-  t.context.collectionPgModel = new CollectionPgModel();
 });
 
 test.afterEach.always(async (t) => {
@@ -159,18 +169,42 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
   t.is(report.withConflicts.length, 1);
 });
 
-test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
-  const { knex, collectionPgModel } = t.context;
-  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
-  const provider = randomId('provider');
+test.serial.only('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    granulePgModel,
+    providerPgModel,
+  } = t.context;
 
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
-  const additionalMatchingGrans = range(10).map(() => fakeGranuleFactoryV2({ provider }));
-  const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+
+  // const provider = randomId('provider');
+  // Create provider in PG
+  const provider = fakeProviderRecordFactory();
+  await providerPgModel.create(knex, provider);
+
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({
+    collectionId,
+    provider: provider.name,
+  }));
+  const additionalMatchingGrans = range(10).map(() => fakeGranuleFactoryV2({
+    provider: provider.name,
+  }));
+  const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({
+    collectionId,
+    provider: provider.name,
+  }));
   const additionalExtraDbGrans = range(2).map(() => fakeGranuleFactoryV2());
-  const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({ provider }));
+  const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({
+    provider: provider.name,
+  }));
   const additionalExtraEsGrans = range(2)
-    .map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+    .map(() => fakeGranuleFactoryV2({
+      collectionId,
+      provider: provider.name,
+    }));
   const conflictGranInDb = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
   const conflictGranInEs = { ...conflictGranInDb, status: 'failed' };
 
@@ -181,20 +215,28 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // add granules and related collections to es and db
   await Promise.all(
-    esGranules.map(async (gran) => {
-      await indexer.indexGranule(esClient, gran, esAlias);
-      const collection = fakeCollectionFactory({ ...deconstructCollectionId(gran.collectionId) });
+    esGranules.map(async (granule) => {
+      const collection = fakeCollectionFactory({
+        ...deconstructCollectionId(granule.collectionId),
+      });
       await indexer.indexCollection(esClient, collection, esAlias);
       await collectionPgModel.upsert(
         knex,
         translateApiCollectionToPostgresCollection(collection)
       );
+      await indexer.indexGranule(esClient, granule, esAlias);
     })
   );
+  // models.Granule().create(dbGranules)
+  await Promise.all(
+    dbGranules.map(async (granule) => {
+      const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+      return granulePgModel.create(knex, pgGranule);
+    })
+    // new models.Granule().create(dbGranules);
+  );
 
-  await new models.Granule().create(dbGranules);
-
-  let report = await internalRecReportForGranules({});
+  let report = await internalRecReportForGranules({ knex });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -212,7 +254,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForGranules(normalizeEvent(searchParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(searchParams),
+    knex,
+  });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.is(report.onlyInDb.length, 4);
@@ -224,7 +269,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForGranules(normalizeEvent(outOfRangeParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(outOfRangeParams),
+    knex,
+  });
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
@@ -232,7 +280,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // collectionId, provider parameters
   const collectionProviderParams = { ...searchParams, collectionId, provider };
-  report = await internalRecReportForGranules(normalizeEvent(collectionProviderParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(collectionProviderParams),
+    knex,
+  });
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -244,7 +295,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // provider parameter
   const providerParams = { ...searchParams, provider: [randomId('p'), provider] };
-  report = await internalRecReportForGranules(normalizeEvent(providerParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(providerParams),
+    knex,
+  });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -261,7 +315,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     granuleId: [granuleId, extraEsGrans[0].granuleId, randomId('g')],
     collectionId: [collectionId, extraEsGrans[0].collectionId, extraEsGrans[1].collectionId],
   };
-  report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(granuleIdParams),
+    knex,
+  });
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 1);
   t.is(report.onlyInEs[0].granuleId, extraEsGrans[0].granuleId);

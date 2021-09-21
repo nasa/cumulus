@@ -1,5 +1,6 @@
 'use strict';
 
+const chunk = require('lodash/chunk');
 const cloneDeep = require('lodash/cloneDeep');
 const pick = require('lodash/pick');
 const sortBy = require('lodash/sortBy');
@@ -8,19 +9,17 @@ const intersection = require('lodash/intersection');
 const union = require('lodash/union');
 const omit = require('lodash/omit');
 const moment = require('moment');
-const pLimit = require('p-limit');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const {
   CollectionPgModel,
   translatePostgresCollectionToApiCollection,
   getKnexClient,
-  GranulePgModel,
+  getCollectionsByGranuleIds,
 } = require('@cumulus/db');
 
 const {
@@ -160,37 +159,61 @@ async function getAllCollections() {
   return union(dbCollections, esCollections);
 }
 
+async function getAllCollectionIdsByGranuleIds({
+  granuleIds,
+  knex,
+  concurrency,
+}) {
+  const collectionIds = await pMap(
+    // TODO: Is this necessary? I don't want to overwhelm the database
+    // with a really slow query
+    chunk(granuleIds, 100),
+    async (granuleIdsBatch) => {
+      const collections = await getCollectionsByGranuleIds(knex, granuleIdsBatch);
+      return collections.map(
+        (collection) => constructCollectionId(collection.name, collection.version)
+      );
+    },
+    {
+      concurrency,
+    }
+  );
+  // Should I build the set of collection IDs as results are returned?
+  return new Set(collectionIds);
+}
+
 /**
  * Get list of collections for the given granuleIds
  *
- * @param {Object} params
- * @param {Array<string>} params.granuleIds - list of granuleIds
- * @param {string} params.stackName - stack name
+ * @param {Object} recReportParams
+ * @param {Array<string>} recReportParams.granuleIds - list of granuleIds
+ * @param {string} recReportParams.stackName - stack name
  * @returns {Promise<Array<string>>} list of collectionIds
  */
-async function getCollectionsForGranules({
-  granuleIds,
-  granulePgModel = new GranulePgModel(),
-}) {
-  const dbCollections = await pMap(
+async function getCollectionsForGranules(recReportParams) {
+  const {
     granuleIds,
-    async (granuleId) => {
-      try {
-        const granule = await granulePgModel.get({
-          granuleId,
-        });
-        return granule.collectionId;
-      } catch (error) {
-        if (error instanceof RecordDoesNotExist) {
-          return undefined;
-        }
-        throw error;
-      }
-    },
-    {
-      concurrency: process.env.CONCURRENCY || 3,
-    }
-  );
+  } = recReportParams;
+  // const dbCollections = await pMap(
+  //   granuleIds,
+  //   async (granuleId) => {
+  //     try {
+  //       const granule = await granulePgModel.get({
+  //         granuleId,
+  //       });
+  //       return granule.collectionId;
+  //     } catch (error) {
+  //       if (error instanceof RecordDoesNotExist) {
+  //         return undefined;
+  //       }
+  //       throw error;
+  //     }
+  //   },
+  //   {
+  //     concurrency,
+  //   }
+  // );
+  const dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
 
   const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
@@ -198,7 +221,7 @@ async function getCollectionsForGranules({
   const esCollections = (await esGranulesIterator.empty())
     .map((granule) => (granule ? granule.collectionId : undefined));
 
-  return union(dbCollections, esCollections);
+  return union(dbCollectionIds, esCollections);
 }
 
 /**
@@ -209,7 +232,6 @@ async function getCollectionsForGranules({
  */
 async function getCollectionsForGranuleSearch(recReportParams) {
   const { collectionIds, granuleIds } = recReportParams;
-  // get collections list in ES and dynamoDB combined
   let collections = [];
   if (granuleIds) {
     const collectionIdsForGranules = await getCollectionsForGranules(recReportParams);
@@ -317,12 +339,15 @@ async function internalRecReportForGranules(recReportParams) {
 
   const collections = await getCollectionsForGranuleSearch(recReportParams);
 
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
   const searchParams = omit(recReportParams, ['collectionIds']);
 
-  const reports = await Promise.all(collections.map((collId) => limit(() =>
-    reportForGranulesByCollectionId(collId, searchParams))));
+  const reports = await pMap(
+    collections,
+    (collectionId) => reportForGranulesByCollectionId(collectionId, searchParams),
+    {
+      concurrency: recReportParams.concurrency,
+    }
+  );
 
   const report = {};
   report.okCount = reports

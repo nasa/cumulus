@@ -130,15 +130,14 @@ async function fetchESCollections(recReportParams) {
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
  * @param {Object} recReportParams - input report params.
- * @param {Knex} knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForBucket(Bucket, recReportParams, knex) {
+async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
 
   const query = getFilesAndGranuleInfoQuery({
-    knex,
+    knex: recReportParams.knex,
     searchParams: { bucket: Bucket },
     sortColumns: ['key'],
     granuleColumns: ['granule_id'],
@@ -592,16 +591,17 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
- * @param {Knex} knex - Database client for interacting with PostgreSQL database
+ * @param {Knex} recReportParams.knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
-async function createReconciliationReport(recReportParams, knex) {
+async function createReconciliationReport(recReportParams) {
   const {
     reportKey,
     stackName,
     systemBucket,
     location,
+    knex,
   } = recReportParams;
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
@@ -719,16 +719,24 @@ async function processRequest(params) {
 
   const env = params.env ? params.env : process.env;
   const knex = await getKnexClient(env);
+  const concurrency = process.env.CONCURRENCY || 3;
 
   try {
-    const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    const recReportParams = {
+      ...params,
+      createStartTime,
+      reportKey,
+      reportType,
+      knex,
+      concurrency,
+    };
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams, knex);
+      await createReconciliationReport(recReportParams);
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
