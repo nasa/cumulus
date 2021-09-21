@@ -97,7 +97,7 @@ const ingestAndPublishGranuleExecutionArns = [];
  * @param {string} stackName - stack used for testing
  * @returns {Promise<Object>}  The collection created
  */
-const createActiveCollection = async (prefix, sourceBucket, stackName) => {
+const createActiveCollection = async (prefix, sourceBucket) => {
   // The S3 path where granules will be ingested from
   const sourcePath = `${prefix}/tmp/${randomId('test-')}`;
 
@@ -149,7 +149,7 @@ const createActiveCollection = async (prefix, sourceBucket, stackName) => {
   await waitForApiStatus(
     getGranule,
     {
-      prefix: stackName,
+      prefix,
       granuleId: inputPayload.granules[0].granuleId,
     },
     'completed'
@@ -341,7 +341,7 @@ describe('When there are granule differences and granule reconciliation is run',
       process.env.FilesTable = `${config.stackName}-FilesTable`;
       await GranuleFilesCache.put(extraFileInDb);
 
-      extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket, config.stackName);
+      extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
       testSuffix = createTestSuffix(testId);
