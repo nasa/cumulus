@@ -123,19 +123,23 @@ function convertToESGranuleSearchParams(params) {
  */
 function convertToDBGranuleSearchParams(params) {
   const {
-    collectionIds: collectionId,
-    granuleIds: granuleId,
-    providers: provider,
+    collectionId,
+    granuleIds,
+    provider,
     startTimestamp,
     endTimestamp,
   } = params;
   const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
     collectionId,
-    granuleId,
+    granuleIds,
     provider,
   };
+  if (startTimestamp || endTimestamp) {
+    searchParams.updatedAtRange = removeNilProperties({
+      updatedAtFrom: startTimestamp ? new Date(startTimestamp) : undefined,
+      updatedAtTo: endTimestamp ? new Date(endTimestamp) : undefined,
+    });
+  }
   return removeNilProperties(searchParams);
 }
 

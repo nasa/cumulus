@@ -120,7 +120,7 @@ export const getApiGranuleExecutionCumulusIds = async (
 };
 
 /**
- * Get cumulus IDs for all executions associated to a set of granules
+ * Search granules by various API granule record properties.
  *
  * @param {Knex} knex - DB client
  * @param {Object} searchParams
@@ -128,6 +128,7 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
  * @param {string} [searchParams.providerName] - Provider.name
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
+ * @param {Array<string>} sortByFields - Fields to sort by
  * @returns {Knex.QueryBuilder}
  */
 export const searchGranulesByApiProperties = (
@@ -142,7 +143,8 @@ export const searchGranulesByApiProperties = (
     granuleIds: string | string[],
     providerName: string,
     updatedAtRange: UpdatedAtRange,
-  }
+  },
+  sortByFields?: string | string[]
 ): Knex.QueryBuilder => {
   const {
     granules: granulesTable,
@@ -151,10 +153,16 @@ export const searchGranulesByApiProperties = (
   } = tableNames;
   return knex(granulesTable)
     .select(`${granulesTable}.*`)
+    .select({
+      providerName: `${providersTable}.name`,
+      collectionName: `${collectionsTable}.name`,
+      collectionVersion: `${collectionsTable}.version`,
+    })
+    .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
+    .leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
     .modify((queryBuilder) => {
       if (collectionId) {
         const collectionNameAndVersion = deconstructCollectionId(collectionId);
-        queryBuilder.innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
         queryBuilder.where(`${collectionsTable}.name`, collectionNameAndVersion.name);
         queryBuilder.where(`${collectionsTable}.version`, collectionNameAndVersion.version);
       }
@@ -162,7 +170,6 @@ export const searchGranulesByApiProperties = (
         queryBuilder.whereIn(`${granulesTable}.granule_id`, [granuleIds].flat());
       }
       if (providerName) {
-        queryBuilder.leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
         queryBuilder.where(`${providersTable}.name`, providerName);
       }
       if (updatedAtRange.updatedAtFrom) {
@@ -171,6 +178,11 @@ export const searchGranulesByApiProperties = (
       if (updatedAtRange.updatedAtTo) {
         queryBuilder.where(`${granulesTable}.updated_at`, '<=', updatedAtRange.updatedAtTo);
       }
+      if (sortByFields) {
+        queryBuilder.orderBy([sortByFields].flat());
+      }
     })
-    .groupBy(`${granulesTable}.cumulus_id`);
+    .groupBy(`${granulesTable}.cumulus_id`)
+    .groupBy(`${collectionsTable}.cumulus_id`)
+    .groupBy(`${providersTable}.cumulus_id`);
 };

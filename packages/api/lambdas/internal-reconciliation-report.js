@@ -20,6 +20,8 @@ const {
   translatePostgresCollectionToApiCollection,
   getKnexClient,
   getCollectionsByGranuleIds,
+  searchGranulesByApiProperties,
+  QuerySearchClient,
 } = require('@cumulus/db');
 
 const {
@@ -177,7 +179,7 @@ async function getAllCollectionIdsByGranuleIds({
     }
   );
   // Should I build the set of collection IDs as results are returned?
-  return new Set(collectionIds);
+  return [...new Set(collectionIds)];
 }
 
 /**
@@ -241,12 +243,26 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   //   Report granules with different contents
 
   const esSearchParams = convertToESGranuleSearchParams(recReportParams);
-  const searchParams = convertToDBGranuleSearchParams(recReportParams);
   const esGranulesIterator = new ESSearchQueue(
     { ...esSearchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
   );
 
-  const dbGranulesIterator = new DbGranuleSearchQueues(collectionId, searchParams);
+  // const moo = await esGranulesIterator.empty();
+
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
+  const granulesSearchQuery = searchGranulesByApiProperties(
+    recReportParams.knex,
+    searchParams,
+    ['collectionName', 'collectionVersion', 'granule_id']
+  );
+  const pgGranulesSearchClient = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+  );
+
+  // const foo = await pgGranulesSearchClient.peek();
+
+  // const dbGranulesIterator = new DbGranuleSearchQueues(collectionId, searchParams);
 
   let okCount = 0;
   const withConflicts = [];
@@ -255,29 +271,40 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   const fieldsIgnored = ['timestamp', 'updatedAt'];
 
   const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
-  let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+  const translatePgResult = (pgGranuleResult) => ({
+    collectionId: constructCollectionId(
+      pgGranuleResult.collectionName,
+      pgGranuleResult.collectionVersion
+    ),
+    provider: pgGranuleResult.providerName,
+    granuleId: pgGranuleResult.granule_id,
+    createdAt: pgGranuleResult.created_at,
+    updatedAt: pgGranuleResult.updated_at,
+  });
+
+  let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
 
   /* eslint-disable no-await-in-loop */
   while (nextEsItem && nextDbItem) {
-    if (nextEsItem.granuleId < nextDbItem.granuleId) {
+    if (nextEsItem.granuleId < nextDbItem.granule_id) {
       // Found an item that is only in ES and not in DB
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
-    } else if (nextEsItem.granuleId > nextDbItem.granuleId) {
+    } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
       // Found an item that is only in DB and not in ES
-      onlyInDb.push(pick(nextDbItem, granuleFields));
-      await dbGranulesIterator.shift();
+      onlyInDb.push(translatePgResult(nextDbItem));
+      await pgGranulesSearchClient.shift();
     } else {
       // Found an item that is in both ES and DB
-      if (isEqual(omit(nextEsItem, fieldsIgnored), omit(nextDbItem, fieldsIgnored))) {
+      if (isEqual(omit(nextEsItem, fieldsIgnored), translatePgResult(nextDbItem))) {
         okCount += 1;
       } else {
         withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
-      await Promise.all([esGranulesIterator.shift(), dbGranulesIterator.shift()]);
+      await Promise.all([esGranulesIterator.shift(), pgGranulesSearchClient.shift()]);
     }
 
-    [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+    [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
   }
 
   // Add any remaining ES items to the report
@@ -287,9 +314,9 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   }
 
   // Add any remaining DB items to the report
-  while (await dbGranulesIterator.peek()) {
-    const item = await dbGranulesIterator.shift();
-    onlyInDb.push(pick(item, granuleFields));
+  while (await pgGranulesSearchClient.peek()) {
+    const item = await pgGranulesSearchClient.shift();
+    onlyInDb.push(translatePgResult(item));
   }
   /* eslint-enable no-await-in-loop */
 

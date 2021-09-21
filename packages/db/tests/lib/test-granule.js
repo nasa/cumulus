@@ -486,6 +486,7 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
 
 test.serial('searchGranulesByApiProperties returns correct granules by collection', async (t) => {
   const {
+    collection,
     collectionId,
     collectionCumulusId,
     knex,
@@ -506,11 +507,20 @@ test.serial('searchGranulesByApiProperties returns correct granules by collectio
       collectionId,
     }
   );
-  t.deepEqual([granule], record);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    record
+  );
 });
 
 test.serial('searchGranulesByApiProperties returns correct granules by granule IDs', async (t) => {
   const {
+    collection,
     collectionCumulusId,
     knex,
     granulePgModel,
@@ -531,7 +541,15 @@ test.serial('searchGranulesByApiProperties returns correct granules by granule I
       granuleIds: granule.granule_id,
     }
   );
-  t.deepEqual([granule], record);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    record
+  );
 
   const [granule2] = await granulePgModel.create(
     knex,
@@ -547,7 +565,20 @@ test.serial('searchGranulesByApiProperties returns correct granules by granule I
       granuleIds: [granule.granule_id, granule2.granule_id],
     }
   );
-  t.deepEqual([granule, granule2], records);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }, {
+      ...granule2,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
 });
 
 test.serial('searchGranulesByApiProperties returns correct granules by provider', async (t) => {
@@ -556,6 +587,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by provider'
     knex,
     granulePgModel,
     providerPgModel,
+    collection,
   } = t.context;
 
   const provider = fakeProviderRecordFactory();
@@ -576,7 +608,15 @@ test.serial('searchGranulesByApiProperties returns correct granules by provider'
       providerName: provider.name,
     }
   );
-  t.deepEqual([granule], records);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: provider.name,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
 });
 
 test.serial('searchGranulesByApiProperties returns correct granules by updated_at from date', async (t) => {
@@ -584,6 +624,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
     collectionCumulusId,
     knex,
     granulePgModel,
+    collection,
   } = t.context;
 
   const now = Date.now();
@@ -607,7 +648,15 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
 
   const records2 = await searchGranulesByApiProperties(
     knex,
@@ -617,11 +666,20 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records2);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records2
+  );
 });
 
 test.serial('searchGranulesByApiProperties returns correct granules by updated_at to date', async (t) => {
   const {
+    collection,
     collectionCumulusId,
     knex,
     granulePgModel,
@@ -648,7 +706,15 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
 
   const records2 = await searchGranulesByApiProperties(
     knex,
@@ -658,11 +724,20 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records2);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records2
+  );
 });
 
 test.serial('searchGranulesByApiProperties returns correct granules by updated_at date range date', async (t) => {
   const {
+    collection,
     collectionCumulusId,
     knex,
     granulePgModel,
@@ -690,7 +765,15 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
 
   const records2 = await searchGranulesByApiProperties(
     knex,
@@ -701,5 +784,13 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
       },
     }
   );
-  t.deepEqual([granule], records2);
+  t.deepEqual(
+    [{
+      ...granule,
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records2
+  );
 });

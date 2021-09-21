@@ -26,7 +26,6 @@ const {
   translateApiGranuleToPostgresGranule,
   GranulePgModel,
   fakeProviderRecordFactory,
-  fakeCollectionRecordFactory,
   ProviderPgModel,
 } = require('@cumulus/db');
 
