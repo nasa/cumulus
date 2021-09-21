@@ -226,13 +226,12 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
       await indexer.indexGranule(esClient, granule, esAlias);
     })
   );
-  // models.Granule().create(dbGranules)
+
   await Promise.all(
     dbGranules.map(async (granule) => {
       const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
       return granulePgModel.create(knex, pgGranule);
     })
-    // new models.Granule().create(dbGranules);
   );
 
   let report = await internalRecReportForGranules({ knex });

@@ -2,7 +2,6 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
-const isString = require('lodash/isString');
 const path = require('path');
 
 const awsClients = require('@cumulus/aws-client/services');
@@ -348,70 +347,6 @@ class Granule extends Manager {
       filterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
       keyConditionArray,
     };
-  }
-
-  /**
-   * return the queue of the granules for a given collection,
-   * the items are ordered by granuleId
-   *
-   * @param {string} collectionId - collection id
-   * @param {string} status - granule status, optional
-   * @returns {Array<Object>} the granules' queue for a given collection
-   */
-  getGranulesForCollection(collectionId, status) {
-    const fields = ['granuleId', 'collectionId', 'files', 'published', 'createdAt'];
-    const searchParams = status ? { status } : {};
-    return this.searchGranulesForCollection(collectionId, searchParams, fields);
-  }
-
-  /**
-   * return the queue of the granules for a given collection and search params,
-   * the items are ordered by granuleId
-   *
-   * @param {string} collectionId - collection id
-   * @param {Object} searchParams - optional, search parameters
-   * @param {Array<string>} fields - optional, fields to return
-   * @returns {Array<Object>} the granules' queue for a given collection
-   */
-  searchGranulesForCollection(collectionId, searchParams = {}, fields = []) {
-    // Key Condition Expression does not support IN operators
-    if (searchParams.granuleId && !isString(searchParams.granuleId)) {
-      throw new CumulusModelError('Could not search granule records for collection, granuleId is not string');
-    }
-    // Filter Expression can't contain key attributes
-    if (searchParams.collectionId) {
-      throw new CumulusModelError('Could not search granule records for collection, do not specify collectionId in searchParams');
-    }
-
-    const {
-      attributeNames,
-      attributeValues,
-      filterExpression,
-      keyConditionArray,
-    } = this.getDynamoDbSearchParams(searchParams);
-
-    const projectionArray = [];
-
-    fields.forEach((field) => {
-      attributeNames[`#${field}`] = field;
-      projectionArray.push(`#${field}`);
-    });
-
-    attributeNames['#collectionId'] = 'collectionId';
-    attributeValues[':collectionId'] = collectionId;
-    keyConditionArray.push('#collectionId = :collectionId');
-
-    const params = {
-      TableName: this.tableName,
-      IndexName: 'collectionId-granuleId-index',
-      ExpressionAttributeNames: attributeNames,
-      ExpressionAttributeValues: attributeValues,
-      KeyConditionExpression: keyConditionArray.join(' AND '),
-      ProjectionExpression: (projectionArray.length > 0) ? projectionArray.join(', ') : undefined,
-      FilterExpression: filterExpression,
-    };
-
-    return new GranuleSearchQueue(removeNilProperties(params), 'query');
   }
 
   /**
