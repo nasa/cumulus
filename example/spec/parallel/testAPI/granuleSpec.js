@@ -27,7 +27,7 @@ const {
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Granules API', () => {
-  let beforeAllFailed = false;
+  let beforeAllError;
   let config;
   let collection;
   let collectionId;
@@ -79,11 +79,11 @@ describe('The Granules API', () => {
         execution: undefined,
         files: [granuleFile],
       }));
+      console.log('granule record: %j', randomGranuleRecord);
 
       granuleId = randomGranuleRecord.granuleId;
     } catch (error) {
-      beforeAllFailed = true;
-      console.log(error);
+      beforeAllError = error;
     }
   });
 
@@ -99,21 +99,24 @@ describe('The Granules API', () => {
 
   describe('the Granule Api', () => {
     it('creates a granule.', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll() failed');
-      } else {
-        const response = await createGranule({
-          prefix,
-          body: randomGranuleRecord,
-        });
-
-        expect(response.statusCode).toBe(200);
-        const { message } = JSON.parse(response.body);
-        expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
+      if (beforeAllError) {
+        fail(beforeAllError);
       }
+      const response = await createGranule({
+        prefix,
+        body: randomGranuleRecord,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { message } = JSON.parse(response.body);
+      expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
     });
 
     it('can discover the granule directly via the API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       discoveredGranule = await getGranule({
         prefix,
         granuleId,
@@ -122,6 +125,10 @@ describe('The Granules API', () => {
     });
 
     it('can search the granule via the API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const searchResults = await waitForListGranulesResult({
         prefix,
         query: {
@@ -134,6 +141,10 @@ describe('The Granules API', () => {
     });
 
     it('can modify the granule via API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const modifiedGranule = {
         ...discoveredGranule,
         status: 'failed',
@@ -154,6 +165,10 @@ describe('The Granules API', () => {
     });
 
     it('can associate an execution with the granule via API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const requestPayload = {
         granuleId,
         collectionId,
@@ -173,6 +188,10 @@ describe('The Granules API', () => {
     });
 
     it('Errors creating a bad granule.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const name = randomId('name');
       const version = randomId('version');
       const badRandomGranuleRecord = fakeGranuleFactoryV2({

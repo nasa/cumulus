@@ -23,6 +23,7 @@ const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
+const { groupAndBatchGranules } = require('..');
 const fakeGranulesApi = {
   updateGranule: noop,
 };
@@ -99,6 +100,63 @@ test.afterEach(async (t) => {
     recursivelyDeleteS3Bucket(t.context.internalBucket),
     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
   ]);
+});
+
+test('groupAndBatchGranules uses default if batchSize is NaN', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, null);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules batches granules by collection', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules respects batchSize', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001' },
+    { granuleId: '3', dataType: 'ABC', version: '001' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+    { granuleId: '5', dataType: 'ABC', version: '002' },
+    { granuleId: '6', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = [
+    [granules[0], granules[1]],
+    [granules[2]],
+    [granules[3], granules[4]],
+    [granules[5]],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 2);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules further divides batches by provider if granules have one', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '3', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+  ];
+  const expectedBatchGranules = [
+    [granules[0]],
+    [granules[1], granules[2]],
+    [granules[3]],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 3);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
 test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
@@ -518,12 +576,12 @@ test.serial('A default concurrency of 3 is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
-  t.true(pMapSpy.calledWithMatch(
+  t.true(pMapSpy.calledThrice);
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 3 })
-  ));
+  )));
 });
 
 test.serial('A configured concurrency is used', async (t) => {
@@ -547,12 +605,12 @@ test.serial('A configured concurrency is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
-  t.true(pMapSpy.calledWithMatch(
+  t.true(pMapSpy.calledThrice);
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 99 })
-  ));
+  )));
 });
 
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
