@@ -71,7 +71,6 @@ async function queueGranules(event) {
             granule.version
           ),
           status: 'queued',
-          retries: 3,
         };
         await granulesApi.updateGranule({
           prefix: event.config.stackName,
