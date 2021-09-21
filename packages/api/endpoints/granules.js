@@ -336,14 +336,13 @@ async function del(req, res) {
  */
 async function get(req, res) {
   const {
-    granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
   let granule;
   try {
-    granule = await granulePgModel.getByGranuleId(knex, granuleId);
+    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');

@@ -15,6 +15,7 @@ const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
 } = require('@cumulus/db');
+const granuleLib = require('@cumulus/db/dist/lib/granule');
 const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
@@ -132,7 +133,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-  const getPgGranuleStub = sinon.stub(granulePgModel, 'getByGranuleId');
+  const getPgGranuleStub = sinon.stub(granuleLib, 'getUniqueGranuleByGranuleId');
   const upsertPgGranuleStub = sinon.stub(granulePgModel, 'upsert');
   const queueUrl = 'testqueueUrl';
   const reingestParams = {
@@ -150,6 +151,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
       reingestParams,
       granuleModel,
       granulePgModel,
+      getPgGranuleHandler: getPgGranuleStub,
     });
     // Rule.buildPayload has its own unit tests to ensure the queue name
     // is used properly, so just ensure that we pass the correct argument
@@ -207,7 +209,7 @@ test.serial('applyWorkflow updates granule status and invokes Lambda to schedule
     const updatedDynamoGranule = await granuleModel.get({ granuleId: granule.granuleId });
     t.is(updatedDynamoGranule.status, 'running');
 
-    const updatedPgGranule = await granulePgModel.getByGranuleId(
+    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
       t.context.knex,
       granule.granuleId
     );

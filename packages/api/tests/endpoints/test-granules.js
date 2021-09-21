@@ -23,6 +23,7 @@ const {
   translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
+  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 
 const {
@@ -522,7 +523,7 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await granulePgModel.getByGranuleId(
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
     t.context.fakePGGranules[0].granule_id
   );
@@ -581,7 +582,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedPgGranule = await granulePgModel.getByGranuleId(
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
     t.context.fakePGGranules[0].granule_id
   );
@@ -633,7 +634,7 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(updatedDynamoGranule.cmrLink, undefined);
 
     // Should have updated the Postgres granule
-    const updatedPgGranule = await granulePgModel.getByGranuleId(
+    const updatedPgGranule = await getUniqueGranuleByGranuleId(
       t.context.knex,
       granuleId
     );
