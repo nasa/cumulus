@@ -1,8 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const pick = require('lodash/pick');
-const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -10,7 +8,7 @@ const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
