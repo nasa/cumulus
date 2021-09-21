@@ -1,7 +1,11 @@
 'use strict';
 
 const get = require('lodash/get');
+const groupBy = require('lodash/groupBy');
+const chunk = require('lodash/chunk');
+const isNumber = require('lodash/isNumber');
 const pMap = require('p-map');
+
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -19,6 +23,29 @@ async function fetchGranuleProvider(prefix, providerId) {
   });
 
   return JSON.parse(body);
+}
+
+/**
+ * Group granules by collection and split into batches then split again on provider
+ *
+ * @param {Array<Object>} granules - list of input granules
+ * @param {number} batchSize - size of batch of granules to queue
+ * @returns {Array<Object>} list of lists of granules: each list contains granules which belong
+ *                          to the same collection, and each list's max length is set by batchSize
+ */
+function groupAndBatchGranules(granules, batchSize) {
+  const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
+  const granulesByCollectionMap = groupBy(
+    granules,
+    (g) => constructCollectionId(g.dataType, g.version)
+  );
+  const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
+    (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
+    []
+  );
+  return granulesBatchedByCollection.reduce((arr, granuleBatch) => arr.concat(
+    Object.values(groupBy(granuleBatch, 'provider'))
+  ), []);
 }
 
 /**
@@ -41,19 +68,25 @@ async function queueGranules(event) {
     get(event, 'cumulus_config.execution_name')
   );
 
-  const executionArns = await pMap(
+  const groupedAndBatchedGranules = groupAndBatchGranules(
     granules,
-    async (granule) => {
+    event.config.preferredQueueBatchSize
+  );
+
+  const pMapConcurrency = get(event, 'config.concurrency', 3);
+  const executionArns = await pMap(
+    groupedAndBatchedGranules,
+    async (granuleBatch) => {
       const collectionConfig = await collectionConfigStore.get(
-        granule.dataType,
-        granule.version
+        granuleBatch[0].dataType,
+        granuleBatch[0].version
       );
-      const executionArn = await enqueueGranuleIngestMessage({
-        granule,
+      const executionArn = enqueueGranuleIngestMessage({
+        granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
-        provider: granule.provider
-          ? await fetchGranuleProvider(event.config.stackName, granule.provider)
+        provider: granuleBatch[0].provider
+          ? await fetchGranuleProvider(event.config.stackName, granuleBatch[0].provider)
           : event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,
@@ -64,29 +97,31 @@ async function queueGranules(event) {
         additionalCustomMeta: event.config.childWorkflowMeta,
       });
       if (executionArn) {
-        const queuedGranule = {
-          granuleId: granule.granuleId,
-          collectionId: constructCollectionId(
-            granule.dataType,
-            granule.version
-          ),
-          status: 'queued',
-        };
-        await granulesApi.updateGranule({
-          prefix: event.config.stackName,
-          body: queuedGranule,
-        });
+        await pMap(
+          granuleBatch,
+          (queuedGranule) => granulesApi.updateGranule({
+            prefix: event.config.stackName,
+            body: {
+              collectionId: constructCollectionId(
+                queuedGranule.dataType,
+                queuedGranule.version
+              ),
+              granuleId: queuedGranule.granuleId,
+              status: 'queued',
+            },
+          }),
+          { concurrency: pMapConcurrency }
+        );
       }
       return executionArn;
     },
-    { concurrency: get(event, 'config.concurrency', 3) }
+    { concurrency: pMapConcurrency }
   );
 
   const result = { running: executionArns };
   if (event.input.pdr) result.pdr = event.input.pdr;
   return result;
 }
-exports.queueGranules = queueGranules;
 
 /**
  * Lambda handler
@@ -103,4 +138,9 @@ async function handler(event, context) {
     context
   );
 }
-exports.handler = handler;
+
+module.exports = {
+  groupAndBatchGranules,
+  handler,
+  queueGranules,
+};
