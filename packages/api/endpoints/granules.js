@@ -110,9 +110,8 @@ const update = async (req, res) => {
   const body = req.body || {};
 
   let existingGranule;
-
   try {
-    existingGranule = async () => await granuleModel.get({ granuleId: body.granuleId });
+    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (body.status === 'queued') {
       existingGranule = {};

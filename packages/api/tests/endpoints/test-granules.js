@@ -1835,39 +1835,40 @@ test.serial('update (PUT) returns bad request when the path param granuleName do
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
 
-test.serial('update (PUT) can set running granule status to queued', async (t) => {
-  const runningGranuleId = t.context.fakeGranules[2].granuleId;
-  const response = await request(app)
-    .put(`/granules/${runningGranuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      granuleId: runningGranuleId,
-      status: 'queued',
-    });
+// test.serial('update (PUT) can set running granule status to queued', async (t) => {
+//   const runningGranuleId = t.context.fakeGranules[2].granuleId;
+//   const response = await request(app)
+//     .put(`/granules/${runningGranuleId}`)
+//     .set('Accept', 'application/json')
+//     .set('Authorization', `Bearer ${jwtAuthToken}`)
+//     .send({
+//       granuleId: runningGranuleId,
+//       status: 'queued',
+//     });
 
-  t.is(response.status, 200);
-  t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${runningGranuleId}`,
-  });
-});
+//   t.is(response.status, 200);
+//   t.deepEqual(JSON.parse(response.text), {
+//     message: `Successfully updated granule with Granule Id: ${runningGranuleId}`,
+//   });
+// });
 
-test.serial('update (PUT) does not set status to queued if not running', async (t) => {
-  const granuleId = t.context.fakeGranules[0].granuleId;
-  const response = await request(app)
-    .put(`/granules/${granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      granuleId,
-      status: 'queued',
-    });
+// test.serial('update (PUT) does not set status to queued if not running', async (t) => {
+//   const granuleId = t.context.fakeGranules[0].granuleId;
+//   const response = await request(app)
+//     .put(`/granules/${granuleId}`)
+//     .set('Accept', 'application/json')
+//     .set('Authorization', `Bearer ${jwtAuthToken}`)
+//     .send({
+//       granuleId,
+//       status: 'queued',
+//     });
 
-  t.is(response.status, 200);
-  t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${granuleId} Skipped setting status to queued because granule was not running`,
-  });
-});
+//   t.is(response.status, 200);
+//   t.deepEqual(JSON.parse(response.text), {
+//     message: `Successfully updated granule with Granule Id: ${granuleId}
+//  Skipped setting status to queued because granule was not running`,
+//   });
+// });
 
 test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
   const response = await request(app)
