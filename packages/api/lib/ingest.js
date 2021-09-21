@@ -21,18 +21,16 @@ const { Granule, Rule } = require('../models');
    * @param {string} granuleId - the granule's ID
    * @param {GranulePgModel} granulePgModel - Postgres Granule model
    * @param {Granule} granuleModel - API Granule model
-   * @param {Function} getPgGranuleHandler - handler for getting unique Postgres granules
    * @returns {Promise<undefined>} - undefined
    */
 async function _updateGranuleStatus(
   knex,
   granuleId,
   granulePgModel,
-  granuleModel,
-  getPgGranuleHandler
+  granuleModel
 ) {
   await granuleModel.updateStatus({ granuleId: granuleId }, 'running');
-  const pgGranuleToUpdate = await getPgGranuleHandler(
+  const pgGranuleToUpdate = await getUniqueGranuleByGranuleId(
     knex,
     granuleId
   );
@@ -53,7 +51,6 @@ async function _updateGranuleStatus(
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
    * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
    * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
-   * @param {Function} [getPgGranuleHandler] - Optional stub for testing
    * (optional, for testing)
    * @returns {Promise<undefined>} - undefined
    */
@@ -62,7 +59,6 @@ async function reingestGranule({
   asyncOperationId = undefined,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
-  getPgGranuleHandler = getUniqueGranuleByGranuleId,
 }) {
   const knex = await getKnexClient();
   const executionArn = path.basename(reingestParams.execution);
@@ -96,8 +92,7 @@ async function reingestGranule({
     knex,
     reingestParams.granuleId,
     granulePgModel,
-    granuleModel,
-    getPgGranuleHandler
+    granuleModel
   );
 
   return Lambda.invoke(process.env.invoke, lambdaPayload);
@@ -127,7 +122,6 @@ async function applyWorkflow({
   asyncOperationId = undefined,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
-  getPgGranuleHandler = getUniqueGranuleByGranuleId,
 }) {
   if (!workflow) {
     throw new TypeError('applyWorkflow requires a `workflow` parameter');
@@ -156,8 +150,7 @@ async function applyWorkflow({
     knex,
     granule.granuleId,
     granulePgModel,
-    granuleModel,
-    getPgGranuleHandler
+    granuleModel
   );
 
   await Lambda.invoke(process.env.invoke, lambdaPayload);
