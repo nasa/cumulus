@@ -155,6 +155,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     // is used properly, so just ensure that we pass the correct argument
     // to that function.
     t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
+    t.true(upsertPgGranuleStub.called);
   } finally {
     fileExistsStub.restore();
     buildPayloadSpy.restore();
