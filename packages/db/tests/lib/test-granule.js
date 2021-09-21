@@ -8,14 +8,17 @@ const {
   ExecutionPgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
+  ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeProviderRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
   getApiGranuleExecutionCumulusIds,
   migrationDir,
+  searchGranulesByApiProperties,
 } = require('../../dist');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
@@ -33,6 +36,10 @@ test.before(async (t) => {
 
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory();
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
   const collectionResponse = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.collection
@@ -40,6 +47,7 @@ test.before(async (t) => {
   t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -474,4 +482,224 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
   );
 
   t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by collection', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+
+  const record = await searchGranulesByApiProperties(
+    knex,
+    {
+      collectionId,
+    }
+  );
+  t.deepEqual([granule], record);
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by granule IDs', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+
+  const record = await searchGranulesByApiProperties(
+    knex,
+    {
+      granuleIds: granule.granule_id,
+    }
+  );
+  t.deepEqual([granule], record);
+
+  const [granule2] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }));
+  const records = await searchGranulesByApiProperties(
+    knex,
+    {
+      granuleIds: [granule.granule_id, granule2.granule_id],
+    }
+  );
+  t.deepEqual([granule, granule2], records);
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by provider', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+    providerPgModel,
+  } = t.context;
+
+  const provider = fakeProviderRecordFactory();
+  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      provider_cumulus_id: providerCumulusId,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+  const records = await searchGranulesByApiProperties(
+    knex,
+    {
+      providerName: provider.name,
+    }
+  );
+  t.deepEqual([granule], records);
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by updated_at from date', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  const now = Date.now();
+  const updatedAt = new Date(now);
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      updated_at: updatedAt,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+
+  const records = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtFrom: updatedAt,
+      },
+    }
+  );
+  t.deepEqual([granule], records);
+
+  const records2 = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtFrom: new Date(now - 1),
+      },
+    }
+  );
+  t.deepEqual([granule], records2);
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by updated_at to date', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  const now = Date.now();
+  const updatedAt = new Date(now);
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      updated_at: updatedAt,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+
+  const records = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtTo: updatedAt,
+      },
+    }
+  );
+  t.deepEqual([granule], records);
+
+  const records2 = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtTo: new Date(now + 1),
+      },
+    }
+  );
+  t.deepEqual([granule], records2);
+});
+
+test.serial('searchGranulesByApiProperties returns correct granules by updated_at date range date', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  const now = Date.now();
+  const updatedAt = new Date(now);
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      updated_at: updatedAt,
+    }),
+    '*'
+  );
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+
+  const records = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtFrom: updatedAt,
+        updatedAtTo: updatedAt,
+      },
+    }
+  );
+  t.deepEqual([granule], records);
+
+  const records2 = await searchGranulesByApiProperties(
+    knex,
+    {
+      updatedAtRange: {
+        updatedAtFrom: new Date(now - 1),
+        updatedAtTo: new Date(now + 1),
+      },
+    }
+  );
+  t.deepEqual([granule], records2);
 });

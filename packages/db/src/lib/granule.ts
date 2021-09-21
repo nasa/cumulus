@@ -1,11 +1,14 @@
 import Knex from 'knex';
 
-import { PostgresGranule } from '../types/granule';
+import { deconstructCollectionId } from '@cumulus/message/Collections';
+
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
+import { PostgresGranule } from '../types/granule';
+import { UpdatedAtRange } from '../types/record';
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { tableNames } = require('../tables');
 
 /**
  * Upsert a granule and a record in the granules/executions join table.
@@ -114,4 +117,60 @@ export const getApiGranuleExecutionCumulusIds = async (
     .searchByGranuleCumulusIds(knexOrTransaction, granuleCumulusIds);
 
   return executionCumulusIds;
+};
+
+/**
+ * Get cumulus IDs for all executions associated to a set of granules
+ *
+ * @param {Knex} knex - DB client
+ * @param {Object} searchParams
+ * @param {string} [searchParams.collectionId] - Collection ID
+ * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
+ * @param {string} [searchParams.providerName] - Provider.name
+ * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
+ * @returns {Knex.QueryBuilder}
+ */
+export const searchGranulesByApiProperties = (
+  knex: Knex,
+  {
+    collectionId,
+    granuleIds,
+    providerName,
+    updatedAtRange = {},
+  }: {
+    collectionId: string,
+    granuleIds: string | string[],
+    providerName: string,
+    updatedAtRange: UpdatedAtRange,
+  }
+): Knex.QueryBuilder => {
+  const {
+    granules: granulesTable,
+    collections: collectionsTable,
+    providers: providersTable,
+  } = tableNames;
+  return knex(granulesTable)
+    .select(`${granulesTable}.*`)
+    .modify((queryBuilder) => {
+      if (collectionId) {
+        const collectionNameAndVersion = deconstructCollectionId(collectionId);
+        queryBuilder.innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+        queryBuilder.where(`${collectionsTable}.name`, collectionNameAndVersion.name);
+        queryBuilder.where(`${collectionsTable}.version`, collectionNameAndVersion.version);
+      }
+      if (granuleIds) {
+        queryBuilder.whereIn(`${granulesTable}.granule_id`, [granuleIds].flat());
+      }
+      if (providerName) {
+        queryBuilder.leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+        queryBuilder.where(`${providersTable}.name`, providerName);
+      }
+      if (updatedAtRange.updatedAtFrom) {
+        queryBuilder.where(`${granulesTable}.updated_at`, '>=', updatedAtRange.updatedAtFrom);
+      }
+      if (updatedAtRange.updatedAtTo) {
+        queryBuilder.where(`${granulesTable}.updated_at`, '<=', updatedAtRange.updatedAtTo);
+      }
+    })
+    .groupBy(`${granulesTable}.cumulus_id`);
 };

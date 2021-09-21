@@ -112,6 +112,7 @@ export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
+  searchGranulesByApiProperties,
 } from './lib/granule';
 
 export {
