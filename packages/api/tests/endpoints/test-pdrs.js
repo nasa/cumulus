@@ -18,6 +18,7 @@ const {
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   fakeCollectionRecordFactory,
@@ -41,7 +42,6 @@ const {
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { del } = require('../../endpoints/pdrs');
 const { buildFakeExpressResponse } = require('./utils');
 

@@ -41,11 +41,20 @@ export const constructCollectionId = (name: string, version: string) =>
  * @alias module:Collections
  */
 export const deconstructCollectionId = (collectionId: string) => {
-  const [name, version] = collectionId.split(collectionIdSeparator);
-  return {
-    name,
-    version,
-  };
+  let name;
+  let version;
+  try {
+    [name, version] = collectionId.split(collectionIdSeparator);
+  } catch (error) {
+    throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
+  }
+  if (name && version) {
+    return {
+      name,
+      version,
+    };
+  }
+  throw new Error(`invalid collectionId: ${collectionId}`);
 };
 
 /**

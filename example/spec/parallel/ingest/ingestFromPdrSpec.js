@@ -420,7 +420,7 @@ describe('Ingesting from PDR', () => {
               getExecution,
               {
                 prefix: config.stackName,
-                arn: workflowExecution.executionArn,
+                arn: ingestGranuleWorkflowArn,
               },
               'completed'
             );

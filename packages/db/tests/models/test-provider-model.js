@@ -3,7 +3,7 @@ const test = require('ava');
 
 const cryptoRandomString = require('crypto-random-string');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
+const { migrationDir } = require('../../dist');
 
 const testDbName = `provider_${cryptoRandomString({ length: 10 })}`;
 

@@ -9,9 +9,9 @@ const {
   ExecutionPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
-
 const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
@@ -20,7 +20,6 @@ const {
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Execution = require('../../../models/executions');
 
 const {

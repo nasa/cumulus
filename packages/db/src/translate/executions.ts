@@ -144,5 +144,5 @@ export const translateApiExecutionToPostgresExecution = async (
     }
   }
 
-  return translatedRecord;
+  return <PostgresExecution>removeNilProperties(translatedRecord);
 };

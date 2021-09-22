@@ -18,6 +18,7 @@ const {
   PdrPgModel,
   ProviderPgModel,
   tableNames,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   createBucket,
@@ -26,8 +27,6 @@ const {
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { migratePdrRecord, migratePdrs } = require('../dist/lambda/pdrs');
 
 const buildCollectionId = (name, version) => `${name}___${version}`;
