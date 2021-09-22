@@ -2,7 +2,14 @@ const path = require('path');
 // path to module root
 const root = path.resolve(__dirname);
 
+const ignoredPackages = [
+  'cpu-features'
+];
+
 module.exports = {
+  plugins: [
+    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+  ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
