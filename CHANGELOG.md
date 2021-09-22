@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
 - **CUMULUS-2583**
   - Adds `queued` as option for granule's `status` field
+- **CUMULUS-2630**
+  - Adds a new workflow `DiscoverGranulesBackground` that discovers and writes
+    granules to a throttled background queue.  This allows discovery and ingest
+    of larger numbers of granules without running into limits with lambda
+    concurrency.
+
 
 ### Changed
 
@@ -1001,7 +1007,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after
-    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
     of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
