@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/sftp-client",
+<<<<<<< HEAD
   "version": "9.6.0",
+=======
+  "version": "9.6.0-alpha.1",
+>>>>>>> 92354b796... Upgrade ssh2 to v1.0.0 to fix vulnerability (#2464)
   "description": "A Promise-based SFTP client",
   "keywords": [
     "GIBS",
@@ -40,11 +44,12 @@
     "@cumulus/common": "9.6.0",
     "lodash": "^4.17.20",
     "mime-types": "^2.1.27",
-    "ssh2-sftp-client": "^5.2.1"
+    "ssh2": "^1.0.0",
+    "ssh2-sftp-client": "^7.0.4"
   },
   "devDependencies": {
     "@cumulus/checksum": "9.6.0",
     "@cumulus/test-data": "9.6.0",
-    "@types/ssh2-sftp-client": "^5.1.1"
+    "@types/ssh2-sftp-client": "^7.0.0"
   }
 }
