@@ -1,4 +1,5 @@
 const path = require('path');
+const { IgnorePlugin } = require('webpack');
 // path to module root
 const root = path.resolve(__dirname);
 
