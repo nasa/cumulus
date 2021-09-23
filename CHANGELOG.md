@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   issue in previous version.
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
 
 ### Fixed
 
