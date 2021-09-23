@@ -20,7 +20,7 @@ const {
   translatePostgresCollectionToApiCollection,
   getKnexClient,
   getCollectionsByGranuleIds,
-  searchGranulesByApiProperties,
+  getGranulesByApiPropertiesQuery,
   QuerySearchClient,
 } = require('@cumulus/db');
 
@@ -247,7 +247,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   );
 
   const searchParams = convertToDBGranuleSearchParams(recReportParams);
-  const granulesSearchQuery = searchGranulesByApiProperties(
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
     recReportParams.knex,
     searchParams,
     ['collectionName', 'collectionVersion', 'granule_id']

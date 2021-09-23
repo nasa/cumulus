@@ -164,7 +164,7 @@ export const getApiGranuleExecutionCumulusIds = async (
 };
 
 /**
- * Search granules by various API granule record properties.
+ * Helper to build a query to search granules by various API granule record properties.
  *
  * @param {Knex} knex - DB client
  * @param {Object} searchParams
@@ -175,7 +175,7 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {Array<string>} sortByFields - Fields to sort by
  * @returns {Knex.QueryBuilder}
  */
-export const searchGranulesByApiProperties = (
+export const getGranulesByApiPropertiesQuery = (
   knex: Knex,
   {
     collectionId,

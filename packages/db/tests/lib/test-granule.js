@@ -20,7 +20,7 @@ const {
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   migrationDir,
-  searchGranulesByApiProperties,
+  getGranulesByApiPropertiesQuery,
 } = require('../../dist');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
@@ -486,7 +486,7 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
   t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by collection', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by collection', async (t) => {
   const {
     collection,
     collectionId,
@@ -503,7 +503,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by collectio
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const record = await searchGranulesByApiProperties(
+  const record = await getGranulesByApiPropertiesQuery(
     knex,
     {
       collectionId,
@@ -520,7 +520,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by collectio
   );
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by granule IDs', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by granule IDs', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -537,7 +537,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by granule I
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const record = await searchGranulesByApiProperties(
+  const record = await getGranulesByApiPropertiesQuery(
     knex,
     {
       granuleIds: granule.granule_id,
@@ -561,7 +561,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by granule I
     '*'
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }));
-  const records = await searchGranulesByApiProperties(
+  const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
       granuleIds: [granule.granule_id, granule2.granule_id],
@@ -583,7 +583,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by granule I
   );
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by provider', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by provider', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -604,7 +604,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by provider'
     '*'
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
-  const records = await searchGranulesByApiProperties(
+  const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
       providerName: provider.name,
@@ -621,7 +621,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by provider'
   );
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by updated_at from date', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated_at from date', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -642,7 +642,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await searchGranulesByApiProperties(
+  const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
@@ -660,7 +660,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
     records
   );
 
-  const records2 = await searchGranulesByApiProperties(
+  const records2 = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
@@ -679,7 +679,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   );
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by updated_at to date', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated_at to date', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -700,7 +700,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await searchGranulesByApiProperties(
+  const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
@@ -718,7 +718,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
     records
   );
 
-  const records2 = await searchGranulesByApiProperties(
+  const records2 = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
@@ -737,7 +737,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   );
 });
 
-test.serial('searchGranulesByApiProperties returns correct granules by updated_at date range', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated_at date range', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -758,7 +758,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   );
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const records = await searchGranulesByApiProperties(
+  const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
@@ -777,7 +777,7 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
     records
   );
 
-  const records2 = await searchGranulesByApiProperties(
+  const records2 = await getGranulesByApiPropertiesQuery(
     knex,
     {
       updatedAtRange: {
