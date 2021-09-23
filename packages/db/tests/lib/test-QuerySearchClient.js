@@ -1,8 +1,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
+const orderBy = require('lodash/orderBy');
 
 const {
   generateLocalTestDb,
@@ -14,6 +13,7 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   getFilesAndGranuleInfoQuery,
+  migrationDir,
 } = require('../../dist');
 
 test.before(async (t) => {
@@ -31,13 +31,14 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
 
   const testCollection = fakeCollectionRecordFactory();
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.testGranule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
   });
   [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
     t.context.knex,
@@ -61,20 +62,24 @@ const createFileRecords = async ({
   knex,
   bucket,
 }, numOfFileRecords) => {
-  const records = [...new Array(numOfFileRecords).keys()]
+  const insertRecords = [...new Array(numOfFileRecords).keys()]
     .map((index) => ({
       bucket,
       key: `${index}_${cryptoRandomString({ length: 5 })}`,
       granule_cumulus_id: granuleCumulusId,
     }));
-  await Promise.all(records.map((record) => filePgModel.create(knex, record)));
+  const records = await filePgModel.insert(
+    knex,
+    insertRecords,
+    '*'
+  );
   return records;
 };
 
 test('QuerySearchClient.shift() returns next record from current set of results correctly', async (t) => {
   const { knex, bucket, testGranule } = t.context;
 
-  const records = await createFileRecords(t.context, 2);
+  const records = orderBy(await createFileRecords(t.context, 2), ['cumulus_id']);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -107,7 +112,7 @@ test('QuerySearchClient.shift() returns next record from current set of results 
 test('QuerySearchClient.shift() returns next record if next record must be fetched', async (t) => {
   const { knex, bucket, testGranule } = t.context;
 
-  const records = await createFileRecords(t.context, 2);
+  const records = orderBy(await createFileRecords(t.context, 2), ['cumulus_id']);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,

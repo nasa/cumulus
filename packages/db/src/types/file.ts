@@ -15,7 +15,6 @@ export interface PostgresFile {
 export interface PostgresFileRecord extends Omit<PostgresFile, 'file_size'> {
   bucket: string,
   key: string,
-  file_size?: string,
   cumulus_id: number,
   file_size?: string,
   created_at: Date,

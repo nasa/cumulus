@@ -1,8 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
-
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
@@ -12,6 +10,7 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   getFilesAndGranuleInfoQuery,
+  migrationDir,
 } = require('../../dist');
 
 test.before(async (t) => {
@@ -29,10 +28,11 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
 
   const testCollection = fakeCollectionRecordFactory();
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.after.always(async (t) => {

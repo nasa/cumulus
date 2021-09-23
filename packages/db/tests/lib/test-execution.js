@@ -23,7 +23,6 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   getExecutionArnsByGranuleCumulusId,
   migrationDir,
-  getExecutionArnsByGranuleCumulusId,
 } = require('../../dist');
 
 /**

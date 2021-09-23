@@ -741,6 +741,8 @@ test.serial('searchGranulesByApiProperties returns correct granules by updated_a
   const {
     collection,
     collectionCumulusId,
+    granulePgModel,
+    knex,
   } = t.context;
 
   const now = Date.now();
