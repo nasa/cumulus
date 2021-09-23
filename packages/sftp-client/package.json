@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/sftp-client",
-<<<<<<< HEAD
   "version": "9.6.0",
-=======
-  "version": "9.6.0-alpha.1",
->>>>>>> 92354b796... Upgrade ssh2 to v1.0.0 to fix vulnerability (#2464)
   "description": "A Promise-based SFTP client",
   "keywords": [
     "GIBS",
