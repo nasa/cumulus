@@ -34,7 +34,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates cumulus-tf/cumulus/variables.tf to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard for default deployments.
-
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
 
 ### Fixed
 
