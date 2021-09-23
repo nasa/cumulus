@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/common",
-<<<<<<< HEAD
   "version": "9.6.0",
-=======
-  "version": "9.6.0-alpha.1",
->>>>>>> master
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
