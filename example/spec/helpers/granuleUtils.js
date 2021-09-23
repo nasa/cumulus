@@ -218,6 +218,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'lastUpdateDateTime',
       'productionDateTime',
       'updatedAt',
+      'timestamp',
     ];
 
     const resp = await listGranules({
