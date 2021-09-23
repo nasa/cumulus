@@ -41,10 +41,6 @@ module.exports = {
           },
         ],
       },
-      {
-        test: /\.node$/,
-        loader: "node-loader",
-      },
     ],
   },
   devtool: 'inline-source-map',
