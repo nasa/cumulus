@@ -56,6 +56,9 @@ of response and not the raw API endpoint response
 
 ### Changed
 
+- Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
+  upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
+  issue in previous version.
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2302**
