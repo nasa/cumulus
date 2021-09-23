@@ -1,11 +1,25 @@
 import Knex from 'knex';
 
-import { PostgresGranule } from '../types/granule';
+import { RecordDoesNotExist } from '@cumulus/errors';
+import Logger from '@cumulus/logger';
+
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
+
+export const getGranuleCollectionId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granule: PostgresGranule
+) => {
+  const collectionPgModel = new CollectionPgModel();
+  const collection = await collectionPgModel.get(
+    knexOrTransaction, { cumulus_id: granule.collection_cumulus_id }
+  );
+  return constructCollectionId(collection.name, collection.version);
+};
 
 /**
  * Upsert a granule and a record in the granules/executions join table.
@@ -86,6 +100,36 @@ export const getApiGranuleCumulusIds = async (
     });
   }));
   return [...new Set(granuleCumulusIds)];
+};
+
+/**
+ * Get one Granule for a granule_id. If more than one or none are found, throw an error
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {string} granuleId - a Granule ID
+ * @param {GranulePgModel} granulePgModel - Granule PG model class instance
+ * @returns {Promise<PostgresGranuleRecord>}
+ */
+export const getUniqueGranuleByGranuleId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleId: string,
+  granulePgModel = new GranulePgModel()
+): Promise<PostgresGranuleRecord> => {
+  const logger = new Logger({ sender: '@cumulus/api/granules' });
+
+  const PgGranuleRecords = await granulePgModel.search(knexOrTransaction, {
+    granule_id: granuleId,
+  });
+  if (PgGranuleRecords.length > 1) {
+    logger.warn(`Granule ID ${granuleId} is not unique across collections, cannot make an update action based on granule Id alone`);
+    throw new Error(`Failed to write ${granuleId} due to granuleId duplication on postgres granule record`);
+  }
+  if (PgGranuleRecords.length === 0) {
+    throw new RecordDoesNotExist(`Granule ${granuleId} does not exist or was already deleted`);
+  }
+
+  return PgGranuleRecords[0];
 };
 
 /**

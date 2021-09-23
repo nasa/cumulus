@@ -88,7 +88,10 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
 export {
   translateApiPdrToPostgresPdr,
   translatePostgresPdrToApiPdr,
@@ -103,8 +106,14 @@ export {
 export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
+  getGranuleCollectionId,
+  getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
+
+export {
+  getExecutionArnsByGranuleCumulusId,
+} from './lib/execution';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

@@ -9,8 +9,10 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   getKnexClient,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
   translatePostgresCollectionToApiCollection,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const {
   addToLocalES,
@@ -35,6 +37,7 @@ const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const Execution = require('../models/executions');
 const { moveGranule } = require('../lib/granules');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
@@ -175,29 +178,54 @@ async function put(req, res) {
   const {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
+    esClient = await Search.es(),
+    reingestHandler = reingestGranule,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
+  let newApiGranule;
 
   if (!action) {
-    if (req.body.granuleId === req.params.granuleName) {
-      return update(req, res);
+    const apiGranule = req.body;
+    const oldDynamoGranule = await granuleModel.get({ granuleId });
+    const oldPgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
+
+    apiGranule.updatedAt = Date.now();
+    apiGranule.createdAt = oldPgGranule.created_at.getTime();
+    const postgresGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+
+    try {
+      await knex.transaction(async (trx) => {
+        await granulePgModel.upsert(trx, postgresGranule);
+        newApiGranule = await granuleModel.create(apiGranule);
+        await indexGranule(esClient, newApiGranule, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Revert Dynamo record update if any write fails
+      await granuleModel.create(oldDynamoGranule);
+      throw innerError;
     }
-    return res.boom.badRequest(
-      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
-    );
+    return res.send(newApiGranule);
   }
 
-  const granule = await granuleModel.get({ granuleId });
+  const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
+
+  const collectionPgModel = new CollectionPgModel();
+  const pgCollection = await collectionPgModel.get(
+    knex,
+    { cumulus_id: pgGranule.collection_cumulus_id }
+  );
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  });
 
   if (action === 'reingest') {
-    const collectionPgModel = new CollectionPgModel();
-    const { name, version } = deconstructCollectionId(granule.collectionId);
-    const collection = translatePostgresCollectionToApiCollection(
-      await collectionPgModel.get(knex, { name, version })
-    );
+    const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
@@ -213,52 +241,60 @@ async function put(req, res) {
     if (targetExecution) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
-
-    await granuleModel.reingest({
-      ...granule,
+    const reingestParams = {
+      ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
       queueUrl: process.env.backgroundQueueUrl,
+    };
+
+    await reingestHandler({
+      reingestParams,
     });
 
     const response = {
       action,
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       status: 'SUCCESS',
     };
 
-    if (collection.duplicateHandling !== 'replace') {
+    if (apiCollection.duplicateHandling !== 'replace') {
       response.warning = 'The granule files may be overwritten';
     }
     return res.send(response);
   }
 
   if (action === 'applyWorkflow') {
-    await granuleModel.applyWorkflow(
-      granule,
-      body.workflow,
-      body.meta
-    );
+    await applyWorkflow({
+      granule: apiGranule,
+      workflow: body.workflow,
+      meta: body.meta,
+    });
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action: `applyWorkflow ${body.workflow}`,
       status: 'SUCCESS',
     });
   }
 
   if (action === 'removeFromCmr') {
-    await unpublishGranule(knex, granule);
+    await unpublishGranule({
+      knex,
+      pgGranuleRecord: pgGranule,
+      pgCollection: pgCollection,
+    });
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
   }
 
   if (action === 'move') {
+    // FUTURE - this should be removed from the granule model
     const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
-      granule,
+      apiGranule,
       body.destinations
     );
 
@@ -270,14 +306,14 @@ async function put(req, res) {
     }
 
     await moveGranule(
-      granule,
+      apiGranule,
       body.destinations,
       process.env.DISTRIBUTION_ENDPOINT,
       granuleModel
     );
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
@@ -424,18 +460,27 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+  const {
+    knex = await getKnexClient(),
+  } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
-  let result;
+  let granule;
   try {
-    result = await (new Granule()).get({ granuleId });
+    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
-    if (error.message.startsWith('No record found')) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');
     }
 
     throw error;
   }
+
+  // Get related files, execution ARNs, provider, PDR, and collection and format
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    knexOrTransaction: knex,
+  });
 
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)

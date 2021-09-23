@@ -62,6 +62,12 @@ of response and not the raw API endpoint response
   issue in previous version.
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2308**
+    - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
+    - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
+    - Update `unpublishGranule` (used in /granules PUT) to use PostgreSQL Granule as source rather than DynamoDB Granule
+    - Update integration tests to use `waitForApiStatus` instead of `waitForModelStatus`
+    - Update Granule ingest to update the Postgres Granule status as well as the DynamoDB Granule status
   - **CUMULUS-2302**
     - Update API collection GET endpoint to read individual provider records from
       PostgreSQL database instead of DynamoDB

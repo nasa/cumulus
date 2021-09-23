@@ -137,6 +137,7 @@ export const generateGranuleApiRecord = async ({
   files,
   processingTimeInfo = {},
   cmrUtils,
+  timestamp,
   duration,
   productVolume,
   timeToPreprocess,
@@ -152,9 +153,10 @@ export const generateGranuleApiRecord = async ({
   pdrName?: string,
   status: GranuleStatus,
   queryFields?: Object,
-  updatedAt?: string,
+  updatedAt: number,
   processingTimeInfo?: ExecutionProcessingTimes,
   files?: ApiFile[],
+  timestamp: number,
   cmrUtils: CmrUtilsClass
   cmrTemporalInfo?: GranuleTemporalInfo,
   duration: number,
@@ -174,7 +176,6 @@ export const generateGranuleApiRecord = async ({
     published = false,
   } = granule;
 
-  const now = Date.now();
   // Get cmr temporalInfo ( beginningDateTime, endingDateTime,
   // productionDateTime, lastUpdateDateTime)
   let temporalInfo = { ...cmrTemporalInfo };
@@ -194,8 +195,8 @@ export const generateGranuleApiRecord = async ({
     error,
     published,
     createdAt: workflowStartTime,
-    timestamp: now,
-    updatedAt: updatedAt || now,
+    timestamp,
+    updatedAt,
     duration,
     productVolume,
     timeToPreprocess,

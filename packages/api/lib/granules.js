@@ -5,12 +5,13 @@ const isNil = require('lodash/isNil');
 const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 
 const {
   generateMoveFileParams,
   moveGranuleFile,
+  getNameOfFile,
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -25,6 +26,7 @@ const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
+
 const translateGranule = async (
   granule,
   fileUtils = FileUtils
@@ -125,7 +127,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       });
       // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push(file);
+      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
@@ -170,9 +172,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     .reduce(
       (acc, { name, type }) => ({ ...acc, [name]: type }),
       {}
-    );
-
-  const distributionBucketMap = await fetchDistributionBucketMap();
+    ); const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,

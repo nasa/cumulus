@@ -394,6 +394,7 @@ test('storeGranule() correctly stores granule record', async (t) => {
     workflowStatus,
     status: getGranuleStatus(workflowStatus, granule1),
     cmrUtils,
+    updatedAt: Date.now(),
   });
   await granuleModel.storeGranule(granuleRecord);
 
