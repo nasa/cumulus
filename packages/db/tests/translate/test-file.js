@@ -42,7 +42,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
 });
 
 test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
-  const file = {
+  const apiFile = {
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
     fileName: cryptoRandomString({ length: 3 }),
@@ -52,14 +52,14 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
     source: 'fake-source',
   };
   t.deepEqual(
-    translateApiFiletoPostgresFile(file),
+    translateApiFiletoPostgresFile(apiFile),
     omit(
       {
-        ...file,
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        file_name: file.fileName,
-        file_size: file.size,
+        ...apiFile,
+        checksum_type: apiFile.checksumType,
+        checksum_value: apiFile.checksum,
+        file_name: apiFile.fileName,
+        file_size: apiFile.size,
         path: undefined,
       },
       apiFileOmitKeys
@@ -68,27 +68,27 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
 });
 
 test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) => {
-  const file = {
+  const apiFile = {
     bucket: undefined,
-    key: undefined,
-    fileName: cryptoRandomString({ length: 3 }),
-    filename: 's3://cumulus-test-sandbox-private/somekey',
-    checksumType: 'md5',
     checksum: 'bogus-value',
+    checksumType: 'md5',
+    filename: 's3://cumulus-test-sandbox-private/somekey',
+    fileName: cryptoRandomString({ length: 3 }),
+    key: undefined,
     size: 100,
     source: 'fake-source',
   };
   t.deepEqual(
-    translateApiFiletoPostgresFile(file),
+    translateApiFiletoPostgresFile(apiFile),
     omit(
       {
-        ...file,
+        ...apiFile,
         bucket: 'cumulus-test-sandbox-private',
+        checksum_type: apiFile.checksumType,
+        checksum_value: apiFile.checksum,
+        file_name: apiFile.fileName,
+        file_size: apiFile.size,
         key: 'somekey',
-        checksum_type: file.checksumType,
-        checksum_value: file.checksum,
-        file_name: file.fileName,
-        file_size: file.size,
         path: undefined,
       },
       apiFileOmitKeys

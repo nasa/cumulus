@@ -21,6 +21,7 @@ const {
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
   upsertGranuleWithExecutionJoinRecord,
+  getExecutionArnsByGranuleCumulusId,
   migrationDir,
   getExecutionArnsByGranuleCumulusId,
 } = require('../../dist');
@@ -88,15 +89,17 @@ test.before(async (t) => {
   t.context.knex = knex;
 
   t.context.granulePgModel = new GranulePgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
-
-  const [pgCollection] = await collectionPgModel.create(
+  t.context.collection = fakeCollectionRecordFactory();
+  const collectionPgRecord = await collectionPgModel.create(
     t.context.knex,
-    fakeCollectionRecordFactory()
+    t.context.collection
   );
-  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  t.context.collectionCumulusId = collectionPgRecord[0].cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });

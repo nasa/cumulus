@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
-const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
@@ -12,7 +11,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -590,36 +588,6 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   }
 });
 
-test.serial(
-  'reingest pushes a message with the correct queueUrl',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-    const queueUrl = 'testqueueUrl';
-    const granule = {
-      execution: 'some/execution',
-      collectionId: 'MyCollection___006',
-      provider: 'someProvider',
-      queueUrl,
-    };
-    const fileExists = () => Promise.resolve(true);
-    const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
-    const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-
-    try {
-      await granuleModel.reingest(granule);
-      // Rule.buildPayload has its own unit tests to ensure the queue name
-      // is used properly, so just ensure that we pass the correct argument
-      // to that function.
-      t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
-    } finally {
-      fileExistsStub.restore();
-      buildPayloadSpy.restore();
-      updateStatusStub.restore();
-    }
-  }
-);
-
 test('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { granuleModel } = t.context;
 
@@ -649,72 +617,4 @@ test('_getMutableFieldNames() returns correct fields for completed status', (t) 
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
-});
-
-test('applyWorkflow throws error if workflow argument is missing', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = {
-    granuleId: randomString(),
-  };
-
-  await t.throwsAsync(
-    granuleModel.applyWorkflow(granule),
-    {
-      instanceOf: TypeError,
-    }
-  );
-});
-
-test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2();
-  const workflow = randomString();
-  const lambdaPayload = {
-    payload: {
-      granules: [granule],
-    },
-  };
-
-  await granuleModel.create(granule);
-
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
-  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
-  t.teardown(() => {
-    buildPayloadStub.restore();
-    lambdaInvokeStub.restore();
-  });
-
-  await granuleModel.applyWorkflow(granule, workflow);
-
-  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
-  t.is(status, 'running');
-
-  t.true(lambdaInvokeStub.called);
-  t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
-});
-
-test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2();
-  const workflow = randomString();
-  const queueUrl = randomString();
-
-  await granuleModel.create(granule);
-
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
-  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
-  t.teardown(() => {
-    buildPayloadStub.restore();
-    lambdaInvokeStub.restore();
-  });
-
-  await granuleModel.applyWorkflow(granule, workflow, undefined, queueUrl);
-
-  t.true(buildPayloadStub.called);
-  t.like(buildPayloadStub.args[0][0], {
-    queueUrl,
-  });
 });

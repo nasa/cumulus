@@ -9,7 +9,6 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -41,7 +40,6 @@ const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'SyncGranule';
 const providersDir = './data/providers/s3/';
@@ -53,7 +51,6 @@ describe('The Sync Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let failingExecutionArn;
-  let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
@@ -68,7 +65,6 @@ describe('The Sync Granules workflow', () => {
     lambdaStep = new LambdaStep();
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -325,9 +321,12 @@ describe('The Sync Granules workflow', () => {
         expect(f.duplicate_found).toBeTrue();
       });
 
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'completed'
       );
 

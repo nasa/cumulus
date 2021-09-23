@@ -99,6 +99,7 @@ const ingestAndPublishGranuleExecutionArns = [];
  *
  * @param {string} prefix - stack Prefix
  * @param {string} sourceBucket - testing source bucket
+ * @param {string} stackName - stack used for testing
  * @returns {Promise<Object>}  The collection created
  */
 const createActiveCollection = async (prefix, sourceBucket) => {

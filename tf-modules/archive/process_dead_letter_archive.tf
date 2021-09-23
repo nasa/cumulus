@@ -90,11 +90,13 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
   memory_size      = 512
 
   environment {
+    // TODO - need sns topic ARNs for granules, PDRs
     variables = {
       acquireTimeoutMillis      = var.rds_connection_timing_configuration.acquireTimeoutMillis
       createRetryIntervalMillis = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis       = var.rds_connection_timing_configuration.createTimeoutMillis
-      databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      execution_sns_topic_arn   = aws_sns_topic.report_executions_topic.arn
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       ExecutionsTable           = var.dynamo_tables.executions.name
       GranulesTable             = var.dynamo_tables.granules.name
@@ -103,7 +105,6 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       reapIntervalMillis        = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                 = var.prefix
       system_bucket             = var.system_bucket
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
       ES_HOST = var.elasticsearch_hostname
     }
   }
