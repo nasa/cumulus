@@ -17,7 +17,6 @@ const {
   FilePgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  destroyLocalTestDb,
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiFiletoPostgresFile,

@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
-const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -13,6 +12,7 @@ const {
   GranulePgModel,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const {
   addToLocalES,
@@ -100,68 +100,6 @@ const create = async (req, res) => {
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
-};
-
-/**
- * Update existing granule
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} promise of an express response object.
- */
-const update = async (req, res) => {
-  const {
-    granuleModel = new Granule(),
-    granulePgModel = new GranulePgModel(),
-    knex = await getKnexClient(),
-    esClient = await Search.es(),
-  } = req.testContext || {};
-  const body = req.body || {};
-  const { retries = 0, status, ...restOfBody } = body;
-
-  let existingGranule;
-
-  try {
-    existingGranule = await pRetry(
-      async () => await granuleModel.get({ granuleId: body.granuleId }),
-      {
-        retries,
-      }
-    );
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
-    }
-    return res.boom.badRequest(errorify(error));
-  }
-
-  let updatedBody = { status, ...body };
-  let message = '';
-
-  // Only set status to queued if granule was running
-  // Prevents race condition of setting granule to queued after completed
-  if (status === 'queued' && existingGranule.status !== 'running') {
-    updatedBody = restOfBody;
-    message = ' Skipped setting status to queued because granule was not running';
-  }
-
-  const updatedGranule = {
-    ...existingGranule,
-    updatedAt: Date.now(),
-    ...updatedBody,
-    granuleModel,
-    granulePgModel,
-  };
-
-  try {
-    await writeGranuleFromApi(updatedGranule, knex, esClient);
-  } catch (error) {
-    log.error('failed to update granule', error);
-    return res.boom.badRequest(errorify(error));
-  }
-  return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}${message}`,
-  });
 };
 
 /**
