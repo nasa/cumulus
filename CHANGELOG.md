@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard.
+  - Updates cumulus-tf/cumulus/variables.tf to change
+    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
+    the dashboard.
 
 
 ### Fixed
