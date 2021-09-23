@@ -21,6 +21,7 @@ const {
   localStackConnectionEnv,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
+  translateApiExecutionToPostgresExecution,
   translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
@@ -254,7 +255,6 @@ test.before(async (t) => {
   // we need this as granules *should have* a related execution
 
   t.context.testExecution = fakeExecutionRecordFactory();
-  const executionPgModel = new ExecutionPgModel();
   const [testExecution] = (
     await executionPgModel.create(t.context.knex, t.context.testExecution)
   );
@@ -321,13 +321,6 @@ test.beforeEach(async (t) => {
         collection_cumulus_id: t.context.collectionCumulusId,
         duration: 52.235,
         timestamp: new Date(Date.now()),
-      }
-    ),
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId3,
-        status: 'running',
-        collection_cumulus_id: t.context.collectionCumulusId,
       }
     ),
   ];
