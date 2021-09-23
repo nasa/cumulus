@@ -2,6 +2,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
@@ -13,8 +14,9 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  upsertGranuleWithExecutionJoinRecord,
   getApiGranuleExecutionCumulusIds,
+  getUniqueGranuleByGranuleId,
+  upsertGranuleWithExecutionJoinRecord,
   migrationDir,
 } = require('../../dist');
 
@@ -474,4 +476,73 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
   );
 
   t.deepEqual(results.sort(), [executionCumulusId, secondExecutionCumulusId].sort());
+});
+
+test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granulePgModel,
+  } = t.context;
+
+  const fakeGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranule);
+
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  t.deepEqual(
+    await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
+    pgGranule
+  );
+});
+
+test('getUniqueGranuleByGranuleId() throws an error if more than one granule is found', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    collectionPgModel,
+    granulePgModel,
+  } = t.context;
+
+  const granuleId = 1;
+
+  const collection = fakeCollectionRecordFactory({ name: 'collectionName2', version: 'collectionVersion2' });
+  const [collectionPgRecord] = await collectionPgModel.create(knex, collection);
+  const collectionCumulusId2 = collectionPgRecord.cumulus_id;
+
+  // 2 records. Same granule ID, different collections
+  const fakeGranules = [
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      granule_id: granuleId,
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId2,
+      granule_id: granuleId,
+    }),
+  ];
+
+  const granuleIds = await Promise.all(fakeGranules.map((fakeGranule) =>
+    granulePgModel.create(knex, fakeGranule)));
+
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleIds[0][0] });
+
+  await t.throwsAsync(
+    getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
+    { instanceOf: Error }
+  );
+});
+
+test('getUniqueGranuleByGranuleId() throws an error if no granules are found', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  await t.throwsAsync(
+    getUniqueGranuleByGranuleId(knex, 99999, granulePgModel),
+    { instanceOf: RecordDoesNotExist }
+  );
 });

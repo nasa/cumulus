@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { models: { Granule } } = require('@cumulus/api');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
@@ -17,9 +16,6 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
-const {
-  waitForModelStatus,
-} = require('../../helpers/apiUtils');
 const {
   createTimestampedTestId,
   createTestDataPath,
@@ -46,7 +42,6 @@ describe('The Ingest Granule failure workflow', () => {
 
   let beforeAllFailed = false;
   let config;
-  let granuleModel;
   let inputPayload;
   let pdrFilename;
   let testDataFolder;
@@ -64,7 +59,6 @@ describe('The Ingest Granule failure workflow', () => {
       const provider = { id: `s3_provider${testSuffix}` };
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
 
       // populate collections, providers and test data
       await Promise.all([
@@ -225,9 +219,12 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with an error object', async () => {
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'failed'
       );
 
