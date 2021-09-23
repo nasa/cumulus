@@ -136,11 +136,11 @@ const update = async (req, res) => {
     updatedBody = restOfBody;
     message = ' Skipped setting status to queued because granule was not running';
   }
-
+  const now = Date.now();
   const updatedGranule = {
     ...existingGranule,
-    updatedAt: Date.now(),
-    timestamp: Date.now(),
+    updatedAt: now,
+    timestamp: now,
     ...updatedBody,
   };
 
