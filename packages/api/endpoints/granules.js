@@ -140,6 +140,7 @@ const update = async (req, res) => {
   const updatedGranule = {
     ...existingGranule,
     updatedAt: Date.now(),
+    timestamp: Date.now(),
     ...updatedBody,
   };
 
