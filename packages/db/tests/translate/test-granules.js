@@ -45,6 +45,7 @@ test.before(async (t) => {
     t.context.collection
   );
   const collectionCumulusId = collectionPgRecord.cumulus_id;
+  t.context.collectionCumulusId = collectionCumulusId;
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
@@ -62,7 +63,7 @@ test.before(async (t) => {
 
   // Create Granule
   t.context.granulePgModel = new GranulePgModel();
-  [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
+  [t.context.postgresGranule] = await t.context.granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       beginning_date_time: new Date(Date.now() - 300 * 1000),
@@ -87,8 +88,10 @@ test.before(async (t) => {
       time_to_process: 0,
       timestamp: new Date(Date.now() - 120 * 1000),
       updated_at: new Date(Date.now()),
-    })
+    }),
+    '*'
   );
+  t.context.granuleCumulusId = Number.parseInt(t.context.postgresGranule.cumulus_id, 10);
 
   // Create executions
   const executionPgModel = new ExecutionPgModel();
@@ -136,7 +139,7 @@ test.before(async (t) => {
       created_at: createdAt,
       file_name: 's3://cumulus-test-sandbox-private/firstKey',
       file_size: 2098711627776,
-      granule_cumulus_id: 1,
+      granule_cumulus_id: t.context.granuleCumulusId,
       key: 'firstKey',
       path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
@@ -149,7 +152,7 @@ test.before(async (t) => {
       created_at: createdAt,
       file_name: 's3://cumulus-test-sandbox-private/secondKey',
       file_size: 1099511627776,
-      granule_cumulus_id: 1,
+      granule_cumulus_id: t.context.granuleCumulusId,
       key: 'secondKey',
       path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
@@ -166,12 +169,9 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    granulePgModel,
-    granuleCumulusId,
     executions,
+    postgresGranule,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
@@ -241,12 +241,9 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    granulePgModel,
-    granuleCumulusId,
     executions,
+    postgresGranule,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
@@ -319,6 +316,47 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   );
 });
 
+test('translatePostgresGranuleToApiGranule omits files property from API granule if there are no PostgreSQL files', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    collectionCumulusId,
+  } = t.context;
+
+  const [pgGranule] = await t.context.granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+
+  const expectedApiGranule = {
+    collectionId: 'collectionName___collectionVersion',
+    createdAt: pgGranule.created_at.getTime(),
+    granuleId: pgGranule.granule_id,
+    status: pgGranule.status,
+    updatedAt: pgGranule.updated_at.getTime(),
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
 test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
   const {
     knex,
@@ -326,11 +364,8 @@ test('translatePostgresGranuleToApiGranule throws an error if the Collection doe
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    granulePgModel,
-    granuleCumulusId,
+    postgresGranule,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   // No cumulus_id set so this will not match the granule's collection_cumulus_id
   const collection = fakeCollectionRecordFactory({
@@ -357,12 +392,9 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    granulePgModel,
-    granuleCumulusId,
     executions,
+    postgresGranule,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   delete postgresGranule.pdr_cumulus_id;
   delete postgresGranule.provider_cumulus_id;

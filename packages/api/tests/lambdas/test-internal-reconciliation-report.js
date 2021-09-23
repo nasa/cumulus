@@ -70,7 +70,9 @@ test.beforeEach(async (t) => {
   esClient = await Search.es();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;
-  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir, {
+    KNEX_DEBUG: 'true',
+  });
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   process.env = {

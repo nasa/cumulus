@@ -52,7 +52,7 @@ export const translatePostgresGranuleToApiGranule = async ({
   );
 
   if (granulePgRecord.collection_cumulus_id !== collection.cumulus_id) {
-    throw new ValidationError(`Collection ${collection.cumulus_id} does not match the Granule's Collection ${granulePgRecord.collection_cumulus_id}`);
+    throw new ValidationError(`Input collection.cumulus_id: ${collection.cumulus_id} does not match the granule PG record collection_cumulus_id: ${granulePgRecord.collection_cumulus_id}`);
   }
 
   const files = await filePgModel.search(
@@ -89,9 +89,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
     error: granulePgRecord.error,
     execution: executionArns[0] ? getExecutionUrlFromArn(executionArns[0].arn) : undefined,
-    files: files.map((file) => ({
-      ...translatePostgresFileToApiFile(file),
-    })),
+    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : undefined,
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
     pdrName: pdr ? pdr.name : undefined,
