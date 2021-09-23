@@ -1885,8 +1885,15 @@ test.serial('update (PUT) modifies timestamp and updatedAt values but does not c
   t.is(updatedDynamoRecord.createdAt, createdAtTime);
   t.true(updatedDynamoRecord.timestamp > originalDynamoRecord.timestamp);
   t.true(updatedDynamoRecord.updatedAt > originalDynamoRecord.updatedAt);
-  t.true(new Date(updatedPostgresRecord.timestamp).valueOf() > new Date(originalPostgresRecord.timestamp).valueOf());
-  t.is(new Date(updatedPostgresRecord.created_at).valueOf(), new Date(originalPostgresRecord.created_at).valueOf());
+  t.true(
+    new Date(updatedPostgresRecord.timestamp).valueOf()
+      >
+      new Date(originalPostgresRecord.timestamp).valueOf()
+  );
+  t.is(
+    new Date(updatedPostgresRecord.created_at).valueOf(),
+    new Date(originalPostgresRecord.created_at).valueOf()
+  );
 });
 
 test.serial('update (PUT) returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
