@@ -84,7 +84,7 @@ A number property that determines the level of concurrency with which granule du
 
 Limiting concurrency helps to avoid throttling by the AWS Lambda API and helps to avoid encountering account Lambda concurrency limitations.
 
-We do not recommend increasing this value to a level at which you may encounter throttling errors, but if you are seeing Lambda.Timeout errors when discover-granules discovers a large number of granules with `skip` or `error` duplicate handling, you may either wish to increase this value or convert the discover-granules task to an ECS activity, which does not face similar runtime constraints.
+We do not recommend increasing this value unless you are seeing Lambda.Timeout errors when discover-granules discovers a large number of granules with `skip` or `error` duplicate handling. However, as increasing the concurrency may lead to Lambda API or Lambda concurrency throttling errors, you may wish to consider converting the discover-granules task to an ECS activity, which does not face similar runtime constraints.
 
 The default value is 3.
 

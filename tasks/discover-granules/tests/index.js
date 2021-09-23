@@ -319,7 +319,10 @@ test('discover granules using S3 throws error when discovery fails',
   });
 
 test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) => {
-  const result = await handleDuplicates(t.context.filesByGranuleId, 'skip');
+  const result = await handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'skip',
+  });
 
   t.is(Object.keys(result).length, 2);
   t.is(result.duplicate, undefined);
@@ -327,31 +330,46 @@ test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) =>
 
 test(
   'handleDuplicates throws Error on duplicateHandling set to "error"',
-  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'error'))
+  (t) => t.throwsAsync(handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'error',
+  }))
 );
 
 test(
   'handleDuplicates throws Error on an invalid duplicateHandling configuration',
-  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'foobar'))
+  (t) => t.throwsAsync(handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'foobar',
+  }))
 );
 
 test('handleDuplicates does not filter when duplicateHandling is set to "replace"', async (t) => {
   t.deepEqual(
-    await handleDuplicates(t.context.filesByGranuleId, 'replace'),
+    await handleDuplicates({
+      filesByGranuleId: t.context.filesByGranuleId,
+      duplicateHandling: 'replace',
+    }),
     t.context.filesByGranuleId
   );
 });
 
 test('handleDuplicates does not filter when duplicateHandling is set to "version"', async (t) => {
   t.deepEqual(
-    await handleDuplicates(t.context.filesByGranuleId, 'version'),
+    await handleDuplicates({
+      filesByGranuleId: t.context.filesByGranuleId,
+      duplicateHandling: 'version',
+    }),
     t.context.filesByGranuleId
   );
 });
 
 test('filterDuplicates returns a set of filtered keys', async (t) => {
   t.deepEqual(
-    await filterDuplicates(['duplicate', 'key1', 'key2'], 'skip'),
+    await filterDuplicates({
+      granuleIds: ['duplicate', 'key1', 'key2'],
+      duplicateHandling: 'skip',
+    }),
     ['key1', 'key2']
   );
 });
