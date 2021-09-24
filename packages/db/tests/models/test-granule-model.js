@@ -402,6 +402,70 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
   t.is(record.status, 'running');
 });
 
+test('GranulePgModel.upsert() will not allow a queued status to replace a completed status for same execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'completed');
+});
+
+test('GranulePgModel.upsert() will allow a queued status to replace a non-queued status for different execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const [newExecutionCumulusId] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'queued');
+});
+
 test('GranulePgModel.upsert() will not allow a final state from an older execution to overwrite the completed state from a newer execution', async (t) => {
   const {
     knex,
