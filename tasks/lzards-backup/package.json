@@ -49,7 +49,7 @@
     "@cumulus/launchpad-auth": "9.5.0",
     "@cumulus/logger": "9.5.0",
     "@cumulus/message": "9.5.0",
-    "got": "11.7.0"
+    "got": "11.8.2"
   },
   "devDependencies": {
     "@cumulus/types": "9.5.0"
