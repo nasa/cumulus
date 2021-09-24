@@ -11,6 +11,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
 
+### Changed
+
+- **CUMULUS-2695**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
+    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
+    should increase this value.
+  - Updates cumulus-tf/cumulus/variables.tf to change
+    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
+    the dashboard for default deployments.
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
+
 ## [v9.6.0] 2021-09-20
 
 ### Added
@@ -31,16 +44,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   issue in previous version.
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
-- **CUMULUS-2695**
-  - Updates the example/cumulus-tf deployment to change
-    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
-    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
-    should increase this value.
-  - Updates cumulus-tf/cumulus/variables.tf to change
-    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
-    the dashboard for default deployments.
-- **CUMULUS-NONE**
-  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
 
 ### Fixed
 
