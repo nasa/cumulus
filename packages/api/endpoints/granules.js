@@ -112,7 +112,6 @@ const update = async (req, res) => {
   const { retries = 0, status, ...restOfBody } = body;
 
   let existingGranule;
-
   try {
     existingGranule = await pRetry(
       async () => await granuleModel.get({ granuleId: body.granuleId }),
@@ -136,13 +135,10 @@ const update = async (req, res) => {
     updatedBody = restOfBody;
     message = ' Skipped setting status to queued because granule was not running';
   }
-  const now = Date.now();
-  const updatedGranule = {
-    ...existingGranule,
-    updatedAt: now,
-    timestamp: now,
-    ...updatedBody,
-  };
+
+  delete existingGranule.updatedAt;
+  delete existingGranule.timestamp;
+  const updatedGranule = { ...existingGranule, ...updatedBody };
 
   try {
     await writeGranuleFromApi(updatedGranule, knex);
