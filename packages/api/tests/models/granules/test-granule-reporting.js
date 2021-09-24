@@ -76,7 +76,6 @@ test('_storeGranuleRecord() can be used to create a new failed granule', async (
   t.is(fetchedItem.status, 'failed');
 });
 
-
 test('_storeGranuleRecord() can be used to create a new queued granule', async (t) => {
   const { granuleModel } = t.context;
 
@@ -327,7 +326,6 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
     }
   );
 });
-
 
 test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution', async (t) => {
   const { granuleModel } = t.context;
