@@ -9,13 +9,12 @@ const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { buildExecutionArn } = require('@cumulus/message/Executions');
+const { buildExecutionArn, getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
   granules: granulesApi,
 } = require('@cumulus/api-client');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { getExecutionUrl } = require('@cumulus/aws-client/StepFunctions');
 
 async function fetchGranuleProvider(prefix, providerId) {
   const { body } = await providersApi.getProvider({
@@ -108,7 +107,7 @@ async function queueGranules(event) {
                 queuedGranule.version
               ),
               granuleId: queuedGranule.granuleId,
-              execution: getExecutionUrl(executionArn),
+              execution: getExecutionUrlFromArn(executionArn),
               status: 'queued',
             },
           }),
