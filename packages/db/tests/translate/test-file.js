@@ -21,6 +21,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
     created_at: new Date(Date.now()),
     updated_at: new Date(Date.now()),
+    type: 'data',
   };
 
   t.deepEqual(
@@ -35,6 +36,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         key: postgresFile.key,
         size: Number.parseInt(postgresFile.file_size, 10),
         source: postgresFile.source,
+        type: postgresFile.type,
       },
       postgresFileOmitKeys
     )

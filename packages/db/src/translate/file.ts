@@ -27,6 +27,7 @@ export const translatePostgresFileToApiFile = (
   key: filePgRecord.key,
   size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
   source: filePgRecord.source,
+  type: filePgRecord.type,
 });
 
 export const translateApiFiletoPostgresFile = (
