@@ -18,6 +18,14 @@ of response and not the raw API endpoint response
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2672**
+    - Added migration to add `type` text column to Postgres database `files` table
+    - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
+      instead of dropping it.
+    - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
+    - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
+    - Updated `@cumulus/types.api.file` to add `type` to the typing.
+
   - **CUMULUS-2634**
     - Added new functions for upserting data to Elasticsearch:
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
