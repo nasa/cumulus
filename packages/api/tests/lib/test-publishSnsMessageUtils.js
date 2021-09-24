@@ -54,6 +54,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('publishExecutionSnsMessage() does not publish an SNS message if execution_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
   const newExecution = fakeExecutionFactoryV2({
     arn: cryptoRandomString({ length: 5 }),
     status: 'completed',
@@ -63,6 +64,8 @@ test.serial('publishExecutionSnsMessage() does not publish an SNS message if exe
     publishExecutionSnsMessage(newExecution),
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
 
 test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) => {
@@ -90,6 +93,7 @@ test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) =
 });
 
 test.serial('publishCollectionSnsMessage() does not publish an SNS message if collection_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
   const newCollection = fakeCollectionFactory();
 
   t.teardown(() => {
@@ -100,6 +104,9 @@ test.serial('publishCollectionSnsMessage() does not publish an SNS message if co
     publishCollectionSnsMessage(newCollection),
     { message: 'The collection_sns_topic_arn environment variable must be set' }
   );
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
 
 test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Create', async (t) => {
@@ -168,6 +175,7 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
 });
 
 test.serial('publishPdrSnsMessage() does not publish an SNS message if pdr_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
   const newPdr = fakePdrFactoryV2({
     pdrName: 'test_pdr',
   });
@@ -175,6 +183,9 @@ test.serial('publishPdrSnsMessage() does not publish an SNS message if pdr_sns_t
     publishPdrSnsMessage(newPdr),
     { message: 'The pdr_sns_topic_arn environment variable must be set' }
   );
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
 
 test.serial('publishPdrSnsMessage() publishes an SNS message', async (t) => {

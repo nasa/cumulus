@@ -61,35 +61,6 @@ const generatePdrRecord = ({
   };
 };
 
-/**
- * Get the PDR record from a query result or look it up in the database.
- *
- * For certain cases, such as an upsert query that matched no rows, an empty
- * database result is returned, so no record will be returned. In those
- * cases, this function will lookup the PDR from the record.
- *
- * @param {Object} params
- * @param {Object} params.trx - A Knex transaction
- * @param {Object} params.queryResult - Query result
- * @param {Object} params.pdrRecord - A PDR record
- * @returns {Promise<Object|undefined>} - PDR record
- */
-const getPdrFromQueryResultOrLookup = async ({
-  queryResult = [],
-  pdrRecord,
-  trx,
-  pdrPgModel = new PdrPgModel(),
-}) => {
-  let pdr = queryResult[0];
-  if (!pdr) {
-    pdr = await pdrPgModel.get(
-      trx,
-      { name: pdrRecord.name }
-    );
-  }
-  return pdr;
-};
-
 const writePdrViaTransaction = async ({
   cumulusMessage,
   trx,
@@ -115,11 +86,7 @@ const writePdrViaTransaction = async ({
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
   // since it is used for writing granules
-  const pdr = await getPdrFromQueryResultOrLookup({
-    trx,
-    queryResult,
-    pdrRecord,
-  });
+  const pdr = queryResult[0] || await pdrPgModel.get(trx, { name: pdrRecord.name });
 
   logger.info(`Successfully upserted PDR ${pdrRecord.name} to PostgreSQL with cumulus_id ${pdr.cumulus_id}`);
   return pdr;
@@ -200,7 +167,6 @@ const writePdr = async ({
 
 module.exports = {
   generatePdrRecord,
-  getPdrFromQueryResultOrLookup,
   writePdrViaTransaction,
   writePdr,
   writePdrToDynamoAndEs,

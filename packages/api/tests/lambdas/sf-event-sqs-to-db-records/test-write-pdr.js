@@ -26,8 +26,8 @@ const {
 
 const {
   generatePdrRecord,
-  getPdrFromQueryResultOrLookup,
   writePdr,
+  writePdrViaTransaction,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
 const Pdr = require('../../../models/pdrs');
@@ -225,8 +225,15 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   );
 });
 
-test('getPdrFromQueryResultOrLookup() returns PDR from database if query result is empty', async (t) => {
-  const { runningPdrRecord } = t.context;
+test('writePdrViaTransaction() returns PDR from database if query result is empty', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    runningPdrRecord,
+  } = t.context;
 
   const fakePdrPgModel = {
     get: (_, record) => {
@@ -235,14 +242,19 @@ test('getPdrFromQueryResultOrLookup() returns PDR from database if query result 
       }
       return Promise.resolve();
     },
+    upsert: () => Promise.resolve([]),
   };
 
-  const pdr = await getPdrFromQueryResultOrLookup({
-    trx: {},
-    queryResult: [],
-    pdrRecord: runningPdrRecord,
+  const pdr = await writePdrViaTransaction({
+    cumulusMessage,
+    trx: knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
     pdrPgModel: fakePdrPgModel,
+    updatedAt: Date.now(),
   });
+
   t.is(runningPdrRecord, pdr);
 });
 
@@ -598,6 +610,7 @@ test.serial('writePdr() calls publishPdrSnsMessage and does not publish an SNS m
     collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
+    QueueUrl,
   } = t.context;
 
   await t.throwsAsync(
@@ -610,4 +623,6 @@ test.serial('writePdr() calls publishPdrSnsMessage and does not publish an SNS m
     }),
     { message: 'Topic does not exist' }
   );
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
