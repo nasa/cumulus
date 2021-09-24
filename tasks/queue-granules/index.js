@@ -15,6 +15,7 @@ const {
   granules: granulesApi,
 } = require('@cumulus/api-client');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
+const { getExecutionUrl } = require('@cumulus/aws-client/StepFunctions');
 
 async function fetchGranuleProvider(prefix, providerId) {
   const { body } = await providersApi.getProvider({
@@ -81,7 +82,7 @@ async function queueGranules(event) {
         granuleBatch[0].dataType,
         granuleBatch[0].version
       );
-      const executionArn = enqueueGranuleIngestMessage({
+      const executionArn = await enqueueGranuleIngestMessage({
         granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
@@ -107,6 +108,7 @@ async function queueGranules(event) {
                 queuedGranule.version
               ),
               granuleId: queuedGranule.granuleId,
+              execution: getExecutionUrl(executionArn),
               status: 'queued',
             },
           }),
