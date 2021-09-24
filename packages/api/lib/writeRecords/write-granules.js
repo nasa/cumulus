@@ -48,6 +48,7 @@ const {
   parseException,
 } = require('../utils');
 const Granule = require('../../models/granules');
+const Execution = require('../../models/executions');
 const {
   getExecutionCumulusId,
 } = require('./utils');
@@ -388,6 +389,7 @@ const writeGranuleFromApi = async (
     queryFields,
     granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
+    executionModel = new Execution(),
   },
   knex
 ) => {
@@ -406,10 +408,17 @@ const writeGranuleFromApi = async (
     };
 
     let executionCumulusId;
+    let granuleStatus = status;
     if (execution) {
       executionCumulusId = await getExecutionCumulusId(execution, knex);
       if (executionCumulusId === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
+      }
+      if (status === 'queued') {
+        const executionObject = await executionModel.get({ arn: execution });
+        if (executionObject.status === 'running') {
+          granuleStatus = executionObject.status;
+        }
       }
     }
 
@@ -423,7 +432,7 @@ const writeGranuleFromApi = async (
       timestamp,
       productVolume,
       duration,
-      status,
+      status: granuleStatus,
       workflowStartTime: createdAt,
       files,
       error,
