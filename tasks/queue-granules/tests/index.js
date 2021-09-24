@@ -19,14 +19,19 @@ const {
 } = require('@cumulus/common/test-utils');
 const sinon = require('sinon');
 const pMap = require('p-map');
+const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
+const fakeGranulesApi = {
+  updateGranule: noop,
+};
 
 const { queueGranules } = proxyquire('..', {
   'p-map': pMapSpy,
   '@cumulus/api-client': {
     providers: fakeProvidersApi,
+    granules: fakeGranulesApi,
   },
 });
 
