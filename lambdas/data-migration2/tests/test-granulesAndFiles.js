@@ -279,6 +279,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
+      type: testFile.type,
     }
   );
 });
