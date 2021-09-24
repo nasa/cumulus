@@ -366,7 +366,7 @@ test.serial('default returns list of granules', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(results.length, 3);
+  t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
@@ -526,7 +526,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
 
 test.serial('PUT without a body, fails to update granule.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -1698,25 +1698,25 @@ test('PUT replaces an existing granule in all data stores', async (t) => {
   const actualGranule = await t.context.granuleModel.get({
     granuleId: newDynamoGranule.granuleId,
   });
-  t.deepEqual(omit(actualGranule, 'timestamp'), omit({
+  t.deepEqual(actualGranule, {
     ...newDynamoGranule,
     status: 'completed',
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
     error: {},
-  }), 'timestamp');
+  });
 
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
     cumulus_id: newPgGranule.cumulus_id,
   });
 
-  t.deepEqual(omit(actualPgGranule, 'timestamp'), omit({
+  t.deepEqual(actualPgGranule, {
     ...newPgGranule,
     status: 'completed',
     query_fields: newQueryFields,
     updated_at: actualPgGranule.updated_at,
     error: {},
-  }, 'timestamp'));
+  });
 
   t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
 
@@ -1810,7 +1810,6 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fa
 
   const fakeGranuleModel = {
     get: () => Promise.resolve(newDynamoGranule),
-    // storeGranule: () => Promise.reject(new Error('something bad')),
     storeGranule: () => {
       throw new Error('something bad');
     },
@@ -1834,7 +1833,6 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fa
   };
 
   const response = buildFakeExpressResponse();
-
   await put(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
@@ -1903,7 +1901,6 @@ test('put() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fa
   };
 
   const response = buildFakeExpressResponse();
-
   await put(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
@@ -1940,13 +1937,8 @@ test('put() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fa
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: {
-      status: 'running',
-      execution: executionUrl,
-    },
+    granuleParams: { status: 'running', execution: executionUrl },
   });
-  console.log('NEW PG GRANULE', newPgGranule);
-  console.log('NEW DB GRANULE', newDynamoGranule);
 
   const fakeEsClient = {
     update: () => {
@@ -2175,7 +2167,7 @@ test.serial('update (PUT) returns bad request when the path param granuleName do
 });
 
 test.serial('update (PUT) can set running granule status to queued', async (t) => {
-  const runningGranuleId = t.context.fakeGranules[2].granuleId;
+  const runningGranuleId = t.context.fakeGranules[1].granuleId;
   const response = await request(app)
     .put(`/granules/${runningGranuleId}`)
     .set('Accept', 'application/json')
@@ -2187,7 +2179,7 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${runningGranuleId}`,
+    message: `Successfully updated granule with Granule Id: ${runningGranuleId} Skipped setting status to queued because granule was not running`,
   });
 });
 
@@ -2325,12 +2317,8 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
     message: `Successfully associated execution ${requestPayload.executionArn} with granule granuleId ${requestPayload.granuleId} collectionId ${requestPayload.collectionId}`,
   });
 
-  // t.is(fetchedDynamoRecord.timestamp, timestamp);
-  // t.is(fetchedDynamoRecord.createdAt, createdAt);
   t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
 
-  // t.is(new Date(fetchedPostgresRecord.timestamp).valueOf(), timestamp);
-  // t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), createdAt);
   t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
   t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
   t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());

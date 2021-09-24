@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -12,7 +13,6 @@ const {
   GranulePgModel,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
-  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const {
   addToLocalES,
@@ -103,6 +103,68 @@ const create = async (req, res) => {
 };
 
 /**
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const update = async (req, res) => {
+  const {
+    granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+  const body = req.body || {};
+  const { retries = 0, status, ...restOfBody } = body;
+
+  let existingGranule;
+
+  try {
+    existingGranule = await pRetry(
+      async () => await granuleModel.get({ granuleId: body.granuleId }),
+      {
+        retries,
+      }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  let updatedBody = { status, ...body };
+  let message = '';
+
+  // Only set status to queued if granule was running
+  // Prevents race condition of setting granule to queued after completed
+  if (status === 'queued' && existingGranule.status !== 'running') {
+    updatedBody = restOfBody;
+    message = ' Skipped setting status to queued because granule was not running';
+  }
+
+  const updatedGranule = {
+    ...existingGranule,
+    updatedAt: Date.now(),
+    ...updatedBody,
+    granuleModel,
+    granulePgModel,
+  };
+
+  try {
+    await writeGranuleFromApi(updatedGranule, knex, esClient);
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}${message}`,
+  });
+};
+
+/**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  * If no action is included on the request, the body is assumed to be an
@@ -117,36 +179,20 @@ async function put(req, res) {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
     reingestHandler = reingestGranule,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
-  let newApiGranule;
 
   if (!action) {
-    const apiGranule = req.body;
-    const oldDynamoGranule = await granuleModel.get({ granuleId });
-    const oldPgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
-
-    apiGranule.updatedAt = Date.now();
-    apiGranule.createdAt = oldPgGranule.created_at.getTime();
-    const postgresGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
-
-    try {
-      await knex.transaction(async (trx) => {
-        await granulePgModel.upsert(trx, postgresGranule);
-        newApiGranule = await granuleModel.create(apiGranule);
-        await indexGranule(esClient, newApiGranule, process.env.ES_INDEX);
-      });
-    } catch (innerError) {
-      // Revert Dynamo record update if any write fails
-      await granuleModel.create(oldDynamoGranule);
-      throw innerError;
+    if (req.body.granuleId === req.params.granuleName) {
+      return update(req, res);
     }
-    return res.send(newApiGranule);
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
   }
 
   const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
