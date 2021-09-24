@@ -323,6 +323,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
       file_size: null,
       file_name: testFile.fileName,
       source: null,
+      type: null,
     }
   );
 });
@@ -514,6 +515,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
+  delete testFile.type;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
   const [granuleCumulusId] = await granulePgModel.create(knex, granule);
@@ -536,6 +538,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
       file_name: null,
       source: null,
       path: null,
+      type: null,
     }
   );
 });
