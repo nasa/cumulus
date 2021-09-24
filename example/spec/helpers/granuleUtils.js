@@ -214,7 +214,6 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'beginningDateTime',
       'endingDateTime',
       'error',
-      'files', // FUTURE: files contain a "type" field in elasticsearch that does not exist in Postgres
       'lastUpdateDateTime',
       'productionDateTime',
       'updatedAt',
