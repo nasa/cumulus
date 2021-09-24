@@ -199,7 +199,6 @@ test('upsertGranule updates "failed" record for same execution', async (t) => {
   t.deepEqual(updatedEsRecord, {
     ...updates,
     _id: updatedEsRecord._id,
-    timestamp: updatedEsRecord.timestamp,
   });
 });
 
