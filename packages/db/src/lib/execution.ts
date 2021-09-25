@@ -14,6 +14,41 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
 /**
  * Returns a list of executionArns sorted by most recent first, for an input
+ * Granule Cumulus ID.
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {number} granuleCumulusId - The primary ID for a Granule
+ * @param {number} limit - limit to number of executions to query
+ * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ */
+export const getExecutionArnsByGranuleCumulusId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusId: Number,
+  limit?: number
+): Promise<arnRecord[]> => {
+  const knexQuery = knexOrTransaction(tableNames.executions)
+    .select(`${tableNames.executions}.arn`)
+    .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
+    .join(
+      tableNames.granulesExecutions,
+      `${tableNames.executions}.cumulus_id`,
+      `${tableNames.granulesExecutions}.execution_cumulus_id`
+    )
+    .join(
+      tableNames.granules,
+      `${tableNames.granules}.cumulus_id`,
+      `${tableNames.granulesExecutions}.granule_cumulus_id`
+    )
+    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+  if (limit) {
+    knexQuery.limit(limit);
+  }
+  return await knexQuery;
+};
+
+/**
+ * Returns a list of executionArns sorted by most recent first, for an input
  * list of granuleIds and workflowNames.
  *
  * @param {Knex} knex - DB Client

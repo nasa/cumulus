@@ -393,6 +393,11 @@ variable "ddl_dir" {
   description = "The location of the ddl dir that contains the sql to create the application database."
 }
 
+variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
+}
+
 variable "lambda_timeout" {
   default = 300
   type = number

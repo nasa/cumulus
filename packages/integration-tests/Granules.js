@@ -11,7 +11,6 @@ const get = require('lodash/get');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
 
-const { randomId } = require('@cumulus/common/test-utils');
 const granulesApi = require('@cumulus/api-client/granules');
 
 class GranuleNotFoundError extends Error {
@@ -77,16 +76,21 @@ const getGranuleWithStatus = async (params = {}) =>
     }
   );
 
-const buildRandomizedGranule = (overrides = {}) => ({
-  granuleId: randomId('granid'),
-  collectionId: `${randomId('name')}___${randomId('vers')}`,
-  status: 'completed',
-  error: {},
-  files: [{ bucket: randomId('bucket'), key: randomId('key') }],
-  ...overrides,
-});
+/**
+ * Wait for listGranules to return at least a single value before returning an
+ * empty result
+ * @param {Object} params - parameters to listGranules function
+ * @returns {Promise<Object>} - results of a successful listGranules
+ */
+const waitForListGranulesResult = async (params) => await pRetry(
+  async () => {
+    const results = await granulesApi.listGranules(params);
+    if (results.body && JSON.parse(results.body).results.length > 0) return results;
+    throw new Error('Waiting for searched Granule.');
+  }
+);
 
 module.exports = {
   getGranuleWithStatus,
-  buildRandomizedGranule,
+  waitForListGranulesResult,
 };

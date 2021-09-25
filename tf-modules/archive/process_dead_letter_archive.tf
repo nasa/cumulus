@@ -90,6 +90,7 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
   memory_size      = 512
 
   environment {
+    // TODO - need sns topic ARNs for granules, PDRs
     variables = {
       acquireTimeoutMillis           = var.rds_connection_timing_configuration.acquireTimeoutMillis
       createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis

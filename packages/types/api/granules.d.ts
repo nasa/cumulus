@@ -1,6 +1,6 @@
 export type GranuleId = string;
 
-export type GranuleStatus = 'completed' | 'failed' | 'running';
+export type GranuleStatus = 'completed' | 'failed' | 'running' | 'queued';
 
 export type GranuleTemporalInfo = {
   beginningDateTime: string
@@ -23,18 +23,18 @@ export type ApiGranule = {
   granuleId: string
   collectionId: string
   status: GranuleStatus
-  execution: string
+  execution?: string
   cmrLink?: string
   published?: boolean
   pdrName?: string
   provider?: string
   error?: Object
-  createdAt: string
-  timestamp?: string
-  updatedAt: string
+  createdAt: number
+  timestamp?: number
+  updatedAt: number
   duration?: number
   productVolume?: number
   timeToPreprocess?: number
   timeToArchive?: number
-  files?: import('./files').ApiFile[]
+  files?: Omit<import('./files').ApiFile, 'granuleId'>[]
 } & GranuleTemporalInfo & import('./executions').ExecutionProcessingTimes;
