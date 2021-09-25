@@ -7,9 +7,7 @@ const cryptoRandomString = require('crypto-random-string');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 
 const {
-  publishExecutionSnsMessage,
-  publishCollectionSnsMessage,
-  publishPdrSnsMessage,
+  publishSnsMessageByDataType,
 } = require('../../lib/publishSnsMessageUtils');
 
 const {
@@ -53,7 +51,7 @@ test.after.always(async (t) => {
   ]);
 });
 
-test.serial('publishExecutionSnsMessage() does not publish an SNS message if execution_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish an execution SNS message if execution_sns_topic_arn is undefined', async (t) => {
   const { QueueUrl } = t.context;
   const newExecution = fakeExecutionFactoryV2({
     arn: cryptoRandomString({ length: 5 }),
@@ -61,14 +59,14 @@ test.serial('publishExecutionSnsMessage() does not publish an SNS message if exe
     name: 'test_execution',
   });
   await t.throwsAsync(
-    publishExecutionSnsMessage(newExecution),
+    publishSnsMessageByDataType(newExecution, 'execution'),
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
   t.is(Messages, undefined);
 });
 
-test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes an SNS message for execution', async (t) => {
   process.env.execution_sns_topic_arn = t.context.TopicArn;
   const executionArn = cryptoRandomString({ length: 10 });
   const newExecution = fakeExecutionFactoryV2({
@@ -76,7 +74,7 @@ test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) =
     status: 'completed',
     name: 'test_execution',
   });
-  await publishExecutionSnsMessage(newExecution);
+  await publishSnsMessageByDataType(newExecution, 'execution');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -92,7 +90,7 @@ test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) =
   t.deepEqual(executionRecord.status, newExecution.status);
 });
 
-test.serial('publishCollectionSnsMessage() does not publish an SNS message if collection_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish a collection SNS message if collection_sns_topic_arn is undefined', async (t) => {
   const { QueueUrl } = t.context;
   const newCollection = fakeCollectionFactory();
 
@@ -101,7 +99,7 @@ test.serial('publishCollectionSnsMessage() does not publish an SNS message if co
   });
 
   await t.throwsAsync(
-    publishCollectionSnsMessage(newCollection),
+    publishSnsMessageByDataType(newCollection, 'collection', 'Update'),
     { message: 'The collection_sns_topic_arn environment variable must be set' }
   );
 
@@ -109,11 +107,11 @@ test.serial('publishCollectionSnsMessage() does not publish an SNS message if co
   t.is(Messages, undefined);
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Create', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Create', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Create');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Create');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -129,11 +127,11 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.event, 'Create');
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Update', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Update', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Update');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Update');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -148,7 +146,7 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.event, 'Update');
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Delete', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Delete', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const deletedAt = Date.now();
   const stub = sinon.stub(Date, 'now').returns(deletedAt);
@@ -158,7 +156,7 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
 
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Delete');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Delete');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -174,13 +172,13 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.deletedAt, deletedAt);
 });
 
-test.serial('publishPdrSnsMessage() does not publish an SNS message if pdr_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if pdr_sns_topic_arn is undefined', async (t) => {
   const { QueueUrl } = t.context;
   const newPdr = fakePdrFactoryV2({
     pdrName: 'test_pdr',
   });
   await t.throwsAsync(
-    publishPdrSnsMessage(newPdr),
+    publishSnsMessageByDataType(newPdr, 'pdr'),
     { message: 'The pdr_sns_topic_arn environment variable must be set' }
   );
 
@@ -188,7 +186,7 @@ test.serial('publishPdrSnsMessage() does not publish an SNS message if pdr_sns_t
   t.is(Messages, undefined);
 });
 
-test.serial('publishPdrSnsMessage() publishes an SNS message', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
   process.env.pdr_sns_topic_arn = TopicArn;
@@ -216,7 +214,7 @@ test.serial('publishPdrSnsMessage() publishes an SNS message', async (t) => {
   const newPdr = fakePdrFactoryV2({
     pdrName,
   });
-  await publishPdrSnsMessage(newPdr);
+  await publishSnsMessageByDataType(newPdr, 'pdr');
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
 

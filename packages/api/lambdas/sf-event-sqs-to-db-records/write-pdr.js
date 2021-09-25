@@ -25,7 +25,7 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const Logger = require('@cumulus/logger');
-const { publishPdrSnsMessage } = require('../../lib/publishSnsMessageUtils');
+const { publishSnsMessageByDataType } = require('../../lib/publishSnsMessageUtils');
 
 const Pdr = require('../../models/pdrs');
 
@@ -160,7 +160,7 @@ const writePdr = async ({
       updatedAt,
       esClient,
     });
-    await publishPdrSnsMessage(pdrToPublish);
+    await publishSnsMessageByDataType(pdrToPublish, 'pdr');
     return pgPdr.cumulus_id;
   });
 };

@@ -568,7 +568,7 @@ test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if E
   t.false(await t.context.esPdrClient.exists(pdr.name));
 });
 
-test.serial('writePdr() calls publishPdrSnsMessage and successfully publishes an SNS message', async (t) => {
+test.serial('writePdr() calls publishSnsMessageByDataType and successfully publishes an SNS message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -602,7 +602,7 @@ test.serial('writePdr() calls publishPdrSnsMessage and successfully publishes an
   t.deepEqual(pdrRecord, translatedRecord);
 });
 
-test.serial('writePdr() calls publishPdrSnsMessage and does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
+test.serial('writePdr() calls publishSnsMessageByDataType and does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
   process.env.pdr_sns_topic_arn = undefined;
   const {
     cumulusMessage,

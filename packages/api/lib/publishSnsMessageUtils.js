@@ -6,18 +6,6 @@ const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
-const publishPdrSnsMessage = async (record) => {
-  logger.info(`About to publish SNS message for pdr to topic ARN ${process.env.pdr_sns_topic_arn}: ${JSON.stringify(record)} `);
-  const topicArn = envUtils.getRequiredEnvVar('pdr_sns_topic_arn', process.env);
-  await publishSnsMessage(topicArn, record);
-};
-
-const publishExecutionSnsMessage = async (record) => {
-  logger.info(`About to publish SNS message for execution to topic ARN ${process.env.execution_sns_topic_arn}: ${JSON.stringify(record)} `);
-  const topicArn = envUtils.getRequiredEnvVar('execution_sns_topic_arn', process.env);
-  await publishSnsMessage(topicArn, record);
-};
-
 const constructCollectionSnsMessage = (record, event) => {
   switch (event) {
   case 'Create':
@@ -35,16 +23,19 @@ const constructCollectionSnsMessage = (record, event) => {
   }
 };
 
-const publishCollectionSnsMessage = async (record, event) => {
-  const topicArn = envUtils.getRequiredEnvVar('collection_sns_topic_arn', process.env);
-  const messageToPublish = constructCollectionSnsMessage(record, event);
-
-  logger.info(`About to publish SNS message for collection to topic ARN ${topicArn}:  ${JSON.stringify(messageToPublish)}`);
-  await publishSnsMessage(topicArn, messageToPublish);
+const publishSnsMessageByDataType = async (record, dataType, event) => {
+  const topicArn = envUtils.getRequiredEnvVar(`${dataType}_sns_topic_arn`, process.env);
+  if (dataType === 'collection') {
+    const messageToPublish = constructCollectionSnsMessage(record, event);
+    return await publishSnsMessage(topicArn, messageToPublish);
+  }
+  if (dataType === 'pdr' || dataType === 'execution') {
+    logger.info(`About to publish SNS message for ${dataType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
+    return await publishSnsMessage(topicArn, record);
+  }
+  return undefined;
 };
 
 module.exports = {
-  publishCollectionSnsMessage,
-  publishExecutionSnsMessage,
-  publishPdrSnsMessage,
+  publishSnsMessageByDataType,
 };
