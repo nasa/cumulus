@@ -41,8 +41,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "9.4.0",
-    "@cumulus/logger": "9.4.0",
+    "@cumulus/errors": "9.5.0",
+    "@cumulus/logger": "9.5.0",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
