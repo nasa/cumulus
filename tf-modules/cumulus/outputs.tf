@@ -169,7 +169,3 @@ output "ecs_cluster_name" {
 output "start_sf_queue_url" {
   value = module.ingest.start_sf_queue_url
 }
-
-output "background_queue_url" {
-  value = module.ingest.background_queue_url
-}

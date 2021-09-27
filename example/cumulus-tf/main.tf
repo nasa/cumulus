@@ -75,9 +75,10 @@ module "cumulus" {
 
   bucket_map_key = var.bucket_map_key
   throttled_queues = [{
-    url = module.cumulus.background_queue_url
-    execution_limit = 100
+    url = aws_sqs_queue.throttled_queue.id
+    execution_limit = 30
   }]
+
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
