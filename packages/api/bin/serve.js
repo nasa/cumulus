@@ -374,9 +374,9 @@ async function eraseDynamoTables(stackName, systemBucket) {
 
   try {
     await rulesModel.deleteRules();
+    await providerModel.deleteProviders();
     await Promise.all([
       collectionModel.deleteCollections(),
-      providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
       pdrsModel.deletePdrs(),
@@ -396,7 +396,13 @@ async function eraseDataStack(
   stackName = localStackName,
   systemBucket = localSystemBucket
 ) {
+  console.log('*********************');
+  console.log('about to erase dynamo tables');
+  console.log('*********************');
   await eraseDynamoTables(stackName, systemBucket);
+  console.log('*********************');
+  console.log('erased dynamo tables');
+  console.log('*********************');
   return initializeLocalElasticsearch(stackName);
 }
 
