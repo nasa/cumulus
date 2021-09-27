@@ -165,8 +165,6 @@ const _writePostgresGranuleViaTransaction = async ({
   trx,
   granulePgModel,
 }) => {
-  log.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id} to PostgreSQL`);
-
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granuleRecord,
@@ -215,7 +213,7 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
 
-  if (status !== 'running') {
+  if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
       files: files,
       granuleCumulusId,
@@ -340,6 +338,9 @@ const _writeGranule = async ({
 }) => {
   let pgGranule;
 
+  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
+  log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
+
   await knex.transaction(async (trx) => {
     pgGranule = await _writePostgresGranuleViaTransaction({
       granuleRecord: postgresGranuleRecord,
@@ -353,6 +354,14 @@ const _writeGranule = async ({
       granuleModel,
     });
   });
+
+  log.info(
+    `
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${granuleCumulusId}.
+    `,
+    postgresGranuleRecord
+  );
+  log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
 
   const { files, granuleId, status, error } = dynamoGranuleRecord;
 
@@ -425,6 +434,7 @@ const writeGranuleFromApi = async (
     productVolume,
     timeToPreprocess,
     timeToArchive,
+    timestamp,
     files = [],
     beginningDateTime,
     endingDateTime,
@@ -468,6 +478,7 @@ const writeGranuleFromApi = async (
       provider,
       timeToArchive,
       timeToPreprocess,
+      timestamp,
       productVolume,
       duration,
       status,
@@ -603,7 +614,6 @@ const writeGranulesFromMessage = async ({
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
-    console.log('\nallFailures', allFailures);
     const aggregateError = new AggregateError(allFailures);
     log.error('Failed writing some granules to Dynamo', aggregateError);
     throw aggregateError;
