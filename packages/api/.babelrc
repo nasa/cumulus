@@ -9,7 +9,6 @@
     }]
   ],
   "plugins": [
-    "@babel/plugin-proposal-object-rest-spread",
     "source-map-support"
   ]
 }
