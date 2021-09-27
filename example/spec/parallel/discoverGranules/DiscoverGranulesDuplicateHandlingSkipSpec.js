@@ -195,7 +195,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       const granule = await waitForApiStatus(
         getGranule,
         { prefix, granuleId: newGranuleId },
-        ['completed', 'queued']
+        'completed'
       );
       expect(granule).toBeDefined();
     }

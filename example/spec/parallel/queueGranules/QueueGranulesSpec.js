@@ -169,19 +169,6 @@ describe('The Queue Granules workflow', () => {
   });
 
   describe('the QueueGranules Lambda function', () => {
-    let lambdaOutput;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn,
-        'QueueGranules'
-      );
-    });
-
-    it('has expected arns output', () => {
-      expect(lambdaOutput.payload.running.length).toEqual(1);
-    });
-
     it('sets granule status to queued', async () => {
       await Promise.all(
         inputPayload.granules.map(async (granule) => {
@@ -193,6 +180,14 @@ describe('The Queue Granules workflow', () => {
           expect(record.status).toEqual('queued');
         })
       );
+    });
+
+    it('has expected arns output', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
+      expect(lambdaOutput.payload.running.length).toEqual(1);
     });
   });
 
