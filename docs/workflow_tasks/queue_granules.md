@@ -73,7 +73,7 @@ This property is also used to limit concurrency when updating granule status to 
 
 Limiting concurrency helps to avoid throttling by the AWS Lambda API and helps to avoid encountering account Lambda concurrency limitations.
 
-We do not recommend increasing this value to a level at which you may encounter throttling errors, but if you are seeing Lambda.Timeout errors when queue-granules receives a large number of granules as input, you may either wish to increase this value or convert the queue-granules task to an ECS activity, which does not face similar runtime constraints.
+We do not recommend increasing this value unless you are seeing Lambda.Timeout errors when queue-granules receives a large number of granules as input. However, as increasing the concurrency may lead to Lambda API or Lambda concurrency throttling errors, you may wish to consider converting the queue-granules task to an ECS activity, which does not face similar runtime constraints.
 
 The default value is 3.
 
