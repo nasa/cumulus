@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2583**
   - Adds `queued` as option for granule's `status` field
 - **CUMULUS-2630**
-  - Adds a new workflow `DiscoverGranulesBackground` that discovers and writes
+  - Adds a new workflow `DiscoverGranulesToThrottledQueue` that discovers and writes
     granules to a throttled background queue.  This allows discovery and ingest
     of larger numbers of granules without running into limits with lambda
     concurrency.
