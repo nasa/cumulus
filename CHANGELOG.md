@@ -28,17 +28,14 @@ of response and not the raw API endpoint response
       `sf_event_sqs_to_db_records` lambda TF definition.
     - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
       permissions for SNS publish for `report_executions_topic`
-    - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report executions topic.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
-    - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
     - Added `pdr_sns_topic_arn` environment variable to
       `sf_event_sqs_to_db_records` lambda TF definition.
-    - Added the new function `publishPdrSnsMessage` in `@cumulus/api` to publish
-      SNS messages to the report PDRs topic.
+    - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
+      publish SNS messages to the report topics to PDRs, Collections, and
+      Executions.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
 - **CUMULUS-2592**
