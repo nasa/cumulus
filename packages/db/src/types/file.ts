@@ -1,12 +1,12 @@
 export interface PostgresFile {
   bucket?: string,
   key?: string,
-  granule_cumulus_id: number
-  checksum_type?: string
-  checksum_value?: string
-  file_name?: string
-  file_size?: number
-  path?: string
+  granule_cumulus_id: number,
+  checksum_type?: string,
+  checksum_value?: string,
+  file_name?: string,
+  file_size?: BigInt,
+  path?: string,
   source?: string,
   type?: string,
 }
