@@ -100,6 +100,7 @@ async function queueGranules(event) {
         await pMap(
           granuleBatch,
           (queuedGranule) => granulesApi.updateGranule({
+            ...queuedGranule,
             prefix: event.config.stackName,
             body: {
               collectionId: constructCollectionId(
