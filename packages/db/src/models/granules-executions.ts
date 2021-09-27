@@ -68,7 +68,7 @@ export default class GranulesExecutionsPgModel {
    * single execution_cumulus_id or array of execution_cumulus_ids
    * @returns {Promise<Array<number>>} An array of granule_cumulus_ids
    */
-   async searchByExecutionCumulusIds(
+  async searchByExecutionCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,
     executionCumulusIds: Array<number> | number
   ): Promise<Array<number>> {

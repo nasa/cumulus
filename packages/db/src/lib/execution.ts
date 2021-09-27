@@ -23,7 +23,7 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  * @param {number} limit - limit to number of executions to query
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
- export const getExecutionArnsByGranuleCumulusId = async (
+export const getExecutionArnsByGranuleCumulusId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number,
   limit?: number
@@ -91,7 +91,7 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
 export const newestExecutionArnFromGranuleIdWorkflowName = async (
   granuleId: string,
   workflowName: string,
-  testKnex: Knex|undefined
+  testKnex: Knex | undefined
 ): Promise<string> => {
   try {
     const knex = testKnex ?? await getKnexClient({ env: process.env });
@@ -156,16 +156,15 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
  * @param {Object} [executionPgModel] - Execution PG model class instance
  * @returns {Promise<number[]>}
  */
- export const getApiExecutionCumulusIds = async (
+export const getApiExecutionCumulusIds = async (
   knexOrTransaction: Knex | Knex.Transaction,
   executions: Array<{ arn: string }>,
-  executionPgModel = new ExecutionPgModel(),
+  executionPgModel = new ExecutionPgModel()
 ) => {
-  const executionCumulusIds: Array<number> = await Promise.all(executions.map(async (execution) => {
-    return await executionPgModel.getRecordCumulusId(knexOrTransaction, {
+  const executionCumulusIds: Array<number> = await Promise.all(executions.map(async (execution) =>
+    await executionPgModel.getRecordCumulusId(knexOrTransaction, {
       arn: execution.arn,
-    });
-  }));
+    })));
   return [...new Set(executionCumulusIds)];
 };
 

@@ -75,7 +75,7 @@ export {
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
- } from './translate/granules';
+} from './translate/granules';
 export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {

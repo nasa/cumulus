@@ -47,8 +47,6 @@ export const translatePostgresGranuleToApiGranule = async ({
   providerPgModel: ProviderPgModel,
   filePgModel: FilePgModel,
 }): Promise<ApiGranule> => {
-  console.log("processing!: " + JSON.stringify(granulePgRecord));
-
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
