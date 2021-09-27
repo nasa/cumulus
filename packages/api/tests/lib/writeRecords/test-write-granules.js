@@ -725,7 +725,7 @@ test.serial('writeGranuleFromApi() can write a granule with no files associated 
   ));
 });
 
-test.skip('writeGranuleFromApi() throws with granule with an execution url that does not exist.', async (t) => {
+test.serial('writeGranuleFromApi() throws with granule with an execution url that does not exist.', async (t) => {
   const {
     knex,
     granule,
