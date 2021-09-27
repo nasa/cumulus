@@ -212,10 +212,7 @@ describe('The DiscoverGranules workflow', () => {
       const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
         getGranule,
         { prefix: stackName, granuleId },
-        'completed',
-        {
-          retries: 5,
-        }
+        'completed'
       )));
       granules.forEach((g) => {
         expect(g).toBeDefined();
