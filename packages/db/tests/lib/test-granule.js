@@ -492,9 +492,9 @@ test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
   const fakeGranule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
-  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranule);
+  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
 
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
 
   t.deepEqual(
     await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
