@@ -5,7 +5,7 @@ export interface PostgresFile {
   checksum_type?: string,
   checksum_value?: string,
   file_name?: string,
-  file_size?: BigInt,
+  file_size?: number,
   path?: string,
   source?: string,
   type?: string,
