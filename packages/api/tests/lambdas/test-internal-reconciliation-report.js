@@ -27,6 +27,9 @@ const {
   GranulePgModel,
   fakeProviderRecordFactory,
   ProviderPgModel,
+  upsertGranuleWithExecutionJoinRecord,
+  fakeExecutionRecordFactory,
+  ExecutionPgModel,
 } = require('@cumulus/db');
 
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
@@ -46,6 +49,7 @@ test.before((t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
   t.context.providerPgModel = new ProviderPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -174,8 +178,8 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
   const {
     knex,
     collectionPgModel,
-    granulePgModel,
     providerPgModel,
+    executionPgModel,
   } = t.context;
 
   // Create collection in PG/ES
@@ -232,7 +236,14 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
   await Promise.all(
     dbGranules.map(async (granule) => {
       const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
-      return granulePgModel.create(knex, pgGranule);
+      let executionCumulusId;
+      if (granule.execution) {
+        const pgExecution = fakeExecutionRecordFactory({
+          url: granule.execution,
+        });
+        ([executionCumulusId] = await executionPgModel.create(knex, pgExecution));
+      }
+      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, executionCumulusId);
     })
   );
 
