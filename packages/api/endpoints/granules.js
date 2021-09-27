@@ -3,6 +3,7 @@
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 const pRetry = require('p-retry');
+const omit = require('lodash/omit');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -137,8 +138,7 @@ const update = async (req, res) => {
     message = ' Skipped setting status to queued because granule was not running';
   }
 
-  // eslint-disable-next-line no-unused-vars
-  const { updatedAt, timestamp, ...existingGranuleWithoutTimes } = existingGranule;
+  const existingGranuleWithoutTimes = omit(existingGranule, ['updatedAt', 'timestamp']);
   const updatedGranule = { ...existingGranuleWithoutTimes, ...updatedBody };
 
   try {
