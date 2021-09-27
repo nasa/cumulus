@@ -357,7 +357,7 @@ const _writeGranule = async ({
 
   log.info(
     `
-    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${granuleCumulusId}.
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
     `,
     postgresGranuleRecord
   );

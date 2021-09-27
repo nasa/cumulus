@@ -40,19 +40,19 @@ const createGranuleInDynamoAndPG = async (t, params) => {
   });
   const originalDynamoGranule = await t.context.granulesModel.create(granule);
 
-  const pgGranule = await translateApiGranuleToPostgresGranule(
+  const translatedGranule = await translateApiGranuleToPostgresGranule(
     granule,
     t.context.knex
   );
   const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
-    pgGranule
+    translatedGranule
   );
+  const pgGranuleCumulusId = pgGranule.cumulus_id;
   const originalPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
     { cumulus_id: pgGranuleCumulusId }
   );
-  const pgGranuleCumulusId = pgGranule.cumulus_id;
   return {
     originalDynamoGranule,
     originalPgGranule,
