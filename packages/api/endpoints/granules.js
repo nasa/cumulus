@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const omit = require('lodash/omit');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -123,11 +124,8 @@ const update = async (req, res) => {
     }
   }
 
-  const updatedGranule = {
-    ...existingGranule,
-    updatedAt: Date.now(),
-    ...body,
-  };
+  const existingGranuleWithoutTimes = omit(existingGranule, ['updatedAt', 'timestamp']);
+  const updatedGranule = { ...existingGranuleWithoutTimes, ...body };
 
   try {
     await writeGranuleFromApi(updatedGranule, knex);
