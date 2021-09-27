@@ -137,10 +137,9 @@ const update = async (req, res) => {
     message = ' Skipped setting status to queued because granule was not running';
   }
 
-  let updatedAt;
-  let timestamp;
-  ({ updatedAt, timestamp, ...existingGranule } = existingGranule);
-  const updatedGranule = { ...existingGranule, ...updatedBody };
+  // eslint-disable-next-line no-unused-vars
+  const { updatedAt, timestamp, ...existingGranuleWithoutTimes } = existingGranule;
+  const updatedGranule = { ...existingGranuleWithoutTimes, ...updatedBody };
 
   try {
     await writeGranuleFromApi(updatedGranule, knex);
