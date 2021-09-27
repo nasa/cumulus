@@ -55,7 +55,7 @@ const fakeFile = () => fakeFileFactory({
 });
 
 const generateTestGranule = (params) => ({
-  granuleId: cryptoRandomString({ length: 5 }),
+  granuleId: cryptoRandomString({ length: 10 }),
   status: 'running',
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,
