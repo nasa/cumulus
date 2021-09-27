@@ -1,11 +1,13 @@
 'use strict';
 
 const test = require('ava');
+const { randomId } = require('../../common/test-utils');
 const granulesApi = require('../granules');
 
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
+  t.context.status = 'queued';
 });
 
 test('getGranule calls the callback with the expected object', async (t) => {
@@ -372,8 +374,10 @@ test('createGranule calls the callback with the expected object', async (t) => {
 });
 
 test('updateGranule calls the callback with the expected object', async (t) => {
-  const updateParams = {
-    status: 'completed',
+  const body = {
+    granuleId: t.context.granuleId,
+    any: 'object',
+    status: t.context.status,
   };
   const expected = {
     prefix: t.context.testPrefix,
@@ -381,10 +385,8 @@ test('updateGranule calls the callback with the expected object', async (t) => {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updateParams),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     },
   };
 
@@ -393,9 +395,36 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   };
 
   await t.notThrowsAsync(granulesApi.updateGranule({
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId,
-    updateParams,
     callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
+
+test('associateExecutionWithGranule calls the callback with the expected object', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    collectionId: randomId('collectionId'),
+    executionArn: randomId('executionArn'),
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}/executions`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.associateExecutionWithGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
   }));
 });

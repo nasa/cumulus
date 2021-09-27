@@ -249,8 +249,7 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
   });
   await updateGranule({
     prefix,
-    granuleId,
-    updateParams: {
+    body: {
       ...granule,
       files: updatedFiles,
     },

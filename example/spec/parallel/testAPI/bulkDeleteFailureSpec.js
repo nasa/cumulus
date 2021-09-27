@@ -95,8 +95,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     // mark granule as unpublished to allow delete
     await updateGranule({
       prefix,
-      granuleId: granule.granuleId,
-      updateParams: {
+      body: {
         ...granule,
         published: false,
       },
