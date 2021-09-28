@@ -1,6 +1,10 @@
 import Knex from 'knex';
 
-import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
+import {
+  collectionIdSeparator,
+  constructCollectionId,
+  deconstructCollectionId,
+} from '@cumulus/message/Collections';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -178,13 +182,13 @@ export const getApiGranuleExecutionCumulusIds = async (
 export const getGranulesByApiPropertiesQuery = (
   knex: Knex,
   {
-    collectionId,
+    collectionIds,
     granuleIds,
     providerNames,
     updatedAtRange = {},
     status,
   }: {
-    collectionId?: string,
+    collectionIds?: string | string[],
     granuleIds?: string | string[],
     providerNames?: string[],
     updatedAtRange?: UpdatedAtRange,
@@ -207,10 +211,14 @@ export const getGranulesByApiPropertiesQuery = (
     .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
     .leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
     .modify((queryBuilder) => {
-      if (collectionId) {
-        const collectionNameAndVersion = deconstructCollectionId(collectionId);
-        queryBuilder.where(`${collectionsTable}.name`, collectionNameAndVersion.name);
-        queryBuilder.where(`${collectionsTable}.version`, collectionNameAndVersion.version);
+      if (collectionIds) {
+        const collectionIdFilters = [collectionIds].flat();
+        const collectionIdConcatField = `(${collectionsTable}.name || '${collectionIdSeparator}' || ${collectionsTable}.version)`;
+        const collectionIdInClause = collectionIdFilters.map(() => '?').join(',');
+        queryBuilder.whereRaw(
+          `${collectionIdConcatField} IN (${collectionIdInClause})`,
+          collectionIdFilters
+        );
       }
       if (granuleIds) {
         queryBuilder.whereIn(`${granulesTable}.granule_id`, [granuleIds].flat());
