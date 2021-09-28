@@ -36,7 +36,7 @@
     "@cumulus/message": "9.6.0",
     "@cumulus/types": "9.6.0",
     "crypto-random-string": "^3.2.0",
-    "is-valid-hostname": "0.0.1",
+    "is-valid-hostname": "0.1.1",
     "knex": "0.21.13",
     "lodash": "^4.17.20",
     "pg": "^8.3.0",
