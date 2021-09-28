@@ -607,12 +607,6 @@ class Granule extends Manager {
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
-    // Only allow "queued" granule to replace running/completed/failed
-    // granule if the execution has changed for granules with executions.
-    if (granuleRecord.status === 'queued' && granuleRecord.execution !== undefined) {
-      updateParams.ConditionExpression += ' and #execution <> :execution';
-    }
-
     try {
       return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {

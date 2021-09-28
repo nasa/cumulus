@@ -357,63 +357,6 @@ test('_storeGranuleRecord() will allow a queued status to replace a running stat
   );
 });
 
-test('_storeGranuleRecord() will not allow a queued status to replace a failed status for same execution', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2({ status: 'failed' });
-
-  await granuleModel._storeGranuleRecord(granule);
-
-  const updatedGranule = {
-    ...granule,
-    status: 'queued',
-  };
-
-  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
-
-  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
-
-  t.deepEqual(fetchedItem, granule);
-});
-
-test('_storeGranuleRecord() will not allow a queued status to replace a completed status for same execution', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2({ status: 'completed' });
-
-  await granuleModel._storeGranuleRecord(granule);
-
-  const updatedGranule = {
-    ...granule,
-    status: 'queued',
-  };
-
-  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
-
-  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
-
-  t.deepEqual(fetchedItem, granule);
-});
-
-test('_storeGranuleRecord() will not allow a queued status to replace a running status for same execution', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2({ status: 'running' });
-
-  await granuleModel._storeGranuleRecord(granule);
-
-  const updatedGranule = {
-    ...granule,
-    status: 'queued',
-  };
-
-  await t.notThrowsAsync(granuleModel._storeGranuleRecord(updatedGranule));
-
-  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
-
-  t.deepEqual(fetchedItem, granule);
-});
-
 test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution ', async (t) => {
   const { granuleModel } = t.context;
 
