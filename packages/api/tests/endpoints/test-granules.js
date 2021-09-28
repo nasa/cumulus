@@ -1880,7 +1880,11 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
 });
 
 test.serial('PUT publishes an SNS message after a successful granule update', async (t) => {
-  const { esClient, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
   const {
     newPgGranule,
     newDynamoGranule,
@@ -1891,6 +1895,7 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
       status: 'running',
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      execution: executionUrl,
     },
   });
 
@@ -2124,18 +2129,26 @@ test.serial('put() does not write to DynamoDB/PostgreSQL if writing to Elasticse
 });
 
 test.serial('put() does not publish an SNS message if writing to DynamoDB fails', async (t) => {
-  const { esClient, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
   const {
     newDynamoGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running' },
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
   });
 
   const fakeGranuleModel = {
     get: () => Promise.resolve(newDynamoGranule),
-    create: () => {
+    delete: () => Promise.resolve(),
+    storeGranule: () => {
       throw new Error('something bad');
     },
   };
@@ -2158,10 +2171,8 @@ test.serial('put() does not publish an SNS message if writing to DynamoDB fails'
 
   const response = buildFakeExpressResponse();
 
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'something bad' }
-  );
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -2171,13 +2182,20 @@ test.serial('put() does not publish an SNS message if writing to DynamoDB fails'
 });
 
 test.serial('put() does not publish an SNS message if writing to PostgreSQL fails', async (t) => {
-  const { esClient, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
   const {
     newDynamoGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running' },
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
   });
 
   const fakeGranulePgModel = {
@@ -2204,10 +2222,8 @@ test.serial('put() does not publish an SNS message if writing to PostgreSQL fail
 
   const response = buildFakeExpressResponse();
 
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'something bad' }
-  );
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -2217,17 +2233,24 @@ test.serial('put() does not publish an SNS message if writing to PostgreSQL fail
 });
 
 test.serial('put() does not publish an SNS message if writing to Elasticsearch fails', async (t) => {
-  const { esClient, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
   const {
     newDynamoGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running' },
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
   });
 
   const fakeEsClient = {
-    index: () => {
+    update: () => {
       throw new Error('something bad');
     },
     delete: () => Promise.resolve(),
@@ -2251,10 +2274,8 @@ test.serial('put() does not publish an SNS message if writing to Elasticsearch f
 
   const response = buildFakeExpressResponse();
 
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'something bad' }
-  );
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
