@@ -13,7 +13,7 @@ export interface arnRecord {
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
 /**
- * Returns a list of executionArns sorted by most recent first, for an input
+ * Returns execution info sorted by most recent first for an input
  * Granule Cumulus ID.
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction
@@ -22,13 +22,19 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  * @param {number} limit - limit to number of executions to query
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
-export const getExecutionArnsByGranuleCumulusId = async (
+export const getExecutionInfoByGranuleCumulusId = async <T>({
+  knexOrTransaction,
+  granuleCumulusId,
+  executionColumns = ['arn'],
+  limit,
+}: {
   knexOrTransaction: Knex | Knex.Transaction,
-  granuleCumulusId: Number,
+  granuleCumulusId: number,
+  executionColumns: string[],
   limit?: number
-): Promise<arnRecord[]> => {
+}): Promise<T[]> => {
   const knexQuery = knexOrTransaction(tableNames.executions)
-    .select(`${tableNames.executions}.arn`)
+    .column(executionColumns.map((column) => `${tableNames.executions}.${column}`))
     .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
       tableNames.granulesExecutions,

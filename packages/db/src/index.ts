@@ -105,7 +105,7 @@ export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
-  getExecutionArnsByGranuleCumulusId,
+  getExecutionInfoByGranuleCumulusId,
 } from './lib/execution';
 
 export {

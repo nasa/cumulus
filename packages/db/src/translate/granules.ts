@@ -1,7 +1,6 @@
 import Knex from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
-import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
 import { removeNilProperties } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
@@ -12,7 +11,7 @@ import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
-import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
+import { getExecutionInfoByGranuleCumulusId } from '../lib/execution';
 import { PostgresCollectionRecord } from '../types/collection';
 
 /**
@@ -58,14 +57,14 @@ export const translatePostgresGranuleToApiGranule = async ({
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
   );
-  const executionArns = await getExecutionArnsByGranuleCumulusId(
+  const executionUrls = await getExecutionInfoByGranuleCumulusId<{url: string}>({
     knexOrTransaction,
-    granulePgRecord.cumulus_id,
-    1
-  );
+    granuleCumulusId: granulePgRecord.cumulus_id,
+    executionColumns: ['url'],
+    limit: 1,
+  });
 
   let pdr;
-
   if (granulePgRecord.pdr_cumulus_id) {
     pdr = await pdrPgModel.get(
       knexOrTransaction, { cumulus_id: granulePgRecord.pdr_cumulus_id }
@@ -73,7 +72,6 @@ export const translatePostgresGranuleToApiGranule = async ({
   }
 
   let provider;
-
   if (granulePgRecord.provider_cumulus_id) {
     provider = await providerPgModel.get(
       knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
@@ -88,7 +86,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     duration: granulePgRecord.duration,
     endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
     error: granulePgRecord.error,
-    execution: executionArns[0] ? getExecutionUrlFromArn(executionArns[0].arn) : undefined,
+    execution: executionUrls[0] ? executionUrls[0].url : undefined,
     files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : undefined,
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
