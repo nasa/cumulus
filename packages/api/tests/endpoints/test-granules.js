@@ -1929,6 +1929,24 @@ test.serial('update (PUT) can set granule status to queued', async (t) => {
   });
 });
 
+test.serial('update (PUT) can create a new granule with status queued', async (t) => {
+  const granuleId = randomId('new-granule');
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+  });
+});
+
 test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
   const response = await request(app)
     .post(`/granules/${randomId('granuleId')}/executions`)
