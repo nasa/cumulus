@@ -528,8 +528,9 @@ test('getUniqueGranuleByGranuleId() throws an error if more than one granule is 
     }),
   ];
 
-  const granuleIds = await Promise.all(fakeGranules.map((fakeGranule) =>
+  const granules = await Promise.all(fakeGranules.map((fakeGranule) =>
     granulePgModel.create(knex, fakeGranule)));
+  const granuleIds = granules.map(([granule]) => granule.cumulus_id);
 
   const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleIds[0][0] });
 
