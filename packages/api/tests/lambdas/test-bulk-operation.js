@@ -279,7 +279,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       updated_at: new Date(),
     }),
   ];
-  const cumulusGranuleIds = await Promise.all([
+  const pgGranules = await Promise.all([
     granuleModel.create(
       t.context.knex,
       granules[0]
@@ -289,6 +289,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       granules[1]
     ),
   ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
   granules[0].cumulus_id = cumulusGranuleIds[0][0];
   granules[1].cumulus_id = cumulusGranuleIds[1][0];
@@ -344,7 +345,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       updated_at: new Date(),
     }),
   ];
-  const cumulusGranuleIds = await Promise.all([
+  const pgGranules = await Promise.all([
     granuleModel.create(
       t.context.knex,
       granules[0]
@@ -354,6 +355,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       granules[1]
     ),
   ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
   granules[0].cumulus_id = cumulusGranuleIds[0][0];
   granules[1].cumulus_id = cumulusGranuleIds[1][0];
