@@ -1,23 +1,60 @@
 'use strict';
 
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const { getObject } = require('@cumulus/aws-client/S3');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const models = require('../../models');
+const {
+  CollectionPgModel,
+  // ExecutionPgModel,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  // ProviderPgModel,
+  migrationDir,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
+} = require('@cumulus/db');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const {
   normalizeEvent,
 } = require('../../lib/reconciliationReport/normalizeEvent');
 const {
   createGranuleInventoryReport,
 } = require('../../lambdas/reports/granule-inventory-report');
-const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+
+test.before(async (t) => {
+  t.context.testDbName = `granule_inventory_${cryptoRandomString({ length: 10 })}`;
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    t.context.testDbName,
+    migrationDir
+  );
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.collection = fakeCollectionRecordFactory();
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
+  const collectionResponse = await t.context.collectionPgModel.create(
+    t.context.knex,
+    t.context.collection
+  );
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
+});
 
 test.beforeEach(async (t) => {
-  process.env.GranulesTable = randomId('granulesTable');
-  await new models.Granule().createTable();
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
   t.context.systemBucket = randomId('systembucket');
@@ -31,13 +68,24 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await Promise.all([
     t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-    new models.Granule().deleteTable(),
   ]);
 });
 
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+  });
+});
+
 test.serial('Writes a file containing all granules to S3.', async (t) => {
-  const testGranules = range(20).map(() => fakeGranuleFactoryV2());
-  await new models.Granule().create(testGranules);
+  const testGranules = range(20).map(() => fakeGranuleRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+  }));
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    testGranules
+  );
+
   const reportRecordName = randomId('recordName');
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportRecordName}.csv`;
   const systemBucket = t.context.systemBucket;
@@ -45,6 +93,7 @@ test.serial('Writes a file containing all granules to S3.', async (t) => {
     ...normalizeEvent({ reportType: 'Granule Inventory' }),
     reportKey,
     systemBucket,
+    knex: t.context.knex,
   };
 
   await createGranuleInventoryReport(reportParams);
@@ -59,25 +108,59 @@ test.serial('Writes a file containing all granules to S3.', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
   t.true(reportData.includes(header));
   testGranules.forEach((g) => {
-    const createdAt = new Date(g.createdAt).toISOString();
-    const searchStr = `"${g.granuleId}","${g.collectionId}","${createdAt}"`;
+    const createdAt = new Date(g.created_at).toISOString();
+    const searchStr = `"${g.granule_id}","${t.context.collectionId}","${createdAt}"`;
     t.true(reportData.includes(searchStr));
   });
 });
 
-test.serial('Writes a file containing a filtered set of granules to S3.', async (t) => {
+test.serial.only('Writes a file containing a filtered set of granules to S3.', async (t) => {
   const collectionId = randomString();
   const status = 'running';
   const granuleId = randomString();
+  // const testGranules = [
+  //   fakeGranuleFactoryV2({ collectionId, status }),
+  //   fakeGranuleFactoryV2({ collectionId, status }),
+  //   fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testGranule' }),
+  //   fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testAnotherGranule' }),
+  //   fakeGranuleFactoryV2({ collectionId, status, granuleId }),
+  //   fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
+  // ];
+
   const testGranules = [
-    fakeGranuleFactoryV2({ collectionId, status }),
-    fakeGranuleFactoryV2({ collectionId, status }),
-    fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testGranule' }),
-    fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testAnotherGranule' }),
-    fakeGranuleFactoryV2({ collectionId, status, granuleId }),
-    fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status,
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status,
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status,
+      granule_id: 'testGranule',
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status,
+      granule_id: 'testAnotherGranule',
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status,
+      granule_id: granuleId,
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      status: 'completed',
+    }),
   ];
-  await new models.Granule().create(testGranules);
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    testGranules
+  );
+
   const reportRecordName = randomId('recordName');
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportRecordName}.csv`;
   const systemBucket = t.context.systemBucket;
@@ -90,6 +173,7 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
     }),
     reportKey,
     systemBucket,
+    knex: t.context.knex,
   };
 
   await createGranuleInventoryReport(reportParams);

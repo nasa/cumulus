@@ -5,9 +5,14 @@ const noop = require('lodash/noop');
 const Stream = require('stream');
 const Logger = require('@cumulus/logger');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { Granule } = require('../../models');
+const {
+  getGranulesByApiPropertiesQuery,
+  QuerySearchClient,
+  translatePostgresGranuleToApiGranule,
+} = require('@cumulus/db');
+// const { Granule } = require('../../models');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
-const { convertToDBScanGranuleSearchParams } = require('../../lib/reconciliationReport');
+const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
  * Builds a CSV file of all granules in the Cumulus DB
@@ -34,10 +39,20 @@ async function createGranuleInventoryReport(recReportParams) {
   ];
 
   const { reportKey, systemBucket } = recReportParams;
-  const searchParams = convertToDBScanGranuleSearchParams(recReportParams);
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
-  const granuleScanner = new Granule().granuleAttributeScan(searchParams);
-  let nextGranule = await granuleScanner.peek();
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+    recReportParams.knex,
+    searchParams,
+    ['collectionName', 'collectionVersion', 'granule_id']
+  );
+  const pgGranulesSearchClient = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+  );
+
+  // const granuleScanner = new Granule().granuleAttributeScan(searchParams);
+  let nextGranule = await pgGranulesSearchClient.peek();
 
   const readable = new Stream.Readable({ objectMode: true });
   const pass = new Stream.PassThrough();
@@ -53,20 +68,33 @@ async function createGranuleInventoryReport(recReportParams) {
     Body: pass,
   });
 
-  while (nextGranule) {
-    readable.push({
-      granuleUr: nextGranule.granuleId,
-      collectionId: nextGranule.collectionId,
-      createdAt: new Date(nextGranule.createdAt).toISOString(),
-      startDateTime: nextGranule.beginningDateTime || '',
-      endDateTime: nextGranule.endingDateTime || '',
-      status: nextGranule.status,
-      updatedAt: new Date(nextGranule.updatedAt).toISOString(),
-      published: nextGranule.published,
-      provider: nextGranule.provider,
+  const translateDbResultToApiGranule = (dbResult) =>
+    translatePostgresGranuleToApiGranule({
+      knexOrTransaction: recReportParams.knex,
+      granulePgRecord: dbResult,
+      collectionPgRecord: {
+        cumulus_id: dbResult.collection_cumulus_id,
+        name: dbResult.collectionName,
+        version: dbResult.collectionVersion,
+      },
     });
-    await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
-    nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
+
+  while (nextGranule) {
+    // eslint-disable-next-line no-await-in-loop
+    const apiGranule = await translateDbResultToApiGranule(nextGranule);
+    readable.push({
+      granuleUr: apiGranule.granuleId,
+      collectionId: apiGranule.collectionId,
+      createdAt: new Date(apiGranule.createdAt).toISOString(),
+      startDateTime: apiGranule.beginningDateTime || '',
+      endDateTime: apiGranule.endingDateTime || '',
+      status: apiGranule.status,
+      updatedAt: new Date(apiGranule.updatedAt).toISOString(),
+      published: apiGranule.published,
+      provider: apiGranule.provider,
+    });
+    await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
   }
   readable.push(null);
 

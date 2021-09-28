@@ -117,22 +117,25 @@ function convertToESGranuleSearchParams(params) {
 }
 
 /**
+ * Convert reconciliation report parameters to PostgreSQL database search params.
  *
  * @param {Object} params - request params to convert to database params
  * @returns {Object} object of desired parameters formated for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
   const {
-    collectionId,
+    collectionIds,
     granuleIds,
     providers,
     startTimestamp,
     endTimestamp,
+    status,
   } = params;
   const searchParams = {
-    collectionId,
+    collectionIds,
     granuleIds,
     providerNames: providers,
+    status,
   };
   if (startTimestamp || endTimestamp) {
     searchParams.updatedAtRange = removeNilProperties({
@@ -152,7 +155,7 @@ function convertToDBScanGranuleSearchParams(params) {
   const {
     collectionIds: collectionId,
     granuleIds: granuleIdsParam,
-    providers: provider,
+    providers,
     status,
     startTimestamp,
     endTimestamp,
@@ -165,7 +168,7 @@ function convertToDBScanGranuleSearchParams(params) {
     updatedAt__to: dateToValue(endTimestamp),
     collectionId,
     granuleId,
-    provider,
+    providerNames: providers,
     status,
   };
   return removeNilProperties(searchParams);

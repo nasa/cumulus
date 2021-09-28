@@ -255,7 +255,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
 
   const searchParams = convertToDBGranuleSearchParams({
     ...recReportParams,
-    collectionId,
+    collectionIds: collectionId,
   });
   const granulesSearchQuery = getGranulesByApiPropertiesQuery(
     recReportParams.knex,
