@@ -103,7 +103,7 @@ const create = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const update = async (req, res) => {
+const putGranule = async (req, res) => {
   const {
     granuleModel = new models.Granule(),
     knex = await getKnexClient(),
@@ -111,15 +111,14 @@ const update = async (req, res) => {
   const body = req.body || {};
 
   let existingGranule;
+  let message;
   try {
     existingGranule = await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
-    if (body.status === 'queued') {
+    if (error instanceof RecordDoesNotExist) {
       existingGranule = {};
+      message = `Successfully wrote granule with Granule Id: ${body.granuleId}`;
     } else {
-      if (error instanceof RecordDoesNotExist) {
-        return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
-      }
       return res.boom.badRequest(errorify(error));
     }
   }
@@ -134,7 +133,7 @@ const update = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
+    message: message || `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}`,
   });
 };
 
@@ -155,7 +154,7 @@ async function put(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleName) {
-      return update(req, res);
+      return putGranule(req, res);
     }
     return res.boom.badRequest(
       `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`

@@ -1658,7 +1658,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
+test.serial('update (PUT) adds granule if it does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1669,10 +1669,11 @@ test.serial('update (PUT) returns Not Found if granule does not exist', async (t
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(404);
+    .expect(200);
 
-  t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}`,
+  });
 });
 
 test.serial('update (PUT) returns an updated granule with an undefined execution', async (t) => {
@@ -1887,8 +1888,7 @@ test.serial('update (PUT) modifies timestamp and updatedAt values but does not c
   t.true(updatedDynamoRecord.updatedAt > originalDynamoRecord.updatedAt);
   t.true(
     new Date(updatedPostgresRecord.timestamp).valueOf()
-      >
-      new Date(originalPostgresRecord.timestamp).valueOf()
+      > new Date(originalPostgresRecord.timestamp).valueOf()
   );
   t.is(
     new Date(updatedPostgresRecord.created_at).valueOf(),
@@ -1943,7 +1943,7 @@ test.serial('update (PUT) can create a new granule with status queued', async (t
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+    message: `Successfully wrote granule with Granule Id: ${granuleId}`,
   });
 });
 
