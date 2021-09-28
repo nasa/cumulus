@@ -319,11 +319,16 @@ const writeGranuleToDynamoAndEs = async (params) => {
 
 /**
  * Write a granule record to DynamoDB and PostgreSQL
- * param {PostgresGranule} postgresGranuleRecord,
- * param {DynamoDBGranule} dynamoGranuleRecord,
- * param {number} executionCumulusId,
- * param {Knex} knex,
- * param {Object} granuleModel = new Granule(),
+ *
+ * @param {Object} params
+ * @param {PostgresGranule} params.postgresGranuleRecord,
+ * @param {DynamoDBGranule} params.dynamoGranuleRecord,
+ * @param {number} params.executionCumulusId,
+ * @param {Knex} params.knex,
+ * @param {Object} params.granuleModel = new Granule(),
+ * @param {Object} params.granulePgModel,
+ * @param {Object} params.esClient - Elasticsearch client
+ * @param {string} params.snsEvent - SNS Event
  * returns {Promise}
  * throws
  */
@@ -335,6 +340,7 @@ const _writeGranule = async ({
   granuleModel,
   granulePgModel,
   esClient,
+  snsEvent,
 }) => {
   let pgGranule;
 
@@ -378,7 +384,7 @@ const _writeGranule = async ({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  await publishGranuleSnsMessage(granuletoPublish, 'Update');
+  await publishGranuleSnsMessage(granuletoPublish, snsEvent);
 };
 
 /**
@@ -415,6 +421,7 @@ const _writeGranule = async ({
  * @param {Object} [params.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
  * @param {Object} esClient - Elasticsearch client
+ * @param {string} snsEvent - SNS Event
  * @returns {Promise}
  */
 const writeGranuleFromApi = async (
@@ -447,7 +454,8 @@ const writeGranuleFromApi = async (
     granulePgModel = new GranulePgModel(),
   },
   knex,
-  esClient
+  esClient,
+  snsEvent = 'Update'
 ) => {
   try {
     // Build a objects with correct shape for the granuleModel.generateGranuleRecord.
@@ -506,6 +514,7 @@ const writeGranuleFromApi = async (
       granuleModel,
       granulePgModel,
       esClient,
+      snsEvent,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {

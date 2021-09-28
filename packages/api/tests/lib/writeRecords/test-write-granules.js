@@ -1252,6 +1252,7 @@ test.serial('_writeGranule() calls publishGranuleSnsMessage and successfully pub
     granuleModel,
     knex,
     esClient,
+    snsEvent: 'Update',
   });
 
   t.true(await granuleModel.exists({ granuleId }));

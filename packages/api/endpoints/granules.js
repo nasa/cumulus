@@ -78,6 +78,7 @@ const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
     granuleModel = new Granule(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const granule = req.body || {};
@@ -91,7 +92,7 @@ const create = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(granule, knex);
+    await writeGranuleFromApi(granule, knex, esClient, 'Create');
     if (inTestMode()) {
       await addToLocalES(granule, indexGranule);
     }
@@ -154,7 +155,7 @@ const update = async (req, res) => {
   };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex, esClient);
+    await writeGranuleFromApi(updatedGranule, knex, esClient, 'Update');
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -328,6 +329,7 @@ const associateExecution = async (req, res) => {
     executionModel = new Execution(),
     granuleModel = new Granule(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   let granule;
@@ -356,7 +358,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex);
+    await writeGranuleFromApi(updatedGranule, knex, esClient, 'Update');
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
@@ -434,7 +436,6 @@ async function del(req, res) {
     esClient,
     collectionCumulusId,
   });
-
 
   return res.send({ detail: 'Record deleted' });
 }
