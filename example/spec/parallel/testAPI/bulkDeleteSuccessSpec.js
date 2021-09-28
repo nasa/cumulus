@@ -10,7 +10,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { s3PutObject, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
@@ -101,6 +101,17 @@ describe('POST /granules/bulkDelete', () => {
 
         // Ingest the granule the first time
         const testExecutionId = randomId('test-execution-');
+        const granuleToDelete = {
+          granuleId,
+          dataType: collection.name,
+          version: collection.version,
+          files: [
+            {
+              name: filename,
+              path: sourcePath,
+            },
+          ],
+        };
         ingestGranuleRule = await createOneTimeRule(
           prefix,
           {
@@ -112,19 +123,7 @@ describe('POST /granules/bulkDelete', () => {
             provider: provider.id,
             payload: {
               testExecutionId,
-              granules: [
-                {
-                  granuleId,
-                  dataType: collection.name,
-                  version: collection.version,
-                  files: [
-                    {
-                      name: filename,
-                      path: sourcePath,
-                    },
-                  ],
-                },
-              ],
+              granules: [granuleToDelete],
             },
           }
         );
@@ -276,6 +275,16 @@ describe('POST /granules/bulkDelete', () => {
       }
 
       expect(output).toEqual({ deletedGranules: [granuleId] });
+    });
+
+    it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {
+      const timestamp = Date.now();
+      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}.output`;
+      const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+      expect(message.event).toEqual('Delete');
+      expect(message.record).toEqual(ingestedGranule);
+      expect(message.deletedAt).toBeGreaterThan(timestamp);
     });
   });
 });
