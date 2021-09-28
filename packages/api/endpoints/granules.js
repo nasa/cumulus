@@ -27,7 +27,6 @@ const Logger = require('@cumulus/logger');
 const {
   deconstructCollectionId,
 } = require('@cumulus/message/Collections');
-const { publishGranuleSnsMessage } = require('../lib/publishSnsMessageUtils');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -388,7 +387,7 @@ async function del(req, res) {
 
   let dynamoGranule;
   let pgGranule;
-  let granuleToPublishToSns;
+  let collectionCumulusId;
 
   // If the granule does not exist in Dynamo, throw an error
   try {
@@ -406,7 +405,7 @@ async function del(req, res) {
   try {
     if (dynamoGranule.collectionId) {
       const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      collectionCumulusId = await collectionPgModel.getRecordCumulusId(
         knex,
         { name, version }
       );
@@ -433,18 +432,9 @@ async function del(req, res) {
     dynamoGranule,
     pgGranule,
     esClient,
+    collectionCumulusId,
   });
 
-  if (pgGranule) {
-    granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
-    });
-  } else {
-    granuleToPublishToSns = dynamoGranule;
-  }
-
-  await publishGranuleSnsMessage(granuleToPublishToSns, 'Delete');
 
   return res.send({ detail: 'Record deleted' });
 }
