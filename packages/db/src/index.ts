@@ -62,6 +62,7 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
@@ -72,12 +73,14 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
+// eslint-disable-next-line import/no-cycle
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } from './translate/granules';
 export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
+// eslint-disable-next-line import/no-cycle
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
