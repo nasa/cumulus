@@ -182,11 +182,13 @@ export const getGranulesByApiPropertiesQuery = (
     granuleIds,
     providerNames,
     updatedAtRange = {},
+    status,
   }: {
-    collectionId: string,
-    granuleIds: string | string[],
-    providerNames: string[],
-    updatedAtRange: UpdatedAtRange,
+    collectionId?: string,
+    granuleIds?: string | string[],
+    providerNames?: string[],
+    updatedAtRange?: UpdatedAtRange,
+    status?: string,
   },
   sortByFields?: string | string[]
 ): Knex.QueryBuilder => {
@@ -221,6 +223,9 @@ export const getGranulesByApiPropertiesQuery = (
       }
       if (updatedAtRange.updatedAtTo) {
         queryBuilder.where(`${granulesTable}.updated_at`, '<=', updatedAtRange.updatedAtTo);
+      }
+      if (status) {
+        queryBuilder.where(`${granulesTable}.status`, status);
       }
       if (sortByFields) {
         queryBuilder.orderBy([sortByFields].flat());

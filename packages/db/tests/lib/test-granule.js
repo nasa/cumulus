@@ -621,6 +621,56 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   );
 });
 
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by status', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+    providerPgModel,
+    collection,
+  } = t.context;
+
+  const provider = fakeProviderRecordFactory();
+  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+
+  const granules = await granulePgModel.insert(
+    knex,
+    [
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        provider_cumulus_id: providerCumulusId,
+        status: 'running',
+      }),
+      fakeGranuleRecordFactory({
+        collection_cumulus_id: collectionCumulusId,
+        provider_cumulus_id: providerCumulusId,
+        status: 'completed',
+      }),
+    ],
+    '*'
+  );
+  t.teardown(() => Promise.all([
+    granulePgModel.delete(knex, { cumulus_id: granules[0].cumulus_id }),
+    granulePgModel.delete(knex, { cumulus_id: granules[1].cumulus_id }),
+  ]));
+  const records = await getGranulesByApiPropertiesQuery(
+    knex,
+    {
+      status: 'completed',
+    }
+  );
+  t.is(records.length, 1);
+  t.deepEqual(
+    [{
+      ...granules.find((granule) => granule.status === 'completed'),
+      providerName: provider.name,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    records
+  );
+});
+
 test.serial('getGranulesByApiPropertiesQuery returns correct granules by updated_at from date', async (t) => {
   const {
     collectionCumulusId,
