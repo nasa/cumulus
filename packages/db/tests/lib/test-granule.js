@@ -583,7 +583,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by granule
   );
 });
 
-test.serial('getGranulesByApiPropertiesQuery returns correct granules by provider', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by providers', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -607,7 +607,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
-      providerName: provider.name,
+      providerNames: [provider.name],
     }
   );
   t.deepEqual(

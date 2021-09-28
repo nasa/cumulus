@@ -180,12 +180,12 @@ export const getGranulesByApiPropertiesQuery = (
   {
     collectionId,
     granuleIds,
-    providerName,
+    providerNames,
     updatedAtRange = {},
   }: {
     collectionId: string,
     granuleIds: string | string[],
-    providerName: string,
+    providerNames: string[],
     updatedAtRange: UpdatedAtRange,
   },
   sortByFields?: string | string[]
@@ -213,8 +213,8 @@ export const getGranulesByApiPropertiesQuery = (
       if (granuleIds) {
         queryBuilder.whereIn(`${granulesTable}.granule_id`, [granuleIds].flat());
       }
-      if (providerName) {
-        queryBuilder.where(`${providersTable}.name`, providerName);
+      if (providerNames) {
+        queryBuilder.whereIn(`${providersTable}.name`, providerNames);
       }
       if (updatedAtRange.updatedAtFrom) {
         queryBuilder.where(`${granulesTable}.updated_at`, '>=', updatedAtRange.updatedAtFrom);
