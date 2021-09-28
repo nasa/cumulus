@@ -29,7 +29,10 @@ const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
-    migrationDir
+    migrationDir,
+    {
+      KNEX_DEBUG: 'true',
+    }
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
@@ -521,7 +524,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by single 
   );
 });
 
-test.serial.only('getGranulesByApiPropertiesQuery returns correct granules by multiple collection IDs', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by multiple collection IDs', async (t) => {
   const {
     collection,
     collectionId,
@@ -585,7 +588,7 @@ test.serial.only('getGranulesByApiPropertiesQuery returns correct granules by mu
   );
 });
 
-test.serial('getGranulesByApiPropertiesQuery returns correct granules by granule IDs', async (t) => {
+test.serial.only('getGranulesByApiPropertiesQuery returns correct granules by granule IDs', async (t) => {
   const {
     collection,
     collectionCumulusId,
