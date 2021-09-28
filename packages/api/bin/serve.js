@@ -396,13 +396,7 @@ async function eraseDataStack(
   stackName = localStackName,
   systemBucket = localSystemBucket
 ) {
-  console.log('*********************');
-  console.log('about to erase dynamo tables');
-  console.log('*********************');
   await eraseDynamoTables(stackName, systemBucket);
-  console.log('*********************');
-  console.log('erased dynamo tables');
-  console.log('*********************');
   return initializeLocalElasticsearch(stackName);
 }
 
