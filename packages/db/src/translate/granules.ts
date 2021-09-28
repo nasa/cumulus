@@ -46,7 +46,7 @@ export const translateApiGranuleToPostgresGranule = async (
         { name: dynamoRecord.pdrName }
       )
       : undefined,
-    provider_cumulus_id: dynamoRecord.provider ? await providerPgModel.getRecordCumulusId(
+    provider_cumulus_id: (dynamoRecord.provider && dynamoRecord.status !== 'queued') ? await providerPgModel.getRecordCumulusId(
       knexOrTransaction,
       { name: dynamoRecord.provider }
     ) : undefined,
