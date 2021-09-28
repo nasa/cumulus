@@ -38,6 +38,7 @@ of response and not the raw API endpoint response
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic_arn`, `report_pdrs_topic_arn`,
       `report_granules_topic_arn`
+    - Added report topic ARNS tp `process_dead_letter_archive.tf`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2575**
@@ -142,13 +143,18 @@ of response and not the raw API endpoint response
     - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated functions `create` and `upsert` in the `db` model for Executions
-    to return an array of objects containing all columns of the created or
-    updated records.
+      to return an array of objects containing all columns of the created or
+      updated records.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
+    - Updated functions `create` and `upsert` in the `db` model for Granules
+      to return an array of objects containing all columns for the created or
+      updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-granules` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
