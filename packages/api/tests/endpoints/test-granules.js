@@ -1819,6 +1819,83 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
 });
 
+test.serial('update (PUT) modifies timestamp and updatedAt values but does not change created at values.', async (t) => {
+  const createdAtTime = Date.now();
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt: createdAtTime,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  t.is(response.statusCode, 200);
+
+  const originalDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const originalPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  const modifiedGranule = {
+    collectionId: newGranule.collectionId,
+    granuleId: newGranule.granuleId,
+    status: 'failed',
+    error: { some: 'error' },
+  };
+
+  const modifiedResponse = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(modifiedGranule)
+    .expect(200);
+
+  t.is(modifiedResponse.statusCode, 200);
+
+  const updatedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const updatedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.is(originalDynamoRecord.createdAt, createdAtTime);
+  t.true(originalDynamoRecord.timestamp >= createdAtTime);
+  t.true(originalDynamoRecord.updatedAt >= createdAtTime);
+  t.true(new Date(originalPostgresRecord.timestamp).valueOf() > createdAtTime);
+  t.is(new Date(originalPostgresRecord.created_at).valueOf(), createdAtTime);
+
+  t.is(updatedDynamoRecord.createdAt, createdAtTime);
+  t.true(updatedDynamoRecord.timestamp > originalDynamoRecord.timestamp);
+  t.true(updatedDynamoRecord.updatedAt > originalDynamoRecord.updatedAt);
+  t.true(
+    new Date(updatedPostgresRecord.timestamp).valueOf()
+      >
+      new Date(originalPostgresRecord.timestamp).valueOf()
+  );
+  t.is(
+    new Date(updatedPostgresRecord.created_at).valueOf(),
+    new Date(originalPostgresRecord.created_at).valueOf()
+  );
+});
+
 test.serial('update (PUT) returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({});
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
