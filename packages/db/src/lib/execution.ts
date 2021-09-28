@@ -1,7 +1,8 @@
 import Knex from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { tableNames } from '../tables';
-import { ExecutionPgModel, GranulesExecutionsPgModel } from '..';
+import { ExecutionPgModel } from '../models/execution';
+import { GranulesExecutionsPgModel } from '../models/granules-executions';
 
 const Logger = require('@cumulus/logger');
 

@@ -73,14 +73,12 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-// eslint-disable-next-line import/no-cycle
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } from './translate/granules';
 export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
-// eslint-disable-next-line import/no-cycle
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
