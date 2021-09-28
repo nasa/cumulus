@@ -74,9 +74,7 @@ test.beforeEach(async (t) => {
   esClient = await Search.es();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;
-  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir, {
-    KNEX_DEBUG: 'true',
-  });
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   process.env = {
@@ -236,14 +234,14 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
   await Promise.all(
     dbGranules.map(async (granule) => {
       const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
-      let executionCumulusId;
+      let pgExecution = {};
       if (granule.execution) {
-        const pgExecution = fakeExecutionRecordFactory({
+        const pgExecutionData = fakeExecutionRecordFactory({
           url: granule.execution,
         });
-        ([executionCumulusId] = await executionPgModel.create(knex, pgExecution));
+        ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
       }
-      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, executionCumulusId);
+      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
     })
   );
 
@@ -290,7 +288,7 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
   t.is(report.withConflicts.length, 0);
 
   // collectionId, provider parameters
-  const collectionProviderParams = { ...searchParams, collectionId, provider };
+  const collectionProviderParams = { ...searchParams, collectionId, provider: provider.name };
   report = await internalRecReportForGranules({
     ...normalizeEvent(collectionProviderParams),
     knex,
@@ -305,7 +303,7 @@ test.serial.only('internalRecReportForGranules reports discrepancy of granule ho
   t.is(report.withConflicts.length, 0);
 
   // provider parameter
-  const providerParams = { ...searchParams, provider: [randomId('p'), provider] };
+  const providerParams = { ...searchParams, provider: [randomId('p'), provider.name] };
   report = await internalRecReportForGranules({
     ...normalizeEvent(providerParams),
     knex,

@@ -125,14 +125,14 @@ function convertToDBGranuleSearchParams(params) {
   const {
     collectionId,
     granuleIds,
-    provider,
+    providers,
     startTimestamp,
     endTimestamp,
   } = params;
   const searchParams = {
     collectionId,
     granuleIds,
-    provider,
+    providerNames: providers,
   };
   if (startTimestamp || endTimestamp) {
     searchParams.updatedAtRange = removeNilProperties({

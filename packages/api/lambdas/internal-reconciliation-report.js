@@ -272,9 +272,23 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   const onlyInEs = [];
   const onlyInDb = [];
   const fieldsIgnored = ['timestamp', 'updatedAt'];
+  // "dataType" and "version" fields do not exist in the PostgreSQL database
+  // granules table which is now the source of truth
+  const esFieldsIgnored = [...fieldsIgnored, 'dataType', 'version'];
   const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
 
   let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
+
+  const translateDbResultToApiGranule = (dbResult) =>
+    translatePostgresGranuleToApiGranule({
+      knexOrTransaction: recReportParams.knex,
+      granulePgRecord: dbResult,
+      collectionPgRecord: {
+        cumulus_id: dbResult.collection_cumulus_id,
+        name: dbResult.collectionName,
+        version: dbResult.collectionVersion,
+      },
+    });
 
   /* eslint-disable no-await-in-loop */
   while (nextEsItem && nextDbItem) {
@@ -283,35 +297,19 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
     } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
-      const apiGranule = await translatePostgresGranuleToApiGranule({
-        knexOrTransaction: recReportParams.knex,
-        granulePgRecord: nextDbItem,
-        collectionPgRecord: {
-          cumulus_id: nextDbItem.collection_cumulus_id,
-          name: nextDbItem.collectionName,
-          version: nextDbItem.collectionVersion,
-        },
-      });
+      const apiGranule = await translateDbResultToApiGranule(nextDbItem);
 
       // Found an item that is only in DB and not in ES
       onlyInDb.push(pick(apiGranule, granuleFields));
       await pgGranulesSearchClient.shift();
     } else {
-      const apiGranule = await translatePostgresGranuleToApiGranule({
-        knexOrTransaction: recReportParams.knex,
-        granulePgRecord: nextDbItem,
-        collectionPgRecord: {
-          cumulus_id: nextDbItem.collection_cumulus_id,
-          name: nextDbItem.collectionName,
-          version: nextDbItem.collectionVersion,
-        },
-      });
+      const apiGranule = await translateDbResultToApiGranule(nextDbItem);
 
       // Found an item that is in both ES and DB
-      if (isEqual(omit(nextEsItem, fieldsIgnored), omit(apiGranule, fieldsIgnored))) {
+      if (isEqual(omit(nextEsItem, esFieldsIgnored), omit(apiGranule, fieldsIgnored))) {
         okCount += 1;
       } else {
-        withConflicts.push({ es: nextEsItem, db: nextDbItem });
+        withConflicts.push({ es: nextEsItem, db: apiGranule });
       }
       await Promise.all([esGranulesIterator.shift(), pgGranulesSearchClient.shift()]);
     }
@@ -328,14 +326,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   // Add any remaining DB items to the report
   while (await pgGranulesSearchClient.peek()) {
     const item = await pgGranulesSearchClient.shift();
-    const apiGranule = await translatePostgresGranuleToApiGranule({
-      knexOrTransaction: recReportParams.knex,
-      granulePgRecord: item,
-      collectionPgRecord: {
-        name: nextDbItem.collectionName,
-        version: nextDbItem.collectionVersion,
-      },
-    });
+    const apiGranule = await translateDbResultToApiGranule(item);
     onlyInDb.push(pick(apiGranule, granuleFields));
   }
   /* eslint-enable no-await-in-loop */
