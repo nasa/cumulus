@@ -181,7 +181,7 @@ module "cumulus" {
 
   log_destination_arn = var.log_destination_arn
 
-  # Cumulus Distribution settings. Remove/comment if not using Cumulus Distribution. (are using TEA)
+  # Cumulus Distribution settings. Remove/comment to use TEA
   tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
   deploy_cumulus_distribution = var.deploy_cumulus_distribution
