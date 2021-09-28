@@ -408,7 +408,7 @@ const writeGranuleFromApi = async (
     let executionCumulusId;
     if (execution) {
       executionCumulusId = await getExecutionCumulusId(execution, knex);
-      if (executionCumulusId === undefined && status !== 'queued') {
+      if (executionCumulusId === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
     }
