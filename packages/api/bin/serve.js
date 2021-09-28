@@ -374,8 +374,8 @@ async function eraseDynamoTables(stackName, systemBucket) {
 
   try {
     await rulesModel.deleteRules();
-    await providerModel.deleteProviders();
     await Promise.allSettled([
+      providerModel.deleteProviders(),
       collectionModel.deleteCollections(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
