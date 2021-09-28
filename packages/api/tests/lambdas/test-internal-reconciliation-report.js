@@ -172,7 +172,7 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
   t.is(report.withConflicts.length, 1);
 });
 
-test.serial.only('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
+test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
   const {
     knex,
     collectionPgModel,
