@@ -16,7 +16,7 @@ resource "aws_lambda_function" "cnm_response_task" {
   runtime       = "java8"
   timeout       = 300
   memory_size   = 256
-  source_code_hash = filebase64sha256("${path.module}/cnmResponse.zip")
+  source_code_hash = filebase64sha256("cnmResponse.zip")
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
