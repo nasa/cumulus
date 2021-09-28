@@ -16,10 +16,12 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  * Returns execution info sorted by most recent first for an input
  * Granule Cumulus ID.
  *
- * @param {Knex | Knex.Transaction} knexOrTransaction
+ * @param {Object} params
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {number} granuleCumulusId - The primary ID for a Granule
- * @param {number} limit - limit to number of executions to query
+ * @param {Array<string>} params.executionColumns - Columns to return from executions table
+ * @param {number} params.granuleCumulusId - The primary ID for a Granule
+ * @param {number} [params.limit] - limit to number of executions to query
  * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
  */
 export const getExecutionInfoByGranuleCumulusId = async <T>({
