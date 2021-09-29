@@ -555,6 +555,7 @@ releases.
 
 ### BREAKING CHANGES
 
+- @cumulus/api-client/granules.getGranule now returns the granule record from the GET /granules/<granuleId> endpoint, not the raw endpoint response
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
