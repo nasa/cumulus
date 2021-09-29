@@ -431,6 +431,35 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
   t.is(record.status, 'completed');
 });
 
+test('GranulePgModel.upsert() will not allow a queued status to replace a running status for same execution', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'running');
+});
+
 test('GranulePgModel.upsert() will allow a queued status to replace a non-queued status for a different execution', async (t) => {
   const {
     knex,
