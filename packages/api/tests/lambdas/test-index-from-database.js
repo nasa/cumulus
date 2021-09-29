@@ -26,6 +26,7 @@ const {
   fakeRuleRecordFactory,
   generateLocalTestDb,
   GranulePgModel,
+  migrationDir,
   PdrPgModel,
   ProviderPgModel,
   RulePgModel,
@@ -43,7 +44,6 @@ const {
 
 const models = require('../../models');
 const indexFromDatabase = require('../../lambdas/index-from-database');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const {
   getWorkflowList,
 } = require('../../lib/testUtils');
