@@ -221,7 +221,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
   }));
 });
 
-test.only('Lambda successfully indexes records of all types', async (t) => {
+test.serial('Lambda successfully indexes records of all types', async (t) => {
   const knex = t.context.knex;
   const { esAlias } = t.context;
 
