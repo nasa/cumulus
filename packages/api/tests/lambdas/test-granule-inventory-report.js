@@ -10,10 +10,8 @@ const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
-  // ExecutionPgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  // ProviderPgModel,
   migrationDir,
   destroyLocalTestDb,
   generateLocalTestDb,
@@ -114,50 +112,48 @@ test.serial('Writes a file containing all granules to S3.', async (t) => {
   });
 });
 
-test.serial.only('Writes a file containing a filtered set of granules to S3.', async (t) => {
-  const collectionId = randomString();
+test.serial('Writes a file containing a filtered set of granules to S3.', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    granulePgModel,
+    knex,
+  } = t.context;
+
   const status = 'running';
   const granuleId = randomString();
-  // const testGranules = [
-  //   fakeGranuleFactoryV2({ collectionId, status }),
-  //   fakeGranuleFactoryV2({ collectionId, status }),
-  //   fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testGranule' }),
-  //   fakeGranuleFactoryV2({ collectionId, status, granuleId: 'testAnotherGranule' }),
-  //   fakeGranuleFactoryV2({ collectionId, status, granuleId }),
-  //   fakeGranuleFactoryV2({ collectionId, status: 'completed' }),
-  // ];
 
   const testGranules = [
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status,
     }),
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status,
     }),
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status,
       granule_id: 'testGranule',
     }),
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status,
       granule_id: 'testAnotherGranule',
     }),
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status,
       granule_id: granuleId,
     }),
     fakeGranuleRecordFactory({
-      collection_cumulus_id: t.context.collectionCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       status: 'completed',
     }),
   ];
-  await t.context.granulePgModel.insert(
-    t.context.knex,
+  await granulePgModel.insert(
+    knex,
     testGranules
   );
 

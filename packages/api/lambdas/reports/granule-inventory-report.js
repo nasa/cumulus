@@ -10,7 +10,6 @@ const {
   QuerySearchClient,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-// const { Granule } = require('../../models');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
@@ -51,7 +50,6 @@ async function createGranuleInventoryReport(recReportParams) {
     100 // arbitrary limit on how items are fetched at once
   );
 
-  // const granuleScanner = new Granule().granuleAttributeScan(searchParams);
   let nextGranule = await pgGranulesSearchClient.peek();
 
   const readable = new Stream.Readable({ objectMode: true });
