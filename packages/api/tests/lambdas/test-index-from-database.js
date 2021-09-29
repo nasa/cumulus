@@ -83,12 +83,9 @@ async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
   const items = [];
   for (let i = 0; i < numItems; i += 1) {
     const item = factory(factoryParams);
-    // eslint-disable-next-line no-await-in-loop
-    const createdRecordId = await model.create(knex, item);
-    items.push({ ...item, cumulus_id: Number(createdRecordId) });
+    items.push(model.create(knex, item, '*'));
   }
-
-  return items;
+  return (await Promise.all(items)).map((result) => result[0]);
 }
 
 function searchEs(type, index, limit = 10) {
@@ -224,7 +221,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
   }));
 });
 
-test.serial('Lambda successfully indexes records of all types', async (t) => {
+test.only('Lambda successfully indexes records of all types', async (t) => {
   const knex = t.context.knex;
   const { esAlias } = t.context;
 
@@ -314,7 +311,11 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     fakeExecutionRecords.map((r) => translatePostgresExecutionToApiExecution(r))
   );
   const granuleResults = await Promise.all(
-    fakeGranuleRecords.map((r) => translatePostgresGranuleToApiGranule(r, knex))
+    fakeGranuleRecords.map((r) =>
+      translatePostgresGranuleToApiGranule({
+        granulePgRecord: r,
+        knexOrTransaction: knex,
+      }))
   );
   const pdrResults = await Promise.all(
     fakePdrRecords.map((r) => translatePostgresPdrToApiPdr(r, knex))
@@ -331,7 +332,6 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
       .map((r) => omit(r, ['timestamp']))
       .sort((a, b) => (a.name > b.name ? 1 : -1)),
     collectionResults
-      .map((r) => ({ ...r, files: JSON.parse(r.files) }))
       .sort((a, b) => (a.name > b.name ? 1 : -1))
   );
 

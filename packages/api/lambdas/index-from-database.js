@@ -221,7 +221,11 @@ async function indexFromDatabase(event) {
       indexFn: indexer.indexGranule,
       limitEsRequests,
       postgresModel: new GranulePgModel(),
-      translationFunction: (record) => translatePostgresGranuleToApiGranule(record, knex),
+      translationFunction: (record) =>
+        translatePostgresGranuleToApiGranule({
+          granulePgRecord: record,
+          knexOrTransaction: knex,
+        }),
       knex,
       pageSize,
     }),
@@ -231,7 +235,8 @@ async function indexFromDatabase(event) {
       indexFn: indexer.indexPdr,
       limitEsRequests,
       postgresModel: new PdrPgModel(),
-      translationFunction: (record) => translatePostgresPdrToApiPdr(record, knex),
+      translationFunction: (record) =>
+        translatePostgresPdrToApiPdr(record, knex),
       knex,
       pageSize,
     }),
