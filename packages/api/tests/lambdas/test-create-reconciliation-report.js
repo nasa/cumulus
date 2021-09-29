@@ -445,7 +445,7 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInDb.length, 0);
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
@@ -536,7 +536,7 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInDb.length, 0);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
   t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
@@ -626,7 +626,7 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
   t.is(report.error, undefined);
   t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInDb.length, 0);
   t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
   t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
@@ -703,7 +703,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
-  t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+  t.is(filesInCumulus.onlyInDb.length, 0);
 
   const createStartTime = moment(report.createStartTime);
   const createEndTime = moment(report.createEndTime);
@@ -787,11 +787,11 @@ test.serial('Generates valid reconciliation report when there are extra internal
   );
   t.is(totalOkCount, filesInCumulus.okCount);
 
-  t.is(filesInCumulus.onlyInDynamoDb.length, 2);
-  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+  t.is(filesInCumulus.onlyInDb.length, 2);
+  t.truthy(filesInCumulus.onlyInDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
     && f.granuleId === extraDbFile1.granule_id));
-  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+  t.truthy(filesInCumulus.onlyInDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
     && f.granuleId === extraDbFile2.granule_id));
 
@@ -883,11 +883,11 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
   t.true(filesInCumulus.onlyInS3.includes(buildS3Uri(extraS3File2.bucket, extraS3File2.key)));
 
-  t.is(filesInCumulus.onlyInDynamoDb.length, 2);
-  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+  t.is(filesInCumulus.onlyInDb.length, 2);
+  t.truthy(filesInCumulus.onlyInDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile1.bucket, extraDbFile1.key)
     && f.granuleId === extraDbFile1.granule_id));
-  t.truthy(filesInCumulus.onlyInDynamoDb.find((f) =>
+  t.truthy(filesInCumulus.onlyInDb.find((f) =>
     f.uri === buildS3Uri(extraDbFile2.bucket, extraDbFile2.key)
     && f.granuleId === extraDbFile2.granule_id));
 
@@ -1049,7 +1049,7 @@ test.serial(
     t.is(report.error, undefined);
     t.is(filesInCumulus.okCount, files.length);
     t.is(filesInCumulus.onlyInS3.length, 0);
-    t.is(filesInCumulus.onlyInDynamoDb.length, 0);
+    t.is(filesInCumulus.onlyInDb.length, 0);
     t.is(report.collectionsInCumulusCmr.okCount, 0);
     t.is(report.granulesInCumulusCmr.okCount, 0);
     t.is(report.filesInCumulusCmr.okCount, 0);

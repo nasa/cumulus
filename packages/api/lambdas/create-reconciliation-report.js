@@ -149,7 +149,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
 
   let okCount = 0;
   const onlyInS3 = [];
-  const onlyInDynamoDb = [];
+  const onlyInDb = [];
   const okCountByGranule = {};
 
   let [nextS3Object, nextPgItem] = await Promise.all([
@@ -171,7 +171,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     } else if (nextS3Uri > nextDynamoDbUri) {
       // Found an item that is only in DynamoDB and not in S3
       const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
-      onlyInDynamoDb.push({
+      onlyInDb.push({
         uri: buildS3Uri(Bucket, pgItem.key),
         granuleId: pgItem.granule_id,
       });
@@ -201,7 +201,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   // Add any remaining DynamoDB items to the report
   while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
     const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
-    onlyInDynamoDb.push({
+    onlyInDb.push({
       uri: buildS3Uri(Bucket, pgItem.key),
       granuleId: pgItem.granule_id,
     });
@@ -210,7 +210,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   return {
     okCount,
     onlyInS3,
-    onlyInDynamoDb,
+    onlyInDb,
     okCountByGranule,
   };
 }
@@ -617,7 +617,7 @@ async function createReconciliationReport(recReportParams) {
     okCount: 0,
     okCountByGranule: {},
     onlyInS3: [],
-    onlyInDynamoDb: [],
+    onlyInDb: [],
   };
 
   const reportFormatCumulusCmr = {
@@ -652,8 +652,8 @@ async function createReconciliationReport(recReportParams) {
     bucketReports.forEach((bucketReport) => {
       report.filesInCumulus.okCount += bucketReport.okCount;
       report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-      report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
-        bucketReport.onlyInDynamoDb
+      report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
+        bucketReport.onlyInDb
       );
 
       if (linkingFilesToGranules(recReportParams.reportType)) {
