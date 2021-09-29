@@ -1,15 +1,15 @@
 export interface ApiFile {
-  granuleId: string
   bucket?: string
-  key?: string
+  checksum?: string
+  checksumType?: string
+  createdAt: Date
   fileName?: string
   filename?: string
+  granuleId: string
+  key?: string
   name?: string
   path?: string
   size?: number
   source?: string
-  checksumType?: string
-  checksum?: string
-  createdAt: Date
   updatedAt: Date
 }

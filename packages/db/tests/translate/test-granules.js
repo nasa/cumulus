@@ -19,14 +19,13 @@ const {
   GranulesExecutionsPgModel,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('../../dist');
 
 const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
-
-const { migrationDir } = require('../../../../lambdas/db-migration/dist/lambda');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
@@ -96,14 +95,17 @@ test.before(async (t) => {
 
   // Create executions
   const executionPgModel = new ExecutionPgModel();
-  const [executionACumulusId] = await executionPgModel.create(
+  const [executionA] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
-  const [executionBCumulusId] = await executionPgModel.create(
+  const [executionB] = await executionPgModel.create(
     knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
 
   t.context.executions = [
     await executionPgModel.get(knex, { cumulus_id: executionACumulusId }),
@@ -203,23 +205,19 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/firstKey',
         key: 'firstKey',
         size: 2098711627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/secondKey',
         key: 'secondKey',
         size: 1099511627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
       },
     ],
   };
@@ -282,23 +280,19 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/firstKey',
         key: 'firstKey',
         size: 2098711627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/secondKey',
         key: 'secondKey',
         size: 1099511627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
       },
     ],
   };
@@ -403,24 +397,20 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/firstKey',
         key: 'firstKey',
         size: 2098711627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
 
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-        createdAt: createdAt.getTime(),
         fileName: 's3://cumulus-test-sandbox-private/secondKey',
         key: 'secondKey',
         size: 1099511627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-        updatedAt: updatedAt.getTime(),
       },
     ],
   };
@@ -447,32 +437,32 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   const dateString = new Date().toString();
 
   const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
+    cmrLink: cryptoRandomString({ length: 10 }),
     collectionId: 'name___version',
+    duration: 10,
+    granuleId: cryptoRandomString({ length: 5 }),
     pdrName: 'pdr-name',
     provider: 'provider',
-    status: 'running',
-    cmrLink: cryptoRandomString({ length: 10 }),
     published: false,
-    duration: 10,
+    status: 'running',
     files: [
       {
         bucket: 'null',
         key: 'null',
       },
     ],
-    error: {},
-    productVolume: 1119742,
-    timeToPreprocess: 0,
     beginningDateTime: dateString,
-    endingDateTime: dateString,
-    processingStartDateTime: dateString,
-    processingEndDateTime: dateString,
-    lastUpdateDateTime: dateString,
-    timeToArchive: 0,
-    productionDateTime: dateString,
-    timestamp: Date.now(),
     createdAt: Date.now() - 200 * 1000,
+    endingDateTime: dateString,
+    error: {},
+    lastUpdateDateTime: dateString,
+    processingEndDateTime: dateString,
+    processingStartDateTime: dateString,
+    productionDateTime: dateString,
+    productVolume: 1119742,
+    timestamp: Date.now(),
+    timeToArchive: 0,
+    timeToPreprocess: 0,
     updatedAt: Date.now(),
   };
 
@@ -488,27 +478,27 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   };
 
   const expectedPostgresGranule = {
-    granule_id: apiGranule.granuleId,
-    status: apiGranule.status,
-    collection_cumulus_id: collectionCumulusId,
-    published: apiGranule.published,
-    duration: apiGranule.duration,
-    time_to_archive: apiGranule.timeToArchive,
-    time_to_process: apiGranule.timeToPreprocess,
-    product_volume: apiGranule.productVolume,
-    error: apiGranule.error,
-    cmr_link: apiGranule.cmrLink,
-    pdr_cumulus_id: pdrCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    query_fields: apiGranule.query_fields,
     beginning_date_time: new Date(apiGranule.beginningDateTime),
+    cmr_link: apiGranule.cmrLink,
+    collection_cumulus_id: collectionCumulusId,
+    created_at: new Date(apiGranule.createdAt),
+    duration: apiGranule.duration,
     ending_date_time: new Date(apiGranule.endingDateTime),
+    error: apiGranule.error,
+    granule_id: apiGranule.granuleId,
     last_update_date_time: new Date(apiGranule.lastUpdateDateTime),
+    pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    product_volume: apiGranule.productVolume,
     production_date_time: new Date(apiGranule.productionDateTime),
+    provider_cumulus_id: providerCumulusId,
+    published: apiGranule.published,
+    query_fields: apiGranule.query_fields,
+    status: apiGranule.status,
+    time_to_archive: apiGranule.timeToArchive,
+    time_to_process: apiGranule.timeToPreprocess,
     timestamp: new Date(apiGranule.timestamp),
-    created_at: new Date(apiGranule.createdAt),
     updated_at: new Date(apiGranule.updatedAt),
   };
 

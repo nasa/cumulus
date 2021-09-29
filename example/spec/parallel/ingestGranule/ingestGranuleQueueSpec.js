@@ -6,9 +6,6 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
-const {
-  Granule,
-} = require('@cumulus/api/models');
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
   parseS3Uri,
@@ -51,7 +48,6 @@ const {
 } = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
-  waitForModelStatus,
 } = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
@@ -83,7 +79,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let expectedSyncGranulePayload;
-  let granuleModel;
   let inputPayload;
   let pdrFilename;
   let postToCmrOutput;
@@ -104,7 +99,6 @@ describe('The S3 Ingest Granules workflow', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
@@ -278,10 +272,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('makes the granule available through the Cumulus API', async () => {
     if (beforeAllError) fail(beforeAllError);
-    await waitForModelStatus(
-      granuleModel,
-      { granuleId: inputPayload.granules[0].granuleId },
-      ['completed']
+    await waitForApiStatus(
+      getGranule,
+      {
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+      },
+      'completed'
     );
 
     const granule = await getGranule({

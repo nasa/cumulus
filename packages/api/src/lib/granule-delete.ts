@@ -26,7 +26,8 @@ const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
  * @returns {Promise<void>}
  */
 const _deleteS3Files = async (
-  files: (Omit<ApiFile, 'granuleId'> | PostgresFileRecord)[] = []) =>
+  files: (Omit<ApiFile, 'granuleId'> | PostgresFileRecord)[] = []
+) =>
   await pMap(
     files,
     async (file) => {

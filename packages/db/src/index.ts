@@ -106,8 +106,14 @@ export {
 export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
+  getGranuleCollectionId,
+  getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
+
+export {
+  getExecutionArnsByGranuleCumulusId,
+} from './lib/execution';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
