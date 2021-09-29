@@ -637,7 +637,14 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
 });
 
 test.serial('Generates valid reconciliation report when there are extra internal S3 objects', async (t) => {
-  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+  const { filePgModel, granulePgModel, knex } = t.context;
+
+  const collection = fakeCollectionRecordFactory();
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
@@ -704,7 +711,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
 });
 
 test.serial('Generates valid reconciliation report when there are extra internal DynamoDB objects', async (t) => {
-  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+  const { filePgModel, granulePgModel, knex } = t.context;
 
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
@@ -717,6 +724,13 @@ test.serial('Generates valid reconciliation report when there are extra internal
     t.context.systemBucket,
     t.context.stackName
   );
+
+  const collection = fakeCollectionRecordFactory();
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   // Create files that are in sync
   const granules = range(12).map(() => fakeGranuleRecordFactory({
@@ -787,7 +801,14 @@ test.serial('Generates valid reconciliation report when there are extra internal
 });
 
 test.serial('Generates valid reconciliation report when internally, there are both extra DynamoDB and extra S3 files', async (t) => {
-  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+  const { filePgModel, granulePgModel, knex } = t.context;
+
+  const collection = fakeCollectionRecordFactory();
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
@@ -964,7 +985,14 @@ test.serial(
 test.serial(
   'With location param as S3, generates a valid reconcilation report for only S3 and DynamoDB',
   async (t) => {
-    const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+    const { filePgModel, granulePgModel, knex } = t.context;
+
+    const collection = fakeCollectionRecordFactory();
+    const [pgCollection] = await t.context.collectionPgModel.create(
+      t.context.knex,
+      collection
+    );
+    const collectionCumulusId = pgCollection.cumulus_id;
 
     const dataBuckets = range(2).map(() => randomId('bucket'));
     await Promise.all(dataBuckets.map((bucket) =>
