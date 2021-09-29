@@ -20,27 +20,30 @@ const {
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
-
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
   generateLocalTestDb,
   localStackConnectionEnv,
-  translateApiCollectionToPostgresCollection,
   FilePgModel,
   GranulePgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   migrationDir,
+  translateApiGranuleToPostgresGranule,
+  translatePostgresCollectionToApiCollection,
+  ExecutionPgModel,
+  fakeExecutionRecordFactory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
@@ -341,6 +344,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
 
   t.context.collectionPgModel = new CollectionPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
   t.context.filePgModel = new FilePgModel();
   t.context.granulePgModel = new GranulePgModel();
 });
@@ -363,12 +367,6 @@ test.beforeEach(async (t) => {
   await new models.Granule().createTable();
   await new models.ReconciliationReport().createTable();
 
-  const testCollection = fakeCollectionRecordFactory();
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
-    t.context.knex,
-    testCollection
-  );
-
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
@@ -378,6 +376,30 @@ test.beforeEach(async (t) => {
   process.env.ES_INDEX = esAlias;
   await bootstrapElasticSearch('fakehost', esIndex, esAlias);
   esClient = await Search.es();
+
+  const collection = fakeCollectionRecordFactory();
+  t.context.collectionId = constructCollectionId(
+    collection.name,
+    collection.version
+  );
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  t.context.collection = pgCollection;
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  await indexer.indexCollection(
+    esClient,
+    translatePostgresCollectionToApiCollection(pgCollection),
+    esAlias
+  );
+
+  t.context.execution = fakeExecutionRecordFactory();
+  const [pgExecution] = await t.context.executionPgModel.create(
+    t.context.knex,
+    t.context.execution
+  );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 });
 
 test.afterEach.always(async (t) => {
@@ -1792,28 +1814,31 @@ test.serial('When report creation fails, reconciliation report status is set to 
 });
 
 test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
-  const matchingColls = range(5).map(() => fakeCollectionFactory());
-  const collectionId = constructCollectionId(matchingColls[0].name, matchingColls[0].version);
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
-  await Promise.all(
-    matchingColls.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
-  );
-  await new models.Collection().create(matchingColls);
+  const {
+    knex,
+    collectionId,
+    execution,
+    executionCumulusId,
+  } = t.context;
 
-  const collectionPgModel = new CollectionPgModel();
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({
+    collectionId,
+    execution: execution.url,
+  }));
   await Promise.all(
-    matchingColls.map((collection) =>
-      collectionPgModel.create(
-        t.context.knex,
-        translateApiCollectionToPostgresCollection(collection)
-      ))
+    matchingGrans.map(async (gran) => {
+      await indexer.indexGranule(esClient, gran, esAlias);
+      const pgGranule = await translateApiGranuleToPostgresGranule(
+        gran,
+        knex
+      );
+      await upsertGranuleWithExecutionJoinRecord(
+        knex,
+        pgGranule,
+        executionCumulusId
+      );
+    })
   );
-
-  await Promise.all(
-    matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
-  );
-
-  await new models.Granule().create(matchingGrans);
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -1845,14 +1870,18 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
 });
 
 test.serial('Creates a valid Granule Inventory report', async (t) => {
-  const collection = fakeCollectionFactory();
-  const collectionId = constructCollectionId(collection.name, collection.version);
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
-  await Promise.all(
-    matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
-  );
+  const {
+    collectionId,
+    collectionCumulusId,
+    granulePgModel,
+    knex,
+  } = t.context;
 
-  await new models.Granule().create(matchingGrans);
+  const matchingGrans = range(10).map(() => fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  }));
+
+  await granulePgModel.insert(knex, matchingGrans);
 
   const event = {
     systemBucket: t.context.systemBucket,
