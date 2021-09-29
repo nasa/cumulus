@@ -222,8 +222,11 @@ export const getGranulesByApiPropertiesQuery = (
       }
       if (granuleIds) {
         const granuleIdFilters = [granuleIds].flat();
-        const granuleIdFilterClause = granuleIdFilters.map(() => '?').join('|');
-        queryBuilder.whereRaw(`${granulesTable}.granule_id SIMILAR TO '%(${granuleIdFilterClause})%'`, granuleIdFilters);
+        queryBuilder.where((nestedQueryBuilder) => {
+          granuleIdFilters.forEach((granuleId) => {
+            nestedQueryBuilder.orWhere(`${granulesTable}.granule_id`, 'LIKE', `%${granuleId}%`);
+          });
+        });
       }
       if (providerNames) {
         queryBuilder.whereIn(`${providersTable}.name`, providerNames);

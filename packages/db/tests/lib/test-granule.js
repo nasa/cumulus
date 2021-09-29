@@ -29,10 +29,7 @@ const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
 test.before(async (t) => {
   const { knexAdmin, knex } = await generateLocalTestDb(
     testDbName,
-    migrationDir,
-    {
-      KNEX_DEBUG: 'true',
-    }
+    migrationDir
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
@@ -279,14 +276,14 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     }
   );
   t.deepEqual(
-    await granulesExecutionsPgModel.search(
+    orderBy(await granulesExecutionsPgModel.search(
       knex,
       { granule_cumulus_id: granuleCumulusId }
-    ),
-    [executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
+    ), 'execution_cumulus_id'),
+    orderBy([executionCumulusId, secondExecutionCumulusId].map((executionId) => ({
       granule_cumulus_id: Number(granuleCumulusId),
       execution_cumulus_id: executionId,
-    }))
+    })), 'execution_cumulus_id')
   );
 });
 
@@ -588,7 +585,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by multipl
   );
 });
 
-test.serial.only('getGranulesByApiPropertiesQuery returns correct granules by granule IDs', async (t) => {
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by single granule ID', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -603,51 +600,74 @@ test.serial.only('getGranulesByApiPropertiesQuery returns correct granules by gr
     }),
     '*'
   );
+
   t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
 
-  const record = await getGranulesByApiPropertiesQuery(
-    knex,
-    {
-      granuleIds: granule.granule_id,
-    }
-  );
-  t.deepEqual(
-    [{
-      ...granule,
-      providerName: null,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    }],
-    record
-  );
-
-  const [granule2] = await granulePgModel.create(
-    knex,
-    fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId,
-    }),
-    '*'
-  );
-  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }));
   const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
-      granuleIds: [granule.granule_id, granule2.granule_id],
+      granuleIds: [granule.granule_id],
     }
   );
   t.deepEqual(
     [{
       ...granule,
-      providerName: null,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    }, {
-      ...granule2,
       providerName: null,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }],
     records
+  );
+});
+
+test.serial('getGranulesByApiPropertiesQuery returns correct granules by multiple granule IDs', async (t) => {
+  const {
+    collection,
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+
+  const granules = orderBy(
+    await granulePgModel.insert(
+      knex,
+      [
+        fakeGranuleRecordFactory({
+          collection_cumulus_id: collectionCumulusId,
+        }),
+        fakeGranuleRecordFactory({
+          collection_cumulus_id: collectionCumulusId,
+        }),
+      ],
+      '*'
+    ),
+    'granule_id'
+  );
+
+  t.teardown(() => Promise.all(granules.map(
+    (granule) =>
+      granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id })
+  )));
+
+  const records = await getGranulesByApiPropertiesQuery(
+    knex,
+    {
+      granuleIds: [granules[0].granule_id, granules[1].granule_id],
+    }
+  );
+  t.deepEqual(
+    [{
+      ...granules[0],
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }, {
+      ...granules[1],
+      providerName: null,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    }],
+    orderBy(records, 'granule_id')
   );
 });
 
