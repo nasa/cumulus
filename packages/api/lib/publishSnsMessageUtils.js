@@ -25,12 +25,12 @@ const constructCollectionSnsMessage = (record, event) => {
 
 const publishSnsMessageByDataType = async (record, dataType, event) => {
   const topicArn = envUtils.getRequiredEnvVar(`${dataType}_sns_topic_arn`, process.env);
+  logger.info(`About to publish SNS message for ${dataType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
   if (dataType === 'collection') {
     const messageToPublish = constructCollectionSnsMessage(record, event);
     return await publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'pdr' || dataType === 'execution') {
-    logger.info(`About to publish SNS message for ${dataType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
     return await publishSnsMessage(topicArn, record);
   }
   return undefined;
