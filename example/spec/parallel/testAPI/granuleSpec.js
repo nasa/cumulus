@@ -169,7 +169,7 @@ describe('The Granules API', () => {
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
     });
 
-    it('modifying a granule publishes a record to the granules reporting SNS topic', async () => {
+    it('publishes a record to the granules reporting SNS topic for a granule modification', async () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
@@ -222,7 +222,7 @@ describe('The Granules API', () => {
       }
     });
 
-    it('deleting a granule publishes a record to the granules reporting SNS topic', async () => {
+    it('publishes a record to the granules reporting SNS topic for a granule deletion', async () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
