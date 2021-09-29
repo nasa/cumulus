@@ -541,19 +541,18 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by multipl
   );
   const collectionCumulusId2 = pgCollection2[0].cumulus_id;
 
+  const granule1 = fakeGranuleRecordFactory({
+    granule_id: `1_${cryptoRandomString({ length: 5 })}`,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const granule2 = fakeGranuleRecordFactory({
+    granule_id: `2_${cryptoRandomString({ length: 5 })}`,
+    collection_cumulus_id: collectionCumulusId2,
+  });
   const granules = orderBy(
     await granulePgModel.insert(
       knex,
-      [
-        fakeGranuleRecordFactory({
-          granule_id: `${cryptoRandomString({ length: 5 })}_1`,
-          collection_cumulus_id: collectionCumulusId,
-        }),
-        fakeGranuleRecordFactory({
-          granule_id: `${cryptoRandomString({ length: 5 })}_2`,
-          collection_cumulus_id: collectionCumulusId2,
-        }),
-      ],
+      [granule1, granule2],
       '*'
     ),
     'granule_id'
@@ -567,21 +566,22 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by multipl
     knex,
     {
       collectionIds: [collectionId, collectionId2],
-    }
+    },
+    ['granule_id']
   );
   t.deepEqual(
     [{
-      ...granules[0],
+      ...granules.find((granule) => granule.granule_id === granule1.granule_id),
       providerName: null,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }, {
-      ...granules[1],
+      ...granules.find((granule) => granule.granule_id === granule2.granule_id),
       providerName: null,
       collectionName: collection2.name,
       collectionVersion: collection2.version,
     }],
-    orderBy(records, 'granule_id')
+    records
   );
 });
 
