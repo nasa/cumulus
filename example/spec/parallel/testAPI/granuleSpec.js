@@ -1,7 +1,10 @@
 'use strict';
 
 const omit = require('lodash/omit');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  s3PutObject,
+  getJsonS3Object,
+} = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -28,15 +31,17 @@ const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Granules API', () => {
   let beforeAllFailed = false;
-  let config;
   let collection;
   let collectionId;
+  let config;
   let discoveredGranule;
-  let granuleId;
-  let prefix;
   let executionRecord;
   let granuleFile;
+  let granuleId;
+  let modifiedGranule;
+  let prefix;
   let randomGranuleRecord;
+  let updatedGranuleFromApi;
 
   beforeAll(async () => {
     try {
@@ -88,7 +93,6 @@ describe('The Granules API', () => {
   });
 
   afterAll(async () => {
-    await deleteGranule({ prefix, granuleId });
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
     await deleteCollection({
       prefix,
@@ -121,6 +125,18 @@ describe('The Granules API', () => {
       expect(discoveredGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 
+    it('publishes a record to the granules reporting SNS topic upon granule creation', async () => {
+      if (beforeAllFailed) {
+        fail('beforeAll() failed');
+      } else {
+        const granuleKey = `${config.stackName}/test-output/${granuleId}-${discoveredGranule.status}-Create.output`;
+        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+        expect(message.event).toEqual('Create');
+        expect(message.record).toEqual(discoveredGranule);
+      }
+    });
+
     it('can search the granule via the API.', async () => {
       const searchResults = await waitForListGranulesResult({
         prefix,
@@ -134,7 +150,7 @@ describe('The Granules API', () => {
     });
 
     it('can modify the granule via API.', async () => {
-      const modifiedGranule = {
+      modifiedGranule = {
         ...discoveredGranule,
         status: 'failed',
         error: { message: 'granule now failed' },
@@ -145,12 +161,24 @@ describe('The Granules API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const updatedGranuleFromApi = await getGranule({
+      updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId: modifiedGranule.granuleId,
       });
       updatedGranuleFromApi.execution = undefined;
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
+    });
+
+    it('modifying a granule publishes a record to the granules reporting SNS topic', async () => {
+      if (beforeAllFailed) {
+        fail('beforeAll() failed');
+      } else {
+        const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Update.output`;
+        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+        expect(message.event).toEqual('Update');
+        expect(message.record).toEqual(modifiedGranule);
+      }
     });
 
     it('can associate an execution with the granule via API.', async () => {
@@ -165,7 +193,7 @@ describe('The Granules API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const updatedGranuleFromApi = await getGranule({
+      updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId,
       });
@@ -191,6 +219,23 @@ describe('The Granules API', () => {
         expect(apiError.message).toContain('RecordDoesNotExist');
         expect(apiError.message).toContain(name);
         expect(apiError.message).toContain(version);
+      }
+    });
+
+    it('deleting a granule publishes a record to the granules reporting SNS topic', async () => {
+      if (beforeAllFailed) {
+        fail('beforeAll() failed');
+      } else {
+        const timestamp = Date.now();
+        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId });
+        expect(response.statusCode).toBe(200);
+
+        const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
+        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+        expect(message.event).toEqual('Delete');
+        expect(message.record).toEqual(updatedGranuleFromApi);
+        expect(message.deletedAt).toBeGreaterThan(timestamp);
       }
     });
   });
