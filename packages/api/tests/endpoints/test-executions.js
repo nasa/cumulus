@@ -271,7 +271,6 @@ test.beforeEach(async (t) => {
     t.context.fakePGGranules.map(async (granule) =>
       await granulePgModel.create(knex, granule))
   );
-  //const granuleIds = granules.map((granule) => granule.cumulus_id);
 
   await upsertGranuleWithExecutionJoinRecord(
     knex, t.context.fakePGGranules[0], await executionPgModel.getRecordCumulusId(knex, {

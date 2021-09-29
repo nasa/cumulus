@@ -36,9 +36,10 @@ of response and not the raw API endpoint response
       publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
-      for `report_executions_topic_arn`, `report_pdrs_topic_arn`,
-      `report_granules_topic_arn`
-    - Added report topic ARNS tp `process_dead_letter_archive.tf`.
+      for `report_executions_sns_topic_arn`, `report_pdrs_sns_topic_arn`,
+      `report_granules_sns_topic_arn`
+    - Added variables for report topic ARNs to `process_dead_letter_archive.tf`
+    - Added variable for granule report topic ARN to `bulk_operation.tf`
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2575**
