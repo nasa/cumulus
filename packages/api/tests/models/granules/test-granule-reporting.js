@@ -327,6 +327,34 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
   );
 });
 
+test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'queued' });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const updateTime = Date.now();
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    createdAt: updateTime,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'running',
+      createdAt: updateTime,
+    }
+  );
+});
+
 test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution', async (t) => {
   const { granuleModel } = t.context;
 
@@ -357,7 +385,7 @@ test('_storeGranuleRecord() will allow a queued status to replace a running stat
   );
 });
 
-test('_storeGranuleRecord() will not allow a queued status to replace any other status for same execution', async (t) => {
+test('_storeGranuleRecord() will allow a queued status to replace running for same execution', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -377,7 +405,32 @@ test('_storeGranuleRecord() will not allow a queued status to replace any other 
     fetchedItem,
     {
       ...granule,
-      status: 'running',
+      status: 'queued',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will not allow a queued status to replace completed/failed for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'completed' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'completed',
     }
   );
 });
