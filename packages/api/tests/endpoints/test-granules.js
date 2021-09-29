@@ -1669,7 +1669,7 @@ test.serial('PUT adds granule if it does not exist', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(200);
+    .expect(201);
 
   t.deepEqual(JSON.parse(response.text), {
     message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}`,
@@ -1820,82 +1820,6 @@ test.serial('PUT returns an updated granule with associated execution', async (t
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
 });
 
-test.serial('PUT modifies timestamp and updatedAt values but does not change created at values.', async (t) => {
-  const createdAtTime = Date.now();
-  const newGranule = fakeGranuleFactoryV2({
-    collectionId: t.context.collectionId,
-    createdAt: createdAtTime,
-    execution: undefined,
-  });
-
-  const response = await request(app)
-    .post('/granules')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .set('Accept', 'application/json')
-    .send(newGranule)
-    .expect(200);
-
-  t.is(response.statusCode, 200);
-
-  const originalDynamoRecord = await granuleModel.get({
-    granuleId: newGranule.granuleId,
-  });
-
-  const originalPostgresRecord = await granulePgModel.get(
-    t.context.knex,
-    {
-      granule_id: newGranule.granuleId,
-      collection_cumulus_id: t.context.collectionCumulusId,
-    }
-  );
-
-  const modifiedGranule = {
-    collectionId: newGranule.collectionId,
-    granuleId: newGranule.granuleId,
-    status: 'failed',
-    error: { some: 'error' },
-  };
-
-  const modifiedResponse = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .set('Accept', 'application/json')
-    .send(modifiedGranule)
-    .expect(200);
-
-  t.is(modifiedResponse.statusCode, 200);
-
-  const updatedDynamoRecord = await granuleModel.get({
-    granuleId: newGranule.granuleId,
-  });
-
-  const updatedPostgresRecord = await granulePgModel.get(
-    t.context.knex,
-    {
-      granule_id: newGranule.granuleId,
-      collection_cumulus_id: t.context.collectionCumulusId,
-    }
-  );
-
-  t.is(originalDynamoRecord.createdAt, createdAtTime);
-  t.true(originalDynamoRecord.timestamp >= createdAtTime);
-  t.true(originalDynamoRecord.updatedAt >= createdAtTime);
-  t.true(new Date(originalPostgresRecord.timestamp).valueOf() > createdAtTime);
-  t.is(new Date(originalPostgresRecord.created_at).valueOf(), createdAtTime);
-
-  t.is(updatedDynamoRecord.createdAt, createdAtTime);
-  t.true(updatedDynamoRecord.timestamp > originalDynamoRecord.timestamp);
-  t.true(updatedDynamoRecord.updatedAt > originalDynamoRecord.updatedAt);
-  t.true(
-    new Date(updatedPostgresRecord.timestamp).valueOf()
-      > new Date(originalPostgresRecord.timestamp).valueOf()
-  );
-  t.is(
-    new Date(updatedPostgresRecord.created_at).valueOf(),
-    new Date(originalPostgresRecord.created_at).valueOf()
-  );
-});
-
 test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({});
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
@@ -1921,6 +1845,7 @@ test.serial('PUT can set granule status to queued', async (t) => {
     .send({
       granuleId: granuleId,
       status: 'queued',
+      collectionId: t.context.collectionId,
     });
 
   t.is(response.status, 200);
@@ -1941,7 +1866,7 @@ test.serial('PUT can create a new granule with status queued', async (t) => {
       collectionId: t.context.collectionId,
     });
 
-  t.is(response.status, 200);
+  t.is(response.status, 201);
   t.deepEqual(JSON.parse(response.text), {
     message: `Successfully wrote granule with Granule Id: ${granuleId}`,
   });
