@@ -9,7 +9,7 @@ const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { buildExecutionArn } = require('@cumulus/message/Executions');
+const { buildExecutionArn, getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
   granules: granulesApi,
@@ -81,22 +81,7 @@ async function queueGranules(event) {
         granuleBatch[0].dataType,
         granuleBatch[0].version
       );
-      await pMap(
-        granuleBatch,
-        (queuedGranule) => granulesApi.updateGranule({
-          prefix: event.config.stackName,
-          body: {
-            collectionId: constructCollectionId(
-              queuedGranule.dataType,
-              queuedGranule.version
-            ),
-            granuleId: queuedGranule.granuleId,
-            status: 'queued',
-          },
-        }),
-        { concurrency: pMapConcurrency }
-      );
-      return await enqueueGranuleIngestMessage({
+      const executionArn = await enqueueGranuleIngestMessage({
         granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
@@ -111,6 +96,23 @@ async function queueGranules(event) {
         executionNamePrefix: event.config.executionNamePrefix,
         additionalCustomMeta: event.config.childWorkflowMeta,
       });
+      await pMap(
+        granuleBatch,
+        (queuedGranule) => granulesApi.updateGranule({
+          prefix: event.config.stackName,
+          body: {
+            collectionId: constructCollectionId(
+              queuedGranule.dataType,
+              queuedGranule.version
+            ),
+            granuleId: queuedGranule.granuleId,
+            status: 'queued',
+            execution: getExecutionUrlFromArn(executionArn),
+          },
+        }),
+        { concurrency: pMapConcurrency }
+      );
+      return executionArn;
     },
     { concurrency: pMapConcurrency }
   );
