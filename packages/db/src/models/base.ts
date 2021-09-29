@@ -93,12 +93,11 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     return Number(result.max);
   }
 
-  // TODO - paramaterize?
   async paginateByCumulusId(
     knexOrTransaction: Knex | Knex.Transaction,
     startId: number = 0,
     pageSize: number = 100,
-    keys: Array<keyof RecordType> = [] // TODO: YAGNI?
+    keys: Array<keyof RecordType> = []
   ): Promise<RecordType[]> {
   // @ts-ignore
     return await knexOrTransaction.select(...keys)
