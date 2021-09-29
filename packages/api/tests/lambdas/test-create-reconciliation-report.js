@@ -377,23 +377,6 @@ test.beforeEach(async (t) => {
   await bootstrapElasticSearch('fakehost', esIndex, esAlias);
   esClient = await Search.es();
 
-  const collection = fakeCollectionRecordFactory();
-  t.context.collectionId = constructCollectionId(
-    collection.name,
-    collection.version
-  );
-  const [pgCollection] = await t.context.collectionPgModel.create(
-    t.context.knex,
-    collection
-  );
-  t.context.collection = pgCollection;
-  t.context.collectionCumulusId = pgCollection.cumulus_id;
-  await indexer.indexCollection(
-    esClient,
-    translatePostgresCollectionToApiCollection(pgCollection),
-    esAlias
-  );
-
   t.context.execution = fakeExecutionRecordFactory();
   const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
@@ -410,6 +393,10 @@ test.afterEach.always(async (t) => {
       new models.Granule().deleteTable(),
       new models.ReconciliationReport().deleteTable(),
     ])
+  );
+  await t.context.executionPgModel.delete(
+    t.context.knex,
+    { cumulus_id: t.context.executionCumulusId }
   );
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
@@ -468,7 +455,7 @@ test.serial('Generates valid reconciliation report for no buckets', async (t) =>
 });
 
 test.serial('Generates valid GNF reconciliation report when everything is in sync', async (t) => {
-  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+  const { filePgModel, granulePgModel, knex } = t.context;
 
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
@@ -481,6 +468,23 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
     t.context.systemBucket,
     t.context.stackName
   );
+
+  // Create collections that are in sync
+  const matchingColls = range(10).map(() => ({
+    name: randomId('name'),
+    version: randomId('vers'),
+  }));
+  await storeCollectionsToElasticsearch(matchingColls);
+
+  const collection = fakeCollectionRecordFactory({
+    name: matchingColls[0].name,
+    version: matchingColls[0].version,
+  });
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   // Create random files
   const granuleCumulusIds = await granulePgModel.insert(
@@ -501,21 +505,13 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
     filePgModel.insert(knex, files),
   ]);
 
-  // Create collections that are in sync
-  const matchingColls = range(10).map(() => ({
-    name: randomId('name'),
-    version: randomId('vers'),
-  }));
-
   const cmrCollections = sortBy(matchingColls, ['name', 'version'])
-    .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
+    .map((cmrCollection) => ({
+      umm: { ShortName: cmrCollection.name, Version: cmrCollection.version },
     }));
 
   CMR.prototype.searchCollections.restore();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
-
-  await storeCollectionsToElasticsearch(matchingColls);
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -551,7 +547,7 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
 });
 
 test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
-  const { collectionCumulusId, filePgModel, granulePgModel, knex } = t.context;
+  const { filePgModel, granulePgModel, knex } = t.context;
 
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
@@ -564,6 +560,23 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
     t.context.systemBucket,
     t.context.stackName
   );
+
+  // Create collections that are in sync
+  const matchingColls = range(10).map(() => ({
+    name: randomId('name'),
+    version: randomId('vers'),
+  }));
+  await storeCollectionsToElasticsearch(matchingColls);
+
+  const collection = fakeCollectionRecordFactory({
+    name: matchingColls[0].name,
+    version: matchingColls[0].version,
+  });
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   // Create random files
   const granuleCumulusIds = await granulePgModel.insert(
@@ -584,15 +597,9 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
     filePgModel.insert(knex, files),
   ]);
 
-  // Create collections that are in sync
-  const matchingColls = range(10).map(() => ({
-    name: randomId('name'),
-    version: randomId('vers'),
-  }));
-
   const cmrCollections = sortBy(matchingColls, ['name', 'version'])
-    .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
+    .map((cmrCollection) => ({
+      umm: { ShortName: cmrCollection.name, Version: cmrCollection.version },
     }));
 
   CMR.prototype.searchCollections.restore();
@@ -1682,6 +1689,8 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 });
 
 test.serial('reconciliationReportForGranuleFiles does not fail if no distribution endpoint is defined', async (t) => {
+  process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
+
   const buckets = {
     internal: { name: 'cumulus-test-sandbox-internal', type: 'internal' },
     private: { name: 'testbucket-private', type: 'private' },
@@ -1816,10 +1825,24 @@ test.serial('When report creation fails, reconciliation report status is set to 
 test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
   const {
     knex,
-    collectionId,
     execution,
     executionCumulusId,
   } = t.context;
+
+  const collection = fakeCollectionRecordFactory();
+  const collectionId = constructCollectionId(
+    collection.name,
+    collection.version
+  );
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  await indexer.indexCollection(
+    esClient,
+    translatePostgresCollectionToApiCollection(pgCollection),
+    esAlias
+  );
 
   const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({
     collectionId,
@@ -1871,11 +1894,25 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
 
 test.serial('Creates a valid Granule Inventory report', async (t) => {
   const {
-    collectionId,
-    collectionCumulusId,
     granulePgModel,
     knex,
   } = t.context;
+
+  const collection = fakeCollectionRecordFactory();
+  const collectionId = constructCollectionId(
+    collection.name,
+    collection.version
+  );
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
+  await indexer.indexCollection(
+    esClient,
+    translatePostgresCollectionToApiCollection(pgCollection),
+    esAlias
+  );
 
   const matchingGrans = range(10).map(() => fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
