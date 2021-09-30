@@ -3,7 +3,6 @@
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
 const pMap = require('p-map');
-const pRetry = require('p-retry');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildURL } = require('@cumulus/common/URLUtils');
@@ -407,13 +406,9 @@ const writeGranuleFromApi = async (
     };
 
     let executionCumulusId;
-    const retryOptions = status === 'queued' ? { retries: 5 } : {};
     if (execution) {
-      executionCumulusId = await pRetry(
-        async () => await getExecutionCumulusId(execution, knex),
-        retryOptions
-      );
-      if (executionCumulusId === undefined && status !== 'queued') {
+      executionCumulusId = await getExecutionCumulusId(execution, knex);
+      if (executionCumulusId === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
     }
