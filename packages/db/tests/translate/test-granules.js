@@ -1,7 +1,282 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { ValidationError } = require('@cumulus/errors');
+const {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} = require('../../dist/translate/granules');
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const {
+  fakeCollectionRecordFactory,
+} = require('../../dist');
 
-const { translateApiGranuleToPostgresGranule } = require('../../dist/translate/granules');
+test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+    executions,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId: 'collectionName___collectionVersion',
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.toISOString(),
+    error: postgresGranule.error,
+    execution: getExecutionUrlFromArn(executions[0].arn),
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
+    pdrName: 'pdrName',
+    processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    productionDateTime: postgresGranule.production_date_time.toISOString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    provider: 'providerName',
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/firstKey',
+        key: 'firstKey',
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/secondKey',
+        key: 'secondKey',
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
+test('translatePostgresGranuleToApiGranule accepts an optional Collection', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+    executions,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId: 'collectionName2___collectionVersion2',
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.toISOString(),
+    error: postgresGranule.error,
+    execution: getExecutionUrlFromArn(executions[0].arn),
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
+    pdrName: 'pdrName',
+    processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    productionDateTime: postgresGranule.production_date_time.toISOString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    provider: 'providerName',
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/firstKey',
+        key: 'firstKey',
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/secondKey',
+        key: 'secondKey',
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+  };
+
+  // explicitly set the cumulus_id so that the collection matches the granule's
+  // collection_cumulus_id. This is not in the database and will ensure that the
+  // translate function below skips the DB query and uses this passed-in Collection.
+  const collection = fakeCollectionRecordFactory({
+    cumulus_id: 1,
+    name: 'collectionName2',
+    version: 'collectionVersion2',
+  });
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    collectionPgRecord: collection,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
+test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  // No cumulus_id set so this will not match the granule's collection_cumulus_id
+  const collection = fakeCollectionRecordFactory({
+    name: 'collectionName2',
+    version: 'collectionVersion2',
+  });
+
+  await t.throwsAsync(translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    collectionPgRecord: collection,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  }),
+  { instanceOf: ValidationError });
+});
+
+test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    granulePgModel,
+    granuleCumulusId,
+    executions,
+  } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+
+  delete postgresGranule.pdr_cumulus_id;
+  delete postgresGranule.provider_cumulus_id;
+
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId: 'collectionName___collectionVersion',
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.toISOString(),
+    error: postgresGranule.error,
+    execution: getExecutionUrlFromArn(executions[0].arn),
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
+    processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    productionDateTime: postgresGranule.production_date_time.toISOString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/firstKey',
+        key: 'firstKey',
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: 's3://cumulus-test-sandbox-private/secondKey',
+        key: 'secondKey',
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
 
 test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
