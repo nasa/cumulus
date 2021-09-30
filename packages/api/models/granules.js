@@ -603,20 +603,15 @@ class Granule extends Manager {
 
     // Only allow "running" granule to replace completed/failed
     // granule if the execution has changed for granules with executions.
+    // Allow running granule to replace queued granule
     if (granuleRecord.status === 'running' && granuleRecord.execution !== undefined) {
-      updateParams.ExpressionAttributeValues = {
-        ...updateParams.ExpressionAttributeValues,
-        ':queued': 'queued',
-      };
+      updateParams.ExpressionAttributeValues[':queued'] = 'queued';
       updateParams.ConditionExpression += ' and (#status = :queued or #execution <> :execution)';
     }
 
-    // Only allow "queued" granule to replace completed/failed
+    // Only allow "queued" granule to replace running/completed/failed
     // granule if the execution has changed for granules with executions.
     if (granuleRecord.status === 'queued' && granuleRecord.execution !== undefined) {
-      updateParams.ExpressionAttributeValues = {
-        ...updateParams.ExpressionAttributeValues,
-      };
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
