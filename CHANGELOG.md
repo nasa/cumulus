@@ -26,13 +26,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `sf_event_sqs_to_db_records` lambda TF definition.
     - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
       permissions for SNS publish for `report_executions_topic`
-    - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report executions topic.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
-    - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
+    - Added `pdr_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
+      publish SNS messages to the report topics to PDRs, Collections, and
+      Executions.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_topic` and `report_pdrs_topic`.
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
 - **CUMULUS-2630**
@@ -128,6 +131,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
 - **CUMULUS-2695**
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
@@ -157,6 +162,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
+    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
+      DynamoDB table.
 
 ## [v9.6.0] 2021-09-20
 
