@@ -1,10 +1,49 @@
 import Knex from 'knex';
-import { RuleRecord, RuleType } from '@cumulus/types/api/rules';
+import { Rule, RuleRecord } from '@cumulus/types/api/rules';
 import { removeNilProperties } from '@cumulus/common/util';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';
 import { PostgresRule, PostgresRuleRecord } from '../types/rule';
+
+export const translatePostgresRuleToApiRule = async (
+  pgRule: PostgresRuleRecord,
+  knex: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  providerPgModel = new ProviderPgModel()
+): Promise<RuleRecord> => {
+  const provider = pgRule.provider_cumulus_id
+    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
+    : undefined;
+  const collection = pgRule.collection_cumulus_id
+    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
+    : undefined;
+
+  const apiRule: RuleRecord = {
+    name: pgRule.name,
+    workflow: pgRule.workflow,
+    provider: provider ? provider.name : undefined,
+    collection: collection ? {
+      name: collection.name,
+      version: collection.version,
+    } : undefined,
+    rule: <Rule>removeNilProperties({
+      type: pgRule.type,
+      arn: pgRule.arn,
+      logEventArn: pgRule.log_event_arn,
+      value: pgRule.value,
+    }),
+    state: pgRule.enabled ? 'ENABLED' : 'DISABLED',
+    meta: pgRule.meta,
+    payload: pgRule.payload,
+    executionNamePrefix: pgRule.execution_name_prefix,
+    queueUrl: pgRule.queue_url,
+    tags: pgRule.tags ? JSON.parse(pgRule.tags) : undefined,
+    createdAt: pgRule.created_at.getTime(),
+    updatedAt: pgRule.updated_at.getTime(),
+  };
+  return <RuleRecord>removeNilProperties(apiRule);
+};
 
 /**
  * Generate a Postgres rule record from a DynamoDB record.
@@ -46,42 +85,5 @@ export const translateApiRuleToPostgresRule = async (
     updated_at: (record.updatedAt ? new Date(record.updatedAt) : undefined),
   };
 
-  return removeNilProperties(ruleRecord);
-};
-
-export const translatePostgresRuleToApiRule = async (
-  record: PostgresRuleRecord,
-  dbClient: Knex,
-  collectionPgModel = new CollectionPgModel(),
-  providerPgModel = new ProviderPgModel()
-): Promise<RuleRecord> => {
-  let collection: undefined | { name: string, version: string };
-  if (record.collection_cumulus_id) {
-    const { name, version } = await collectionPgModel.get(dbClient, {
-      cumulus_id: record.provider_cumulus_id,
-    });
-    collection = { name, version };
-  }
-  return removeNilProperties({
-    name: record.name,
-    workflow: record.workflow,
-    provider: record.provider_cumulus_id ?
-      (await providerPgModel.get(dbClient, { cumulus_id: record.provider_cumulus_id })).name
-      : undefined,
-    collection,
-    meta: record?.meta as { retries?: number, visilibity?: number, [key: string]: unknown},
-    payload: record.payload as any,
-    queueUrl: record.queue_url,
-    rule: removeNilProperties({
-      arn: record.arn,
-      type: record.type as RuleType,
-      value: record.value,
-      logEventArn: record.log_event_arn,
-    }),
-    state: record.enabled ? 'ENABLED' : 'DISABLED',
-    tags: record.tags ? JSON.parse(record.tags) : undefined,
-    executionNamePrefix: record.execution_name_prefix,
-    createdAt: record.created_at.getTime(),
-    updatedAt: record.updated_at.getTime(),
-  });
+  return <PostgresRule>removeNilProperties(ruleRecord);
 };
