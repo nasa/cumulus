@@ -1854,6 +1854,30 @@ test.serial('PUT can set granule status to queued', async (t) => {
   });
 });
 
+test.serial('PUT will not set completed status to queued', async (t) => {
+  const granuleId = t.context.fakeGranules[0].granuleId;
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+      execution: t.context.executionUrl,
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+  });
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'completed');
+});
+
 test.serial('PUT can create a new granule with status queued', async (t) => {
   const granuleId = randomId('new-granule');
   const response = await request(app)
