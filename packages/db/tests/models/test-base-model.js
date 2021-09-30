@@ -541,17 +541,17 @@ test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (
   t.deepEqual(secondPageRecords[0].info, info2);
 });
 
-test.serial('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
+test.only('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const testLength = 5;
-  const recordIds = await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
-    .insert({ info: cryptoRandomString({ length: 5 }) })
+  await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
+    .insert({ info: cryptoRandomString({ length: 20 }) })
     .returning('cumulus_id')));
   const firstPageRecords = await basePgModel.paginateByCumulusId(
-    knex, recordIds.flat()[0], 3
+    knex, 1, 3
   );
   const secondPageRecords = await basePgModel.paginateByCumulusId(
-    knex, recordIds.flat()[3], 2
+    knex, 4, 2
   );
   t.is(firstPageRecords.length, 3);
   t.is(secondPageRecords.length, 2);
