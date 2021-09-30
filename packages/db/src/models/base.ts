@@ -87,8 +87,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     knexOrTransaction: Knex | Knex.Transaction
   ): Promise<number> {
     const result = await knexOrTransaction(this.tableName).max('cumulus_id').first();
-    if (!result?.max) {
-      throw new Error(`${this.tableName} has no records, so no max id returned`);
+    if (!result) {
+      throw new Error('Invalid index query on getMaxCumulusId, max index cannot be returned');
     }
     return Number(result.max);
   }

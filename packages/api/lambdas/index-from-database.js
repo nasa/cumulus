@@ -146,7 +146,7 @@ async function indexModel({
   let done;
   let maxIndex = await postgresModel.getMaxCumulusId(knex);
   /* eslint-disable no-await-in-loop */
-  while (done !== true) {
+  while (done !== true && maxIndex > 0) {
     const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
     log.info(
       `Attempting to index ${pageResults.length} records from ${postgresModel.tableName}`

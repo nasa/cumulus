@@ -563,10 +563,3 @@ test.serial('getMaxId returns the next cumulus_id in sequence', async (t) => {
   const result = await basePgModel.getMaxCumulusId(knex);
   t.is(result, expected.max);
 });
-
-test('getMaxId throws if the table is empty', async (t) => {
-  const { knex, emptyTableName } = t.context;
-  const pgModel = new BasePgModel({ tableName: emptyTableName });
-  await knex(emptyTableName).max('cumulus_id').first();
-  await t.throwsAsync(pgModel.getMaxCumulusId(knex));
-});
