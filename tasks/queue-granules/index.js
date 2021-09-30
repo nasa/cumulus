@@ -81,6 +81,7 @@ async function queueGranules(event) {
         granuleBatch[0].dataType,
         granuleBatch[0].version
       );
+      const createdAt = Date.now();
       const executionArn = await enqueueGranuleIngestMessage({
         granules: granuleBatch,
         queueUrl: event.config.queueUrl,
@@ -108,6 +109,7 @@ async function queueGranules(event) {
             granuleId: queuedGranule.granuleId,
             status: 'queued',
             execution: getExecutionUrlFromArn(executionArn),
+            createdAt,
           },
         }),
         { concurrency: pMapConcurrency }
