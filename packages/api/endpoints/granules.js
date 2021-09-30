@@ -127,7 +127,7 @@ const putGranule = async (req, res) => {
   let updatedGranule = body;
   if (body.status === 'queued' && existingGranule) {
     updatedGranule = {
-      ...omit(existingGranule, ['updatedAt', 'timestamp']),
+      ...omit(existingGranule, ['updatedAt', 'timestamp', 'provider']),
       ...body,
     };
   }
