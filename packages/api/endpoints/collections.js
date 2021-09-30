@@ -22,7 +22,7 @@ const {
   deleteCollection,
 } = require('@cumulus/es-client/indexer');
 const Collection = require('@cumulus/es-client/collections');
-const { publishCollectionSnsMessage } = require('../lib/publishSnsMessageUtils');
+const { publishSnsMessageByDataType } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
@@ -140,7 +140,7 @@ async function post(req, res) {
         // process.env.ES_INDEX is only used to isolate the index for
         // each unit test suite
         await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-        await publishCollectionSnsMessage(translatedCollection, 'Create');
+        await publishSnsMessageByDataType(translatedCollection, 'collection', 'Create');
       });
     } catch (innerError) {
       // Clean up DynamoDB collection record in case of any failure
@@ -213,7 +213,7 @@ async function put(req, res) {
       // process.env.ES_INDEX is only used to isolate the index for
       // each unit test suite
       await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-      await publishCollectionSnsMessage(translatedCollection, 'Update');
+      await publishSnsMessageByDataType(translatedCollection, 'collection', 'Update');
     });
   } catch (error) {
     // Revert Dynamo record update if any write fails
@@ -262,7 +262,7 @@ async function del(req, res) {
           index: process.env.ES_INDEX,
           ignore: [404],
         });
-        await publishCollectionSnsMessage({ name, version }, 'Delete');
+        await publishSnsMessageByDataType({ name, version }, 'collection', 'Delete');
       });
     } catch (innerError) {
       // Delete is idempotent, so there may not be a DynamoDB
