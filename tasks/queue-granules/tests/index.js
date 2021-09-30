@@ -710,7 +710,6 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
   );
 });
 
-
 test('createdAt for queued granule is older than enqueueGranuleIngestMessage date', async (t) => {
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
