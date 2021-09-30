@@ -145,6 +145,7 @@ async function indexModel({
   let totalItemsIndexed = 0;
   let done;
   let maxIndex = await postgresModel.getMaxCumulusId(knex);
+  let failCount = 0;
   /* eslint-disable no-await-in-loop */
   while (done !== true && maxIndex > 0) {
     const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
@@ -152,29 +153,31 @@ async function indexModel({
       `Attempting to index ${pageResults.length} records from ${postgresModel.tableName}`
     );
 
-    const translatedResults = await Promise.all(
-      pageResults.map(async (result) => await translationFunction(result))
-    );
-
-    const indexPromises = translatedResults.map((result) => limitEsRequests(
-      async () => {
+    const indexPromises = pageResults.map(async (pageResult) => {
+      const result = await translationFunction(pageResult);
+      return limitEsRequests(async () => {
         try {
           return await indexFn(esClient, result, esIndex);
         } catch (error) {
-          log.error(`Error indexing record ${JSON.stringify(result)}, error: ${error}`);
+          log.error(
+            `Error indexing record ${JSON.stringify(result)}, error: ${error.message}`
+          );
           return false;
         }
-      }
-    ));
+      });
+    });
+
     const results = await Promise.all(indexPromises);
     const successfulResults = results.filter((result) => result !== false);
+    failCount += (results.length - successfulResults.length);
+
     totalItemsIndexed += successfulResults;
 
     log.info(`Completed index of ${successfulResults.length} records from ${postgresModel.tableName}`);
     startId += pageSize;
     if (startId > maxIndex) {
       startId = maxIndex;
-      log.info(`Updating maxIndex to account for new rows from ${postgresModel.tableName}`);
+      log.info(`Continuing indexing from cumulus_id ${startId} to account for new rows from ${postgresModel.tableName}`);
       const oldMaxIndex = maxIndex;
       maxIndex = await postgresModel.getMaxCumulusId(knex);
       if (maxIndex <= oldMaxIndex) {
@@ -183,6 +186,10 @@ async function indexModel({
     }
   }
   /* eslint-enable no-await-in-loop */
+  log.info(`Completed successful index of ${totalItemsIndexed.length} records from ${postgresModel.tableName}`);
+  if (failCount) {
+    log.warn(`${failCount} records failed indexing from ${postgresModel.tableName}`);
+  }
   return totalItemsIndexed;
 }
 
