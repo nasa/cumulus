@@ -709,3 +709,31 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
     message.meta.cnm, cnm
   );
 });
+
+
+test('createdAt for queued granule is older than enqueueGranuleIngestMessage date', async (t) => {
+  const { event } = t.context;
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
+  const enqueueGranuleIngestMessageMock = sinon.spy(() => Date.now());
+
+  const testMocks = {
+    updateGranuleMock,
+    enqueueGranuleIngestMessageMock,
+  };
+
+  await queueGranules(event, testMocks);
+  t.assert(updateGranuleMock.returnValues[0] <= enqueueGranuleIngestMessageMock.returnValues[0]);
+});
