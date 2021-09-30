@@ -38,6 +38,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
+### Fixed
+  - **CUMULUS-2583**
+    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
 ## [v9.6.0] 2021-09-20
 
 ### Added
