@@ -479,10 +479,11 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
     collection_cumulus_id: collectionCumulusId,
   });
 
-  const [newExecutionCumulusId] = await executionPgModel.create(
+  const [execution] = await executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory({ status: 'running' })
   );
+  const newExecutionCumulusId = execution.cumulusId;
 
   await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
 
