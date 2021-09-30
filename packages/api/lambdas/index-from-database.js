@@ -60,7 +60,7 @@ const getEsRequestConcurrency = (event) => {
   return 10;
 };
 
-// Legacy method for Reconciliation Reports only
+// Legacy method used for indexing Reconciliation Reports only
 async function indexReconciliationReports({
   esClient,
   tableName,
@@ -116,6 +116,21 @@ async function indexReconciliationReports({
   return totalItemsIndexed;
 }
 
+/**
+* indexModel - Index a postgres RDS table's contents to ElasticSearch
+*
+* @param {Object} params                  -- parameters
+* @param {any} params.esClient            -- ElasticSearch client
+* @param {any} params.postgresModel       -- @cumulus/db model
+* @param {string} params.esIndex          -- esIndex to write records to
+* @param {any} params.indexFn             -- Indexer function that maps to the database model
+* @param {any} params.limitEsRequests     -- limitEsRequests method (used for testing)
+* @param {Knex} params.knex               -- configured knex instance
+* @param {any} params.translationFunction -- function to translate postgres record
+*                                            to API record for ES
+* @param {number} params.pageSize         -- Page size for postgres pagination
+* @returns {number}                       -- number of items indexed
+*/
 async function indexModel({
   esClient,
   postgresModel,
