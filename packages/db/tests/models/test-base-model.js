@@ -16,16 +16,23 @@ test.before(async (t) => {
     env: localStackConnectionEnv,
   });
   t.context.tableName = cryptoRandomString({ length: 10 });
+  t.context.emptyTableName = 'getMaxIdEmptyTable';
+
   await t.context.knex.schema.createTable(t.context.tableName, (table) => {
     table.increments('cumulus_id').primary();
     table.text('info');
     table.timestamps(false, true);
   });
+  await t.context.knex.schema.createTable(t.context.emptyTableName, (table) => {
+    table.increments('cumulus_id').primary();
+  });
+
   t.context.basePgModel = new BasePgModel({ tableName: t.context.tableName });
 });
 
 test.after.always(async (t) => {
   await t.context.knex.schema.dropTable(t.context.tableName);
+  await t.context.knex.schema.dropTable(t.context.emptyTableName);
 });
 
 test('BasePgModel.create() creates record and returns cumulus_id by default', async (t) => {
@@ -555,4 +562,11 @@ test.serial('getMaxId returns the next cumulus_id in sequence', async (t) => {
   const expected = await knex(tableName).max('cumulus_id').first();
   const result = await basePgModel.getMaxCumulusId(knex);
   t.is(result, expected.max);
+});
+
+test('getMaxId throws if the table is empty', async (t) => {
+  const { knex, emptyTableName } = t.context;
+  const pgModel = new BasePgModel({ tableName: emptyTableName });
+  await knex(emptyTableName).max('cumulus_id').first();
+  await t.throwsAsync(pgModel.getMaxCumulusId(knex));
 });
