@@ -33,7 +33,7 @@
     "@cumulus/errors": "9.6.0",
     "@cumulus/es-client": "9.6.0",
     "@cumulus/types": "9.6.0",
-    "uuid": "8.3.1"
+    "uuid": "8.3.2"
   },
   "devDependencies": {
     "@cumulus/common": "9.6.0",
