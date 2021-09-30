@@ -55,7 +55,7 @@ const {
   getExecutionProcessingTimeInfo,
 } = require('../granules');
 const Granule = require('../../models/granules');
-const { publishGranuleSnsMessage } = require('../publishSnsMessageUtils');
+const { publishSnsMessageByDataType } = require('../publishSnsMessageUtils');
 const {
   getExecutionCumulusId,
 } = require('./utils');
@@ -262,7 +262,7 @@ const _writeGranuleFiles = async ({
         granulePgRecord: pgGranule,
         knexOrTransaction: knex,
       });
-      await publishGranuleSnsMessage(granuletoPublish, 'Update');
+      await publishSnsMessageByDataType(granuletoPublish, 'granule,' 'Update');
     });
   }
 };
@@ -384,7 +384,7 @@ const _writeGranule = async ({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  await publishGranuleSnsMessage(granuletoPublish, snsEvent);
+  await publishSnsMessageByDataType(granuletoPublish, 'granule', snsEvent);
 };
 
 /**

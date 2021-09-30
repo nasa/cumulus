@@ -1225,7 +1225,7 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
 
-test.serial('_writeGranule() calls publishGranuleSnsMessage and successfully publishes an SNS message', async (t) => {
+test.serial('_writeGranule() calls publishSnsMessageByDataType and successfully publishes an SNS message', async (t) => {
   const {
     granule,
     executionCumulusId,

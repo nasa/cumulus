@@ -18,7 +18,7 @@ import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
-const { publishGranuleSnsMessage } = require('../../lib/publishSnsMessageUtils');
+const { publishSnsMessageByDataType } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
 const Granule = require('../../models/granules');
 
@@ -88,7 +88,7 @@ const deleteGranuleAndFiles = async (params: {
     granuleToPublishToSns = dynamoGranule;
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
-    await publishGranuleSnsMessage(granuleToPublishToSns, 'Delete');
+    await publishSnsMessageByDataType(granuleToPublishToSns, 'granule', 'Delete');
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
@@ -127,7 +127,7 @@ const deleteGranuleAndFiles = async (params: {
           index: process.env.ES_INDEX,
           ignore: [404],
         });
-        await publishGranuleSnsMessage(granuleToPublishToSns, 'Delete');
+        await publishSnsMessageByDataType(granuleToPublishToSns, 'granule', 'Delete');
       });
       logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
       await _deleteS3Files(files);
