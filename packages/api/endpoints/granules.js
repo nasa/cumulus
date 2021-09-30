@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
-const omit = require('lodash/omit');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -110,11 +109,10 @@ const putGranule = async (req, res) => {
   } = req.testContext || {};
   const body = req.body || {};
 
-  let existingGranule;
   let message;
   let status;
   try {
-    existingGranule = await granuleModel.get({ granuleId: body.granuleId });
+    await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       status = 201;
@@ -124,16 +122,8 @@ const putGranule = async (req, res) => {
     }
   }
 
-  let updatedGranule = body;
-  if (body.status === 'queued' && existingGranule) {
-    updatedGranule = {
-      ...omit(existingGranule, ['updatedAt', 'timestamp', 'provider']),
-      ...body,
-    };
-  }
-
   try {
-    await writeGranuleFromApi(updatedGranule, knex);
+    await writeGranuleFromApi(body, knex);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
