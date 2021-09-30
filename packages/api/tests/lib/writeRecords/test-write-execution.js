@@ -547,7 +547,7 @@ test.serial('writeExecutionRecordFromApi() saves execution to Dynamo and RDS wit
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 });
 
-test.serial('writeExecutionRecordFromMessage() calls publishExecutionSnsMessage and successfully publishes an SNS message', async (t) => {
+test.serial('writeExecutionRecordFromMessage() calls publishSnsMessageByDataType and successfully publishes an SNS message', async (t) => {
   const {
     cumulusMessage,
     executionArn,
