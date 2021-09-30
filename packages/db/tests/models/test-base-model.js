@@ -541,7 +541,7 @@ test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (
   t.deepEqual(secondPageRecords[0].info, info2);
 });
 
-test.only('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
+test.serial('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const testLength = 5;
   await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
