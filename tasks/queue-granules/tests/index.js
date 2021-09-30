@@ -726,7 +726,7 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   ];
 
   const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy(() => Date.now());
+  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
 
   const testMocks = {
     updateGranuleMock,
@@ -734,5 +734,5 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   };
 
   await queueGranules(event, testMocks);
-  t.assert(updateGranuleMock.returnValues[0] <= enqueueGranuleIngestMessageMock.returnValues[0]);
+  t.assert(updateGranuleMock.returnValues[0] < enqueueGranuleIngestMessageMock.returnValues[0]);
 });
