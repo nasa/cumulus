@@ -52,6 +52,7 @@ function groupAndBatchGranules(granules, batchSize) {
  * See schemas/input.json and schemas/config.json for detailed event description
  *
  * @param {Object} event - Lambda event object
+ * @param {Object} testMocks - Object containing mock functions for testing
  * @returns {Promise} - see schemas/output.json for detailed output schema
  *   that is passed to the next task in the workflow
  **/
