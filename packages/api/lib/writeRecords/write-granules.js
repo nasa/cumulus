@@ -262,7 +262,7 @@ const _writeGranuleFiles = async ({
         granulePgRecord: pgGranule,
         knexOrTransaction: knex,
       });
-      await publishSnsMessageByDataType(granuletoPublish, 'granule,' 'Update');
+      await publishSnsMessageByDataType(granuletoPublish, 'granule', 'Update');
     });
   }
 };
