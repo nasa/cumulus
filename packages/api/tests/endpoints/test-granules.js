@@ -1652,7 +1652,6 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-<<<<<<< HEAD
 test('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
@@ -1991,10 +1990,7 @@ test('put() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fa
   );
 });
 
-test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
-=======
 test.serial('PUT adds granule if it does not exist', async (t) => {
->>>>>>> master
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -2185,11 +2181,7 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-<<<<<<< HEAD
-    message: `Successfully updated granule with Granule Id: ${runningGranuleId} Skipped setting status to queued because granule was not running`,
-=======
     message: `Successfully updated granule with Granule Id: ${granuleId}`,
->>>>>>> master
   });
 });
 
