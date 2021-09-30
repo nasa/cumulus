@@ -28,18 +28,21 @@ of response and not the raw API endpoint response
       `sf_event_sqs_to_db_records` lambda TF definition.
     - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
       permissions for SNS publish for `report_executions_topic`
-    - Added the new function `publishExecutionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report executions topic.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
-    - Added the new function `publishCollectionSnsMessage` in `@cumulus/api` to
-      publish SNS messages to the report collections topic.
     - Added `updateCollection` to `@cumulus/api-client`.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_sns_topic_arn`, `report_pdrs_sns_topic_arn`,
       `report_granules_sns_topic_arn`
     - Added variables for report topic ARNs to `process_dead_letter_archive.tf`
     - Added variable for granule report topic ARN to `bulk_operation.tf`
+    - Added `pdr_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
+      publish SNS messages to the report topics to PDRs, Collections, and
+      Executions.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_topic` and `report_pdrs_topic`.
 - **CUMULUS-2592**
   - Adds logging when messages fail to be added to queue
 - **CUMULUS-2575**
@@ -156,6 +159,14 @@ of response and not the raw API endpoint response
       updated records.
     - Updated `@cumulus/api/lib/writeRecords/write-granules` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
+    - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+- **CUMULUS-2577**
+  - Adds `POST /executions` endpoint to create an execution
+
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+
 - **CUMULUS-2644**
   - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
   from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
@@ -194,6 +205,9 @@ when output of the operation is `undefined`
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
     - Removed `aws_lambda_event_source_mapping` TF definition on granules
+    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
       DynamoDB table.
 
 - **CUMULUS-2583**

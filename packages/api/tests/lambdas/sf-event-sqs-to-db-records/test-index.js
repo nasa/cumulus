@@ -186,10 +186,14 @@ test.before(async (t) => {
 
   fixture = await loadFixture('execution-running-event.json');
 
-  const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.execution_sns_topic_arn = TopicArn;
-  t.context.TopicArn = TopicArn;
+  const executionsTopicName = cryptoRandomString({ length: 10 });
+  const pdrsTopicName = cryptoRandomString({ length: 10 });
+  const executionsTopic = await sns().createTopic({ Name: executionsTopicName }).promise();
+  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName }).promise();
+  process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
+  process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
+  t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
+  t.context.PdrsTopicArn = pdrsTopic.TopicArn;
 });
 
 test.beforeEach(async (t) => {
@@ -289,8 +293,9 @@ test.after.always(async (t) => {
   const {
     executionModel,
     pdrModel,
+    PdrsTopicArn,
     granuleModel,
-    TopicArn,
+    ExecutionsTopicArn,
   } = t.context;
   await executionModel.deleteTable();
   await pdrModel.deleteTable();
@@ -301,7 +306,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
+  await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
 });
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
@@ -506,7 +512,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
-test('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -558,7 +564,7 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -597,7 +603,7 @@ test('writeRecords() discards an out of order message that is older than an exis
   );
 });
 
-test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,

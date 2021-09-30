@@ -6,12 +6,6 @@ const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
-const publishExecutionSnsMessage = async (record) => {
-  const topicArn = envUtils.getRequiredEnvVar('execution_sns_topic_arn', process.env);
-  logger.info(`About to publish SNS message ${JSON.stringify(record)} for execution to topic ARN ${topicArn}`);
-  await publishSnsMessage(topicArn, record);
-};
-
 const constructCollectionSnsMessage = (record, event) => {
   switch (event) {
   case 'Create':
@@ -43,24 +37,23 @@ const constructGranuleSnsMessage = (record, event) => {
   }
 };
 
-const publishGranuleSnsMessage = async (record, event) => {
-  const topicArn = envUtils.getRequiredEnvVar('granule_sns_topic_arn', process.env);
-  const messageToPublish = constructGranuleSnsMessage(record, event);
-
-  logger.info(`About to publish SNS message ${JSON.stringify(record)} for granule to topic ARN ${topicArn}`);
-  await publishSnsMessage(topicArn, messageToPublish);
-};
-
-const publishCollectionSnsMessage = async (record, event) => {
-  const topicArn = envUtils.getRequiredEnvVar('collection_sns_topic_arn', process.env);
-  const messageToPublish = constructCollectionSnsMessage(record, event);
-
-  logger.info(`About to publish SNS message ${JSON.stringify(messageToPublish)} for collection to topic ARN ${topicArn}`);
-  await publishSnsMessage(topicArn, messageToPublish);
+const publishSnsMessageByDataType = async (record, dataType, event) => {
+  const topicArn = envUtils.getRequiredEnvVar(`${dataType}_sns_topic_arn`, process.env);
+  logger.info(`About to publish SNS message for ${dataType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
+  if (dataType === 'collection') {
+    const messageToPublish = constructCollectionSnsMessage(record, event);
+    return await publishSnsMessage(topicArn, messageToPublish);
+  }
+  if (dataType === 'granule') {
+    const messageToPublish = constructGranuleSnsMessage(record, event);
+    return await publishSnsMessage(topicArn, messageToPublish);
+  }
+  if (dataType === 'pdr' || dataType === 'execution') {
+    return await publishSnsMessage(topicArn, record);
+  }
+  return undefined;
 };
 
 module.exports = {
-  publishGranuleSnsMessage,
-  publishCollectionSnsMessage,
-  publishExecutionSnsMessage,
+  publishSnsMessageByDataType,
 };

@@ -7,9 +7,7 @@ const cryptoRandomString = require('crypto-random-string');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 
 const {
-  publishExecutionSnsMessage,
-  publishCollectionSnsMessage,
-  publishGranuleSnsMessage,
+  publishSnsMessageByDataType,
 } = require('../../lib/publishSnsMessageUtils');
 
 const {
@@ -17,6 +15,7 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeFileFactory,
+  fakePdrFactoryV2,
 } = require('../../lib/testUtils');
 
 test.before(async (t) => {
@@ -54,19 +53,22 @@ test.after.always(async (t) => {
   ]);
 });
 
-test.serial('publishExecutionSnsMessage() does not publish an SNS message if execution_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish an execution SNS message if execution_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
   const newExecution = fakeExecutionFactoryV2({
     arn: cryptoRandomString({ length: 5 }),
     status: 'completed',
     name: 'test_execution',
   });
   await t.throwsAsync(
-    publishExecutionSnsMessage(newExecution),
+    publishSnsMessageByDataType(newExecution, 'execution'),
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes an SNS message for execution', async (t) => {
   process.env.execution_sns_topic_arn = t.context.TopicArn;
   const executionArn = cryptoRandomString({ length: 10 });
   const newExecution = fakeExecutionFactoryV2({
@@ -74,7 +76,7 @@ test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) =
     status: 'completed',
     name: 'test_execution',
   });
-  await publishExecutionSnsMessage(newExecution);
+  await publishSnsMessageByDataType(newExecution, 'execution');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -90,7 +92,8 @@ test.serial('publishExecutionSnsMessage() publishes an SNS message', async (t) =
   t.deepEqual(executionRecord.status, newExecution.status);
 });
 
-test.serial('publishCollectionSnsMessage() does not publish an SNS message if collection_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish a collection SNS message if collection_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
   const newCollection = fakeCollectionFactory();
 
   t.teardown(() => {
@@ -98,16 +101,19 @@ test.serial('publishCollectionSnsMessage() does not publish an SNS message if co
   });
 
   await t.throwsAsync(
-    publishCollectionSnsMessage(newCollection),
+    publishSnsMessageByDataType(newCollection, 'collection', 'Update'),
     { message: 'The collection_sns_topic_arn environment variable must be set' }
   );
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Create', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Create', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Create');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Create');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -123,11 +129,11 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.event, 'Create');
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Update', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Update', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Update');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Update');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -142,7 +148,7 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.event, 'Update');
 });
 
-test.serial('publishCollectionSnsMessage() publishes an SNS message for the event type Delete', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Delete', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
   const deletedAt = Date.now();
   const stub = sinon.stub(Date, 'now').returns(deletedAt);
@@ -152,7 +158,7 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
 
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
-  await publishCollectionSnsMessage(newCollection, 'Delete');
+  await publishSnsMessageByDataType(newCollection, 'collection', 'Delete');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -168,17 +174,17 @@ test.serial('publishCollectionSnsMessage() publishes an SNS message for the even
   t.is(message.deletedAt, deletedAt);
 });
 
-test.serial('publishGranuleSnsMessage() does not publish an SNS message if granule_sns_topic_arn is undefined', async (t) => {
+test.serial('publishSnsMessageByDataType() does not publish an SNS message if granule_sns_topic_arn is undefined', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     granuleId: cryptoRandomString({ length: 5 }),
   });
   await t.throwsAsync(
-    publishGranuleSnsMessage(newGranule),
+    publishSnsMessageByDataType(newGranule, 'granule'),
     { message: 'The granule_sns_topic_arn environment variable must be set' }
   );
 });
 
-test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete event', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes an SNS message for the Delete event', async (t) => {
   process.env.granule_sns_topic_arn = t.context.TopicArn;
 
   const granuleId = cryptoRandomString({ length: 10 });
@@ -188,7 +194,7 @@ test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete 
     granuleId,
     published: false,
   });
-  await publishGranuleSnsMessage(newGranule, 'Delete');
+  await publishSnsMessageByDataType(newGranule, 'granule', 'Delete');
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -203,4 +209,59 @@ test.serial('publishGranuleSnsMessage() publishes an SNS message for the Delete 
   t.deepEqual(publishedMessage.record.granuleId, granuleId);
   t.deepEqual(publishedMessage.event, 'Delete');
   t.true(publishedMessage.deletedAt < Date.now());
+});
+
+test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if pdr_sns_topic_arn is undefined', async (t) => {
+  const { QueueUrl } = t.context;
+  const newPdr = fakePdrFactoryV2({
+    pdrName: 'test_pdr',
+  });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newPdr, 'pdr'),
+    { message: 'The pdr_sns_topic_arn environment variable must be set' }
+  );
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
+});
+
+test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.pdr_sns_topic_arn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
+  const pdrName = cryptoRandomString({ length: 10 });
+  const newPdr = fakePdrFactoryV2({
+    pdrName,
+  });
+  await publishSnsMessageByDataType(newPdr, 'pdr');
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const pdrRecord = JSON.parse(snsMessage.Message);
+
+  t.deepEqual(pdrRecord.pdrName, pdrName);
+  t.deepEqual(pdrRecord.status, newPdr.status);
 });
