@@ -71,7 +71,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   });
 
   afterAll(async () => {
-    await waitForExecutionAndDelete(stackName, workflowExecution.executionArn, 'completed');
+    await waitForExecutionAndDelete(stackName, workflowExecution.executionArn, 'failed');
     await Promise.all([
       deleteCollection({
         prefix: stackName,
