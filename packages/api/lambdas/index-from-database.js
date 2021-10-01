@@ -153,19 +153,17 @@ async function indexModel({
       `Attempting to index ${pageResults.length} records from ${postgresModel.tableName}`
     );
 
-    const indexPromises = pageResults.map(async (pageResult) => {
+    const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
       const result = await translationFunction(pageResult);
-      return limitEsRequests(async () => {
-        try {
-          return await indexFn(esClient, result, esIndex);
-        } catch (error) {
-          log.error(
-            `Error indexing record ${JSON.stringify(result)}, error: ${error.message}`
-          );
-          return false;
-        }
-      });
-    });
+      try {
+        return await indexFn(esClient, result, esIndex);
+      } catch (error) {
+        log.error(
+          `Error indexing record ${JSON.stringify(result)}, error: ${error.message}`
+        );
+        return false;
+      }
+    }));
 
     const results = await Promise.all(indexPromises);
     const successfulResults = results.filter((result) => result !== false);
