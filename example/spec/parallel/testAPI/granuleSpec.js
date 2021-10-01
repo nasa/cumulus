@@ -89,7 +89,7 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteGranule({ prefix, granuleId });
-    await waitForExecutionAndDelete(prefix, executionRecord.arn, 'completed');
+    await waitForExecutionAndDelete(prefix, executionRecord.arn, 'running');
     await deleteCollection({
       prefix,
       collectionName: collection.name,

@@ -6,6 +6,7 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
@@ -37,7 +38,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutions } = require('@cumulus/api-client/executions');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
-const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const {
@@ -108,7 +108,7 @@ async function cleanUp() {
     },
   })).body).results;
   await Promise.all(executions.map(
-    (execution) => waitForExecutionAndDelete(config.stackName, execution.arn, 'completed')
+    (execution) => deleteExecution({ prefix: config.stackName, executionArn: execution.arn })
   ));
 
   await Promise.all(inputPayload.granules.map(
