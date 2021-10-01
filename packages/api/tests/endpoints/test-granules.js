@@ -58,7 +58,6 @@ const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
