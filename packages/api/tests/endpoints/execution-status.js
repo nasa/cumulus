@@ -12,13 +12,6 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { randomId } = require('@cumulus/common/test-utils');
-const models = require('../../models');
-const assertions = require('../../lib/assertions');
-const {
-  createFakeJwtAuthToken,
-  fakeExecutionFactoryV2,
-  setAuthorizedOAuthUsers,
-} = require('../../lib/testUtils');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -27,6 +20,13 @@ const {
   ExecutionPgModel,
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
+const {
+  createFakeJwtAuthToken,
+  fakeExecutionFactoryV2,
+  setAuthorizedOAuthUsers,
+} = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
