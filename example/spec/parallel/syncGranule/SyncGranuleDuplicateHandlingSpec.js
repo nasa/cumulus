@@ -145,7 +145,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
     // Executions must be deleted in a specific order due to foreign key relationships
     await waitForExecutionAndDelete(config.stackName, caughtDuplicateErrorExecutionArn, 'completed');
-    await waitForExecutionAndDelete(config.stackName, uncaughtDuplicateErrorExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, uncaughtDuplicateErrorExecutionArn, 'failed');
     await waitForExecutionAndDelete(config.stackName, existingVersionedFileExecutionArn, 'completed');
     await waitForExecutionAndDelete(config.stackName, duplicateFilenameExecutionArn, 'completed');
     await waitForExecutionAndDelete(config.stackName, duplicateChecksumExecutionArn, 'completed');

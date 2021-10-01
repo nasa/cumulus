@@ -104,7 +104,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
 
-    await waitForExecutionAndDelete(testConfig.stackName, failingWorkflowExecution.executionArn, 'completed');
+    await waitForExecutionAndDelete(testConfig.stackName, failingWorkflowExecution.executionArn, 'failed');
     await waitForExecutionAndDelete(testConfig.stackName, workflowExecution.executionArn, 'completed');
     await deleteGranule({ prefix: testConfig.stackName, granuleId });
 
