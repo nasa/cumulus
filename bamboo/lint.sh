@@ -13,8 +13,8 @@ set -ex
 npm run lint
 
 GIT_DIFF=$(git --no-pager diff --name-only $PR_BRANCH:CHANGELOG.md -- CHANGELOG.md)
-if [[ ! $SKIP_CHANGELOG == "true" || ! $GIT_DIFF =~ ^CHANGELOG.md$ ]]; then
+if [[ $SKIP_CHANGELOG != "true" && ! $GIT_DIFF =~ ^CHANGELOG.md$ ]]; then
   echo "**** ERROR -- NO CHANGELOG CHANGE DETECTED.  Failing Lint...."
-  echo "GIT DIFF OUTPUT was $GIT_DIFF"
+  echo "GIT DIFF OUTPUT: $GIT_DIFF"
   exit 1
 fi
