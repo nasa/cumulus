@@ -12,13 +12,15 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 const { getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
+
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
@@ -157,8 +159,8 @@ describe('The DiscoverGranules workflow', () => {
       ),
     ]);
     // The order of execution deletes matters. Children must be deleted before parents.
-    await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: stackName, executionArn: discoverGranulesExecutionArn });
+    await waitForExecutionAndDelete(stackName, ingestGranuleExecutionArn, 'completed');
+    await waitForExecutionAndDelete(stackName, discoverGranulesExecutionArn, 'completed');
     await deleteRule({ prefix: stackName, ruleName: discoverGranulesRule.name });
     await Promise.all([
       deleteFolder(bucket, sourcePath),

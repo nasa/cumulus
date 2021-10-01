@@ -12,13 +12,14 @@ const {
   api: apiTestUtils,
   cleanupCollections,
 } = require('@cumulus/integration-tests');
-const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildFtpProvider, createProvider } = require('../../helpers/Providers');
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -103,7 +104,7 @@ describe('The FTP Ingest Granules workflow', () => {
       pdr: pdrFilename,
     });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleExecutionArn, 'completed');
 
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),

@@ -6,7 +6,6 @@ const pAll = require('p-all');
 const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -23,6 +22,9 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
+const {
+  waitForExecutionAndDelete,
+} = require('../../helpers/executionUtils');
 const {
   createTimestampedTestId,
   createTestSuffix,
@@ -182,8 +184,10 @@ describe('POST /granules/bulkDelete', () => {
       await deleteRule(
         { prefix, ruleName: get(ingestGranuleRule, 'name') }
       );
-      await deleteExecution(
-        { prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }
+      await waitForExecutionAndDelete(
+        config.stackName,
+        ingestGranuleExecution1Arn,
+        'completed'
       );
 
       if (postBulkDeleteBody.id) {

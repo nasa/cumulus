@@ -14,13 +14,13 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandling = "error" and a granule re-ingested', () => {
@@ -217,8 +217,8 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
     await deleteGranule({ prefix, granuleId });
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn1 }),
-      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
+      waitForExecutionAndDelete(config.stackName, ingestGranuleExecutionArn1, 'completed'),
+      waitForExecutionAndDelete(config.stackName, ingestGranuleExecution2Arn, 'completed'),
     ]);
 
     await pAll(

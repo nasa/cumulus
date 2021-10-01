@@ -2,7 +2,6 @@
 
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule } = require('@cumulus/api-client/granules');
 const { deletePdr } = require('@cumulus/api-client/pdrs');
 
@@ -14,6 +13,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { deleteProvidersAndAllDependenciesByHost } = require('../../helpers/Providers');
@@ -206,9 +206,9 @@ describe('Parsing a PDR with multiple data types and node names', () => {
     ));
     await deletePdr({ prefix: stackName, pdrName });
     await Promise.all(queueGranulesOutput.payload.running.map(
-      (executionArn) => deleteExecution({ prefix: stackName, executionArn })
+      (executionArn) => waitForExecutionAndDelete(stackName, executionArn, 'completed')
     ));
-    await deleteExecution({ prefix: stackName, executionArn: parsePdrExecutionArn });
+    await waitForExecutionAndDelete(stackName, parsePdrExecutionArn, 'completed');
     await Promise.all([
       deleteFolder(bucket, testDataPath),
       deleteFolder(nodeNameBucket, testDataPath),

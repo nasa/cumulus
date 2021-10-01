@@ -7,7 +7,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getGranule } = require('@cumulus/api-client/granules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   addCollections,
   addProviders,
@@ -17,6 +16,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   deleteFolder,
@@ -144,12 +144,12 @@ describe('When the Sync Granule workflow is configured', () => {
     ));
 
     // Executions must be deleted in a specific order due to foreign key relationships
-    await deleteExecution({ prefix: config.stackName, executionArn: caughtDuplicateErrorExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: uncaughtDuplicateErrorExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: existingVersionedFileExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: duplicateFilenameExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: duplicateChecksumExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, caughtDuplicateErrorExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, uncaughtDuplicateErrorExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, existingVersionedFileExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, duplicateFilenameExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, duplicateChecksumExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, syncGranuleExecutionArn, 'completed');
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),

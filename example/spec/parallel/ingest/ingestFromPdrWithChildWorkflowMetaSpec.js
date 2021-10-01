@@ -25,7 +25,6 @@ const cryptoRandomString = require('crypto-random-string');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 
 const {
@@ -38,6 +37,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -187,9 +187,9 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     );
 
     // The order of execution deletes matters. Children must be deleted before parents.
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: parsePdrExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: discoverPdrsExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, parsePdrExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, discoverPdrsExecutionArn, 'completed');
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),

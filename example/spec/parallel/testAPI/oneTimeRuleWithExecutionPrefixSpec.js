@@ -6,10 +6,10 @@ const {
 } = require('@cumulus/integration-tests');
 
 const rulesApi = require('@cumulus/api-client/rules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   loadConfig,
   timestampedName,
@@ -78,7 +78,7 @@ describe('When I create a one-time rule with an executionNamePrefix via the Cumu
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
-    await deleteExecution({ prefix: config.stackName, executionArn });
+    await waitForExecutionAndDelete(config.stackName, executionArn, 'completed');
     await rulesApi.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name,

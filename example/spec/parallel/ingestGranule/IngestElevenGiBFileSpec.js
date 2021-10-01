@@ -14,11 +14,11 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
@@ -128,7 +128,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleExecutionArn, 'completed');
     await deleteGranule({ prefix, granuleId });
     await pAll(
       [

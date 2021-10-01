@@ -12,11 +12,11 @@ const {
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
@@ -71,7 +71,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   });
 
   afterAll(async () => {
-    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(stackName, workflowExecution.executionArn, 'completed');
     await Promise.all([
       deleteCollection({
         prefix: stackName,

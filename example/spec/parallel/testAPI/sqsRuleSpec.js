@@ -7,7 +7,6 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
@@ -29,7 +28,6 @@ const {
   deleteRules,
   setProcessEnvironment,
   getExecutionInputObject,
-  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -39,6 +37,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutions } = require('@cumulus/api-client/executions');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const {
@@ -109,8 +108,7 @@ async function cleanUp() {
     },
   })).body).results;
   await Promise.all(executions.map(
-    (execution) => waitForCompletedExecution(execution.arn)
-      .then(deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
+    (execution) => waitForExecutionAndDelete(config.stackName, execution.arn, 'completed')
   ));
 
   await Promise.all(inputPayload.granules.map(

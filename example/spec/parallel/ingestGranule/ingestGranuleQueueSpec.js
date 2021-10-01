@@ -29,7 +29,6 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const {
   getDistributionFileUrl,
@@ -39,6 +38,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
@@ -238,8 +238,8 @@ describe('The S3 Ingest Granules workflow', () => {
       pdr: pdrFilename,
     });
     // The order of execution deletes matters. Parents must be deleted before children.
-    await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, publishGranuleExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, workflowExecutionArn, 'completed');
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({

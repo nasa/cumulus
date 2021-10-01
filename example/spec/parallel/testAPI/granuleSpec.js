@@ -15,7 +15,6 @@ const {
 } = require('@cumulus/api-client/granules');
 const {
   createExecution,
-  deleteExecution,
 } = require('@cumulus/api-client/executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
@@ -24,6 +23,7 @@ const {
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Granules API', () => {
@@ -89,7 +89,7 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteGranule({ prefix, granuleId });
-    await deleteExecution({ prefix, executionArn: executionRecord.arn });
+    await waitForExecutionAndDelete(prefix, executionRecord.arn, 'completed');
     await deleteCollection({
       prefix,
       collectionName: collection.name,

@@ -1,7 +1,7 @@
 'use strict';
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   api: apiTestUtils,
@@ -20,6 +20,7 @@ const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Provide
 const {
   waitForApiStatus,
 } = require('../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../helpers/executionUtils');
 const { waitForGranuleAndDelete } = require('../helpers/granuleUtils');
 
 const workflowName = 'DiscoverGranules';
@@ -122,18 +123,18 @@ describe('The Discover Granules workflow with http Protocol', () => {
     ));
 
     // Order matters. Child executions must be deleted before parents.
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn1 });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn2 });
-    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleWorkflowArn3 });
-    await deleteExecution({ prefix: config.stackName, executionArn: discoverGranulesExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleWorkflowArn1, 'completed');
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleWorkflowArn2, 'completed');
+    await waitForExecutionAndDelete(config.stackName, ingestGranuleWorkflowArn3, 'completed');
+    await waitForExecutionAndDelete(config.stackName, discoverGranulesExecutionArn, 'completed');
 
-    await Promise.all(noFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
-    await Promise.all(partialFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
-    await Promise.all(ignoringFilesIngestExecutionArns.map((executionArn) => deleteExecution({ prefix: config.stackName, executionArn })));
+    await Promise.all(noFilesIngestExecutionArns.map((executionArn) => waitForExecutionAndDelete(config.stackName, executionArn, 'completed')));
+    await Promise.all(partialFilesIngestExecutionArns.map((executionArn) => waitForExecutionAndDelete(config.stackName, executionArn, 'completed')));
+    await Promise.all(ignoringFilesIngestExecutionArns.map((executionArn) => waitForExecutionAndDelete(config.stackName, executionArn, 'completed')));
 
-    await deleteExecution({ prefix: config.stackName, executionArn: ignoringFilesConfigExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: partialFilesConfigExecutionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: noFilesConfigExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, ignoringFilesConfigExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, partialFilesConfigExecutionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, noFilesConfigExecutionArn, 'completed');
 
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),

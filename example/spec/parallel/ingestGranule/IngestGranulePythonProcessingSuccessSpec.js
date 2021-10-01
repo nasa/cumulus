@@ -16,7 +16,6 @@ const {
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { getGranule, deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteProvider, createProvider,
 } = require('@cumulus/api-client/providers');
@@ -24,6 +23,7 @@ const {
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -133,7 +133,7 @@ describe('The TestPythonProcessing workflow', () => {
       granuleId: inputPayload.granules[0].granuleId,
     });
     await deleteProvider({ prefix: config.stackName, providerId: provider.id });
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, workflowExecutionArn, 'completed');
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({

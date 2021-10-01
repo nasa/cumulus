@@ -17,10 +17,12 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
+const {
+  waitForExecutionAndDelete,
+} = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
@@ -212,9 +214,9 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
     ).catch(console.error);
 
     // The order of execution deletes matters. Parents must be deleted before children.
-    await deleteExecution({ prefix, executionArn: finishedIngestGranulesArn });
-    await deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn });
+    await waitForExecutionAndDelete(prefix, finishedIngestGranulesArn, 'completed');
+    await waitForExecutionAndDelete(prefix, ingestGranuleExecutionArn, 'completed');
+    await waitForExecutionAndDelete(prefix, discoverGranulesExecutionArn, 'completed');
 
     await pAll(
       [

@@ -7,13 +7,14 @@ const {
 } = require('@cumulus/integration-tests');
 
 const rulesApi = require('@cumulus/api-client/rules');
-const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -97,7 +98,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
       { prefix: config.stackName, arn: executionArn },
       'completed'
     );
-    await deleteExecution({ prefix: config.stackName, executionArn });
+    await waitForExecutionAndDelete(config.stackName, executionArn, 'completed');
 
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);

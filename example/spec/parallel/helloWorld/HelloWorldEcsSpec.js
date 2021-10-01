@@ -1,6 +1,7 @@
 const { Execution } = require('@cumulus/api/models');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
@@ -25,7 +26,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   });
 
   afterAll(async () => {
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(config.stackName, workflowExecution.executionArn, 'completed');
   });
 
   it('executes successfully', () => {

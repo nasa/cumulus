@@ -7,7 +7,6 @@ const {
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -26,6 +25,7 @@ const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 
 const workflowName = 'QueueGranules';
 const providersDir = './data/providers/s3/';
@@ -142,10 +142,7 @@ describe('The Queue Granules workflow', () => {
       })
     );
 
-    await deleteExecution({
-      prefix: config.stackName,
-      executionArn: queueGranulesExecutionArn,
-    });
+    await waitForExecutionAndDelete(config.stackName, queueGranulesExecutionArn, 'completed');
 
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),

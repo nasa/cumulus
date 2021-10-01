@@ -4,7 +4,6 @@ const omit = require('lodash/omit');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
   createExecution,
-  deleteExecution,
   getExecution,
   updateExecution,
 } = require('@cumulus/api-client/executions');
@@ -13,6 +12,8 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Executions API', () => {
@@ -50,7 +51,7 @@ describe('The Executions API', () => {
   });
 
   afterAll(async () => {
-    await deleteExecution({ prefix, executionArn });
+    await waitForExecutionAndDelete(prefix, executionArn, 'completed');
     await deleteCollection({
       prefix,
       collectionName: collection.name,

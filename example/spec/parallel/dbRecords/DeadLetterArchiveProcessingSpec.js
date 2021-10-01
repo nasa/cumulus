@@ -15,7 +15,6 @@ const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
 const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { createProvider, deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -33,6 +32,9 @@ const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests'
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const {
+  waitForExecutionAndDelete,
+} = require('../../helpers/executionUtils');
 const {
   createTimestampedTestId,
   loadConfig,
@@ -169,7 +171,11 @@ describe('A dead letter record archive processing operation', () => {
       asyncOperationId: deadLetterRecoveryAsyncOpId,
     });
 
-    await deleteExecution({ prefix: stackName, executionArn });
+    await waitForExecutionAndDelete(
+      stackName,
+      executionArn,
+      'completed'
+    );
 
     if (testCollection) {
       await deleteCollection(

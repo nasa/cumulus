@@ -8,7 +8,6 @@ const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const { Rule } = require('@cumulus/api/models');
 
 const { postKinesisReplays } = require('@cumulus/api-client/replays');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -21,6 +20,7 @@ const {
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   createOrUseTestStream,
   deleteTestStream,
@@ -211,8 +211,8 @@ describe('The Kinesis Replay API', () => {
 
         console.log('Cleaning up executions...');
         await Promise.all([
-          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[0].executionArn }),
-          deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecutions[1].executionArn }),
+          waitForExecutionAndDelete(testConfig.stackName, workflowExecutions[0].executionArn, 'completed'),
+          waitForExecutionAndDelete(testConfig.stackName, workflowExecutions[1].executionArn, 'completed'),
         ]);
       });
     });

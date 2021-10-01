@@ -11,13 +11,14 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
-const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   uploadS3GranuleDataForDiscovery,
 } = require('../../helpers/discoverUtils');
@@ -133,8 +134,8 @@ describe('The DiscoverGranules workflow', () => {
       ),
     ]);
     // The order of execution deletes matters. Children must be deleted before parents.
-    await deleteExecution({ prefix: stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(stackName, ingestGranuleExecutionArn, 'completed');
+    await waitForExecutionAndDelete(stackName, workflowExecution.executionArn, 'completed');
     await Promise.all([
       deleteFolder(bucket, providerPath),
       deleteCollection({

@@ -12,11 +12,11 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   createTestSuffix,
   createTimestampedTestId,
@@ -120,7 +120,7 @@ describe('The SNS-type rule', () => {
       // the case where the deletion test did not properly clean this up.
     }
 
-    await deleteExecution({ prefix: config.stackName, executionArn: hellowWorldExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, hellowWorldExecutionArn, 'completed');
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });

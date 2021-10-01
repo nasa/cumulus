@@ -6,7 +6,6 @@ const pAll = require('p-all');
 const granules = require('@cumulus/api-client/granules');
 const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -27,6 +26,7 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   createTimestampedTestId,
   createTestSuffix,
@@ -189,8 +189,9 @@ describe('POST /granules/bulk', () => {
     afterAll(async () => {
       // Must delete rules and executions before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
-      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
-      await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
+
+      await waitForExecutionAndDelete(config.stackName, ingestGranuleExecution1Arn, 'completed');
+      await waitForExecutionAndDelete(config.stackName, bulkOperationExecutionArn, 'completed');
 
       await granules.deleteGranule({ prefix, granuleId });
       if (postBulkOperationsBody.id) {

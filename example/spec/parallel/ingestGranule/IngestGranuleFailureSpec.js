@@ -12,8 +12,7 @@ const {
   executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
 
-const { deleteExecution } = require('@cumulus/api-client/executions');
-
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   waitForModelStatus,
@@ -126,7 +125,7 @@ describe('The Ingest Granule failure workflow', () => {
       pdr: pdrFilename,
     });
 
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(config.stackName, workflowExecution.executionArn, 'completed');
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),

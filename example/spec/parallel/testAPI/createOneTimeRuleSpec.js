@@ -8,7 +8,6 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const rulesApi = require('@cumulus/api-client/rules');
 const {
   isWorkflowTriggeredByRule,
@@ -25,6 +24,7 @@ const {
 } = require('../../helpers/testUtils');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 
 describe('Creating a one-time rule via the Cumulus API', () => {
   let beforeAllError;
@@ -82,8 +82,8 @@ describe('Creating a one-time rule via the Cumulus API', () => {
 
     if (ruleName) await deleteRule({ prefix, ruleName });
 
-    await deleteExecution({ prefix: config.stackName, executionArn });
-    await deleteExecution({ prefix: config.stackName, executionArn: executionArn2 });
+    await waitForExecutionAndDelete(config.stackName, executionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, executionArn2, 'completed');
 
     if (collection) {
       await deleteCollection({

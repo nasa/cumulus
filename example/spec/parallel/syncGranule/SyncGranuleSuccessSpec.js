@@ -10,7 +10,6 @@ const {
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { Execution, Granule } = require('@cumulus/api/models');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -40,6 +39,7 @@ const {
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 
 const workflowName = 'SyncGranule';
 const providersDir = './data/providers/s3/';
@@ -164,9 +164,9 @@ describe('The Sync Granules workflow', () => {
     ));
 
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+      waitForExecutionAndDelete(config.stackName, syncGranuleExecutionArn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, reingestGranuleExecutionArn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, failingExecutionArn, 'failed'),
     ]);
 
     await Promise.all([

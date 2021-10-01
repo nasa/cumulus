@@ -46,7 +46,6 @@ const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const executionsApiTestUtils = require('@cumulus/api-client/executions');
 const providersApi = require('@cumulus/api-client/providers');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   applyWorkflow,
   bulkReingestGranules,
@@ -63,6 +62,7 @@ const {
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
@@ -295,7 +295,7 @@ describe('The S3 Ingest Granules workflow', () => {
       prefix: config.stackName,
       provider: { id: provider.id },
     });
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, workflowExecutionArn, 'completed');
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
@@ -785,7 +785,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
-      await deleteExecution({ prefix: config.stackName, executionArn: failedExecutionArn });
+      await waitForExecutionAndDelete(config.stackName, failedExecutionArn, 'failed');
 
       await Promise.all([
         deleteS3Object(config.bucket, executionCompletedKey),
@@ -854,8 +854,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
       afterAll(async () => {
         const publishExecutionName = publishGranuleExecution.executionArn.split(':').pop();
-        await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecution.executionArn });
-        await deleteExecution({ prefix: config.stackName, executionArn: updateCmrAccessConstraintsExecutionArn });
+        await waitForExecutionAndDelete(config.stackName, publishGranuleExecution.executionArn, 'completed');
+        await waitForExecutionAndDelete(config.stackName, updateCmrAccessConstraintsExecutionArn, 'completed');
         await deleteS3Object(config.bucket, `${config.stackName}/test-output/${publishExecutionName}.output`);
       });
 
@@ -930,7 +930,7 @@ describe('The S3 Ingest Granules workflow', () => {
             pdr: pdrFilename,
           });
 
-          await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
+          await waitForExecutionAndDelete(config.stackName, reingestExecutionArn, 'completed');
         });
 
         it('generates an async operation through the Cumulus API', () => {

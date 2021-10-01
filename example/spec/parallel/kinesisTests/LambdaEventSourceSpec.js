@@ -20,8 +20,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { deleteExecution } = require('@cumulus/api-client/executions');
-
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -71,7 +70,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);
-    await deleteExecution({ prefix: testConfig.stackName, executionArn: executionArn });
+    await waitForExecutionAndDelete(testConfig.stackName, executionArn, 'completed');
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),

@@ -14,13 +14,13 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The IngestGranule workflow with DuplicateHandling="version" and a granule re-ingested with one new file, one unchanged existing file, and one modified file', () => {
@@ -252,8 +252,8 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
 
     await deleteGranule({ prefix, granuleId });
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
-      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),
+      waitForExecutionAndDelete(config.stackName, ingestGranuleExecution2Arn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, ingestGranuleExecution1Arn, 'completed'),
     ]);
 
     await pAll(

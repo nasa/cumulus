@@ -4,7 +4,6 @@ const pAll = require('p-all');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   loadCollection,
   loadProvider,
@@ -23,6 +22,7 @@ const {
 const {
   uploadS3GranuleDataForDiscovery,
 } = require('../../helpers/discoverUtils');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
@@ -121,8 +121,8 @@ describe('The DiscoverGranules workflow', () => {
     );
 
     // The order of execution deletes matters. Parents must be deleted before children.
-    await deleteExecution({ prefix: stackName, executionArn: parentExecutionArn });
-    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(stackName, parentExecutionArn, 'completed');
+    await waitForExecutionAndDelete(stackName, workflowExecution.executionArn, 'completed');
 
     await pAll(
       [

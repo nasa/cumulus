@@ -1,4 +1,4 @@
-const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const {
@@ -81,7 +81,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
         waitForExecutionAndDelete(config.stackName, executionArn, 'completed')
     ));
 
-    await deleteExecution({ prefix: config.stackName, executionArn: httpsWorkflowExecutionArn });
+    await waitForExecutionAndDelete(config.stackName, httpsWorkflowExecutionArn, 'completed');
 
     await Promise.all([
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),

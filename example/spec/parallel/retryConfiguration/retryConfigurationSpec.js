@@ -1,6 +1,6 @@
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -82,9 +82,9 @@ describe('When a task is configured', () => {
 
   afterAll(async () => {
     await Promise.all([
-      deleteExecution({ prefix: config.stackName, executionArn: retryPassWorkflowExecution.executionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: noRetryWorkflowExecution.executionArn }),
-      deleteExecution({ prefix: config.stackName, executionArn: retryFailWorkflowExecution.executionArn }),
+      waitForExecutionAndDelete(config.stackName, retryPassWorkflowExecution.executionArn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, noRetryWorkflowExecution.executionArn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, retryFailWorkflowExecution.executionArn, 'completed'),
     ]);
   });
 
