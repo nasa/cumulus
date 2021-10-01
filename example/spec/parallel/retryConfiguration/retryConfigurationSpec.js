@@ -83,8 +83,8 @@ describe('When a task is configured', () => {
   afterAll(async () => {
     await Promise.all([
       waitForExecutionAndDelete(config.stackName, retryPassWorkflowExecution.executionArn, 'completed'),
-      waitForExecutionAndDelete(config.stackName, noRetryWorkflowExecution.executionArn, 'completed'),
-      waitForExecutionAndDelete(config.stackName, retryFailWorkflowExecution.executionArn, 'completed'),
+      waitForExecutionAndDelete(config.stackName, noRetryWorkflowExecution.executionArn, 'failed'),
+      waitForExecutionAndDelete(config.stackName, retryFailWorkflowExecution.executionArn, 'failed'),
     ]);
   });
 
