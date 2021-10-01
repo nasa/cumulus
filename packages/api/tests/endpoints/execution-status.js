@@ -11,6 +11,7 @@ const {
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 
+const { randomId } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
@@ -18,6 +19,14 @@ const {
   fakeExecutionFactoryV2,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
+const {
+  localStackConnectionEnv,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  migrationDir,
+  ExecutionPgModel,
+  translateApiExecutionToPostgresExecution,
+} = require('@cumulus/db');
 
 process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
@@ -48,6 +57,8 @@ const cumulusMetaOutput = () => ({
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
 const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
+
+const testDbName = randomId('execution-status_test');
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -159,8 +170,9 @@ let accessTokenModel;
 let executionModel;
 let mockedSF;
 let mockedSFExecution;
+let executionPgModel;
 
-test.before(async () => {
+test.before(async (t) => {
   process.env.system_bucket = randomString();
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -191,14 +203,41 @@ test.before(async () => {
   executionModel = new models.Execution();
   await executionModel.createTable();
   await executionModel.create(fakeExpiredExecution);
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  // Generate a local test postgres database
+  const { knex, knexAdmin } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
+  executionPgModel = new ExecutionPgModel();
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    fakeExpiredExecution,
+    knex
+  );
+  await executionPgModel.create(knex, executionPgRecord);
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();
   await executionModel.deleteTable();
+
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
