@@ -272,9 +272,9 @@ test.before(async (t) => {
     newExecution,
     knex
   );
-  const [pgExecution] = await executionPgModel.create(knex, executionPgRecord);
-  t.context.executionUrl = pgExecution.url;
-  t.context.executionArn = pgExecution.arn;
+  await executionPgModel.create(knex, executionPgRecord);
+  t.context.executionUrl = executionPgRecord.url;
+  t.context.executionArn = executionPgRecord.arn;
 });
 
 test.beforeEach(async (t) => {
@@ -286,13 +286,13 @@ test.beforeEach(async (t) => {
     fakeGranuleFactoryV2({
       granuleId: granuleId1,
       status: 'completed',
-      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      execution: t.context.executionUrl,
       duration: 47.125,
     }),
     fakeGranuleFactoryV2({
       granuleId: granuleId2,
       status: 'failed',
-      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      execution: t.context.executionUrl,
       duration: 52.235,
     }),
   ];
@@ -1819,6 +1819,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fa
   const updatedGranule = {
     ...newDynamoGranule,
     status: 'completed',
+    granuleModel: fakeGranuleModel,
   };
 
   const expressRequest = {
@@ -1887,6 +1888,7 @@ test('put() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fa
   const updatedGranule = {
     ...newDynamoGranule,
     status: 'completed',
+    granulePgModel: fakeGranulePgModel,
   };
 
   const expressRequest = {
@@ -2167,8 +2169,15 @@ test.serial('PUT returns bad request when the path param granuleName does not ma
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
 
-test.serial('update (PUT) can set running granule status to queued', async (t) => {
-  const granuleId = t.context.fakeGranules[2].granuleId;
+test.serial.only('update (PUT) can set running granule status to queued', async (t) => {
+  const granuleId = cryptoRandomString({ length: 6 });
+  const runningGranule = fakeGranuleFactoryV2({
+    granuleId: granuleId,
+    status: 'running',
+    execution: t.context.executionUrl,
+  });
+  await granuleModel.create(runningGranule);
+
   const response = await request(app)
     .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')

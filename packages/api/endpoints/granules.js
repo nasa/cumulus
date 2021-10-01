@@ -112,6 +112,7 @@ const putGranule = async (req, res) => {
   const {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
   const body = req.body || {};
 
@@ -129,7 +130,7 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(body, knex);
+    await writeGranuleFromApi(body, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
