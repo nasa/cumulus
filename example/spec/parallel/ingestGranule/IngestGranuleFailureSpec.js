@@ -125,7 +125,7 @@ describe('The Ingest Granule failure workflow', () => {
       pdr: pdrFilename,
     });
 
-    await waitForExecutionAndDelete(config.stackName, workflowExecution.executionArn, 'completed');
+    await waitForExecutionAndDelete(config.stackName, workflowExecution.executionArn, 'failed');
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),

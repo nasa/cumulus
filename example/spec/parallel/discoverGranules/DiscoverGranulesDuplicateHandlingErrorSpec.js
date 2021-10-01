@@ -184,7 +184,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
 
     await deleteGranule({ prefix, granuleId: existingGranuleId });
     await Promise.all([
-      waitForExecutionAndDelete(prefix, discoverGranulesExecutionArn, 'completed'),
+      waitForExecutionAndDelete(prefix, discoverGranulesExecutionArn, 'failed'),
       waitForExecutionAndDelete(prefix, ingestGranuleExecutionArn, 'completed'),
     ]);
 
