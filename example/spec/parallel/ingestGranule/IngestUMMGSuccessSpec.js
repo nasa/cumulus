@@ -25,7 +25,6 @@ const {
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { moveGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const providersApi = require('@cumulus/api-client/providers');
 const {
@@ -49,6 +48,9 @@ const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   setDistributionApiEnvVars,
 } = require('../../helpers/apiUtils');
+const {
+  waitForExecutionAndDelete,
+} = require('../../helpers/executionUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
@@ -217,7 +219,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       prefix: config.stackName,
       pdr: pdrFilename,
     });
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await waitForExecutionAndDelete(
+      config.stackName,
+      workflowExecution.executionArn,
+      'completed'
+    );
     await removePublishedGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
