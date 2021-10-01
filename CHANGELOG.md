@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2720**
+  - Updated Core CI scripts to validate CHANGELOG diffs as part of the lint process
 - **CUMULUS-2695**
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
