@@ -20,7 +20,7 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
-  translatePostgresGranuleToApiGranule,
+  // translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 
 const {
@@ -459,30 +459,30 @@ test.serial('GET returns an existing granule', async (t) => {
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
-test.serial('GET returns the expected existing granule', async (t) => {
-  const {
-    knex,
-    fakePGGranules,
-  } = t.context;
+// test.serial('GET returns the expected existing granule', async (t) => {
+//   const {
+//     knex,
+//     fakePGGranules,
+//   } = t.context;
 
-  const response = await request(app)
-    .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+//   const response = await request(app)
+//     .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+//     .set('Accept', 'application/json')
+//     .set('Authorization', `Bearer ${jwtAuthToken}`)
+//     .expect(200);
 
-  const pgGranule = await granulePgModel.get(knex, {
-    granule_id: fakePGGranules[0].granule_id,
-    collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
-  });
+//   const pgGranule = await granulePgModel.get(knex, {
+//     granule_id: fakePGGranules[0].granule_id,
+//     collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
+//   });
 
-  const expectedGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
+//   const expectedGranule = await translatePostgresGranuleToApiGranule({
+//     granulePgRecord: pgGranule,
+//     knexOrTransaction: knex,
+//   });
 
-  t.deepEqual(response.body, expectedGranule);
-});
+//   t.deepEqual(response.body, expectedGranule);
+// });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
   const response = await request(app)
