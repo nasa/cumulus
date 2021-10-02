@@ -137,7 +137,7 @@ when output of the operation is `undefined`
     modified to throw a descriptive error if the input `collectionId` is
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
-    if an incorrectly formated collectionId is input.
+    if an incorrectly formatted collection ID is input.
 
 ## [v9.4.0] 2021-08-16
 
@@ -212,7 +212,7 @@ package to catch or to otherwise handle errors that you may encounter.
 availability in a high-concurrency environment. However, this also caps max concurrency which
 may result in throttling errors if trying to reach the Cumulus API multiple times in a short
 period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
-terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
+terraform variable on the Cumulus module and increased if you are seeing throttling errors.
 The default reserved concurrency value is 8.
 
 ### Notable changes
@@ -528,7 +528,7 @@ releases.
 ### Removed
 
 - **CUMULUS-2502**
-  - Removed outdated documenation regarding Kibana index patterns for metrics.
+  - Removed outdated documentation regarding Kibana index patterns for metrics.
 
 ## [v9.0.1] 2021-05-07
 
@@ -941,7 +941,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 ### Added
 
 - `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can
-  be used to set to an arbitray  host for making CMR requests (e.g.
+  be used to set to an arbitrary  host for making CMR requests (e.g.
   `https://custom-cmr-host.com`).
 - Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2345**
@@ -965,7 +965,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   supports accessing all buckets defined in your `buckets` variable except
   "internal" buckets
 - Updated the default scroll duration used in ESScrollSearch and part of the
-  reconcilation report functions as a result of testing and seeing timeouts
+  reconciliation report functions as a result of testing and seeing timeouts
   at its current value of 2min.
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for
@@ -980,7 +980,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
   - Updated the default scroll duration used in ESScrollSearch and part of the
-    reconcilation report functions as a result of testing and seeing timeouts
+    reconciliation report functions as a result of testing and seeing timeouts
     at its current value of 2min.
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
@@ -2053,16 +2053,16 @@ the [release page](https://github.com/nasa/cumulus/releases)
 - The deprecated `@cumulus/common/message.hasQueueAndExecutionLimit` function
   has been removed
 - The deprecated `@cumulus/common/Semaphore` class has been removed
-- The deprecated `@cumulus/common/string.globalReplace` functon has been removed
-- The deprecated `@cumulus/common/string.isNonEmptyString` functon has been
+- The deprecated `@cumulus/common/string.globalReplace` function has been removed
+- The deprecated `@cumulus/common/string.isNonEmptyString` function has been
   removed
-- The deprecated `@cumulus/common/string.isValidHostname` functon has been
+- The deprecated `@cumulus/common/string.isValidHostname` function has been
   removed
-- The deprecated `@cumulus/common/string.match` functon has been removed
-- The deprecated `@cumulus/common/string.matches` functon has been removed
-- The deprecated `@cumulus/common/string.replace` functon has been removed
-- The deprecated `@cumulus/common/string.toLower` functon has been removed
-- The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/string.match` function has been removed
+- The deprecated `@cumulus/common/string.matches` function has been removed
+- The deprecated `@cumulus/common/string.replace` function has been removed
+- The deprecated `@cumulus/common/string.toLower` function has been removed
+- The deprecated `@cumulus/common/string.toUpper` function has been removed
 - The deprecated `@cumulus/common/testUtils.getLocalstackEndpoint` function has been removed
 - The deprecated `@cumulus/common/util.setErrorStack` function has been removed
 - The `@cumulus/common/util.uuid` function has been removed
@@ -2293,7 +2293,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
 - **CUMULUS-2210**
-  - Fixed `cmr_oauth_provider` variable not being propogated to reconciliation reports
+  - Fixed `cmr_oauth_provider` variable not being propagated to reconciliation reports
 
 ### Deprecated
 
@@ -3222,7 +3222,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
 - **CUMULUS-1574**
 
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
-    This lets a user retieve a token by hand that can be presented to the API.
+    This lets a user retrieve a token by hand that can be presented to the API.
 
 - **CUMULUS-1625**
 
@@ -3367,7 +3367,7 @@ SfSnsReport:
     - when Cumulus configured to protect API via Launchpad:
       - New endpoints
         - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
-        - `POST /saml/auth` - SAML Assertion Consumer Service. POST receiver from SAML IDP. Validates response, logs the user in, and returnes a SAML-based JWT.
+        - `POST /saml/auth` - SAML Assertion Consumer Service. POST receiver from SAML IDP. Validates response, logs the user in, and returns a SAML-based JWT.
     - Disabled endpoints
       - `POST /refresh`
       - Changes authorization worklow:
@@ -3460,13 +3460,13 @@ SfSnsReport:
 
 - **CUMULUS-800** Several items:
 
-  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API. Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
+  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API. Instructions are included in the documentation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
 
   - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
 
   - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`. More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
 
-  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination. More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
+  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination. More information in the documentation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
 
   - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
 
@@ -4203,7 +4203,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     incoming events via a Kinesis event triggered lambda.
     CUMULUS-975-migration-4
   - Update migration code to require explicit migration names per run
-  - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
+  - Added migration_4 to migrate/update existing Kinesis rules to have a log event mapping
   - Added new IAM policy for migration lambda
 - **CUMULUS-775**
   - Adds a instance metadata endpoint to the `@cumulus/api` package.
@@ -4215,7 +4215,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     `@cumulus/test-data.loadTestData()`, and
     `@cumulus/test-data.streamTestData()` to safely load test data. These
     functions should be used instead of using `require()` to load test data,
-    which could lead to tests interferring with each other.
+    which could lead to tests interfering with each other.
   - Add a `@cumulus/common/util/deprecate()` function to mark a piece of code as
     deprecated
 - **CUMULUS-986**
@@ -4411,7 +4411,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ### Fixed
 
 - **CUMULUS-836** - `@cumulus/deployment` uses `overlay2` driver by default and does not attempt to write `--storage-opt dm.basesize` to fix [this error](https://github.com/moby/moby/issues/37039).
-- **CUMULUS-413** Kinesis processing now captures all errrors.
+- **CUMULUS-413** Kinesis processing now captures all errors.
   - Added kinesis fallback mechanism when errors occur during record processing.
   - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
   - Adds fallbackConsumer lambda to `@cumulus/api`
@@ -4512,9 +4512,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ### Added
 
-- **GITC-776-2** - Add support for versioned collectons
+- **GITC-776-2** - Add support for versioned collections
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
-- **CUMULUS-480** Add suport for backup and recovery:
+- **CUMULUS-480** Add support for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
   - Add ability to write all records to S3
   - Add ability to download all DynamoDB records in form json files
