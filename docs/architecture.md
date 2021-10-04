@@ -42,7 +42,7 @@ Discovering data for ingest is handled via workflow step components using Cumulu
 
 #### Database
 
-Cumulus utililzes a user-provided PostgreSQL database backend with data replication to an elasticsearch instance utilized for API search query efficency.   For legacy reasons, Core is currently also deploying a DynamoDB datastore that writes are replicated to in parallel with the PostgreSQL database writes.   These data stores will be removed in future releases.
+Cumulus utilizes a user-provided PostgreSQL database backend. For improved API search query efficiency Cumulus provides data replication to an Elasticsearch instance.   For legacy reasons, Cumulus is currently also deploying a DynamoDB datastore, and writes are replicated in parallel with the PostgreSQL database writes.   The DynamoDB replicated tables and parallel writes will be removed in future releases.
 
 ##### PostgreSQL Database Schema Diagram
 
