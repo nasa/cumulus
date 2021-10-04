@@ -69,6 +69,13 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     resources = ["arn:aws:sqs:*:*:*"]
   }
 
+    statement {
+    actions   = ["sns:Publish"]
+    resources = [
+      module.archive.report_executions_sns_topic_arn
+    ]
+  }
+
   statement {
     actions = [
       "states:DescribeActivity",
@@ -137,6 +144,19 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     resources = [
       var.rds_user_access_secret_arn
     ]
+  }
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [
+      module.archive.report_executions_sns_topic_arn,
+      module.archive.report_pdrs_sns_topic_arn,
+    ]
+  }
+  
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [module.archive.provider_kms_key_arn]
   }
 }
 

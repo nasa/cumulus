@@ -31,7 +31,7 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
@@ -45,8 +45,8 @@ const {
 } = require('./write-pdr');
 
 const {
-  writeGranules,
-} = require('./write-granules');
+  writeGranulesFromMessage,
+} = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
@@ -144,6 +144,8 @@ const writeRecords = async ({
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
+
+    // TODO - Throw error here in phase 2 instead of writing to Dynamo
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,
@@ -172,9 +174,8 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,

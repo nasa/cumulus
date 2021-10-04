@@ -2,15 +2,20 @@ const get = require('lodash/get');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
+const {
+  GranulePgModel,
+  getKnexClient,
+  translatePostgresGranuleToApiGranule,
+  getUniqueGranuleByGranuleId,
+} = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
 
-const { deconstructCollectionId } = require('../lib/utils');
 const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { getGranuleIdsForPayload } = require('../lib/granules');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
@@ -19,18 +24,29 @@ async function applyWorkflowToGranules({
   workflowName,
   meta,
   queueUrl,
-  granuleModel = new GranuleModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleTranslateMethod = translatePostgresGranuleToApiGranule,
+  applyWorkflowHandler = applyWorkflow,
+  knex,
 }) {
   const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
     try {
-      const granule = await granuleModel.get({ granuleId });
-      await granuleModel.applyWorkflow(
+      const pgGranule = await getUniqueGranuleByGranuleId(
+        knex,
+        granuleId,
+        granulePgModel
+      );
+      const granule = await granuleTranslateMethod({
+        granulePgRecord: pgGranule,
+        knexOrTransaction: knex,
+      });
+      await applyWorkflowHandler({
         granule,
-        workflowName,
+        workflow: workflowName,
         meta,
         queueUrl,
-        process.env.asyncOperationId
-      );
+        asyncOperationId: process.env.asyncOperationId,
+      });
       return granuleId;
     } catch (error) {
       log.error(`Granule ${granuleId} encountered an error`, error);
@@ -39,50 +55,6 @@ async function applyWorkflowToGranules({
   });
   return await Promise.all(applyWorkflowRequests);
 }
-
-/**
- * Fetch a Postgres Granule by granule and collection IDs
- *
- * @param {Knex } knex - DB client
- * @param {string} granuleId - Granule ID
- * @param {string} collectionId - Collection ID in "name___version" format
- * @returns {Promise<PostgresGranuleRecord|undefined>}
- *   The fetched Postgres Granule, if any exists
- * @private
- */
-async function _getPgGranuleByCollection(knex, granuleId, collectionId) {
-  const granulePgModel = new GranulePgModel();
-  const collectionPgModel = new CollectionPgModel();
-
-  let pgGranule;
-
-  try {
-    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-      knex,
-      deconstructCollectionId(collectionId)
-    );
-
-    pgGranule = granulePgModel.get(
-      knex,
-      {
-        granule_id: granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      }
-    );
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      log.error(error);
-      throw error;
-    }
-  }
-
-  return pgGranule;
-}
-
-// FUTURE: the Dynamo Granule is currently the primary record driving the
-// "unpublish from CMR" logic.
-// This should be switched to pgGranule once the postgres
-// reads are implemented.
 
 /**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
@@ -106,35 +78,39 @@ async function bulkGranuleDelete(
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  const granuleModel = new GranuleModel();
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
 
   await pMap(
     granuleIds,
     async (granuleId) => {
-      let dynamoGranule;
       let pgGranule;
+      let dynamoGranule;
+      const granulePgModel = new GranulePgModel();
+      const dynamoGranuleModel = new GranuleModel();
 
       try {
-        dynamoGranule = await granuleModel.getRecord({ granuleId });
+        pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {
-          log.info(`Granule ${granuleId} does not exist or was already deleted, continuing`);
-          return;
+          log.info(error.message);
         }
-        throw error;
+
+        return;
       }
 
-      if (dynamoGranule && dynamoGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc(knex, dynamoGranule));
+      if (pgGranule.published && forceRemoveFromCmr) {
+        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc({
+          knex,
+          pgGranuleRecord: pgGranule,
+        }));
+      } else {
+        dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
       }
 
       await deleteGranuleAndFiles({
         knex,
         dynamoGranule,
-        pgGranule: pgGranule || await _getPgGranuleByCollection(
-          knex, granuleId, dynamoGranule.collectionId
-        ),
+        pgGranule,
       });
 
       deletedGranules.push(granuleId);
@@ -159,15 +135,27 @@ async function bulkGranuleDelete(
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {function} [applyWorkflowHandler] - Optional handler for testing
  * @returns {Promise}
  */
-async function bulkGranule(payload) {
+async function bulkGranule(payload, applyWorkflowHandler) {
+  const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({
+    knex,
+    granuleIds,
+    meta,
+    queueUrl,
+    workflowName,
+    applyWorkflowHandler,
+  });
 }
 
-async function bulkGranuleReingest(payload) {
+async function bulkGranuleReingest(
+  payload,
+  reingestHandler = reingestGranule
+) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granuleIds)}`);
 
@@ -179,13 +167,16 @@ async function bulkGranuleReingest(payload) {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
-        await granuleModel.reingest(
-          {
-            ...granule,
-            ...(targetExecution && { execution: targetExecution }),
-          },
-          process.env.asyncOperationId
-        );
+        const reingestParams = {
+          ...granule,
+          ...(targetExecution && { execution: targetExecution }),
+        };
+
+        await reingestHandler({
+          reingestParams,
+          asyncOperationId: process.env.asyncOperationId,
+        });
+
         return granuleId;
       } catch (error) {
         log.error(`Granule ${granuleId} encountered an error`, error);
@@ -212,13 +203,13 @@ async function handler(event) {
   setEnvVarsForOperation(event);
   log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
   if (event.type === 'BULK_GRANULE') {
-    return await bulkGranule(event.payload);
+    return await bulkGranule(event.payload, event.applyWorkflowHandler);
   }
   if (event.type === 'BULK_GRANULE_DELETE') {
     return await bulkGranuleDelete(event.payload);
   }
   if (event.type === 'BULK_GRANULE_REINGEST') {
-    return await bulkGranuleReingest(event.payload);
+    return await bulkGranuleReingest(event.payload, event.reingestHandler);
   }
   // throw an appropriate error here
   throw new TypeError(`Type ${event.type} could not be matched, no operation attempted.`);

@@ -5,13 +5,14 @@ const isEmpty = require('lodash/isEmpty');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   translateApiFiletoPostgresFile,
   FilePgModel,
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const {
   upsertGranule,
@@ -48,87 +49,16 @@ const {
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
 
-const FileUtils = require('../../lib/FileUtils');
+const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
-} = require('../../lib/granules');
+} = require('../granules');
 const Granule = require('../../models/granules');
+const {
+  getExecutionCumulusId,
+} = require('./utils');
 
-const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-granules' });
-
-/**
- * Generate a Granule record to save to the core database from a Cumulus message
- * and other contextual information
- *
- * @param {Object} params
- * @param {string} params.collectionId - Collection ID for the workflow
- * @param {Object} params.granule - Granule object from workflow message
- * @param {Array<Object>} params.files - Granule file objects
- * @param {Object} params.queryFields - Arbitrary query fields for the granule
- * @param {number} params.collectionCumulusId
- *   Cumulus ID of collection referenced in workflow message
- * @param {number} params.providerCumulusId
- *   Cumulus ID of provider referenced in workflow message
- * @param {number} params.pdrCumulusId
- *   Cumulus ID of PDR referenced in workflow message
- * @param {Object} [params.processingTimeInfo={}]
- *   Info describing the processing time for the granule
- * @param {Object} [params.cmrUtils=CmrUtils]
- *   Utilities for interacting with CMR
- * @param {number} [params.timestamp] - Timestamp for granule record. Defaults to now.
- * @param {number} [params.updatedAt] - Updated timestamp for granule record. Defaults to now.
- * @returns {Promise<Object>} - a granule record
- */
-const generateGranuleRecord = async ({
-  error,
-  granule,
-  files,
-  workflowStartTime,
-  workflowStatus,
-  queryFields,
-  collectionCumulusId,
-  providerCumulusId,
-  pdrCumulusId,
-  processingTimeInfo = {},
-  cmrUtils = CmrUtils,
-  timestamp = Date.now(),
-  updatedAt = Date.now(),
-}) => {
-  const {
-    granuleId,
-    cmrLink,
-    published = false,
-  } = granule;
-
-  const temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-
-  return {
-    granule_id: granuleId,
-    status: getGranuleStatus(workflowStatus, granule),
-    cmr_link: cmrLink,
-    error,
-    published,
-    created_at: new Date(workflowStartTime),
-    updated_at: new Date(updatedAt),
-    timestamp: new Date(timestamp),
-    duration: getWorkflowDuration(workflowStartTime, timestamp),
-    product_volume: getGranuleProductVolume(files),
-    time_to_process: getGranuleTimeToPreprocess(granule),
-    time_to_archive: getGranuleTimeToArchive(granule),
-    collection_cumulus_id: collectionCumulusId,
-    provider_cumulus_id: providerCumulusId,
-    pdr_cumulus_id: pdrCumulusId,
-    // Temporal info from CMR
-    beginning_date_time: temporalInfo.beginningDateTime,
-    ending_date_time: temporalInfo.endingDateTime,
-    production_date_time: temporalInfo.productionDateTime,
-    last_update_date_time: temporalInfo.lastUpdateDateTime,
-    // Processing info from execution
-    processing_start_date_time: processingTimeInfo.processingStartDateTime,
-    processing_end_date_time: processingTimeInfo.processingEndDateTime,
-    query_fields: queryFields,
-  };
-};
+const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 /**
  * Generate a file record to save to the core database.
@@ -174,9 +104,9 @@ const _writeFiles = async ({
 }) => await pMap(
   fileRecords,
   async (fileRecord) => {
-    logger.info('About to write file record to PostgreSQL: %j', fileRecord);
+    log.info('About to write file record to PostgreSQL: %j', fileRecord);
     await filePgModel.upsert(knex, fileRecord);
-    logger.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
+    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
   },
   { stopOnError: false }
 );
@@ -212,66 +142,29 @@ const getGranuleCumulusIdFromQueryResultOrLookup = async ({
 };
 
 /**
- * Write a granule to DynamoDB and PostgreSQL
+ * Write a granule to PostgreSQL
  *
  * @param {Object} params
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.processingTimeInfo
- *   Processing time information for the granule, if any
- * @param {Object} params.error - Workflow error, if any
- * @param {string} params.workflowStartTime - Workflow start time
- * @param {string} params.workflowStatus - Workflow status
- * @param {Object} params.queryFields - Arbitrary query fields for the granule
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
- * @param {string} params.providerCumulusId
- *   Cumulus ID for provider referenced in workflow message, if any
+ * @param {Object} params.granuleRecord - An postgres granule records
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
- * @param {string} params.pdrCumulusId
- *   Cumulus ID for PDR referenced in workflow message, if any
  * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
- * @param {string} params.updatedAt - Update timestamp
- * @param {Array} params.files - List of files to add to Dynamo Granule
+ * @param {Object} params.granulePgModel - postgreSQL granule model
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
  */
-const _writeGranuleViaTransaction = async ({
-  granule,
-  processingTimeInfo,
-  error,
-  workflowStartTime,
-  workflowStatus,
-  queryFields,
-  collectionCumulusId,
-  providerCumulusId,
+const _writePostgresGranuleViaTransaction = async ({
+  granuleRecord,
   executionCumulusId,
-  pdrCumulusId,
   trx,
-  updatedAt,
-  files,
+  granulePgModel,
 }) => {
-  const granuleRecord = await generateGranuleRecord({
-    error,
-    granule,
-    files,
-    workflowStartTime,
-    workflowStatus,
-    queryFields,
-    collectionCumulusId,
-    providerCumulusId,
-    pdrCumulusId,
-    processingTimeInfo,
-    updatedAt,
-  });
-
-  logger.info(`About to write granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId} to PostgreSQL`);
-
   const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granuleRecord,
-    executionCumulusId
+    executionCumulusId,
+    granulePgModel
   );
   // Ensure that we get a granule ID for the files even if the
   // upsert query returned an empty result
@@ -281,10 +174,6 @@ const _writeGranuleViaTransaction = async ({
     granuleRecord,
   });
 
-  logger.info(`
-    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${collectionCumulusId}
-    to granule record with cumulus_id ${granuleCumulusId} in PostgreSQL
-  `);
   return granuleCumulusId;
 };
 
@@ -306,16 +195,16 @@ const _writeGranuleViaTransaction = async ({
 const _writeGranuleFiles = async ({
   files,
   granuleCumulusId,
-  granule,
+  granuleId,
   workflowError,
-  workflowStatus,
+  status,
   knex,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
 }) => {
   let fileRecords = [];
 
-  if (workflowStatus !== 'running') {
+  if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
       files: files,
       granuleCumulusId,
@@ -329,9 +218,9 @@ const _writeGranuleFiles = async ({
     });
   } catch (error) {
     if (!isEmpty(workflowError)) {
-      logger.error(`Logging existing error encountered by granule ${granule.granuleId} before overwrite`, workflowError);
+      log.error(`Logging existing error encountered by granule ${granuleId} before overwrite`, workflowError);
     }
-    logger.error('Failed writing files to PostgreSQL, updating granule with error', error);
+    log.error('Failed writing files to PostgreSQL, updating granule with error', error);
     const errorObject = {
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
@@ -345,18 +234,18 @@ const _writeGranuleFiles = async ({
           error: errorObject,
         }
       ).catch((updateError) => {
-        logger.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
+        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
         throw updateError;
       });
 
       await granuleModel.update(
-        { granuleId: granule.granuleId },
+        { granuleId },
         {
           status: 'failed',
           error: errorObject,
         }
       ).catch((updateError) => {
-        logger.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
+        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
         throw updateError;
       });
     });
@@ -390,197 +279,254 @@ const _generateFilesFromGranule = async ({
 
 const writeGranuleToDynamoAndEs = async (params) => {
   const {
-    granule,
-    executionUrl,
-    collectionId,
-    provider,
-    workflowStartTime,
-    error,
-    pdrName,
-    workflowStatus,
-    processingTimeInfo,
-    queryFields,
+    dynamoGranuleRecord,
     granuleModel,
-    files,
-    cmrUtils = CmrUtils,
-    updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
-  const granuleApiRecord = await generateGranuleApiRecord({
-    granule,
-    executionUrl,
-    collectionId,
-    provider,
-    workflowStartTime,
-    error,
-    pdrName,
-    workflowStatus,
-    processingTimeInfo,
-    queryFields,
-    updatedAt,
-    cmrUtils,
-    files,
-  });
   try {
-    await granuleModel.storeGranuleFromCumulusMessage(granuleApiRecord);
+    await granuleModel.storeGranule(dynamoGranuleRecord);
     await upsertGranule({
       esClient,
-      updates: granuleApiRecord,
+      updates: dynamoGranuleRecord,
       index: process.env.ES_INDEX,
     });
   } catch (writeError) {
-    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granule.granuleId}`);
+    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${dynamoGranuleRecord.granuleId}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await granuleModel.delete({
-      granuleId: granuleApiRecord.granuleId,
-      collectionId: granuleApiRecord.collectionId,
+      granuleId: dynamoGranuleRecord.granuleId,
+      collectionId: dynamoGranuleRecord.collectionId,
     });
     throw writeError;
   }
 };
 
 /**
- * Write a granule to DynamoDB and PostgreSQL
- *
- * @param {Object} params
- * @param {string} params.collectionId - Collection ID for the workflow
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.provider - Provider object
- * @param {string} params.workflowStatus - Workflow status
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
- * @param {string} params.executionCumulusId
- *   Cumulus ID for execution referenced in workflow message, if any
- * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {Object} [params.error] - Workflow error, if any
- * @param {string} [params.executionUrl]
- *   Step Function execution URL for the workflow, if any
- * @param {Object} [params.processingTimeInfo]
- *   Processing time information for the granule, if any
- * @param {string} [params.providerCumulusId]
- *   Cumulus ID for provider referenced in workflow message, if any
- * @param {string} [params.pdrCumulusId]
- *   Cumulus ID for PDR referenced in workflow message, if any
- * @param {Object} [params.granuleModel]
- *   Optional override for the granule model writing to DynamoDB
- *
- * @returns {Promise}
- * @throws
+ * Write a granule record to DynamoDB and PostgreSQL
+ * param {PostgresGranule} postgresGranuleRecord,
+ * param {DynamoDBGranule} dynamoGranuleRecord,
+ * param {number} executionCumulusId,
+ * param {Knex} knex,
+ * param {Object} granuleModel = new Granule(),
+ * returns {Promise}
+ * throws
  */
 const _writeGranule = async ({
-  collectionId,
-  granule,
-  pdrName,
-  provider,
-  workflowStartTime,
-  workflowStatus,
-  queryFields,
-  collectionCumulusId,
+  postgresGranuleRecord,
+  dynamoGranuleRecord,
   executionCumulusId,
   knex,
-  error,
-  executionUrl,
-  processingTimeInfo,
-  providerCumulusId,
-  pdrCumulusId,
   granuleModel,
-  updatedAt = Date.now(),
+  granulePgModel,
   esClient,
 }) => {
   let granuleCumulusId;
-  const files = await _generateFilesFromGranule({ granule, provider });
+
+  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
+  log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
 
   await knex.transaction(async (trx) => {
-    granuleCumulusId = await _writeGranuleViaTransaction({
-      granule,
-      processingTimeInfo,
-      error,
-      provider,
-      workflowStartTime,
-      workflowStatus,
-      queryFields,
-      collectionCumulusId,
-      providerCumulusId,
+    granuleCumulusId = await _writePostgresGranuleViaTransaction({
+      granuleRecord: postgresGranuleRecord,
       executionCumulusId,
-      pdrCumulusId,
       trx,
-      updatedAt,
-      files,
+      granulePgModel,
     });
-
-    return writeGranuleToDynamoAndEs({
-      granule,
-      executionUrl,
-      collectionId,
-      provider,
-      workflowStartTime,
-      error,
-      pdrName,
-      workflowStatus,
-      processingTimeInfo,
-      queryFields,
-      granuleModel,
+    await writeGranuleToDynamoAndEs({
+      dynamoGranuleRecord,
       esClient,
-      updatedAt,
-      files,
+      granuleModel,
     });
   });
+
+  log.info(
+    `
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${granuleCumulusId}.
+    `,
+    postgresGranuleRecord
+  );
+  log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
+
+  const { files, granuleId, status, error } = dynamoGranuleRecord;
 
   await _writeGranuleFiles({
     files,
     granuleCumulusId,
-    granule,
+    granuleId,
     workflowError: error,
-    workflowStatus,
+    status,
     knex,
     granuleModel,
   });
 };
 
 /**
- * Write granules to DynamoDB and PostgreSQL
+ * Thin wrapper to _writeGranule used by endpoints/granule to create a granule
+ * directly.
+ *
+ * @param {Object} params
+ * @param {string} params.granuleId - granule's id
+ * @param {string} params.collectionId - granule's collection id
+ * @param {GranuleStatus} params.status - ['running','failed','completed']
+ * @param {string} [params.execution] - Execution URL to associate with this granule
+ *                               must already exist in database.
+ * @param {string} [params.cmrLink] - url to CMR information for this granule.
+ * @param {boolean} [params.published] - published to cmr
+ * @param {string} [params.pdrName] - pdr name
+ * @param {string} [params.provider] - provider
+ * @param {Object} [params.error = {}] - workflow errors
+ * @param {string} [params.createdAt = new Date().valueOf()] - time value
+ * @param {string} [params.timestamp] - timestamp
+ * @param {string} [params.updatedAt = new Date().valueOf()] - time value
+ * @param {number} [params.duration] - seconds
+ * @param {integer} [params.productVolume] - sum of the files sizes in bytes
+ * @param {integer} [params.timeToPreprocess] -  seconds
+ * @param {integer} [params.timeToArchive] - seconds
+ * @param {Array<ApiFile>} params.files - files associated with the granule.
+ * @param {string} [params.beginningDateTime] - CMR Echo10: Temporal.RangeDateTime.BeginningDateTime
+ * @param {string} [params.endingDateTime] - CMR Echo10: Temporal.RangeDateTime.EndingDateTime
+ * @param {string} [params.productionDateTime] - CMR Echo10: DataGranule.ProductionDateTime
+ * @param {string} [params.lastUpdateDateTime] - CMR Echo10: LastUpdate || InsertTime
+ * @param {string} [params.processingStartDateTime] - execution startDate
+ * @param {string} [params.processingEndDateTime] - execution StopDate
+ * @param {Object} [params.queryFields] - query fields
+ * @param {Object} [params.granuleModel] - only for testing.
+ * @param {Object} [params.granulePgModel] - only for testing.
+ * @param {Knex} knex - knex Client
+ * @param {Object} esClient - Elasticsearch client
+ * @returns {Promise}
+ */
+const writeGranuleFromApi = async (
+  {
+    granuleId,
+    collectionId,
+    status,
+    execution,
+    cmrLink,
+    published,
+    pdrName,
+    provider,
+    error = {},
+    createdAt = new Date().valueOf(),
+    updatedAt = new Date().valueOf(),
+    duration,
+    productVolume,
+    timeToPreprocess,
+    timeToArchive,
+    timestamp,
+    files = [],
+    beginningDateTime,
+    endingDateTime,
+    productionDateTime,
+    lastUpdateDateTime,
+    processingStartDateTime,
+    processingEndDateTime,
+    queryFields,
+    granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
+  },
+  knex,
+  esClient
+) => {
+  try {
+    // Build a objects with correct shape for the granuleModel.generateGranuleRecord.
+    const granule = { granuleId, cmrLink, published, files };
+    const processingTimeInfo = {
+      processingStartDateTime,
+      processingEndDateTime,
+    };
+    const cmrTemporalInfo = {
+      beginningDateTime,
+      endingDateTime,
+      productionDateTime,
+      lastUpdateDateTime,
+    };
+
+    let executionCumulusId;
+    if (execution) {
+      executionCumulusId = await getExecutionCumulusId(execution, knex);
+      if (executionCumulusId === undefined) {
+        throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
+      }
+    }
+
+    const dynamoGranuleRecord = await generateGranuleApiRecord({
+      granule,
+      executionUrl: execution,
+      collectionId,
+      provider,
+      timeToArchive,
+      timeToPreprocess,
+      timestamp,
+      productVolume,
+      duration,
+      status,
+      workflowStartTime: createdAt,
+      files,
+      error,
+      pdrName,
+      queryFields,
+      processingTimeInfo,
+      updatedAt,
+      cmrTemporalInfo,
+      cmrUtils,
+    });
+
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
+      dynamoGranuleRecord,
+      knex
+    );
+
+    await _writeGranule({
+      postgresGranuleRecord,
+      dynamoGranuleRecord,
+      executionCumulusId,
+      knex,
+      granuleModel,
+      granulePgModel,
+      esClient,
+    });
+    return `Wrote Granule ${granule.granuleId}`;
+  } catch (thrownError) {
+    log.error('Failed to write granule', thrownError);
+    throw thrownError;
+  }
+};
+
+/**
+ * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
  * @param {Object} params
  * @param {Object} params.cumulusMessage - A workflow message
- * @param {string} params.collectionCumulusId
- *   Cumulus ID for collection referenced in workflow message, if any
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {string} [params.providerCumulusId]
- *   Cumulus ID for provider referenced in workflow message, if any
- * @param {string} [params.pdrCumulusId]
- *   Cumulus ID for PDR referenced in workflow message, if any
  * @param {Object} [params.granuleModel]
  *   Optional override for the granule model writing to DynamoDB
- *
+ * @param {Object} [params.granulePgModel]
+ *   Optional override for the granule model writing to PostgreSQL database
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
  * @throws {Error}
  */
-const writeGranules = async ({
+const writeGranulesFromMessage = async ({
   cumulusMessage,
-  collectionCumulusId,
   executionCumulusId,
   knex,
-  providerCumulusId,
-  pdrCumulusId,
   granuleModel = new Granule(),
+  granulePgModel = new GranulePgModel(),
   esClient,
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
-    logger.info('No granules to write, skipping writeGranules');
+    log.info('No granules to write, skipping writeGranules');
     return undefined;
-  }
-  if (!collectionCumulusId) {
-    throw new Error('Collection reference is required for granules');
   }
 
   const granules = getMessageGranules(cumulusMessage);
   const granuleIds = granules.map((granule) => granule.granuleId);
-  logger.info(`process granule IDs ${granuleIds.join(',')}`);
+  log.info(`process granule IDs ${granuleIds.join(',')}`);
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
@@ -597,31 +543,59 @@ const writeGranules = async ({
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
-    (granule) => _writeGranule({
-      collectionId,
-      granule,
-      processingTimeInfo,
-      error,
-      executionUrl,
-      pdrName,
-      provider,
-      workflowStartTime,
-      workflowStatus,
-      queryFields,
-      collectionCumulusId,
-      providerCumulusId,
-      executionCumulusId,
-      pdrCumulusId,
-      knex,
-      granuleModel,
-      esClient,
-    })
+    async (granule) => {
+      // compute granule specific data.
+      const files = await _generateFilesFromGranule({ granule, provider });
+      const timeToArchive = getGranuleTimeToArchive(granule);
+      const timeToPreprocess = getGranuleTimeToPreprocess(granule);
+      const productVolume = getGranuleProductVolume(files);
+      const now = Date.now();
+      const duration = getWorkflowDuration(workflowStartTime, now);
+      const status = getGranuleStatus(workflowStatus, granule);
+      const updatedAt = now;
+
+      const dynamoGranuleRecord = await generateGranuleApiRecord({
+        granule,
+        executionUrl,
+        collectionId,
+        provider: provider.id,
+        workflowStartTime,
+        files,
+        error,
+        pdrName,
+        workflowStatus,
+        timeToArchive,
+        timeToPreprocess,
+        productVolume,
+        duration,
+        status,
+        processingTimeInfo,
+        queryFields,
+        updatedAt,
+        cmrUtils,
+      });
+
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
+        dynamoGranuleRecord,
+        knex
+      );
+
+      return _writeGranule({
+        postgresGranuleRecord,
+        dynamoGranuleRecord,
+        executionCumulusId,
+        knex,
+        granuleModel,
+        granulePgModel,
+        esClient,
+      });
+    }
   ));
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    logger.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules to Dynamo', aggregateError);
     throw aggregateError;
   }
   return results;
@@ -629,8 +603,8 @@ const writeGranules = async ({
 
 module.exports = {
   generateFilePgRecord,
-  generateGranuleRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
   _writeGranule,
-  writeGranules,
+  writeGranuleFromApi,
+  writeGranulesFromMessage,
 };

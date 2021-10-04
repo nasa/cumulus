@@ -26,6 +26,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeAsyncOperationRecordFactory,
   fakeExecutionRecordFactory,
+  migrationDir,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
@@ -36,8 +37,6 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const { AccessToken, AsyncOperation, Collection, Execution, Granule } = require('../../models');
 // Dynamo mock data factories
 const {
@@ -179,13 +178,13 @@ test.before(async (t) => {
       omitExecution,
       t.context.knex
     );
-    const executionCumulusIds = await t.context.executionPgModel.create(
+    const [pgExecution] = await t.context.executionPgModel.create(
       t.context.knex,
       executionPgRecord
     );
     const dynamoRecord = await executionModel.create(execution);
     await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
-    return { ...executionPgRecord, cumulus_id: executionCumulusIds[0] };
+    return pgExecution;
   }));
 
   // Create AsyncOperation in Dynamo and Postgres
@@ -229,10 +228,11 @@ test.before(async (t) => {
     version: collectionVersion,
   });
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.fakeApiExecutions = await Promise.all(t.context.fakePGExecutions
     .map(async (fakePGExecution) =>
@@ -240,8 +240,13 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const { esIndex, esClient, executionPgModel, knex, granulePgModel } = t.context;
-
+  const {
+    esClient,
+    esIndex,
+    executionPgModel,
+    granulePgModel,
+    knex,
+  } = t.context;
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
 
@@ -390,20 +395,22 @@ test('GET returns an existing execution', async (t) => {
   const collectionPgModel = new CollectionPgModel();
   const asyncOperationsPgModel = new AsyncOperationPgModel();
 
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     collectionRecord
   );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
     t.context.knex,
     asyncRecord
   );
 
-  const [parentExecutionCumulusId] = await t.context.executionPgModel.create(
+  const [parentPgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     parentExecutionRecord
   );
+  const parentExecutionCumulusId = parentPgExecution.cumulus_id;
 
   const executionRecord = await fakeExecutionRecordFactory({
     async_operation_cumulus_id: asyncOperationCumulusId,
@@ -1050,8 +1057,9 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
     fakePGGranules,
   } = t.context;
 
-  const [mostRecentExecutionCumulusId]
+  const [mostRecentExecution]
     = await executionPgModel.create(knex, fakeExecutionRecordFactory({ workflow_name: 'newWorkflow' }));
+  const mostRecentExecutionCumulusId = mostRecentExecution.cumulus_id;
 
   await upsertGranuleWithExecutionJoinRecord(
     knex, fakePGGranules[0], mostRecentExecutionCumulusId
@@ -1277,6 +1285,224 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
     t.context.knex,
     {
       arn: newExecution.arn,
+    }
+  );
+
+  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.falsy(fetchedPgRecord.parent_cumulus_id);
+});
+
+test.serial('POST /executions creates an execution that is searchable', async (t) => {
+  const newExecution = fakeExecutionFactoryV2();
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .get('/executions')
+    .query({ arn: newExecution.arn })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'execution');
+  t.is(meta.count, 1);
+  t.is(results[0].arn, newExecution.arn);
+});
+
+test.serial('PUT /executions updates the record as expected', async (t) => {
+  const execution = fakeExecutionFactoryV2({
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'running',
+  });
+  delete execution.finalPayload;
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...omit(execution, ['collectionId']),
+    asyncOperationId: t.context.testAsyncOperation.id,
+    finalPayload: { outputPayload: randomId('outputPayload') },
+    parentArn: t.context.fakeApiExecutions[2].arn,
+    status: 'completed',
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const dynamoRecord = await executionModel.get({
+    arn: execution.arn,
+  });
+
+  const pgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedDynamoRecord = await executionModel.get({
+    arn: execution.arn,
+  });
+
+  const updatePgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  t.is(updatedDynamoRecord.arn, execution.arn);
+  t.is(updatePgRecord.arn, execution.arn);
+  t.is(updatePgRecord.cumulus_id, pgRecord.cumulus_id);
+
+  t.is(updatedDynamoRecord.createdAt, dynamoRecord.createdAt);
+  t.true(updatedDynamoRecord.updatedAt > dynamoRecord.createdAt);
+  t.is(updatePgRecord.created_at.getTime(), pgRecord.created_at.getTime());
+  t.true(updatePgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
+
+  // updated record is the merge of the original record with the updated fields
+  // updated record has the original info that's not updated
+  t.is(updatedDynamoRecord.collectionId, execution.collectionId);
+  t.is(updatePgRecord.collection_cumulus_id, t.context.collectionCumulusId);
+  // updated record has added field
+  t.is(updatedDynamoRecord.asyncOperationId, updatedExecution.asyncOperationId);
+  t.is(updatePgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
+  // updated record has updated field
+  t.is(updatedDynamoRecord.parentArn, updatedExecution.parentArn);
+  t.is(updatePgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
+  t.is(updatedDynamoRecord.status, updatedExecution.status);
+  t.is(updatePgRecord.status, updatedExecution.status);
+  t.deepEqual(updatedDynamoRecord.finalPayload, updatedExecution.finalPayload);
+  t.deepEqual(updatePgRecord.final_payload, updatedExecution.finalPayload);
+});
+
+test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
+  const updatedExecution = fakeExecutionFactoryV2();
+  const arn = randomId('arn');
+  const response = await request(app)
+    .put(`/executions/${arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const expectedErrorMessage = `Expected execution arn to be '${arn}`;
+  t.truthy(response.body.message.match(expectedErrorMessage));
+});
+
+test.serial('PUT /executions throws error when the provided execution does not exist', async (t) => {
+  const updatedExecution = fakeExecutionFactoryV2();
+
+  const response = await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  const expectedErrorMessage = `Execution '${updatedExecution.arn}' not found`;
+  t.truthy(response.body.message.match(expectedErrorMessage));
+});
+
+test.serial('PUT /executions with non-existing asyncOperation throws error', async (t) => {
+  const execution = fakeExecutionFactoryV2();
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...execution,
+    asyncOperationId: uuidv4(),
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const expectedErrorMessage = `Record in async_operations .*${updatedExecution.asyncOperationId}.* does not exist`;
+  t.truthy(response.body.message.match(expectedErrorMessage));
+});
+
+test.serial('PUT /executions with non-existing collectionId throws error', async (t) => {
+  const execution = fakeExecutionFactoryV2();
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...execution,
+    collectionId: constructCollectionId(randomId('name'), randomId('version')),
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const response = await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  const expectedErrorMessage = 'Record in collections with identifiers .* does not exist';
+  t.truthy(response.body.message.match(expectedErrorMessage));
+});
+
+test.serial('PUT /executions with non-existing parentArn still updates the execution', async (t) => {
+  const execution = fakeExecutionFactoryV2();
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...execution,
+    parentArn: randomId('parentArn'),
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const fetchedDynamoRecord = await executionModel.get({
+    arn: updatedExecution.arn,
+  });
+
+  const fetchedPgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: updatedExecution.arn,
     }
   );
 

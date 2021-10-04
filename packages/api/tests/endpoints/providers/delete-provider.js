@@ -21,6 +21,7 @@ const {
   CollectionPgModel,
   RulePgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -56,7 +57,6 @@ process.env = {
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
 let accessTokenModel;
@@ -478,11 +478,11 @@ test('Attempting to delete a provider with an associated granule does not delete
     files: {},
   };
 
-  const [collectionCumulusId] = await collectionPgModel
-    .create(
-      t.context.testKnex,
-      collection
-    );
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.testKnex,
+    collection
+  );
+  const collectionCumulusId = pgCollection.cumulus_id;
 
   const pgGranule = fakeGranuleRecordFactory(
     {

@@ -5,6 +5,7 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   GranulePgModel,
+  migrationDir,
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
@@ -18,16 +19,8 @@ const {
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const Granule = require('../../models/granules');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
-
-const getGranuleCumulusId = (dynamoGranule, granules) => {
-  const matchingGranule = granules.find(
-    (granule) => granule.newDynamoGranule.granuleId === dynamoGranule.granuleId
-  );
-  return matchingGranule.newPgGranule;
-};
 
 test.before(async (t) => {
   process.env.GranulesTable = randomId('granule');
@@ -63,70 +56,88 @@ test.after.always(async (t) => {
 });
 
 test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
+  const {
+    knex,
+    esClient,
+  } = t.context;
+
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
   const granules = await Promise.all([
     createGranuleAndFiles({
-      dbClient: t.context.knex,
+      dbClient: knex,
       granuleParams: { published: true },
-      esClient: t.context.esClient,
+      esClient: esClient,
     }),
     createGranuleAndFiles({
-      dbClient: t.context.knex,
+      dbClient: knex,
       granuleParams: { published: true },
-      esClient: t.context.esClient,
+      esClient: esClient,
     }),
   ]);
 
-  const dynamoGranule1 = granules[0].newDynamoGranule;
-  const dynamoGranule2 = granules[1].newDynamoGranule;
-  const dynamoGranuleId1 = dynamoGranule1.granuleId;
-  const dynamoGranuleId2 = dynamoGranule2.granuleId;
+  const pgGranule1 = granules[0].newPgGranule;
+  const pgGranule2 = granules[1].newPgGranule;
+  const pgGranuleId1 = pgGranule1.granule_id;
+  const pgGranuleId2 = pgGranule2.granule_id;
 
   const { deletedGranules } = await bulkGranuleDelete(
     {
       ids: [
-        dynamoGranuleId1,
-        dynamoGranuleId2,
+        pgGranuleId1,
+        pgGranuleId2,
       ],
       forceRemoveFromCmr: true,
     },
-    (_, dynamoGranule) => ({
-      dynamoGranule: { ...dynamoGranule, published: false },
-      pgGranule: {
-        ...getGranuleCumulusId(dynamoGranule, granules),
-        published: false,
-      },
-    })
+    async ({ _, pgGranuleRecord }) => {
+      const dynamoGranule = await granuleModel.get(
+        { granuleId: pgGranuleRecord.granule_id }
+      );
+
+      return {
+        dynamoGranule: { ...dynamoGranule, published: false },
+        pgGranule: {
+          ...pgGranuleRecord,
+          published: false,
+        },
+      };
+    }
   );
 
   t.deepEqual(
     deletedGranules.sort(),
     [
-      dynamoGranuleId1,
-      dynamoGranuleId2,
+      pgGranuleId1,
+      pgGranuleId2,
     ].sort()
   );
 
   // Granules should have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId1 }));
-  t.false(await granuleModel.exists({ granuleId: dynamoGranuleId2 }));
+  t.false(await granuleModel.exists({ granuleId: pgGranuleId1 }));
+  t.false(await granuleModel.exists({ granuleId: pgGranuleId2 }));
 
   // Granules should have been deleted from Postgres
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId1 }));
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: dynamoGranuleId2 }));
+  const pgCollectionCumulusId1 = granules[0].newPgGranule.collection_cumulus_id;
+  const pgCollectionCumulusId2 = granules[1].newPgGranule.collection_cumulus_id;
+
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: pgGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
+  ));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: pgGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
+  ));
 
   t.false(
     await t.context.esGranulesClient.exists(
-      dynamoGranule1.granuleId,
-      dynamoGranule1.collectionId
+      pgGranuleId1
     )
   );
   t.false(
     await t.context.esGranulesClient.exists(
-      dynamoGranule2.granuleId,
-      dynamoGranule2.collectionId
+      pgGranuleId2
     )
   );
 

@@ -142,6 +142,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
   type    = list(object({

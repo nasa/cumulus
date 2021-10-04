@@ -21,7 +21,7 @@ const {
   getMessageProviderId,
 } = require('@cumulus/message/Providers');
 
-const logger = new Logger({ sender: '@cumulus/api/sfEventSqsToDbRecords/utils' });
+const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/utils' });
 
 const isPostRDSDeploymentExecution = (cumulusMessage) => {
   try {
@@ -61,7 +61,7 @@ const getAsyncOperationCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      logger.info(error);
+      log.info(error);
       return undefined;
     }
     throw error;
@@ -85,7 +85,7 @@ const getParentExecutionCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      logger.info(error);
+      log.info(error);
       return undefined;
     }
     throw error;
@@ -107,12 +107,29 @@ const getCollectionCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      logger.info(error);
+      log.info(error);
       return undefined;
     }
     throw error;
   }
 };
+
+/**
+ * Looks up an Provider's cumulus_id by providerId.
+ *
+ * @param {string} [providerId = ''] - Full url of stepfunction execution
+ * @param {Knex} knex - knex Client
+ * @param {Object} providerPgModel - Instance of the provider database model
+ * @returns {integer} - RDS internal cumulus_id
+ */
+const getProviderCumulusId = async (
+  providerId,
+  knex,
+  providerPgModel = new ProviderPgModel()
+) => await providerPgModel.getRecordCumulusId(
+  knex,
+  { name: providerId }
+);
 
 const getMessageProviderCumulusId = async (
   cumulusMessage,
@@ -124,25 +141,50 @@ const getMessageProviderCumulusId = async (
     if (isNil(providerId)) {
       throw new InvalidArgument('Could not find provider ID in message');
     }
-    return await providerPgModel.getRecordCumulusId(
-      knex,
-      {
-        name: getMessageProviderId(cumulusMessage),
-      }
-    );
+    return await getProviderCumulusId(providerId, knex, providerPgModel);
   } catch (error) {
     if (isFailedLookupError(error)) {
-      logger.info(error);
+      log.info(error);
       return undefined;
     }
     throw error;
   }
 };
 
+/**
+ * Looks up an Execution's cumulus_id by executionUrl.
+ *
+ * @param {string} [executionUrl = ''] - Full url of stepfunction execution
+ * @param {Knex} knex - knex Client
+ * @param {Object} executionPgModel - instance of the exection database model
+ * @returns {integer|undefined} - RDS internal cumulus_id
+ */
+const getExecutionCumulusId = async (
+  executionUrl = '',
+  knex,
+  executionPgModel = new ExecutionPgModel()
+) => {
+  try {
+    return await executionPgModel.getRecordCumulusId(
+      knex,
+      { url: executionUrl }
+    );
+  } catch (error) {
+    if (isFailedLookupError(error)) {
+      log.info(error);
+      return undefined;
+    }
+    log.error(`Encountered error trying to find ${executionUrl}`, error);
+    throw (error);
+  }
+};
+
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
+  getExecutionCumulusId,
   getParentExecutionCumulusId,
+  getProviderCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
 };

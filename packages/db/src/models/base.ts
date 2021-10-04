@@ -123,13 +123,14 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     return record.cumulus_id;
   }
 
+  // eslint-disable-next-line valid-jsdoc
   /**
    * Get cumulus_id column value for multiple records in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction
    * @param {Array<keyof RecordType>} columnNames - column names for whereIn query
-   * @param {Array<string>} values - record values for whereIn query
+   * @param {Array<any>} values - record values for whereIn query
    * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
    */
   async getRecordsCumulusIds(
@@ -170,15 +171,19 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {ItemType} item - A record to insert into the DB
-   * @returns {Promise<number[]>} List of IDs of the inserted records
+   * @param {string | Array<string>} returningFields - A string or array of strings
+   *   of columns to return. Defaults to 'cumulus_id'.
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
+   *   array of values from the specified column(s) from returningFields.
    */
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
-    item: ItemType
-  ): Promise<number[]> {
+    item: ItemType,
+    returningFields: string | string[] = 'cumulus_id'
+  ): Promise<unknown[] | Object[]> {
     return await knexOrTransaction(this.tableName)
       .insert(item)
-      .returning('cumulus_id');
+      .returning(returningFields);
   }
 
   /**

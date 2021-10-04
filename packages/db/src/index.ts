@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 export { default as Knex } from 'knex';
 export {
   createTestDatabase,
@@ -17,6 +19,7 @@ export {
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { tableNames } from './tables';
+export const migrationDir = path.join(__dirname, 'migrations');
 
 export {
   validateProviderHost,
@@ -85,7 +88,10 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
 export {
   translateApiPdrToPostgresPdr,
   translatePostgresPdrToApiPdr,
@@ -100,8 +106,14 @@ export {
 export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
+  getGranuleCollectionId,
+  getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
+
+export {
+  getExecutionArnsByGranuleCumulusId,
+} from './lib/execution';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

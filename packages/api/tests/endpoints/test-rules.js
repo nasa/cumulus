@@ -16,6 +16,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  migrationDir,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
@@ -38,8 +39,6 @@ const { post, put, del } = require('../../endpoints/rules');
 const AccessToken = require('../../models/access-tokens');
 const Rule = require('../../models/rules');
 const assertions = require('../../lib/assertions');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 [
   'AccessTokensTable',
@@ -352,10 +351,13 @@ test('POST creates a rule in all data stores', async (t) => {
     version: fakeCollection.version,
   };
 
-  const [collectionCumulusId] = await t.context.collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.testKnex,
     translateApiCollectionToPostgresCollection(fakeCollection)
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+  const collectionCumulusId = t.context.collectionCumulusId;
+
   const [providerCumulusId] = await t.context.providerPgModel.create(
     t.context.testKnex,
     await translateApiProviderToPostgresProvider(fakeProvider)
