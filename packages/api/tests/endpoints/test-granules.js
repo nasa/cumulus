@@ -1658,7 +1658,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial('update (PUT) returns Not Found if granule does not exist', async (t) => {
+test.serial('PUT adds granule if it does not exist', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1669,13 +1669,14 @@ test.serial('update (PUT) returns Not Found if granule does not exist', async (t
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
-    .expect(404);
+    .expect(201);
 
-  t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to update for ${newGranule.granuleId}`);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}`,
+  });
 });
 
-test.serial('update (PUT) returns an updated granule with an undefined execution', async (t) => {
+test.serial('PUT returns an updated granule with an undefined execution', async (t) => {
   const now = Date.now();
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
@@ -1734,7 +1735,7 @@ test.serial('update (PUT) returns an updated granule with an undefined execution
   t.is(new Date(fetchedPostgresRecord.created_at).valueOf(), now);
 });
 
-test.serial('update (PUT) returns an updated granule with associated execution', async (t) => {
+test.serial('PUT returns an updated granule with associated execution', async (t) => {
   const timestamp = Date.now();
   const createdAt = timestamp - 1000000;
   const newGranule = fakeGranuleFactoryV2({
@@ -1819,7 +1820,7 @@ test.serial('update (PUT) returns an updated granule with associated execution',
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
 });
 
-test.serial('update (PUT) returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
+test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({});
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
 
@@ -1835,37 +1836,63 @@ test.serial('update (PUT) returns bad request when the path param granuleName do
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
 
-test.serial('update (PUT) can set running granule status to queued', async (t) => {
-  const runningGranuleId = t.context.fakeGranules[2].granuleId;
+test.serial('PUT can set granule status to queued', async (t) => {
+  const granuleId = t.context.fakeGranules[2].granuleId;
   const response = await request(app)
-    .put(`/granules/${runningGranuleId}`)
+    .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
-      granuleId: runningGranuleId,
+      granuleId: granuleId,
       status: 'queued',
+      collectionId: t.context.collectionId,
     });
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${runningGranuleId}`,
+    message: `Successfully updated granule with Granule Id: ${granuleId}`,
   });
 });
 
-test.serial('update (PUT) does not set status to queued if not running', async (t) => {
+test.serial('PUT will not set completed status to queued', async (t) => {
   const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
     .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
-      granuleId,
+      granuleId: granuleId,
       status: 'queued',
+      collectionId: t.context.collectionId,
+      execution: t.context.executionUrl,
     });
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${granuleId} Skipped setting status to queued because granule was not running`,
+    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+  });
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'completed');
+});
+
+test.serial('PUT can create a new granule with status queued', async (t) => {
+  const granuleId = randomId('new-granule');
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+    });
+
+  t.is(response.status, 201);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully wrote granule with Granule Id: ${granuleId}`,
   });
 });
 

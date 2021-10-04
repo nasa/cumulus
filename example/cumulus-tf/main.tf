@@ -74,6 +74,10 @@ module "cumulus" {
   deploy_to_ngap = true
 
   bucket_map_key = var.bucket_map_key
+  throttled_queues = [{
+    url = aws_sqs_queue.throttled_queue.id
+    execution_limit = 30
+  }]
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
@@ -177,7 +181,7 @@ module "cumulus" {
 
   log_destination_arn = var.log_destination_arn
 
-  # Cumulus Distribution settings. Remove/comment if not using Cumulus Distribution.
+  # Cumulus Distribution settings. Remove/comment to use TEA
   tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
   deploy_cumulus_distribution = var.deploy_cumulus_distribution
