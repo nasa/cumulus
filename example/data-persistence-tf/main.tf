@@ -51,5 +51,6 @@ module "data_persistence" {
   rds_security_group_id          = var.rds_security_group
   rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
   permissions_boundary_arn       = var.permissions_boundary_arn
+  provider_kms_key_id            = var.provider_kms_key_id
   tags = merge(var.tags, { Deployment = var.prefix })
 }

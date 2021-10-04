@@ -78,3 +78,7 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "provider_kms_key_id" {
+  type = string
+}
