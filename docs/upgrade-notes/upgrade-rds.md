@@ -41,53 +41,7 @@ Then you can re-deploy your data-persistence module as usual:
 terraform apply
 ```
 
-### 3. Deploy and run data-migration1
-
-You will need to create a `data-migration1-tf` directory. See the configuration in our template-deploy repo for reference: <https://github.com/nasa/cumulus-template-deploy/tree/master/data-migration1-tf>
-
-Navigate to the directory `data-migration1-tf` and copy the following `.example` files:
-
-```shell
-cp terraform.tf.example terraform.tf
-cp terraform.tfvars.example terraform.tfvars
-```
-
-In `terraform.tf`, configure your remote state settings by replacing the appropriate value for `PREFIX`.
-
-In `terraform.tfvars` replace the appropriate values for the following variables:
-
-- `prefix`
-- `data_persistence_remote_state_config`
-- `permissions_boundary_arn`
-- `lambda_subnet_ids`
-- `vpc_id`
-- `provider_kms_key_id`
-
-These values should match the values used for your Cumulus Core deployment.
-
-After replacing those values, run `terraform init`.
-The output should resemble the following:
-
-```shell
-Initializing modules...
-
-Initializing the backend...
-
-Initializing provider plugins...
-- Using previously-installed hashicorp/aws v3.34.0
-- terraform.io/builtin/terraform is built in to Terraform
-
-Terraform has been successfully initialized!
-```
-
-Run  `terraform apply` to deploy `data-migration1` and type `yes` when prompted to create those resources.
-On success, you will see output like:
-
-```shell
-Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
-```
-
-Once the deployment is complete, you can use the AWS Console or CLI to invoke the Lambda and start the data migration:
+Once the deployment is complete, you can use the AWS Console or CLI to invoke the data-migration1 Lambda and start the data migration:
 
 ```bash
 aws lambda invoke --function-name $PREFIX-data-migration1 $OUTFILE
