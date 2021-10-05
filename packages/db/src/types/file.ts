@@ -8,6 +8,7 @@ export interface PostgresFile {
   file_size?: number,
   path?: string,
   source?: string,
+  type?: string,
 }
 
 // file_size is stored as a BigInt in Postgres. It returns from PG to Node

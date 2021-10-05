@@ -18,6 +18,8 @@ of response and not the raw API endpoint response
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2672**
+    - Added migration to add `type` text column to Postgres database `files` table
   - **CUMULUS-2634**
     - Added new functions for upserting data to Elasticsearch:
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
@@ -65,6 +67,12 @@ of response and not the raw API endpoint response
   issue in previous version.
 - `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2672**
+    - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
+      instead of dropping it.
+    - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
+    - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
+    - Updated `@cumulus/types.api.file` to add `type` to the typing.
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
