@@ -92,7 +92,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     if (!granule.created_at) {
       throw new Error(`To upsert granule record must have 'created_at' set: ${JSON.stringify(granule)}`);
     }
-    if (granule.status === 'running') {
+    if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
