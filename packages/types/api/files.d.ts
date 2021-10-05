@@ -11,5 +11,6 @@ export interface ApiFile {
   path?: string
   size?: number
   source?: string
+  type?: string
   updatedAt: Date
 }
