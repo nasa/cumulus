@@ -30,10 +30,10 @@ const {
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Granules API', () => {
-  let beforeAllFailed = false;
+  let beforeAllError;
+  let config;
   let collection;
   let collectionId;
-  let config;
   let discoveredGranule;
   let executionRecord;
   let granuleFile;
@@ -84,11 +84,11 @@ describe('The Granules API', () => {
         execution: undefined,
         files: [granuleFile],
       }));
+      console.log('granule record: %j', randomGranuleRecord);
 
       granuleId = randomGranuleRecord.granuleId;
     } catch (error) {
-      beforeAllFailed = true;
-      console.log(error);
+      beforeAllError = error;
     }
   });
 
@@ -103,21 +103,24 @@ describe('The Granules API', () => {
 
   describe('the Granule Api', () => {
     it('creates a granule.', async () => {
-      if (beforeAllFailed) {
-        fail('beforeAll() failed');
-      } else {
-        const response = await createGranule({
-          prefix,
-          body: randomGranuleRecord,
-        });
-
-        expect(response.statusCode).toBe(200);
-        const { message } = JSON.parse(response.body);
-        expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
+      if (beforeAllError) {
+        fail(beforeAllError);
       }
+      const response = await createGranule({
+        prefix,
+        body: randomGranuleRecord,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { message } = JSON.parse(response.body);
+      expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
     });
 
     it('can discover the granule directly via the API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       discoveredGranule = await getGranule({
         prefix,
         granuleId,
@@ -126,6 +129,10 @@ describe('The Granules API', () => {
     });
 
     it('can search the granule via the API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const searchResults = await waitForListGranulesResult({
         prefix,
         query: {
@@ -138,7 +145,7 @@ describe('The Granules API', () => {
     });
 
     it('publishes a record to the granules reporting SNS topic upon granule creation', async () => {
-      if (beforeAllFailed) {
+      if (beforeAllError) {
         fail('beforeAll() failed');
       } else {
         const granuleKey = `${config.stackName}/test-output/${granuleId}-${discoveredGranule.status}-Create.output`;
@@ -150,6 +157,10 @@ describe('The Granules API', () => {
     });
 
     it('can modify the granule via API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       modifiedGranule = {
         ...discoveredGranule,
         status: 'failed',
@@ -170,7 +181,7 @@ describe('The Granules API', () => {
     });
 
     it('publishes a record to the granules reporting SNS topic for a granule modification', async () => {
-      if (beforeAllFailed) {
+      if (beforeAllError) {
         fail('beforeAll() failed');
       } else {
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Update.output`;
@@ -182,6 +193,10 @@ describe('The Granules API', () => {
     });
 
     it('can associate an execution with the granule via API.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const requestPayload = {
         granuleId,
         collectionId,
@@ -201,6 +216,10 @@ describe('The Granules API', () => {
     });
 
     it('Errors creating a bad granule.', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+
       const name = randomId('name');
       const version = randomId('version');
       const badRandomGranuleRecord = fakeGranuleFactoryV2({
@@ -223,7 +242,7 @@ describe('The Granules API', () => {
     });
 
     it('publishes a record to the granules reporting SNS topic for a granule deletion', async () => {
-      if (beforeAllFailed) {
+      if (beforeAllError) {
         fail('beforeAll() failed');
       } else {
         const timestamp = Date.now();

@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
-const pRetry = require('p-retry');
 
 const asyncOperations = require('@cumulus/async-operations');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -110,58 +109,35 @@ const create = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const update = async (req, res) => {
+const putGranule = async (req, res) => {
   const {
     granuleModel = new Granule(),
-    granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
   const body = req.body || {};
-  const { retries = 0, status, ...restOfBody } = body;
 
-  let existingGranule;
-
+  let message;
+  let status;
   try {
-    existingGranule = await pRetry(
-      async () => await granuleModel.get({ granuleId: body.granuleId }),
-      {
-        retries,
-      }
-    );
+    await granuleModel.get({ granuleId: body.granuleId });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`No granule found to update for ${body.granuleId}`);
+      status = 201;
+      message = `Successfully wrote granule with Granule Id: ${body.granuleId}`;
+    } else {
+      return res.boom.badRequest(errorify(error));
     }
-    return res.boom.badRequest(errorify(error));
   }
-
-  let updatedBody = { status, ...body };
-  let message = '';
-
-  // Only set status to queued if granule was running
-  // Prevents race condition of setting granule to queued after completed
-  if (status === 'queued' && existingGranule.status !== 'running') {
-    updatedBody = restOfBody;
-    message = ' Skipped setting status to queued because granule was not running';
-  }
-
-  const updatedGranule = {
-    ...existingGranule,
-    updatedAt: Date.now(),
-    ...updatedBody,
-    granuleModel,
-    granulePgModel,
-  };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex, esClient, 'Update');
+    await writeGranuleFromApi(body, knex, esClient, 'Update');
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return res.send({
-    message: `Successfully updated granule with Granule Id: ${updatedGranule.granuleId}${message}`,
+  return res.status(status || 200).send({
+    message: message || `Successfully updated granule with Granule Id: ${body.granuleId}`,
   });
 };
 
@@ -189,7 +165,7 @@ async function put(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleName) {
-      return update(req, res);
+      return putGranule(req, res);
     }
     return res.boom.badRequest(
       `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`

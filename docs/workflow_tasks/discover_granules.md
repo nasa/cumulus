@@ -78,6 +78,16 @@ filename occurs as described above.
 When set on the task configuration, the value applies to all collections during
 discovery.  Otherwise, this property may be set on individual collections.
 
+#### Concurrency
+
+A number property that determines the level of concurrency with which granule duplicate checks are performed when `duplicateGranuleHandling` is `skip` or `error`.
+
+Limiting concurrency helps to avoid throttling by the AWS Lambda API and helps to avoid encountering account Lambda concurrency limitations.
+
+We do not recommend increasing this value unless you are seeing Lambda.Timeout errors when discover-granules discovers a large number of granules with `skip` or `error` duplicate handling. However, as increasing the concurrency may lead to Lambda API or Lambda concurrency throttling errors, you may wish to consider converting the discover-granules task to an ECS activity, which does not face similar runtime constraints.
+
+The default value is 3.
+
 ## Task Outputs
 
 This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.

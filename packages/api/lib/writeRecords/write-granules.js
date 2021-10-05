@@ -514,7 +514,7 @@ const writeGranuleFromApi = async (
       granuleModel,
       granulePgModel,
       esClient,
-      snsEvent,
+      snsEventType,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {

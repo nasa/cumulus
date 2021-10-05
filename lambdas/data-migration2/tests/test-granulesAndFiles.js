@@ -55,7 +55,7 @@ const fakeFile = () => fakeFileFactory({
 });
 
 const generateTestGranule = (params) => ({
-  granuleId: cryptoRandomString({ length: 5 }),
+  granuleId: cryptoRandomString({ length: 10 }),
   status: 'running',
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,
@@ -280,6 +280,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
+      type: testFile.type,
     }
   );
 });
@@ -324,6 +325,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
       file_size: null,
       file_name: testFile.fileName,
       source: null,
+      type: null,
     }
   );
 });
@@ -515,6 +517,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
+  delete testFile.type;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
   const [pgGranule] = await granulePgModel.create(knex, granule);
@@ -538,6 +541,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
       file_name: null,
       source: null,
       path: null,
+      type: null,
     }
   );
 });
