@@ -1053,8 +1053,8 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record.granuleId, newDynamoGranule.granuleId);
-  t.deepEqual(publishedMessage.event, 'Delete');
+  t.is(publishedMessage.record.granuleId, newDynamoGranule.granuleId);
+  t.is(publishedMessage.event, 'Delete');
   t.true(publishedMessage.deletedAt < Date.now());
 });
 
@@ -1923,8 +1923,8 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record.granuleId, actualPgGranule.granule_id);
-  t.deepEqual(publishedMessage.event, 'Update');
+  t.is(publishedMessage.record.granuleId, actualPgGranule.granule_id);
+  t.is(publishedMessage.event, 'Update');
 });
 
 test.serial('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {

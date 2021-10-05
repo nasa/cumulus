@@ -1225,7 +1225,7 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
 
-test.serial('_writeGranule() calls publishSnsMessageByDataType and successfully publishes an SNS message', async (t) => {
+test.serial('_writeGranule() successfully publishes an SNS message', async (t) => {
   const {
     granule,
     executionCumulusId,
@@ -1268,6 +1268,6 @@ test.serial('_writeGranule() calls publishSnsMessageByDataType and successfully 
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record.granuleId, granuleId);
-  t.deepEqual(publishedMessage.event, 'Update');
+  t.is(publishedMessage.record.granuleId, granuleId);
+  t.is(publishedMessage.event, 'Update');
 });

@@ -184,7 +184,7 @@ test.serial('publishSnsMessageByDataType() does not publish an SNS message if gr
   );
 });
 
-test.serial('publishSnsMessageByDataType() publishes an SNS message for the Delete event', async (t) => {
+test.serial('publishSnsMessageByDataType() publishes an SNS message for the granule Delete event', async (t) => {
   process.env.granule_sns_topic_arn = t.context.TopicArn;
 
   const granuleId = cryptoRandomString({ length: 10 });

@@ -23,7 +23,7 @@ const constructCollectionSnsMessage = (record, event) => {
   }
 };
 
-const constructGranuleSnsMessage = (record, event) => {
+const constructGranuleSnsMessage = (record, eventType) => {
   switch (event) {
   case 'Create':
   case 'Update':
