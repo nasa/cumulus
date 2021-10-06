@@ -328,7 +328,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
  * @param {Object} params.granuleModel = new Granule(),
  * @param {Object} params.granulePgModel,
  * @param {Object} params.esClient - Elasticsearch client
- * @param {string} params.snsEvent - SNS Event type
+ * @param {string} params.snsEventType - SNS Event Type
  * returns {Promise}
  * throws
  */
@@ -340,7 +340,7 @@ const _writeGranule = async ({
   granuleModel,
   granulePgModel,
   esClient,
-  snsEvent,
+  snsEventType,
 }) => {
   let pgGranule;
 
@@ -384,7 +384,7 @@ const _writeGranule = async ({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  await publishSnsMessageByDataType(granuletoPublish, 'granule', snsEvent);
+  await publishSnsMessageByDataType(granuletoPublish, 'granule', snsEventType);
 };
 
 /**
@@ -421,7 +421,7 @@ const _writeGranule = async ({
  * @param {Object} [params.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
  * @param {Object} esClient - Elasticsearch client
- * @param {string} snsEvent - SNS Event
+ * @param {string} snsEventType - SNS Event Type
  * @returns {Promise}
  */
 const writeGranuleFromApi = async (
@@ -455,7 +455,7 @@ const writeGranuleFromApi = async (
   },
   knex,
   esClient,
-  snsEventType = 'Update'
+  snsEventType
 ) => {
   try {
     // Build a objects with correct shape for the granuleModel.generateGranuleRecord.

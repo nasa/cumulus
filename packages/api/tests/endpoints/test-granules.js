@@ -1010,6 +1010,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     granuleParams: { published: false },
     esClient: t.context.esClient,
   });
+  const timeOfResponse = Date.now();
 
   const response = await request(app)
     .delete(`/granules/${newDynamoGranule.granuleId}`)
@@ -1053,7 +1054,8 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(publishedMessage.record.granuleId, newDynamoGranule.granuleId);
-  t.is(publishedMessage.event, 'Delete');
+  t.is(publishedMessage.eventType, 'Delete');
+  t.true(publishedMessage.deletedAt > timeOfResponse);
   t.true(publishedMessage.deletedAt < Date.now());
 });
 
@@ -1921,9 +1923,10 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   }).promise();
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
+  console.log(publishedMessage);
 
   t.is(publishedMessage.record.granuleId, actualPgGranule.granule_id);
-  t.is(publishedMessage.event, 'Update');
+  t.is(publishedMessage.eventType, 'Update');
 });
 
 test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
@@ -2324,7 +2327,7 @@ test.serial('PUT returns bad request when the path param granuleName does not ma
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
 
-test.serial.only('update (PUT) can set running granule status to queued', async (t) => {
+test.serial('update (PUT) can set running granule status to queued', async (t) => {
   const granuleId = cryptoRandomString({ length: 6 });
   const runningGranule = fakeGranuleFactoryV2({
     granuleId: granuleId,

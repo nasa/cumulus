@@ -1269,5 +1269,5 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(publishedMessage.record.granuleId, granuleId);
-  t.is(publishedMessage.event, 'Update');
+  t.is(publishedMessage.eventType, 'Update');
 });

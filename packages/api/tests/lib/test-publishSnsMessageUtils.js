@@ -207,7 +207,7 @@ test.serial('publishSnsMessageByDataType() publishes an SNS message for the gran
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.deepEqual(publishedMessage.record.granuleId, granuleId);
-  t.deepEqual(publishedMessage.event, 'Delete');
+  t.deepEqual(publishedMessage.eventType, 'Delete');
   t.true(publishedMessage.deletedAt < Date.now());
 });
 
