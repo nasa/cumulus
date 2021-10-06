@@ -34,6 +34,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates cumulus-tf/cumulus/variables.tf to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard for default deployments.
+- **CUMULUS-2584**
+  - Updates `api/endpoints/execution-status.js` `get` method to include associated granules, as
+    an array, for the provided execution
 - **CUMULUS-NONE**
   - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
