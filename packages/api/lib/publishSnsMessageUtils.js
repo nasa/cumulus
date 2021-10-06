@@ -6,13 +6,13 @@ const Logger = require('@cumulus/logger');
 
 const logger = new Logger({ sender: '@cumulus/publishSnsMessageUtils' });
 
-const constructCollectionSnsMessage = (record, event) => {
-  switch (event) {
+const constructCollectionSnsMessage = (record, eventType) => {
+  switch (eventType) {
   case 'Create':
   case 'Update':
-    return { event, record };
+    return { eventType, record };
   case 'Delete': return {
-    event,
+    eventType,
     record: {
       name: record.name,
       version: record.version,
@@ -24,12 +24,12 @@ const constructCollectionSnsMessage = (record, event) => {
 };
 
 const constructGranuleSnsMessage = (record, eventType) => {
-  switch (event) {
+  switch (eventType) {
   case 'Create':
   case 'Update':
-    return { event, record };
+    return { eventType, record };
   case 'Delete': return {
-    event,
+    eventType,
     record,
     deletedAt: Date.now(),
   };
@@ -37,15 +37,15 @@ const constructGranuleSnsMessage = (record, eventType) => {
   }
 };
 
-const publishSnsMessageByDataType = async (record, dataType, event) => {
+const publishSnsMessageByDataType = async (record, dataType, eventType) => {
   const topicArn = envUtils.getRequiredEnvVar(`${dataType}_sns_topic_arn`, process.env);
   logger.info(`About to publish SNS message for ${dataType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
   if (dataType === 'collection') {
-    const messageToPublish = constructCollectionSnsMessage(record, event);
+    const messageToPublish = constructCollectionSnsMessage(record, eventType);
     return await publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'granule') {
-    const messageToPublish = constructGranuleSnsMessage(record, event);
+    const messageToPublish = constructGranuleSnsMessage(record, eventType);
     return await publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'pdr' || dataType === 'execution') {
