@@ -449,7 +449,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
       },
     ],
     error: {},
-    productVolume: '1119742',
+    productVolume: 1119742,
     timeToPreprocess: 0,
     beginningDateTime: dateString,
     endingDateTime: dateString,
