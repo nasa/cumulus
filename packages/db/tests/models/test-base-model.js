@@ -565,7 +565,7 @@ test.serial('getMaxId returns the next cumulus_id in sequence', async (t) => {
 });
 
 test('getMaxId throws if knex call returns undefined ', async (t) => {
-  const { basePgModel } = t.context;
+  const { basePgModel, tableName } = t.context;
   const knexMock = () => ({
     max: (_id) => ({
       first: () => undefined,
@@ -573,6 +573,6 @@ test('getMaxId throws if knex call returns undefined ', async (t) => {
   });
   await t.throwsAsync(basePgModel.getMaxCumulusId(knexMock), {
     message:
-      'Invalid index query on getMaxCumulusId, max index cannot be returned',
+      `Invalid .max "cumulus_id" query on ${tableName}, MAX cumulus_id cannot be returned`,
   });
 });
