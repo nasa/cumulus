@@ -20,7 +20,8 @@ const {
   translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
-  // translatePostgresGranuleToApiGranule,
+  fakeExecutionRecordFactory,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
 
 const {
@@ -53,9 +54,13 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 // Postgres mock data factories
 const {
   fakeCollectionRecordFactory,
-  fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
+const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 
@@ -84,8 +89,6 @@ const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
 let collectionModel;
-let esClient;
-let esIndex;
 let executionModel;
 let executionPgModel;
 let filePgModel;
@@ -158,12 +161,15 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-  esIndex = randomId('esindex');
-  t.context.esAlias = randomId('esAlias');
-  process.env.ES_INDEX = t.context.esAlias;
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
-  // create esClient
-  esClient = await Search.es('fakehost');
+  t.context.esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
 
   // add fake elasticsearch index
   await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
@@ -260,53 +266,77 @@ test.before(async (t) => {
   await executionPgModel.create(knex, executionPgRecord);
   t.context.executionUrl = executionPgRecord.url;
   t.context.executionArn = executionPgRecord.arn;
+
+  // Create execution in Dynamo/Postgres
+  // we need this as granules *should have* a related execution
+
+  t.context.testExecution = fakeExecutionRecordFactory();
+  const [testExecution] = (
+    await executionPgModel.create(t.context.knex, t.context.testExecution)
+  );
+  t.context.testExecutionCumulusId = testExecution.cumulus_id;
 });
 
 test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
-
-  const granuleId1 = cryptoRandomString({ length: 6 });
-  const granuleId2 = cryptoRandomString({ length: 6 });
-  const granuleId3 = cryptoRandomString({ length: 6 });
+  const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', execution: t.context.executionUrl }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId3, status: 'running', execution: t.context.executionUrl }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId1,
+      status: 'completed',
+      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      duration: 47.125,
+    }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId2,
+      status: 'failed',
+      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      duration: 52.235,
+    }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId3,
+      status: 'running',
+      execution: getExecutionUrlFromArn(t.context.testExecution.arn),
+      duration: 41.261,
+    }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
     granuleModel.create(granule)
-      .then((record) => indexer.indexGranule(esClient, record, esAlias))));
+      .then(async (record) => {
+        await indexer.indexGranule(t.context.esClient, record, t.context.esIndex);
+        const dbRecord = await translateApiGranuleToPostgresGranule(record, t.context.knex);
+        const executionCumulusId = await executionPgModel.getRecordCumulusId(t.context.knex, {
+          url: getExecutionUrlFromArn(t.context.testExecution.arn),
+        });
+        return await upsertGranuleWithExecutionJoinRecord(t.context.knex,
+          dbRecord,
+          executionCumulusId);
+      })));
 
   // create fake Postgres granule records
-  t.context.fakePGGranules = [
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId1,
-        status: 'completed',
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }
-    ),
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId2,
-        status: 'failed',
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }
-    ),
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId3,
-        status: 'running',
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }
-    ),
-  ];
+  // t.context.fakePGGranules = [
+  //   fakeGranuleRecordFactory(
+  //     {
+  //       granule_id: granuleId1,
+  //       status: 'completed',
+  //       collection_cumulus_id: t.context.collectionCumulusId,
+  //     }
+  //   ),
+  //   fakeGranuleRecordFactory(
+  //     {
+  //       granule_id: granuleId2,
+  //       status: 'failed',
+  //       collection_cumulus_id: t.context.collectionCumulusId,
+  //     }
+  //   ),
+  // ];
 
-  await Promise.all(t.context.fakePGGranules.map((granule) =>
-    granulePgModel.create(t.context.knex, granule)));
+//   await Promise.all(t.context.fakePGGranules.map((granule) =>
+//     granulePgModel.create(t.context.knex, granule)));
 });
 
 test.after.always(async (t) => {
@@ -314,7 +344,6 @@ test.after.always(async (t) => {
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
@@ -330,6 +359,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -458,31 +488,6 @@ test.serial('GET returns an existing granule', async (t) => {
   const { granuleId } = response.body;
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
-
-// test.serial('GET returns the expected existing granule', async (t) => {
-//   const {
-//     knex,
-//     fakePGGranules,
-//   } = t.context;
-
-//   const response = await request(app)
-//     .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
-//     .set('Accept', 'application/json')
-//     .set('Authorization', `Bearer ${jwtAuthToken}`)
-//     .expect(200);
-
-//   const pgGranule = await granulePgModel.get(knex, {
-//     granule_id: fakePGGranules[0].granule_id,
-//     collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
-//   });
-
-//   const expectedGranule = await translatePostgresGranuleToApiGranule({
-//     granulePgRecord: pgGranule,
-//     knexOrTransaction: knex,
-//   });
-
-//   t.deepEqual(response.body, expectedGranule);
-// });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
   const response = await request(app)
