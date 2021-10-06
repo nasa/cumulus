@@ -196,7 +196,7 @@ async function indexFromDatabase(event) {
   const {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
-    dynamoTables = { reconciliationReportsTable: process.env.ReconciliationReportsTable },
+    reconciliationReportsTable = process.env.ReconciliationReportsTable,
     pageSize = 100,
   } = event;
   const esClient = await Search.es(esHost);
@@ -272,7 +272,7 @@ async function indexFromDatabase(event) {
     }),
     indexReconciliationReports({
       esClient,
-      tableName: dynamoTables.reconciliationReportsTable,
+      tableName: reconciliationReportsTable,
       esIndex,
       indexFn: indexer.indexReconciliationReport,
       limitEsRequests,

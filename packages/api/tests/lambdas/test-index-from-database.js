@@ -56,9 +56,7 @@ const reconciliationReportModel = new models.ReconciliationReport();
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
-const tables = {
-  reconciliationReportsTable: process.env.ReconciliationReportsTable,
-};
+const reconciliationReportsTable = process.env.ReconciliationReportsTable;
 
 function sortAndFilter(input, omitList, sortKey) {
   return input.map((r) => omit(r, omitList))
@@ -216,7 +214,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
 
   await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
-    tables,
+    reconciliationReportsTable,
     knex,
   }));
 });
@@ -402,7 +400,7 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      tables,
+      reconciliationReportsTable,
       knex,
     });
 
@@ -479,7 +477,7 @@ test.serial(
     try {
       await indexFromDatabase.handler({
         indexName: esAlias,
-        tables,
+        reconciliationReportsTable,
         knex,
       });
 
