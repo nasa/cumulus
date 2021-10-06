@@ -40,6 +40,6 @@
   },
   "devDependencies": {
     "@cumulus/common": "9.7.0",
-    "@cumulus/schemas": "9.6.0-alpha.0"
+    "@cumulus/schemas": "9.7.0-alpha.0"
   }
 }

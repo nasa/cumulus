@@ -47,6 +47,6 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@cumulus/schemas": "9.6.0-alpha.0"
+    "@cumulus/schemas": "9.7.0-alpha.0"
   }
 }
