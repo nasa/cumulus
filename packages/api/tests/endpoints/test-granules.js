@@ -1926,7 +1926,7 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   t.is(publishedMessage.event, 'Update');
 });
 
-test.serial('put() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
+test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -1992,9 +1992,15 @@ test.serial('put() does not write to PostgreSQL/Elasticsearch if writing to Dyna
     ),
     esRecord
   );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('put() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2061,9 +2067,15 @@ test.serial('put() does not write to DynamoDB/Elasticsearch if writing to Postgr
     ),
     esRecord
   );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('put() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test.serial('put() does not write to DynamoDB/PostgreSQL/SNS if writing to Elasticsearch fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2127,156 +2139,6 @@ test.serial('put() does not write to DynamoDB/PostgreSQL if writing to Elasticse
     ),
     esRecord
   );
-});
-
-test.serial('put() does not publish an SNS message if writing to DynamoDB fails', async (t) => {
-  const {
-    esClient,
-    executionUrl,
-    knex,
-  } = t.context;
-  const {
-    newDynamoGranule,
-  } = await createGranuleAndFiles({
-    dbClient: knex,
-    esClient,
-    granuleParams: {
-      status: 'running',
-      execution: executionUrl,
-    },
-  });
-
-  const fakeGranuleModel = {
-    get: () => Promise.resolve(newDynamoGranule),
-    delete: () => Promise.resolve(),
-    storeGranule: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const updatedGranule = {
-    ...newDynamoGranule,
-    status: 'completed',
-  };
-
-  const expressRequest = {
-    params: {
-      granuleName: newDynamoGranule.granuleId,
-    },
-    body: updatedGranule,
-    testContext: {
-      knex,
-      granuleModel: fakeGranuleModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await put(expressRequest, response);
-  t.true(response.boom.badRequest.calledWithMatch('something bad'));
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
-});
-
-test.serial('put() does not publish an SNS message if writing to PostgreSQL fails', async (t) => {
-  const {
-    esClient,
-    executionUrl,
-    knex,
-  } = t.context;
-  const {
-    newDynamoGranule,
-  } = await createGranuleAndFiles({
-    dbClient: knex,
-    esClient,
-    granuleParams: {
-      status: 'running',
-      execution: executionUrl,
-    },
-  });
-
-  const fakeGranulePgModel = {
-    upsert: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const updatedGranule = {
-    ...newDynamoGranule,
-    status: 'completed',
-  };
-
-  const expressRequest = {
-    params: {
-      granuleName: newDynamoGranule.granuleId,
-    },
-    body: updatedGranule,
-    testContext: {
-      knex,
-      granulePgModel: fakeGranulePgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await put(expressRequest, response);
-  t.true(response.boom.badRequest.calledWithMatch('something bad'));
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-  t.is(Messages, undefined);
-});
-
-test.serial('put() does not publish an SNS message if writing to Elasticsearch fails', async (t) => {
-  const {
-    esClient,
-    executionUrl,
-    knex,
-  } = t.context;
-  const {
-    newDynamoGranule,
-  } = await createGranuleAndFiles({
-    dbClient: knex,
-    esClient,
-    granuleParams: {
-      status: 'running',
-      execution: executionUrl,
-    },
-  });
-
-  const fakeEsClient = {
-    update: () => {
-      throw new Error('something bad');
-    },
-    delete: () => Promise.resolve(),
-  };
-
-  const updatedGranule = {
-    ...newDynamoGranule,
-    status: 'completed',
-  };
-
-  const expressRequest = {
-    params: {
-      granuleName: newDynamoGranule.granuleId,
-    },
-    body: updatedGranule,
-    testContext: {
-      knex,
-      esClient: fakeEsClient,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await put(expressRequest, response);
-  t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
