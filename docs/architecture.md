@@ -40,6 +40,14 @@ Cumulus entity state data is stored in a set of [DynamoDB](https://aws.amazon.co
 
 Discovering data for ingest is handled via workflow step components using Cumulus `provider` and `collection` configurations and various triggers.    Data can be ingested from AWS S3, FTP, HTTPS and more.
 
+#### Database
+
+Cumulus utilizes a user-provided PostgreSQL database backend. For improved API search query efficiency Cumulus provides data replication to an Elasticsearch instance.   For legacy reasons, Cumulus is currently also deploying a DynamoDB datastore, and writes are replicated in parallel with the PostgreSQL database writes.   The DynamoDB replicated tables and parallel writes will be removed in future releases.
+
+##### PostgreSQL Database Schema Diagram
+
+![ERD of the Cumulus Database](assets/db_schema/relationships.real.large.png)
+
 ### Maintenance
 
 System maintenance personnel have access to manage ingest and various portions of Cumulus via an [AWS API gateway](<https://aws.amazon.com/api-gateway/>), as well as the operator [dashboard](https://github.com/nasa/cumulus-dashboard).

@@ -30,7 +30,7 @@ const removeCollectionAndAllDependencies = async (params) => {
   });
 
   const granulesForDeletion = JSON.parse(collectionGranuleResponse.body).results;
-  const granuleDeletionResult = deleteGranules(prefix, granulesForDeletion);
+  const granuleDeletionResult = await deleteGranules(prefix, granulesForDeletion);
 
   console.log('Granule Cleanup Complete:');
   console.log(granulesForDeletion);
