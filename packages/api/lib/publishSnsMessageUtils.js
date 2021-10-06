@@ -42,18 +42,63 @@ const publishSnsMessageByDataType = async (record, dataType, eventType) => {
   logger.info(`About to publish SNS message for ${dataType} with event type ${eventType} to topic ARN ${topicArn}: ${JSON.stringify(record)} `);
   if (dataType === 'collection') {
     const messageToPublish = constructCollectionSnsMessage(record, eventType);
-    return await publishSnsMessage(topicArn, messageToPublish);
+    await publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'granule') {
     const messageToPublish = constructGranuleSnsMessage(record, eventType);
-    return await publishSnsMessage(topicArn, messageToPublish);
+    await publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'pdr' || dataType === 'execution') {
-    return await publishSnsMessage(topicArn, record);
+    await publishSnsMessage(topicArn, record);
   }
   return undefined;
 };
 
+const publishCollectionUpdateSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'collection', 'Update');
+};
+
+const publishCollectionDeleteSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'collection', 'Delete');
+};
+
+const publishCollectionCreateSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'collection', 'Create');
+};
+
+const publishGranuleUpdateSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'granule', 'Update');
+};
+
+const publishGranuleDeleteSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'granule', 'Delete');
+};
+
+const publishGranuleCreateSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'granule', 'Create');
+};
+
+const publishExecutionSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'execution');
+};
+
+const publishPdrSnsMessage = async (record) => {
+  await publishSnsMessageByDataType(record, 'pdr');
+};
+
+const publishGranuleSnsMessageByEventType = async (record, eventType) => {
+  await publishSnsMessageByDataType(record, 'granule', eventType);
+};
+
 module.exports = {
   publishSnsMessageByDataType,
+  publishCollectionCreateSnsMessage,
+  publishCollectionDeleteSnsMessage,
+  publishCollectionUpdateSnsMessage,
+  publishGranuleCreateSnsMessage,
+  publishGranuleDeleteSnsMessage,
+  publishGranuleUpdateSnsMessage,
+  publishPdrSnsMessage,
+  publishExecutionSnsMessage,
+  publishGranuleSnsMessageByEventType,
 };

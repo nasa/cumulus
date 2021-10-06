@@ -58,7 +58,7 @@ describe('Collections API', () => {
       })).toBeResolved();
       const savedEvent = await getJsonS3Object(config.bucket, recordCreatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-      expect(message.event).toEqual('Create');
+      expect(message.eventType).toEqual('Create');
       expect(message.record).toEqual(originalCollectionFromApi);
     }
   });
@@ -89,7 +89,7 @@ describe('Collections API', () => {
       })).toBeResolved();
       const savedEvent = await getJsonS3Object(config.bucket, recordUpdatedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-      expect(message.event).toEqual('Update');
+      expect(message.eventType).toEqual('Update');
       expect(message.record).toEqual(updatedCollectionFromApi);
       expect(message.record.reportToEms).toEqual(false);
     }
@@ -112,7 +112,7 @@ describe('Collections API', () => {
       })).toBeResolved();
       const savedEvent = await getJsonS3Object(config.bucket, recordDeletedKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-      expect(message.event).toEqual('Delete');
+      expect(message.eventType).toEqual('Delete');
       expect(message.record).toEqual({ name: collection.name, version: collection.version });
       expect(message.deletedAt).toBeGreaterThan(timestamp);
     }

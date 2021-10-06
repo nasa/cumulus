@@ -151,7 +151,7 @@ describe('The Granules API', () => {
         const granuleKey = `${config.stackName}/test-output/${granuleId}-${discoveredGranule.status}-Create.output`;
         const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
         const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-        expect(message.event).toEqual('Create');
+        expect(message.eventType).toEqual('Create');
         expect(message.record).toEqual(discoveredGranule);
       }
     });
@@ -187,7 +187,7 @@ describe('The Granules API', () => {
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Update.output`;
         const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
         const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-        expect(message.event).toEqual('Update');
+        expect(message.eventType).toEqual('Update');
         expect(message.record).toEqual(modifiedGranule);
       }
     });
@@ -252,7 +252,7 @@ describe('The Granules API', () => {
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
         const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
         const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-        expect(message.event).toEqual('Delete');
+        expect(message.eventType).toEqual('Delete');
         expect(message.record).toEqual(updatedGranuleFromApi);
         expect(message.deletedAt).toBeGreaterThan(timestamp);
       }

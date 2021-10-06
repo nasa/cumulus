@@ -291,6 +291,7 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     granuleModel,
     knex,
     esClient,
+    snsEventType: 'Update',
   });
 
   t.like(
@@ -349,6 +350,7 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     granuleModel,
     knex,
     esClient,
+    snsEventType: 'Update',
   });
 
   t.like(
@@ -412,7 +414,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   t.is(actual, undefined);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -437,6 +439,12 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   ));
   t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages.length, 1);
 });
 
 test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
@@ -667,7 +675,7 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
   }));
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Dynamo write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/Elasticsearch/SNS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -706,9 +714,15 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Postgres write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/Elasticsearch/SNS if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -743,9 +757,15 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     })
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -782,6 +802,12 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
@@ -1252,7 +1278,7 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
     granuleModel,
     knex,
     esClient,
-    snsEvent: 'Update',
+    snsEventType: 'Update',
   });
 
   t.true(await granuleModel.exists({ granuleId }));

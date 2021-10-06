@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -42,6 +41,8 @@ test.before(async (t) => {
     TopicArn,
     Token: SubscriptionArn,
   }).promise();
+
+  t.context.timeBeforePublish = Date.now();
 });
 
 test.after.always(async (t) => {
@@ -126,7 +127,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, newCollection);
-  t.is(message.event, 'Create');
+  t.is(message.eventType, 'Create');
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Update', async (t) => {
@@ -145,16 +146,11 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, newCollection);
-  t.is(message.event, 'Update');
+  t.is(message.eventType, 'Update');
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Delete', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
-  const deletedAt = Date.now();
-  const stub = sinon.stub(Date, 'now').returns(deletedAt);
-  t.teardown(() => {
-    stub.restore();
-  });
 
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
@@ -170,8 +166,9 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, { name: newCollection.name, version: newCollection.version });
-  t.is(message.event, 'Delete');
-  t.is(message.deletedAt, deletedAt);
+  t.is(message.eventType, 'Delete');
+  t.true(message.deletedAt > t.context.timeBeforePublish);
+  t.true(message.deletedAt < Date.now());
 });
 
 test.serial('publishSnsMessageByDataType() does not publish an SNS message if granule_sns_topic_arn is undefined', async (t) => {
@@ -208,6 +205,7 @@ test.serial('publishSnsMessageByDataType() publishes an SNS message for the gran
 
   t.deepEqual(publishedMessage.record.granuleId, granuleId);
   t.deepEqual(publishedMessage.eventType, 'Delete');
+  t.true(publishedMessage.deletedAt > t.context.timeBeforePublish);
   t.true(publishedMessage.deletedAt < Date.now());
 });
 

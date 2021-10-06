@@ -231,7 +231,7 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.event, 'Update');
+  t.is(message.eventType, 'Update');
   t.deepEqual(message.record, actualCollection);
 });
 
@@ -334,7 +334,7 @@ test.serial('PUT creates a new record in RDS if one does not exist  and sends an
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.event, 'Update');
+  t.is(message.eventType, 'Update');
   t.deepEqual(message.record, fetchedDynamoRecord);
 });
 

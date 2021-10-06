@@ -282,7 +282,7 @@ describe('POST /granules/bulkDelete', () => {
       const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}.output`;
       const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-      expect(message.event).toEqual('Delete');
+      expect(message.eventType).toEqual('Delete');
       expect(message.record).toEqual(ingestedGranule);
       expect(message.deletedAt).toBeGreaterThan(timestamp);
     });

@@ -55,7 +55,10 @@ const {
   getExecutionProcessingTimeInfo,
 } = require('../granules');
 const Granule = require('../../models/granules');
-const { publishSnsMessageByDataType } = require('../publishSnsMessageUtils');
+const {
+  publishGranuleSnsMessageByEventType,
+  publishGranuleUpdateSnsMessage,
+} = require('../publishSnsMessageUtils');
 const {
   getExecutionCumulusId,
 } = require('./utils');
@@ -262,7 +265,7 @@ const _writeGranuleFiles = async ({
         granulePgRecord: pgGranule,
         knexOrTransaction: knex,
       });
-      await publishSnsMessageByDataType(granuletoPublish, 'granule', 'Update');
+      await publishGranuleUpdateSnsMessage(granuletoPublish);
     });
   }
 };
@@ -359,6 +362,11 @@ const _writeGranule = async ({
       esClient,
       granuleModel,
     });
+    const granuletoPublish = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+    await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
   });
 
   log.info(
@@ -380,11 +388,6 @@ const _writeGranule = async ({
     knex,
     granuleModel,
   });
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-  await publishSnsMessageByDataType(granuletoPublish, 'granule', snsEventType);
 };
 
 /**
@@ -617,6 +620,7 @@ const writeGranulesFromMessage = async ({
         granuleModel,
         granulePgModel,
         esClient,
+        snsEventType: 'Update',
       });
     }
   ));
