@@ -181,7 +181,6 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   // Create collection in PG/ES
   const collectionId = constructCollectionId(randomId('name'), randomId('version'));
 
-  // const provider = randomId('provider');
   // Create provider in PG
   const provider = fakeProviderRecordFactory();
   await providerPgModel.create(knex, provider);

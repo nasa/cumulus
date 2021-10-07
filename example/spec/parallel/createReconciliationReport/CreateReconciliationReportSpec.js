@@ -9,6 +9,7 @@ const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { deleteGranule } = require('@cumulus/api-client/granules');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject,
@@ -819,7 +820,6 @@ describe('When there are granule differences and granule reconciliation is run',
     const activeCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
 
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
-    // await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
     await updateGranule({
       prefix: config.stackName,
       granuleId: publishedGranuleId,
@@ -832,6 +832,10 @@ describe('When there are granule differences and granule reconciliation is run',
       s3().deleteObject(extraS3Object).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
+      deleteGranule({
+        prefix: config.stackName,
+        granuleId: extraGranuleInDb.granuleId,
+      }),
     ]);
     cleanupResults.forEach((result) => {
       if (result.status === 'rejected') {

@@ -57,7 +57,7 @@ export const translatePostgresGranuleToApiGranule = async ({
   const files = await filePgModel.search(
     knexOrTransaction, { granule_cumulus_id: granulePgRecord.cumulus_id }
   );
-  const executionUrls = await getExecutionInfoByGranuleCumulusId<{url: string}>({
+  const executionUrls = await getExecutionInfoByGranuleCumulusId({
     knexOrTransaction,
     granuleCumulusId: granulePgRecord.cumulus_id,
     executionColumns: ['url'],

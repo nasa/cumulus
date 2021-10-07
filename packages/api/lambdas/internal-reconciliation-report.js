@@ -279,8 +279,8 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
 
   let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
 
-  const translateDbResultToApiGranule = (dbResult) =>
-    translatePostgresGranuleToApiGranule({
+  const translateDbResultToApiGranule = async (dbResult) =>
+    await translatePostgresGranuleToApiGranule({
       knexOrTransaction: recReportParams.knex,
       granulePgRecord: dbResult,
       collectionPgRecord: {

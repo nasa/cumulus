@@ -2,6 +2,8 @@ import Knex from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { tableNames } from '../tables';
 
+import { PostgresExecutionRecord } from '../types/execution';
+
 const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
@@ -22,9 +24,10 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  * @param {Array<string>} params.executionColumns - Columns to return from executions table
  * @param {number} params.granuleCumulusId - The primary ID for a Granule
  * @param {number} [params.limit] - limit to number of executions to query
- * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ * @returns {Promise<Partial<PostgresExecutionRecord>[]>}
+ *   Array of arn objects with the most recent first.
  */
-export const getExecutionInfoByGranuleCumulusId = async <T>({
+export const getExecutionInfoByGranuleCumulusId = async ({
   knexOrTransaction,
   granuleCumulusId,
   executionColumns = ['arn'],
@@ -34,7 +37,7 @@ export const getExecutionInfoByGranuleCumulusId = async <T>({
   granuleCumulusId: number,
   executionColumns: string[],
   limit?: number
-}): Promise<T[]> => {
+}): Promise<Partial<PostgresExecutionRecord>[]> => {
   const knexQuery = knexOrTransaction(tableNames.executions)
     .column(executionColumns.map((column) => `${tableNames.executions}.${column}`))
     .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)

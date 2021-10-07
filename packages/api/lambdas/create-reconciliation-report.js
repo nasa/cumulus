@@ -719,7 +719,7 @@ async function processRequest(params) {
 
   const env = params.env ? params.env : process.env;
   const knex = await getKnexClient(env);
-  const concurrency = process.env.CONCURRENCY || 3;
+  const concurrency = env.CONCURRENCY || 3;
 
   try {
     const recReportParams = {

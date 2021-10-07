@@ -1717,8 +1717,6 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 });
 
 test.serial('reconciliationReportForGranuleFiles does not fail if no distribution endpoint is defined', async (t) => {
-  process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
-
   const buckets = {
     internal: { name: 'cumulus-test-sandbox-internal', type: 'internal' },
     private: { name: 'testbucket-private', type: 'private' },
