@@ -23,6 +23,7 @@ const {
   migrationDir,
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
+  translateDbResultToApiGranule,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -323,6 +324,82 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   );
 });
 
+test('translatePostgresGranuleToApiGranule accepts an optional provider', async (t) => {
+  const {
+    knex,
+    pdrPgModel,
+    providerPgModel,
+    collectionPgModel,
+    filePgModel,
+    executions,
+    postgresGranule,
+    fileKeys,
+    collectionId,
+  } = t.context;
+
+  const providerPgRecord = fakeProviderRecordFactory();
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId,
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.toISOString(),
+    error: postgresGranule.error,
+    execution: getExecutionUrlFromArn(executions[0].arn),
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
+    pdrName: 'pdrName',
+    processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    productionDateTime: postgresGranule.production_date_time.toISOString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    provider: providerPgRecord.name,
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: fileKeys[0],
+        key: fileKeys[0],
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: fileKeys[1],
+        key: fileKeys[1],
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: postgresGranule,
+    providerPgRecord,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+    filePgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
 test('translatePostgresGranuleToApiGranule omits files property from API granule if there are no PostgreSQL files', async (t) => {
   const {
     knex,
@@ -585,5 +662,81 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   t.deepEqual(
     result,
     expectedPostgresGranule
+  );
+});
+
+test('translateDbResultToApiGranule converts DB result to API granule', async (t) => {
+  const {
+    postgresGranule,
+    fileKeys,
+    executions,
+    knex,
+  } = t.context;
+
+  const collectionName = cryptoRandomString({ length: 10 });
+  const collectionVersion = '0.0.0';
+  const providerName = cryptoRandomString({ length: 10 });
+
+  const dbResult = {
+    ...postgresGranule,
+    collectionName,
+    collectionVersion,
+    providerName,
+  };
+
+  const expectedApiGranule = {
+    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
+    cmrLink: postgresGranule.cmr_link,
+    collectionId: constructCollectionId(collectionName, collectionVersion),
+    createdAt: postgresGranule.created_at.getTime(),
+    duration: postgresGranule.duration,
+    endingDateTime: postgresGranule.ending_date_time.toISOString(),
+    error: postgresGranule.error,
+    execution: executions[0].url,
+    granuleId: postgresGranule.granule_id,
+    lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
+    pdrName: 'pdrName',
+    processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
+    processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
+    productionDateTime: postgresGranule.production_date_time.toISOString(),
+    productVolume: Number.parseInt(postgresGranule.product_volume, 10),
+    provider: providerName,
+    published: postgresGranule.published,
+    queryFields: postgresGranule.query_fields,
+    status: postgresGranule.status,
+    timestamp: postgresGranule.timestamp.getTime(),
+    timeToArchive: postgresGranule.time_to_archive,
+    timeToPreprocess: postgresGranule.time_to_process,
+    updatedAt: postgresGranule.updated_at.getTime(),
+    files: [
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: fileKeys[0],
+        key: fileKeys[0],
+        size: 2098711627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+      {
+        bucket: 'cumulus-test-sandbox-private',
+        checksum: 'bogus-value',
+        checksumType: 'md5',
+        fileName: fileKeys[1],
+        key: fileKeys[1],
+        size: 1099511627776,
+        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
+      },
+    ],
+  };
+
+  const result = await translateDbResultToApiGranule(
+    knex,
+    dbResult
+  );
+
+  t.deepEqual(
+    result,
+    expectedApiGranule
   );
 });

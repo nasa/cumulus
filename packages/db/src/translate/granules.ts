@@ -13,6 +13,8 @@ import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
 import { getExecutionInfoByGranuleCumulusId } from '../lib/execution';
 import { PostgresCollectionRecord } from '../types/collection';
+import { GranuleWithProviderAndCollectionInfo } from '../types/query';
+import { PostgresProviderRecord } from '..';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
@@ -33,18 +35,20 @@ export const translatePostgresGranuleToApiGranule = async ({
   granulePgRecord,
   collectionPgRecord,
   knexOrTransaction,
+  providerPgRecord,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
   filePgModel = new FilePgModel(),
 }: {
   granulePgRecord: PostgresGranuleRecord,
-  collectionPgRecord: PostgresCollectionRecord,
   knexOrTransaction: Knex | Knex.Transaction,
-  collectionPgModel: CollectionPgModel,
-  pdrPgModel: PdrPgModel,
-  providerPgModel: ProviderPgModel,
-  filePgModel: FilePgModel,
+  collectionPgRecord?: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
+  providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+  filePgModel?: FilePgModel,
 }): Promise<ApiGranule> => {
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
@@ -72,7 +76,9 @@ export const translatePostgresGranuleToApiGranule = async ({
   }
 
   let provider;
-  if (granulePgRecord.provider_cumulus_id) {
+  if (providerPgRecord) {
+    provider = providerPgRecord;
+  } else if (granulePgRecord.provider_cumulus_id) {
     provider = await providerPgModel.get(
       knexOrTransaction, { cumulus_id: granulePgRecord.provider_cumulus_id }
     );
@@ -174,3 +180,26 @@ export const translateApiGranuleToPostgresGranule = async (
 
   return granuleRecord;
 };
+
+/**
+ * Translate a custom database result into an API granule
+ *
+ * @param {Knex | Knex.Transaction} knex
+ *   Knex client for reading from RDS database
+ * @param {GranuleWithProviderAndCollectionInfo} dbResult - Custom database result
+ */
+export const translateDbResultToApiGranule = async (
+  knex: Knex,
+  dbResult: GranuleWithProviderAndCollectionInfo
+): Promise<ApiGranule> => await translatePostgresGranuleToApiGranule({
+  knexOrTransaction: knex,
+  granulePgRecord: dbResult,
+  collectionPgRecord: {
+    cumulus_id: dbResult.collection_cumulus_id,
+    name: dbResult.collectionName,
+    version: dbResult.collectionVersion,
+  },
+  providerPgRecord: {
+    name: dbResult.providerName,
+  },
+});

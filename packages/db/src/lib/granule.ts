@@ -13,6 +13,7 @@ import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
 
 const { tableNames } = require('../tables');
@@ -201,7 +202,7 @@ export const getGranulesByApiPropertiesQuery = (
     collections: collectionsTable,
     providers: providersTable,
   } = tableNames;
-  return knex(granulesTable)
+  return knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
     .select(`${granulesTable}.*`)
     .select({
       providerName: `${providersTable}.name`,
