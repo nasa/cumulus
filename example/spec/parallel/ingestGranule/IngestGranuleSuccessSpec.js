@@ -102,7 +102,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
-const SetupError = new Error('Test setup failed, aborting');
+// const SetupError = new Error('Test setup failed, aborting');
 
 function failOnSetupError(setupErrors) {
   const errors = setupErrors.filter((e) => e);
@@ -1142,8 +1142,6 @@ describe('The S3 Ingest Granules workflow', () => {
           try {
             failOnSetupError([beforeAllError]);
 
-
-
             file = granule.files[0];
 
             destinationKey = `${testDataFolder}/${file.key}`;
@@ -1211,7 +1209,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('can delete the ingested granule from the API', async () => {
-        failOnSetupError([beforeAllError, subTestSetupError, moveGranuleSetupError]);
+        failOnSetupError([beforeAllError, subTestSetupError]);
         await removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
