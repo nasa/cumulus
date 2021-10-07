@@ -10,9 +10,9 @@ const constructCollectionSnsMessage = (record, eventType) => {
   switch (eventType) {
   case 'Create':
   case 'Update':
-    return { eventType, record };
+    return { event: eventType, record };
   case 'Delete': return {
-    eventType,
+    event: eventType,
     record: {
       name: record.name,
       version: record.version,
@@ -27,9 +27,9 @@ const constructGranuleSnsMessage = (record, eventType) => {
   switch (eventType) {
   case 'Create':
   case 'Update':
-    return { eventType, record };
+    return { event: eventType, record };
   case 'Delete': return {
-    eventType,
+    event: eventType,
     record,
     deletedAt: Date.now(),
   };

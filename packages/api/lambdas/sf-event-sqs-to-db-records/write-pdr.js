@@ -134,6 +134,7 @@ const writePdr = async ({
   updatedAt = Date.now(),
   esClient,
 }) => {
+  let pdrToPublish;
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
     return undefined;
@@ -144,7 +145,7 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return await knex.transaction(async (trx) => {
+  const pdrCumulusId = await knex.transaction(async (trx) => {
     const pgPdr = await writePdrViaTransaction({
       cumulusMessage,
       collectionCumulusId,
@@ -153,16 +154,17 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
+    pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
     await writePdrToDynamoAndEs({
       cumulusMessage,
       pdrModel,
       updatedAt,
       esClient,
     });
-    await publishPdrSnsMessage(pdrToPublish);
     return pgPdr.cumulus_id;
   });
+  await publishPdrSnsMessage(pdrToPublish);
+  return pdrCumulusId;
 };
 
 module.exports = {

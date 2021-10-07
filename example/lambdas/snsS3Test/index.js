@@ -30,7 +30,7 @@ async function handleExecutions(event) {
  */
 async function handleGranules(event) {
   const {
-    eventType,
+    event: eventType,
     record: granule,
   } = JSON.parse(event.Records[0].Sns.Message);
   const s3 = new S3();
@@ -72,7 +72,7 @@ async function handlePdrs(event) {
  */
 async function handleCollections(event) {
   const {
-    eventType,
+    event: eventType,
     record: collection,
   } = JSON.parse(event.Records[0].Sns.Message);
 

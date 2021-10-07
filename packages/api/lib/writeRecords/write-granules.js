@@ -57,7 +57,6 @@ const {
 const Granule = require('../../models/granules');
 const {
   publishGranuleSnsMessageByEventType,
-  publishGranuleUpdateSnsMessage,
 } = require('../publishSnsMessageUtils');
 const {
   getExecutionCumulusId,
@@ -200,6 +199,7 @@ const _writePostgresGranuleViaTransaction = async ({
  * @param {Object} params.workflowError - Error from the workflow
  * @param {string} params.workflowStatus - Workflow status
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
+ * @param {string} params.snsEventType - SNS Event Type
  * @param {Object} [params.granuleModel] - Optional Granule DDB model override
  * @param {Object} [params.granulePgModel] - Optional Granule PG model override
  * @returns {undefined}
@@ -211,10 +211,12 @@ const _writeGranuleFiles = async ({
   workflowError,
   status,
   knex,
+  snsEventType,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
 }) => {
   let fileRecords = [];
+  let pgGranule;
 
   if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
@@ -238,7 +240,7 @@ const _writeGranuleFiles = async ({
       Cause: error.toString(),
     };
     await knex.transaction(async (trx) => {
-      const [pgGranule] = await granulePgModel.update(
+      [pgGranule] = await granulePgModel.update(
         trx,
         { cumulus_id: granuleCumulusId },
         {
@@ -261,12 +263,13 @@ const _writeGranuleFiles = async ({
         log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
         throw updateError;
       });
-      const granuletoPublish = await translatePostgresGranuleToApiGranule({
-        granulePgRecord: pgGranule,
-        knexOrTransaction: knex,
-      });
-      await publishGranuleUpdateSnsMessage(granuletoPublish);
     });
+    const granuletoPublish = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+
+    await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
   }
 };
 
@@ -362,12 +365,13 @@ const _writeGranule = async ({
       esClient,
       granuleModel,
     });
-    const granuletoPublish = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
-    });
-    await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
   });
+
+  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
 
   log.info(
     `
@@ -386,6 +390,7 @@ const _writeGranule = async ({
     workflowError: error,
     status,
     knex,
+    snsEventType,
     granuleModel,
   });
 };

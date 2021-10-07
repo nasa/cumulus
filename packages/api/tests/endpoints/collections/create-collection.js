@@ -218,7 +218,7 @@ test.serial('POST creates a new collection in all data stores and publishes an S
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.eventType, 'Create');
+  t.is(message.event, 'Create');
   t.deepEqual(message.record, fetchedDynamoRecord);
 });
 

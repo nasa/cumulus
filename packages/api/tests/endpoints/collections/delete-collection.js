@@ -227,7 +227,7 @@ test.serial('Deleting a collection removes it from all data stores and publishes
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.eventType, 'Delete');
+  t.is(message.event, 'Delete');
   t.true(Date.now() > message.deletedAt);
   t.deepEqual(
     message.record,
@@ -258,7 +258,7 @@ test.serial('Deleting a collection without a record in RDS succeeds', async (t) 
   t.is(Messages.length, 1);
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.eventType, 'Delete');
+  t.is(message.event, 'Delete');
   t.truthy(message.deletedAt);
   t.deepEqual(
     message.record,

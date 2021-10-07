@@ -127,7 +127,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, newCollection);
-  t.is(message.eventType, 'Create');
+  t.is(message.event, 'Create');
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Update', async (t) => {
@@ -146,7 +146,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, newCollection);
-  t.is(message.eventType, 'Update');
+  t.is(message.event, 'Update');
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Delete', async (t) => {
@@ -166,7 +166,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const message = JSON.parse(snsMessage.Message);
 
   t.deepEqual(message.record, { name: newCollection.name, version: newCollection.version });
-  t.is(message.eventType, 'Delete');
+  t.is(message.event, 'Delete');
   t.true(message.deletedAt > t.context.timeBeforePublish);
   t.true(message.deletedAt < Date.now());
 });
@@ -204,7 +204,7 @@ test.serial('publishSnsMessageByDataType() publishes an SNS message for the gran
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.deepEqual(publishedMessage.record.granuleId, granuleId);
-  t.deepEqual(publishedMessage.eventType, 'Delete');
+  t.deepEqual(publishedMessage.event, 'Delete');
   t.true(publishedMessage.deletedAt > t.context.timeBeforePublish);
   t.true(publishedMessage.deletedAt < Date.now());
 });

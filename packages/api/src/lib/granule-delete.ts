@@ -82,10 +82,10 @@ const deleteGranuleAndFiles = async (params: {
     collectionCumulusId,
   } = params;
   let granuleToPublishToSns: object;
+  granuleToPublishToSns = dynamoGranule;
   if (pgGranule === undefined) {
     logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
     // Delete only the Dynamo Granule and S3 Files
-    granuleToPublishToSns = dynamoGranule;
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
     await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
@@ -127,8 +127,8 @@ const deleteGranuleAndFiles = async (params: {
           index: process.env.ES_INDEX,
           ignore: [404],
         });
-        await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
       });
+      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
       logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
       await _deleteS3Files(files);
     } catch (error) {

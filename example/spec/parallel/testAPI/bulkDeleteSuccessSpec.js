@@ -279,12 +279,13 @@ describe('POST /granules/bulkDelete', () => {
 
     it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {
       const timestamp = Date.now();
-      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}.output`;
+      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}-Delete.output`;
       const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-      expect(message.eventType).toEqual('Delete');
-      expect(message.record).toEqual(ingestedGranule);
-      expect(message.deletedAt).toBeGreaterThan(timestamp);
+      expect(message.event).toEqual('Delete');
+      expect(message.record.granuleId).toEqual(ingestedGranule.granuleId);
+      expect(message.record.published).toEqual(false);
+      expect(message.deletedAt).toBeLessThan(timestamp);
     });
   });
 });
