@@ -147,10 +147,10 @@ test('QuerySearchClient.shift() returns next record if next record must be fetch
   t.is(queryLimitSpy.callCount, 2);
 });
 
-test('QuerySearchClient.peek() correctly returns true if next record exists in fetched results', async (t) => {
+test('QuerySearchClient.peek() correctly returns the next record in the fetched results, if any', async (t) => {
   const { knex, bucket } = t.context;
 
-  await createFileRecords(t.context, 1);
+  const records = await createFileRecords(t.context, 1);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -162,15 +162,16 @@ test('QuerySearchClient.peek() correctly returns true if next record exists in f
     query,
     1
   );
-  t.truthy(
-    await fileSearchClient.peek()
+  t.like(
+    await fileSearchClient.peek(),
+    records[0]
   );
 });
 
-test('QuerySearchClient.peek() correctly returns true if next record must be fetched', async (t) => {
+test('QuerySearchClient.peek() correctly returns next record when more records must be fetched', async (t) => {
   const { knex, bucket } = t.context;
 
-  await createFileRecords(t.context, 2);
+  const records = orderBy(await createFileRecords(t.context, 2), ['cumulus_id']);
 
   const query = getFilesAndGranuleInfoQuery({
     knex,
@@ -185,12 +186,14 @@ test('QuerySearchClient.peek() correctly returns true if next record must be fet
     1
   );
 
-  t.truthy(
-    await fileSearchClient.peek()
+  t.like(
+    await fileSearchClient.peek(),
+    records[0]
   );
   await fileSearchClient.shift();
-  t.truthy(
-    await fileSearchClient.peek()
+  t.like(
+    await fileSearchClient.peek(),
+    records[1]
   );
   t.is(queryOffsetSpy.callCount, 2);
   t.is(queryOffsetSpy.getCall(0).args[0], 0);
@@ -200,7 +203,7 @@ test('QuerySearchClient.peek() correctly returns true if next record must be fet
   t.is(queryLimitSpy.getCall(1).args[0], 1);
 });
 
-test('QuerySearchClient.peek() correctly returns false if next record does not exist in fetched results', async (t) => {
+test('QuerySearchClient.peek() correctly returns undefined if next record does not exist in fetched results', async (t) => {
   const { knex, bucket } = t.context;
 
   const query = getFilesAndGranuleInfoQuery({
@@ -213,8 +216,9 @@ test('QuerySearchClient.peek() correctly returns false if next record does not e
     query,
     1
   );
-  t.falsy(
-    await fileSearchClient.peek()
+  t.is(
+    await fileSearchClient.peek(),
+    undefined
   );
 });
 

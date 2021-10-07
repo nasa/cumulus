@@ -31,7 +31,7 @@ export const getFilesAndGranuleInfoQuery = ({
   sortColumns: (keyof PostgresFileRecord)[],
   granuleColumns: (keyof PostgresGranuleRecord)[],
   limit?: number
-}) => {
+}): Knex.QueryBuilder => {
   const query = knex(tableNames.files)
     .select(`${tableNames.files}.*`)
     .select(granuleColumns.map((column) => `${tableNames.granules}.${column}`))
