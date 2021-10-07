@@ -172,7 +172,7 @@ variable "archive_api_port" {
 variable "archive_api_reserved_concurrency" {
   description = "Reserved Concurrency for the API lambda function"
   type = number
-  default = 8
+  default = 15
 }
 
 variable "archive_api_users" {

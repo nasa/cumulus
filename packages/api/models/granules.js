@@ -362,7 +362,15 @@ class Granule extends Manager {
 
     // Only allow "running" granule to replace completed/failed
     // granule if the execution has changed for granules with executions.
+    // Allow running granule to replace queued granule
     if (granuleRecord.status === 'running' && granuleRecord.execution !== undefined) {
+      updateParams.ExpressionAttributeValues[':queued'] = 'queued';
+      updateParams.ConditionExpression += ' and (#status = :queued or #execution <> :execution)';
+    }
+
+    // Only allow "queued" granule to replace running/completed/failed
+    // granule if the execution has changed for granules with executions.
+    if (granuleRecord.status === 'queued' && granuleRecord.execution !== undefined) {
       updateParams.ConditionExpression += ' and #execution <> :execution';
     }
 
@@ -370,7 +378,7 @@ class Granule extends Manager {
       return await this.dynamodbDocClient.update(updateParams).promise();
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-        logger.error(`Did not process delayed event for granule: ${granuleRecord.granuleId} (execution: ${granuleRecord.execution}), cause:`, error);
+        logger.error(`Did not process delayed event for granule: ${JSON.stringify(granuleRecord)}, cause:`, error);
         return undefined;
       }
       throw error;

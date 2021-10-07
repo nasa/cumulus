@@ -95,7 +95,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  */
 async function enqueueGranuleIngestMessage({
   collection,
-  granule,
+  granules,
   granuleIngestWorkflow,
   parentExecutionArn,
   pdr,
@@ -112,11 +112,7 @@ async function enqueueGranuleIngestMessage({
     getWorkflowFileKey(stack, granuleIngestWorkflow)
   );
 
-  const payload = {
-    granules: [
-      granule,
-    ],
-  };
+  const payload = { granules };
 
   const workflow = {
     name: granuleIngestWorkflow,

@@ -10,12 +10,14 @@ const path = require('path');
 const pWaitFor = require('p-wait-for');
 
 const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   deleteGranule,
   getGranule,
   listGranules,
+  removePublishedGranule,
 } = require('@cumulus/api-client/granules');
 
 const { waitForApiStatus } = require('./apiUtils');
@@ -144,6 +146,34 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   ])(baseInputPayload);
 }
 
+const deleteGranules = async (prefix, granules) => {
+  process.env.GranulesTable = `${prefix}-GranulesTable`;
+  const granuleModel = new Granule();
+  return await Promise.all(
+    granules.map(async (granule) => {
+      // Temporary fix to handle granules that are in a bad state
+      // and cannot be deleted via the API
+      try {
+        if (granule.published === true) {
+          return await removePublishedGranule({
+            prefix,
+            granuleId: granule.granuleId,
+          });
+        }
+        return await deleteGranule({
+          prefix,
+          granuleId: granule.granuleId,
+        });
+      } catch (error) {
+        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
+          return await granuleModel.delete({ granuleId: granule.granuleId });
+        }
+        throw error;
+      }
+    })
+  );
+};
+
 /**
  * Read the file, update it with the new granule id, path, collectionId, and
  * stackId, and return the file as a JS object.
@@ -214,7 +244,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
       'beginningDateTime',
       'endingDateTime',
       'error',
-      'files', // FUTURE: files contain a "type" field in elasticsearch that does not exist in Postgres
+      'files', // TODO -2714 this should be removed
       'lastUpdateDateTime',
       'productionDateTime',
       'updatedAt',
@@ -230,6 +260,7 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
     });
     const results = JSON.parse(resp.body).results;
     if (results && results.length === 1) {
+      // TODO - CUMULUS-2714 key sort both files objects for comparison
       const granuleMatches = isEqual(omit(results[0], fieldsIgnored), omit(granule, fieldsIgnored));
 
       if (!granuleMatches) {
@@ -273,6 +304,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = 
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
+  deleteGranules,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
