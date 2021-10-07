@@ -92,3 +92,35 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
     granule_id: testGranule2.granule_id,
   });
 });
+
+test('getFilesAndGranuleInfoQuery works with no granule columns specified', async (t) => {
+  const { collectionCumulusId, filePgModel, knex } = t.context;
+
+  const testGranule1 = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [granuleCumulusId1] = await t.context.granulePgModel.create(
+    t.context.knex,
+    testGranule1
+  );
+
+  const bucket = cryptoRandomString({ length: 10 });
+  const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
+  await filePgModel.create(knex, {
+    bucket,
+    key: firstKey,
+    granule_cumulus_id: granuleCumulusId1,
+  });
+
+  const records = await getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams: { bucket },
+    sortColumns: ['bucket', 'key'],
+  });
+  t.is(records.length, 1);
+  t.like(records[0], {
+    bucket,
+    key: firstKey,
+    granule_cumulus_id: Number.parseInt(granuleCumulusId1, 10),
+  });
+});

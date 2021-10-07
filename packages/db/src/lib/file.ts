@@ -14,7 +14,7 @@ import { PostgresGranuleRecord } from '../types/granule';
  *   Query search parameters for files table
  * @param {Array<string>} params.sortColumns
  *   Columns to sort results by
- * @param {Array<string>} params.granuleColumns
+ * @param {Array<string>} [params.granuleColumns]
  *   Columns to return from granules table
  * @param {number} [params.limit] - Limit on number of results to return. Optional.
  * @returns {Promise<Object>} - A Knex query builder object
@@ -29,17 +29,21 @@ export const getFilesAndGranuleInfoQuery = ({
   knex: Knex,
   searchParams: Partial<PostgresFileRecord>,
   sortColumns: (keyof PostgresFileRecord)[],
-  granuleColumns: (keyof PostgresGranuleRecord)[],
+  granuleColumns?: (keyof PostgresGranuleRecord)[],
   limit?: number
 }): Knex.QueryBuilder => {
   const query = knex(tableNames.files)
     .select(`${tableNames.files}.*`)
-    .select(granuleColumns.map((column) => `${tableNames.granules}.${column}`))
-    .innerJoin(
-      tableNames.granules,
-      `${tableNames.files}.granule_cumulus_id`,
-      `${tableNames.granules}.cumulus_id`
-    )
+    .modify((queryBuilder) => {
+      if (granuleColumns.length > 0) {
+        queryBuilder.select(granuleColumns.map((column) => `${tableNames.granules}.${column}`));
+        queryBuilder.innerJoin(
+          tableNames.granules,
+          `${tableNames.files}.granule_cumulus_id`,
+          `${tableNames.granules}.cumulus_id`
+        );
+      }
+    })
     .where(searchParams)
     .orderBy(sortColumns);
   if (limit) {
