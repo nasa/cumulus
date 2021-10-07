@@ -482,6 +482,7 @@ async function bulkOperations(req, res) {
       type: 'BULK_GRANULE',
       envVars: {
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,
@@ -535,6 +536,7 @@ async function bulkDelete(req, res) {
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -576,6 +578,7 @@ async function bulkReingest(req, res) {
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,
