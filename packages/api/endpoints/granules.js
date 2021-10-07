@@ -334,7 +334,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex, esClient, 'Update');
+    await updateGranuleFromApi(updatedGranule, knex, esClient, 'Update');
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
