@@ -2,6 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { ValidationError } = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const {
@@ -40,6 +41,10 @@ test.before(async (t) => {
   // Create collection
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
   const [collectionPgRecord] = await t.context.collectionPgModel.create(
     knex,
     t.context.collection
@@ -171,12 +176,13 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     executions,
     postgresGranule,
     fileKeys,
+    collectionId,
   } = t.context;
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId,
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -325,6 +331,7 @@ test('translatePostgresGranuleToApiGranule omits files property from API granule
     collectionPgModel,
     filePgModel,
     collectionCumulusId,
+    collectionId,
   } = t.context;
 
   const [pgGranule] = await t.context.granulePgModel.create(
@@ -336,7 +343,7 @@ test('translatePostgresGranuleToApiGranule omits files property from API granule
   );
 
   const expectedApiGranule = {
-    collectionId: 'collectionName___collectionVersion',
+    collectionId,
     createdAt: pgGranule.created_at.getTime(),
     granuleId: pgGranule.granule_id,
     status: pgGranule.status,
@@ -396,6 +403,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     executions,
     postgresGranule,
     fileKeys,
+    collectionId,
   } = t.context;
 
   delete postgresGranule.pdr_cumulus_id;
@@ -404,7 +412,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId,
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -455,6 +463,40 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   });
 
   t.deepEqual(
+    result,
+    expectedApiGranule
+  );
+});
+
+test('translatePostgresGranuleToApiGranule handles granule with no associated execution', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granulePgModel,
+    collectionId,
+  } = t.context;
+
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+
+  const expectedApiGranule = {
+    granuleId: granule.granule_id,
+    status: granule.status,
+    createdAt: granule.created_at.getTime(),
+    collectionId,
+  };
+
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    knexOrTransaction: knex,
+  });
+
+  t.like(
     result,
     expectedApiGranule
   );
