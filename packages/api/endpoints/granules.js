@@ -147,6 +147,7 @@ async function put(req, res) {
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
+  const QUEQUED_STATUS = 'queued';
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleName) {
@@ -180,6 +181,13 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
+    const knex = await getKnexClient({ env: process.env });
+    await writeGranuleFromApi({
+      collectionId: granule.collectionId,
+      granuleId: granule.granuleId,
+      status: QUEQUED_STATUS,
+    }, knex);
+
     await granuleModelClient.reingest({
       ...granule,
       ...(targetExecution && { execution: targetExecution }),
@@ -200,6 +208,13 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
+    const knex = await getKnexClient({ env: process.env });
+    await writeGranuleFromApi({
+      collectionId: granule.collectionId,
+      granuleId: granule.granuleId,
+      status: QUEQUED_STATUS,
+    }, knex);
+
     await granuleModelClient.applyWorkflow(
       granule,
       body.workflow,

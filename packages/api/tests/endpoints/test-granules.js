@@ -528,7 +528,7 @@ test.serial('reingest a granule', async (t) => {
   t.true(body.warning.includes('overwritten'));
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  t.is(updatedGranule.status, 'queued');
   stub.restore();
 });
 
@@ -579,7 +579,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  t.is(updatedGranule.status, 'queued');
   stub.restore();
 });
 
