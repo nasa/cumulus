@@ -41,6 +41,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
       publish SNS messages to the report topics to PDRs, Collections, and
       Executions.
+    - Added the following functions in `publishSnsMessageUtils` to handle publishing SNS messages for specific data and event types:
+      - `publishCollectionUpdateSnsMessage`
+      - `publishCollectionCreateSnsMessage`
+      - `publishCollectionDeleteSnsMessage`
+      - `publishGranuleUpdateSnsMessage`
+      - `publishGranuleDeleteSnsMessage`
+      - `publishGranuleCreateSnsMessage`
+      - `publishExecutionSnsMessage`
+      - `publishPdrSnsMessage`
+      - `publishGranuleSnsMessageByEventType`
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
 - **CUMULUS-2000**
@@ -164,8 +174,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
 ### Fixed
-  - **CUMULUS-2583**
-    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as   "queued" were not able to be set as "running" or "completed"
 
 ### Removed
 
