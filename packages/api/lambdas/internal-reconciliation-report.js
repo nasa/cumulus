@@ -22,7 +22,7 @@ const {
   getCollectionsByGranuleIds,
   getGranulesByApiPropertiesQuery,
   QuerySearchClient,
-  translatePostgresGranuleToApiGranule,
+  translateDbResultToApiGranule,
 } = require('@cumulus/db');
 
 const {
@@ -279,17 +279,6 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
 
   let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
 
-  const translateDbResultToApiGranule = async (dbResult) =>
-    await translatePostgresGranuleToApiGranule({
-      knexOrTransaction: recReportParams.knex,
-      granulePgRecord: dbResult,
-      collectionPgRecord: {
-        cumulus_id: dbResult.collection_cumulus_id,
-        name: dbResult.collectionName,
-        version: dbResult.collectionVersion,
-      },
-    });
-
   /* eslint-disable no-await-in-loop */
   while (nextEsItem && nextDbItem) {
     if (nextEsItem.granuleId < nextDbItem.granule_id) {
@@ -297,13 +286,13 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
     } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
-      const apiGranule = await translateDbResultToApiGranule(nextDbItem);
+      const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextDbItem);
 
       // Found an item that is only in DB and not in ES
       onlyInDb.push(pick(apiGranule, granuleFields));
       await pgGranulesSearchClient.shift();
     } else {
-      const apiGranule = await translateDbResultToApiGranule(nextDbItem);
+      const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextDbItem);
 
       // Found an item that is in both ES and DB
       if (isEqual(omit(nextEsItem, esFieldsIgnored), omit(apiGranule, fieldsIgnored))) {
@@ -326,7 +315,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   // Add any remaining DB items to the report
   while (await pgGranulesSearchClient.peek()) {
     const item = await pgGranulesSearchClient.shift();
-    const apiGranule = await translateDbResultToApiGranule(item);
+    const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, item);
     onlyInDb.push(pick(apiGranule, granuleFields));
   }
   /* eslint-enable no-await-in-loop */

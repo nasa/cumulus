@@ -8,7 +8,7 @@ const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const {
   getGranulesByApiPropertiesQuery,
   QuerySearchClient,
-  translatePostgresGranuleToApiGranule,
+  translateDbResultToApiGranule,
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
@@ -66,20 +66,9 @@ async function createGranuleInventoryReport(recReportParams) {
     Body: pass,
   });
 
-  const translateDbResultToApiGranule = (dbResult) =>
-    translatePostgresGranuleToApiGranule({
-      knexOrTransaction: recReportParams.knex,
-      granulePgRecord: dbResult,
-      collectionPgRecord: {
-        cumulus_id: dbResult.collection_cumulus_id,
-        name: dbResult.collectionName,
-        version: dbResult.collectionVersion,
-      },
-    });
-
   while (nextGranule) {
     // eslint-disable-next-line no-await-in-loop
-    const apiGranule = await translateDbResultToApiGranule(nextGranule);
+    const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextGranule);
     readable.push({
       granuleUr: apiGranule.granuleId,
       collectionId: apiGranule.collectionId,
