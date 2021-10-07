@@ -49,6 +49,7 @@ class ESScrollSearch extends Search {
     } else {
       response = await this.client.scroll({
         scrollId: this.scrollId,
+        scroll: process.env.ES_SCROLL || defaultESScrollDuration,
       });
       this.scrollId = response.body._scroll_id;
     }
