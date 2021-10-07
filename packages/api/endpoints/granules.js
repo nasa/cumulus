@@ -29,7 +29,7 @@ const {
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { createGranuleFromApi, updateGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
@@ -91,7 +91,7 @@ const create = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(granule, knex, esClient, 'Create');
+    await createGranuleFromApi(granule, knex, esClient);
     if (inTestMode()) {
       await addToLocalES(granule, indexGranule);
     }
@@ -131,7 +131,7 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(body, knex, esClient, 'Update');
+    await updateGranuleFromApi(body, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));

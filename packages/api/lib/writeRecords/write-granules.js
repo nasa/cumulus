@@ -526,6 +526,14 @@ const writeGranuleFromApi = async (
   }
 };
 
+const createGranuleFromApi = async (granule, knex, esClient) => {
+  await writeGranuleFromApi(granule, knex, esClient, 'Create');
+};
+
+const updateGranuleFromApi = async (granule, knex, esClient) => {
+  await writeGranuleFromApi(granule, knex, esClient, 'Update');
+};
+
 /**
  * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
@@ -640,4 +648,6 @@ module.exports = {
   _writeGranule,
   writeGranuleFromApi,
   writeGranulesFromMessage,
+  createGranuleFromApi,
+  updateGranuleFromApi,
 };
