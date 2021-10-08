@@ -4,12 +4,56 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Unreleased
+
+### Added
+
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
+
+## [v9.7.0] 2021-10-01
+
+### Notable Changes
+
+- **CUMULUS-2583**
+  - The `queue-granules` task now updates granule status to `queued` when a granule is queued. In order to prevent issues with the private API endpoint and Lambda API request and concurrency limits, this functionality runs with limited concurrency, which may increase the task's overall runtime when large numbers of granules are being queued. If you are facing Lambda timeout errors with this task, we recommend converting your `queue-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- **CUMULUS-2676**
+  - The `discover-granules` task has been updated to limit concurrency on checks to identify and skip already ingested granules in order to prevent issues with the private API endpoint and Lambda API request and concurrency limits. This may increase the task's overall runtime when large numbers of granules are discovered. If you are facing Lambda timeout errors with this task, we recommend converting your `discover-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- Updated memory of `<prefix>-sfEventSqsToDbRecords` Lambda to 1024MB
 
 ### Added
 
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
+- **CUMULUS-2630**
+  - Adds a new workflow `DiscoverGranulesToThrottledQueue` that discovers and writes
+    granules to a throttled background queue.  This allows discovery and ingest
+    of larger numbers of granules without running into limits with lambda
+    concurrency.
+
+### Changed
+
+- **CUMULUS-2695**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
+    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
+    should increase this value.
+  - Updates cumulus-tf/cumulus/variables.tf to change
+    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
+    the dashboard for default deployments.
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
+  - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
+
+### Fixed
+  - **CUMULUS-2583**
+    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
+## [v9.6.0] 2021-09-20
+
+### Added
+
 - **CUMULUS-2576**
   - Adds `PUT /granules` API endpoint to update a granule
   - Adds helper `updateGranule` to `@cumulus/api-client/granules`
@@ -26,21 +70,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   issue in previous version.
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
-- **CUMULUS-2695**
-  - Updates the example/cumulus-tf deployment to change
-    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
-    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
-    should increase this value.
-  - Updates cumulus-tf/cumulus/variables.tf to change
-    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
-    the dashboard for default deployments.
-- **CUMULUS-NONE**
-  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
 
 ### Fixed
 
 - Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
 to allow `kms:Decrypt` on the KMS key used to encrypt provider credentials. Adding this permission fixes the `sync-granule` task when run as an ECS activity in a Step Function, which previously failed trying to decrypt credentials for providers.
+
+- **CUMULUS-2576**
+  - Adds default value to granule's timestamp when updating a granule via API.
 
 ## [v9.5.0] 2021-09-07
 
@@ -1014,7 +1051,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after
-    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
     of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
@@ -4860,7 +4897,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.5.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.7.0...HEAD
+[v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
+[v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0

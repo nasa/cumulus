@@ -2,6 +2,8 @@
 
 const path = require('path');
 const test = require('ava');
+const sinon = require('sinon');
+const pMap = require('p-map');
 const proxyquire = require('proxyquire');
 const { readJson } = require('fs-extra');
 const { CumulusApiClientError } = require('@cumulus/api-client/CumulusApiClientError');
@@ -61,6 +63,8 @@ const fakeGranulesModule = {
   },
 };
 
+const pMapSpy = sinon.spy(pMap);
+
 // Import the discover-granules functions that we'll be testing, configuring them to use the fake
 // granules module and the fake logger.
 const {
@@ -71,6 +75,7 @@ const {
 } = proxyquire(
   '..',
   {
+    'p-map': pMapSpy,
     '@cumulus/api-client/granules': fakeGranulesModule,
     '@cumulus/logger': FakeLogger,
   }
@@ -84,6 +89,7 @@ async function assertDiscoveredGranules(t, output) {
 }
 
 test.beforeEach(async (t) => {
+  pMapSpy.resetHistory();
   process.env.oauth_provider = 'earthdata';
 
   t.context.event = await readJson(path.join(__dirname, 'fixtures', 'mur.json'));
@@ -313,7 +319,10 @@ test('discover granules using S3 throws error when discovery fails',
   });
 
 test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) => {
-  const result = await handleDuplicates(t.context.filesByGranuleId, 'skip');
+  const result = await handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'skip',
+  });
 
   t.is(Object.keys(result).length, 2);
   t.is(result.duplicate, undefined);
@@ -321,31 +330,46 @@ test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) =>
 
 test(
   'handleDuplicates throws Error on duplicateHandling set to "error"',
-  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'error'))
+  (t) => t.throwsAsync(handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'error',
+  }))
 );
 
 test(
   'handleDuplicates throws Error on an invalid duplicateHandling configuration',
-  (t) => t.throwsAsync(handleDuplicates(t.context.filesByGranuleId, 'foobar'))
+  (t) => t.throwsAsync(handleDuplicates({
+    filesByGranuleId: t.context.filesByGranuleId,
+    duplicateHandling: 'foobar',
+  }))
 );
 
 test('handleDuplicates does not filter when duplicateHandling is set to "replace"', async (t) => {
   t.deepEqual(
-    await handleDuplicates(t.context.filesByGranuleId, 'replace'),
+    await handleDuplicates({
+      filesByGranuleId: t.context.filesByGranuleId,
+      duplicateHandling: 'replace',
+    }),
     t.context.filesByGranuleId
   );
 });
 
 test('handleDuplicates does not filter when duplicateHandling is set to "version"', async (t) => {
   t.deepEqual(
-    await handleDuplicates(t.context.filesByGranuleId, 'version'),
+    await handleDuplicates({
+      filesByGranuleId: t.context.filesByGranuleId,
+      duplicateHandling: 'version',
+    }),
     t.context.filesByGranuleId
   );
 });
 
 test('filterDuplicates returns a set of filtered keys', async (t) => {
   t.deepEqual(
-    await filterDuplicates(['duplicate', 'key1', 'key2'], 'skip'),
+    await filterDuplicates({
+      granuleIds: ['duplicate', 'key1', 'key2'],
+      duplicateHandling: 'skip',
+    }),
     ['key1', 'key2']
   );
 });
@@ -377,6 +401,58 @@ test(
 test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda return', async (t) => {
   const error = await t.throwsAsync(checkGranuleHasNoDuplicate('unexpected-response', 'skip'));
   t.true(error.message.startsWith('Unexpected return from Private API lambda'));
+});
+
+test.serial('discover granules uses default concurrency of 3', async (t) => {
+  const { event } = t.context;
+
+  event.config.provider_path = '/granules/fake_granules';
+
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  event.config.duplicateGranuleHandling = 'skip';
+
+  await validateConfig(t, event.config);
+
+  await discoverGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 3 })
+  ));
+});
+
+test.serial('discover granules uses configured concurrency', async (t) => {
+  const { event } = t.context;
+
+  event.config.provider_path = '/granules/fake_granules';
+
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+
+  event.config.duplicateGranuleHandling = 'skip';
+  event.config.concurrency = 17;
+
+  await validateConfig(t, event.config);
+
+  await discoverGranules(event);
+
+  t.true(pMapSpy.calledOnce);
+  t.true(pMapSpy.calledWithMatch(
+    sinon.match.any,
+    sinon.match.any,
+    sinon.match({ concurrency: 17 })
+  ));
 });
 
 test.serial('discover granules sets the GRANULES environment variable and logs the granules', async (t) => {

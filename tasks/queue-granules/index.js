@@ -52,11 +52,15 @@ function groupAndBatchGranules(granules, batchSize) {
  * See schemas/input.json and schemas/config.json for detailed event description
  *
  * @param {Object} event - Lambda event object
+ * @param {Object} testMocks - Object containing mock functions for testing
  * @returns {Promise} - see schemas/output.json for detailed output schema
  *   that is passed to the next task in the workflow
  **/
-async function queueGranules(event) {
+async function queueGranules(event, testMocks = {}) {
   const granules = event.input.granules || [];
+  const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
+  const enqueueGranuleIngestMessageFn
+    = testMocks.enqueueGranuleIngestMessageMock || enqueueGranuleIngestMessage;
 
   const collectionConfigStore = new CollectionConfigStore(
     event.config.internalBucket,
@@ -81,7 +85,25 @@ async function queueGranules(event) {
         granuleBatch[0].dataType,
         granuleBatch[0].version
       );
-      const executionArn = enqueueGranuleIngestMessage({
+      // include createdAt to ensure write logic passes
+      const createdAt = Date.now();
+      await pMap(
+        granuleBatch,
+        (queuedGranule) => updateGranule({
+          prefix: event.config.stackName,
+          body: {
+            collectionId: constructCollectionId(
+              queuedGranule.dataType,
+              queuedGranule.version
+            ),
+            granuleId: queuedGranule.granuleId,
+            status: 'queued',
+            createdAt,
+          },
+        }),
+        { concurrency: pMapConcurrency }
+      );
+      return await enqueueGranuleIngestMessageFn({
         granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
@@ -96,25 +118,6 @@ async function queueGranules(event) {
         executionNamePrefix: event.config.executionNamePrefix,
         additionalCustomMeta: event.config.childWorkflowMeta,
       });
-      if (executionArn) {
-        await pMap(
-          granuleBatch,
-          (queuedGranule) => granulesApi.updateGranule({
-            prefix: event.config.stackName,
-            body: {
-              collectionId: constructCollectionId(
-                queuedGranule.dataType,
-                queuedGranule.version
-              ),
-              granuleId: queuedGranule.granuleId,
-              status: 'queued',
-              retries: 3,
-            },
-          }),
-          { concurrency: pMapConcurrency }
-        );
-      }
-      return executionArn;
     },
     { concurrency: pMapConcurrency }
   );
