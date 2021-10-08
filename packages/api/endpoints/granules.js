@@ -147,7 +147,6 @@ async function put(req, res) {
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
-  const QUEQUED_STATUS = 'queued';
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleName) {
@@ -185,7 +184,7 @@ async function put(req, res) {
     await writeGranuleFromApi({
       collectionId: granule.collectionId,
       granuleId: granule.granuleId,
-      status: QUEQUED_STATUS,
+      status: 'queued',
     }, knex);
 
     await granuleModelClient.reingest({
@@ -212,7 +211,7 @@ async function put(req, res) {
     await writeGranuleFromApi({
       collectionId: granule.collectionId,
       granuleId: granule.granuleId,
-      status: QUEQUED_STATUS,
+      status: 'queued',
     }, knex);
 
     await granuleModelClient.applyWorkflow(
