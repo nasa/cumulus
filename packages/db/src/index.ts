@@ -18,6 +18,7 @@ export {
 
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
+export { createRejectableTransaction } from './database';
 export { tableNames } from './tables';
 export const migrationDir = path.join(__dirname, 'migrations');
 
