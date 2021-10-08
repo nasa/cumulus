@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
 import { tableNames } from '../tables';

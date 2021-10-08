@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> =>
   await knex.schema.createTable('executions', (table) => {

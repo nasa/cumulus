@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import * as KMS from '@cumulus/aws-client/KMS';

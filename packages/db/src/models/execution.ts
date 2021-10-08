@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
 import { tableNames } from '../tables';

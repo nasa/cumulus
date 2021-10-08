@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { isRecordDefined } from '../database';
 import { tableNames } from '../tables';

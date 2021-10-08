@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import pMap from 'p-map';
 
 import { deleteS3Object } from '@cumulus/aws-client/S3';

@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 export const isRecordDefined = <T>(record: T) => record !== undefined;
 

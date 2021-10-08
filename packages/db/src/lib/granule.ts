@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { PostgresGranule } from '../types/granule';
 import { CollectionPgModel } from '../models/collection';
