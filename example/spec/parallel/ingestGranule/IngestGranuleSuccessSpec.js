@@ -107,7 +107,7 @@ const s3data = [
 function failOnSetupError(setupErrors) {
   const errors = setupErrors.filter((e) => e);
 
-  if (errors) {
+  if (errors.length > 0) {
     console.log('Test setup failed, aborting');
     console.log(errors);
     fail(errors[0]);
