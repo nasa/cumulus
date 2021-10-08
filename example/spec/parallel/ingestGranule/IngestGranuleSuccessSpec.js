@@ -604,11 +604,19 @@ describe('The S3 Ingest Granules workflow', () => {
         files = granule.files;
 
         const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
-        const result = await Promise.all([
-          getOnlineResources(granule),
-          getOnlineResources(ummGranule),
-          getTEARequestHeaders(config.stackName),
-        ]);
+        // const result = await Promise.all([
+        //   getOnlineResources(granule),
+        //   getOnlineResources(ummGranule),
+        //   getTEARequestHeaders(config.stackName),
+        // ]);
+
+        const result = [];
+        console.log('Get granule');
+        result.push(await getOnlineResources(granule));
+        console.log('Get UMM granule');
+        result.push(await getOnlineResources(ummGranule));
+        console.log('Get TEA');
+        result.push(await getTEARequestHeaders(config.stackName));
 
         cmrResource = result[0];
         ummCmrResource = result[1];
