@@ -29,6 +29,7 @@ Currently the following values are supported:
 - queue_pdrs_task_timeout
 - queue_workflow_task_timeout
 - sync_granule_task_timeout
+- update_granules_cmr_metadata_file_links_task_timeout
 
 ### Example
 

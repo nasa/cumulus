@@ -84,6 +84,7 @@ const buildRandomizedCollection = (overrides = {}) => ({
   granuleId: '^[^.]+$',
   granuleIdExtraction: '^([^.]+)\..+$',
   sampleFileName: 'asdf.jpg',
+  duplicateHandling: 'replace',
   url_path: randomId('url-path-'),
   files: [
     {
