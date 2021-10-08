@@ -9,7 +9,9 @@ const ignoredPackages = [
 
 module.exports = {
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
