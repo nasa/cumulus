@@ -26,7 +26,7 @@
   "dependencies": {
     "@cumulus/common": "9.7.0",
     "@cumulus/db": "9.7.0",
-    "knex": "0.21.13",
+    "knex": "~0.95.11",
     "pg": "^8.3.0"
   },
   "devDependencies": {
