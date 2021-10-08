@@ -13,6 +13,7 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranule,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const {
   upsertGranule,
@@ -61,6 +62,9 @@ const {
 const {
   getExecutionCumulusId,
 } = require('./utils');
+const {
+  deconstructCollectionId,
+} = require('../utils');
 
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
@@ -211,12 +215,10 @@ const _writeGranuleFiles = async ({
   workflowError,
   status,
   knex,
-  snsEventType,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
 }) => {
   let fileRecords = [];
-  let pgGranule;
 
   if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
@@ -240,7 +242,7 @@ const _writeGranuleFiles = async ({
       Cause: error.toString(),
     };
     await knex.transaction(async (trx) => {
-      [pgGranule] = await granulePgModel.update(
+      await granulePgModel.update(
         trx,
         { cumulus_id: granuleCumulusId },
         {
@@ -264,12 +266,6 @@ const _writeGranuleFiles = async ({
         throw updateError;
       });
     });
-    const granuletoPublish = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
-    });
-
-    await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
   }
 };
 
@@ -367,12 +363,6 @@ const _writeGranule = async ({
     });
   });
 
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-
   log.info(
     `
     Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
@@ -393,6 +383,12 @@ const _writeGranule = async ({
     snsEventType,
     granuleModel,
   });
+
+  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
 };
 
 /**
@@ -540,6 +536,42 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
 };
 
 /**
+ * Checks to see if granule exists and, if not, returns 'Create' for the
+ * SNS event type. Otherwise, returns 'Update'.
+ *
+ * @param {DynamoDBGranule} granule
+ * @param {Knex} knex
+ * @param {CollectionPgModel} collectionPgModel
+ * @param {GranulePgModel} granulePgModel
+ * @returns {string} - Returns SNS event type value of 'Create' or 'Update'
+ */
+const deriveSnsEventTypeFromMessage = async (
+  granule,
+  knex,
+  collectionPgModel = new CollectionPgModel(),
+  granulePgModel = new GranulePgModel()
+) => {
+  const { name, version } = deconstructCollectionId(granule.collectionId);
+  try {
+    await granulePgModel.getRecordCumulusId(
+      knex,
+      {
+        granule_id: granule.granuleId,
+        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+          knex,
+          { name, version }
+        ),
+      }
+    );
+  } catch (error) {
+    if (error.name === 'RecordDoesNotExist') {
+      return 'Create';
+    }
+  }
+  return 'Update';
+};
+
+/**
  * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
  * @param {Object} params
@@ -625,6 +657,7 @@ const writeGranulesFromMessage = async ({
         knex
       );
 
+      const eventType = await deriveSnsEventTypeFromMessage(dynamoGranuleRecord, knex);
       return _writeGranule({
         postgresGranuleRecord,
         dynamoGranuleRecord,
@@ -633,7 +666,7 @@ const writeGranulesFromMessage = async ({
         granuleModel,
         granulePgModel,
         esClient,
-        snsEventType: 'Update',
+        snsEventType: eventType,
       });
     }
   ));

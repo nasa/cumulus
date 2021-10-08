@@ -152,7 +152,7 @@ describe('The Granules API', () => {
         const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
         const message = JSON.parse(savedEvent.Records[0].Sns.Message);
         expect(message.event).toEqual('Create');
-        expect(omit(message.record, 'files')).toEqual(omit(discoveredGranule, 'files'));
+        expect(message.record).toEqual(discoveredGranule);
       }
     });
 

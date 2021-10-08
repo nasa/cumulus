@@ -79,7 +79,6 @@ const deleteGranuleAndFiles = async (params: {
     collectionPgModel = new CollectionPgModel(),
     granuleModelClient = new Granule(),
     esClient = await Search.es(),
-    collectionCumulusId,
   } = params;
   let granuleToPublishToSns: object;
   granuleToPublishToSns = dynamoGranule;
@@ -99,20 +98,14 @@ const deleteGranuleAndFiles = async (params: {
       { granule_cumulus_id: pgGranule.cumulus_id }
     );
 
-    if (collectionCumulusId) {
-      const collectionPgRecord = await collectionPgModel.get(
-        knex, { cumulus_id: collectionCumulusId }
-      );
-      granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
-        granulePgRecord: pgGranule,
-        collectionPgRecord,
-        knexOrTransaction: knex,
-        collectionPgModel,
-        filePgModel,
-        pdrPgModel: new PdrPgModel(),
-        providerPgModel: new ProviderPgModel(),
-      });
-    }
+    granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+      collectionPgModel,
+      filePgModel,
+      pdrPgModel: new PdrPgModel(),
+      providerPgModel: new ProviderPgModel(),
+    });
 
     try {
       await knex.transaction(async (trx) => {

@@ -325,8 +325,8 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
   ]);
   const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
-  granules[0].cumulus_id = cumulusGranuleIds[0][0];
-  granules[1].cumulus_id = cumulusGranuleIds[1][0];
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
 
   const workflowName = randomId('workflow');
   await bulkOperation.handler({
@@ -391,8 +391,8 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
   ]);
   const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
-  granules[0].cumulus_id = cumulusGranuleIds[0][0];
-  granules[1].cumulus_id = cumulusGranuleIds[1][0];
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
 
   esSearchStub.resolves({
     body: {

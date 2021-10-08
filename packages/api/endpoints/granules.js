@@ -410,7 +410,6 @@ async function del(req, res) {
     dynamoGranule,
     pgGranule,
     esClient,
-    collectionCumulusId,
   });
 
   return res.send({ detail: 'Record deleted' });

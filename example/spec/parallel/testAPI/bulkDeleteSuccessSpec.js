@@ -34,6 +34,7 @@ describe('POST /granules/bulkDelete', () => {
   let config;
   let clusterArn;
   let prefix;
+  let timestampBeforeCall;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -153,6 +154,7 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
+        timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {
             prefix,
@@ -278,14 +280,21 @@ describe('POST /granules/bulkDelete', () => {
     });
 
     it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {
-      const timestamp = Date.now();
       const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}-Delete.output`;
       const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
       const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+
+      const expectedGranuleAfterDeletion = {
+        ...ingestedGranule,
+        published: false,
+        updatedAt: message.record.updatedAt,
+        productionDateTime: message.record.productionDateTime,
+        beginningDateTime: message.record.beginningDateTime,
+        lastUpdateDateTime: message.record.lastUpdateDateTime,
+      };
       expect(message.event).toEqual('Delete');
-      expect(message.record.granuleId).toEqual(ingestedGranule.granuleId);
-      expect(message.record.published).toEqual(false);
-      expect(message.deletedAt).toBeLessThan(timestamp);
+      expect(message.record).toEqual(expectedGranuleAfterDeletion);
+      expect(message.deletedAt).toBeGreaterThan(timestampBeforeCall);
     });
   });
 });

@@ -1882,6 +1882,7 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
 
 test.serial('PUT publishes an SNS message after a successful granule update', async (t) => {
   const {
+    collectionCumulusId,
     esClient,
     executionUrl,
     knex,
@@ -1898,6 +1899,7 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
       updatedAt: Date.now(),
       execution: executionUrl,
     },
+    collection_cumulus_id: collectionCumulusId,
   });
 
   const updatedGranule = {
@@ -1916,6 +1918,10 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
     cumulus_id: newPgGranule.cumulus_id,
   });
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: actualPgGranule,
+    knexOrTransaction: knex,
+  });
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -1923,9 +1929,8 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   }).promise();
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
-  console.log(publishedMessage);
 
-  t.is(publishedMessage.record.granuleId, actualPgGranule.granule_id);
+  t.deepEqual(publishedMessage.record, translatedGranule);
   t.is(publishedMessage.event, 'Update');
 });
 
