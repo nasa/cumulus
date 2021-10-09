@@ -107,29 +107,20 @@ const setUpExistingDatabaseRecords = async (t) => {
 
   const granuleCumulusIds = await granulePgModel.create(
     t.context.knex,
-    [
+    t.context.granules.map((granule) =>
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        granule_id: t.context.granuleIds[0],
-      }),
-      fakeGranuleRecordFactory({
-        collection_cumulus_id: collectionCumulusId,
-        granule_id: t.context.granuleIds[1],
-      }),
-    ]
+        granule_id: granule.granuleId,
+        created_at: new Date(granule.createdAt),
+      }))
   );
   const executionCumulusIds = await executionPgModel.create(
     t.context.knex,
-    [
+    t.context.executionArns.map((executionArn) =>
       fakeExecutionRecordFactory({
         workflow_name: t.context.workflowName,
-        arn: t.context.executionArns[0],
-      }),
-      fakeExecutionRecordFactory({
-        workflow_name: t.context.workflowName,
-        arn: t.context.executionArns[1],
-      }),
-    ]
+        arn: executionArn,
+      }))
   );
   const joinRecords = [
     {
@@ -352,9 +343,9 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
 
   const granulePgModel = new GranulePgModel();
   const pgGranules = await Promise.all(
-    t.context.granuleIds.map((granuleId) =>
+    granules.map((g) =>
       granulePgModel.get(t.context.knex, {
-        granule_id: granuleId,
+        granule_id: g.granuleId,
         collection_cumulus_id: t.context.collectionCumulusId,
       }))
   );

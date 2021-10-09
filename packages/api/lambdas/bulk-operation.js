@@ -1,4 +1,5 @@
 const get = require('lodash/get');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
@@ -17,9 +18,8 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
 
 async function updateGranuleStatus({ granule, status, knex }) {
   await writeGranuleFromApi({
-    collectionId: granule.collectionId,
-    granuleId: granule.granuleId,
-    status: status,
+    ...omit(granule, ['execution']),
+    status,
   }, knex);
 }
 
@@ -36,7 +36,6 @@ async function applyWorkflowToGranules({
     async (granuleId) => {
       try {
         const granule = await granuleModel.get({ granuleId });
-        console.log('here', granule, granuleId);
         await updateGranuleStatus({ granule, status: 'queued', knex });
         await granuleModel.applyWorkflow(
           granule,

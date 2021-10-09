@@ -530,7 +530,6 @@ test.serial('reingest a granule', async (t) => {
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'queued');
-  t.deepEqual(updatedGranule, t.context.fakeGranules[0]);
   stub.restore();
 });
 

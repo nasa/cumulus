@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const omit = require('lodash/omit');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -133,6 +134,13 @@ const putGranule = async (req, res) => {
   });
 };
 
+async function updateGranuleStatus({ granule, status, knex }) {
+  await writeGranuleFromApi({
+    ...omit(granule, ['execution']),
+    status,
+  }, knex);
+}
+
 /**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
@@ -157,6 +165,7 @@ async function put(req, res) {
     );
   }
 
+  const knex = await getKnexClient();
   const granuleModelClient = new models.Granule();
   const granule = await granuleModelClient.get({ granuleId });
 
@@ -180,12 +189,7 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    const knex = await getKnexClient({ env: process.env });
-    await writeGranuleFromApi({
-      collectionId: granule.collectionId,
-      granuleId: granule.granuleId,
-      status: 'queued',
-    }, knex);
+    await updateGranuleStatus({ granule, status: 'queued', knex });
 
     await granuleModelClient.reingest({
       ...granule,
@@ -207,12 +211,7 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
-    const knex = await getKnexClient({ env: process.env });
-    await writeGranuleFromApi({
-      collectionId: granule.collectionId,
-      granuleId: granule.granuleId,
-      status: 'queued',
-    }, knex);
+    await updateGranuleStatus({ granule, status: 'queued', knex });
 
     await granuleModelClient.applyWorkflow(
       granule,
@@ -228,8 +227,6 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    const knex = await getKnexClient({ env: process.env });
-
     await unpublishGranule(knex, granule);
 
     return res.send({
