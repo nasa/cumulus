@@ -25,9 +25,9 @@ To configure a deployment to use Cumulus Distribution:
   1. Deploy once without `cumulus_distribution_url` set
   2. Note the API Gateway or CloudFront URL that's provided for the new Cumulus Distribution API after a successful deployment
   3. Enter that URL plus a port for `cumulus_distribution_url`. e.g. `cumulus_distribution_url = "https://abc123.execute-api.us-east-1.amazonaws.com:7000/dev/"`
-- `csdap_client_id`: The Client ID of your AWS account's Cognito setup. Created and managed outside of Cumulus.
-- `csdap_client_password`: The client password for your AWS account's Cognito setup. Created and managed outside of Cumulus.
-- `csdap_host_url`: The host URL of your AWS account's Cognito setup. Created and managed outside of Cumulus.
+- `csdap_client_id`: The Client ID of your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
+- `csdap_client_password`: The client password for your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
+- `csdap_host_url`: The host URL of your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
 - any others under the `Cumulus Distribution Variables` section in the example
 
 ## S3 Bucket Mapping
