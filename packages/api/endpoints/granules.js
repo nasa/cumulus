@@ -334,7 +334,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await updateGranuleFromApi(updatedGranule, knex, esClient, 'Update');
+    await updateGranuleFromApi(updatedGranule, knex, esClient);
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
@@ -365,7 +365,6 @@ async function del(req, res) {
 
   let dynamoGranule;
   let pgGranule;
-  let collectionCumulusId;
 
   // If the granule does not exist in Dynamo, throw an error
   try {
@@ -383,7 +382,7 @@ async function del(req, res) {
   try {
     if (dynamoGranule.collectionId) {
       const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-      collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
         knex,
         { name, version }
       );

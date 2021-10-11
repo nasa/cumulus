@@ -1282,11 +1282,16 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
   });
 
   t.true(await granuleModel.exists({ granuleId }));
-  t.true(await t.context.granulePgModel.exists(knex, {
+  t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const retrievedPgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id,
-  }));
-  t.true(await t.context.esGranulesClient.exists(granuleId));
+  });
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: retrievedPgGranule,
+    knexOrTransaction: knex,
+  });
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
   t.is(Messages.length, 1);
@@ -1294,6 +1299,6 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.is(publishedMessage.record.granuleId, granuleId);
+  t.deepEqual(publishedMessage.record, translatedGranule);
   t.is(publishedMessage.event, 'Update');
 });

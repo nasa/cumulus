@@ -13,7 +13,6 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranule,
-  CollectionPgModel,
 } = require('@cumulus/db');
 const {
   upsertGranule,
@@ -62,9 +61,6 @@ const {
 const {
   getExecutionCumulusId,
 } = require('./utils');
-const {
-  deconstructCollectionId,
-} = require('../utils');
 
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 

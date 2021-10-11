@@ -80,14 +80,12 @@ const deleteGranuleAndFiles = async (params: {
     granuleModelClient = new Granule(),
     esClient = await Search.es(),
   } = params;
-  let granuleToPublishToSns: object;
-  granuleToPublishToSns = dynamoGranule;
   if (pgGranule === undefined) {
     logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
-    await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
+    await publishGranuleDeleteSnsMessage(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
@@ -98,7 +96,7 @@ const deleteGranuleAndFiles = async (params: {
       { granule_cumulus_id: pgGranule.cumulus_id }
     );
 
-    granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+    const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
       collectionPgModel,
