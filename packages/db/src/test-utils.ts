@@ -1,6 +1,7 @@
 import Knex from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
+import pRetry from 'p-retry';
 
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 
@@ -51,7 +52,7 @@ export const destroyLocalTestDb = async ({
   testDbName: string
 }) => {
   knex.destroy();
-  await deleteTestDatabase(knexAdmin, testDbName);
+  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
   knexAdmin.destroy();
 };
 
@@ -140,7 +141,7 @@ export const fakeAsyncOperationRecordFactory = (
 export const fakePdrRecordFactory = (
   params: Partial<PostgresPdr>
 ) => ({
-  name: `pdr${cryptoRandomString({ length: 3 })}`,
+  name: `pdr${cryptoRandomString({ length: 10 })}`,
   status: 'running',
   created_at: new Date(),
   ...params,

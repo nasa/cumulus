@@ -24,12 +24,11 @@ const {
   PdrPgModel,
   ProviderPgModel,
   translateApiGranuleToPostgresGranule,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const {
   migrateGranuleRecord,
   migrateFileRecord,
@@ -56,7 +55,7 @@ const fakeFile = () => fakeFileFactory({
 });
 
 const generateTestGranule = (params) => ({
-  granuleId: cryptoRandomString({ length: 5 }),
+  granuleId: cryptoRandomString({ length: 10 }),
   status: 'running',
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,

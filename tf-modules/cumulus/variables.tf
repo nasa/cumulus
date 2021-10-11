@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:32"
+  default = "cumuluss/async-operation:34"
 }
 
 variable "cmr_client_id" {
@@ -100,6 +100,12 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string
@@ -166,7 +172,7 @@ variable "archive_api_port" {
 variable "archive_api_reserved_concurrency" {
   description = "Reserved Concurrency for the API lambda function"
   type = number
-  default = 8
+  default = 15
 }
 
 variable "archive_api_users" {

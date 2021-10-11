@@ -21,13 +21,12 @@ To configure a deployment to use Cumulus Distribution:
  5. Set the Cumulus Distribution variables in your `terraform.tfvars` (which is based on [terraform.tfvars.example](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/terraform.tfvars.example)). These include:
 
 - `deploy_cumulus_distribution`: Set to `true` if deploying the Cumulus Distribution API or `false` if deploying TEA.
-- `cumulus_distribution_url`: Used to override the CloudFront/API Gateway URL. This can be used if you need to insert a port for port forwarding. Not all users will need to set this and, if you do require it, it will need to be set _after_ an initial deployment. The process would be:
+- `cumulus_distribution_url`: Used to override the base URL for your distribution API that will be inserted in CMR metadata. This can be used if you need to insert a port in your distribution URL for port forwarding or specify a Cloudfront URL for distribution. Not all users will need to set this and, if you do require it, it will need to be set _after_ an initial deployment. The process would be:
   1. Deploy once without `cumulus_distribution_url` set
-  2. Note the API Gateway or CloudFront URL that's provided for the new Cumulus Distribution API after a successful deployment
-  3. Enter that URL plus a port for `cumulus_distribution_url`. e.g. `cumulus_distribution_url = "https://abc123.execute-api.us-east-1.amazonaws.com:7000/dev/"`
-- `csdap_client_id`: The Client ID of your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
-- `csdap_client_password`: The client password for your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
-- `csdap_host_url`: The host URL of your AWS account's Cognito setup. Created and managed outside of Cumulus by the Earthdata team.
+  2. If necessary, redeploy with the correct value a `cumulus_distribution_url`. For port forwarding/tunnel based access, you might set `cumulus_distribution_url = "https://abc123.execute-api.us-east-1.amazonaws.com:7000/dev/". If you want to direct distribution to a Cloudfront URL that you registered for your API Gateway, you would set that for `cumulus_distribution_url`: `cumulus_distribution_url = https://abc123.cloudfront.net`.
+- `csdap_client_id`: The Client ID of your AWS account's Cognito setup, which is created and managed outside of Cumulus by the Earthdata team.
+- `csdap_client_password`: The client password for your AWS account's Cognito setup, which is created and managed outside of Cumulus by the Earthdata team.
+- `csdap_host_url`: The host URL of your AWS account's Cognito setup, which is created and managed outside of Cumulus by the Earthdata team.
 - any others under the `Cumulus Distribution Variables` section in the example
 
 ## S3 Bucket Mapping

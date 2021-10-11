@@ -1,7 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
   getApiGranuleExecutionCumulusIds,
@@ -11,9 +13,117 @@ const {
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
+const {
+  addToLocalES,
+  indexExecution,
+} = require('@cumulus/es-client/indexer');
 const models = require('../models');
+const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
+const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
 const { validateGranuleExecutionRequest } = require('../lib/request');
+
+const log = new Logger({ sender: '@cumulus/api/executions' });
+
+/**
+ * create an execution
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function create(req, res) {
+  const {
+    executionPgModel = new ExecutionPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  const execution = req.body || {};
+  const { arn } = execution;
+
+  if (!arn) {
+    return res.boom.badRequest('Field arn is missing');
+  }
+
+  if (await executionPgModel.exists(knex, { arn })) {
+    return res.boom.conflict(`A record already exists for ${arn}`);
+  }
+
+  execution.updatedAt = Date.now();
+  execution.createdAt = Date.now();
+
+  try {
+    await writeExecutionRecordFromApi({ record: execution, knex });
+
+    if (inTestMode()) {
+      await addToLocalES(execution, indexExecution);
+    }
+
+    return res.send({
+      message: `Successfully wrote execution with arn ${arn}`,
+    });
+  } catch (error) {
+    log.error('Error occurred while trying to create execution:', error);
+    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(error.message);
+    }
+    return res.boom.badImplementation(error.message);
+  }
+}
+
+/**
+ * update an existing execution
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function update(req, res) {
+  const arn = req.params.arn;
+  const execution = req.body || {};
+
+  if (arn !== execution.arn) {
+    return res.boom.badRequest(`Expected execution arn to be '${arn}',`
+      + ` but found '${execution.arn}' in payload`);
+  }
+
+  const {
+    executionPgModel = new ExecutionPgModel(),
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+
+  let oldPgRecord;
+  try {
+    oldPgRecord = await executionPgModel.get(knex, { arn });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+    return res.boom.notFound(`Execution '${arn}' not found`);
+  }
+
+  const oldApiRecord = await translatePostgresExecutionToApiExecution(oldPgRecord, knex);
+  execution.updatedAt = Date.now();
+  execution.createdAt = oldApiRecord.createdAt;
+
+  try {
+    await writeExecutionRecordFromApi({ record: execution, knex });
+
+    if (inTestMode()) {
+      await addToLocalES(execution, indexExecution);
+    }
+
+    return res.send({
+      message: `Successfully updated execution with arn ${arn}`,
+    });
+  } catch (error) {
+    log.error('Error occurred while trying to update execution:', error);
+    if (isBadRequestError(error) || error instanceof RecordDoesNotExist) {
+      return res.boom.badRequest(error.message);
+    }
+    return res.boom.badImplementation(error.message);
+  }
+}
 
 /**
  * List and search executions
@@ -144,6 +254,8 @@ async function workflowsByGranules(req, res) {
 
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
+router.post('/', create);
+router.put('/:arn', update);
 router.get('/:arn', get);
 router.get('/', list);
 router.delete('/:arn', del);

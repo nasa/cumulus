@@ -1,8 +1,11 @@
 const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
+const awsClients = require('@cumulus/aws-client/services');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 
+const { getGranuleStatus } = require('@cumulus/message/Granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -71,6 +74,20 @@ test('_storeGranuleRecord() can be used to create a new failed granule', async (
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
   t.is(fetchedItem.status, 'failed');
+});
+
+test('_storeGranuleRecord() can be used to create a new queued granule', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({
+    status: 'queued',
+  });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.status, 'queued');
 });
 
 test('_storeGranuleRecord() can be used to update a completed granule', async (t) => {
@@ -250,6 +267,199 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   );
 });
 
+test('_storeGranuleRecord() will allow a completed status to replace a queued status for a new execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'queued' });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const updateTime = Date.now();
+
+  const updatedGranule = {
+    ...granule,
+    execution: 'new-execution-url',
+    status: 'completed',
+    createdAt: updateTime,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'completed',
+      createdAt: updateTime,
+      execution: 'new-execution-url',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will allow a running status to replace a queued status for a new execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'queued' });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const updateTime = Date.now();
+
+  const updatedGranule = {
+    ...granule,
+    execution: 'new-execution-url',
+    status: 'running',
+    createdAt: updateTime,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'running',
+      createdAt: updateTime,
+      execution: 'new-execution-url',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'queued' });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const updateTime = Date.now();
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    createdAt: updateTime,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'running',
+      createdAt: updateTime,
+    }
+  );
+});
+
+test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'running' });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const updateTime = Date.now();
+
+  const updatedGranule = {
+    ...granule,
+    execution: 'new-execution-url',
+    status: 'queued',
+    createdAt: updateTime,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'queued',
+      createdAt: updateTime,
+      execution: 'new-execution-url',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will not allow a queued status to replace running for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'running' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'running',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will not allow a queued status to replace completed/failed for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'completed' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'completed',
+    }
+  );
+});
+
+test('_storeGranuleRecord() will allow a completed status to replace queued for same execution', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'queued' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'completed',
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      status: 'completed',
+    }
+  );
+});
+
 test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution ', async (t) => {
   const { granuleModel } = t.context;
 
@@ -354,7 +564,7 @@ test('_validateAndStoreGranuleRecord() throws an error if trying to update granu
   await t.notThrowsAsync(granuleModel._validateAndStoreGranuleRecord(updatedGranule));
 });
 
-test('storeGranuleFromCumulusMessage() throws an error for a failing record', async (t) => {
+test('generateGranuleRecord() throws an error for a failing record', async (t) => {
   const {
     collectionId,
     granuleModel,
@@ -367,14 +577,14 @@ test('storeGranuleFromCumulusMessage() throws an error for a failing record', as
   // cause record to fail
   delete granule1.granuleId;
 
-  await t.throwsAsync(granuleModel.storeGranuleFromCumulusMessage({
+  await t.throwsAsync(granuleModel.generateGranuleRecord({
     granule: granule1,
     executionUrl: 'http://execution-url.com',
     collectionId,
   }));
 });
 
-test('storeGranuleFromCumulusMessage() correctly stores granule record', async (t) => {
+test('storeGranule() correctly stores granule record', async (t) => {
   const {
     granuleModel,
     collectionId,
@@ -383,7 +593,7 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
     workflowStatus,
   } = t.context;
 
-  const bucket = randomId('bucket-');
+  const bucket = randomId('bucket');
   await S3.createBucket(bucket);
   t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
 
@@ -393,14 +603,23 @@ test('storeGranuleFromCumulusMessage() correctly stores granule record', async (
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
 
-  await granuleModel.storeGranuleFromCumulusMessage({
+  const files = await granuleModel.fileUtils.buildDatabaseFiles({
+    s3: awsClients.s3(),
+    providerURL: buildURL(provider),
+    files: granule1.files,
+  });
+
+  const granuleRecord = await granuleModel.generateGranuleRecord({
     granule: granule1,
+    files,
     executionUrl: 'http://execution-url.com',
     collectionId,
-    provider,
+    provider: provider.id,
     workflowStartTime,
     workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule1),
   });
+  await granuleModel.storeGranule(granuleRecord);
 
   t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
 });
@@ -467,10 +686,14 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
 
   const granule1 = fakeGranuleFactoryV2({
     files: [fakeFileFactory({ bucket })],
+    status: 'completed',
   });
-  // Missing files should cause failure to write
+
+  // If both the message's workflow status
+  // and the granule status are undefined, the granule will fail validation.
   const granule2 = fakeGranuleFactoryV2({
-    files: undefined,
+    files: [fakeFileFactory({ bucket })],
+    status: undefined,
   });
 
   await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
@@ -490,7 +713,7 @@ test('storeGranulesFromCumulusMessage() handles failing and succcessful granules
         host: 'example-bucket',
         protocol: 's3',
       },
-      status: 'completed',
+      status: undefined,
     },
     payload: {
       granules: [

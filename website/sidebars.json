@@ -37,7 +37,8 @@
       "configuration/server_access_logging",
       "configuration/cloudwatch-retention",
       "configuration/lifecycle-policies",
-      "configuration/collection-storage-best-practices"
+      "configuration/collection-storage-best-practices",
+      "configuration/ingest-task-configuration"
     ],
     "Development": [
       "workflows/developing-a-cumulus-workflow",
@@ -52,7 +53,8 @@
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
       "workflow_tasks/move_granules",
-      "workflow_tasks/parse_pdr"
+      "workflow_tasks/parse_pdr",
+      "workflow_tasks/queue_granules"
     ],
     "Features": [
       "features/backup_and_restore",

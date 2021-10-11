@@ -1,8 +1,11 @@
+import * as path from 'path';
+
 export { default as Knex } from 'knex';
 export {
   createTestDatabase,
   deleteTestDatabase,
   destroyLocalTestDb,
+  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -16,6 +19,7 @@ export {
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { tableNames } from './tables';
+export const migrationDir = path.join(__dirname, 'migrations');
 
 export {
   validateProviderHost,

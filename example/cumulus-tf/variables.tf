@@ -166,7 +166,7 @@ variable "api_gateway_stage" {
 
 variable "api_reserved_concurrency" {
   type = number
-  default = 8
+  default = 5
   description = "Archive API Lambda reserved concurrency"
 }
 
@@ -314,7 +314,7 @@ variable "rds_connection_timing_configuration" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "32"
+  default = "34"
 }
 
 variable "cumulus_process_activity_version" {
@@ -391,6 +391,11 @@ variable "ddl_dir" {
   default = "ddl/"
   type = string
   description = "The location of the ddl dir that contains the sql to create the application database."
+}
+
+variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
 }
 
 variable "lambda_timeout" {
