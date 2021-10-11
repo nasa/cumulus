@@ -82,6 +82,9 @@ upgrades to `knex` package.
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
+- **CUMULUS-2617**
+  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
+
 ### Fixed
 
 - Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
@@ -145,6 +148,7 @@ when output of the operation is `undefined`
   - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
   updated unit test references to migrationDir to be pulled from `@cumulus/db`
   - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
+
 - **CUMULUS-2575**
   - Updates model/granule to allow a granule created from API to not require an
     execution to be associated with it. This is a backwards compatible change

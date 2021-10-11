@@ -690,6 +690,7 @@ async function getCmrSettings(cmrConfig = {}) {
   const cmrCredentials = {
     provider: cmrConfig.provider || process.env.cmr_provider,
     clientId: cmrConfig.clientId || process.env.cmr_client_id,
+    oauthProvider,
   };
 
   if (oauthProvider === 'launchpad') {
