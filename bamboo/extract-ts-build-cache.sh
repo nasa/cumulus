@@ -6,10 +6,6 @@ if [[ -z $TS_BUILD_CACHE_FILE ]]; then
   exit 1
 fi
 
-DIR=$(pwd)
-echo "Current dir: $DIR"
-ls -lah "$DIR"
-
 echo "***Extracting build cache of compiled TS code"
 
 tar xvf $TS_BUILD_CACHE_FILE
