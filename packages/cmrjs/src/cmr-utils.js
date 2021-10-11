@@ -21,7 +21,7 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
@@ -31,6 +31,8 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
