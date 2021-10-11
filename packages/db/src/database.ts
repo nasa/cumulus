@@ -18,7 +18,7 @@ export const isRecordDefined = <T>(record: T) => record !== undefined;
  * @param {function} handlerFn
  * @returns {Promise}
  */
-export const createRejectableTransaction = async (
+export const createRejectableTransaction = async <T>(
   knex: Knex,
   handlerFn: (trx: Knex.Transaction) => any
-) => await knex.transaction(handlerFn, { doNotRejectOnRollback: false });
+) => await knex.transaction<T>(handlerFn, { doNotRejectOnRollback: false });

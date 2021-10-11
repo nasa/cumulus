@@ -7,6 +7,7 @@ import {
   GranulePgModel,
   PostgresGranuleRecord,
   PostgresFileRecord,
+  createRejectableTransaction,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
 import { ApiFile, ApiGranule } from '@cumulus/types';
@@ -78,7 +79,7 @@ const deleteGranuleAndFiles = async ({
     );
 
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await granulePgModel.delete(trx, {
           cumulus_id: pgGranule.cumulus_id,
         });

@@ -8,6 +8,7 @@ const {
   tableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -104,7 +105,7 @@ async function post(req, res) {
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await providerPgModel.create(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
     });
@@ -163,7 +164,7 @@ async function put({ params: { id }, body }, res) {
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await providerPgModel.upsert(trx, postgresProvider);
     record = await providerModel.create(apiProvider);
   });
@@ -187,7 +188,7 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await trx(tableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
