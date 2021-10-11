@@ -102,8 +102,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
 ];
 
-// const SetupError = new Error('Test setup failed, aborting');
-
 function failOnSetupError(setupErrors) {
   const errors = setupErrors.filter((e) => e);
 
@@ -604,19 +602,11 @@ describe('The S3 Ingest Granules workflow', () => {
         files = granule.files;
 
         const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v1_6_2' };
-        // const result = await Promise.all([
-        //   getOnlineResources(granule),
-        //   getOnlineResources(ummGranule),
-        //   getTEARequestHeaders(config.stackName),
-        // ]);
-
-        const result = [];
-        console.log('Get granule');
-        result.push(await getOnlineResources(granule));
-        console.log('Get UMM granule');
-        result.push(await getOnlineResources(ummGranule));
-        console.log('Get TEA');
-        result.push(await getTEARequestHeaders(config.stackName));
+        const result = await Promise.all([
+          getOnlineResources(granule),
+          getOnlineResources(ummGranule),
+          getTEARequestHeaders(config.stackName),
+        ]);
 
         cmrResource = result[0];
         ummCmrResource = result[1];
