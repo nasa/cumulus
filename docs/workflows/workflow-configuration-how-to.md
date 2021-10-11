@@ -12,7 +12,7 @@ Buckets configured in your deployment for the `cumulus` module's inputs will ult
 
 * `public` indicates a completely public bucket.
 * `internal` type is for system use.
-* `protected` buckets are for any information that should be behind either Earthdata Login or Cognito authentication, depending on the distribution app deployed.
+* `protected` buckets are for any information that should be behind either Earthdata Login (if using TEA for distribution) or Cognito authentication (if using the Cumulus Distribution API for distribution)
 * `private` buckets are for private data.
 
 Consider the following `buckets` configuration variable for the `cumulus` module for all following examples:
