@@ -66,7 +66,9 @@ module.exports = {
     ],
   },
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   optimization: {
     nodeEnv: false,
