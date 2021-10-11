@@ -20,6 +20,7 @@ const {
   destroyLocalTestDb,
   tableNames,
   migrationDir,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 
 const {
@@ -187,7 +188,8 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   };
 
   await t.throwsAsync(
-    knex.transaction(
+    createRejectableTransaction(
+      knex,
       (trx) =>
         writeFilesViaTransaction({
           fileRecords,
