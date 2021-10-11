@@ -147,7 +147,7 @@ async function fetchESCollections(recReportParams) {
  * @returns {Promise<Object>} a report
  */
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
-  log.debug(`createReconciliationReportForBucket: ${Bucket}: ${JSON.stringify(recReportParams)}`);
+  log.info(`createReconciliationReportForBucket(S3 vs. Dynamo): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
@@ -210,7 +210,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     log.error(`error caught in createReconciliationReportForBucket for ${Bucket}`);
     log.error(errorify(error));
   }
-  log.debug(`createReconciliationReportForBucket ${Bucket} returning `
+  log.info(`createReconciliationReportForBucket ${Bucket} returning `
             + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
             + `onlyInDynamoDb: ${onlyInDynamoDb.length}, `
             + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
@@ -236,11 +236,9 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Get list of collections from CUMULUS
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
-  log.debug(`reconciliationReportForCollections with params ${JSON.stringify(recReportParams)}`);
+  log.info(`reconciliationReportForCollections with params ${JSON.stringify(recReportParams)}`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
   log.debug(`Creating one way report: ${oneWayReport}`);
-
-  log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
@@ -289,7 +287,7 @@ async function reconciliationReportForCollections(recReportParams) {
     log.error(`Error caught in reconciliationReportForCollections. with params ${JSON.stringify(recReportParams)}`);
     log.error(errorify(error));
   }
-  log.debug(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
+  log.info(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
   return {
     okCollections,
     onlyInCumulus: collectionsOnlyInCumulus,
@@ -426,7 +424,7 @@ async function reconciliationReportForGranules(params) {
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
-  log.debug(`reconciliationReportForGranules(${params.collectionId})`);
+  log.info(`reconciliationReportForGranules(${params.collectionId})`);
   const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
   const { name, version } = deconstructCollectionId(collectionId);
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
@@ -536,8 +534,12 @@ async function reconciliationReportForGranules(params) {
     log.error(`error caught in reconciliationReportForGranules(${collectionId})`);
     log.error(errorify(error));
   }
-  log.debug(`returning reconciliationReportForGranules(${collectionId}) granulesReport: okCount: ${granulesReport.okCount}, onlyInCumulus: ${granulesReport.onlyInCumulus.length}, onlyInCmr: ${granulesReport.onlyInCmr.length}`);
-  log.debug(`returning reconciliationReportForGranules(${collectionId}) filesReport: okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, onlyInCmr: ${filesReport.onlyInCmr.length}`);
+  log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
+           + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
+           + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
+  log.info(`returning reconciliationReportForGranules(${collectionId}) filesReport: `
+           + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
+           + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
   return {
     granulesReport,
     filesReport,
@@ -561,7 +563,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @returns {Promise<Object>}                    - a reconcilation report
  */
 async function reconciliationReportForCumulusCMR(params) {
-  log.debug(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
+  log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
   const { bucketsConfig, distributionBucketMap, recReportParams } = params;
   const collectionReport = await reconciliationReportForCollections(recReportParams);
   const collectionsInCumulusCmr = {
@@ -577,7 +579,7 @@ async function reconciliationReportForCumulusCMR(params) {
     })
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
-  log.debug('reconciliationReportForCumulusCMR: All Granule and Granule Files Reports completed. '
+  log.info('reconciliationReportForCumulusCMR: All Granule and Granule Files Reports completed. '
             + `${JSON.stringify(recReportParams)}`);
 
   const granulesInCumulusCmr = {};
@@ -601,7 +603,7 @@ async function reconciliationReportForCumulusCMR(params) {
     (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.onlyInCmr), []
   );
 
-  log.debug('returning reconciliationReportForCumulusCMR');
+  log.info('returning reconciliationReportForCumulusCMR');
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
 
@@ -627,7 +629,7 @@ async function createReconciliationReport(recReportParams) {
     systemBucket,
     location,
   } = recReportParams;
-  log.debug(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
+  log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
   const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
@@ -674,7 +676,7 @@ async function createReconciliationReport(recReportParams) {
     );
 
     const bucketReports = await Promise.all(promisedBucketReports);
-    log.debug('bucketReports completed');
+    log.info('bucketReports (S3 vs database) completed');
 
     bucketReports.forEach((bucketReport) => {
       report.filesInCumulus.okCount += bucketReport.okCount;
@@ -706,7 +708,7 @@ async function createReconciliationReport(recReportParams) {
     report = Object.assign(report, cumulusCmrReport);
   }
 
-  log.debug(`Writing report to S3: at ${systemBucket}/${reportKey}`);
+  log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
   // Create the full report
   report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
@@ -728,7 +730,7 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
-  log.debug(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
+  log.info(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
   const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -745,11 +747,11 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   await reconciliationReportModel.create(reportRecord);
-  log.debug(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
 
   try {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
-    log.debug(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
+    log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else if (reportType === 'Granule Inventory') {
