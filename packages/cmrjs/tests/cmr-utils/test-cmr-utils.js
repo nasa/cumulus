@@ -22,7 +22,14 @@ const { randomId, readJsonFixture, randomString } = require('@cumulus/common/tes
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 
-const { getCmrSettings, constructCmrConceptLink, granuleToCmrFileObject } = require('../../cmr-utils');
+const {
+  addEtagsToFileObjects,
+  constructCmrConceptLink,
+  getCmrSettings,
+  granuleToCmrFileObject,
+  mapFileEtags,
+  removeEtagsFromFileObjects,
+} = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
@@ -162,7 +169,8 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleToCmrFileObject(granule),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
     }]
   );
 });
@@ -178,8 +186,82 @@ test('granuleToCmrFileObject returns correct objects for files with a filename',
     granuleToCmrFileObject(granule),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
     }]
+  );
+});
+
+test('addEtagsToFileObjects adds etag for granule file', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granule = {
+    files: [
+      {
+        bucket,
+        key,
+      },
+    ],
+  };
+  const etags = {
+    [buildS3Uri(bucket, key)]: etag,
+  };
+  const expectation = {
+    files: [
+      {
+        bucket,
+        key,
+        etag,
+      },
+    ],
+  };
+  addEtagsToFileObjects(granule, etags);
+  t.deepEqual(granule, expectation);
+});
+
+test('removeEtagsFromFileObjects removes etag from granule file', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granule = {
+    files: [
+      {
+        bucket,
+        key,
+        etag,
+      },
+    ],
+  };
+  const expectation = {
+    files: [
+      {
+        bucket,
+        key,
+      },
+    ],
+  };
+  removeEtagsFromFileObjects(granule);
+  t.deepEqual(granule, expectation);
+});
+
+test('mapFileEtags returns map of S3 URIs to etags', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granuleFiles = [
+    {
+      bucket,
+      key,
+      etag,
+    },
+  ];
+  const expectation = {
+    [buildS3Uri(bucket, key)]: etag,
+  };
+  t.deepEqual(
+    mapFileEtags(granuleFiles),
+    expectation
   );
 });
 
@@ -527,7 +609,8 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        filename: 'test.cmr.json',
+        bucket: 'bucket',
+        key: 'test.cmr.json',
       }],
     });
 
@@ -553,7 +636,8 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        filename: 'test.cmr.xml',
+        bucket: 'bucket',
+        key: 'test.cmr.xml',
       }],
     });
 
@@ -579,7 +663,8 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        filename: 'test.cmr_iso.xml',
+        bucket: 'bucket',
+        key: 'test.cmr_iso.xml',
       }],
     });
 

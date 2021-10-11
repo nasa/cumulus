@@ -196,7 +196,7 @@ export const waitForObjectToExist = async (params: {
     timeout = 30 * 1000,
   } = params;
 
-  await pWaitFor(
+  return await pWaitFor(
     () => s3ObjectExists({ Bucket: bucket, Key: key }),
     { interval, timeout }
   );
@@ -531,8 +531,7 @@ export const getObjectReadStream = (params: {
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
-    const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
-    return r;
+    return await s3().headObject({ Key: key, Bucket: bucket }).promise();
   } catch (error) {
     // if file is not return false
     if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
@@ -607,7 +606,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
     });
 
     await deleteS3Files(s3Objects);
-    await s3().deleteBucket({ Bucket: bucket }).promise();
+    return await s3().deleteBucket({ Bucket: bucket }).promise();
   }
 );
 
@@ -1071,5 +1070,5 @@ export const moveObject = async (
     ACL: params.ACL,
     copyTags: isBoolean(params.copyTags) ? params.copyTags : true,
   });
-  await deleteS3Object(params.sourceBucket, params.sourceKey);
+  return await deleteS3Object(params.sourceBucket, params.sourceKey);
 };

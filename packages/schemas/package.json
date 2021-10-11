@@ -1,0 +1,32 @@
+{
+  "name": "@cumulus/schemas",
+  "version": "9.7.0-alpha.0",
+  "description": "Helpers for managing Cumulus task schemas",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "bin": {
+    "generate-task-schemas": "./generate-task-schemas.js"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true,
+    "timeout": "15m"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "fs-extra": "^9.0.0",
+    "json-templates": "^4.1.0"
+  }
+}

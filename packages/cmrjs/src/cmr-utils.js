@@ -96,13 +96,16 @@ function isCMRFile(fileobject) {
 function granuleToCmrFileObject({ granuleId, files = [] }) {
   return files
     .filter(isCMRFile)
-    .map((file) => ({
-      // Include etag only if file has one
-      ...pick(file, 'etag'),
-      // handle both new-style and old-style files model
-      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId,
-    }));
+    .map((file) => {
+      const { Bucket, Key } = parseS3Uri(getS3UrlOfFile(file));
+      return {
+        // Include etag only if file has one
+        ...pick(file, 'etag'),
+        bucket: Bucket,
+        key: Key,
+        granuleId,
+      };
+    });
 }
 
 /**
@@ -110,7 +113,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }) {
  *
  * @param {Array<Object>} granules - granule objects array
  *
- * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules) {
   return granules.flatMap(granuleToCmrFileObject);
@@ -198,12 +201,13 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  */
 async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
+  const cmrFileName = getFilename(cmrPublishObject);
 
   // choose xml or json and do the things.
-  if (isECHO10File(cmrPublishObject.filename)) {
+  if (isECHO10File(cmrFileName)) {
     return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-  if (isUMMGFile(cmrPublishObject.filename)) {
+  if (isUMMGFile(cmrFileName)) {
     return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
@@ -343,6 +347,48 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
     return 'GET DATA VIA DIRECT ACCESS';
   }
   return mappedType;
+}
+
+/**
+ * Add ETags to file objects as some downstream functions expect this structure.
+ *
+ * @param {Object} granule - input granule object
+ * @param {Object} etags - map of s3URIs and ETags
+ * @returns {Object} - updated granule object
+ */
+function addEtagsToFileObjects(granule, etags) {
+  granule.files.forEach((file) => {
+    const fileURI = getS3UrlOfFile(file);
+    // eslint-disable-next-line no-param-reassign
+    if (etags[fileURI]) file.etag = etags[fileURI];
+  });
+  return granule;
+}
+
+/**
+ * Remove ETags to match output schema
+ *
+ * @param {Object} granule - output granule object
+ * @returns {undefined}
+ */
+function removeEtagsFromFileObjects(granule) {
+  granule.files.forEach((file) => {
+    // eslint-disable-next-line no-param-reassign
+    delete file.etag;
+  });
+}
+
+/**
+ * Maps etag values from the specified granules' files.
+ *
+ * @param {Object[]} files - array of file objects with `bucket`, `key` and
+ *    `etag` properties
+ * @returns {Object} mapping of file S3 URIs to etags
+ */
+function mapFileEtags(files) {
+  return Object.fromEntries(
+    files.map(({ bucket, key, etag }) => [getS3UrlOfFile({ bucket, key }), etag])
+  );
 }
 
 /**
@@ -1020,7 +1066,7 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
   if (cmrFile.length === 0) return {};
 
-  const cmrFilename = cmrFile[0].filename;
+  const cmrFilename = getS3UrlOfFile(cmrFile[0]);
 
   if (isISOFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
@@ -1070,6 +1116,7 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  addEtagsToFileObjects,
   constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
@@ -1081,6 +1128,7 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
+  getS3UrlOfFile,
   getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
@@ -1088,9 +1136,11 @@ module.exports = {
   isECHO10File,
   isISOFile,
   isUMMGFile,
+  mapFileEtags,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
