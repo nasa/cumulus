@@ -37,7 +37,7 @@
     "@cumulus/types": "9.7.0",
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "0.0.1",
-    "knex": "~0.95.11",
+    "knex": "0.95.11",
     "lodash": "^4.17.20",
     "pg": "^8.3.0",
     "snake-camel": "^1.0.6",
