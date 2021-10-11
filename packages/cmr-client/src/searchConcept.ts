@@ -1,10 +1,8 @@
 import got, { Headers } from 'got';
 import Logger from '@cumulus/logger';
+
 import { getSearchUrl } from './getUrl';
 import { parseXMLString } from './Utils';
-import Logger from '@cumulus/logger';
-
-const log = new Logger({ sender: 'cmr-client/searchConcept' });
 
 const log = new Logger({ sender: 'cmr-client/searchConcept' });
 
