@@ -254,10 +254,8 @@ async function reconciliationReportForCollections(recReportParams) {
     const cmr = new CMR(cmrSettings);
     const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
     const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
-    log.debug(`found ${cmrCollectionIds.length} cmrCollectionIds`);
-
     const esCollectionIds = await fetchESCollections(recReportParams);
-    log.debug(`found ${esCollectionIds.length} cumulus (es) collections`);
+    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
     let nextDbCollectionId = esCollectionIds[0];
     let nextCmrCollectionId = cmrCollectionIds[0];
