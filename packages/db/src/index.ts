@@ -1,6 +1,6 @@
 import * as path from 'path';
 
-export { default as Knex } from 'knex';
+export { Knex } from 'knex';
 export {
   createTestDatabase,
   deleteTestDatabase,
