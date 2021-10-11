@@ -207,8 +207,9 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     }
     /* eslint-enable no-await-in-loop */
   } catch (error) {
-    log.error(`error caught in createReconciliationReportForBucket for ${Bucket}`);
+    log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}`);
     log.error(errorify(error));
+    throw error;
   }
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
             + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
@@ -236,7 +237,7 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Get list of collections from CUMULUS
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
-  log.info(`reconciliationReportForCollections with params ${JSON.stringify(recReportParams)}`);
+  log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
   log.debug(`Creating one way report: ${oneWayReport}`);
 
@@ -286,6 +287,7 @@ async function reconciliationReportForCollections(recReportParams) {
   } catch (error) {
     log.error(`Error caught in reconciliationReportForCollections. with params ${JSON.stringify(recReportParams)}`);
     log.error(errorify(error));
+    throw error;
   }
   log.info(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
   return {
@@ -398,8 +400,9 @@ async function reconciliationReportForGranuleFiles(params) {
       }
     });
   } catch (error) {
-    log.error(`caught error in reconciliationReportForGranuleFiles(${granuleInDb.granuleId})`);
+    log.error(`Error caught in reconciliationReportForGranuleFiles(${granuleInDb.granuleId})`);
     log.error(errorify(error));
+    throw error;
   }
   return { okCount, onlyInCumulus, onlyInCmr };
 }
@@ -531,8 +534,9 @@ async function reconciliationReportForGranules(params) {
       }
     }
   } catch (error) {
-    log.error(`error caught in reconciliationReportForGranules(${collectionId})`);
+    log.error(`Error caught in reconciliationReportForGranules(${collectionId})`);
     log.error(errorify(error));
+    throw error;
   }
   log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
            + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
