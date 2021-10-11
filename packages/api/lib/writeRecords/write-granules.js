@@ -536,42 +536,6 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
 };
 
 /**
- * Checks to see if granule exists and, if not, returns 'Create' for the
- * SNS event type. Otherwise, returns 'Update'.
- *
- * @param {DynamoDBGranule} granule
- * @param {Knex} knex
- * @param {CollectionPgModel} collectionPgModel
- * @param {GranulePgModel} granulePgModel
- * @returns {string} - Returns SNS event type value of 'Create' or 'Update'
- */
-const deriveSnsEventTypeFromMessage = async (
-  granule,
-  knex,
-  collectionPgModel = new CollectionPgModel(),
-  granulePgModel = new GranulePgModel()
-) => {
-  const { name, version } = deconstructCollectionId(granule.collectionId);
-  try {
-    await granulePgModel.getRecordCumulusId(
-      knex,
-      {
-        granule_id: granule.granuleId,
-        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-          knex,
-          { name, version }
-        ),
-      }
-    );
-  } catch (error) {
-    if (error.name === 'RecordDoesNotExist') {
-      return 'Create';
-    }
-  }
-  return 'Update';
-};
-
-/**
  * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
  * @param {Object} params
@@ -657,7 +621,6 @@ const writeGranulesFromMessage = async ({
         knex
       );
 
-      const eventType = await deriveSnsEventTypeFromMessage(dynamoGranuleRecord, knex);
       return _writeGranule({
         postgresGranuleRecord,
         dynamoGranuleRecord,
@@ -666,7 +629,7 @@ const writeGranulesFromMessage = async ({
         granuleModel,
         granulePgModel,
         esClient,
-        snsEventType: eventType,
+        snsEventType: 'Update',
       });
     }
   ));
