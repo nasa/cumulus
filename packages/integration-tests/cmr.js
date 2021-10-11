@@ -332,9 +332,11 @@ async function getOnlineResourcesUMMG(cmrLink) {
  */
 async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
   if (cmrMetadataFormat === 'echo10') {
+    console.log(cmrLink);
     return await getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
   }
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
+    console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
     return await getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
