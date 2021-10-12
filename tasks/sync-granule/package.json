@@ -40,7 +40,7 @@
     "@cumulus/common": "9.7.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.0",
     "@cumulus/errors": "9.7.0",
-    "@cumulus/ingest": "9.7.0",
+    "@cumulus/ingest": "9.8.0-alpha.0",
     "@cumulus/message": "9.7.0",
     "lodash": "^4.17.20",
     "p-map": "^2.1.0",

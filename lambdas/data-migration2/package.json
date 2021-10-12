@@ -25,7 +25,7 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "9.7.0",
+    "@cumulus/api": "9.8.0-alpha.0",
     "@cumulus/aws-client": "9.7.0",
     "@cumulus/common": "9.7.0",
     "@cumulus/db": "9.8.0-alpha.0",

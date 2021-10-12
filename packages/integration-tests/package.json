@@ -27,7 +27,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "9.7.0",
+    "@cumulus/api": "9.8.0-alpha.0",
     "@cumulus/api-client": "9.7.0",
     "@cumulus/aws-client": "9.7.0",
     "@cumulus/cmr-client": "9.7.0",

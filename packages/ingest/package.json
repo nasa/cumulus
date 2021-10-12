@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Ingest utilities",
   "engines": {
     "node": ">=12.18.0"
