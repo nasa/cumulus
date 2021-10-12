@@ -18,7 +18,7 @@ const {
   fakeProviderRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
-  tableNames,
+  TableNames,
   migrationDir,
   createRejectableTransaction,
 } = require('@cumulus/db');
@@ -124,9 +124,9 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await t.context.knex(tableNames.files).del();
-  await t.context.knex(tableNames.granulesExecutions).del();
-  await t.context.knex(tableNames.granules).del();
+  await t.context.knex(TableNames.files).del();
+  await t.context.knex(TableNames.granulesExecutions).del();
+  await t.context.knex(TableNames.granules).del();
 });
 
 test.after.always(async (t) => {

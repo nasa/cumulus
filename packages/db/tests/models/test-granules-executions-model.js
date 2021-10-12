@@ -11,7 +11,7 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  tableNames,
+  TableNames,
   migrationDir,
   createRejectableTransaction,
 } = require('../../dist');
@@ -75,7 +75,7 @@ test('GranulesExecutionsPgModel.create() creates a new granule/execution join re
 
   await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const records = await trx(tableNames.granulesExecutions).where(joinRecord);
+    const records = await trx(TableNames.granulesExecutions).where(joinRecord);
     t.is(
       records.length,
       1
@@ -129,7 +129,7 @@ test('GranulesExecutionsPgModel.upsert() creates a new granule/execution join re
 
   await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.upsert(trx, joinRecord);
-    const records = await trx(tableNames.granulesExecutions).where(joinRecord);
+    const records = await trx(TableNames.granulesExecutions).where(joinRecord);
     t.is(
       records.length,
       1

@@ -121,20 +121,22 @@ export const startECSTask = async ({
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: {
-  asyncOperationTaskDefinition: string,
-  cluster: string,
-  description: string,
-  dynamoTableName: string,
-  knexConfig?: NodeJS.ProcessEnv,
-  lambdaName: string,
-  operationType: AsyncOperationType,
-  payload: unknown,
-  stackName: string,
-  systemBucket: string,
-  useLambdaEnvironmentVariables?: boolean,
-  startEcsTaskFunc?: () => StartEcsTaskReturnType
-}, AsyncOperation: AsyncOperationModelClass
+export const startAsyncOperation = async (
+  params: {
+    asyncOperationTaskDefinition: string,
+    cluster: string,
+    description: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    lambdaName: string,
+    operationType: AsyncOperationType,
+    payload: unknown,
+    stackName: string,
+    systemBucket: string,
+    useLambdaEnvironmentVariables?: boolean,
+    startEcsTaskFunc?: () => StartEcsTaskReturnType
+  },
+  AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,

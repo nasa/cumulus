@@ -5,7 +5,7 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
-  tableNames,
+  TableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
   createRejectableTransaction,
@@ -189,7 +189,7 @@ async function del(req, res) {
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
+      await trx(TableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
         const esClient = await Search.es(process.env.ES_HOST);
