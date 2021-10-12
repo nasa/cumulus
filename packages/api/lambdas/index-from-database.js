@@ -196,14 +196,18 @@ async function indexModel({
 }
 
 async function indexFromDatabase(event) {
-  const knex = event.knex || await getKnexClient();
   const {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
     reconciliationReportsTable = process.env.ReconciliationReportsTable,
-    pageSize = 100,
+    pageSize = event.postgresResultPageSize || 1000,
+    postgresConnectionPoolSize = event.postgresConnectionPoolSize || 10,
   } = event;
   const esClient = await Search.es(esHost);
+  const knex = event.knex || (await getKnexClient({
+    dbMaxPool: postgresConnectionPoolSize,
+    ...process.env,
+  }));
 
   const esRequestConcurrency = getEsRequestConcurrency(event);
   const limitEsRequests = pLimit(esRequestConcurrency);
