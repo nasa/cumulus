@@ -146,6 +146,9 @@ async function indexModel({
   let done;
   let maxIndex = await postgresModel.getMaxCumulusId(knex);
   let failCount = 0;
+
+  log.info(`Starting index of ${postgresModel.tableName} with max cumulus_id of ${maxIndex}`);
+
   /* eslint-disable no-await-in-loop */
   while (done !== true && maxIndex > 0) {
     const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
@@ -192,7 +195,7 @@ async function indexModel({
 }
 
 async function indexFromDatabase(event) {
-  const knex = event.knex || getKnexClient();
+  const knex = event.knex || await getKnexClient();
   const {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
@@ -221,7 +224,11 @@ async function indexFromDatabase(event) {
       indexFn: indexer.indexExecution,
       limitEsRequests,
       postgresModel: new ExecutionPgModel(),
-      translationFunction: translatePostgresExecutionToApiExecution,
+      translationFunction: (record) =>
+        translatePostgresExecutionToApiExecution(
+          record,
+          knex
+        ),
       knex,
       pageSize,
     }),
