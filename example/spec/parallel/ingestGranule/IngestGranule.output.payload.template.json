@@ -1,4 +1,5 @@
 {
+  "granuleDuplicates": {},
   "granules": [
     {
       "granuleId": "replace-me-granuleId",
@@ -10,41 +11,30 @@
       "cmrMetadataFormat": "echo10",
       "files": [
         {
-          "name": "replace-me-granuleId.hdf",
+          "fileName": "replace-me-granuleId.hdf",
           "bucket": "this-should-be-replaced-with-protected-bucket-name-in-the-test",
-          "filename": "s3://this-should-be-replaced-with-protected-bucket-name-in-the-test/MOD09GQ/2017/MOD/replace-me-granuleId.hdf",
+          "key": "MOD09GQ/2017/MOD/replace-me-granuleId.hdf",
           "size": 1098034,
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf",
           "type": "data"
         },
         {
-          "name": "replace-me-granuleId.hdf.met",
+          "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "this-should-be-replaced-with-private-bucket-name-in-the-test",
-          "filename": "s3://this-should-be-replaced-with-private-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.hdf.met",
+          "key": "MOD09GQ/MOD/replace-me-granuleId.hdf.met",
           "size": 21708,
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met",
           "type": "metadata"
         },
         {
-          "name": "replace-me-granuleId_ndvi.jpg",
+          "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "this-should-be-replaced-with-public-bucket-name-in-the-test",
-          "filename": "s3://this-should-be-replaced-with-public-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
+          "key": "MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
           "size": 9728,
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg",
           "type": "browse"
         },
         {
-          "filename": "s3://this-should-be-replaced-with-protected-2-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.cmr.xml",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+          "key": "MOD09GQ/MOD/replace-me-granuleId.cmr.xml",
           "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
-          "name": "replace-me-granuleId.cmr.xml",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml",
+          "fileName": "replace-me-granuleId.cmr.xml",
           "type": "metadata"
         }
       ]

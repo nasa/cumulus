@@ -1,4 +1,9 @@
 module "kinesis_trigger_test_workflow" {
+  depends_on = [
+    aws_lambda_function.cnm_response_task,
+    aws_lambda_function.cnm_to_cma_task
+  ]
+
   source = "../../tf-modules/workflow"
 
   prefix          = var.prefix

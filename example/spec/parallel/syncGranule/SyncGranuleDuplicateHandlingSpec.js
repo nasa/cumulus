@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -101,13 +102,13 @@ describe('When the Sync Granule workflow is configured', () => {
             files: [
               {
                 bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf.met`,
               },
             ],
           },
@@ -171,9 +172,22 @@ describe('When the Sync Granule workflow is configured', () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
         const files = lambdaOutput.payload.granules[0].files;
         existingfiles = await getFilesMetadata(files);
+        const [file1, file2] = expectedPayload.granules[0].files;
         // expect reporting of duplicates
-        expectedPayload.granules[0].files[0].duplicate_found = true;
-        expectedPayload.granules[0].files[1].duplicate_found = true;
+        expectedPayload.granuleDuplicates = {
+          [expectedPayload.granules[0].granuleId]: {
+            files: [
+              {
+                bucket: file1.bucket,
+                key: file1.key,
+              },
+              {
+                bucket: file2.bucket,
+                key: file2.key,
+              },
+            ],
+          },
+        };
 
         // set collection duplicate handling to 'version'
         await apiTestUtils.updateCollection({
@@ -191,8 +205,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
       afterAll(() => {
         // delete reporting expectations
-        delete expectedPayload.granules[0].files[0].duplicate_found;
-        delete expectedPayload.granules[0].files[1].duplicate_found;
+        delete expectedPayload.granuleDuplicates;
       });
 
       it('does not raise a workflow error', () => {
@@ -256,10 +269,10 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(3);
 
-        const renamedFiles = files.filter((f) => f.name.startsWith(`${fileUpdated}.v`));
+        const renamedFiles = files.filter((f) => f.fileName.startsWith(`${fileUpdated}.v`));
         expect(renamedFiles.length).toEqual(1);
 
-        const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].size;
+        const expectedRenamedFileSize = existingfiles.filter((f) => f.key.endsWith(fileUpdated))[0].size;
         expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
@@ -314,7 +327,7 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         expect(files.length).toEqual(4);
 
-        const renamedFiles = files.filter((f) => f.name.startsWith(`${updatedFileName}.v`));
+        const renamedFiles = files.filter((f) => f.fileName.startsWith(`${updatedFileName}.v`));
         expect(renamedFiles.length).toEqual(2);
       });
 

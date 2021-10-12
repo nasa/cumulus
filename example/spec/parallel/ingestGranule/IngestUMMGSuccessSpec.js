@@ -15,6 +15,7 @@ const {
   s3ObjectExists,
   parseS3Uri,
   headObject,
+  buildS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -136,7 +137,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.system_bucket = config.bucket;
 
-      const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+      const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}/';
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
         ...providerJson,
@@ -164,19 +165,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               files: [
                 {
                   bucket: config.buckets.protected.name,
-                  filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf`,
+                  key: `MOD09GQ___006/2016/MOD/${testId}/replace-me-granuleId.hdf`,
                 },
                 {
                   bucket: config.buckets.private.name,
-                  filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.hdf.met`,
                 },
                 {
                   bucket: config.buckets.public.name,
-                  filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId_ndvi.jpg`,
                 },
                 {
                   bucket: config.buckets['protected-2'].name,
-                  filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.cmr.json`,
                 },
               ],
             },
@@ -287,12 +288,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
         movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
         existCheck = await Promise.all(movedFiles.map((fileObject) =>
-          s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
+          s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.key })));
         headObjects = await Promise.all(movedFiles.map(async (fileObject) =>
           ({
             ...fileObject,
-            ...await headObject(fileObject.bucket, fileObject.filepath),
-            expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream',
+            ...await headObject(fileObject.bucket, fileObject.key),
+            expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream',
           })));
       } catch (error) {
         subTestSetupError = error;
@@ -305,11 +306,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       if (subTestSetupError) fail(subTestSetupError);
     });
 
-    it('has a payload with correct buckets, filenames, sizes', () => {
+    it('has a payload with correct buckets, keys, sizes', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
       movedFiles.forEach((file) => {
-        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
-        expect(file.filename).toEqual(expectedFile.filename);
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.fileName === file.fileName);
+        expect(file.key).toEqual(expectedFile.key);
         expect(file.bucket).toEqual(expectedFile.bucket);
         if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
@@ -378,20 +379,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const scienceFile = files.find((f) => f.filepath.endsWith('hdf'));
-      const browseFile = files.find((f) => f.filepath.endsWith('jpg'));
+      const scienceFile = files.find((f) => f.fileName.endsWith('hdf'));
+      const browseFile = files.find((f) => f.fileName.endsWith('jpg'));
 
       const scienceFileUrl = getDistributionFileUrl({
-        bucket: scienceFile.bucket, key: scienceFile.filepath,
+        bucket: scienceFile.bucket, key: scienceFile.key,
       });
       const s3ScienceFileUrl = getDistributionFileUrl({
-        bucket: scienceFile.bucket, key: scienceFile.filepath, urlType: 's3',
+        bucket: scienceFile.bucket, key: scienceFile.key, urlType: 's3',
       });
       const browseImageUrl = getDistributionFileUrl({
-        bucket: browseFile.bucket, key: browseFile.filepath,
+        bucket: browseFile.bucket, key: browseFile.key,
       });
       const s3BrowseImageUrl = getDistributionFileUrl({
-        bucket: browseFile.bucket, key: browseFile.filepath, urlType: 's3',
+        bucket: browseFile.bucket, key: browseFile.key, urlType: 's3',
       });
 
       expect(resourceURLs).toContain(scienceFileUrl);
@@ -439,7 +440,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
       if (beforeAllError || subTestSetupError) throw SetupError;
-      const filepath = `/${files[0].bucket}/${files[0].filepath}`;
+      const filepath = `/${files[0].bucket}/${files[0].key}`;
       const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
@@ -459,9 +460,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               'cksum',
               fs.createReadStream(require.resolve(sourceFile))
             );
-            const file = files.find((f) => f.name.endsWith(extension));
+            const file = files.find((f) => f.fileName.endsWith(extension));
 
-            const filepath = `/${file.bucket}/${file.filepath}`;
+            const filepath = `/${file.bucket}/${file.key}`;
             const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
 
             // Compare checksum of downloaded file with expected checksum.
@@ -488,14 +489,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       try {
         file = granule.files[0];
 
-        newS3UMMJsonFileLocation = expectedPayload.granules[0].files.find((f) => f.filename.includes('.cmr.json')).filename;
+        const ummGJsonFile = expectedPayload.granules[0].files.find((f) => f.fileName.includes('.cmr.json'));
+        newS3UMMJsonFileLocation = buildS3Uri(ummGJsonFile.bucket, ummGJsonFile.key);
 
-        destinationKey = `${testDataFolder}/${file.filepath}`;
-
+        destinationKey = `${testDataFolder}/${file.key}`;
         destinations = [{
           regex: '.*.hdf$',
           bucket: config.buckets.protected.name,
-          filepath: `${testDataFolder}/${path.dirname(file.filepath)}`,
+          filepath: `${testDataFolder}/${path.dirname(file.key)}`,
         }];
 
         const originalUmm = await getUmmObject(newS3UMMJsonFileLocation);

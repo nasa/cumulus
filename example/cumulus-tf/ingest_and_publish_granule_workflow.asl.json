@@ -26,6 +26,10 @@
                   "destination": "{$.meta.input_granules}"
                 },
                 {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.sync_granules.granule_duplicates}"
+                },
+                {
                   "source": "{$}",
                   "destination": "{$.payload}"
                 },
@@ -208,7 +212,19 @@
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.move_granules.granule_duplicates}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -243,7 +259,19 @@
           "event.$": "$",
           "task_config": {
             "buckets": "{$.meta.buckets}",
-            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -274,7 +302,20 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}"
+            "launchpad": "{$.meta.launchpad}",
+            "etags": "{$.meta.file_etags}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -314,7 +355,8 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}"
+            "launchpad": "{$.meta.launchpad}",
+            "etags": "{$.meta.file_etags}"
           }
         }
       },

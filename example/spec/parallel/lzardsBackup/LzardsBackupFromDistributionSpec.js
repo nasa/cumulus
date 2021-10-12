@@ -28,9 +28,9 @@ describe('The Lzards Backup Task with distribution URL', () => {
       const config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
-      ingestPath = `${ingestBucket}/${prefix}/lzardsBackupFromDistributionSpec`;
-      await putFile(ingestBucket, `${prefix}/lzardsBackupFromDistributionSpec/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
-      await putFile(ingestBucket, `${prefix}/lzardsBackupFromDistributionSpec/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
+      ingestPath = `${prefix}/lzardsBackupFromDistributionSpec`;
+      await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
@@ -96,14 +96,16 @@ describe('The Lzards Backup Task with distribution URL', () => {
                   version: collection.version,
                   files: [
                     {
-                      name: 'testGranule.jpg',
-                      filename: `s3://${ingestPath}/testGranule.jpg`,
+                      fileName: 'testGranule.jpg',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule.jpg`,
                       checksumType: 'md5',
                       checksum: '5799f9560b232baf54337d334179caa0',
                     },
                     {
-                      name: 'testGranule.dat',
-                      filename: `s3://${ingestPath}/testGranule.dat`,
+                      fileName: 'testGranule.dat',
+                      bucket: ingestBucket,
+                      key: `${ingestPath}/testGranule.dat`,
                       checksumType: 'md5',
                       checksum: '39a870a194a787550b6b5d1f49629236',
                     },

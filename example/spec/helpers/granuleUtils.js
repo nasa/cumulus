@@ -9,7 +9,7 @@ const omit = require('lodash/omit');
 const path = require('path');
 const pWaitFor = require('p-wait-for');
 
-const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const { Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
@@ -59,12 +59,11 @@ const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
     const granule = cloneDeep(originalGranule);
 
     granule.files.forEach((file) => {
-      const { Bucket, Key } = parseS3Uri(file.filename);
-      const { dir, base } = path.parse(Key);
+      const { dir, base } = path.parse(file.key);
       const updateKey = `${dir}/${filePath}/${base}`;
 
       Object.assign(file, {
-        filename: buildS3Uri(Bucket, updateKey),
+        filename: buildS3Uri(file.bucket, updateKey),
         filepath: updateKey,
       });
     });

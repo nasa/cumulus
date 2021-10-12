@@ -25,7 +25,8 @@ class Test(unittest.TestCase):
                 {
                     "files": [
                         {
-                            "filename": "test_data_file.hdf",
+                            "bucket": "test-bucket",
+                            "key": "test_data_file.hdf",
                             "type": "data"
                         }
                     ]
@@ -34,7 +35,7 @@ class Test(unittest.TestCase):
         }
 
         process_object.input = input
-        expected = ['test_data_file.md5', 'test_data_file.hdf']
+        expected = ['test_data_file.md5', 's3://test-bucket/test_data_file.hdf']
         actual = process_object.process()
 
         self.assertEqual(expected, actual)

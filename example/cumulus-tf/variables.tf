@@ -332,7 +332,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "12"
+    default = "13"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
