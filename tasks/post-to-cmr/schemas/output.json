@@ -7,7 +7,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": [
+          "granuleId",
+          "files"
+        ],
         "properties": {
           "granuleId": {
             "type": "string"
@@ -16,20 +19,36 @@
             "type": "array",
             "items": {
               "type": "object",
+              "required": [
+                "bucket",
+                "key"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "name": {
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "filename": {
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
                   "type": "string"
                 },
                 "type": {
-                  "type": "string"
-                },
-                "bucket": {
-                  "type": "string"
-                },
-                "etag": {
                   "type": "string"
                 }
               }

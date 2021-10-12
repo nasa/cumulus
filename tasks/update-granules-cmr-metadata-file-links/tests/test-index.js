@@ -12,8 +12,9 @@ const {
   promiseS3Upload,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
-const { isCMRFile } = require('@cumulus/cmrjs');
+const {
+  randomId, randomString, validateConfig, validateInput, validateOutput,
+} = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
@@ -32,9 +33,9 @@ async function uploadFiles(files, bucket) {
   })));
 }
 
-function granulesToFileURIs(granules) {
-  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
-  return s3URIs;
+function granulesToFileURIs(stagingBucket, granules) {
+  const files = granules.reduce((arr, g) => arr.concat(g.files), []);
+  return files.map((file) => buildS3Uri(stagingBucket, file.key));
 }
 
 function buildPayload(t) {
@@ -45,10 +46,20 @@ function buildPayload(t) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
 
+  const updatedETagConfigObject = {};
+  Object.keys(newPayload.config.etags).forEach((k) => {
+    const ETag = newPayload.config.etags[k];
+    const newURI = buildS3Uri(
+      t.context.stagingBucket,
+      parseS3Uri(k).Key
+    );
+    updatedETagConfigObject[newURI] = ETag;
+  });
+  newPayload.config.etags = updatedETagConfigObject;
+
   newPayload.input.granules.forEach((gran) => {
     gran.files.forEach((file) => {
       file.bucket = t.context.stagingBucket;
-      file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
 
@@ -83,9 +94,11 @@ test.beforeEach(async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
-  t.context.filesToUpload = filesToUpload.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload;
   process.env.REINGEST_GRANULE = false;
 });
 
@@ -96,34 +109,38 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('Should add etag to each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
+test.serial('Should map etag for each CMR metadata file by checking that etag is one or more characters, not whitespace', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  await validateOutput(t, output);
 
-  output.granules.forEach((g) => g.files
-    .filter(isCMRFile)
-    .forEach(({ etag = '' }) => t.regex(etag, /"\S+"/)));
+  Object.values(output.etags).forEach((etag) => t.regex(etag, /"\S+"/));
 });
 
 test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   const filesToUpload = cloneDeep(t.context.filesToUpload);
-  const inputGranules = newPayload.input.granules;
-  const granuleWithEtag = inputGranules.find((g) => g.files.some((f) => f.etag));
-  const previousEtag = granuleWithEtag.files.filter(isCMRFile)[0].etag;
+  const ETagS3URI = Object.keys(newPayload.config.etags)[0];
+  const previousEtag = newPayload.config.etags[ETagS3URI];
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
-  const { granules } = await updateGranulesCmrMetadataFileLinks(newPayload);
-  const updatedGranule = granules.find((g) => g.granuleId === granuleWithEtag.granuleId);
-  const newEtag = updatedGranule.files.filter(isCMRFile)[0].etag;
+  const output = await updateGranulesCmrMetadataFileLinks(newPayload);
+  await validateOutput(t, output);
+  const newEtag = output.etags[ETagS3URI];
   t.not(newEtag, previousEtag);
 });
 
 test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is both and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
   delete newPayload.config.distribution_endpoint;
 
   const filesToUpload = cloneDeep(t.context.filesToUpload);
@@ -132,5 +149,21 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
   await t.throwsAsync(
     () => updateGranulesCmrMetadataFileLinks(newPayload),
     { message: 'cmrGranuleUrlType is both, but no distribution endpoint is configured.' }
+  );
+});
+
+test.serial('update-granules-cmr-metadata-file-links does not throw error if no etags config is provided', async (t) => {
+  const newPayload = buildPayload(t);
+  // remove etags config
+  delete newPayload.config.etags;
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  await t.notThrowsAsync(
+    () => updateGranulesCmrMetadataFileLinks(newPayload)
   );
 });

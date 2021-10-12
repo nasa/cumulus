@@ -2,30 +2,56 @@
   "title": "AddMissingFileChecksumsOut",
   "description": "Describes the output expected from the add-missing-file-checksums task",
   "type": "object",
-  "required": ["granules"],
+  "required": [
+    "granules"
+  ],
   "properties": {
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["files"],
+        "required": [
+          "files"
+        ],
         "properties": {
           "files": {
             "type": "array",
             "items": {
               "type": "object",
               "required": [
-                "filename",
+                "bucket",
+                "checksum",
                 "checksumType",
-                "checksum"
+                "key"
               ],
+              "additionalProperties": false,
               "properties": {
-                "filename": {
-                  "type": "string",
-                  "description": "The s3:// URI of the file"
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
+                  "type": "string"
                 },
-                "checksumType": { "type": "string" },
-                "checksum": { "type": "string" }
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
               }
             }
           }

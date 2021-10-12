@@ -1,14 +1,13 @@
 'use strict';
 
-const groupBy = require('lodash/groupBy');
-const keyBy = require('lodash/keyBy');
 const set = require('lodash/set');
-const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { granulesToCmrFileObjects } = require('@cumulus/cmrjs');
 const {
   generateEcho10XMLString,
-  isCMRFile,
+  getS3UrlOfFile,
+  mapFileEtags,
   isECHO10File,
   isUMMGFile,
   metadataObjectFromCMRFile,
@@ -65,52 +64,6 @@ function createUpdatedEcho10XMLMetadataGranuleCopy(metadataGranule, accessConstr
 }
 
 /**
- * Add etag to a CMR file object.
- *
- * @param {Object} file - CMR file record object
- * @param {Object} updatedFileMap - Map of CMR files by filename
- * @returns {Object} Updated CMR file record object
- */
-function setCmrFileEtag(file, updatedFileMap) {
-  const filename = file.filename || buildS3Uri(file.bucket, file.key);
-  const updatedFile = updatedFileMap[filename];
-  return updatedFile === undefined ? file : { ...file, etag: updatedFile.etag };
-}
-
-/**
- * Add etags to CMR file objects.
- *
- * @param {Array<Object>} originalFiles - Input list of CMR files
- * @param {Array<Object>} updatedFiles - List of CMR files updated by this task
- * @returns {Array<Object>} List of CMR files with updated etags
- */
-function updateGranuleCmrFileObjects(originalFiles, updatedFiles) {
-  const updatedFilesMap = keyBy(updatedFiles, 'filename');
-  return originalFiles.map(
-    (file) => (isCMRFile(file) ? setCmrFileEtag(file, updatedFilesMap) : file)
-  );
-}
-
-/**
- * Reconcile task input granule with function CMR file outputs to create task output granule.
- *
- * @param {Object} input - Granule object task input
- * @param {Array<Object>} updatedCmrFileObjectsWithEtags - List of update CMR file objects
- * @returns {Object} Updated granule object
- */
-function reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) {
-  const mapOfUpdatedCmrFileObjects = groupBy(updatedCmrFileObjectsWithEtags, 'granuleId');
-  return input.granules.map((granule) => (
-    {
-      ...granule,
-      files: updateGranuleCmrFileObjects(
-        granule.files,
-        mapOfUpdatedCmrFileObjects[granule.granuleId]
-      ),
-    }));
-}
-
-/**
  * Use accessConstraintsObject values to set RestrictionFlag and RestrictionComment in
  * echo10XMLMetadataContentsObject.
  *
@@ -158,26 +111,28 @@ function setAccessConstraintMetadataInUMMGJSONMetadata(
  * Update access constraints within CMR Metadata.
  *
  * @param {Object} cmrFileObject - CMR File Object from granule record
- * @param {Object} accessConstraintsObject - Access Constraints config object
- * @param {number} accessConstraintsObject.value - Access constraint value
- * @param {string} [accessConstraintsObject.description] - Access constraint description
+ * @param {Object} etags - map of s3Uris to ETags
+ * @param {Object} accessConstraints - access constraints config object
+ * @param {number} accessConstraints.value - Access constraint value
+ * @param {string} [accessConstraints.description] - Access constraint description
  * @returns {Object} CMR File Object with etag for updated CMR File
  */
 async function updateCmrFileAccessConstraint(
   cmrFileObject,
-  accessConstraintsObject
+  etags,
+  accessConstraints
 ) {
-  const cmrFileName = cmrFileObject.filename;
+  const cmrS3Url = getS3UrlOfFile(cmrFileObject);
   const cmrMetadataContentsObject = await metadataObjectFromCMRFile(
-    cmrFileName,
-    cmrFileObject.etag
+    cmrS3Url,
+    etags[cmrS3Url]
   );
-  const { Bucket, Key } = parseS3Uri(cmrFileName);
+  const { Bucket, Key } = parseS3Uri(cmrS3Url);
   // ECHO10XML logic
-  if (isECHO10File(cmrFileName)) {
+  if (isECHO10File(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setRestrictionMetadataInEcho10XMLMetadata(
       cmrMetadataContentsObject,
-      accessConstraintsObject
+      accessConstraints
     );
     const updatedGranuleXML = generateEcho10XMLString(updatedCmrMetadataContentsObject.Granule);
     const updatedCmrFile = await uploadEcho10CMRFile(
@@ -187,10 +142,10 @@ async function updateCmrFileAccessConstraint(
     return { ...cmrFileObject, etag: updatedCmrFile.ETag };
   }
   // UMMG-JSON logic
-  if (isUMMGFile(cmrFileName)) {
+  if (isUMMGFile(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setAccessConstraintMetadataInUMMGJSONMetadata(
       cmrMetadataContentsObject,
-      accessConstraintsObject
+      accessConstraints
     );
     const updatedCmrFile = await uploadUMMGJSONCMRFile(
       updatedCmrMetadataContentsObject,
@@ -198,7 +153,7 @@ async function updateCmrFileAccessConstraint(
     );
     return { ...cmrFileObject, etag: updatedCmrFile.ETag };
   }
-  throw new Error(`Unrecognized CMR File format: ${cmrFileName}`);
+  throw new Error(`Unrecognized CMR File format: ${cmrS3Url}`);
 }
 
 /**
@@ -215,13 +170,22 @@ async function updateCmrFileAccessConstraint(
  */
 const updateCmrAccessConstraints = async (event) => {
   const { config, input } = event;
+  const { etags = {}, accessConstraints } = config;
+
   const cmrFileObjects = granulesToCmrFileObjects(input.granules);
   const updatedCmrFileObjectsWithEtags = await Promise.all(
     cmrFileObjects.map(
-      (cmrFileObject) => updateCmrFileAccessConstraint(cmrFileObject, config.accessConstraints)
+      (cmrFileObject) => updateCmrFileAccessConstraint(cmrFileObject, etags, accessConstraints)
     )
   );
-  return { ...input, granules: reconcileTaskOutput(input, updatedCmrFileObjectsWithEtags) };
+
+  return {
+    ...input,
+    etags: {
+      ...etags,
+      ...mapFileEtags(updatedCmrFileObjectsWithEtags),
+    },
+  };
 };
 
 const handler = (event, context) => runCumulusTask(updateCmrAccessConstraints, event, context);

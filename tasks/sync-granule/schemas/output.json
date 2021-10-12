@@ -2,50 +2,90 @@
   "title": "SyncGranuleOutput",
   "description": "Describes the output produced by the sync-granule task",
   "type": "object",
-  "required": ["granules"],
+  "required": [
+    "granules"
+  ],
   "properties": {
+    "granuleDuplicates": {
+      "type": "object",
+      "additionalProperties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bucket",
+              "key"
+            ],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "dataType", "version", "files"],
+        "required": [
+          "granuleId",
+          "dataType",
+          "version",
+          "files"
+        ],
         "properties": {
-          "granuleId": {"type": "string"},
-          "dataType": {"type": "string"},
-          "version": {"type": "string"},
+          "granuleId": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
+              "required": [
+                "bucket",
+                "key"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "name": {
-                  "description": "'filename' portion of S3 URI (e.g. 'foo.dat' from s3://bucket/path/foo.dat)",
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "filename": {
-                  "description": "full s3 URI of staged granule",
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
                   "type": "string"
                 },
                 "type": {
-                  "description": "",
                   "type": "string"
-                },
-                "bucket": {
-                  "description": "bucket file is staged in",
-                  "type": "string"
-                },
-                "url_path": {
-                  "description": "url path template that determines the filepath of the file when published",
-                  "type": "string"
-                },
-                "fileStagingDir": {
-                  "description": "name of directory used for staging location",
-                  "type": "string"
-                },
-                "duplicate_found": {
-                  "description": "whether a duplicate for this file was found",
-                  "type": "boolean"
                 }
               }
             }
@@ -54,10 +94,17 @@
       }
     },
     "pdr": {
-      "required": ["name", "path"],
+      "required": [
+        "name",
+        "path"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "path": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
       }
     }
   }

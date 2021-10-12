@@ -20,7 +20,8 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "package": "./bin/package.sh",
+    "generate-task-schemas": "./node_modules/.bin/generate-task-schemas $(pwd) files",
+    "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
@@ -52,6 +53,7 @@
     "got": "11.7.0"
   },
   "devDependencies": {
+    "@cumulus/schemas": "9.7.0-alpha.0",
     "@cumulus/types": "9.7.0"
   }
 }
