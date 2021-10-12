@@ -25,12 +25,10 @@ website/**
 /packages/common/*.d.ts
 /packages/common/*.js
 /packages/ingest/*.d.ts
-/packages/ingest/*.map
 /packages/ingest/*.js
 /packages/launchpad-auth/*.d.ts
 /packages/launchpad-auth/*.js
 /packages/message/*.d.ts
-/packages/message/*.map
 /packages/message/*.js
 /tf-modules/cumulus-rds-tf/db-provision-user-database*
 /packages/api/src/**/*.js
