@@ -58,7 +58,7 @@
     "@cumulus/files-to-granules": "9.7.0",
     "@cumulus/hello-world": "9.7.0",
     "@cumulus/ingest": "9.8.0-alpha.0",
-    "@cumulus/integration-tests": "9.7.0",
+    "@cumulus/integration-tests": "9.8.0-alpha.0",
     "@cumulus/message": "9.7.0",
     "@cumulus/move-granules": "9.7.0",
     "@cumulus/parse-pdr": "9.7.0",
