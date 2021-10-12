@@ -65,14 +65,6 @@ module "cumulus" {
     # ... more buckets ...
   }
 
-  dynamo_tables = {
-    "access_tokens" = {
-      "arn" = "arn:aws:dynamodb:us-east-1:12345:table/prefix-AccessTokensTable"
-      "name" = "prefix-AccessTokensTable"
-    }
-    # ... more tables ...
-  }
-
   token_secret = "a-random-32-character-string"
 
   archive_api_users = ["urs-user1", "urs-user2"]
