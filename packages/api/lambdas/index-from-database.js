@@ -157,12 +157,13 @@ async function indexModel({
     );
 
     const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
-      const result = await translationFunction(pageResult);
+      let translationResult;
       try {
-        return await indexFn(esClient, result, esIndex);
+        await translationFunction(pageResult);
+        return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
-          `Error indexing record ${JSON.stringify(result)}, error: ${error.message}`
+          `Error indexing record ${JSON.stringify(translationResult)}, error: ${error.message}`
         );
         return false;
       }
