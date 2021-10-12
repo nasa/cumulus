@@ -93,7 +93,6 @@ function searchEs(type, index, limit = 10) {
 
 test.before(async (t) => {
   t.context.esIndices = [];
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await reconciliationReportModel.createTable();

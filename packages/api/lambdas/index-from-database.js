@@ -159,7 +159,7 @@ async function indexModel({
     const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
       let translationResult;
       try {
-        await translationFunction(pageResult);
+        translationResult = await translationFunction(pageResult);
         return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
