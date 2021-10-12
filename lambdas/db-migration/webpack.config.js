@@ -1,5 +1,6 @@
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const ignoredPackages = [
   'mssql',
@@ -18,6 +19,11 @@ module.exports = {
   plugins: [
     new IgnorePlugin({
       resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: './node_modules/@cumulus/db/dist/migrations', to: 'migrations' },
+      ],
     }),
   ],
   mode: 'development',
