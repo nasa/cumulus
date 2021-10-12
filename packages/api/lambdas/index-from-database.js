@@ -172,7 +172,7 @@ async function indexModel({
     const successfulResults = results.filter((result) => result !== false);
     failCount += (results.length - successfulResults.length);
 
-    totalItemsIndexed += successfulResults;
+    totalItemsIndexed += successfulResults.length;
 
     log.info(`Completed index of ${successfulResults.length} records from ${postgresModel.tableName}`);
     startId += pageSize;
@@ -187,7 +187,7 @@ async function indexModel({
     }
   }
   /* eslint-enable no-await-in-loop */
-  log.info(`Completed successful index of ${totalItemsIndexed.length} records from ${postgresModel.tableName}`);
+  log.info(`Completed successful index of ${totalItemsIndexed} records from ${postgresModel.tableName}`);
   if (failCount) {
     log.warn(`${failCount} records failed indexing from ${postgresModel.tableName}`);
   }
