@@ -11,7 +11,7 @@ export const up = async (knex: Knex): Promise<void> =>
       .comment('Granule ID')
       .notNullable();
     table
-      .enum('status', ['running', 'completed', 'failed', 'queued'])
+      .enum('status', ['running', 'completed', 'failed'])
       .comment('Ingest status of the granule')
       .notNullable();
     table
