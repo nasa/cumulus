@@ -6,6 +6,7 @@ import {
   translateApiAsyncOperationToPostgresAsyncOperation,
   AsyncOperationPgModel,
   createRejectableTransaction,
+  Knex,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
@@ -180,7 +181,7 @@ export const startAsyncOperation = async (params: {
   const asyncOperationPgModel = new AsyncOperationPgModel();
 
   const knex = await getKnexClient({ env: knexConfig });
-  return createRejectableTransaction<ApiAsyncOperation>(knex, async (trx: any) => {
+  return createRejectableTransaction<ApiAsyncOperation>(knex, async (trx: Knex.Transaction) => {
     const createObject: ApiAsyncOperation = {
       id,
       status: 'RUNNING',
