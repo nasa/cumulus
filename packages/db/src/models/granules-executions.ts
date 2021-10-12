@@ -1,17 +1,17 @@
 import { Knex } from 'knex';
 
 import { isRecordDefined } from '../database';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
 export default class GranulesExecutionsPgModel {
-  readonly tableName: tableNames;
+  readonly tableName: TableNames;
 
   // can't extend base class because type for this data doesn't contain
   // a cumulus_id property
   constructor() {
-    this.tableName = tableNames.granulesExecutions;
+    this.tableName = TableNames.granulesExecutions;
   }
 
   async create(

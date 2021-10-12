@@ -13,7 +13,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
-  tableNames,
+  TableNames,
   translateApiCollectionToPostgresCollection,
   createRejectableTransaction,
 } = require('@cumulus/db');
@@ -226,7 +226,7 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      await trx(tableNames.collections).where({ name, version }).del();
+      await trx(TableNames.collections).where({ name, version }).del();
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
         const collectionId = constructCollectionId(name, version);

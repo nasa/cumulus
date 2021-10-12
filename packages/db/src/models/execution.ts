@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
@@ -9,7 +9,7 @@ import { getSortFields } from '../lib/sort';
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
-      tableName: tableNames.executions,
+      tableName: TableNames.executions,
     });
   }
 
