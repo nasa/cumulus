@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-pdrs",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Add discovered PDRs to a queue",
   "main": "index.js",
   "directories": {

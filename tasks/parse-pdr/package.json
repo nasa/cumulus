@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Download and Parse a given PDR",
   "license": "Apache-2.0",
   "main": "index.js",

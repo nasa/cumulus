@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-pdrs",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Discover PDRs in FTP and HTTP endpoints",
   "main": "index.js",
   "directories": {

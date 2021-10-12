@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
