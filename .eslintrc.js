@@ -206,6 +206,14 @@ module.exports = {
         'lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',
         'node/no-unsupported-features/es-syntax': 'off'
+      },
+      parserOptions: {
+        project: [
+          './tsconfig.eslint.json'
+          // './packages/**/tsconfig.json',
+          // './lambdas/**/tsconfig.json',
+          // './tasks/**/tsconfig.json'
+        ]
       }
     },
     {
