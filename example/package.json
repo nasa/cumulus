@@ -53,7 +53,7 @@
     "@cumulus/cmr-client": "9.7.0",
     "@cumulus/cmrjs": "9.7.0",
     "@cumulus/common": "9.7.0",
-    "@cumulus/discover-granules": "9.7.0",
+    "@cumulus/discover-granules": "9.8.0-alpha.0",
     "@cumulus/discover-pdrs": "9.7.0",
     "@cumulus/files-to-granules": "9.7.0",
     "@cumulus/hello-world": "9.7.0",
@@ -68,7 +68,7 @@
     "@cumulus/queue-pdrs": "9.7.0",
     "@cumulus/sf-sqs-report": "9.7.0",
     "@cumulus/sync-granule": "9.7.0",
-    "@cumulus/test-processing": "9.7.0"
+    "@cumulus/test-processing": "9.8.0-alpha.0"
   },
   "devDependencies": {
     "@cumulus/test-data": "9.7.0"
