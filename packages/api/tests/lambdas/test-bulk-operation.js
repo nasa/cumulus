@@ -218,18 +218,6 @@ test.serial('applyWorkflowToGranules passed on queueUrl to granule.applyWorkflow
   });
 
   t.is(applyWorkflowStub.getCall(0).args[3], queueUrl);
-
-  const granulePgModel = new GranulePgModel();
-  const pgGranules = await Promise.all(
-    t.context.granuleIds.map((granuleId) =>
-      granulePgModel.get(t.context.knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }))
-  );
-  pgGranules.forEach((granule) => {
-    t.is(granule.status, 'queued');
-  });
 });
 
 test('bulk operation lambda throws error for unknown event type', async (t) => {
@@ -284,18 +272,6 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
     t.deepEqual(matchingGranule, callArgs[0]);
     t.is(callArgs[1], workflowName);
   });
-
-  const granulePgModel = new GranulePgModel();
-  const pgGranules = await Promise.all(
-    t.context.granuleIds.map((granuleId) =>
-      granulePgModel.get(t.context.knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }))
-  );
-  pgGranules.forEach((granule) => {
-    t.is(granule.status, 'queued');
-  });
 });
 
 test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returned by query', async (t) => {
@@ -346,6 +322,32 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
     granules.map((g) =>
       granulePgModel.get(t.context.knex, {
         granule_id: g.granuleId,
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }))
+  );
+  pgGranules.forEach((granule) => {
+    t.is(granule.status, 'queued');
+  });
+});
+
+test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  const workflowName = 'test-workflow';
+
+  await bulkOperation.applyWorkflowToGranules({
+    granuleIds: t.context.granuleIds,
+    workflowName,
+    granuleModel: new Granule(),
+    knex: t.context.knex,
+  });
+
+  t.is(applyWorkflowStub.callCount, 2);
+
+  const granulePgModel = new GranulePgModel();
+  const pgGranules = await Promise.all(
+    t.context.granuleIds.map((granuleId) =>
+      granulePgModel.get(t.context.knex, {
+        granule_id: granuleId,
         collection_cumulus_id: t.context.collectionCumulusId,
       }))
   );
@@ -629,5 +631,30 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
     const matchingGranule = granules.find((granule) => granule.granuleId === callArgs[0].granuleId);
     t.deepEqual(matchingGranule, callArgs[0]);
     t.is(callArgs[1], process.env.asyncOperationId);
+  });
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => {
+  await setUpExistingDatabaseRecords(t);
+  await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      ids: t.context.granuleIds,
+    },
+  });
+
+  t.is(reingestStub.callCount, 2);
+
+  const granulePgModel = new GranulePgModel();
+  const pgGranules = await Promise.all(
+    t.context.granuleIds.map((granuleId) =>
+      granulePgModel.get(t.context.knex, {
+        granule_id: granuleId,
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }))
+  );
+  pgGranules.forEach((granule) => {
+    t.is(granule.status, 'queued');
   });
 });
