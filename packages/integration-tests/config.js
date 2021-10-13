@@ -66,7 +66,7 @@ const loadConfig = async () => {
 
   const buckets = await getJsonS3Object(
     configFromFile.bucket,
-    `${configFromFile.stackName}/workflows/buckets.json`
+    `${configFromFile.stackName}/buckets/buckets.json`
   );
 
   return { ...configFromFile, buckets };

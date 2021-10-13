@@ -79,7 +79,7 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 
   return await awsServices.s3().putObject({
     Bucket: systemBucket,
-    Key: `${stackName}/workflows/buckets.json`,
+    Key: `${stackName}/buckets/buckets.json`,
     Body: JSON.stringify(bucketsConfig),
   }).promise();
 }
