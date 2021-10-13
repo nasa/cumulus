@@ -28,8 +28,8 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "9.7.0",
-    "@cumulus/async-operations": "9.7.0",
+    "@cumulus/api": "9.8.0-alpha.0",
+    "@cumulus/async-operations": "9.8.0-alpha.0",
     "@cumulus/logger": "9.7.0",
     "@cumulus/types": "9.7.0"
   },

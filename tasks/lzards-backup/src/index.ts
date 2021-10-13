@@ -27,7 +27,7 @@ import {
   InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
-import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
+import { MakeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
@@ -182,7 +182,7 @@ export const makeBackupFileRequest = async (params: {
   granuleId: string,
   lzardsPostMethod?: typeof postRequestToLzards,
   generateAccessUrlMethod?: typeof generateAccessUrl,
-}): Promise<makeBackupFileRequestResult> => {
+}): Promise<MakeBackupFileRequestResult> => {
   const {
     collectionId,
     backupConfig,
@@ -346,7 +346,7 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   }
   const filteredResults = backupResults.filter(
     (result) => isFulfilledPromise(result)
-  ) as PromiseFulfilledResult<makeBackupFileRequestResult[]>[];
+  ) as PromiseFulfilledResult<MakeBackupFileRequestResult[]>[];
   return {
     backupResults: filteredResults.map((result) => result.value).flat(),
     granules: event.input.granules,
