@@ -13,15 +13,15 @@
     "clean": "rm -rf dist",
     "db:local:schema": "env PGPASSWORD=password pg_dump -h localhost -U postgres --schema-only --no-owner | egrep -v '^--' | cat -s | tee schema.sql",
     "webpack": "../../node_modules/.bin/webpack",
-    "build-lambda-zip": "(cd dist/webpack && cp -R ../../node_modules/@cumulus/db/dist/migrations . && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js)",
+    "build-lambda-zip": "(cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js)",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-    "@cumulus/db": "9.7.0",
-    "knex": "0.21.13",
+    "@cumulus/db": "9.8.0-alpha.0",
+    "knex": "0.95.11",
     "pg": "^8.3.0"
   }
 }
