@@ -184,7 +184,7 @@ Also, each run of these data migration will write a timestamped log of any error
 
 ### 6. Run validation tool
 
-We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](http://github.com/nasa/cumulus/blob/master/lambdas/postgres-migration-count-tool/README.md).
+We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](https://github.com/nasa/cumulus/blob/master/lambdas/postgres-migration-count-tool/README.md).
 
 This tool can be run in the following two ways:
 
