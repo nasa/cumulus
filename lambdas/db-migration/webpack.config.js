@@ -38,7 +38,6 @@ module.exports = {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist', 'webpack')
   },
-  devtool: 'source-map',
   module: {
     rules: [
       {
