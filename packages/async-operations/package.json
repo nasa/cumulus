@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/async-operations",
-  "version": "9.7.0",
+  "version": "9.8.0-alpha.0",
   "description": "Cumulus Core internal async operations module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,7 +29,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "9.7.0",
-    "@cumulus/db": "9.7.0",
+    "@cumulus/db": "9.8.0-alpha.0",
     "@cumulus/errors": "9.7.0",
     "@cumulus/types": "9.7.0",
     "uuid": "8.3.2"

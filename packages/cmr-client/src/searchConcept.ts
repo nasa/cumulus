@@ -117,7 +117,7 @@ export async function searchConcept({
   const responseItems
     = format === 'echo10'
       ? (<Echo10Response>(await parseXMLString(<string>response.body))).results.result || []
-      : (<{body: {items: unknown}}>response).body.items || (<JsonResponse>response).body.feed.entry;
+      : (<UmmJsonResponse>response).body.items || (<JsonResponse>response).body.feed.entry;
 
   const fetchedResults = previousResults.concat(responseItems || []);
 
