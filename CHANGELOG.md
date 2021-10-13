@@ -19,9 +19,14 @@ upgrades to `knex` package.
   `update_granules_cmr_metadata_file_links_task_timeout` property
 
 ### Changed
-
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
 - Updated default version of async operations Docker image to `cumuluss/async-operation:35`
+
+- **CUMULUS-2643**
+  - relocates system file `buckets.json` out of the
+    `s3://internal-bucket/workflows` directory into
+    `s3://internal-bucket/buckets`.
+
 
 ## [v9.7.0] 2021-10-01
 
