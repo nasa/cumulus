@@ -10,6 +10,7 @@ const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
+const omit = require('lodash/omit');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -22,7 +23,6 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
 const Logger = require('@cumulus/logger');
-const omit = require('lodash/omit');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
