@@ -204,8 +204,10 @@ async function indexFromDatabase(event) {
   } = event;
   const esClient = await Search.es(esHost);
   const knex = event.knex || (await getKnexClient({
-    dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
-    ...process.env,
+    env: {
+      dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
+      ...process.env,
+    }
   }));
 
   const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
