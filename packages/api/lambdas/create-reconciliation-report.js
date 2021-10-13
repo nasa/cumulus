@@ -307,7 +307,7 @@ async function reconciliationReportForCollections(recReportParams) {
  *                                                 (e.g. { bucket: distribution path })
  * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
-async function reconciliationReportForGranuleFiles(params) {
+function reconciliationReportForGranuleFiles(params) {
   const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
   const onlyInCumulus = [];
@@ -326,7 +326,7 @@ async function reconciliationReportForGranuleFiles(params) {
       );
 
     // check each URL entry against database records
-    const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
+    granuleInCmr.RelatedUrls.forEach((relatedUrl) => {
       // only check URL types for downloading granule files and related data (such as documents)
       if (cmrGetDataTypes.includes(relatedUrl.Type)
           || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
@@ -377,8 +377,6 @@ async function reconciliationReportForGranuleFiles(params) {
         }
       }
     });
-
-    await Promise.all(relatedUrlPromises);
 
     // any remaining database items to the report
     Object.keys(granuleFiles).forEach((fileName) => {
