@@ -207,7 +207,7 @@ async function indexFromDatabase(event) {
     env: {
       dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
       ...process.env,
-    }
+    },
   }));
 
   const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
