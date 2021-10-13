@@ -54,6 +54,9 @@ data "aws_iam_policy_document" "index_from_database" {
 
   statement {
     actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
       "logs:DescribeLogStreams",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
