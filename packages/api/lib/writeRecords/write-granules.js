@@ -16,7 +16,10 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
+const {
+  deconstructCollectionId,
+  getCollectionIdFromMessage,
+} = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -47,7 +50,6 @@ const {
   getGranuleProductVolume,
 } = require('../granules');
 const {
-  deconstructCollectionId,
   parseException,
 } = require('../utils');
 const Granule = require('../../models/granules');

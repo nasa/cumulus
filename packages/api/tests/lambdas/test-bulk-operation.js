@@ -135,6 +135,29 @@ const setUpExistingDatabaseRecords = async (t) => {
   await granulesExecutionsPgModel.create(t.context.knex, joinRecords);
 };
 
+const verifyGranulesQueuedStatus = async (t) => {
+  const granulePgModel = new GranulePgModel();
+  const pgGranules = await Promise.all(
+    t.context.granuleIds.map((granuleId) =>
+      granulePgModel.get(t.context.knex, {
+        granule_id: granuleId,
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }))
+  );
+  pgGranules.forEach((granule) => {
+    t.is(granule.status, 'queued');
+  });
+
+  const granuleModel = new Granule();
+  const dynamoGranules = await Promise.all(
+    t.context.granuleIds.map((granuleId) =>
+      granuleModel.get({ granuleId }))
+  );
+  dynamoGranules.forEach((granule) => {
+    t.is(granule.status, 'queued');
+  });
+};
+
 test.before(async (t) => {
   process.env = {
     ...process.env,
@@ -317,17 +340,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
     t.is(callArgs[1], workflowName);
   });
 
-  const granulePgModel = new GranulePgModel();
-  const pgGranules = await Promise.all(
-    granules.map((g) =>
-      granulePgModel.get(t.context.knex, {
-        granule_id: g.granuleId,
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }))
-  );
-  pgGranules.forEach((granule) => {
-    t.is(granule.status, 'queued');
-  });
+  await verifyGranulesQueuedStatus(t);
 });
 
 test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
@@ -343,17 +356,7 @@ test.serial('applyWorkflowToGranules sets the granules status to queued', async 
 
   t.is(applyWorkflowStub.callCount, 2);
 
-  const granulePgModel = new GranulePgModel();
-  const pgGranules = await Promise.all(
-    t.context.granuleIds.map((granuleId) =>
-      granulePgModel.get(t.context.knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }))
-  );
-  pgGranules.forEach((granule) => {
-    t.is(granule.status, 'queued');
-  });
+  await verifyGranulesQueuedStatus(t);
 });
 
 test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and Postgres', async (t) => {
@@ -646,15 +649,5 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
 
   t.is(reingestStub.callCount, 2);
 
-  const granulePgModel = new GranulePgModel();
-  const pgGranules = await Promise.all(
-    t.context.granuleIds.map((granuleId) =>
-      granulePgModel.get(t.context.knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: t.context.collectionCumulusId,
-      }))
-  );
-  pgGranules.forEach((granule) => {
-    t.is(granule.status, 'queued');
-  });
+  await verifyGranulesQueuedStatus(t);
 });
