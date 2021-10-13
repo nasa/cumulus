@@ -242,7 +242,7 @@ module.exports = {
       }
     },
     {
-      files: ['lambdas/db-migration/src/migration-template.ts', 'packages/db/src/migration-template.ts'],
+      files: ['packages/db/src/migration-template.ts'],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off'
       }

@@ -6,18 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### BREAKING CHANGES
+### Notable Changes
 
-- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
-- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
-any adverse impact on existing deployments, even those which still contain `logs` records,
-but technically it is a breaking change to the Elasticsearch mappings.
-- Changed `@cumulus/api-client/asyncOperations.getAsyncOperation` to return parsed JSON body
-of response and not the raw API endpoint response
+- **CUMULUS-2583**
+  - The `queue-granules` task now updates granule status to `queued` when a granule is queued. In order to prevent issues with the private API endpoint and Lambda API request and concurrency limits, this functionality runs with limited concurrency, which may increase the task's overall runtime when large numbers of granules are being queued. If you are facing Lambda timeout errors with this task, we recommend converting your `queue-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- **CUMULUS-2676**
+  - The `discover-granules` task has been updated to limit concurrency on checks to identify and skip already ingested granules in order to prevent issues with the private API endpoint and Lambda API request and concurrency limits. This may increase the task's overall runtime when large numbers of granules are discovered. If you are facing Lambda timeout errors with this task, we recommend converting your `discover-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
 
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2672**
+    - Added migration to add `type` text column to Postgres database `files` table
   - **CUMULUS-2634**
     - Added new functions for upserting data to Elasticsearch:
       - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
@@ -38,33 +38,23 @@ of response and not the raw API endpoint response
       Executions.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-- **CUMULUS-2575**
-  - Adds `POST /granules` API endpoint to create a granule
-  - Adds helper `createGranule` to `@cumulus/api-client`
-- **CUMULUS-2577**
-  - Adds `POST /executions` endpoint to create an execution
-- **CUMULUS-2578**
-  - Adds `PUT /executions` endpoint to update an execution
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-- **CUMULUS-2576**
-  - Adds `PUT /granules` API endpoint to update a granule
-  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
-- **CUMULUS-2606**
-  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
-  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
-- **CUMULUS-2583**
-  - Adds `queued` as option for granule's `status` field
+- **CUMULUS-2000**
+  - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
+- **CUMULUS-2630**
+  - Adds a new workflow `DiscoverGranulesToThrottledQueue` that discovers and writes
+    granules to a throttled background queue.  This allows discovery and ingest
+    of larger numbers of granules without running into limits with lambda
+    concurrency.
 
 ### Changed
 
-- Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
-  upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
-  issue in previous version.
-- `@cumulus/api-client/granules.getGranule` now returns the granule record from the GET `/granules/<granuleId>` endpoint, not the raw endpoint response
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2672**
+    - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
+      instead of dropping it.
+    - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
+    - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
+    - Updated `@cumulus/types.api.file` to add `type` to the typing.
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
@@ -151,35 +141,21 @@ of response and not the raw API endpoint response
       updated records.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
-- **CUMULUS-2577**
-  - Adds `POST /executions` endpoint to create an execution
+- **CUMULUS-2695**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
+    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
+    should increase this value.
+  - Updates cumulus-tf/cumulus/variables.tf to change
+    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
+    the dashboard for default deployments.
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
+  - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
-- **CUMULUS-2592**
-  - Adds logging when messages fail to be added to queue
-
-- **CUMULUS-2644**
-  - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
-  from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
-  - Changed `erasePostgresTables` in serve.js to ensure granules_executions, granules, pdrs, are
-    deleted before executions
-- Updated `processDeadLetterArchive` Lambda to return an object where
-`processingSucceededKeys` is an array of the S3 keys for successfully
-processed objects and `processingFailedKeys` is an array of S3 keys
-for objects that could not be processed
-- Updated async operations to handle writing records to the databases
-when output of the operation is `undefined`
-- **CUMULUS-2575**
-  - Updates model/granule to allow a granule created from API to not require an
-    execution to be associated with it. This is a backwards compatible change
-    that will not affect granules created in the normal way.
-  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
-    enforce parameter checking so that requests include either (granule\_id
-    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
-  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
-    modified to throw a descriptive error if the input `collectionId` is
-    undefined rather than `TypeError: Cannot read property 'split' of
-    undefined`. This function has also been updated to throw descriptive errors
-    if an incorrectly formated collectionId is input.
+### Fixed
+  - **CUMULUS-2583**
+    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
 
 ### Removed
 
@@ -199,6 +175,24 @@ when output of the operation is `undefined`
     - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
       DynamoDB table.
 
+## [v9.6.0] 2021-09-20
+
+### Added
+
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2606**
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
+  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
+
+### Changed
+
+- Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
+  upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
+  issue in previous version.
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
@@ -206,6 +200,9 @@ when output of the operation is `undefined`
 
 - Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
 to allow `kms:Decrypt` on the KMS key used to encrypt provider credentials. Adding this permission fixes the `sync-granule` task when run as an ECS activity in a Step Function, which previously failed trying to decrypt credentials for providers.
+
+- **CUMULUS-2576**
+  - Adds default value to granule's timestamp when updating a granule via API.
 
 ## [v9.5.0] 2021-09-07
 
@@ -274,6 +271,7 @@ when output of the operation is `undefined`
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
     if an incorrectly formated collectionId is input.
+
 ## [v9.4.0] 2021-08-16
 
 ### Notable changes
@@ -594,6 +592,7 @@ releases.
 
 ### BREAKING CHANGES
 
+- @cumulus/api-client/granules.getGranule now returns the granule record from the GET /granules/<granuleId> endpoint, not the raw endpoint response
 - **CUMULUS-2434**
   - To use the updated `update-granules-cmr-metadata-file-links` task, the
     granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
@@ -1218,7 +1217,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after
-    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
     of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
@@ -5064,7 +5063,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.5.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.6.0...HEAD
+[v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0

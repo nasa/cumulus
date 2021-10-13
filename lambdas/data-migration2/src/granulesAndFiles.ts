@@ -158,6 +158,7 @@ export const migrateFileRecord = async (
     file_name: file.fileName,
     source: file.source,
     path: file.path,
+    type: file.type,
   };
   await filePgModel.upsert(trx, updatedRecord);
 };

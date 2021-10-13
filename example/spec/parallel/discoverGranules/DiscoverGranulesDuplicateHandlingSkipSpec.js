@@ -14,7 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -22,6 +22,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
@@ -191,9 +192,12 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   it('results in the new granule being ingested', async () => {
     if (beforeAllError) fail(beforeAllError);
     else {
-      await expectAsync(
-        getGranuleWithStatus({ prefix, granuleId: newGranuleId, status: 'completed' })
-      ).toBeResolved();
+      const granule = await waitForApiStatus(
+        getGranule,
+        { prefix, granuleId: newGranuleId },
+        'completed'
+      );
+      expect(granule).toBeDefined();
     }
   });
 
