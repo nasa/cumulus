@@ -22,17 +22,23 @@ module.exports = {
     }),
     new CopyPlugin({
       patterns: [
-        { from: './node_modules/@cumulus/db/dist/migrations', to: 'migrations' },
+        {
+          from: './node_modules/@cumulus/db/dist/migrations',
+          to: 'migrations'
+        },
       ],
     }),
   ],
   mode: 'development',
   entry: './dist/lambda/index.js',
   output: {
-    libraryTarget: 'commonjs2',
+    library: {
+      type: 'commonjs2'
+    },
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist', 'webpack')
   },
+  devtool: 'source-map',
   module: {
     rules: [
       {
@@ -52,12 +58,17 @@ module.exports = {
       // tries to treat migration/seed files as bundled assets, which they are
       // not. Thus, they need to be loaded into the runtime via `require` and not
       // `_webpack_require`.
+      // see https://github.com/webpack/webpack/issues/4175#issuecomment-450746682
       {
-        test: /knex\/lib\/util\/import-file\.js$/,
+        test: /knex\/lib\/migrations\/util\/import-file\.js$/,
         loader: 'string-replace-loader',
         options: {
-          search: 'require(\\([^\'"])',
-          replace: '__non_webpack_require__$1',
+          // match a require function call where the argument isn't a string
+          // also capture the first character of the args so we can ignore it later
+          search: 'require[(]([^\'"])',
+          // replace the 'require(' with a '__non_webpack_require__(', meaning it will require the files at runtime
+          // $1 grabs the first capture group from the regex, the one character we matched and don't want to lose
+          replace: '__non_webpack_require__($1',
           flags: 'g'
         }
       }
