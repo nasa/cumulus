@@ -307,7 +307,7 @@ async function reconciliationReportForCollections(recReportParams) {
  *                                                 (e.g. { bucket: distribution path })
  * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
-function reconciliationReportForGranuleFiles(params) {
+async function reconciliationReportForGranuleFiles(params) {
   const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
   let okCount = 0;
   const onlyInCumulus = [];
@@ -377,6 +377,8 @@ function reconciliationReportForGranuleFiles(params) {
         }
       }
     });
+
+    await Promise.all(relatedUrlPromises);
 
     // any remaining database items to the report
     Object.keys(granuleFiles).forEach((fileName) => {
