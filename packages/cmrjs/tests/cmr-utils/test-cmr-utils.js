@@ -124,6 +124,13 @@ test('isCMRFile returns false if fileobject does not have a valid xml filename',
   t.false(isCMRFile(fileObj));
 });
 
+test('isCMRFile returns true if fileobject has a valid iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.iso.xml',
+  };
+  t.true(isCMRFile(fileObj));
+});
+
 test('isCMRFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr_iso.xml',
@@ -876,6 +883,11 @@ test(
 test(
   'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR UMMG JSON metadata file',
   testMetadataObjectFromCMRFile('s3://bucket/fake.cmr.json')
+);
+
+test(
+  'metadataObjectFromCMRFile throws PreconditionFailed when ETag does not match CMR ISO XML metadata file',
+  testMetadataObjectFromCMRFile('s3://bucket/fake.iso.xml')
 );
 
 test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t) => {

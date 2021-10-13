@@ -67,9 +67,11 @@ function getFileDescription(file, urlType = 'distribution') {
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRISOFile = (filename) => filename.endsWith('.cmr_iso.xml');
+const isISOFile = (filename) => filename.endsWith('.iso.xml');
 const isCMRFilename = (filename) => isECHO10File(filename)
   || isUMMGFile(filename)
+  || isCMRISOFile(filename)
   || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
@@ -281,20 +283,23 @@ const metadataObjectFromCMRXMLFile = (cmrFilename, etag) =>
   getXMLMetadataAsString(cmrFilename, etag).then(parseXmlString);
 
 /**
- * Returns CMR metadata object from a CMR ECHO-10 XML file or CMR UMMG JSON
- * file in S3.
+ * Returns CMR metadata object from a CMR ECHO-10 XML file, CMR UMMG JSON file,
+ * or CMR ISO XML file in S3.
  *
  * @param {string} cmrFilename - S3 path to CMR file
  * @param {string} [etag] - optional entity tag for the desired version of the
  *    CMR file
  * @returns {Promise<Object>} metadata object from the file
  * @throws {Error} if the specified filename does not represent an ECHO-10 XML
- *    file or a UMMG file
+ *    file, a UMMG file, or an ISO XML file
  * @see isECHO10File
  * @see isUMMGFile
+ * @see isISOFile
+ * @see isCMRISOFile
  */
 function metadataObjectFromCMRFile(cmrFilename, etag) {
-  if (isECHO10File(cmrFilename)) {
+  if ([isECHO10File, isISOFile, isCMRISOFile].some((func) => func(cmrFilename)))
+  if (isECHO10File(cmrFilename) || isISOFile(cmrFilename) || isCMRISOFile(cmrFilename)) {
     return metadataObjectFromCMRXMLFile(cmrFilename, etag);
   }
   if (isUMMGFile(cmrFilename)) {
@@ -1024,7 +1029,7 @@ async function getGranuleTemporalInfo(granule) {
 
   const cmrFilename = cmrFile[0].filename;
 
-  if (isISOFile(cmrFilename)) {
+  if (isCMRISOFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
 
@@ -1089,6 +1094,7 @@ module.exports = {
   isCMRFilename,
   isECHO10File,
   isISOFile,
+  isCMRISOFile,
   isUMMGFile,
   metadataObjectFromCMRFile,
   publish2CMR,

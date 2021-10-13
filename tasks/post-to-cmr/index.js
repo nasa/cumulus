@@ -7,7 +7,7 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR,
 } = require('@cumulus/cmrjs');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { getCmrSettings, isISOFile, isCMRISOFile } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
@@ -50,6 +50,11 @@ function buildOutput(results, granules) {
 async function addMetadataObjects(cmrFiles) {
   return await Promise.all(
     cmrFiles.map(async (cmrFile) => {
+      if (isISOFile(cmrFile.filename) || isCMRISOFile(cmrFile.filename)) {
+        throw new Error(
+          `Post to CMR does not support ISO metadata: ${cmrFile.filename}`
+        );
+      }
       const metadataObject = await metadataObjectFromCMRFile(
         cmrFile.filename,
         cmrFile.etag

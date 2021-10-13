@@ -10,6 +10,8 @@ const {
   generateEcho10XMLString,
   isCMRFile,
   isECHO10File,
+  isISOFile,
+  isCMRISOFile,
   isUMMGFile,
   metadataObjectFromCMRFile,
   uploadEcho10CMRFile,
@@ -168,6 +170,12 @@ async function updateCmrFileAccessConstraint(
   accessConstraintsObject
 ) {
   const cmrFileName = cmrFileObject.filename;
+  if (isISOFile(cmrFileName) || isCMRISOFile(cmrFileName)) {
+    throw new Error(
+      'Update CMR Access Constraints does not support ISO metadata: '
+        + cmrFileName
+    );
+  }
   const cmrMetadataContentsObject = await metadataObjectFromCMRFile(
     cmrFileName,
     cmrFileObject.etag
