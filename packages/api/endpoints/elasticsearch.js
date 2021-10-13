@@ -228,9 +228,7 @@ async function indexFromDatabase(req, res) {
     operationType: 'ES Index',
     payload: {
       indexName,
-      dynamoTables: {
-        reconciliationReportsTable: process.env.ReconciliationReportsTable,
-      },
+      reconciliationReportsTable: process.env.ReconciliationReportsTable,
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
     },
