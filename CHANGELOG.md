@@ -55,6 +55,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
     - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
     - Updated `@cumulus/types.api.file` to add `type` to the typing.
+  - **CUMULUS-2315**
+    - Update `index-from-database` lambda/ECS task and elasticsearch endpoint to read
+      from PostgreSQL database
+    - Update `index-from-database` endpoint to add the following configuration
+      tuning parameters:
+      - postgresResultPageSize -- The number of records to read from each
+        postgres table per request.   Default is 1000.
+      - postgresConnectionPoolSize -- The max number of connections to allow the
+        index function to make to the database.  Default is 10.
+      - esRequestConcurrency -- The maximium number of concurrent record
+        translation/ES record update requests.   Default is 10.
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule

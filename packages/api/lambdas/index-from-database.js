@@ -148,7 +148,6 @@ async function indexModel({
   let failCount = 0;
 
   log.info(`Starting index of ${postgresModel.tableName} with max cumulus_id of ${maxIndex}`);
-
   /* eslint-disable no-await-in-loop */
   while (done !== true && maxIndex > 0) {
     const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
@@ -200,16 +199,21 @@ async function indexFromDatabase(event) {
     indexName: esIndex,
     esHost = process.env.ES_HOST,
     reconciliationReportsTable = process.env.ReconciliationReportsTable,
-    pageSize = event.postgresResultPageSize || 1000,
-    postgresConnectionPoolSize = event.postgresConnectionPoolSize || 10,
+    postgresResultPageSize,
+    postgresConnectionPoolSize,
   } = event;
   const esClient = await Search.es(esHost);
   const knex = event.knex || (await getKnexClient({
-    dbMaxPool: postgresConnectionPoolSize,
+    dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
     ...process.env,
   }));
 
+  const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
   const esRequestConcurrency = getEsRequestConcurrency(event);
+  log.info(
+    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize} `
+  );
+
   const limitEsRequests = pLimit(esRequestConcurrency);
 
   await Promise.all([

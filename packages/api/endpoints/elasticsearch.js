@@ -210,6 +210,8 @@ async function indexFromDatabase(req, res) {
   } = req.testContext || {};
   const esClient = await Search.es();
   const indexName = req.body.indexName || timestampedIndexName();
+  const { postgresResultPageSize, postgresConnectionPoolSize, esRequestConcurrency } = req.body;
+
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
@@ -230,7 +232,9 @@ async function indexFromDatabase(req, res) {
       indexName,
       reconciliationReportsTable: process.env.ReconciliationReportsTable,
       esHost: process.env.ES_HOST,
-      esRequestConcurrency: process.env.ES_CONCURRENCY,
+      esRequestConcurrency: esRequestConcurrency || process.env.ES_CONCURRENCY,
+      postgresResultPageSize,
+      postgresConnectionPoolSize,
     },
     stackName,
     systemBucket,
