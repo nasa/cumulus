@@ -1,8 +1,10 @@
 'use strict';
 
 const omit = require('lodash/omit');
+const pRetry = require('p-retry');
 const {
   s3PutObject,
+  s3ObjectExists,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -250,6 +252,15 @@ describe('The Granules API', () => {
         expect(response.statusCode).toBe(200);
 
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
+        await pRetry(
+          async () => {
+            await s3ObjectExists({ Bucket: config.bucket, Key: granuleKey });
+          },
+          {
+            maxTimeout: 60 * 1000,
+            interval: 5 * 1000,
+          }
+        );
         const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
         const message = JSON.parse(savedEvent.Records[0].Sns.Message);
         expect(message.event).toEqual('Delete');
