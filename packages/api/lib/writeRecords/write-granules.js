@@ -600,9 +600,9 @@ async function updateGranuleStatusToQueued({
       await granuleModel.update({ granuleId }, { status }, ['execution']);
     });
 
-    log.debug(`Updated granule status to queued, granuleId: ${granule.granuleId}`);
+    log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${granuleCumulusId}`);
   } catch (thrownError) {
-    log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}`, thrownError);
+    log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError);
     throw thrownError;
   }
 }
