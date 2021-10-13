@@ -38,6 +38,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       Executions.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
+  - **CUMULUS-2315**
+    - Added `paginateByCumulusId` to `@cumulus/db` `BasePgModel` to allow for paginated
+      full-table select queries in support of elasticsearch indexing.
+    - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
+      derived table classes to support querying the current max `cumulus_id`.
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
 - **CUMULUS-2630**

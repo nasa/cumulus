@@ -96,11 +96,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   async paginateByCumulusId(
     knexOrTransaction: Knex | Knex.Transaction,
     startId: number = 0,
-    pageSize: number = 100,
-    keys: Array<keyof RecordType> = []
+    pageSize: number = 100
   ): Promise<RecordType[]> {
-  // @ts-ignore
-    return await knexOrTransaction.select(...keys)
+    return await knexOrTransaction.select()
       .from(this.tableName)
       .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
   }
