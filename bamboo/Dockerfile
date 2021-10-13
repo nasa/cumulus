@@ -1,5 +1,5 @@
 ## Dockerfile to create integration/unit test environment
-FROM node:12.18.0-buster
+FROM node:12.22.7-buster
 RUN apt update && npm config set unsafe-perm true &&\
     apt install -y netcat zip jq rsync zip
 RUN apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
