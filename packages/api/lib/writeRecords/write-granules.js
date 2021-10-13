@@ -2,7 +2,6 @@
 
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
-const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -38,9 +37,6 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
-const {
-  RecordDoesNotExist,
-} = require('@cumulus/errors');
 
 const FileUtils = require('../FileUtils');
 const {
@@ -584,33 +580,30 @@ async function updateGranuleStatusToQueued({
   const status = 'queued';
   log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
-  const updatedDynamoGranule = { ...omit(granule, ['execution']), status };
-  let updatedPgGranule;
-
   try {
-    const { name, version } = deconstructCollectionId(collectionId);
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
       knex,
-      { name, version }
+      deconstructCollectionId(collectionId)
     );
-    // Need granule_id + collection_cumulus_id to get truly unique record.
-    const pgGranule = await granulePgModel.get(knex, {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    });
-    updatedPgGranule = { ...pgGranule, status };
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.info(`Postgres Granule with ID ${granuleId} collectionId ${collectionId} exist`);
-    } else {
-      throw error;
-    }
-  }
+    const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+      knex,
+      {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    );
 
-  await knex.transaction(async (trx) => {
-    if (updatedPgGranule) await upsertGranuleWithExecutionJoinRecord(trx, updatedPgGranule);
-    return granuleModel.storeGranule(updatedDynamoGranule);
-  });
+    await knex.transaction(async (trx) => {
+      await granulePgModel.update(trx, { cumulus_id: granuleCumulusId }, { status });
+      // delete the execution field as well
+      await granuleModel.update({ granuleId }, { status }, ['execution']);
+    });
+
+    log.debug(`Updated granule status to queued, granuleId: ${granule.granuleId}`);
+  } catch (thrownError) {
+    log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}`, thrownError);
+    throw thrownError;
+  }
 }
 
 module.exports = {

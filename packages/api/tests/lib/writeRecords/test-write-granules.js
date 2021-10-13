@@ -5,6 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 
+const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
@@ -962,9 +963,34 @@ test.serial('updateGranuleStatusToQueued() updates granule status in the databas
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  const omitList = ['status', 'updatedAt', 'updated_at'];
+  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
+  t.falsy(updatedDynamoRecord.execution);
   t.is(updatedDynamoRecord.status, 'queued');
   t.is(updatedPostgresRecord.status, 'queued');
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+});
+
+test.serial('updateGranuleStatusToQueued() throws error if record does not exist in pg', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex);
+
+  const name = randomId('name');
+  const version = randomId('version');
+  const badGranule = fakeGranuleFactoryV2({
+    granuleId,
+    collectionId: constructCollectionId(name, version),
+  });
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({ granule: badGranule, knex }),
+    {
+      name: 'RecordDoesNotExist',
+      message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
+    }
+  );
 });
