@@ -292,6 +292,8 @@ describe('POST /granules/bulkDelete', () => {
         beginningDateTime: message.record.beginningDateTime,
         lastUpdateDateTime: message.record.lastUpdateDateTime,
       };
+      delete expectedGranuleAfterDeletion.cmrLink;
+
       expect(message.event).toEqual('Delete');
       expect(message.record).toEqual(expectedGranuleAfterDeletion);
       expect(message.deletedAt).toBeGreaterThan(timestampBeforeCall);
