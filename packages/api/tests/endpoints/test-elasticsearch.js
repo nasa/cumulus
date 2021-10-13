@@ -585,6 +585,10 @@ test.serial('Reindex from database - startAsyncOperation is called with expected
   const indexName = randomString();
   const id = randomString();
 
+  const processEnv = { ...process.env };
+  process.env.ES_HOST = 'fakeEsHost';
+  process.env.ReconciliationReportsTable = 'fakeReportsTable';
+
   const asyncOperationsStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
   const payload = {
     indexName,
@@ -604,10 +608,11 @@ test.serial('Reindex from database - startAsyncOperation is called with expected
       .expect(200);
     t.deepEqual(asyncOperationsStub.getCall(0).args[0].payload, {
       ...payload,
-      esHost: undefined,
-      reconciliationReportsTable: undefined,
+      esHost: process.env.ES_HOST,
+      reconciliationReportsTable: process.env.ReconciliationReportsTable,
     });
   } finally {
+    process.env = processEnv;
     await esClient.indices.delete({ index: indexName });
     asyncOperationsStub.restore();
   }
