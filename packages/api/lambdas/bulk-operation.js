@@ -1,5 +1,4 @@
 const get = require('lodash/get');
-const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const Logger = require('@cumulus/logger');
@@ -11,17 +10,10 @@ const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranuleIdsForPayload } = require('../lib/granules');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
-
-async function updateGranuleStatus({ granule, status, knex }) {
-  await writeGranuleFromApi({
-    ...omit(granule, ['execution']),
-    status,
-  }, knex);
-}
 
 async function applyWorkflowToGranules({
   granuleIds,
@@ -36,7 +28,7 @@ async function applyWorkflowToGranules({
     async (granuleId) => {
       try {
         const granule = await granuleModel.get({ granuleId });
-        await updateGranuleStatus({ granule, status: 'queued', knex });
+        await updateGranuleStatusToQueued({ granule, knex });
         await granuleModel.applyWorkflow(
           granule,
           workflowName,
@@ -195,7 +187,7 @@ async function bulkGranuleReingest(payload) {
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
-        await updateGranuleStatus({ granule, status: 'queued', knex });
+        await updateGranuleStatusToQueued({ granule, knex });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
         await granuleModel.reingest(
           {

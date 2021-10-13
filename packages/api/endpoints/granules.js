@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
-const omit = require('lodash/omit');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -27,7 +26,7 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { updateGranuleStatusToQueued, writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
@@ -134,13 +133,6 @@ const putGranule = async (req, res) => {
   });
 };
 
-async function updateGranuleStatus({ granule, status, knex }) {
-  await writeGranuleFromApi({
-    ...omit(granule, ['execution']),
-    status,
-  }, knex);
-}
-
 /**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
@@ -189,7 +181,7 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    await updateGranuleStatus({ granule, status: 'queued', knex });
+    await updateGranuleStatusToQueued({ granule, knex });
 
     await granuleModelClient.reingest({
       ...granule,
@@ -211,7 +203,7 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
-    await updateGranuleStatus({ granule, status: 'queued', knex });
+    await updateGranuleStatusToQueued({ granule, knex });
 
     await granuleModelClient.applyWorkflow(
       granule,

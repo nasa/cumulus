@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -28,6 +29,7 @@ const {
   writeFilesViaTransaction,
   writeGranuleFromApi,
   writeGranulesFromMessage,
+  updateGranuleStatusToQueued,
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -935,4 +937,34 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   );
   t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
   t.true(pgGranule.error.Cause.includes('AggregateError'));
+});
+
+test.serial('updateGranuleStatusToQueued() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  await updateGranuleStatusToQueued({ granule: dynamoRecord, knex });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const omitList = ['status', 'updatedAt', 'updated_at'];
+  t.is(updatedDynamoRecord.status, 'queued');
+  t.is(updatedPostgresRecord.status, 'queued');
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
 });

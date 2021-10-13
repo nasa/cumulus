@@ -2,6 +2,7 @@
 
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -12,6 +13,7 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranule,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
@@ -36,6 +38,9 @@ const {
   getMetaStatus,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const {
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
 
 const FileUtils = require('../FileUtils');
 const {
@@ -45,6 +50,7 @@ const {
   getGranuleProductVolume,
 } = require('../granules');
 const {
+  deconstructCollectionId,
   parseException,
 } = require('../utils');
 const Granule = require('../../models/granules');
@@ -558,9 +564,59 @@ const writeGranulesFromMessage = async ({
   return results;
 };
 
+/**
+ * Update granule status to 'queued'
+ *
+ * @param {Object} params
+ * @param {Object} params.granule - dynamo granule object
+ * @param {Knex} params.knex - knex Client
+ * @returns {Promise}
+ * @throws {Error}
+ */
+async function updateGranuleStatusToQueued({
+  granule,
+  knex,
+  collectionPgModel = new CollectionPgModel(),
+  granuleModel = new Granule(),
+  granulePgModel = new GranulePgModel(),
+}) {
+  const { granuleId, collectionId } = granule;
+  const status = 'queued';
+  log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
+
+  const updatedDynamoGranule = { ...omit(granule, ['execution']), status };
+  let updatedPgGranule;
+
+  try {
+    const { name, version } = deconstructCollectionId(collectionId);
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knex,
+      { name, version }
+    );
+    // Need granule_id + collection_cumulus_id to get truly unique record.
+    const pgGranule = await granulePgModel.get(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    });
+    updatedPgGranule = { ...pgGranule, status };
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.info(`Postgres Granule with ID ${granuleId} collectionId ${collectionId} exist`);
+    } else {
+      throw error;
+    }
+  }
+
+  await knex.transaction(async (trx) => {
+    if (updatedPgGranule) await upsertGranuleWithExecutionJoinRecord(trx, updatedPgGranule);
+    return granuleModel.storeGranule(updatedDynamoGranule);
+  });
+}
+
 module.exports = {
   generateFilePgRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
+  updateGranuleStatusToQueued,
   writeGranuleFromApi,
   writeGranulesFromMessage,
 };

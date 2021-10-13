@@ -250,6 +250,7 @@ test.before(async (t) => {
     arn: 'arn3',
     status: 'completed',
     name: 'test_execution',
+    parentArn: undefined,
   });
 
   await executionModel.create(newExecution);
@@ -516,8 +517,9 @@ test.serial('reingest a granule', async (t) => {
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
 
+  const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -528,8 +530,13 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId });
+  const updatedPgGranule = await granulePgModel.get(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: t.context.collectionCumulusId }
+  );
   t.is(updatedGranule.status, 'queued');
+  t.is(updatedPgGranule.status, 'queued');
   stub.restore();
 });
 
@@ -585,8 +592,9 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
 
+  const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -600,8 +608,13 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId });
+  const updatedPgGranule = await granulePgModel.get(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: t.context.collectionCumulusId }
+  );
   t.is(updatedGranule.status, 'queued');
+  t.is(updatedPgGranule.status, 'queued');
   stub.restore();
 });
 
