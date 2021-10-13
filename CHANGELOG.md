@@ -6,14 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable changes
+
+- Published new tag [`35` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package.
+
 ### Added
 
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
 - **CUMULUS-2670**
   - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
   `update_granules_cmr_metadata_file_links_task_timeout` property
 
 ### Changed
 
+- Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
+- Updated default version of async operations Docker image to `cumuluss/async-operation:35`
 - **CUMULUS-2590**
   - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
 

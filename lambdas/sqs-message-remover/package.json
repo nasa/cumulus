@@ -37,7 +37,7 @@
   "dependencies": {
     "@cumulus/aws-client": "9.7.0",
     "@cumulus/common": "9.7.0",
-    "@cumulus/ingest": "9.7.0",
+    "@cumulus/ingest": "9.8.0-alpha.0",
     "@cumulus/logger": "9.7.0",
     "lodash": "^4.17.20"
   }

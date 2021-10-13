@@ -13,6 +13,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranule,
   CollectionPgModel,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
@@ -221,7 +222,7 @@ const _writeGranuleFiles = async ({
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
     };
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await granulePgModel.update(
         trx,
         { cumulus_id: granuleCumulusId },
@@ -296,7 +297,7 @@ const _writeGranule = async ({
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     granuleCumulusId = await _writePostgresGranuleViaTransaction({
       granuleRecord: postgresGranuleRecord,
       executionCumulusId,
@@ -593,7 +594,7 @@ async function updateGranuleStatusToQueued({
       }
     );
 
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await granulePgModel.update(trx, { cumulus_id: granuleCumulusId }, { status });
       // delete the execution field as well
       await granuleModel.update({ granuleId }, { status }, ['execution']);
