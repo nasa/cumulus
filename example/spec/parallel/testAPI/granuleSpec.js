@@ -144,18 +144,6 @@ describe('The Granules API', () => {
       expect(searchedGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
 
-    it('publishes a record to the granules reporting SNS topic upon granule creation', async () => {
-      if (beforeAllError) {
-        fail('beforeAll() failed');
-      } else {
-        const granuleKey = `${config.stackName}/test-output/${granuleId}-${discoveredGranule.status}-Create.output`;
-        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
-        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-        expect(message.event).toEqual('Create');
-        expect(message.record).toEqual(discoveredGranule);
-      }
-    });
-
     it('can modify the granule via API.', async () => {
       if (beforeAllError) {
         fail(beforeAllError);
@@ -178,18 +166,6 @@ describe('The Granules API', () => {
       });
       updatedGranuleFromApi.execution = undefined;
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
-    });
-
-    it('publishes a record to the granules reporting SNS topic for a granule modification', async () => {
-      if (beforeAllError) {
-        fail('beforeAll() failed');
-      } else {
-        const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Update.output`;
-        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
-        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-        expect(message.event).toEqual('Update');
-        expect(message.record).toEqual(modifiedGranule);
-      }
     });
 
     it('can associate an execution with the granule via API.', async () => {
@@ -238,6 +214,30 @@ describe('The Granules API', () => {
         expect(apiError.message).toContain('RecordDoesNotExist');
         expect(apiError.message).toContain(name);
         expect(apiError.message).toContain(version);
+      }
+    });
+
+    it('publishes a record to the granules reporting SNS topic upon granule creation', async () => {
+      if (beforeAllError) {
+        fail('beforeAll() failed');
+      } else {
+        const granuleKey = `${config.stackName}/test-output/${granuleId}-${discoveredGranule.status}-Create.output`;
+        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+        expect(message.event).toEqual('Create');
+        expect(message.record).toEqual(discoveredGranule);
+      }
+    });
+
+    it('publishes a record to the granules reporting SNS topic for a granule modification', async () => {
+      if (beforeAllError) {
+        fail('beforeAll() failed');
+      } else {
+        const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Update.output`;
+        const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+        const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+        expect(message.event).toEqual('Update');
+        expect(message.record).toEqual(updatedGranuleFromApi);
       }
     });
 
