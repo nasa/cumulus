@@ -326,7 +326,7 @@ function reconciliationReportForGranuleFiles(params) {
       );
 
     // check each URL entry against database records
-    granuleInCmr.RelatedUrls.forEach((relatedUrl) => {
+    const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
       // only check URL types for downloading granule files and related data (such as documents)
       if (cmrGetDataTypes.includes(relatedUrl.Type)
           || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
@@ -335,7 +335,7 @@ function reconciliationReportForGranuleFiles(params) {
         // filename in both Cumulus and CMR
         if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
           // not all files should be in CMR
-          const distributionAccessUrl = constructOnlineAccessUrl({
+          const distributionAccessUrl = await constructOnlineAccessUrl({
             file: granuleFiles[urlFileName],
             distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
             bucketTypes,
@@ -343,7 +343,7 @@ function reconciliationReportForGranuleFiles(params) {
             distributionBucketMap,
           });
 
-          const s3AccessUrl = constructOnlineAccessUrl({
+          const s3AccessUrl = await constructOnlineAccessUrl({
             file: granuleFiles[urlFileName],
             distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
             bucketTypes,
