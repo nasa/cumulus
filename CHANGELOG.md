@@ -22,6 +22,8 @@ upgrades to `knex` package.
 
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
 - Updated default version of async operations Docker image to `cumuluss/async-operation:35`
+- **CUMULUS-2590**
+  - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
 
 ## [v9.7.0] 2021-10-01
 

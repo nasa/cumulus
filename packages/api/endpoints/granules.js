@@ -26,7 +26,7 @@ const indexer = require('@cumulus/es-client/indexer');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { updateGranuleStatusToQueued, writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
 const { deconstructCollectionId, errorify } = require('../lib/utils');
@@ -157,6 +157,7 @@ async function put(req, res) {
     );
   }
 
+  const knex = await getKnexClient();
   const granuleModelClient = new models.Granule();
   const granule = await granuleModelClient.get({ granuleId });
 
@@ -180,6 +181,8 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
+    await updateGranuleStatusToQueued({ granule, knex });
+
     await granuleModelClient.reingest({
       ...granule,
       ...(targetExecution && { execution: targetExecution }),
@@ -200,6 +203,8 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
+    await updateGranuleStatusToQueued({ granule, knex });
+
     await granuleModelClient.applyWorkflow(
       granule,
       body.workflow,
@@ -214,8 +219,6 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    const knex = await getKnexClient({ env: process.env });
-
     await unpublishGranule(knex, granule);
 
     return res.send({
