@@ -155,7 +155,7 @@ async function post(req, res) {
 
     try {
       logger.debug(`Attempting to create async operation ${dbRecord.id}`);
-      await knex.transaction(async (trx) => {
+      await createRejectableTransactionn(knex, async (trx) => {
         await asyncOperationPgModel.create(trx, dbRecord);
         dynamoDbRecord = await asyncOperationModel.create(apiAsyncOperation);
         await indexAsyncOperation(esClient, dynamoDbRecord, process.env.ES_INDEX);

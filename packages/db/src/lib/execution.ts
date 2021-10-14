@@ -26,21 +26,21 @@ export const getExecutionArnsByGranuleCumulusId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number,
   limit?: number
-): Promise<arnRecord[]> => {
-  const knexQuery = knexOrTransaction(tableNames.executions)
-    .select(`${tableNames.executions}.arn`)
-    .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
+): Promise<ArnRecord[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .select(`${TableNames.executions}.arn`)
+    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
     )
     .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
     knexQuery.limit(limit);
   }

@@ -21,7 +21,7 @@ const {
   fakeProviderRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
-  tableNames,
+  TableNames,
   translatePostgresGranuleToApiGranule,
   translateApiGranuleToPostgresGranule,
   migrationDir,

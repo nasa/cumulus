@@ -15,7 +15,6 @@ const {
   getKnexClient,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
-  TableNames,
   createRejectableTransaction,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
@@ -133,7 +132,7 @@ async function post(req, res) {
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
 
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
         const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
         dynamoRecord = await collectionsModel.create(
@@ -208,7 +207,7 @@ async function put(req, res) {
   const postgresCollection = translateApiCollectionToPostgresCollection(collection);
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
       const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
       dynamoRecord = await collectionsModel.create(collection);
