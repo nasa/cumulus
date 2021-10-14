@@ -23,7 +23,7 @@ const {
   migrationDir,
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
-  translateDbResultToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -665,7 +665,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   );
 });
 
-test('translateDbResultToApiGranule converts DB result to API granule', async (t) => {
+test('translatePostgresGranuleResultToApiGranule converts DB result to API granule', async (t) => {
   const {
     postgresGranule,
     fileKeys,
@@ -730,7 +730,7 @@ test('translateDbResultToApiGranule converts DB result to API granule', async (t
     ],
   };
 
-  const result = await translateDbResultToApiGranule(
+  const result = await translatePostgresGranuleResultToApiGranule(
     knex,
     dbResult
   );

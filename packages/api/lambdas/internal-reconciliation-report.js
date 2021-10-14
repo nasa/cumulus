@@ -22,7 +22,7 @@ const {
   getCollectionsByGranuleIds,
   getGranulesByApiPropertiesQuery,
   QuerySearchClient,
-  translateDbResultToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } = require('@cumulus/db');
 
 const {
@@ -285,13 +285,13 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
     } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
-      const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextDbItem);
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextDbItem);
 
       // Found an item that is only in DB and not in ES
       onlyInDb.push(pick(apiGranule, granuleFields));
       await pgGranulesSearchClient.shift();
     } else {
-      const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextDbItem);
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextDbItem);
 
       // Found an item that is in both ES and DB
       if (isEqual(omit(nextEsItem, esFieldsIgnored), omit(apiGranule, fieldsIgnored))) {
@@ -314,7 +314,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   // Add any remaining DB items to the report
   while (await pgGranulesSearchClient.peek()) {
     const item = await pgGranulesSearchClient.shift();
-    const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, item);
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, item);
     onlyInDb.push(pick(apiGranule, granuleFields));
   }
   /* eslint-enable no-await-in-loop */

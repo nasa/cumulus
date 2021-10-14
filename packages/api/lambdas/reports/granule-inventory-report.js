@@ -8,7 +8,7 @@ const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const {
   getGranulesByApiPropertiesQuery,
   QuerySearchClient,
-  translateDbResultToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
@@ -68,7 +68,7 @@ async function createGranuleInventoryReport(recReportParams) {
 
   while (nextGranule) {
     // eslint-disable-next-line no-await-in-loop
-    const apiGranule = await translateDbResultToApiGranule(recReportParams.knex, nextGranule);
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextGranule);
     readable.push({
       granuleUr: apiGranule.granuleId,
       collectionId: apiGranule.collectionId,

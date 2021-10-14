@@ -190,7 +190,7 @@ export const translateApiGranuleToPostgresGranule = async (
  *   Knex client for reading from RDS database
  * @param {GranuleWithProviderAndCollectionInfo} dbResult - Custom database result
  */
-export const translateDbResultToApiGranule = async (
+export const translatePostgresGranuleResultToApiGranule = async (
   knex: Knex,
   dbResult: GranuleWithProviderAndCollectionInfo
 ): Promise<ApiGranule> => await translatePostgresGranuleToApiGranule({

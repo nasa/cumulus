@@ -91,7 +91,7 @@ export {
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
-  translateDbResultToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } from './translate/granules';
 export {
   translateApiPdrToPostgresPdr,
