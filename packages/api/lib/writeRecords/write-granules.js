@@ -12,10 +12,14 @@ const {
   GranulePgModel,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranule,
+  CollectionPgModel,
   createRejectableTransaction,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
+const {
+  deconstructCollectionId,
+  getCollectionIdFromMessage,
+} = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -333,7 +337,7 @@ const _writeGranule = async ({
  * @param {Object} params
  * @param {string} params.granuleId - granule's id
  * @param {string} params.collectionId - granule's collection id
- * @param {GranuleStatus} params.status - ['running','failed','completed']
+ * @param {GranuleStatus} params.status - ['running','failed','completed', 'queued']
  * @param {string} [params.execution] - Execution URL to associate with this granule
  *                               must already exist in database.
  * @param {string} [params.cmrLink] - url to CMR information for this granule.
@@ -559,9 +563,56 @@ const writeGranulesFromMessage = async ({
   return results;
 };
 
+/**
+ * Update granule status to 'queued'
+ *
+ * @param {Object} params
+ * @param {Object} params.granule - dynamo granule object
+ * @param {Knex} params.knex - knex Client
+ * @returns {Promise}
+ * @throws {Error}
+ */
+async function updateGranuleStatusToQueued({
+  granule,
+  knex,
+  collectionPgModel = new CollectionPgModel(),
+  granuleModel = new Granule(),
+  granulePgModel = new GranulePgModel(),
+}) {
+  const { granuleId, collectionId } = granule;
+  const status = 'queued';
+  log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
+
+  try {
+    const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+    const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+      knex,
+      {
+        granule_id: granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      }
+    );
+
+    await createRejectableTransaction(knex, async (trx) => {
+      await granulePgModel.update(trx, { cumulus_id: granuleCumulusId }, { status });
+      // delete the execution field as well
+      await granuleModel.update({ granuleId }, { status }, ['execution']);
+    });
+
+    log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${granuleCumulusId}`);
+  } catch (thrownError) {
+    log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError);
+    throw thrownError;
+  }
+}
+
 module.exports = {
   generateFilePgRecord,
   getGranuleCumulusIdFromQueryResultOrLookup,
+  updateGranuleStatusToQueued,
   writeGranuleFromApi,
   writeGranulesFromMessage,
 };
