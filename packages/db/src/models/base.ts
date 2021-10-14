@@ -83,6 +83,26 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     return record;
   }
 
+  async getMaxCumulusId(
+    knexOrTransaction: Knex | Knex.Transaction
+  ): Promise<number> {
+    const result = await knexOrTransaction(this.tableName).max('cumulus_id').first();
+    if (!result) {
+      throw new Error(`Invalid .max "cumulus_id" query on ${this.tableName}, MAX cumulus_id cannot be returned`);
+    }
+    return Number(result.max);
+  }
+
+  async paginateByCumulusId(
+    knexOrTransaction: Knex | Knex.Transaction,
+    startId: number = 0,
+    pageSize: number = 100
+  ): Promise<RecordType[]> {
+    return await knexOrTransaction.select()
+      .from(this.tableName)
+      .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
+  }
+
   /**
    * Fetches multiple items from Postgres
    *

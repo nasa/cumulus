@@ -9,11 +9,11 @@ import { ValidationError } from '@cumulus/errors';
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
+import { PostgresCollectionRecord } from '../types/collection';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
 import { translatePostgresFileToApiFile } from './file';
 import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
-import { PostgresCollectionRecord } from '../types/collection';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
