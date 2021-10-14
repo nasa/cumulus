@@ -122,7 +122,7 @@ const deleteGranuleAndFiles = async (params: {
       });
       await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
       logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
-      await _deleteS3Files(files);
+      await deleteS3Files(files);
     } catch (error) {
       logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
       // Delete is idempotent, so there may not be a DynamoDB
