@@ -29,15 +29,17 @@ async function handleExecutions(event) {
  * @returns {Promise}
  */
 async function handleGranules(event) {
+  const {
+    event: eventType,
+    record: granule,
+  } = JSON.parse(event.Records[0].Sns.Message);
   const s3 = new S3();
-  const messageString = event.Records[0].Sns.Message;
-  const granuleRecord = JSON.parse(messageString);
-  if (!granuleRecord.record.granuleId) {
+  if (!granule.granuleId) {
     return Promise.resolve();
   }
   return await s3.putObject({
     Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/test-output/${granuleRecord.record.granuleId}-${granuleRecord.record.status}.output`,
+    Key: `${process.env.stackName}/test-output/${granule.granuleId}-${granule.status}-${eventType}.output`,
     Body: JSON.stringify(event, undefined, 2),
   }).promise();
 }

@@ -28,13 +28,14 @@ const createFakeGranule = async (dbClient) => {
   const collectionCumulusId = pgCollection.cumulus_id;
 
   granulePgModel = new GranulePgModel();
-  const [granuleCumulusId] = await granulePgModel.create(
+  const [pgGranule] = await granulePgModel.create(
     dbClient,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
       status: 'running',
     })
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
   // bigint for granule cumulus_id is treated as a string,
   // not number, by knex
   // see https://github.com/knex/knex/issues/387

@@ -29,7 +29,7 @@ const {
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { createGranuleFromApi, updateGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
@@ -77,6 +77,7 @@ const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
     granuleModel = new Granule(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const granule = req.body || {};
@@ -90,7 +91,7 @@ const create = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(granule, knex);
+    await createGranuleFromApi(granule, knex, esClient);
     if (inTestMode()) {
       await addToLocalES(granule, indexGranule);
     }
@@ -130,7 +131,7 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    await writeGranuleFromApi(body, knex, esClient);
+    await updateGranuleFromApi(body, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -304,6 +305,7 @@ const associateExecution = async (req, res) => {
     executionModel = new Execution(),
     granuleModel = new Granule(),
     knex = await getKnexClient(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   let granule;
@@ -332,7 +334,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await writeGranuleFromApi(updatedGranule, knex);
+    await updateGranuleFromApi(updatedGranule, knex, esClient);
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
@@ -478,6 +480,7 @@ async function bulkOperations(req, res) {
       type: 'BULK_GRANULE',
       envVars: {
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,
@@ -531,6 +534,7 @@ async function bulkDelete(req, res) {
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -572,6 +576,7 @@ async function bulkReingest(req, res) {
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,

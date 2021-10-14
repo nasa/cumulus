@@ -20,14 +20,13 @@ import { getExecutionArnsByGranuleCumulusId } from '../lib/execution';
  *
  * @param {Object} params
  * @param {PostgresGranuleRecord} params.granulePgRecord - Granule from Postgres
- * @param {PostgresCollectionRecord} params.collectionPgRecord - Collection from Postgres
+ * @param {PostgresCollectionRecord} [params.collectionPgRecord] - Optional Collection from Postgres
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} params.collectionPgModel - Instance of the collection database model
- * @param {Object} params.pdrPgModel - Instance of the pdr database model
- * @param {Object} params.providerPgModel - Instance of the provider database model
- * @param {Object} params.filePgModel - Instance of the file database model
- * @param {Object} params.executionPgModel - Instance of the execution database model
+ * @param {Object} [params.collectionPgModel] - Instance of the collection database model
+ * @param {Object} [params.pdrPgModel] - Instance of the pdr database model
+ * @param {Object} [params.providerPgModel] - Instance of the provider database model
+ * @param {Object} [params.filePgModel] - Instance of the file database model
  * @returns {Object} An API Granule with associated Files
  */
 export const translatePostgresGranuleToApiGranule = async ({
@@ -40,12 +39,12 @@ export const translatePostgresGranuleToApiGranule = async ({
   filePgModel = new FilePgModel(),
 }: {
   granulePgRecord: PostgresGranuleRecord,
-  collectionPgRecord: PostgresCollectionRecord,
+  collectionPgRecord?: PostgresCollectionRecord,
   knexOrTransaction: Knex | Knex.Transaction,
-  collectionPgModel: CollectionPgModel,
-  pdrPgModel: PdrPgModel,
-  providerPgModel: ProviderPgModel,
-  filePgModel: FilePgModel,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+  filePgModel?: FilePgModel,
 }): Promise<ApiGranule> => {
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
