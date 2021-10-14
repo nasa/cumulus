@@ -35,7 +35,6 @@ export const translateApiFiletoPostgresFile = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => {
   const bucket = getBucket(file);
   const key = getKey(file);
-
   return {
     bucket,
     key,

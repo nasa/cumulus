@@ -266,7 +266,8 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 
   const testFile = testGranule.files[0];
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -307,7 +308,8 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   testGranule.files = [testFile];
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(
@@ -537,7 +539,8 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.type;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });

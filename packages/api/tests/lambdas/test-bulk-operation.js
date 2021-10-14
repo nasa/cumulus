@@ -2,6 +2,10 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -112,7 +116,7 @@ const setUpExistingDatabaseRecords = async (t) => {
   t.context.collectionCumulusId = pgCollection.cumulus_id;
   const collectionCumulusId = t.context.collectionCumulusId;
 
-  const granuleCumulusIds = await granulePgModel.create(
+  const pgGranules = await granulePgModel.create(
     t.context.knex,
     t.context.granules.map((granule) =>
       fakeGranuleRecordFactory({
@@ -132,11 +136,11 @@ const setUpExistingDatabaseRecords = async (t) => {
   const joinRecords = [
     {
       execution_cumulus_id: pgExecutions[0].cumulus_id,
-      granule_cumulus_id: granuleCumulusIds[0],
+      granule_cumulus_id: pgGranules[0].cumulus_id,
     },
     {
       execution_cumulus_id: pgExecutions[1].cumulus_id,
-      granule_cumulus_id: granuleCumulusIds[1],
+      granule_cumulus_id: pgGranules[1].cumulus_id,
     },
   ];
   await granulesExecutionsPgModel.create(t.context.knex, joinRecords);
@@ -209,7 +213,37 @@ test.before(async (t) => {
   }).promise();
 });
 
-test.afterEach.always(() => {
+test.beforeEach(async (t) => {
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
   sandbox.resetHistory();
 });
 
@@ -305,7 +339,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       updated_at: new Date(),
     }),
   ];
-  const cumulusGranuleIds = await Promise.all([
+  const pgGranules = await Promise.all([
     granuleModel.create(
       t.context.knex,
       granules[0]
@@ -315,9 +349,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       granules[1]
     ),
   ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
-  granules[0].cumulus_id = cumulusGranuleIds[0][0];
-  granules[1].cumulus_id = cumulusGranuleIds[1][0];
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
 
   const workflowName = randomId('workflow');
   await bulkOperation.handler({
@@ -370,7 +405,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       updated_at: new Date(),
     }),
   ];
-  const cumulusGranuleIds = await Promise.all([
+  const pgGranules = await Promise.all([
     granuleModel.create(
       t.context.knex,
       granules[0]
@@ -380,9 +415,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
       granules[1]
     ),
   ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
 
-  granules[0].cumulus_id = cumulusGranuleIds[0][0];
-  granules[1].cumulus_id = cumulusGranuleIds[1][0];
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
 
   esSearchStub.resolves({
     body: {

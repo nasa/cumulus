@@ -27,7 +27,7 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const Logger = require('@cumulus/logger');
-const { publishSnsMessageByDataType } = require('../../lib/publishSnsMessageUtils');
+const { publishPdrSnsMessage } = require('../../lib/publishSnsMessageUtils');
 
 const Pdr = require('../../models/pdrs');
 
@@ -136,6 +136,7 @@ const writePdr = async ({
   updatedAt = Date.now(),
   esClient,
 }) => {
+  let pgPdr;
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
     return undefined;
@@ -146,8 +147,8 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return await createRejectableTransaction(knex, async (trx) => {
-    const pgPdr = await writePdrViaTransaction({
+  const pdrCumulusId = await createRejectableTransaction(knex, async (trx) => {
+    pgPdr = await writePdrViaTransaction({
       cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
@@ -155,16 +156,17 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
     await writePdrToDynamoAndEs({
       cumulusMessage,
       pdrModel,
       updatedAt,
       esClient,
     });
-    await publishSnsMessageByDataType(pdrToPublish, 'pdr');
     return pgPdr.cumulus_id;
   });
+  const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
+  await publishPdrSnsMessage(pdrToPublish);
+  return pdrCumulusId;
 };
 
 module.exports = {

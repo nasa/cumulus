@@ -65,7 +65,7 @@ test.before(async (t) => {
 
   // Create Granule
   t.context.granulePgModel = new GranulePgModel();
-  [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
+  const [pgGranule] = await t.context.granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       beginning_date_time: new Date(Date.now() - 300 * 1000),
@@ -92,6 +92,7 @@ test.before(async (t) => {
       updated_at: new Date(Date.now()),
     })
   );
+  t.context.granuleCumulusId = pgGranule.cumulus_id;
 
   // Create executions
   const executionPgModel = new ExecutionPgModel();

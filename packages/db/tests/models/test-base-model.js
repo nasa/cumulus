@@ -19,16 +19,23 @@ test.before(async (t) => {
     env: localStackConnectionEnv,
   });
   t.context.tableName = cryptoRandomString({ length: 10 });
+  t.context.emptyTableName = 'getMaxIdEmptyTable';
+
   await t.context.knex.schema.createTable(t.context.tableName, (table) => {
     table.increments('cumulus_id').primary();
     table.text('info');
     table.timestamps(false, true);
   });
+  await t.context.knex.schema.createTable(t.context.emptyTableName, (table) => {
+    table.increments('cumulus_id').primary();
+  });
+
   t.context.basePgModel = new BasePgModel({ tableName: t.context.tableName });
 });
 
 test.after.always(async (t) => {
   await t.context.knex.schema.dropTable(t.context.tableName);
+  await t.context.knex.schema.dropTable(t.context.emptyTableName);
 });
 
 test('BasePgModel.create() creates record and returns cumulus_id by default', async (t) => {
@@ -524,4 +531,61 @@ test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records
     removeNilProperties(searchResponse[0]),
     searchRecord
   );
+});
+
+test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+
+  const firstPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds[0], 1
+  );
+  const secondPageRecords = await basePgModel.paginateByCumulusId(
+    knex, recordIds[1], 1
+  );
+
+  t.is(firstPageRecords.length, 1);
+  t.is(secondPageRecords.length, 1);
+  t.deepEqual(firstPageRecords[0].info, info1);
+  t.deepEqual(secondPageRecords[0].info, info2);
+});
+
+test.serial('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const testLength = 5;
+  await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
+    .insert({ info: cryptoRandomString({ length: 20 }) })
+    .returning('cumulus_id')));
+  const firstPageRecords = await basePgModel.paginateByCumulusId(
+    knex, 1, 3
+  );
+  const secondPageRecords = await basePgModel.paginateByCumulusId(
+    knex, 4, 2
+  );
+  t.is(firstPageRecords.length, 3);
+  t.is(secondPageRecords.length, 2);
+});
+
+test.serial('getMaxId returns the next cumulus_id in sequence', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const expected = await knex(tableName).max('cumulus_id').first();
+  const result = await basePgModel.getMaxCumulusId(knex);
+  t.is(result, expected.max);
+});
+
+test('getMaxId throws if knex call returns undefined ', async (t) => {
+  const { basePgModel, tableName } = t.context;
+  const knexMock = () => ({
+    max: (_id) => ({
+      first: () => undefined,
+    }),
+  });
+  await t.throwsAsync(basePgModel.getMaxCumulusId(knexMock), {
+    message:
+      `Invalid .max "cumulus_id" query on ${tableName}, MAX cumulus_id cannot be returned`,
+  });
 });

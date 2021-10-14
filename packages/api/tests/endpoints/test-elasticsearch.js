@@ -581,6 +581,43 @@ test.serial('Reindex from database - create new index', async (t) => {
   }
 });
 
+test.serial('Reindex from database - startAsyncOperation is called with expected payload', async (t) => {
+  const indexName = randomString();
+  const id = randomString();
+
+  const processEnv = { ...process.env };
+  process.env.ES_HOST = 'fakeEsHost';
+  process.env.ReconciliationReportsTable = 'fakeReportsTable';
+
+  const asyncOperationsStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
+  const payload = {
+    indexName,
+    esRequestConcurrency: 'fakeEsRequestConcurrency',
+    postgresResultPageSize: 'fakePostgresResultPageSize',
+    postgresConnectionPoolSize: 'fakePostgresConnectionPoolSize',
+  };
+
+  try {
+    await request(app)
+      .post('/elasticsearch/index-from-database')
+      .send(
+        payload
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+    t.deepEqual(asyncOperationsStub.getCall(0).args[0].payload, {
+      ...payload,
+      esHost: process.env.ES_HOST,
+      reconciliationReportsTable: process.env.ReconciliationReportsTable,
+    });
+  } finally {
+    process.env = processEnv;
+    await esClient.indices.delete({ index: indexName });
+    asyncOperationsStub.restore();
+  }
+});
+
 test.serial('Indices status', async (t) => {
   const indexName = `z-${randomString()}`;
   const otherIndexName = `a-${randomString()}`;

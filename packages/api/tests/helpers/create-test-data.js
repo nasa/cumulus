@@ -134,13 +134,13 @@ async function createGranuleAndFiles({
 
   // create a new Postgres granule
   const newPgGranule = await translateApiGranuleToPostgresGranule(dynamoGranule, dbClient);
-  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPgGranule);
+  const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
 
   // create Postgres files
   await Promise.all(
     files.map((f) => {
       const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: pgGranule.cumulus_id,
         bucket: f.bucket,
         file_name: f.fileName,
         key: f.key,
@@ -157,7 +157,7 @@ async function createGranuleAndFiles({
   );
 
   return {
-    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: granuleCumulusId }),
+    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
     newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,

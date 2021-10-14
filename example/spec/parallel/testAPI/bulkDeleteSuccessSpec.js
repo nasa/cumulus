@@ -10,7 +10,11 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  s3PutObject,
+  getJsonS3Object,
+  waitForObjectToExist,
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
@@ -34,6 +38,7 @@ describe('POST /granules/bulkDelete', () => {
   let config;
   let clusterArn;
   let prefix;
+  let timestampBeforeCall;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -101,6 +106,17 @@ describe('POST /granules/bulkDelete', () => {
 
         // Ingest the granule the first time
         const testExecutionId = randomId('test-execution-');
+        const granuleToDelete = {
+          granuleId,
+          dataType: collection.name,
+          version: collection.version,
+          files: [
+            {
+              name: filename,
+              path: sourcePath,
+            },
+          ],
+        };
         ingestGranuleRule = await createOneTimeRule(
           prefix,
           {
@@ -112,19 +128,7 @@ describe('POST /granules/bulkDelete', () => {
             provider: provider.id,
             payload: {
               testExecutionId,
-              granules: [
-                {
-                  granuleId,
-                  dataType: collection.name,
-                  version: collection.version,
-                  files: [
-                    {
-                      name: filename,
-                      path: sourcePath,
-                    },
-                  ],
-                },
-              ],
+              granules: [granuleToDelete],
             },
           }
         );
@@ -154,6 +158,7 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
+        timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {
             prefix,
@@ -277,6 +282,31 @@ describe('POST /granules/bulkDelete', () => {
       }
 
       expect(output).toEqual({ deletedGranules: [granuleId] });
+    });
+
+    it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {
+      expect(beforeAllSucceeded).toBeTrue();
+      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}-Delete.output`;
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: granuleKey,
+      })).toBeResolved();
+      const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+
+      const expectedGranuleAfterDeletion = {
+        ...ingestedGranule,
+        published: false,
+        updatedAt: message.record.updatedAt,
+        productionDateTime: message.record.productionDateTime,
+        beginningDateTime: message.record.beginningDateTime,
+        lastUpdateDateTime: message.record.lastUpdateDateTime,
+      };
+      delete expectedGranuleAfterDeletion.cmrLink;
+
+      expect(message.event).toEqual('Delete');
+      expect(message.record).toEqual(expectedGranuleAfterDeletion);
+      expect(message.deletedAt).toBeGreaterThan(timestampBeforeCall);
     });
   });
 });

@@ -12,12 +12,13 @@ export const translatePostgresRuleToApiRule = async (
   collectionPgModel = new CollectionPgModel(),
   providerPgModel = new ProviderPgModel()
 ): Promise<RuleRecord> => {
-  const provider = pgRule.provider_cumulus_id ?
-    await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id }) :
-    undefined;
-  const collection = pgRule.collection_cumulus_id ?
-    await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id }) :
-    undefined;
+  const provider = pgRule.provider_cumulus_id
+    ? await providerPgModel.get(knex, { cumulus_id: pgRule.provider_cumulus_id })
+    : undefined;
+  const collection = pgRule.collection_cumulus_id
+    ? await collectionPgModel.get(knex, { cumulus_id: pgRule.collection_cumulus_id })
+    : undefined;
+
   const apiRule: RuleRecord = {
     name: pgRule.name,
     workflow: pgRule.workflow,

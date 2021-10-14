@@ -53,13 +53,33 @@ upgrades to `knex` package.
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added `updateCollection` to `@cumulus/api-client`.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_sns_topic_arn`, `report_pdrs_sns_topic_arn`,
+      `report_granules_sns_topic_arn`
+    - Added variables for report topic ARNs to `process_dead_letter_archive.tf`
+    - Added variable for granule report topic ARN to `bulk_operation.tf`
     - Added `pdr_sns_topic_arn` environment variable to
       `sf_event_sqs_to_db_records` lambda TF definition.
     - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
       publish SNS messages to the report topics to PDRs, Collections, and
       Executions.
+    - Added the following functions in `publishSnsMessageUtils` to handle publishing SNS messages for specific data and event types:
+      - `publishCollectionUpdateSnsMessage`
+      - `publishCollectionCreateSnsMessage`
+      - `publishCollectionDeleteSnsMessage`
+      - `publishGranuleUpdateSnsMessage`
+      - `publishGranuleDeleteSnsMessage`
+      - `publishGranuleCreateSnsMessage`
+      - `publishExecutionSnsMessage`
+      - `publishPdrSnsMessage`
+      - `publishGranuleSnsMessageByEventType`
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
+  - **CUMULUS-2315**
+    - Added `paginateByCumulusId` to `@cumulus/db` `BasePgModel` to allow for paginated
+      full-table select queries in support of elasticsearch indexing.
+    - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
+      derived table classes to support querying the current max `cumulus_id`.
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
 - **CUMULUS-2630**
@@ -77,6 +97,17 @@ upgrades to `knex` package.
     - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
     - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
     - Updated `@cumulus/types.api.file` to add `type` to the typing.
+  - **CUMULUS-2315**
+    - Update `index-from-database` lambda/ECS task and elasticsearch endpoint to read
+      from PostgreSQL database
+    - Update `index-from-database` endpoint to add the following configuration
+      tuning parameters:
+      - postgresResultPageSize -- The number of records to read from each
+        postgres table per request.   Default is 1000.
+      - postgresConnectionPoolSize -- The max number of connections to allow the
+        index function to make to the database.  Default is 10.
+      - esRequestConcurrency -- The maximium number of concurrent record
+        translation/ES record update requests.   Default is 10.
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
@@ -154,13 +185,18 @@ upgrades to `knex` package.
     - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated functions `create` and `upsert` in the `db` model for Executions
-    to return an array of objects containing all columns of the created or
-    updated records.
+      to return an array of objects containing all columns of the created or
+      updated records.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
+    - Updated functions `create` and `upsert` in the `db` model for Granules
+      to return an array of objects containing all columns for the created or
+      updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-granules` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
 - **CUMULUS-2695**
@@ -176,8 +212,9 @@ upgrades to `knex` package.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
 ### Fixed
-  - **CUMULUS-2583**
-    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as   "queued" were not able to be set as "running" or "completed"
 
 ### Removed
 
@@ -192,6 +229,7 @@ upgrades to `knex` package.
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
+    - Removed `aws_lambda_event_source_mapping` TF definition on granules
     - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
       definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on PDRs

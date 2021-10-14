@@ -74,7 +74,7 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
     status: 'running',
   });
 
-  const [granuleCumulusId] = await createRejectableTransaction(
+  const [pgGranule] = await createRejectableTransaction(
     knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
@@ -82,6 +82,7 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
       executionCumulusId
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -122,7 +123,7 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await createRejectableTransaction(
+  const [pgGranule] = await createRejectableTransaction(
     knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
@@ -130,6 +131,7 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
       executionCumulusId
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecutionCumulus] = await executionPgModel.create(
     knex,
@@ -236,11 +238,12 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecution] = await executionPgModel.create(
     knex,
@@ -297,11 +300,12 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'completed',
   });
 
-  const [granuleCumulusId] = await upsertGranuleWithExecutionJoinRecord(
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
     executionCumulusId
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
 
   const updatedGranule = {
     ...granule,
@@ -498,9 +502,9 @@ test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
   const fakeGranule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
-  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranule);
+  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
 
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
 
   t.deepEqual(
     await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
@@ -534,10 +538,11 @@ test('getUniqueGranuleByGranuleId() throws an error if more than one granule is 
     }),
   ];
 
-  const granuleIds = await Promise.all(fakeGranules.map((fakeGranule) =>
+  const granules = await Promise.all(fakeGranules.map((fakeGranule) =>
     granulePgModel.create(knex, fakeGranule)));
+  const granuleIds = granules.map(([granule]) => granule.cumulus_id);
 
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleIds[0][0] });
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleIds[0] });
 
   await t.throwsAsync(
     getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),

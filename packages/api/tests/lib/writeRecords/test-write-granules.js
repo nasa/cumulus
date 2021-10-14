@@ -28,6 +28,10 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
+const {
   Search,
 } = require('@cumulus/es-client/search');
 const {
@@ -40,7 +44,8 @@ const {
 
 const {
   generateFilePgRecord,
-  getGranuleCumulusIdFromQueryResultOrLookup,
+  getGranuleFromQueryResultOrLookup,
+  updateGranuleStatusToQueued,
   writeFilesViaTransaction,
   writeGranuleFromApi,
   writeGranulesFromMessage,
@@ -93,6 +98,31 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
 
@@ -156,6 +186,11 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
+
   await t.context.knex(TableNames.files).del();
   await t.context.knex(TableNames.granulesExecutions).del();
   await t.context.knex(TableNames.granules).del();
@@ -181,26 +216,26 @@ test('generateFilePgRecord() adds granule cumulus ID', (t) => {
   t.is(record.granule_cumulus_id, 1);
 });
 
-test('getGranuleCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
-  const granuleRecord = fakeGranuleRecordFactory();
+test('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
   const fakeGranuleCumulusId = Math.floor(Math.random() * 1000);
+  const granuleRecord = fakeGranuleRecordFactory({ granule_id: fakeGranuleCumulusId });
   const fakeGranulePgModel = {
-    getRecordCumulusId: (_, record) => {
+    get: (_, record) => {
       if (record.granule_id === granuleRecord.granule_id) {
-        return Promise.resolve(fakeGranuleCumulusId);
+        return Promise.resolve(granuleRecord);
       }
       return Promise.resolve();
     },
   };
 
   t.is(
-    await getGranuleCumulusIdFromQueryResultOrLookup({
+    await getGranuleFromQueryResultOrLookup({
       trx: {},
       queryResult: [],
       granuleRecord,
       granulePgModel: fakeGranulePgModel,
     }),
-    fakeGranuleCumulusId
+    granuleRecord
   );
 });
 
@@ -233,7 +268,7 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
-test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
+test.serial('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
     granule,
     executionCumulusId,
@@ -260,6 +295,7 @@ test('_writeGranule will not allow a running status to replace a completed statu
     granuleModel,
     knex,
     esClient,
+    snsEventType: 'Update',
   });
 
   t.like(
@@ -300,10 +336,17 @@ test('_writeGranule will not allow a running status to replace a completed statu
     ...granule,
     status: 'running',
   };
-  const updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
+
+  let updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
     updatedDynamoGranuleRecord,
     knex
   );
+
+  updatedPgGranuleRecord = {
+    ...updatedPgGranuleRecord,
+    cumulus_id: granulePgRecord.cumulus_id,
+  };
+
   await _writeGranule({
     dynamoGranuleRecord: updatedDynamoGranuleRecord,
     postgresGranuleRecord: updatedPgGranuleRecord,
@@ -311,6 +354,7 @@ test('_writeGranule will not allow a running status to replace a completed statu
     granuleModel,
     knex,
     esClient,
+    snsEventType: 'Update',
   });
 
   t.like(
@@ -374,7 +418,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   t.is(actual, undefined);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -399,6 +443,12 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   ));
   t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages.length, 1);
 });
 
 test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
@@ -533,7 +583,7 @@ test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQ
   });
 });
 
-test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the worflow status is "running"', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the workflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -629,7 +679,7 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
   }));
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Dynamo write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/Elasticsearch/SNS if Dynamo write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -668,9 +718,15 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Postgres write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/Elasticsearch/SNS if Postgres write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -705,9 +761,15 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     })
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -744,6 +806,12 @@ test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/Pos
     )
   );
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
 });
 
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
@@ -1240,4 +1308,56 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
     }
   );
+});
+
+test.serial('_writeGranule() successfully publishes an SNS message', async (t) => {
+  const {
+    granule,
+    executionCumulusId,
+    esClient,
+    knex,
+    granuleModel,
+    granuleId,
+    QueueUrl,
+  } = t.context;
+
+  const dynamoGranuleRecord = {
+    ...granule,
+    status: 'completed',
+  };
+  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
+    dynamoGranuleRecord,
+    knex
+  );
+
+  await _writeGranule({
+    dynamoGranuleRecord,
+    postgresGranuleRecord,
+    executionCumulusId,
+    granuleModel,
+    knex,
+    esClient,
+    snsEventType: 'Update',
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const retrievedPgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id,
+  });
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: retrievedPgGranule,
+    knexOrTransaction: knex,
+  });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages.length, 1);
+
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.is(publishedMessage.event, 'Update');
 });

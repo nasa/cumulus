@@ -56,7 +56,7 @@ export const translateApiAsyncOperationToPostgresAsyncOperation = (
 /**
  * Generate an API Async Operation record from a PostgreSQL record.
  *
- * @param {Object} pgAsyncOperation - A Postgres PDR record
+ * @param {Object} pgAsyncOperation - A PostgreSQL async operation record
  * @returns {Object} An Async Operation API record
  */
 export const translatePostgresAsyncOperationToApiAsyncOperation = (

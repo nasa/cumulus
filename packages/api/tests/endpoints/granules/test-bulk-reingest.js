@@ -7,7 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
@@ -21,6 +21,7 @@ process.env = {
   AccessTokensTable: randomId('AccessTokensTable'),
   CollectionsTable: randomId('CollectionsTable'),
   GranulesTable: randomId('GranulesTable'),
+  granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
   system_bucket: randomId('systemBucket'),
@@ -98,6 +99,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
@@ -146,6 +148,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,

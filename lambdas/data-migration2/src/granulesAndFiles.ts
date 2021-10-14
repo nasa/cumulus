@@ -116,17 +116,17 @@ export const migrateGranuleRecord = async (
 
   const granule = await translateApiGranuleToPostgresGranule(record, trx);
 
-  const [cumulusId] = await upsertGranuleWithExecutionJoinRecord(
+  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
     trx,
     granule,
     executionCumulusId
   );
 
-  if (!cumulusId) {
+  if (!pgGranuleRecord) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
   }
 
-  return cumulusId;
+  return pgGranuleRecord.cumulus_id;
 };
 
 /**

@@ -45,16 +45,16 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
-  const [granuleCumulusId] = await t.context.granulePgModel.create(
+  const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: t.context.collectionCumulusId,
     })
   );
-  t.context.granuleCumulusId = granuleCumulusId;
+  t.context.granuleCumulusId = pgGranule.cumulus_id;
   t.context.joinRecord = {
     execution_cumulus_id: t.context.executionCumulusId,
-    granule_cumulus_id: Number(granuleCumulusId),
+    granule_cumulus_id: Number(t.context.granuleCumulusId),
   };
 });
 

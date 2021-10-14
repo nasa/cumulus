@@ -31,7 +31,7 @@ const { parseException } = require('@cumulus/message/utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
-const { publishSnsMessageByDataType } = require('../publishSnsMessageUtils');
+const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
 const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
@@ -162,7 +162,7 @@ const writeExecutionRecordFromMessage = async ({
     writeExecutionResponse,
     knex
   );
-  await publishSnsMessageByDataType(translatedExecution, 'execution');
+  await publishExecutionSnsMessage(translatedExecution);
   return writeExecutionResponse.cumulus_id;
 };
 

@@ -93,12 +93,12 @@ test('GranulePgModel.exists() find granule for cumulusId <RecordSelect>', async 
     collection_cumulus_id: collectionCumulusId,
   });
 
-  const cumulusId = await granulePgModel.upsert(knex, granule, executionCumulusId);
+  const [pgGranule] = await granulePgModel.upsert(knex, granule, executionCumulusId);
 
   t.true(
     await granulePgModel.exists(
       knex,
-      { cumulus_id: Number(cumulusId) }
+      { cumulus_id: Number(pgGranule.cumulus_id) }
     )
   );
 });
@@ -163,12 +163,12 @@ test('GranulePgModel.get() returns granule for cumulusId <RecordSelect>', async 
     collection_cumulus_id: collectionCumulusId,
   });
 
-  const cumulusId = await granulePgModel.upsert(knex, granule, executionCumulusId);
+  const [pgGranule] = await granulePgModel.upsert(knex, granule, executionCumulusId);
 
   t.like(
     await granulePgModel.get(
       knex,
-      { cumulus_id: Number(cumulusId) }
+      { cumulus_id: Number(pgGranule.cumulus_id) }
     ),
     granule
   );
@@ -681,7 +681,8 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
   });
 
   const granuleCumulusId = await createRejectableTransaction(knex, async (trx) => {
-    const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
+    const [innerPgGranule] = await granulePgModel.create(trx, granule);
+    const innerGranuleCumulusId = innerPgGranule.cumulus_id;
     await granulesExecutionsPgModel.create(trx, {
       execution_cumulus_id: executionCumulusId,
       granule_cumulus_id: innerGranuleCumulusId,
@@ -750,7 +751,8 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
   let file;
 
   await createRejectableTransaction(knex, async (trx) => {
-    const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
+    const [pgGranule] = await granulePgModel.create(trx, granule);
+    const innerGranuleCumulusId = pgGranule.cumulus_id;
     file = fakeFileRecordFactory({
       granule_cumulus_id: innerGranuleCumulusId,
     });

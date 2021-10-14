@@ -9,12 +9,16 @@ const {
   destroyLocalTestDb,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('@cumulus/es-client/search');
 const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const Granule = require('../../models/granules');
@@ -44,6 +48,39 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   t.context.esGranulesClient = new Search({}, 'granule', t.context.esIndex);
+});
+
+test.beforeEach(async (t) => {
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
