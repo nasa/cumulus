@@ -5,7 +5,6 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
-  TableNames,
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
   validateProviderHost,

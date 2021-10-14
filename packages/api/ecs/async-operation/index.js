@@ -21,7 +21,6 @@ const {
   AsyncOperationPgModel,
   createRejectableTransaction,
 } = require('@cumulus/db');
-const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 

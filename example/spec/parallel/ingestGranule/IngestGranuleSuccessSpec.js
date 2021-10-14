@@ -325,17 +325,16 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('publishes an SNS message for a running execution', async () => {
-    if (beforeAllError) throw SetupError;
-    else {
-      const runningExecutionArn = workflowExecutionArn;
-      const runningExecutionName = runningExecutionArn.split(':').pop();
-      const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
-      const executionExists = await s3ObjectExists({
-        Bucket: config.bucket,
-        Key: runningExecutionKey,
-      });
-      expect(executionExists).toEqual(true);
-    }
+    failOnSetupError([beforeAllError]);
+
+    const runningExecutionArn = workflowExecutionArn;
+    const runningExecutionName = runningExecutionArn.split(':').pop();
+    const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
+    const executionExists = await s3ObjectExists({
+      Bucket: config.bucket,
+      Key: runningExecutionKey,
+    });
+    expect(executionExists).toEqual(true);
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
@@ -1008,14 +1007,14 @@ describe('The S3 Ingest Granules workflow', () => {
           const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
           nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
 
-            await waitForApiStatus(
-              getGranule,
-              {
-                prefix: config.stackName,
-                granuleId: reingestGranuleId,
-              },
-              'completed'
-            );
+          await waitForApiStatus(
+            getGranule,
+            {
+              prefix: config.stackName,
+              granuleId: reingestGranuleId,
+            },
+            'completed'
+          );
 
           const updatedGranule = await getGranule({
             prefix: config.stackName,
@@ -1038,7 +1037,6 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         it('saves asyncOperationId to execution record', async () => {
-
           failOnSetupError([beforeAllError, subTestSetupError, reingestBeforeAllError]);
           const reingestExecution = await waitForApiStatus(
             getExecution,
