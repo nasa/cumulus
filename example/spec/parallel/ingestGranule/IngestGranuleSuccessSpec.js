@@ -798,8 +798,8 @@ describe('The S3 Ingest Granules workflow', () => {
       executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}-failed.output`;
       executionCompletedKey = `${config.stackName}/test-output/${executionName}-completed.output`;
 
-      granuleCompletedMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-completed.output`;
-      granuleRunningMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-running.output`;
+      granuleCompletedMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-completed-Update.output`;
+      granuleRunningMessageKey = `${config.stackName}/test-output/${inputPayload.granules[0].granuleId}-running-Update.output`;
     });
 
     afterAll(async () => {

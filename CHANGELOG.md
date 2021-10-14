@@ -40,11 +40,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added `collection_sns_topic_arn` environment variable to
       `PrivateApiLambda` and `ApiEndpoints` lambdas.
     - Added `updateCollection` to `@cumulus/api-client`.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_sns_topic_arn`, `report_pdrs_sns_topic_arn`,
+      `report_granules_sns_topic_arn`
+    - Added variables for report topic ARNs to `process_dead_letter_archive.tf`
+    - Added variable for granule report topic ARN to `bulk_operation.tf`
     - Added `pdr_sns_topic_arn` environment variable to
       `sf_event_sqs_to_db_records` lambda TF definition.
     - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
       publish SNS messages to the report topics to PDRs, Collections, and
       Executions.
+    - Added the following functions in `publishSnsMessageUtils` to handle publishing SNS messages for specific data and event types:
+      - `publishCollectionUpdateSnsMessage`
+      - `publishCollectionCreateSnsMessage`
+      - `publishCollectionDeleteSnsMessage`
+      - `publishGranuleUpdateSnsMessage`
+      - `publishGranuleDeleteSnsMessage`
+      - `publishGranuleCreateSnsMessage`
+      - `publishExecutionSnsMessage`
+      - `publishPdrSnsMessage`
+      - `publishGranuleSnsMessageByEventType`
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
   - **CUMULUS-2315**
@@ -159,13 +174,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated functions `create` and `upsert` in the `db` model for Executions
-    to return an array of objects containing all columns of the created or
-    updated records.
+      to return an array of objects containing all columns of the created or
+      updated records.
     - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
       after a successful collection delete, update (PUT), create (POST).
     - Updated functions `create` and `upsert` in the `db` model for Collections
       to return an array of objects containing all columns for the created or
       updated records.
+    - Updated functions `create` and `upsert` in the `db` model for Granules
+      to return an array of objects containing all columns for the created or
+      updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-granules` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
 - **CUMULUS-2695**
@@ -182,8 +202,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-  - **CUMULUS-2583**
-    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as   "queued" were not able to be set as "running" or "completed"
 
 ### Removed
 
@@ -198,6 +218,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
+    - Removed `aws_lambda_event_source_mapping` TF definition on granules
     - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
       definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on PDRs

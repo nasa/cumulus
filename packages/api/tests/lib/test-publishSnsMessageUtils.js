@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -13,6 +12,8 @@ const {
 const {
   fakeExecutionFactoryV2,
   fakeCollectionFactory,
+  fakeGranuleFactoryV2,
+  fakeFileFactory,
   fakePdrFactoryV2,
 } = require('../../lib/testUtils');
 
@@ -40,6 +41,8 @@ test.before(async (t) => {
     TopicArn,
     Token: SubscriptionArn,
   }).promise();
+
+  t.context.timeBeforePublish = Date.now();
 });
 
 test.after.always(async (t) => {
@@ -148,11 +151,6 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Delete', async (t) => {
   process.env.collection_sns_topic_arn = t.context.TopicArn;
-  const deletedAt = Date.now();
-  const stub = sinon.stub(Date, 'now').returns(deletedAt);
-  t.teardown(() => {
-    stub.restore();
-  });
 
   const collectionName = cryptoRandomString({ length: 10 });
   const newCollection = fakeCollectionFactory({ name: collectionName });
@@ -169,7 +167,46 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
 
   t.deepEqual(message.record, { name: newCollection.name, version: newCollection.version });
   t.is(message.event, 'Delete');
-  t.is(message.deletedAt, deletedAt);
+  t.true(message.deletedAt > t.context.timeBeforePublish);
+  t.true(message.deletedAt < Date.now());
+});
+
+test.serial('publishSnsMessageByDataType() does not publish an SNS message if granule_sns_topic_arn is undefined', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    granuleId: cryptoRandomString({ length: 5 }),
+  });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newGranule, 'granule'),
+    { message: 'The granule_sns_topic_arn environment variable must be set' }
+  );
+});
+
+test.serial('publishSnsMessageByDataType() publishes an SNS message for the granule Delete event', async (t) => {
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
+
+  const granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const newGranule = fakeGranuleFactoryV2({
+    files,
+    granuleId,
+    published: false,
+  });
+  await publishSnsMessageByDataType(newGranule, 'granule', 'Delete');
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.deepEqual(publishedMessage.record.granuleId, granuleId);
+  t.deepEqual(publishedMessage.event, 'Delete');
+  t.true(publishedMessage.deletedAt > t.context.timeBeforePublish);
+  t.true(publishedMessage.deletedAt < Date.now());
 });
 
 test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if pdr_sns_topic_arn is undefined', async (t) => {

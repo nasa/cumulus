@@ -622,7 +622,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const filePgModel = new FilePgModel();
   const granuleId = cryptoRandomString({ length: 6 });
 
-  const [granuleCumulusId] = await granulePgModel.create(
+  const [pgGranule] = await granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory(
       {
@@ -632,6 +632,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
       }
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
   const moveFileParam = {
     source: {
       Bucket: bucket,

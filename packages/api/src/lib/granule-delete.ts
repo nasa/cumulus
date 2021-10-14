@@ -7,6 +7,10 @@ import {
   GranulePgModel,
   PostgresGranuleRecord,
   PostgresFileRecord,
+  translatePostgresGranuleToApiGranule,
+  CollectionPgModel,
+  PdrPgModel,
+  ProviderPgModel,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
 import { ApiFile, ApiGranule } from '@cumulus/types';
@@ -14,6 +18,7 @@ import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
 const Granule = require('../../models/granules');
 
@@ -46,8 +51,10 @@ const _deleteS3Files = async (
  * @param {Knex} params.knex - DB client
  * @param {Object} params.dynamoGranule - Granule from DynamoDB
  * @param {PostgresGranule} params.pgGranule - Granule from Postgres
+ * @param {number | undefined} params.collectionCumulusId - Optional Collection Cumulus ID
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
+ * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
  * @param {Object} params.granuleModelClient - Granule Dynamo model
  */
 const deleteGranuleAndFiles = async (params: {
@@ -56,10 +63,12 @@ const deleteGranuleAndFiles = async (params: {
   pgGranule: PostgresGranuleRecord,
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
+  collectionPgModel: CollectionPgModel,
   granuleModelClient: typeof Granule,
   esClient: {
     delete(...args: any): any | any[];
   },
+  collectionCumulusId?: number,
 }) => {
   const {
     knex,
@@ -67,6 +76,7 @@ const deleteGranuleAndFiles = async (params: {
     pgGranule,
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
     granuleModelClient = new Granule(),
     esClient = await Search.es(),
   } = params;
@@ -75,6 +85,7 @@ const deleteGranuleAndFiles = async (params: {
     // Delete only the Dynamo Granule and S3 Files
     await _deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
+    await publishGranuleDeleteSnsMessage(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
@@ -84,6 +95,15 @@ const deleteGranuleAndFiles = async (params: {
       knex,
       { granule_cumulus_id: pgGranule.cumulus_id }
     );
+
+    const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+      collectionPgModel,
+      filePgModel,
+      pdrPgModel: new PdrPgModel(),
+      providerPgModel: new ProviderPgModel(),
+    });
 
     try {
       await knex.transaction(async (trx) => {
@@ -99,6 +119,7 @@ const deleteGranuleAndFiles = async (params: {
           ignore: [404],
         });
       });
+      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
       logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
       await _deleteS3Files(files);
     } catch (error) {

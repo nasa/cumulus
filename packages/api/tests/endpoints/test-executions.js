@@ -267,7 +267,7 @@ test.beforeEach(async (t) => {
     return granulePgRecord;
   }));
 
-  [t.context.granuleCumulusId] = await Promise.all(
+  await Promise.all(
     t.context.fakePGGranules.map(async (granule) =>
       await granulePgModel.create(knex, granule))
   );

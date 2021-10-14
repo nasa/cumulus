@@ -59,8 +59,8 @@ test.before(async (t) => {
     }
   );
 
-  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranule);
-  const pgGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
+  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
   t.context.granuleId = pgGranule.granule_id;
 
   process.env.system_bucket = randomString();
