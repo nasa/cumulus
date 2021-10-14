@@ -1,7 +1,8 @@
 'use strict';
 
-const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const test = require('ava');
 const omit = require('lodash/omit');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -13,62 +14,56 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
+const {
+  CollectionPgModel,
+  destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeGranuleRecordFactory,
+  fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  fakeRuleRecordFactory,
+  generateLocalTestDb,
+  GranulePgModel,
+  migrationDir,
+  PdrPgModel,
+  ProviderPgModel,
+  RulePgModel,
+  translatePostgresCollectionToApiCollection,
+  translatePostgresExecutionToApiExecution,
+  translatePostgresGranuleToApiGranule,
+  translatePostgresPdrToApiPdr,
+  translatePostgresProviderToApiProvider,
+  translatePostgresRuleToApiRule,
+} = require('@cumulus/db');
 
-const indexFromDatabase = require('../../lambdas/index-from-database');
+const {
+  fakeReconciliationReportFactory,
+} = require('../../lib/testUtils');
 
 const models = require('../../models');
+const indexFromDatabase = require('../../lambdas/index-from-database');
 const {
-  fakeCollectionFactory,
-  fakeAsyncOperationFactory,
-  fakeExecutionFactoryV2,
-  fakeGranuleFactoryV2,
-  fakePdrFactoryV2,
-  fakeProviderFactory,
-  fakeReconciliationReportFactory,
-  fakeRuleFactoryV2,
   getWorkflowList,
 } = require('../../lib/testUtils');
 
 const workflowList = getWorkflowList();
+process.env.ReconciliationReportsTable = randomString();
+const reconciliationReportModel = new models.ReconciliationReport();
 
 // create all the variables needed across this test
 process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
-process.env.ExecutionsTable = randomString();
-process.env.AsyncOperationsTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.GranulesTable = randomString();
-process.env.PdrsTable = randomString();
-process.env.ProvidersTable = randomString();
-process.env.ReconciliationReportsTable = randomString();
-process.env.RulesTable = randomString();
+const reconciliationReportsTable = process.env.ReconciliationReportsTable;
 
-const tables = {
-  collectionsTable: process.env.CollectionsTable,
-  executionsTable: process.env.ExecutionsTable,
-  asyncOperationsTable: process.env.AsyncOperationsTable,
-  granulesTable: process.env.GranulesTable,
-  pdrsTable: process.env.PdrsTable,
-  providersTable: process.env.ProvidersTable,
-  reconciliationReportsTable: process.env.ReconciliationReportsTable,
-  rulesTable: process.env.RulesTable,
-};
+function sortAndFilter(input, omitList, sortKey) {
+  return input.map((r) => omit(r, omitList))
+    .sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1));
+}
 
-const executionModel = new models.Execution();
-const asyncOperationModel = new models.AsyncOperation({
-  systemBucket: process.env.system_bucket,
-  stackName: process.env.stackName,
-  tableName: process.env.AsyncOperationsTable,
-});
-const collectionModel = new models.Collection();
-const granuleModel = new models.Granule();
-const pdrModel = new models.Pdr();
-const providersModel = new models.Provider();
-const reconciliationReportModel = new models.ReconciliationReport();
-const rulesModel = new models.Rule();
-
-async function addFakeData(numItems, factory, model, factoryParams = {}) {
+async function addFakeDynamoData(numItems, factory, model, factoryParams = {}) {
   const items = [];
 
   /* eslint-disable no-await-in-loop */
@@ -82,30 +77,25 @@ async function addFakeData(numItems, factory, model, factoryParams = {}) {
   return items;
 }
 
-function searchEs(type, index) {
-  const executionQuery = new Search({}, type, index);
+async function addFakeData(knex, numItems, factory, model, factoryParams = {}) {
+  const items = [];
+  for (let i = 0; i < numItems; i += 1) {
+    const item = factory(factoryParams);
+    items.push(model.create(knex, item, '*'));
+  }
+  return (await Promise.all(items)).map((result) => result[0]);
+}
+
+function searchEs(type, index, limit = 10) {
+  const executionQuery = new Search({ queryStringParameters: { limit } }, type, index);
   return executionQuery.query();
 }
 
 test.before(async (t) => {
-  t.context.esIndex = randomString();
-  t.context.esAlias = randomString();
-
-  t.context.esClient = await Search.es('fakehost');
-
-  // add fake elasticsearch index
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  t.context.esIndices = [];
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-
-  await executionModel.createTable();
-  await asyncOperationModel.createTable();
-  await collectionModel.createTable();
-  await granuleModel.createTable();
-  await pdrModel.createTable();
-  await providersModel.createTable();
   await reconciliationReportModel.createTable();
-  await rulesModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
@@ -123,20 +113,28 @@ test.before(async (t) => {
   ]);
 });
 
-test.after.always(async (t) => {
-  const { esClient, esIndex } = t.context;
+test.beforeEach(async (t) => {
+  t.context.testDbName = `test_index_${cryptoRandomString({ length: 10 })}`;
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  t.context.esIndex = randomString();
+  t.context.esAlias = randomString();
+  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  t.context.esClient = await Search.es('fakehost');
+});
 
+test.afterEach.always(async (t) => {
+  const { esClient, esIndex, testDbName } = t.context;
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.knex,
+    knexAdmin: t.context.knexAdmin,
+    testDbName,
+  });
+});
 
-  await executionModel.deleteTable();
-  await asyncOperationModel.deleteTable();
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
-  await pdrModel.deleteTable();
-  await providersModel.deleteTable();
-  await reconciliationReportModel.deleteTable();
-  await rulesModel.deleteTable();
-
+test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
@@ -211,59 +209,175 @@ test.serial('getEsRequestConcurrency throws an error when 0 is specified', (t) =
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {
-  const { esAlias } = t.context;
+  const { esAlias, knex } = t.context;
 
   await t.notThrowsAsync(() => indexFromDatabase.indexFromDatabase({
     indexName: esAlias,
-    tables,
+    reconciliationReportsTable,
+    knex,
   }));
 });
 
-test('Lambda successfully indexes records of all types', async (t) => {
+test.serial('Lambda successfully indexes records of all types', async (t) => {
+  const knex = t.context.knex;
   const { esAlias } = t.context;
 
-  const numItems = 1;
+  const numItems = 20;
 
-  const fakeData = await Promise.all([
-    addFakeData(numItems, fakeCollectionFactory, collectionModel),
-    addFakeData(numItems, fakeExecutionFactoryV2, executionModel),
-    addFakeData(numItems, fakeAsyncOperationFactory, asyncOperationModel),
-    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
-    addFakeData(numItems, fakePdrFactoryV2, pdrModel),
-    addFakeData(numItems, fakeProviderFactory, providersModel),
-    addFakeData(numItems, fakeReconciliationReportFactory, reconciliationReportModel),
-    addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name }),
-  ]);
+  const fakeData = [];
+  const dateObject = { created_at: new Date(), updated_at: new Date() };
+  const fakeCollectionRecords = await addFakeData(
+    knex,
+    numItems,
+    fakeCollectionRecordFactory,
+    new CollectionPgModel(),
+    dateObject
+  );
+  fakeData.push(fakeCollectionRecords);
+
+  const fakeExecutionRecords = await addFakeData(
+    knex,
+    numItems,
+    fakeExecutionRecordFactory,
+    new ExecutionPgModel(),
+    { ...dateObject }
+  );
+
+  const fakeGranuleRecords = await addFakeData(
+    knex,
+    numItems,
+    fakeGranuleRecordFactory,
+    new GranulePgModel(),
+    { collection_cumulus_id: fakeCollectionRecords[0].cumulus_id, ...dateObject }
+  );
+
+  const fakeProviderRecords = await addFakeData(
+    knex,
+    numItems,
+    fakeProviderRecordFactory,
+    new ProviderPgModel(),
+    dateObject
+  );
+
+  const fakePdrRecords = await addFakeData(knex, numItems, fakePdrRecordFactory, new PdrPgModel(), {
+    collection_cumulus_id: fakeCollectionRecords[0].cumulus_id,
+    provider_cumulus_id: fakeProviderRecords[0].cumulus_id,
+    ...dateObject,
+  });
+
+  const fakeReconciliationReportRecords = await addFakeDynamoData(
+    numItems,
+    fakeReconciliationReportFactory,
+    reconciliationReportModel
+  );
+
+  const fakeRuleRecords = await addFakeData(
+    knex,
+    numItems,
+    fakeRuleRecordFactory,
+    new RulePgModel(),
+    {
+      workflow: workflowList[0].name,
+      ...dateObject,
+    }
+  );
 
   await indexFromDatabase.handler({
     indexName: esAlias,
-    tables,
+    pageSize: 6,
+    knex,
   });
 
   const searchResults = await Promise.all([
-    searchEs('collection', esAlias),
-    searchEs('execution', esAlias),
-    searchEs('granule', esAlias),
-    searchEs('pdr', esAlias),
-    searchEs('provider', esAlias),
-    searchEs('reconciliationReport', esAlias),
-    searchEs('rule', esAlias),
+    searchEs('collection', esAlias, '20'),
+    searchEs('execution', esAlias, '20'),
+    searchEs('granule', esAlias, '20'),
+    searchEs('pdr', esAlias, '20'),
+    searchEs('provider', esAlias, '20'),
+    searchEs('reconciliationReport', esAlias, '20'),
+    searchEs('rule', esAlias, '20'),
   ]);
 
   searchResults.map((res) => t.is(res.meta.count, numItems));
 
-  searchResults.map((res, index) =>
-    t.deepEqual(
-      res.results.map((r) => delete r.timestamp),
-      fakeData[index].map((r) => delete r.timestamp)
-    ));
+  const collectionResults = await Promise.all(
+    fakeCollectionRecords.map((r) =>
+      translatePostgresCollectionToApiCollection(r))
+  );
+  const executionResults = await Promise.all(
+    fakeExecutionRecords.map((r) => translatePostgresExecutionToApiExecution(r))
+  );
+  const granuleResults = await Promise.all(
+    fakeGranuleRecords.map((r) =>
+      translatePostgresGranuleToApiGranule({
+        granulePgRecord: r,
+        knexOrTransaction: knex,
+      }))
+  );
+  const pdrResults = await Promise.all(
+    fakePdrRecords.map((r) => translatePostgresPdrToApiPdr(r, knex))
+  );
+  const providerResults = await Promise.all(
+    fakeProviderRecords.map((r) => translatePostgresProviderToApiProvider(r))
+  );
+  const ruleResults = await Promise.all(
+    fakeRuleRecords.map((r) => translatePostgresRuleToApiRule(r))
+  );
+
+  t.deepEqual(
+    searchResults[0].results
+      .map((r) => omit(r, ['timestamp']))
+      .sort((a, b) => (a.name > b.name ? 1 : -1)),
+    collectionResults
+      .sort((a, b) => (a.name > b.name ? 1 : -1))
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[1].results, ['timestamp'], 'name'),
+    sortAndFilter(executionResults, ['timestamp'], 'name')
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[2].results, ['timestamp'], 'granuleId'),
+    sortAndFilter(granuleResults, ['timestamp'], 'granuleId')
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[3].results, ['timestamp'], 'pdrName'),
+    sortAndFilter(pdrResults, ['timestamp'], 'pdrName')
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[4].results, ['timestamp'], 'id'),
+    sortAndFilter(providerResults, ['timestamp'], 'id')
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[5].results, ['timestamp'], 'name'),
+    sortAndFilter(fakeReconciliationReportRecords, ['timestamp'], 'name')
+  );
+
+  t.deepEqual(
+    sortAndFilter(searchResults[6].results, ['timestamp'], 'name'),
+    sortAndFilter(ruleResults, ['timestamp'], 'name')
+  );
 });
 
 test.serial('failure in indexing record of specific type should not prevent indexing of other records with same type', async (t) => {
-  const { esAlias, esClient } = t.context;
-
+  const { esAlias, esClient, knex } = t.context;
+  const granulePgModel = new GranulePgModel();
   const numItems = 7;
-  const fakeData = await addFakeData(numItems, fakeGranuleFactoryV2, granuleModel);
+  const collectionRecord = await addFakeData(
+    knex,
+    1,
+    fakeCollectionRecordFactory,
+    new CollectionPgModel()
+  );
+  const fakeData = await addFakeData(knex, numItems, fakeGranuleRecordFactory, granulePgModel, {
+    collection_cumulus_id: collectionRecord[0].cumulus_id,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
 
   let numCalls = 0;
   const originalIndexGranule = indexer.indexGranule;
@@ -285,7 +399,8 @@ test.serial('failure in indexing record of specific type should not prevent inde
   try {
     await indexFromDatabase.handler({
       indexName: esAlias,
-      tables,
+      reconciliationReportsTable,
+      knex,
     });
 
     searchResults = await searchEs('granule', esAlias);
@@ -293,16 +408,25 @@ test.serial('failure in indexing record of specific type should not prevent inde
     t.is(searchResults.meta.count, successCount);
 
     searchResults.results.forEach((result) => {
-      const sourceData = fakeData.find((data) => data.granuleId === result.granuleId);
-      t.deepEqual(
-        omit(sourceData, ['timestamp', 'updatedAt']),
-        omit(result, ['timestamp', 'updatedAt'])
-      );
+      const sourceData = fakeData.find((data) => data.granule_id === result.granuleId);
+      const expected = {
+        collectionId: `${collectionRecord[0].name}___${collectionRecord[0].version}`,
+        granuleId: sourceData.granule_id,
+        status: sourceData.status,
+      };
+      const actual = {
+        collectionId: result.collectionId,
+        granuleId: result.granuleId,
+        status: result.status,
+      };
+
+      t.deepEqual(expected, actual);
     });
   } finally {
     indexGranuleStub.restore();
     await Promise.all(fakeData.map(
-      ({ granuleId }) => granuleModel.delete({ granuleId })
+      // eslint-disable-next-line camelcase
+      ({ granule_id }) => granulePgModel.delete(knex, { granule_id })
     ));
     await Promise.all(searchResults.results.map(
       (result) =>
@@ -317,52 +441,85 @@ test.serial('failure in indexing record of specific type should not prevent inde
   }
 });
 
-test.serial('failure in indexing record of one type should not prevent indexing of other records with different type', async (t) => {
-  const { esAlias, esClient } = t.context;
+test.serial(
+  'failure in indexing record of one type should not prevent indexing of other records with different type',
+  async (t) => {
+    const { esAlias, esClient, knex } = t.context;
+    const numItems = 2;
+    const collectionRecord = await addFakeData(
+      knex,
+      1,
+      fakeCollectionRecordFactory,
+      new CollectionPgModel()
+    );
+    const [fakeProviderData, fakeGranuleData] = await Promise.all([
+      addFakeData(
+        knex,
+        numItems,
+        fakeProviderRecordFactory,
+        new ProviderPgModel()
+      ),
+      addFakeData(
+        knex,
+        numItems,
+        fakeGranuleRecordFactory,
+        new GranulePgModel(),
+        { collection_cumulus_id: collectionRecord[0].cumulus_id }
+      ),
+    ]);
 
-  const numItems = 2;
-  const [fakeProviderData, fakeGranuleData] = await Promise.all([
-    addFakeData(numItems, fakeProviderFactory, providersModel),
-    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
-  ]);
+    const indexGranuleStub = sinon
+      .stub(indexer, 'indexGranule')
+      .throws(new Error('error'));
 
-  const indexGranuleStub = sinon.stub(indexer, 'indexGranule')
-    .throws(new Error('error'));
+    let searchResults;
+    try {
+      await indexFromDatabase.handler({
+        indexName: esAlias,
+        reconciliationReportsTable,
+        knex,
+      });
 
-  let searchResults;
-  try {
-    await indexFromDatabase.handler({
-      indexName: esAlias,
-      tables,
-    });
+      searchResults = await searchEs('provider', esAlias);
 
-    searchResults = await searchEs('provider', esAlias);
+      t.is(searchResults.meta.count, numItems);
 
-    t.is(searchResults.meta.count, numItems);
-
-    searchResults.results.forEach((result) => {
-      const sourceData = fakeProviderData.find((data) => data.id === result.id);
-      t.deepEqual(
-        omit(sourceData, ['createdAt', 'timestamp', 'updatedAt']),
-        omit(result, ['createdAt', 'timestamp', 'updatedAt'])
-      );
-    });
-  } finally {
-    indexGranuleStub.restore();
-    await Promise.all(fakeProviderData.map(
-      ({ id }) => providersModel.delete({ id })
-    ));
-    await Promise.all(fakeGranuleData.map(
-      ({ granuleId }) => granuleModel.delete({ granuleId })
-    ));
-    await Promise.all(searchResults.results.map(
-      (result) =>
-        esClient.delete({
-          index: esAlias,
-          type: 'provider',
-          id: result.id,
-          refresh: true,
+      searchResults.results.forEach((result) => {
+        const sourceData = fakeProviderData.find(
+          (data) => data.name === result.id
+        );
+        t.deepEqual(
+          { host: result.host, id: result.id, protocol: result.protocol },
+          {
+            host: sourceData.host,
+            id: sourceData.name,
+            protocol: sourceData.protocol,
+          }
+        );
+      });
+    } finally {
+      indexGranuleStub.restore();
+      await Promise.all(
+        fakeProviderData.map(({ name }) => {
+          const pgModel = new ProviderPgModel();
+          return pgModel.delete(knex, { name });
         })
-    ));
+      );
+      await Promise.all(
+        fakeGranuleData.map(
+          // eslint-disable-next-line camelcase
+          ({ granule_id }) => new GranulePgModel().delete(knex, { granule_id })
+        )
+      );
+      await Promise.all(
+        searchResults.results.map((result) =>
+          esClient.delete({
+            index: esAlias,
+            type: 'provider',
+            id: result.id,
+            refresh: true,
+          }))
+      );
+    }
   }
-});
+);
