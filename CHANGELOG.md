@@ -45,6 +45,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       Executions.
     - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
       for `report_executions_topic` and `report_pdrs_topic`.
+  - **CUMULUS-2315**
+    - Added `paginateByCumulusId` to `@cumulus/db` `BasePgModel` to allow for paginated
+      full-table select queries in support of elasticsearch indexing.
+    - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
+      derived table classes to support querying the current max `cumulus_id`.
 - **CUMULUS-2000**
   - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
 - **CUMULUS-2630**
@@ -62,6 +67,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
     - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
     - Updated `@cumulus/types.api.file` to add `type` to the typing.
+  - **CUMULUS-2315**
+    - Update `index-from-database` lambda/ECS task and elasticsearch endpoint to read
+      from PostgreSQL database
+    - Update `index-from-database` endpoint to add the following configuration
+      tuning parameters:
+      - postgresResultPageSize -- The number of records to read from each
+        postgres table per request.   Default is 1000.
+      - postgresConnectionPoolSize -- The max number of connections to allow the
+        index function to make to the database.  Default is 10.
+      - esRequestConcurrency -- The maximium number of concurrent record
+        translation/ES record update requests.   Default is 10.
   - **CUMULUS-2308**
     - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
     - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule

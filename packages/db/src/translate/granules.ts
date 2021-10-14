@@ -7,14 +7,16 @@ import { ValidationError } from '@cumulus/errors';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
-import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { ProviderPgModel } from '../models/provider';
 import { FilePgModel } from '../models/file';
-import { translatePostgresFileToApiFile } from './file';
+
 import { getExecutionInfoByGranuleCumulusId } from '../lib/execution';
 import { PostgresCollectionRecord } from '../types/collection';
+import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
-import { PostgresProviderRecord } from '..';
+import { PostgresProviderRecord } from '../types/provider';
+
+import { translatePostgresFileToApiFile } from './file';
 
 /**
  * Generate an API Granule object from a Postgres Granule with associated Files.
