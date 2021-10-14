@@ -18,6 +18,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -79,7 +80,7 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 
   return await awsServices.s3().putObject({
     Bucket: systemBucket,
-    Key: `${stackName}/buckets/buckets.json`,
+    Key: getBucketsConfigKey(stackName),
     Body: JSON.stringify(bucketsConfig),
   }).promise();
 }
