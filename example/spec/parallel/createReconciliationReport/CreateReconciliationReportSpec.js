@@ -413,6 +413,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       inventoryReportAsyncOperationId = responseBody.id;
+      console.log(`Inventory report async operation id: ${inventoryReportAsyncOperationId}`);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -697,6 +698,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       granuleInventoryAsyncOpId = responseBody.id;
+      console.log(`Granule inventory report async operation id: ${granuleInventoryAsyncOpId}`);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 

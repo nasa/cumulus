@@ -21,13 +21,13 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-    "@cumulus/api": "9.7.0",
+    "@cumulus/api": "9.8.0-alpha.0",
     "@cumulus/api-client": "9.7.0",
     "@cumulus/common": "9.7.0",
-    "@cumulus/db": "9.7.0",
+    "@cumulus/db": "9.8.0-alpha.0",
     "@cumulus/message": "9.7.0",
     "@cumulus/types": "9.7.0",
-    "knex": "0.21.13",
+    "knex": "0.95.11",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"
   }

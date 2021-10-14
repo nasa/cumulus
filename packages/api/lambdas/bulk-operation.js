@@ -10,6 +10,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
+const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranuleIdsForPayload } = require('../lib/granules');
 
 const log = new Logger({ sender: '@cumulus/bulk-operation' });
@@ -20,24 +21,32 @@ async function applyWorkflowToGranules({
   meta,
   queueUrl,
   granuleModel = new GranuleModel(),
+  knex,
 }) {
-  const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
-    try {
-      const granule = await granuleModel.get({ granuleId });
-      await granuleModel.applyWorkflow(
-        granule,
-        workflowName,
-        meta,
-        queueUrl,
-        process.env.asyncOperationId
-      );
-      return granuleId;
-    } catch (error) {
-      log.error(`Granule ${granuleId} encountered an error`, error);
-      return { granuleId, err: error };
+  return await pMap(
+    granuleIds,
+    async (granuleId) => {
+      try {
+        const granule = await granuleModel.get({ granuleId });
+        await updateGranuleStatusToQueued({ granule, knex });
+        await granuleModel.applyWorkflow(
+          granule,
+          workflowName,
+          meta,
+          queueUrl,
+          process.env.asyncOperationId
+        );
+        return granuleId;
+      } catch (error) {
+        log.error(`Granule ${granuleId} encountered an error`, error);
+        return { granuleId, err: error };
+      }
+    },
+    {
+      concurrency: 10,
+      stopOnError: false,
     }
-  });
-  return await Promise.all(applyWorkflowRequests);
+  );
 }
 
 /**
@@ -107,7 +116,7 @@ async function bulkGranuleDelete(
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClient();
 
   await pMap(
     granuleIds,
@@ -162,12 +171,14 @@ async function bulkGranuleDelete(
  * @returns {Promise}
  */
 async function bulkGranule(payload) {
+  const knex = await getKnexClient();
   const { queueUrl, workflowName, meta } = payload;
   const granuleIds = await getGranuleIdsForPayload(payload);
-  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl });
+  return await applyWorkflowToGranules({ granuleIds, workflowName, meta, queueUrl, knex });
 }
 
 async function bulkGranuleReingest(payload) {
+  const knex = await getKnexClient();
   const granuleIds = await getGranuleIdsForPayload(payload);
   const granuleModel = new GranuleModel();
   const workflowName = payload.workflowName;
@@ -176,6 +187,7 @@ async function bulkGranuleReingest(payload) {
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
+        await updateGranuleStatusToQueued({ granule, knex });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
         await granuleModel.reingest(
           {

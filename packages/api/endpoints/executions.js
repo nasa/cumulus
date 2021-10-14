@@ -11,6 +11,7 @@ const {
   getWorkflowNameIntersectFromGranuleIds,
   ExecutionPgModel,
   translatePostgresExecutionToApiExecution,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const Search = require('@cumulus/es-client/search').Search;
 const {
@@ -190,7 +191,7 @@ async function del(req, res) {
     throw error;
   }
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await executionPgModel.delete(trx, { arn });
     await executionModel.delete({ arn });
   });
