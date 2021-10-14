@@ -50,7 +50,7 @@ function dateStringToDateOrNull(dateable) {
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch collection search
+ * @returns {Object} object of desired parameters formatted for Elasticsearch collection search
  */
 function convertToESCollectionSearchParams(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;

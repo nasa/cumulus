@@ -187,7 +187,6 @@ async function getAllCollectionIdsByGranuleIds({
  *
  * @param {Object} recReportParams
  * @param {Array<string>} recReportParams.granuleIds - list of granuleIds
- * @param {string} recReportParams.stackName - stack name
  * @returns {Promise<Array<string>>} list of collectionIds
  */
 async function getCollectionsForGranules(recReportParams) {
