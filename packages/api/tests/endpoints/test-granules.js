@@ -102,6 +102,7 @@ process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
+process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -250,6 +251,7 @@ test.before(async (t) => {
     arn: 'arn3',
     status: 'completed',
     name: 'test_execution',
+    parentArn: undefined,
   });
 
   await executionModel.create(newExecution);
@@ -516,8 +518,9 @@ test.serial('reingest a granule', async (t) => {
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
 
+  const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -528,9 +531,35 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  const updatedGranule = await granuleModel.get({ granuleId });
+  const updatedPgGranule = await granulePgModel.get(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: t.context.collectionCumulusId }
+  );
+  t.is(updatedGranule.status, 'queued');
+  t.is(updatedPgGranule.status, 'queued');
   stub.restore();
+});
+
+test.serial('put request with reingest action calls the granuleModel.reingest function with expected parameters', async (t) => {
+  const granuleReingestStub = sinon.stub(models.Granule.prototype, 'reingest').returns(
+    new Promise((resolve) => resolve({ response: 'fakeResponse' }))
+  );
+
+  await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(200);
+
+  t.is(granuleReingestStub.calledOnce, true);
+
+  const reingestArgs = granuleReingestStub.args[0];
+  const { queueUrl } = reingestArgs[0];
+  t.is(queueUrl, process.env.backgroundQueueUrl);
+
+  granuleReingestStub.restore();
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -564,8 +593,9 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
 
+  const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -579,8 +609,13 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
+  const updatedGranule = await granuleModel.get({ granuleId });
+  const updatedPgGranule = await granulePgModel.get(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: t.context.collectionCumulusId }
+  );
+  t.is(updatedGranule.status, 'queued');
+  t.is(updatedPgGranule.status, 'queued');
   stub.restore();
 });
 
