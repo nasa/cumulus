@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     through results for an arbitrary PostgreSQL query
     - Added `insert` method to all `@cumulus/db` models to handle inserting multiple records into
     the database at once
+    - Added `@cumulus/db/translatePostgresGranuleResultToApiGranule` helper to
+    translate custom PostgreSQL granule result to API granule
   - **CUMULUS-2672**
     - Added migration to add `type` text column to Postgres database `files` table
   - **CUMULUS-2634**
