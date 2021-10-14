@@ -173,11 +173,12 @@ export const getApiGranuleExecutionCumulusIds = async (
  *
  * @param {Knex} knex - DB client
  * @param {Object} searchParams
- * @param {string} [searchParams.collectionId] - Collection ID
+ * @param {string | Array<string>} [searchParams.collectionIds] - Collection ID
  * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
- * @param {string} [searchParams.providerName] - Provider.name
+ * @param {string} [searchParams.providerName] - Provider name
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
- * @param {Array<string>} sortByFields - Fields to sort by
+ * @param {string} [searchParams.status] - Granule status to search by
+ * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
  * @returns {Knex.QueryBuilder}
  */
 export const getGranulesByApiPropertiesQuery = (
