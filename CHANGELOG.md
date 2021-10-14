@@ -4,7 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Unreleased
+
+### Notable changes
+
+- Published new tag [`35` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package.
+
+### Added
+
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
+
+### Changed
+
+- Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
+- Updated default version of async operations Docker image to `cumuluss/async-operation:35`
+- **CUMULUS-2590**
+  - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
+
+## [v9.7.0] 2021-10-01
 
 ### Notable Changes
 
@@ -12,6 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `queue-granules` task now updates granule status to `queued` when a granule is queued. In order to prevent issues with the private API endpoint and Lambda API request and concurrency limits, this functionality runs with limited concurrency, which may increase the task's overall runtime when large numbers of granules are being queued. If you are facing Lambda timeout errors with this task, we recommend converting your `queue-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
 - **CUMULUS-2676**
   - The `discover-granules` task has been updated to limit concurrency on checks to identify and skip already ingested granules in order to prevent issues with the private API endpoint and Lambda API request and concurrency limits. This may increase the task's overall runtime when large numbers of granules are discovered. If you are facing Lambda timeout errors with this task, we recommend converting your `discover-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- Updated memory of `<prefix>-sfEventSqsToDbRecords` Lambda to 1024MB
 
 ### Added
 
@@ -196,6 +218,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2583**
   - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
 
+- **CUMULUS-2617**
+  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
+
 ### Fixed
 
 - Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
@@ -259,6 +284,7 @@ when output of the operation is `undefined`
   - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
   updated unit test references to migrationDir to be pulled from `@cumulus/db`
   - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
+
 - **CUMULUS-2575**
   - Updates model/granule to allow a granule created from API to not require an
     execution to be associated with it. This is a backwards compatible change
@@ -5063,7 +5089,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.6.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.7.0...HEAD
+[v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0

@@ -178,7 +178,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   handler          = "index.handler"
   runtime          = "nodejs12.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 512
+  memory_size      = 1024
 
   dead_letter_config {
     target_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn

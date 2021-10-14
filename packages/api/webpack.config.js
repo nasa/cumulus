@@ -71,7 +71,9 @@ module.exports = {
         }
       ]
     }),
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   output: {
     libraryTarget: 'commonjs2',

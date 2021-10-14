@@ -2,7 +2,9 @@
 
 const pRetry = require('p-retry');
 const {
-  PdrPgModel, translatePostgresPdrToApiPdr,
+  createRejectableTransaction,
+  PdrPgModel,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
   upsertPdr,
@@ -144,7 +146,7 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return await knex.transaction(async (trx) => {
+  return await createRejectableTransaction(knex, async (trx) => {
     const pgPdr = await writePdrViaTransaction({
       cumulusMessage,
       collectionCumulusId,

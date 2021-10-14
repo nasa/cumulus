@@ -226,6 +226,7 @@ describe('POST /granules/bulkDelete', () => {
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
       expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
+      console.log(`Bulk delete async operation id: ${postBulkDeleteBody.id}`);
     });
 
     it('creates an AsyncOperation', async () => {

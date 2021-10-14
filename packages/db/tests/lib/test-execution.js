@@ -23,6 +23,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   getExecutionArnsByGranuleCumulusId,
   migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
 
 /**

@@ -736,3 +736,68 @@ test('_getMutableFieldNames() returns correct fields for completed status', (t) 
 
   t.deepEqual(updateFields, Object.keys(item));
 });
+
+test('applyWorkflow throws error if workflow argument is missing', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = {
+    granuleId: randomString(),
+  };
+
+  await t.throwsAsync(
+    granuleModel.applyWorkflow(granule),
+    {
+      instanceOf: TypeError,
+    }
+  );
+});
+
+test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const lambdaPayload = {
+    payload: {
+      granules: [granule],
+    },
+  };
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow);
+
+  t.true(lambdaInvokeStub.called);
+  t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
+});
+
+test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+  const workflow = randomString();
+  const queueUrl = randomString();
+
+  await granuleModel.create(granule);
+
+  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
+  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
+  t.teardown(() => {
+    buildPayloadStub.restore();
+    lambdaInvokeStub.restore();
+  });
+
+  await granuleModel.applyWorkflow(granule, workflow, undefined, queueUrl);
+
+  t.true(buildPayloadStub.called);
+  t.like(buildPayloadStub.args[0][0], {
+    queueUrl,
+  });
+});

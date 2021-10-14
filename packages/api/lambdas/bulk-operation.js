@@ -14,6 +14,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
+const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 const { getGranuleIdsForPayload } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 
@@ -29,31 +30,33 @@ async function applyWorkflowToGranules({
   applyWorkflowHandler = applyWorkflow,
   knex,
 }) {
-  const applyWorkflowRequests = granuleIds.map(async (granuleId) => {
-    try {
-      const pgGranule = await getUniqueGranuleByGranuleId(
-        knex,
-        granuleId,
-        granulePgModel
-      );
-      const granule = await granuleTranslateMethod({
-        granulePgRecord: pgGranule,
-        knexOrTransaction: knex,
-      });
-      await applyWorkflowHandler({
-        granule,
-        workflow: workflowName,
-        meta,
-        queueUrl,
-        asyncOperationId: process.env.asyncOperationId,
-      });
-      return granuleId;
-    } catch (error) {
-      log.error(`Granule ${granuleId} encountered an error`, error);
-      return { granuleId, err: error };
+  return await pMap(
+    granuleIds,
+    (async (granuleId) => {
+      try {
+        const pgGranule = await getUniqueGranuleByGranuleId(
+          knex,
+          granuleId,
+          granulePgModel
+        );
+        const granule = await granuleTranslateMethod({
+          granulePgRecord: pgGranule,
+          knexOrTransaction: knex,
+        });
+        await updateGranuleStatusToQueued({ granule, knex });
+        await applyWorkflowHandler({
+          granule,
+          workflow: workflowName,
+          meta,
+          queueUrl,
+          asyncOperationId: process.env.asyncOperationId,
+        });
+        return granuleId;
+      } catch (error) {
+        log.error(`Granule ${granuleId} encountered an error`, error);
+        return { granuleId, err: error };
     }
-  });
-  return await Promise.all(applyWorkflowRequests);
+    }));
 }
 
 /**
@@ -166,6 +169,7 @@ async function bulkGranuleReingest(
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
+        await updateGranuleStatusToQueued({ granule, knex });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
         const reingestParams = {
           ...granule,

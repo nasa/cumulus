@@ -8,6 +8,7 @@ const {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   RecordDoesNotExist,
@@ -96,7 +97,7 @@ async function del(req, res) {
   }
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await asyncOperationPgModel.delete(trx, { id });
       await asyncOperationModel.delete({ id });
       await deleteAsyncOperation({

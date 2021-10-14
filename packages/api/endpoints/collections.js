@@ -15,6 +15,8 @@ const {
   getKnexClient,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
+  TableNames,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -252,7 +254,7 @@ async function del(req, res) {
 
   try {
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await collectionPgModel.delete(trx, { name, version });
         await collectionsModel.delete({ name, version });
         const collectionId = constructCollectionId(name, version);

@@ -5,9 +5,11 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
+  TableNames,
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
   validateProviderHost,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   ApiCollisionError,
@@ -112,7 +114,7 @@ async function post(req, res) {
     validateProviderHost(apiProvider.host);
 
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await providerPgModel.create(trx, postgresProvider);
         record = await providerModel.create(apiProvider);
         await indexProvider(esClient, record, process.env.ES_INDEX);
@@ -180,7 +182,7 @@ async function put(req, res) {
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await providerPgModel.upsert(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
       await indexProvider(esClient, record, process.env.ES_INDEX);
@@ -222,7 +224,7 @@ async function del(req, res) {
 
   try {
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await providerPgModel.delete(trx, { name: id });
         await providerModel.delete({ id });
         await deleteProvider({

@@ -29,7 +29,7 @@ const {
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { updateGranuleStatusToQueued, writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
@@ -201,6 +201,9 @@ async function put(req, res) {
     if (targetExecution) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
+
+    await updateGranuleStatusToQueued({ granule, knex });
+
     const reingestParams = {
       ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
@@ -224,6 +227,7 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
+    await updateGranuleStatusToQueued({ granule, knex });
     await applyWorkflow({
       granule: apiGranule,
       workflow: body.workflow,

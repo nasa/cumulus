@@ -1,11 +1,11 @@
-export type pdrStatus = 'running' | 'failed' | 'completed';
+export type PdrStatus = 'running' | 'failed' | 'completed';
 
 export interface ApiPdr {
   pdrName: string,
   provider: string,
   collectionId: string,
-  status: pdrStatus,
-  createdAt: number,
+  status: PdrStatus,
+  createdAt?: number,
   progress?: number,
   execution?: string,
   PANSent?: boolean,

@@ -5,6 +5,8 @@ import {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   AsyncOperationPgModel,
+  createRejectableTransaction,
+  Knex,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
@@ -176,20 +178,22 @@ export const createAsyncOperation = async (
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: {
-  asyncOperationTaskDefinition: string,
-  cluster: string,
-  description: string,
-  dynamoTableName: string,
-  knexConfig?: NodeJS.ProcessEnv,
-  lambdaName: string,
-  operationType: AsyncOperationType,
-  payload: unknown,
-  stackName: string,
-  systemBucket: string,
-  useLambdaEnvironmentVariables?: boolean,
-  startEcsTaskFunc?: () => StartEcsTaskReturnType
-}, AsyncOperation: AsyncOperationModelClass
+export const startAsyncOperation = async (
+  params: {
+    asyncOperationTaskDefinition: string,
+    cluster: string,
+    description: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    lambdaName: string,
+    operationType: AsyncOperationType,
+    payload: unknown,
+    stackName: string,
+    systemBucket: string,
+    useLambdaEnvironmentVariables?: boolean,
+    startEcsTaskFunc?: () => StartEcsTaskReturnType
+  },
+  AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,

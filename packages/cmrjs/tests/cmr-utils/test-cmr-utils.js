@@ -716,6 +716,7 @@ test('getCmrSettings uses values in environment variables by default', async (t)
     clientId: 'Cumulus-Client-Id',
     password: cmrPassword,
     username: 'cmr-user',
+    oauthProvider: 'earthdata',
   });
 });
 
@@ -726,6 +727,7 @@ test('getCmrSettings uses values in environment variables by default for launchp
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
     token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`,
+    oauthProvider: 'launchpad',
   });
 });
 
@@ -751,6 +753,7 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
       clientId: 'test-client-id',
       password: testPassword,
       username: 'cumulus',
+      oauthProvider: 'earthdata',
     });
   } finally {
     await secretsManager().deleteSecret({
@@ -781,6 +784,7 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
       provider: 'CUMULUS-TEST',
       clientId: 'Cumulus-Client-Id',
       token: `${testPassphrase}-test-api-test-certificate`,
+      oauthProvider: 'launchpad',
     });
   } finally {
     await secretsManager().deleteSecret({

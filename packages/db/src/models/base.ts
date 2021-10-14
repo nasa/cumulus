@@ -1,19 +1,19 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
 import { updatedAtRange } from '../types/record';
 import { BaseRecord } from '../types/base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 import { isRecordDefined } from '../database';
 
 class BasePgModel<ItemType, RecordType extends BaseRecord> {
-  readonly tableName: tableNames;
+  readonly tableName: TableNames;
 
   constructor({
     tableName,
   }: {
-    tableName: tableNames,
+    tableName: TableNames,
   }) {
     this.tableName = tableName;
   }

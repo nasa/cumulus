@@ -5,6 +5,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
 const {
+  createRejectableTransaction,
   getKnexClient,
   RulePgModel,
   translateApiRuleToPostgresRule,
@@ -206,7 +207,7 @@ async function del(req, res) {
   }
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await rulePgModel.delete(trx, { name });
       await ruleModel.delete(apiRule);
       await deleteRule({

@@ -156,6 +156,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const onlyInDynamoDb = [];
   const okCountByGranule = {};
 
+  log.info('Comparing DynamoDB to S3');
+
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
@@ -204,6 +206,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     });
   }
 
+  log.info('Compare DynamoDB to S3 completed');
+
   return {
     okCount,
     onlyInS3,
@@ -237,6 +241,8 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
   const esCollectionIds = await fetchESCollections(recReportParams);
+
+  log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];

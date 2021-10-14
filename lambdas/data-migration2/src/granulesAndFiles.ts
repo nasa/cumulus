@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { Writable } from 'stream';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
@@ -14,6 +14,7 @@ import {
   FilePgModel,
   PostgresFile,
   translateApiGranuleToPostgresGranule,
+  createRejectableTransaction,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
@@ -200,7 +201,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   }
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
       const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);
       return await Promise.all(files.map(
         (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)

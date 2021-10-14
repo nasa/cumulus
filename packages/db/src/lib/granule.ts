@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -79,7 +79,7 @@ export const getApiGranuleCumulusIds = async (
   collectionPgModel = new CollectionPgModel(),
   granulePgModel = new GranulePgModel()
 ) => {
-  const collectionMap: {[key: string]: number} = {};
+  const collectionMap: { [key: string]: number } = {};
 
   const granuleCumulusIds: Array<number> = await Promise.all(granules.map(async (granule) => {
     const { collectionId } = granule;

@@ -1,7 +1,7 @@
 import Logger from '@cumulus/logger';
 import { s3PutObject } from '@cumulus/aws-client/S3';
 import { getTeaBucketPath } from './tea';
-import { bucketMapObject } from './types';
+import { BucketMapObject } from './types';
 
 const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 
@@ -20,7 +20,7 @@ export const handler = async (event: {
   bucketList: string[],
   s3Bucket: string,
   s3Key: string
-}): Promise<bucketMapObject> => {
+}): Promise<BucketMapObject> => {
   const { bucketList, s3Bucket, s3Key } = event;
   if (!bucketList || !s3Bucket || !s3Key) {
     throw new Error('A bucketlist and s3 bucket/key must be provided in the event');
