@@ -1,9 +1,10 @@
 #!/bin/bash
 set -ex
-set -o pipefail
 
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
+
+set -o pipefail
 
 NONCACHE_WORKING_DIR=$(pwd)
 CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
