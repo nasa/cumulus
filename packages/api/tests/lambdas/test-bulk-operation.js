@@ -20,7 +20,6 @@ const {
   destroyLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
-  destroyLocalTestDb,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -33,7 +32,6 @@ const {
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const Granule = require('../../models/granules');
-const Collection = require('../../models/collections');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -266,23 +264,26 @@ test.after.always(async (t) => {
   sandbox.restore();
 });
 
-test('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
-  const granuleIds = ['granule-1'];
+test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
+  await setUpExistingDatabaseRecords(t);
   const workflowName = 'test-workflow';
   const queueUrl = `${cryptoRandomString({ length: 5 })}_queue`;
 
   const applyWorkflowSpy = sinon.spy();
+  const updateGranulesToQueuedMethod = () => Promise.resolve();
   const fakeGranulePgModel = {
     search: () => [{}],
   };
 
   await bulkOperation.applyWorkflowToGranules({
+    applyWorkflowHandler: applyWorkflowSpy,
     granuleIds: t.context.granuleIds,
-    workflowName,
-    queueUrl,
     granulePgModel: fakeGranulePgModel,
     granuleTranslateMethod: (_granule) => ({}),
-    applyWorkflowHandler: applyWorkflowSpy,
+    knex: t.context.knex,
+    queueUrl,
+    updateGranulesToQueuedMethod,
+    workflowName,
   });
   t.is(applyWorkflowSpy.getCall(0).args[0].queueUrl, queueUrl);
 });
@@ -354,6 +355,13 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
   granules[0].cumulus_id = cumulusGranuleIds[0];
   granules[1].cumulus_id = cumulusGranuleIds[1];
 
+  const dynamoGranuleModel = new Granule();
+  t.context.granules = await Promise.all(granules.map((g) => g.granule_id).map((granuleId) =>
+    dynamoGranuleModel.create(fakeGranuleFactoryV2({
+      granuleId,
+      collectionId: collection.name,
+    }))));
+
   const workflowName = randomId('workflow');
   await bulkOperation.handler({
     type: 'BULK_GRANULE',
@@ -419,7 +427,14 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granule IDs returne
 
   granules[0].cumulus_id = cumulusGranuleIds[0];
   granules[1].cumulus_id = cumulusGranuleIds[1];
-
+  t.context.granuleIds = granules.map((g) => g.granule_id);
+  t.context.collectionCumulusId = collectionCumulusId;
+  const dynamoGranuleModel = new Granule();
+  t.context.granules = await Promise.all(t.context.granuleIds.map((granuleId) =>
+    dynamoGranuleModel.create(fakeGranuleFactoryV2({
+      granuleId,
+      collectionId: collection.name,
+    }))));
   esSearchStub.resolves({
     body: {
       hits: {
@@ -478,6 +493,7 @@ test.serial('applyWorkflowToGranules sets the granules status to queued', async 
     workflowName,
     granuleModel: new Granule(),
     knex: t.context.knex,
+    applyWorkflowHandler: applyWorkflowStub,
   });
 
   t.is(applyWorkflowStub.callCount, 2);
@@ -785,6 +801,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
     payload: {
       ids: t.context.granuleIds,
     },
+    reingestHandler: reingestStub,
   });
 
   t.is(reingestStub.callCount, 2);

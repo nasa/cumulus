@@ -28,6 +28,7 @@ async function applyWorkflowToGranules({
   granulePgModel = new GranulePgModel(),
   granuleTranslateMethod = translatePostgresGranuleToApiGranule,
   applyWorkflowHandler = applyWorkflow,
+  updateGranulesToQueuedMethod = updateGranuleStatusToQueued,
   knex,
 }) {
   return await pMap(
@@ -43,7 +44,7 @@ async function applyWorkflowToGranules({
           granulePgRecord: pgGranule,
           knexOrTransaction: knex,
         });
-        await updateGranuleStatusToQueued({ granule, knex });
+        await updateGranulesToQueuedMethod({ granule, knex });
         await applyWorkflowHandler({
           granule,
           workflow: workflowName,
@@ -55,8 +56,9 @@ async function applyWorkflowToGranules({
       } catch (error) {
         log.error(`Granule ${granuleId} encountered an error`, error);
         return { granuleId, err: error };
-    }
-    }));
+      }
+    })
+  );
 }
 
 /**
@@ -161,7 +163,7 @@ async function bulkGranuleReingest(
 ) {
   const granuleIds = await getGranuleIdsForPayload(payload);
   log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granuleIds)}`);
-
+  const knex = await getKnexClient();
   const granuleModel = new GranuleModel();
   const workflowName = payload.workflowName;
   return await pMap(
@@ -169,13 +171,12 @@ async function bulkGranuleReingest(
     async (granuleId) => {
       try {
         const granule = await granuleModel.getRecord({ granuleId });
-        await updateGranuleStatusToQueued({ granule, knex });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
         const reingestParams = {
           ...granule,
           ...(targetExecution && { execution: targetExecution }),
         };
-
+        await updateGranuleStatusToQueued({ granule: reingestParams, knex });
         await reingestHandler({
           reingestParams,
           asyncOperationId: process.env.asyncOperationId,

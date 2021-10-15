@@ -12,6 +12,7 @@ const {
 
 const { deconstructCollectionId } = require('./utils');
 const { Granule, Rule } = require('../models');
+const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
 
 /**
    * Set the Dynamo and PG Granule "status" field to "running"
@@ -61,6 +62,8 @@ async function reingestGranule({
   granulePgModel = new GranulePgModel(),
 }) {
   const knex = await getKnexClient();
+  await updateGranuleStatusToQueued({ reingestParams, knex });
+
   const executionArn = path.basename(reingestParams.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
