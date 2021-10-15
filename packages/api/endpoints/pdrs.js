@@ -6,6 +6,7 @@ const {
   getKnexClient,
   PdrPgModel,
   translatePostgresPdrToApiPdr,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
@@ -99,7 +100,7 @@ async function del(req, res) {
     let dynamoPdrDeleted = false;
     let esPdrDeleted = false;
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await pdrPgModel.delete(trx, { name: pdrName });
         await pdrModel.delete({ pdrName });
         dynamoPdrDeleted = true;

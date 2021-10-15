@@ -1,4 +1,4 @@
-export interface updatedAtRange {
+export interface UpdatedAtRange {
   updatedAtFrom?: Date,
   updatedAtTo?: Date
 }

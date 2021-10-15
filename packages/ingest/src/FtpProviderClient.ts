@@ -215,7 +215,7 @@ class FtpProviderClient implements ProviderClient {
     fileRemotePath: string,
     destinationBucket: string,
     destinationKey: string
-  }): Promise<{s3uri: string, etag: string}> {
+  }): Promise<{ s3uri: string, etag: string }> {
     const { fileRemotePath, destinationBucket, destinationKey } = params;
     const remoteUrl = `ftp://${this.host}/${fileRemotePath}`;
     const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);

@@ -106,6 +106,7 @@ process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('systembucket');
 process.env.TOKEN_SECRET = randomId('secret');
+process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -266,6 +267,7 @@ test.before(async (t) => {
     arn: 'arn3',
     status: 'completed',
     name: 'test_execution',
+    parentArn: undefined,
   });
 
   await executionModel.create(newExecution);
@@ -588,7 +590,6 @@ test.serial('reingest a granule', async (t) => {
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
   t.teardown(() => stub.restore());
-
   const response = await request(app)
     .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')

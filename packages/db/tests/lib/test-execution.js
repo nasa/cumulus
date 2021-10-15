@@ -23,6 +23,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   getExecutionArnsByGranuleCumulusId,
   migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
 
 /**
@@ -561,7 +562,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
   let pgExecution1;
   let pgExecution2;
   let pgExecution3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [pgExecution1] = await executionPgModel.create(trx, executionRecords[0]);
     [pgExecution2] = await executionPgModel.create(trx, executionRecords[1]);
     [pgExecution3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -633,7 +634,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   let pgExecution1;
   let pgExecution2;
   let pgExecution3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [pgExecution1] = await executionPgModel.create(trx, executionRecords[0]);
     [pgExecution2] = await executionPgModel.create(trx, executionRecords[1]);
     [pgExecution3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -696,7 +697,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
   let pgExecution1;
   let pgExecution2;
   let pgExecution3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [pgExecution1] = await executionPgModel.create(trx, executionRecords[0]);
     [pgExecution2] = await executionPgModel.create(trx, executionRecords[1]);
     [pgExecution3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -745,7 +746,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for si
   let pgExecution1;
   let pgExecution2;
   let pgExecution3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [pgExecution1] = await executionPgModel.create(trx, executionRecords[0]);
     [pgExecution2] = await executionPgModel.create(trx, executionRecords[1]);
     [pgExecution3] = await executionPgModel.create(trx, executionRecords[2]);

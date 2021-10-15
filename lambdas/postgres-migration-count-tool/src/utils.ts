@@ -104,7 +104,7 @@ export const countPostgresRecords = async <T, R extends BaseRecord>(params: {
   model: BasePgModel<T, R>,
   knexClient: Knex,
   cutoffIsoString?: string,
-  queryParams?: ([string, string, string]|[Partial<R>])[],
+  queryParams?: ([string, string, string] | [Partial<R>])[],
 }): Promise<number> => {
   const {
     model,

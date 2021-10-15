@@ -33,7 +33,7 @@ export type StatsObject = {
   counts: [number, number, number, number, number, number];
 };
 
-export type reportObject = {
+export type ReportObject = {
   collectionsNotMapped: any[],
   records_in_dynamo_not_in_postgres: AggregateReportObject,
   pdr_granule_and_execution_records_not_in_postgres_by_collection: CollectionReportObject,

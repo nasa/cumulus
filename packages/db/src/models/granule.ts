@@ -1,7 +1,7 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
 import { BasePgModel } from './base';
@@ -19,7 +19,7 @@ function isRecordSelect(param: RecordSelect | PostgresGranuleUniqueColumns): par
 export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
     super({
-      tableName: tableNames.granules,
+      tableName: TableNames.granules,
     });
   }
 
