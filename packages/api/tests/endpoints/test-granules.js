@@ -646,7 +646,6 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   });
   t.teardown(() => stub.restore());
 
-  //const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
     .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
