@@ -84,13 +84,13 @@ test.after.always(async (t) => {
   });
 });
 
-test('put request with reingest action calls the reingestGranule function with expected parameters', async (t) => {
+test('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
   } = t.context;
 
   const granuleReingestStub = sinon.stub().resolves({ response: 'fakeResponse' });
-
+  const updateGranuleStatusToQueuedMethod = sinon.stub().resolves({});
   const body = {
     action: 'reingest',
   };
@@ -102,14 +102,16 @@ test('put request with reingest action calls the reingestGranule function with e
     },
     testContext: {
       reingestHandler: granuleReingestStub,
+      updateGranuleStatusToQueuedMethod,
     },
   },
   buildFakeExpressResponse());
 
   t.is(granuleReingestStub.calledOnce, true);
 
-  const reingestArgs = granuleReingestStub.args[0];
-  const { queueUrl } = reingestArgs[0].reingestParams;
-
+  const { queueUrl } = granuleReingestStub.lastCall.args[0].reingestParams;
+  const { granule } = updateGranuleStatusToQueuedMethod.lastCall.args[0];
+  t.is(queueUrl, process.env.backgroundQueueUrl);
+  t.is(granule.granuleId, granuleId);
   t.is(queueUrl, process.env.backgroundQueueUrl);
 });

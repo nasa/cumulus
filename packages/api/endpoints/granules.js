@@ -36,7 +36,7 @@ const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const Execution = require('../models/executions');
 const { moveGranule } = require('../lib/granules');
-const libIngest = require('../lib/ingest');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
@@ -156,7 +156,8 @@ async function put(req, res) {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
-    reingestHandler = libIngest.reingestGranule,
+    reingestHandler = reingestGranule,
+    updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
@@ -203,7 +204,7 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
+    await updateGranuleStatusToQueuedMethod({ granule: apiGranule, knex });
 
     const reingestParams = {
       ...apiGranule,
@@ -229,7 +230,7 @@ async function put(req, res) {
 
   if (action === 'applyWorkflow') {
     await updateGranuleStatusToQueued({ granule: apiGranule, knex });
-    await libIngest.applyWorkflow({
+    await applyWorkflow({
       granule: apiGranule,
       workflow: body.workflow,
       meta: body.meta,

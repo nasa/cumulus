@@ -65,7 +65,6 @@ const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
-const libIngest = require('../../lib/ingest');
 
 // Dynamo mock data factories
 const {
@@ -613,26 +612,6 @@ test.serial('reingest a granule', async (t) => {
 
   t.is(updatedPgGranule.status, 'running');
   t.is(updatedDynamoGranule.status, 'running');
-});
-
-test.serial('put request with reingest action calls the granuleModel.reingest function with expected parameters', async (t) => {
-  const granuleReingestStub = sinon.stub(libIngest, 'reingestGranule').returns(
-    new Promise((resolve) => resolve({ response: 'fakeResponse' }))
-  );
-
-  await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ action: 'reingest' })
-    .expect(200);
-
-  t.is(granuleReingestStub.calledOnce, true);
-
-  const { queueUrl } = granuleReingestStub.lastCall.args[0].reingestParams;
-  t.is(queueUrl, process.env.backgroundQueueUrl);
-
-  granuleReingestStub.restore();
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
