@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable changes
 
-- Published new tag [`35` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
-upgrades to `knex` package.
+- Published new tag [`36` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package and to address security vulnerabilities.
 
 ### Added
 
@@ -22,8 +22,9 @@ upgrades to `knex` package.
   `update_granules_cmr_metadata_file_links_task_timeout` property
 
 ### Changed
+
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
-- Updated default version of async operations Docker image to `cumuluss/async-operation:35`
+- Updated default version of async operations Docker image to `cumuluss/async-operation:36`
 - **CUMULUS-2590**
   - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
 
@@ -31,7 +32,6 @@ upgrades to `knex` package.
   - relocates system file `buckets.json` out of the
     `s3://internal-bucket/workflows` directory into
     `s3://internal-bucket/buckets`.
-
 
 ## [v9.7.0] 2021-10-01
 
