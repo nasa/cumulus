@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+set -o pipefail
 
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
