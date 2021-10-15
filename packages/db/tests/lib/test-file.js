@@ -45,18 +45,20 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   const testGranule1 = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
-  const [granuleCumulusId1] = await t.context.granulePgModel.create(
+  const [pgGranule1] = await t.context.granulePgModel.create(
     t.context.knex,
     testGranule1
   );
+  const granuleCumulusId1 = pgGranule1.cumulus_id;
 
   const testGranule2 = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
-  const [granuleCumulusId2] = await t.context.granulePgModel.create(
+  const [pgGranule2] = await t.context.granulePgModel.create(
     t.context.knex,
     testGranule2
   );
+  const granuleCumulusId2 = pgGranule2.cumulus_id;
 
   const bucket = cryptoRandomString({ length: 10 });
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
@@ -99,10 +101,11 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
   const testGranule1 = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   });
-  const [granuleCumulusId1] = await t.context.granulePgModel.create(
+  const [pgGranule1] = await t.context.granulePgModel.create(
     t.context.knex,
     testGranule1
   );
+  const granuleCumulusId1 = pgGranule1.cumulus_id;
 
   const bucket = cryptoRandomString({ length: 10 });
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;

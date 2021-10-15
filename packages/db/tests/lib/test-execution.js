@@ -270,12 +270,13 @@ test('getExecutionInfoByGranuleCumulusId() gets specified execution info', async
   const executionBCumulusId = executionB.cumulus_id;
 
   // Create Granule
-  const [granuleCumulusId] = await granulePgModel.create(
+  const [pgGranule] = await granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
     })
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
   // Create GranulesExecuions JOIN records
   await granulesExecutionsPgModel.create(
     knex,

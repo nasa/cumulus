@@ -40,10 +40,11 @@ test.before(async (t) => {
   t.context.testGranule = fakeGranuleRecordFactory({
     collection_cumulus_id: t.context.collectionCumulusId,
   });
-  [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
+  const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     t.context.testGranule
   );
+  t.context.granuleCumulusId = pgGranule.cumulus_id;
 });
 
 test.beforeEach((t) => {
