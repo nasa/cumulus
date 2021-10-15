@@ -21,6 +21,7 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn  = var.rds_user_access_secret_arn
       EcsCluster                   = var.ecs_cluster_name
+      ES_HOST                      = var.elasticsearch_hostname
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
       MigrationLambda              = var.data_migration2_function_arn
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis

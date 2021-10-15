@@ -19,6 +19,10 @@ variable "ecs_cluster_name" {
   type = string
 }
 
+variable "elasticsearch_hostname" {
+  type = string
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
