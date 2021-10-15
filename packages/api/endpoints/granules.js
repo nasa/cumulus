@@ -36,7 +36,7 @@ const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const Execution = require('../models/executions');
 const { moveGranule } = require('../lib/granules');
-const { reingestGranule, applyWorkflow } = require('../lib/ingest');
+const libIngest = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
@@ -143,7 +143,7 @@ const putGranule = async (req, res) => {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
+ * Supported Actions: reingest, move, libIngest.applyWorkflow, RemoveFromCMR.
  * If no action is included on the request, the body is assumed to be an
  * existing granule to update, and update is called with the input parameters.
  *
@@ -156,7 +156,7 @@ async function put(req, res) {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
-    reingestHandler = reingestGranule,
+    reingestHandler = libIngest.reingestGranule,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
@@ -227,9 +227,9 @@ async function put(req, res) {
     return res.send(response);
   }
 
-  if (action === 'applyWorkflow') {
+  if (action === 'libIngest.applyWorkflow') {
     await updateGranuleStatusToQueued({ granule: apiGranule, knex });
-    await applyWorkflow({
+    await libIngest.applyWorkflow({
       granule: apiGranule,
       workflow: body.workflow,
       meta: body.meta,
@@ -237,7 +237,7 @@ async function put(req, res) {
 
     return res.send({
       granuleId: apiGranule.granuleId,
-      action: `applyWorkflow ${body.workflow}`,
+      action: `libIngest.applyWorkflow ${body.workflow}`,
       status: 'SUCCESS',
     });
   }
@@ -283,7 +283,7 @@ async function put(req, res) {
       status: 'SUCCESS',
     });
   }
-  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
+  return res.boom.badRequest('Action is not supported. Choices are "libIngest.applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
 }
 
 /**

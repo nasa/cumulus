@@ -615,7 +615,7 @@ test.serial('reingest a granule', async (t) => {
   t.is(updatedDynamoGranule.status, 'running');
 });
 
-/* test.only('put request with reingest action calls the granuleModel.reingest function with expected parameters', async (t) => {
+test.serial('put request with reingest action calls the granuleModel.reingest function with expected parameters', async (t) => {
   const granuleReingestStub = sinon.stub(libIngest, 'reingestGranule').returns(
     new Promise((resolve) => resolve({ response: 'fakeResponse' }))
   );
@@ -629,12 +629,11 @@ test.serial('reingest a granule', async (t) => {
 
   t.is(granuleReingestStub.calledOnce, true);
 
-  const reingestArgs = granuleReingestStub.args[0];
-  const { queueUrl } = reingestArgs[0];
+  const { queueUrl } = granuleReingestStub.lastCall.args[0].reingestParams;
   t.is(queueUrl, process.env.backgroundQueueUrl);
 
   granuleReingestStub.restore();
-}); */
+});
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('apply an in-place workflow to an existing granule', async (t) => {
