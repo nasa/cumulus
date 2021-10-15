@@ -23,6 +23,11 @@ variable "elasticsearch_hostname" {
   type = string
 }
 
+variable "elasticsearch_security_group_id" {
+  description = "Security Group ID For Elasticsearch (OpenSearch)"
+  type = string
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []

@@ -36,7 +36,8 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
       subnet_ids = var.lambda_subnet_ids
       security_group_ids = compact([
         aws_security_group.postgres_migration_async_operation[0].id,
-        var.rds_security_group_id
+        var.rds_security_group_id,
+        var.elasticsearch_security_group_id
       ])
     }
   }

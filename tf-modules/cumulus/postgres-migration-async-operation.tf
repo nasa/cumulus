@@ -8,6 +8,7 @@ module "postgres_migration_async_operation" {
   dynamo_tables                       = var.dynamo_tables
   ecs_cluster_name                    = aws_ecs_cluster.default.name
   elasticsearch_hostname              = var.elasticsearch_hostname
+  elasticsearch_security_group_id     = var.elasticsearch_security_group_id
   lambda_subnet_ids                   = var.lambda_subnet_ids
   prefix                              = var.prefix
   permissions_boundary_arn            = var.permissions_boundary_arn
