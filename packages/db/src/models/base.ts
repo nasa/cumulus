@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
-import { updatedAtRange } from '../types/record';
+import { UpdatedAtRange } from '../types/record';
 import { BaseRecord } from '../types/base';
 import { TableNames } from '../tables';
 import { isRecordDefined } from '../database';
@@ -23,13 +23,13 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
-   * @param {updatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
+   * @param {UpdatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
    * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
    */
   async searchWithUpdatedAtRange(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>,
-    updatedAtParams: updatedAtRange
+    updatedAtParams: UpdatedAtRange
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .where((builder) => {
