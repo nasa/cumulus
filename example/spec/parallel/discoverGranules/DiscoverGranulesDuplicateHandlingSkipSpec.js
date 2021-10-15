@@ -77,15 +77,8 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         granuleId: queuedGranuleId,
-        published: false,
-        dataType: undefined,
-        version: undefined,
         execution: undefined,
-        files: [{
-          bucket: sourceBucket,
-          fileName: `${sourceBucket}/${queuedGranuleKey}`,
-          key: queuedGranuleKey,
-        }],
+        files: [{ bucket: sourceBucket, key: queuedGranuleKey }],
       }));
       await createGranule({
         prefix,
