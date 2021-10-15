@@ -164,22 +164,23 @@ async function getAllCollectionIdsByGranuleIds({
   knex,
   concurrency,
 }) {
-  const collectionIds = await pMap(
-    // TODO: Is this necessary? I don't want to overwhelm the database
-    // with a really slow query
+  const collectionIds = new Set();
+  await pMap(
     chunk(granuleIds, 100),
     async (granuleIdsBatch) => {
       const collections = await getCollectionsByGranuleIds(knex, granuleIdsBatch);
-      return collections.map(
-        (collection) => constructCollectionId(collection.name, collection.version)
+      collections.forEach(
+        (collection) => {
+          const collectionId = constructCollectionId(collection.name, collection.version);
+          collectionIds.add(collectionId);
+        }
       );
     },
     {
       concurrency,
     }
   );
-  // Should I build the set of collection IDs as results are returned?
-  return [...new Set(collectionIds)];
+  return [...collectionIds];
 }
 
 /**
@@ -285,13 +286,19 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
     } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
-      const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextDbItem);
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(
+        recReportParams.knex,
+        nextDbItem
+      );
 
       // Found an item that is only in DB and not in ES
       onlyInDb.push(pick(apiGranule, granuleFields));
       await pgGranulesSearchClient.shift();
     } else {
-      const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextDbItem);
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(
+        recReportParams.knex,
+        nextDbItem
+      );
 
       // Found an item that is in both ES and DB
       if (isEqual(omit(nextEsItem, esFieldsIgnored), omit(apiGranule, fieldsIgnored))) {
