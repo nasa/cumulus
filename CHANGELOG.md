@@ -20,6 +20,9 @@ upgrades to `knex` package.
 - **CUMULUS-2670**
   - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
   `update_granules_cmr_metadata_file_links_task_timeout` property
+- **CUMULUS-2598**
+  - Add unit test to describe queued granules as ignored when duplicate
+    handling is 'skip'
 
 ### Changed
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
