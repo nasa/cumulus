@@ -131,13 +131,14 @@ test.after.always(async (t) => {
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
-  const granuleModel = new Granule();
-  const granulePgModel = new GranulePgModel();
-  const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-  const queueUrl = 'testqueueUrl';
+  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
   const fileExists = () => Promise.resolve(true);
   const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
-  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+  const queueUrl = 'testqueueUrl';
+  const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
+  const updateGranuleStatusToQueuedStub = () => Promise.resolve();
 
   const granule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
@@ -160,6 +161,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
       reingestParams,
       granuleModel,
       granulePgModel,
+      updateGranuleStatusToQueuedMethod: updateGranuleStatusToQueuedStub,
     });
     // Rule.buildPayload has its own unit tests to ensure the queue name
     // is used properly, so just ensure that we pass the correct argument

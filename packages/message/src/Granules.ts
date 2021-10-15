@@ -105,7 +105,6 @@ export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): number =>
     .reduce((x, y) => x + y, 0);
 };
 
-/* eslint-disable @typescript-eslint/camelcase */
 export const getGranuleTimeToPreprocess = ({
   sync_granule_duration = 0,
 } = {}) => sync_granule_duration / 1000;
@@ -113,7 +112,6 @@ export const getGranuleTimeToPreprocess = ({
 export const getGranuleTimeToArchive = ({
   post_to_cmr_duration = 0,
 } = {}) => post_to_cmr_duration / 1000;
-/* eslint-enable @typescript-eslint/camelcase */
 
 /**
  * Generate an API granule record

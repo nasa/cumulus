@@ -15,6 +15,7 @@ const {
   getKnexClient,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -135,7 +136,7 @@ async function post(req, res) {
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
 
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
         const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
         dynamoRecord = await collectionsModel.create(
@@ -210,7 +211,7 @@ async function put(req, res) {
   const postgresCollection = translateApiCollectionToPostgresCollection(collection);
 
   try {
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
       const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
       dynamoRecord = await collectionsModel.create(collection);
@@ -256,7 +257,7 @@ async function del(req, res) {
 
   try {
     try {
-      await knex.transaction(async (trx) => {
+      await createRejectableTransaction(knex, async (trx) => {
         await collectionPgModel.delete(trx, { name, version });
         await collectionsModel.delete({ name, version });
         const collectionId = constructCollectionId(name, version);

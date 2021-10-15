@@ -1,7 +1,7 @@
-import { pdrStatus } from '@cumulus/types/api/pdrs';
+import { PdrStatus } from '@cumulus/types/api/pdrs';
 
 export interface PostgresPdr {
-  status: pdrStatus
+  status: PdrStatus
   name: string
   collection_cumulus_id: number
   provider_cumulus_id: number

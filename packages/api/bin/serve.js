@@ -89,7 +89,7 @@ async function setTableEnvVariables(stackName) {
 
   // set table env variables
   const tableNamesMap = {};
-  const tableNames = tableMapKeys.map((tableNameKey) => {
+  const TableNames = tableMapKeys.map((tableNameKey) => {
     const tableName = `${stackName}-${tableNameKey}`;
     tableNamesMap[tableNameKey] = tableName;
     process.env[tableNameKey] = tableName;
@@ -106,7 +106,7 @@ async function setTableEnvVariables(stackName) {
 
   return {
     tableModels,
-    tableNames,
+    TableNames,
   };
 }
 
@@ -119,10 +119,10 @@ async function checkOrCreateTables(stackName) {
   let i = -1;
   const promises = tables.tableModels.map((t) => limit(() => {
     i += 1;
-    console.log(tables.tableNames[i]);
+    console.log(tables.TableNames[i]);
     return createTable(
       models[t],
-      tables.tableNames[i]
+      tables.TableNames[i]
     );
   }));
   await Promise.all(promises);

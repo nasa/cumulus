@@ -1,7 +1,7 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 import { translateDateToUTC } from '../lib/timestamp';
@@ -9,7 +9,7 @@ import { translateDateToUTC } from '../lib/timestamp';
 export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrRecord> {
   constructor() {
     super({
-      tableName: tableNames.pdrs,
+      tableName: TableNames.pdrs,
     });
   }
 
