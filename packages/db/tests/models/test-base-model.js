@@ -59,10 +59,8 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  const queryResult = await createRejectableTransaction(
-    knex,
-    (trx) => basePgModel.create(trx, { info })
-  );
+  const queryResult = await createRejectableTransaction(knex, (trx) =>
+    basePgModel.create(trx, { ...defaultDates, info }));
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(

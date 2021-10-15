@@ -203,7 +203,7 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    await updateGranuleStatusToQueued({ apiGranule, knex });
+    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
 
     const reingestParams = {
       ...apiGranule,
@@ -228,7 +228,7 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
-    await updateGranuleStatusToQueued({ apiGranule, knex });
+    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
     await applyWorkflow({
       granule: apiGranule,
       workflow: body.workflow,

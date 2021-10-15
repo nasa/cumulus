@@ -60,9 +60,10 @@ async function reingestGranule({
   asyncOperationId = undefined,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
+  updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
   const knex = await getKnexClient();
-  await updateGranuleStatusToQueued({ reingestParams, knex });
+  await updateGranuleStatusToQueuedMethod({ granule: reingestParams, knex });
 
   const executionArn = path.basename(reingestParams.execution);
 
