@@ -21,7 +21,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "9.7.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.0",
+    "@cumulus/cumulus-message-adapter-js": "2.0.1",
     "@cumulus/integration-tests": "9.8.0-alpha.0"
   }
 }
