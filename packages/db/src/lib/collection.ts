@@ -1,6 +1,6 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 /**
  * Get collection results for a given set of granule IDs
@@ -16,7 +16,7 @@ export const getCollectionsByGranuleIds = async (
   const {
     collections: collectionsTable,
     granules: granulesTable,
-  } = tableNames;
+  } = TableNames;
   return await knex(collectionsTable)
     .select(`${collectionsTable}.*`)
     .innerJoin(granulesTable, `${collectionsTable}.cumulus_id`, `${granulesTable}.collection_cumulus_id`)

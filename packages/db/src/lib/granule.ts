@@ -16,7 +16,7 @@ import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
 
-const { tableNames } = require('../tables');
+const { TableNames } = require('../tables');
 
 export const getGranuleCollectionId = async (
   knexOrTransaction: Knex | Knex.Transaction,
@@ -202,7 +202,7 @@ export const getGranulesByApiPropertiesQuery = (
     granules: granulesTable,
     collections: collectionsTable,
     providers: providersTable,
-  } = tableNames;
+  } = TableNames;
   return knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
     .select(`${granulesTable}.*`)
     .select({

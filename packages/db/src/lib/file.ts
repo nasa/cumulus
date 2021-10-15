@@ -1,6 +1,6 @@
-import Knex from 'Knex';
+import { Knex } from 'Knex';
 
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
 import { PostgresGranuleRecord } from '../types/granule';
 
@@ -32,15 +32,15 @@ export const getFilesAndGranuleInfoQuery = ({
   granuleColumns?: (keyof PostgresGranuleRecord)[],
   limit?: number
 }): Knex.QueryBuilder => {
-  const query = knex(tableNames.files)
-    .select(`${tableNames.files}.*`)
-    .modify((queryBuilder) => {
+  const query = knex(TableNames.files)
+    .select(`${TableNames.files}.*`)
+    .modify((queryBuilder: Knex.QueryBuilder) => {
       if (granuleColumns.length > 0) {
-        queryBuilder.select(granuleColumns.map((column) => `${tableNames.granules}.${column}`));
+        queryBuilder.select(granuleColumns.map((column) => `${TableNames.granules}.${column}`));
         queryBuilder.innerJoin(
-          tableNames.granules,
-          `${tableNames.files}.granule_cumulus_id`,
-          `${tableNames.granules}.cumulus_id`
+          TableNames.granules,
+          `${TableNames.files}.granule_cumulus_id`,
+          `${TableNames.granules}.cumulus_id`
         );
       }
     })

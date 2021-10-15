@@ -127,7 +127,7 @@ test('BasePgModel.insert() works with transaction', async (t) => {
   const info2 = cryptoRandomString({ length: 5 });
 
   let queryResult;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     queryResult = await basePgModel.insert(trx, [
       { ...defaultDates, info },
       { ...defaultDates, info: info2 },
