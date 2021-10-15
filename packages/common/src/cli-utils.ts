@@ -10,7 +10,7 @@ import kebabCase from 'lodash/kebabCase';
  * @returns {Array<string>} - required options not present in command
  */
 export function findMissingOptions(
-  command: {[key: string]: unknown},
+  command: { [key: string]: unknown },
   requiredOptions: string[]
 ) {
   return requiredOptions.filter((param) => !command[param]);

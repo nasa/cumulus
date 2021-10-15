@@ -15,7 +15,7 @@ export type AwsLambdaSnsMessageEventRecord = {
  * @param {Object} event - A Cloudwatch event object
  * @returns {boolean} - True if event is an SNS event
  */
-export const isSnsEvent = (event: {EventSource?: string}) =>
+export const isSnsEvent = (event: { EventSource?: string }) =>
   event.EventSource === 'aws:sns';
 
 /**
