@@ -1,4 +1,4 @@
-import { Knex } from 'Knex';
+import { Knex } from 'knex';
 
 import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
