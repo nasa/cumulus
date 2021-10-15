@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { Rule, RuleRecord } from '@cumulus/types/api/rules';
 import { removeNilProperties } from '@cumulus/common/util';
 

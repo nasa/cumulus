@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { removeNilProperties } from '@cumulus/common/util';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';

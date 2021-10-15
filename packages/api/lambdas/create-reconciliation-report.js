@@ -126,7 +126,7 @@ async function fetchESCollections(recReportParams) {
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
- * DynamoDB, and that there are no extras in either S3 or DynamoDB
+ * PostgreSQL, and that there are no extras in either S3 or PostgreSQL
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
  * @param {Object} recReportParams - input report params.
@@ -152,31 +152,32 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const onlyInDb = [];
   const okCountByGranule = {};
 
+  log.info('Comparing PostgreSQL to S3');
   let [nextS3Object, nextPgItem] = await Promise.all([
     s3ObjectsQueue.peek(),
     pgFileSearchClient.peek(),
   ]);
   while (nextS3Object && nextPgItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-    const nextDynamoDbUri = buildS3Uri(Bucket, nextPgItem.key);
+    const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
 
     if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
       okCountByGranule[nextPgItem.granule_id] = 0;
     }
 
-    if (nextS3Uri < nextDynamoDbUri) {
-      // Found an item that is only in S3 and not in DynamoDB
+    if (nextS3Uri < nextPgFileUri) {
+      // Found an item that is only in S3 and not in PostgreSQL
       onlyInS3.push(nextS3Uri);
       s3ObjectsQueue.shift();
-    } else if (nextS3Uri > nextDynamoDbUri) {
-      // Found an item that is only in DynamoDB and not in S3
+    } else if (nextS3Uri > nextPgFileUri) {
+      // Found an item that is only in PostgreSQL and not in S3
       const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDb.push({
         uri: buildS3Uri(Bucket, pgItem.key),
         granuleId: pgItem.granule_id,
       });
     } else {
-      // Found an item that is in both S3 and DynamoDB
+      // Found an item that is in both S3 and PostgreSQL
       okCount += 1;
       if (linkFilesAndGranules) {
         okCountByGranule[nextPgItem.granule_id] += 1;
@@ -198,7 +199,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
   }
 
-  // Add any remaining DynamoDB items to the report
+  // Add any remaining PostgreSQL items to the report
   while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
     const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
     onlyInDb.push({
@@ -206,6 +207,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       granuleId: pgItem.granule_id,
     });
   }
+
+  log.info('Compare PostgreSQL to S3 completed');
 
   return {
     okCount,
@@ -240,6 +243,8 @@ async function reconciliationReportForCollections(recReportParams) {
   const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
 
   const esCollectionIds = await fetchESCollections(recReportParams);
+
+  log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
@@ -495,7 +500,7 @@ async function reconciliationReportForGranules(params) {
     [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
   }
 
-  // Add any remaining DynamoDB items to the report
+  // Add any remaining PostgreSQL items to the report
   while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
     const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     granulesReport.onlyInCumulus.push({
@@ -696,7 +701,6 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
- *   DynamoDB
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {

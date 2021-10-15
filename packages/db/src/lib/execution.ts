@@ -1,6 +1,6 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresExecutionRecord } from '../types/execution';
 
@@ -8,7 +8,7 @@ const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
 
-export interface arnRecord {
+export interface ArnRecord {
   arn: string;
 }
 
@@ -38,20 +38,20 @@ export const getExecutionInfoByGranuleCumulusId = async ({
   executionColumns: string[],
   limit?: number
 }): Promise<Partial<PostgresExecutionRecord>[]> => {
-  const knexQuery = knexOrTransaction(tableNames.executions)
-    .column(executionColumns.map((column) => `${tableNames.executions}.${column}`))
-    .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
+    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
     )
     .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
     knexQuery.limit(limit);
   }
@@ -65,29 +65,29 @@ export const getExecutionInfoByGranuleCumulusId = async ({
  * @param {Knex} knex - DB Client
  * @param {string[]} granuleIds - Array of granuleIds
  * @param {string[]} workflowNames - Array of workflow names
- * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
  */
 export const executionArnsFromGranuleIdsAndWorkflowNames = (
   knex: Knex,
   granuleIds: string[],
   workflowNames: string[]
-): Promise<arnRecord[]> =>
+): Promise<ArnRecord[]> =>
   knex
-    .select(`${tableNames.executions}.arn`)
-    .from(tableNames.executions)
+    .select(`${TableNames.executions}.arn`)
+    .from(TableNames.executions)
     .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
     )
     .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
-    .whereIn(`${tableNames.granules}.granule_id`, granuleIds)
-    .whereIn(`${tableNames.executions}.workflow_name`, workflowNames)
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+    .whereIn(`${TableNames.granules}.granule_id`, granuleIds)
+    .whereIn(`${TableNames.executions}.workflow_name`, workflowNames)
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
 
 /**
  * convenience function to return a single executionArn string for a intput
@@ -102,7 +102,7 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
 export const newestExecutionArnFromGranuleIdWorkflowName = async (
   granuleId: string,
   workflowName: string,
-  testKnex: Knex|undefined
+  testKnex: Knex | undefined
 ): Promise<string> => {
   try {
     const knex = testKnex ?? await getKnexClient({ env: process.env });
@@ -139,7 +139,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
 ): Promise<Array<string>> => {
   const granuleCumulusIdsArray = [granuleCumulusIds].flat();
   const numberOfGranules = granuleCumulusIdsArray.length;
-  const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = tableNames;
+  const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
   const aggregatedWorkflowCounts = await knexOrTransaction(executionsTable)
     .select('workflow_name')

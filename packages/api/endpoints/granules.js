@@ -29,7 +29,7 @@ const {
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { createGranuleFromApi, updateGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const { updateGranuleStatusToQueued, createGranuleFromApi, updateGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
@@ -157,6 +157,7 @@ async function put(req, res) {
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
     reingestHandler = reingestGranule,
+    updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
@@ -202,6 +203,9 @@ async function put(req, res) {
     if (targetExecution) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
+
+    await updateGranuleStatusToQueuedMethod({ granule: apiGranule, knex });
+
     const reingestParams = {
       ...apiGranule,
       ...(targetExecution && { execution: targetExecution }),
@@ -225,6 +229,7 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
+    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
     await applyWorkflow({
       granule: apiGranule,
       workflow: body.workflow,

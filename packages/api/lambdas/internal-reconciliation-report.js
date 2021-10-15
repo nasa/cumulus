@@ -47,9 +47,9 @@ async function internalRecReportForCollections(recReportParams) {
   log.debug('internal-reconciliation-report internalRecReportForCollections');
   // compare collection holdings:
   //   Get collection list in ES ordered by granuleId
-  //   Get collection list in DynamoDB ordered by granuleId
+  //   Get collection list in PostgreSQL ordered by granuleId
   //  Report collections only in ES
-  //   Report collections only in DynamoDB
+  //   Report collections only in PostgreSQL
   //   Report collections with different contents
 
   const searchParams = convertToESCollectionSearchParams(recReportParams);
@@ -237,9 +237,9 @@ async function getCollectionsForGranuleSearch(recReportParams) {
 async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   //   For each collection,
   //     Get granule list in ES ordered by granuleId
-  //     Get granule list in DynamoDB ordered by granuleId
+  //     Get granule list in PostgreSQL ordered by granuleId
   //   Report granules only in ES
-  //   Report granules only in DynamoDB
+  //   Report granules only in PostgreSQL
   //   Report granules with different contents
 
   const esSearchParams = convertToESGranuleSearchParams(recReportParams);
@@ -339,15 +339,13 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
  */
 async function internalRecReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report internalRecReportForGranules');
-  // To avoid 'scan' granules table, we query a Global Secondary Index(GSI) in granules
-  // table with collectionId.
   // compare granule holdings:
   //   Get collections list from db and es based on request parameters or use the collectionId
   //     from the request
   //   For each collection,
   //     compare granule holdings and get report
   //   Report granules only in ES
-  //   Report granules only in DynamoDB
+  //   Report granules only in PostgreSQL
   //   Report granules with different contents
 
   const collections = await getCollectionsForGranuleSearch(recReportParams);

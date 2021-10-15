@@ -46,3 +46,4 @@ tmp
 website/i18n/en.json
 yarn-error.log
 yarn.lock
+*.tsbuildinfo

@@ -1,6 +1,7 @@
 const isNil = require('lodash/isNil');
 
 const {
+  createRejectableTransaction,
   ExecutionPgModel,
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
@@ -117,7 +118,7 @@ const _writeExecutionRecord = ({
   executionPgModel = new ExecutionPgModel(),
   updatedAt = Date.now(),
   esClient,
-}) => knex.transaction(async (trx) => {
+}) => createRejectableTransaction(knex, async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);

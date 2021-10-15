@@ -22,6 +22,7 @@ const {
   getUniqueGranuleByGranuleId,
   migrationDir,
   getGranulesByApiPropertiesQuery,
+  createRejectableTransaction,
 } = require('../../dist');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
@@ -82,7 +83,8 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
     status: 'running',
   });
 
-  const [pgGranule] = await knex.transaction(
+  const [pgGranule] = await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
@@ -130,7 +132,8 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
     status: 'completed',
   });
 
-  const [pgGranule] = await knex.transaction(
+  const [pgGranule] = await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
@@ -145,7 +148,8 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
   );
   const secondExecutionCumulusId = secondExecutionCumulus.cumulus_id;
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
@@ -196,7 +200,8 @@ test('upsertGranuleWithExecutionJoinRecord() does not write anything if upsertin
   };
 
   await t.throwsAsync(
-    knex.transaction(
+    createRejectableTransaction(
+      knex,
       (trx) =>
         upsertGranuleWithExecutionJoinRecord(
           trx,
@@ -365,7 +370,8 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
     status: 'completed',
   });
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
@@ -379,7 +385,8 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
   );
   const secondExecutionCumulusId = secondExecution.cumulus_id;
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule,
@@ -435,7 +442,8 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     status: 'running',
   });
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule1,
@@ -449,7 +457,8 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
   );
   const secondExecutionCumulusId = secondExecution.cumulus_id;
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule1,
@@ -457,7 +466,8 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     )
   );
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => upsertGranuleWithExecutionJoinRecord(
       trx,
       granule2,

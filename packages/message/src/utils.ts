@@ -7,7 +7,7 @@ import isObject from 'lodash/isObject';
  * @param {Object|undefined} exception - the exception
  * @returns {string} an stringified exception
  */
-export const parseException = (exception: Object|undefined) => {
+export const parseException = (exception: Object | undefined) => {
   if (isNil(exception)) return {};
   if (isObject(exception)) return exception;
   return {
