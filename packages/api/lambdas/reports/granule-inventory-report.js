@@ -68,7 +68,10 @@ async function createGranuleInventoryReport(recReportParams) {
 
   while (nextGranule) {
     // eslint-disable-next-line no-await-in-loop
-    const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, nextGranule);
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(
+      recReportParams.knex,
+      nextGranule
+    );
     readable.push({
       granuleUr: apiGranule.granuleId,
       collectionId: apiGranule.collectionId,
