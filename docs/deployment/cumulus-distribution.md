@@ -66,22 +66,24 @@ To create or import an existing key pair, you can use the AWS CLI (see aws [ec2 
 
 Once your key pair is added to AWS, add the following to your `cumulus-tf/terraform.tfvars` file:
 
-```bash
+```plain
 key_name = "<name>"
 cumulus_distribution_url = "https://<id>.execute-api.<region>.amazonaws.com:<port>/dev/"
 ```
 
 where:
 
-`<name>` is the name of the key pair you just added to AWS
-`<id>` and `<region>` are the corresponding parts from your `cumulus_distribution_api_uri` output variable
-`<port>` is your open local port of choice (9000 is typically a good choice)
+- `<name>` is the name of the key pair you just added to AWS
+- `<id>` and `<region>` are the corresponding parts from your `cumulus_distribution_api_uri` output variable
+- `<port>` is your open local port of choice (9000 is typically a good choice)
 
 Once you save your variable changes, redeploy your `cumulus-tf` module.
 
 While your deployment runs, add the following entry to your `/etc/hosts` file, replacing `<hostname>` with the host name of the `cumulus_distribution_url` Terraform variable you just added above:
 
-localhost `<hostname>`
+```plain
+localhost <hostname>
+```
 
 Next, you'll need to use the Cognito API to add the value of your `cumulus_distribution_url` Terraform variable as a Cognito redirect URI. To do so, use your favorite tool (e.g., curl, wget, Postman, etc.) to make a BasicAuth request to the Cognito API, using the following details:
 
@@ -129,7 +131,7 @@ aws ssm start-session --target <id> --document-name AWS-StartPortForwardingSessi
 
 If successful, you should see output similar to the following:
 
-```bash
+```plain
 Starting session with SessionId: NGAPShApplicationDeveloper-***
 Port 6000 opened for sessionId NGAPShApplicationDeveloper-***.
 Waiting for connections...
@@ -143,8 +145,8 @@ ssh -4 -p 6000 -N -L <port>:<api-gateway-host>:443 ec2-user@127.0.0.1
 
 where:
 
-`<port>` is the open local port you chose earlier (e.g., 9000)
-`<api-gateway-host>` is the hostname of your private API Gateway (i.e., the host portion of the URL you used as the value of your `cumulus_distribution_url` Terraform variable above)
+- `<port>` is the open local port you chose earlier (e.g., 9000)
+- `<api-gateway-host>` is the hostname of your private API Gateway (i.e., the host portion of the URL you used as the value of your `cumulus_distribution_url` Terraform variable above)
 
 Finally, use your chosen browser to navigate to `<cumulus_distribution_url>/<bucket>/<key>`, where `<bucket>` and `<key>` reference the sample file you added to S3 above.
 
@@ -169,7 +171,7 @@ This is generally done by placing a CloudFront URL in front of your private Cumu
 
 Once this request is completed, and you obtain the new CloudFront URL, override your default distribution URL with the CloudFront URL by adding the following to your `cumulus-tf/terraform.tfvars` file:
 
-```bash
+```plain
 cumulus_distribution_url = <cloudfront_url>
 ```
 
