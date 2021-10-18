@@ -73,9 +73,9 @@ cumulus_distribution_url = "https://<id>.execute-api.<region>.amazonaws.com:<por
 
 where:
 
-- `<name>` is the name of the key pair you just added to AWS
-- `<id>` and `<region>` are the corresponding parts from your `cumulus_distribution_api_uri` output variable
-- `<port>` is your open local port of choice (9000 is typically a good choice)
+* `<name>` is the name of the key pair you just added to AWS
+* `<id>` and `<region>` are the corresponding parts from your `cumulus_distribution_api_uri` output variable
+* `<port>` is your open local port of choice (9000 is typically a good choice)
 
 Once you save your variable changes, redeploy your `cumulus-tf` module.
 
@@ -145,8 +145,8 @@ ssh -4 -p 6000 -N -L <port>:<api-gateway-host>:443 ec2-user@127.0.0.1
 
 where:
 
-- `<port>` is the open local port you chose earlier (e.g., 9000)
-- `<api-gateway-host>` is the hostname of your private API Gateway (i.e., the host portion of the URL you used as the value of your `cumulus_distribution_url` Terraform variable above)
+* `<port>` is the open local port you chose earlier (e.g., 9000)
+* `<api-gateway-host>` is the hostname of your private API Gateway (i.e., the host portion of the URL you used as the value of your `cumulus_distribution_url` Terraform variable above)
 
 Finally, use your chosen browser to navigate to `<cumulus_distribution_url>/<bucket>/<key>`, where `<bucket>` and `<key>` reference the sample file you added to S3 above.
 
