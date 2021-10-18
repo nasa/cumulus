@@ -3,7 +3,7 @@ export type ExecutionRecordStatus = 'completed' | 'failed' | 'running' | 'unknow
 export type ExecutionProcessingTimes = {
   processingStartDateTime: string
   processingEndDateTime: string
-} | {};
+};
 
 export interface ExecutionRecord {
   arn: string,

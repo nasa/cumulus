@@ -113,20 +113,60 @@ export const getGranuleTimeToArchive = ({
   post_to_cmr_duration = 0,
 } = {}) => post_to_cmr_duration / 1000;
 
-function isGranuleTemporalInfo(info?: GranuleTemporalInfo | {}): info is GranuleTemporalInfo {
+function isProcessingTimeInfo(
+  info: ExecutionProcessingTimes | {} = {}
+): info is ExecutionProcessingTimes {
+  return (info as ExecutionProcessingTimes)?.processingStartDateTime !== undefined
+    && (info as ExecutionProcessingTimes)?.processingEndDateTime !== undefined;
+}
+
+export const getGranuleProcessingTimeInfo = (
+  processingTimeInfo?: ExecutionProcessingTimes
+): ExecutionProcessingTimes | undefined => {
+  const updatedProcessingTimeInfo = isProcessingTimeInfo(processingTimeInfo)
+    ? { ...processingTimeInfo }
+    : undefined;
+
+  if (updatedProcessingTimeInfo !== undefined) {
+    const processingInfoKeys = Object
+      .keys(updatedProcessingTimeInfo) as (keyof ExecutionProcessingTimes)[];
+    processingInfoKeys.forEach((temporalInfoKey) => {
+      const processingInfoValue = updatedProcessingTimeInfo[temporalInfoKey];
+      updatedProcessingTimeInfo[temporalInfoKey] = new Date(processingInfoValue).toISOString();
+    });
+  }
+
+  return updatedProcessingTimeInfo;
+};
+
+function isGranuleTemporalInfo(
+  info: GranuleTemporalInfo | {} = {}
+): info is GranuleTemporalInfo {
   return (info as GranuleTemporalInfo).beginningDateTime !== undefined
     && (info as GranuleTemporalInfo).endingDateTime !== undefined
     && (info as GranuleTemporalInfo).productionDateTime !== undefined
     && (info as GranuleTemporalInfo).lastUpdateDateTime !== undefined;
 }
 
-export const getGranuleTemporalInfo = async ({
+/**
+ * Get granule temporal information from argument or directly from CMR.
+ *
+ * Converts temporal information timestamps to a standardized ISO string
+ * format for compatibility across database systems.
+ *
+ * @param {Object} params
+ * @param {MessageGranule} params.granule - Granule from workflow message
+ * @param {Object} [params.cmrTemporalInfo] - CMR temporal info, if any
+ * @param {CmrUtilsClass} params.cmrUtils - CMR utilities object
+ * @returns {Promise<GranuleTemporalInfo | {}>}
+ */
+export const getGranuleCmrTemporalInfo = async ({
   granule,
-  cmrTemporalInfo = {},
+  cmrTemporalInfo,
   cmrUtils,
 }: {
   granule: MessageGranule,
-  cmrTemporalInfo?: GranuleTemporalInfo | {},
+  cmrTemporalInfo?: GranuleTemporalInfo,
   cmrUtils: CmrUtilsClass
 }): Promise<GranuleTemporalInfo | undefined> => {
   // Get CMR temporalInfo ( beginningDateTime, endingDateTime,
@@ -136,8 +176,8 @@ export const getGranuleTemporalInfo = async ({
     : await cmrUtils.getGranuleTemporalInfo(granule);
 
   if (!isEmpty(temporalInfo)) {
-    const temporalInfoKeys = Object.keys(temporalInfo) as (keyof GranuleTemporalInfo)[];
-    temporalInfoKeys.forEach((temporalInfoKey) => {
+    const processingInfoKeys = Object.keys(temporalInfo) as (keyof GranuleTemporalInfo)[];
+    processingInfoKeys.forEach((temporalInfoKey) => {
       const temporalInfoValue = temporalInfo[temporalInfoKey];
       temporalInfo[temporalInfoKey] = new Date(temporalInfoValue).toISOString();
     });
@@ -166,7 +206,7 @@ export const generateGranuleApiRecord = async ({
   queryFields,
   updatedAt,
   files,
-  processingTimeInfo = {},
+  processingTimeInfo,
   cmrUtils,
   timestamp,
   duration,
@@ -208,11 +248,12 @@ export const generateGranuleApiRecord = async ({
   } = granule;
 
   // Get CMR temporalInfo
-  const temporalInfo = await getGranuleTemporalInfo({
+  const temporalInfo = await getGranuleCmrTemporalInfo({
     granule,
     cmrTemporalInfo,
     cmrUtils,
   });
+  const updatedProcessingTimeInfo = getGranuleProcessingTimeInfo(processingTimeInfo);
 
   const record = {
     granuleId,
@@ -232,7 +273,7 @@ export const generateGranuleApiRecord = async ({
     productVolume,
     timeToPreprocess,
     timeToArchive,
-    ...processingTimeInfo,
+    ...updatedProcessingTimeInfo,
     ...temporalInfo,
     queryFields,
   };

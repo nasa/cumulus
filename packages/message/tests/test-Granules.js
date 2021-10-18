@@ -12,6 +12,8 @@ const {
   getGranuleTimeToArchive,
   getGranuleTimeToPreprocess,
   generateGranuleApiRecord,
+  getGranuleCmrTemporalInfo,
+  getGranuleProcessingTimeInfo,
 } = require('../Granules');
 const {
   getWorkflowDuration,
@@ -44,6 +46,8 @@ test.beforeEach((t) => {
   t.context.pdrName = cryptoRandomString({ length: 10 });
   t.context.workflowStartTime = Date.now();
   t.context.workflowStatus = 'completed';
+
+  t.context.timestampExtraPrecision = '2018-04-25T21:45:45.524053';
 });
 
 test('getMessageGranules returns granules from payload.granules', (t) => {
@@ -237,27 +241,111 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   t.is(record.processingEndDateTime, processingEndDateTime);
 });
 
-test.only('generateGranuleApiRecord() builds granule record with correct processing and temporal info', async (t) => {
+test('getGranuleCmrTemporalInfo() converts input CMR timestamps to standardized format', async (t) => {
+  const { timestampExtraPrecision } = t.context;
+
+  const cmrTemporalInfo = {
+    beginningDateTime: timestampExtraPrecision,
+    endingDateTime: timestampExtraPrecision,
+    productionDateTime: timestampExtraPrecision,
+    lastUpdateDateTime: timestampExtraPrecision,
+  };
+
+  const updatedCmrTemporalInfo = await getGranuleCmrTemporalInfo({
+    granule: {},
+    cmrTemporalInfo,
+    cmrUtils: {},
+  });
+
+  t.deepEqual(updatedCmrTemporalInfo, {
+    beginningDateTime: new Date(timestampExtraPrecision).toISOString(),
+    endingDateTime: new Date(timestampExtraPrecision).toISOString(),
+    productionDateTime: new Date(timestampExtraPrecision).toISOString(),
+    lastUpdateDateTime: new Date(timestampExtraPrecision).toISOString(),
+  });
+});
+
+test('getGranuleCmrTemporalInfo() converts timestamps fetched from CMR to standardized format', async (t) => {
+  const { timestampExtraPrecision } = t.context;
+
+  const cmrTemporalInfo = {
+    beginningDateTime: timestampExtraPrecision,
+    endingDateTime: timestampExtraPrecision,
+    productionDateTime: timestampExtraPrecision,
+    lastUpdateDateTime: timestampExtraPrecision,
+  };
+  const granule = {
+    granuleId: cryptoRandomString({ length: 10 }),
+  };
+
+  const updatedCmrTemporalInfo = await getGranuleCmrTemporalInfo({
+    granule,
+    cmrUtils: {
+      getGranuleTemporalInfo: (granuleArg) => {
+        if (granule.granuleId === granuleArg.granuleId) {
+          return Promise.resolve(cmrTemporalInfo);
+        }
+        throw new Error('should not be reached');
+      },
+    },
+  });
+
+  t.deepEqual(updatedCmrTemporalInfo, {
+    beginningDateTime: new Date(timestampExtraPrecision).toISOString(),
+    endingDateTime: new Date(timestampExtraPrecision).toISOString(),
+    productionDateTime: new Date(timestampExtraPrecision).toISOString(),
+    lastUpdateDateTime: new Date(timestampExtraPrecision).toISOString(),
+  });
+});
+
+test('getGranuleCmrTemporalInfo() handles empty return from CMR', async (t) => {
+  const updatedCmrTemporalInfo = await getGranuleCmrTemporalInfo({
+    granule: {},
+    cmrUtils: {
+      getGranuleTemporalInfo: () => Promise.resolve({}),
+    },
+  });
+
+  t.deepEqual(updatedCmrTemporalInfo, {});
+});
+
+test('getGranuleProcessingTimeInfo() converts input timestamps to standardized format', (t) => {
+  const { timestampExtraPrecision } = t.context;
+
+  const processingTimeInfo = {
+    processingStartDateTime: timestampExtraPrecision,
+    processingEndDateTime: timestampExtraPrecision,
+  };
+
+  const updatedProcessingTimeInfo = getGranuleProcessingTimeInfo(processingTimeInfo);
+
+  t.deepEqual(updatedProcessingTimeInfo, {
+    processingStartDateTime: new Date(timestampExtraPrecision).toISOString(),
+    processingEndDateTime: new Date(timestampExtraPrecision).toISOString(),
+  });
+});
+
+test('generateGranuleApiRecord() builds granule record with correct processing and temporal info', async (t) => {
   const {
     collectionId,
     provider,
     workflowStartTime,
     pdrName,
     workflowStatus,
+    timestampExtraPrecision,
   } = t.context;
   const granule = granuleSuccess.payload.granules[0];
   const executionUrl = cryptoRandomString({ length: 10 });
 
-  const dateString = '2018-04-25T21:45:45.524053';
   const processingTimeInfo = {
-    processingStartDateTime: dateString,
-    processingEndDateTime: dateString,
+    processingStartDateTime: timestampExtraPrecision,
+    processingEndDateTime: timestampExtraPrecision,
   };
   const cmrTemporalInfo = {
-    beginningDateTime: dateString,
-    endingDateTime: dateString,
-    productionDateTime: dateString,
-    lastUpdateDateTime: dateString,
+    beginningDateTime: timestampExtraPrecision,
+    endingDateTime: timestampExtraPrecision,
+    productionDateTime: timestampExtraPrecision,
+    lastUpdateDateTime: timestampExtraPrecision,
   };
 
   const timeToArchive = getGranuleTimeToArchive(granule);
@@ -288,6 +376,15 @@ test.only('generateGranuleApiRecord() builds granule record with correct process
   t.is(record.endingDateTime, new Date(cmrTemporalInfo.endingDateTime).toISOString());
   t.is(record.productionDateTime, new Date(cmrTemporalInfo.productionDateTime).toISOString());
   t.is(record.lastUpdateDateTime, new Date(cmrTemporalInfo.lastUpdateDateTime).toISOString());
+
+  t.is(
+    record.processingStartDateTime,
+    new Date(processingTimeInfo.processingStartDateTime).toISOString()
+  );
+  t.is(
+    record.processingEndDateTime,
+    new Date(processingTimeInfo.processingEndDateTime).toISOString()
+  );
 });
 
 test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
