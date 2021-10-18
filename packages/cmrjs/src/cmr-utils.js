@@ -10,6 +10,7 @@ const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
+const omit = require('lodash/omit');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -21,8 +22,7 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
-const log = require('@cumulus/common/log');
-const omit = require('lodash/omit');
+const Logger = require('@cumulus/logger');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
@@ -31,6 +31,8 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -690,6 +692,7 @@ async function getCmrSettings(cmrConfig = {}) {
   const cmrCredentials = {
     provider: cmrConfig.provider || process.env.cmr_provider,
     clientId: cmrConfig.clientId || process.env.cmr_client_id,
+    oauthProvider,
   };
 
   if (oauthProvider === 'launchpad') {

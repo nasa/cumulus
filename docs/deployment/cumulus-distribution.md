@@ -158,7 +158,7 @@ Once you're finished testing, clean up as follows:
 
 While this is a relatively lengthy process, things are much easier when using CloudFront, such as in Production (OPS), SIT, or UAT, as explained next.
 
-Using a CloudFront URL as your distribution URL
+### Using a CloudFront URL as your distribution URL
 
 In Production (OPS), and perhaps in other environments, such as UAT and SIT, you'll need to provide a publicly accessible URL for users to use for downloading (distributing) granule files.
 
