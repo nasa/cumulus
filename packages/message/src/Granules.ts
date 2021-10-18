@@ -8,7 +8,6 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
-import isEmpty from 'lodash/isEmpty';
 import isInteger from 'lodash/isInteger';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
@@ -113,6 +112,23 @@ export const getGranuleTimeToArchive = ({
   post_to_cmr_duration = 0,
 } = {}) => post_to_cmr_duration / 1000;
 
+function convertObjectDatesToISOStrings<T extends Record<string, string>>(
+  datesObject?: T
+): T | undefined {
+  if (datesObject !== undefined) {
+    const updatedDatesObject = { ...datesObject };
+    const dateKeys = Object.keys(updatedDatesObject) as (keyof T)[];
+    dateKeys.forEach((dateKey) => {
+      const dateValue = updatedDatesObject[dateKey];
+      const newDate = new Date(dateValue).toISOString();
+      // TODO: this is gross. fix me
+      updatedDatesObject[dateKey] = newDate as T[keyof T];
+    });
+    return updatedDatesObject;
+  }
+  return datesObject;
+}
+
 function isProcessingTimeInfo(
   info: ExecutionProcessingTimes | {} = {}
 ): info is ExecutionProcessingTimes {
@@ -120,6 +136,14 @@ function isProcessingTimeInfo(
     && (info as ExecutionProcessingTimes)?.processingEndDateTime !== undefined;
 }
 
+/**
+ * Convert granule processing timestamps to a standardized ISO string
+ * format for compatibility across database systems.
+ *
+ * @param {ExecutionProcessingTimes} [processingTimeInfo]
+ *   Granule processing time info, if any
+ * @returns {Promise<ExecutionProcessingTimes | undefined>}
+ */
 export const getGranuleProcessingTimeInfo = (
   processingTimeInfo?: ExecutionProcessingTimes
 ): ExecutionProcessingTimes | undefined => {
@@ -127,25 +151,16 @@ export const getGranuleProcessingTimeInfo = (
     ? { ...processingTimeInfo }
     : undefined;
 
-  if (updatedProcessingTimeInfo !== undefined) {
-    const processingInfoKeys = Object
-      .keys(updatedProcessingTimeInfo) as (keyof ExecutionProcessingTimes)[];
-    processingInfoKeys.forEach((temporalInfoKey) => {
-      const processingInfoValue = updatedProcessingTimeInfo[temporalInfoKey];
-      updatedProcessingTimeInfo[temporalInfoKey] = new Date(processingInfoValue).toISOString();
-    });
-  }
-
-  return updatedProcessingTimeInfo;
+  return convertObjectDatesToISOStrings(updatedProcessingTimeInfo);
 };
 
 function isGranuleTemporalInfo(
   info: GranuleTemporalInfo | {} = {}
 ): info is GranuleTemporalInfo {
-  return (info as GranuleTemporalInfo).beginningDateTime !== undefined
-    && (info as GranuleTemporalInfo).endingDateTime !== undefined
-    && (info as GranuleTemporalInfo).productionDateTime !== undefined
-    && (info as GranuleTemporalInfo).lastUpdateDateTime !== undefined;
+  return (info as GranuleTemporalInfo)?.beginningDateTime !== undefined
+    && (info as GranuleTemporalInfo)?.endingDateTime !== undefined
+    && (info as GranuleTemporalInfo)?.productionDateTime !== undefined
+    && (info as GranuleTemporalInfo)?.lastUpdateDateTime !== undefined;
 }
 
 /**
@@ -158,7 +173,7 @@ function isGranuleTemporalInfo(
  * @param {MessageGranule} params.granule - Granule from workflow message
  * @param {Object} [params.cmrTemporalInfo] - CMR temporal info, if any
  * @param {CmrUtilsClass} params.cmrUtils - CMR utilities object
- * @returns {Promise<GranuleTemporalInfo | {}>}
+ * @returns {Promise<GranuleTemporalInfo | undefined>}
  */
 export const getGranuleCmrTemporalInfo = async ({
   granule,
@@ -175,15 +190,7 @@ export const getGranuleCmrTemporalInfo = async ({
     ? { ...cmrTemporalInfo }
     : await cmrUtils.getGranuleTemporalInfo(granule);
 
-  if (!isEmpty(temporalInfo)) {
-    const processingInfoKeys = Object.keys(temporalInfo) as (keyof GranuleTemporalInfo)[];
-    processingInfoKeys.forEach((temporalInfoKey) => {
-      const temporalInfoValue = temporalInfo[temporalInfoKey];
-      temporalInfo[temporalInfoKey] = new Date(temporalInfoValue).toISOString();
-    });
-  }
-
-  return temporalInfo;
+  return convertObjectDatesToISOStrings(temporalInfo);
 };
 
 /**
