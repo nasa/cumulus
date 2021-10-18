@@ -233,13 +233,25 @@ remove them. You may do so via either the **AWS Management Console** or the
 **AWS CLI**. As an additional precaution, you may want to create a backup for
 each table in your deployment _before_ you delete them.
 
-Finally, **destroy the resources for your `data-persistence` module**:
+Then, **destroy the resources for your `data-persistence` module**:
 
 ```bash
 cd ../data-persistence-tf
 terraform init -reconfigure
 terraform destroy
 ```
+
+Destroying your data persistence layer does not destroy any of your RDS resources. Next, **destroy your database resources**.
+
+To teardown the entire cluster, if it was deployed by Terraform, run the following commands:
+```bash
+tfenv use 0.13.6
+cd rds-cluster-tf
+terraform init -reconfigure
+terraform destroy
+```
+
+If using a shared cluster and you want to destroy the database created by Cumulus for your deployment you can login to your deployment and manually delete that individual database.
 
 Finally, since we tag the resources in your deployment, you should see if there
 are any dangling resources left behind for any reason, by running the following

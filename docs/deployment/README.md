@@ -257,7 +257,7 @@ A typical Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
 [`data-persistence`](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence) and [`cumulus`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus).
 
-The `data-persistence` module should be deployed first, and creates the Elasticsearch domain and DynamoDB tables. The `cumulus` module deploys the rest of Cumulus: distribution, API, ingest, workflows, etc. The `cumulus` module depends on the resources created in the `data-persistence` deployment.
+The `data-persistence` module should be deployed first, and creates the Elasticsearch domain and RDS databse tables. The `cumulus` module deploys the rest of Cumulus: distribution, API, ingest, workflows, etc. The `cumulus` module depends on the resources created in the `data-persistence` deployment.
 
 Each of these modules have to be deployed independently and require their own Terraform backend, variable, and output settings. The template deploy repo that was cloned previously already contains the scaffolding of the necessary files for the deployment of each module: `data-persistence-tf` deploys the `data-persistence` module and `cumulus-tf` deploys the `cumulus` module. For reference on the files that are included, see the [documentation on adding components to a Terraform deployment](components.md#adding-components-to-your-terraform-deployment).
 
@@ -300,38 +300,6 @@ You should see output like:
 
 Terraform has been successfully initialized!
 ```
-
-<details>
-  <summary>Optional: Import existing AWS resources to Terraform</summary>
-
-#### Import existing resources
-
-If you have an existing Cumulus deployment, you can import your existing DynamoDB tables and Elasticsearch instance to be used with your new Terraform deployment.
-
-To import a DynamoDB table from your existing deployment:
-
-```bash
-terraform import module.data_persistence.aws_dynamodb_table.access_tokens_table PREFIX-AccessTokensTable
-```
-
-Repeat this command for every DynamoDB table included in the [`data-persistence` module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/README.md), replacing `PREFIX` with the correct value for your existing deployment.
-
-To import the Elasticsearch instance from your existing deployment, run this command and replace `PREFIX-es5vpc` with the existing domain name:
-
-```bash
-terraform import module.data_persistence.aws_elasticsearch_domain.es_vpc PREFIX-es5vpc
-```
-
-You will also need to make sure to set these variables in your `terraform.tfvars` file:
-
-```hcl
-prefix = "PREFIX"     # must match prefix of existing deployment
-custom_domain_name = "PREFIX-es5vpc"  # must match existing Elasticsearch domain name
-```
-
-> **Note:** If you are importing data resources from a previous version of Cumulus deployed using Cloudformation, then make sure [`DeletionPolicy: Retain`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html) is set on the data resources in the Cloudformation stack before deleting that stack. Otherwise, the imported data resources will be destroyed when you delete that stack. As of Cumulus version 1.15.0, `DeletionPolicy: Retain` is set by default for the data resources in the Cloudformation stack.
-
-</details>
 
 #### Deploy
 
