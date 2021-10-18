@@ -7,7 +7,7 @@ export type GranuleTemporalInfo = {
   endingDateTime: string
   productionDateTime: string
   lastUpdateDateTime: string
-} | {};
+};
 
 export interface MessageGranule {
   granuleId: string

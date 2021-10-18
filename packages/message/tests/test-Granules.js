@@ -237,6 +237,59 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   t.is(record.processingEndDateTime, processingEndDateTime);
 });
 
+test.only('generateGranuleApiRecord() builds granule record with correct processing and temporal info', async (t) => {
+  const {
+    collectionId,
+    provider,
+    workflowStartTime,
+    pdrName,
+    workflowStatus,
+  } = t.context;
+  const granule = granuleSuccess.payload.granules[0];
+  const executionUrl = cryptoRandomString({ length: 10 });
+
+  const dateString = '2018-04-25T21:45:45.524053';
+  const processingTimeInfo = {
+    processingStartDateTime: dateString,
+    processingEndDateTime: dateString,
+  };
+  const cmrTemporalInfo = {
+    beginningDateTime: dateString,
+    endingDateTime: dateString,
+    productionDateTime: dateString,
+    lastUpdateDateTime: dateString,
+  };
+
+  const timeToArchive = getGranuleTimeToArchive(granule);
+  const timeToPreprocess = getGranuleTimeToPreprocess(granule);
+  const productVolume = getGranuleProductVolume(granule.files);
+  const status = getGranuleStatus(workflowStatus, granule);
+  const duration = getWorkflowDuration(workflowStartTime, Date.now());
+
+  const record = await generateGranuleApiRecord({
+    granule,
+    executionUrl,
+    processingTimeInfo,
+    cmrTemporalInfo,
+    collectionId,
+    provider,
+    workflowStartTime,
+    pdrName,
+    status,
+    duration,
+    cmrUtils: t.context.fakeCmrUtils,
+    files: granule.files,
+    timeToArchive,
+    timeToPreprocess,
+    productVolume,
+  });
+
+  t.is(record.beginningDateTime, new Date(cmrTemporalInfo.beginningDateTime).toISOString());
+  t.is(record.endingDateTime, new Date(cmrTemporalInfo.endingDateTime).toISOString());
+  t.is(record.productionDateTime, new Date(cmrTemporalInfo.productionDateTime).toISOString());
+  t.is(record.lastUpdateDateTime, new Date(cmrTemporalInfo.lastUpdateDateTime).toISOString());
+});
+
 test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
   const {
     collectionId,

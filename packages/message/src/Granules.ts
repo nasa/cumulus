@@ -113,6 +113,39 @@ export const getGranuleTimeToArchive = ({
   post_to_cmr_duration = 0,
 } = {}) => post_to_cmr_duration / 1000;
 
+function isGranuleTemporalInfo(info?: GranuleTemporalInfo | {}): info is GranuleTemporalInfo {
+  return (info as GranuleTemporalInfo).beginningDateTime !== undefined
+    && (info as GranuleTemporalInfo).endingDateTime !== undefined
+    && (info as GranuleTemporalInfo).productionDateTime !== undefined
+    && (info as GranuleTemporalInfo).lastUpdateDateTime !== undefined;
+}
+
+export const getGranuleTemporalInfo = async ({
+  granule,
+  cmrTemporalInfo = {},
+  cmrUtils,
+}: {
+  granule: MessageGranule,
+  cmrTemporalInfo?: GranuleTemporalInfo | {},
+  cmrUtils: CmrUtilsClass
+}): Promise<GranuleTemporalInfo | undefined> => {
+  // Get CMR temporalInfo ( beginningDateTime, endingDateTime,
+  // productionDateTime, lastUpdateDateTime)
+  const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
+    ? { ...cmrTemporalInfo }
+    : await cmrUtils.getGranuleTemporalInfo(granule);
+
+  if (!isEmpty(temporalInfo)) {
+    const temporalInfoKeys = Object.keys(temporalInfo) as (keyof GranuleTemporalInfo)[];
+    temporalInfoKeys.forEach((temporalInfoKey) => {
+      const temporalInfoValue = temporalInfo[temporalInfoKey];
+      temporalInfo[temporalInfoKey] = new Date(temporalInfoValue).toISOString();
+    });
+  }
+
+  return temporalInfo;
+};
+
 /**
  * Generate an API granule record
  *
@@ -140,7 +173,7 @@ export const generateGranuleApiRecord = async ({
   productVolume,
   timeToPreprocess,
   timeToArchive,
-  cmrTemporalInfo = {},
+  cmrTemporalInfo,
 }: {
   granule: MessageGranule,
   executionUrl?: string,
@@ -174,12 +207,12 @@ export const generateGranuleApiRecord = async ({
     published = false,
   } = granule;
 
-  // Get cmr temporalInfo ( beginningDateTime, endingDateTime,
-  // productionDateTime, lastUpdateDateTime)
-  let temporalInfo = { ...cmrTemporalInfo };
-  if (isEmpty(cmrTemporalInfo)) {
-    temporalInfo = await cmrUtils.getGranuleTemporalInfo(granule);
-  }
+  // Get CMR temporalInfo
+  const temporalInfo = await getGranuleTemporalInfo({
+    granule,
+    cmrTemporalInfo,
+    cmrUtils,
+  });
 
   const record = {
     granuleId,
