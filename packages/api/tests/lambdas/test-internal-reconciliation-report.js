@@ -12,6 +12,7 @@ const {
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { generateGranuleApiRecord } = require('@cumulus/message/Granules');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -330,4 +331,76 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   t.is(report.onlyInEs[0].granuleId, extraEsGrans[0].granuleId);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
+});
+
+test.serial('internalRecReportForGranules handles generated granules with custom timestamps', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    providerPgModel,
+    executionPgModel,
+  } = t.context;
+
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+  const collection = fakeCollectionFactory({
+    ...deconstructCollectionId(collectionId),
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+  await collectionPgModel.upsert(
+    knex,
+    translateApiCollectionToPostgresCollection(collection)
+  );
+
+  // Create provider in PG
+  const provider = fakeProviderRecordFactory();
+  await providerPgModel.create(knex, provider);
+
+  // Use date string with extra precision to make sure it is saved
+  // correctly in dynamo, PG, an Elasticsearch
+  const dateString = '2018-04-25T21:45:45.524053';
+
+  await Promise.all(range(5).map(async () => {
+    const fakeGranule = fakeGranuleFactoryV2({
+      collectionId,
+      provider: provider.name,
+    });
+
+    const processingTimeInfo = {
+      processingStartDateTime: dateString,
+      processingEndDateTime: dateString,
+    };
+
+    const cmrTemporalInfo = {
+      beginningDateTime: dateString,
+      endingDateTime: dateString,
+      productionDateTime: dateString,
+      lastUpdateDateTime: dateString,
+    };
+
+    const apiGranule = await generateGranuleApiRecord({
+      ...fakeGranule,
+      granule: fakeGranule,
+      executionUrl: fakeGranule.execution,
+      workflowStartTime: Date.now(),
+      processingTimeInfo,
+      cmrTemporalInfo,
+    });
+    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+
+    let pgExecution = {};
+    if (apiGranule.execution) {
+      const pgExecutionData = fakeExecutionRecordFactory({
+        url: apiGranule.execution,
+      });
+      ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
+    }
+    await upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+    await indexer.indexGranule(esClient, apiGranule, esAlias);
+  }));
+
+  const report = await internalRecReportForGranules({ knex });
+  t.is(report.okCount, 5);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
 });
