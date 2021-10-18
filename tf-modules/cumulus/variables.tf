@@ -163,6 +163,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "archive_api_lambda_vars" {
+  description = "The variables for archive api lambdas"
+  type        = map(string)
+  default     = {}
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type        = number

@@ -142,6 +142,12 @@ variable "api_gateway_stage" {
   description = "The API Gateway stage to create"
 }
 
+variable "api_lambda_vars" {
+  description = "The variables for archive api lambdas"
+  type        = map(string)
+  default     = {}
+}
+
 variable "api_port" {
   type    = number
   default = null

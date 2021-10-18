@@ -16,6 +16,8 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       ES_HOST                          = var.elasticsearch_hostname
+      ES_SCROLL                        = lookup(var.api_lambda_vars, "create_reconciliation_report_es_scroll", 1000)
+      ES_SCROLL_SIZE                   = lookup(var.api_lambda_vars, "create_reconciliation_report_es_scroll_size", "6m")
       FilesTable                       = var.dynamo_tables.files.name
       GranulesTable                    = var.dynamo_tables.granules.name
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name

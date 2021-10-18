@@ -170,6 +170,12 @@ variable "api_reserved_concurrency" {
   description = "Archive API Lambda reserved concurrency"
 }
 
+variable "archive_api_lambda_vars" {
+  description = "The variables for archive api lambdas"
+  type        = map(string)
+  default     = {}
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}

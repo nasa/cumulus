@@ -5,6 +5,8 @@ module "archive" {
 
   api_url = var.archive_api_url
 
+  api_lambda_vars = var.archive_api_lambda_vars
+
   deploy_to_ngap = var.deploy_to_ngap
 
   permissions_boundary_arn = var.permissions_boundary_arn
