@@ -91,7 +91,7 @@ function isCMRFile(fileobject) {
  * @param {Array<Object>} granule.files - array of files for a granule
  * @param {string} granule.granuleId - granule ID
  * @returns {Array<Object>} an array of CMR file objects, each with properties
- *    `granuleId`, `filename`, and possibly `etag` (if present on input)
+ *    `granuleId`, `bucket`, `key`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject({ granuleId, files = [] }) {
   return files
