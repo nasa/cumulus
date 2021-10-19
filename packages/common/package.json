@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs URLUtils.js util.js > docs/API.md",
-    "clean": "rm -f *.d.ts *.map",
+    "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
