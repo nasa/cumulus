@@ -251,7 +251,7 @@ terraform init -reconfigure
 terraform destroy
 ```
 
-If using a shared cluster and you want to destroy the database created by Cumulus for your deployment you can login to your deployment and manually delete that individual database.
+If using a shared cluster and you just want to destroy the database created by Cumulus for your deployment you must manually delete that individual database. The database is named `<prefix>_db`.
 
 Finally, since we tag the resources in your deployment, you should see if there
 are any dangling resources left behind for any reason, by running the following
