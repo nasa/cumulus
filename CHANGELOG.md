@@ -33,6 +33,10 @@ upgrades to `knex` package and to address security vulnerabilities.
     `s3://internal-bucket/workflows` directory into
     `s3://internal-bucket/buckets`.
 
+- **CUMULUS-2725**
+  - Updated providers endpoint to return encrypted password
+  - Update providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+  
 ## [v9.7.0] 2021-10-01
 
 ### Notable Changes
