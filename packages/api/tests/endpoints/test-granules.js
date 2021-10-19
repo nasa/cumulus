@@ -1796,6 +1796,10 @@ test('PUT replaces an existing granule in all data stores', async (t) => {
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
     error: {},
+    beginningDateTime: actualGranule.beginningDateTime,
+    endingDateTime: actualGranule.endingDateTime,
+    productionDateTime: actualGranule.productionDateTime,
+    lastUpdateDateTime: actualGranule.lastUpdateDateTime,
   });
 
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
@@ -1808,6 +1812,10 @@ test('PUT replaces an existing granule in all data stores', async (t) => {
     query_fields: newQueryFields,
     updated_at: actualPgGranule.updated_at,
     error: {},
+    last_update_date_time: actualPgGranule.last_update_date_time,
+    beginning_date_time: actualPgGranule.beginning_date_time,
+    ending_date_time: actualPgGranule.ending_date_time,
+    production_date_time: actualPgGranule.production_date_time,
   });
 
   t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);

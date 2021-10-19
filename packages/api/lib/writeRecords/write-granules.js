@@ -463,7 +463,6 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    // Build a objects with correct shape for the granuleModel.generateGranuleRecord.
     const granule = { granuleId, cmrLink, published, files };
     const processingTimeInfo = {
       processingStartDateTime,

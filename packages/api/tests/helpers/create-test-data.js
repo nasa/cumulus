@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs-extra');
+const path = require('path');
+
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
@@ -27,6 +30,8 @@ const {
 } = require('../../lib/testUtils');
 
 const models = require('../../models');
+
+const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
  * Helper for creating a granule, a parent collection,
@@ -99,16 +104,30 @@ async function createGranuleAndFiles({
       key: `${randomString(5)}/${granuleId}.hdf`,
     },
     {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
       bucket: s3Buckets.public.name,
       fileName: `${granuleId}.jpg`,
       key: `${randomString(5)}/${granuleId}.jpg`,
     },
   ];
+
+  // Add files to S3
+  await Promise.all(files.map((file) => s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: `test data ${randomString()}`,
+  })));
+
+  const metadataFile = {
+    bucket: s3Buckets.protected.name,
+    fileName: `${granuleId}.cmr.xml`,
+    key: `${randomString(5)}/${granuleId}.cmr.xml`,
+  };
+  await s3PutObject({
+    Bucket: metadataFile.bucket,
+    Key: metadataFile.key,
+    Body: metadataFileFixture,
+  });
+  files.push(metadataFile);
 
   const newGranule = fakeGranuleFactoryV2(
     {
@@ -116,17 +135,9 @@ async function createGranuleAndFiles({
       status: 'failed',
       collectionId: granuleCollectionId,
       ...granuleParams,
+      files,
     }
   );
-
-  newGranule.files = files;
-
-  // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: `test data ${randomString()}`,
-  })));
 
   // create a new Dynamo granule
   const dynamoGranule = await granuleModel.create(newGranule);
