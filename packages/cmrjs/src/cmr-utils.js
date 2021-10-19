@@ -357,9 +357,9 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
  * @returns {Object} - updated granule object
  */
 function addEtagsToFileObjects(granule, etags) {
-  granule.files.forEach((file) => {
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
     const fileURI = getS3UrlOfFile(file);
-    // eslint-disable-next-line no-param-reassign
     if (etags[fileURI]) file.etag = etags[fileURI];
   });
   return granule;
@@ -372,8 +372,8 @@ function addEtagsToFileObjects(granule, etags) {
  * @returns {undefined}
  */
 function removeEtagsFromFileObjects(granule) {
-  granule.files.forEach((file) => {
-    // eslint-disable-next-line no-param-reassign
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
     delete file.etag;
   });
 }
