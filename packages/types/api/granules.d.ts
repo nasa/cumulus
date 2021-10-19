@@ -19,6 +19,9 @@ export interface MessageGranule {
   files?: import('./files').ApiFile[]
 }
 
+type OptionalGranuleTemporalInfo = GranuleTemporalInfo | {};
+type OptionalGranuleProcessingInfo = import('./executions').ExecutionProcessingTimes | {};
+
 export type ApiGranule = {
   granuleId: string
   collectionId: string
@@ -37,4 +40,4 @@ export type ApiGranule = {
   timeToPreprocess?: number
   timeToArchive?: number
   files?: Omit<import('./files').ApiFile, 'granuleId'>[]
-} & GranuleTemporalInfo & import('./executions').ExecutionProcessingTimes;
+} & OptionalGranuleTemporalInfo & OptionalGranuleProcessingInfo;

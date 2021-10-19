@@ -138,10 +138,10 @@ function isProcessingTimeInfo(
  */
 export const getGranuleProcessingTimeInfo = (
   processingTimeInfo?: ExecutionProcessingTimes
-): ExecutionProcessingTimes | undefined => {
+): ExecutionProcessingTimes | {} => {
   const updatedProcessingTimeInfo = isProcessingTimeInfo(processingTimeInfo)
     ? { ...processingTimeInfo }
-    : undefined;
+    : {};
   return mapValues(
     updatedProcessingTimeInfo,
     convertDateToISOString
