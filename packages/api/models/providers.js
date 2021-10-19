@@ -68,10 +68,21 @@ class Provider extends Manager {
     if (item.username || item.password) record.encrypted = true;
 
     if (item.username) {
-      record.username = await encryptValueWithKMS(item.username);
+      try {
+        await KMS.decryptBase64String(item.username);
+        record.username = item.username;
+      } catch (error) {
+        record.username = await encryptValueWithKMS(item.username);
+      }
     }
+
     if (item.password) {
-      record.password = await encryptValueWithKMS(item.password);
+      try {
+        await KMS.decryptBase64String(item.password);
+        record.password = item.password;
+      } catch (error) {
+        record.password = await encryptValueWithKMS(item.password);
+      }
     }
 
     return super.update(key, record, keysToDelete);
@@ -83,10 +94,21 @@ class Provider extends Manager {
     if (item.username || item.password) record.encrypted = true;
 
     if (item.username) {
-      record.username = await encryptValueWithKMS(item.username);
+      try {
+        await KMS.decryptBase64String(item.username);
+        record.username = item.username;
+      } catch (error) {
+        record.username = await encryptValueWithKMS(item.username);
+      }
     }
+
     if (item.password) {
-      record.password = await encryptValueWithKMS(item.password);
+      try {
+        await KMS.decryptBase64String(item.password);
+        record.password = item.password;
+      } catch (error) {
+        record.password = await encryptValueWithKMS(item.password);
+      }
     }
 
     return super.create(record);
