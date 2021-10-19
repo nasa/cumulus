@@ -193,15 +193,6 @@ async function del(req, res) {
 
   const { arn } = req.params;
 
-  try {
-    await executionModel.get({ arn });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
-    }
-    throw error;
-  }
-
   let apiExecution;
   try {
     apiExecution = await executionModel.get({ arn });
