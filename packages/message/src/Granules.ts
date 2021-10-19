@@ -10,6 +10,7 @@
 
 import isInteger from 'lodash/isInteger';
 import isNil from 'lodash/isNil';
+import mapValues from 'lodash/mapValues';
 import omitBy from 'lodash/omitBy';
 
 import { CumulusMessageError } from '@cumulus/errors';
@@ -112,22 +113,13 @@ export const getGranuleTimeToArchive = ({
   post_to_cmr_duration = 0,
 } = {}) => post_to_cmr_duration / 1000;
 
-function convertObjectDatesToISOStrings<T extends Record<string, string>>(
-  datesObject?: T
-): T | undefined {
-  if (datesObject !== undefined) {
-    const updatedDatesObject = { ...datesObject };
-    const dateKeys = Object.keys(updatedDatesObject) as (keyof T)[];
-    dateKeys.forEach((dateKey) => {
-      const dateValue = updatedDatesObject[dateKey];
-      const newDate = new Date(dateValue).toISOString();
-      // TODO: this is gross. fix me
-      updatedDatesObject[dateKey] = newDate as T[keyof T];
-    });
-    return updatedDatesObject;
-  }
-  return datesObject;
-}
+/**
+ * Convert date string to standard ISO format.
+ *
+ * @param {string} date - Date string, possibly in multiple formats
+ * @returns {string} Standardized ISO date string
+ */
+const convertDateToISOString = (date: string) => new Date(date).toISOString();
 
 function isProcessingTimeInfo(
   info: ExecutionProcessingTimes | {} = {}
@@ -150,8 +142,10 @@ export const getGranuleProcessingTimeInfo = (
   const updatedProcessingTimeInfo = isProcessingTimeInfo(processingTimeInfo)
     ? { ...processingTimeInfo }
     : undefined;
-
-  return convertObjectDatesToISOStrings(updatedProcessingTimeInfo);
+  return mapValues(
+    updatedProcessingTimeInfo,
+    convertDateToISOString
+  );
 };
 
 function isGranuleTemporalInfo(
@@ -183,14 +177,16 @@ export const getGranuleCmrTemporalInfo = async ({
   granule: MessageGranule,
   cmrTemporalInfo?: GranuleTemporalInfo,
   cmrUtils: CmrUtilsClass
-}): Promise<GranuleTemporalInfo | undefined> => {
-  // Get CMR temporalInfo ( beginningDateTime, endingDateTime,
+}): Promise<GranuleTemporalInfo | {}> => {
+  // Get CMR temporalInfo (beginningDateTime, endingDateTime,
   // productionDateTime, lastUpdateDateTime)
   const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
     ? { ...cmrTemporalInfo }
     : await cmrUtils.getGranuleTemporalInfo(granule);
-
-  return convertObjectDatesToISOStrings(temporalInfo);
+  return mapValues(
+    temporalInfo,
+    convertDateToISOString
+  );
 };
 
 /**

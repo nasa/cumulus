@@ -18,5 +18,5 @@ export interface Workflow {
 }
 
 export interface CmrUtilsClass {
-  getGranuleTemporalInfo(granule: MessageGranule): Promise<GranuleTemporalInfo>
+  getGranuleTemporalInfo(granule: MessageGranule): Promise<GranuleTemporalInfo | {}>
 }
