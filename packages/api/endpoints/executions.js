@@ -194,13 +194,24 @@ async function del(req, res) {
   const { arn } = req.params;
 
   let apiExecution;
+
   try {
-    apiExecution = await executionModel.get({ arn });
+    await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
     throw error;
+  }
+
+  try {
+    // Get DynamoDB execution in case of failure
+    apiExecution = await executionModel.get({ arn });
+  } catch (error) {
+    // Don't throw an error if record doesn't exist
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   try {

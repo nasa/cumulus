@@ -587,6 +587,7 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing fro
 test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoExecution,
+    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
@@ -598,6 +599,7 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {
@@ -737,15 +739,15 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
   t.is(originalExecution2.length, 1);
 });
 
-test.serial('DELETE returns a 404 if Dynamo execution cannot be found', async (t) => {
-  const nonExistantExecution = {
+test.serial('DELETE returns a 404 if PostgreSQL execution cannot be found', async (t) => {
+  const nonExistentExecution = {
     arn: 'arn9',
     status: 'completed',
     name: 'test_execution',
   };
 
   const response = await request(app)
-    .delete(`/executions/${nonExistantExecution.arn}`)
+    .delete(`/executions/${nonExistentExecution.arn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
