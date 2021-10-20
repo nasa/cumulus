@@ -248,6 +248,16 @@ async function del(req, res) {
 
   let existingCollection;
   try {
+    await collectionPgModel.get(knex, { name, version });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw error;
+  }
+
+  try {
+    // Save DynamoDB collection record to recreate in case delete fails
     existingCollection = await collectionsModel.get({ name, version });
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {

@@ -219,6 +219,7 @@ async function del(req, res) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
+    throw error;
   }
 
   try {
