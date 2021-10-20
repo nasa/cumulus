@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
 

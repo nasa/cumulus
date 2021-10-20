@@ -1,6 +1,10 @@
 import got, { Headers } from 'got';
+import Logger from '@cumulus/logger';
+
 import { getSearchUrl } from './getUrl';
 import { parseXMLString } from './Utils';
+
+const log = new Logger({ sender: 'cmr-client/searchConcept' });
 
 export interface Echo10Response {
   results: {
@@ -93,19 +97,29 @@ export async function searchConcept({
 
   if (!query.has('page_size')) query.append('page_size', String(pageSize));
 
-  const response = await got.get(
-    `${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}`,
-    {
-      responseType: format.endsWith('json') ? 'json' : undefined,
-      searchParams: query,
-      headers,
-    }
-  );
+  let response;
+  try {
+    response = await got.get(
+      `${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}`,
+      {
+        responseType: format.endsWith('json') ? 'json' : undefined,
+        searchParams: query,
+        headers,
+      }
+    );
+  } catch (error) {
+    log.error(`Error executing CMR search concept.
+      Searching ${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}
+      with search parameters ${query}
+      and headers ${JSON.stringify(headers)}`);
+    log.error(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    throw error;
+  }
 
   const responseItems
     = format === 'echo10'
       ? (<Echo10Response>(await parseXMLString(<string>response.body))).results.result || []
-      : (<{body: {items: unknown}}>response).body.items || (<JsonResponse>response).body.feed.entry;
+      : (<UmmJsonResponse>response).body.items || (<JsonResponse>response).body.feed.entry;
 
   const fetchedResults = previousResults.concat(responseItems || []);
 
