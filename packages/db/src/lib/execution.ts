@@ -1,14 +1,14 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { tableNames } from '../tables';
 import { ExecutionPgModel } from '../models/execution';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
+import { TableNames } from '../tables';
 
 const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
 
-export interface arnRecord {
+export interface ArnRecord {
   arn: string;
 }
 
@@ -22,27 +22,27 @@ const log = new Logger({ sender: '@cumulus/db/lib/execution' });
  *   Knex client for reading from RDS database
  * @param {number} granuleCumulusId - The primary ID for a Granule
  * @param {number} limit - limit to number of executions to query
- * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
  */
 export const getExecutionArnsByGranuleCumulusId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleCumulusId: Number,
   limit?: number
-): Promise<arnRecord[]> => {
-  const knexQuery = knexOrTransaction(tableNames.executions)
-    .select(`${tableNames.executions}.arn`)
-    .where(`${tableNames.granules}.cumulus_id`, granuleCumulusId)
+): Promise<ArnRecord[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .select(`${TableNames.executions}.arn`)
+    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
     )
     .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
   if (limit) {
     knexQuery.limit(limit);
   }
@@ -56,29 +56,29 @@ export const getExecutionArnsByGranuleCumulusId = async (
  * @param {Knex} knex - DB Client
  * @param {string[]} granuleIds - Array of granuleIds
  * @param {string[]} workflowNames - Array of workflow names
- * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
  */
 export const executionArnsFromGranuleIdsAndWorkflowNames = (
   knex: Knex,
   granuleIds: string[],
   workflowNames: string[]
-): Promise<arnRecord[]> =>
+): Promise<ArnRecord[]> =>
   knex
-    .select(`${tableNames.executions}.arn`)
-    .from(tableNames.executions)
+    .select(`${TableNames.executions}.arn`)
+    .from(TableNames.executions)
     .join(
-      tableNames.granulesExecutions,
-      `${tableNames.executions}.cumulus_id`,
-      `${tableNames.granulesExecutions}.execution_cumulus_id`
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
     )
     .join(
-      tableNames.granules,
-      `${tableNames.granules}.cumulus_id`,
-      `${tableNames.granulesExecutions}.granule_cumulus_id`
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
     )
-    .whereIn(`${tableNames.granules}.granule_id`, granuleIds)
-    .whereIn(`${tableNames.executions}.workflow_name`, workflowNames)
-    .orderBy(`${tableNames.executions}.timestamp`, 'desc');
+    .whereIn(`${TableNames.granules}.granule_id`, granuleIds)
+    .whereIn(`${TableNames.executions}.workflow_name`, workflowNames)
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
 
 /**
  * convenience function to return a single executionArn string for a intput
@@ -129,7 +129,7 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
 ): Promise<Array<string>> => {
   const granuleCumulusIdsArray = [granuleCumulusIds].flat();
   const numberOfGranules = granuleCumulusIdsArray.length;
-  const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = tableNames;
+  const { executions: executionsTable, granulesExecutions: granulesExecutionsTable } = TableNames;
 
   const aggregatedWorkflowCounts = await knexOrTransaction(executionsTable)
     .select('workflow_name')

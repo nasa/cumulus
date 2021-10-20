@@ -314,7 +314,7 @@ variable "rds_connection_timing_configuration" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "34"
+  default = "36"
 }
 
 variable "cumulus_process_activity_version" {

@@ -784,7 +784,7 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
   );
 });
 
-test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -805,9 +805,6 @@ test.serial('applyWorkflow updates granule status and invokes Lambda to schedule
   });
 
   await granuleModel.applyWorkflow(granule, workflow);
-
-  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
-  t.is(status, 'running');
 
   t.true(lambdaInvokeStub.called);
   t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);

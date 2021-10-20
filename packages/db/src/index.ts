@@ -1,6 +1,6 @@
 import * as path from 'path';
 
-export { default as Knex } from 'knex';
+export { Knex } from 'knex';
 export {
   createTestDatabase,
   deleteTestDatabase,
@@ -18,7 +18,8 @@ export {
 
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
-export { tableNames } from './tables';
+export { createRejectableTransaction } from './database';
+export { TableNames } from './tables';
 export const migrationDir = path.join(__dirname, 'migrations');
 
 export {
