@@ -353,6 +353,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalProvider,
+    originalPgRecord,
   } = await createProviderTestRecords(
     t.context
   );
@@ -361,6 +362,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {

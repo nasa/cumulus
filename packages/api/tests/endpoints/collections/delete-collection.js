@@ -178,6 +178,16 @@ test('Attempting to delete a collection with an invalid access token returns an 
 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
+test('DELETE returns a 404 if PostgreSQL collection cannot be found', async (t) => {
+  const nonExistentCollection = fakeCollectionFactory();
+  const response = await request(app)
+    .delete(`/collections/${nonExistentCollection.name}/${nonExistentCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, 'No record found');
+});
+
 test.serial('Deleting a collection removes it from all data stores and publishes an SNS message', async (t) => {
   const { originalCollection } = await createCollectionTestRecords(t.context);
 
@@ -235,44 +245,13 @@ test.serial('Deleting a collection removes it from all data stores and publishes
   );
 });
 
-test.serial('Deleting a collection without a record in RDS succeeds', async (t) => {
-  const { testCollection } = t.context;
-
-  await request(app)
-    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.false(
-    await t.context.collectionModel.exists(
-      testCollection.name,
-      testCollection.version
-    )
-  );
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages.length, 1);
-
-  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.event, 'Delete');
-  t.truthy(message.deletedAt);
-  t.deepEqual(
-    message.record,
-    { name: testCollection.name, version: testCollection.version }
-  );
-});
-
 test.serial('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
-  const { testCollection } = t.context;
+  const { originalCollection } = await createCollectionTestRecords(t.context);
 
   const rule = fakeRuleFactoryV2({
     collection: {
-      name: testCollection.name,
-      version: testCollection.version,
+      name: originalCollection.name,
+      version: originalCollection.version,
     },
     rule: {
       type: 'onetime',
@@ -289,7 +268,7 @@ test.serial('Attempting to delete a collection with an associated rule returns a
   await ruleModel.create(rule);
 
   const response = await request(app)
-    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
+    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
@@ -299,12 +278,13 @@ test.serial('Attempting to delete a collection with an associated rule returns a
 });
 
 test.serial('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
-  const { testCollection } = t.context;
+  const { collectionModel } = t.context;
+  const { originalCollection } = await createCollectionTestRecords(t.context);
 
   const rule = fakeRuleFactoryV2({
     collection: {
-      name: testCollection.name,
-      version: testCollection.version,
+      name: originalCollection.name,
+      version: originalCollection.version,
     },
     rule: {
       type: 'onetime',
@@ -321,12 +301,12 @@ test.serial('Attempting to delete a collection with an associated rule does not 
   await ruleModel.create(rule);
 
   await request(app)
-    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
+    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
 
-  t.true(await t.context.collectionModel.exists(testCollection.name, testCollection.version));
+  t.true(await collectionModel.exists(originalCollection.name, originalCollection.version));
 });
 
 test.serial('del() does not remove from PostgreSQL/Elasticsearch or publish SNS message if removing from Dynamo fails', async (t) => {
@@ -393,6 +373,7 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch or publish SNS 
 test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS message if removing from PostgreSQL fails', async (t) => {
   const {
     originalCollection,
+    originalPgRecord,
   } = await createCollectionTestRecords(
     t.context
   );
@@ -401,6 +382,7 @@ test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS mess
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {

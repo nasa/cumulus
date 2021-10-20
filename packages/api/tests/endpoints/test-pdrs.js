@@ -498,6 +498,7 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch/S3 if removing 
 test.serial('del() does not remove from Dynamo/Elasticsearch/S3 if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoPdr,
+    originalPgRecord,
   } = await createPdrTestRecords(
     t.context
   );
@@ -522,6 +523,7 @@ test.serial('del() does not remove from Dynamo/Elasticsearch/S3 if removing from
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {
