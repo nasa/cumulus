@@ -57,9 +57,9 @@ upgrades to `knex` package.
     - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
       derived table classes to support querying the current max `cumulus_id`.
   - **CUMULUS-2673**
-    - Added `elasticsearch_hostname` variable to
-      `postgres-migration-async-operation` lambda.
-    - Added `elasticsearch_security_group_id` to
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation` 
+    Lambda using value of `elasticsearch_hostname` Terraform variable. 
+    - Added `elasticsearch_security_group_id` to security groups for
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
       `postgres-migration-async-operation` lambda.
