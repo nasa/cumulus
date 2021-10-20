@@ -197,13 +197,23 @@ async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
 
   let apiRule;
+
   try {
-    apiRule = await ruleModel.get({ name });
+    await rulePgModel.get(knex, { name });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
     throw error;
+  }
+
+  try {
+    // Save DynamoDB rule to recreate record in case of deletion failure
+    apiRule = await ruleModel.get({ name });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   try {

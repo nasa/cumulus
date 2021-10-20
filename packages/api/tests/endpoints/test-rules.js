@@ -951,6 +951,16 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
   );
 });
 
+test('DELETE returns a 404 if PostgreSQL rule cannot be found', async (t) => {
+  const nonExistentRule = fakeRuleFactoryV2();
+  const response = await request(app)
+    .delete(`/rules/${nonExistentRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, 'No record found');
+});
+
 test('DELETE deletes a rule', async (t) => {
   const { newRule } = t.context;
 
@@ -1037,6 +1047,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoRule,
+    originalPgRecord,
   } = await createRuleTestRecords(
     t.context,
     {
@@ -1049,6 +1060,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {
