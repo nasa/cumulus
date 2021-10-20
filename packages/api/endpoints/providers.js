@@ -214,6 +214,15 @@ async function del(req, res) {
 
   let existingProvider;
   try {
+    await providerPgModel.get(knex, { name: id });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+  }
+
+  try {
+    // Save DynamoDB provider in case delete fails and need to recreate
     existingProvider = await providerModel.get({ id });
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
