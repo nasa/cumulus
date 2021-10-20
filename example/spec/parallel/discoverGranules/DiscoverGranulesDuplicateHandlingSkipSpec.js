@@ -25,7 +25,7 @@ const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
-describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
+describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
   let collection;
   let discoverGranulesRule;
@@ -78,6 +78,8 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         collectionId,
         granuleId: queuedGranuleId,
         execution: undefined,
+        status: 'queued',
+        published: false,
         files: [{ bucket: sourceBucket, key: queuedGranuleKey }],
       }));
       await createGranule({
@@ -220,6 +222,18 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         getGranule,
         { prefix, granuleId: newGranuleId },
         'completed'
+      );
+      expect(granule).toBeDefined();
+    }
+  });
+
+  it('leaves the queued granule in the queued state', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const granule = await waitForApiStatus(
+        getGranule,
+        { prefix, granuleId: queuedGranuleId },
+        'queued'
       );
       expect(granule).toBeDefined();
     }
