@@ -10,7 +10,7 @@ import { S3ObjectStore } from '@cumulus/aws-client';
  *   which case the protocol will be read from the front of the URL.
  * @returns {S3ObjectStore} an object store for interacting with the given protocol
  */
-export function objectStoreForProtocol(protocol?: string): S3ObjectStore|undefined {
+export function objectStoreForProtocol(protocol?: string): S3ObjectStore | undefined {
   if (!protocol) {
     return undefined;
   }

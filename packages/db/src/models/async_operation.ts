@@ -1,7 +1,7 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresAsyncOperation, PostgresAsyncOperationRecord } from '../types/async_operation';
 
@@ -9,7 +9,7 @@ import { PostgresAsyncOperation, PostgresAsyncOperationRecord } from '../types/a
 class AsyncOperationPgModel extends BasePgModel<PostgresAsyncOperation, PostgresAsyncOperationRecord> {
   constructor() {
     super({
-      tableName: tableNames.asyncOperations,
+      tableName: TableNames.asyncOperations,
     });
   }
 

@@ -22,6 +22,7 @@ const {
   getWorkflowNameIntersectFromGranuleIds,
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
 
 /**
@@ -420,7 +421,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
   let executionCumulusId1;
   let executionCumulusId2;
   let executionCumulusId3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
     [executionCumulusId3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -486,7 +487,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   let executionCumulusId1;
   let executionCumulusId2;
   let executionCumulusId3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
     [executionCumulusId3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -543,7 +544,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
   let executionCumulusId1;
   let executionCumulusId2;
   let executionCumulusId3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
     [executionCumulusId3] = await executionPgModel.create(trx, executionRecords[2]);
@@ -588,7 +589,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for si
   let executionCumulusId1;
   let executionCumulusId2;
   let executionCumulusId3;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
     [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
     [executionCumulusId3] = await executionPgModel.create(trx, executionRecords[2]);
