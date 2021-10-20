@@ -57,6 +57,7 @@ The constructor for the CMR class
 | params.passwordSecretName | <code>string</code> | CMR password secret, not used if token is provided |
 | params.password | <code>string</code> | CMR password, not used if token or  passwordSecretName is provided |
 | params.token | <code>string</code> | CMR or Launchpad token, if not provided, CMR username and password are used to get a cmr token |
+| params.oauthProvider | <code>string</code> | Oauth provider: earthdata or launchpad |
 
 **Example**  
 ```js

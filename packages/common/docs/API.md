@@ -22,9 +22,9 @@ const { buildURL } = require('@cumulus/common/URLUtils');
 
 buildURL({ protocol: 'http', host: 'example.com' }); // => 'http://example.com'
 ```
-<a name="exp_module_URLUtils--exports.buildURL"></a>
+<a name="exp_module_URLUtils--buildURL"></a>
 
-### exports.buildURL(params) ⇒ <code>string</code> ⏏
+### buildURL(params) ⇒ <code>string</code> ⏏
 Build a URL
 
 **Kind**: Exported function  
@@ -59,7 +59,7 @@ Simple utility functions
 
 * [util](#module_util)
     * [exports.deprecate](#exp_module_util--exports.deprecate) ⏏
-    * [exports.removeNilProperties(obj)](#exp_module_util--exports.removeNilProperties) ⇒ <code>Object</code> ⏏
+    * [removeNilProperties(obj)](#exp_module_util--removeNilProperties) ⇒ <code>Object</code> ⏏
     * [exports.isOneOf(collection, val)](#exp_module_util--exports.isOneOf) ⇒ <code>boolean</code> ⏏
 
 <a name="exp_module_util--exports.deprecate"></a>
@@ -78,9 +78,9 @@ only be printed once.
 | version | <code>string</code> | the version after which the code will be marked   as deprecated |
 | [alternative] | <code>string</code> | the function / method / class to use instead   of this deprecated code |
 
-<a name="exp_module_util--exports.removeNilProperties"></a>
+<a name="exp_module_util--removeNilProperties"></a>
 
-### exports.removeNilProperties(obj) ⇒ <code>Object</code> ⏏
+### removeNilProperties(obj) ⇒ <code>Object</code> ⏏
 Remove properties whose values are `null` or `undefined`
 
 **Kind**: Exported function  
