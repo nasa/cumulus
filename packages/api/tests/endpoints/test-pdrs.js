@@ -11,14 +11,15 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  localStackConnectionEnv,
   CollectionPgModel,
+  destroyLocalTestDb,
   ExecutionPgModel,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  migrationDir,
   PdrPgModel,
   ProviderPgModel,
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  migrationDir,
+  translateApiPdrToPostgresPdr,
 } = require('@cumulus/db');
 const {
   fakeCollectionRecordFactory,
@@ -39,6 +40,7 @@ const {
   fakePdrFactory,
   setAuthorizedOAuthUsers,
   createPdrTestRecords,
+  fakePdrFactoryV2,
 } = require('../../lib/testUtils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
@@ -291,16 +293,27 @@ test('GET fails if pdr is not found', async (t) => {
   t.true(message.includes('No record found for'));
 });
 
-test.serial('DELETE a pdr', async (t) => {
-  const newPdr = fakePdrFactory('completed');
-  // create a new pdr
-  await t.context.pdrModel.create(newPdr);
+test('DELETE returns a 404 if PostgreSQL PDR cannot be found', async (t) => {
+  const nonExistentPdr = fakePdrFactory('completed');
+  const response = await request(app)
+    .delete(`/pdrs/${nonExistentPdr.pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, 'No record found');
+});
 
-  const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
+test.serial('DELETE a pdr', async (t) => {
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(t.context);
+  // create a new pdr
+
+  const key = `${process.env.stackName}/pdrs/${originalDynamoPdr.pdrName}`;
   await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
   const response = await request(app)
-    .delete(`/pdrs/${newPdr.pdrName}`)
+    .delete(`/pdrs/${originalDynamoPdr.pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -311,7 +324,21 @@ test.serial('DELETE a pdr', async (t) => {
 });
 
 test.serial('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', async (t) => {
-  const pdrName = `${randomString()}.PDR`;
+  const {
+    knex,
+    pdrPgModel,
+    testPgProvider,
+    testPgCollection,
+  } = t.context;
+
+  const nonExistentPdr = fakePdrFactoryV2({
+    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
+    provider: testPgProvider.name,
+  });
+  const insertPgRecord = await translateApiPdrToPostgresPdr(nonExistentPdr, knex);
+  await pdrPgModel.create(knex, insertPgRecord);
+
+  const pdrName = insertPgRecord.name;
 
   await uploadPdrToS3(
     process.env.system_bucket,
@@ -332,11 +359,12 @@ test.serial('DELETE handles the case where the PDR exists in S3 but not in Dynam
 });
 
 test.serial('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
-  const newPdr = fakePdrFactory('completed');
-  await t.context.pdrModel.create(newPdr);
+  const {
+    originalDynamoPdr,
+  } = await createPdrTestRecords(t.context);
 
   const response = await request(app)
-    .delete(`/pdrs/${newPdr.pdrName}`)
+    .delete(`/pdrs/${originalDynamoPdr.pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -381,26 +409,6 @@ test.serial('DELETE removes a PDR from RDS only if no DynamoDB record exists', a
 
   // create a new PDR in RDS
   await t.context.pdrPgModel.create(t.context.knex, newPGPdr);
-
-  const response = await request(app)
-    .delete(`/pdrs/${pdrName}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-  t.is(response.status, 200);
-
-  // Check Dynamo and RDS. The PDR should not exist in either.
-  t.false(
-    await t.context.pdrModel.exists({ pdrName })
-  );
-  t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: pdrName }));
-});
-
-test.serial('DELETE removes a PDR from DynamoDB only if no RDS record exists', async (t) => {
-  const newDynamoPdr = fakePdrFactory('completed');
-  const pdrName = newDynamoPdr.pdrName;
-
-  // create a new PDR in Dynamo
-  await t.context.pdrModel.create(newDynamoPdr);
 
   const response = await request(app)
     .delete(`/pdrs/${pdrName}`)

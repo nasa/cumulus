@@ -81,6 +81,15 @@ async function del(req, res) {
 
   let existingPdr;
   try {
+    await pdrPgModel.get(knex, { name: pdrName });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+  }
+
+  try {
+    // Save DynamoDb PDR in case delete fails and we need to recreate
     existingPdr = await pdrModel.get({ pdrName });
   } catch (error) {
     // Ignore error if record does not exist in DynamoDb
