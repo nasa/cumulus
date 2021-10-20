@@ -223,7 +223,7 @@ const _writeGranuleFiles = async ({
 
   if (status !== 'running' && status !== 'queued') {
     fileRecords = _generateFilePgRecords({
-      files: files,
+      files,
       granuleCumulusId,
     });
   }
@@ -561,7 +561,7 @@ const writeGranulesFromMessage = async ({
   esClient,
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
-    log.info('No granules to write, skipping writeGranules');
+    log.info('No granules to write, skipping writeGranulesFromMessage');
     return undefined;
   }
 

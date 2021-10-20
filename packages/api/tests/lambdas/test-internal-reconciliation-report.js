@@ -31,10 +31,18 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeExecutionRecordFactory,
   ExecutionPgModel,
+  FilePgModel,
+  translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
 
-const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const {
+  fakeCollectionFactory,
+  // fakeFileFactory,
+  fakeGranuleFactoryV2,
+  fakeFileFactory,
+} = require('../../lib/testUtils');
+const {
+  compareEsGranuleAndPgGranule,
   internalRecReportForCollections,
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
@@ -51,6 +59,7 @@ test.before((t) => {
   t.context.granulePgModel = new GranulePgModel();
   t.context.providerPgModel = new ProviderPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
+  t.context.filePgModel = new FilePgModel();
 });
 
 test.beforeEach(async (t) => {
@@ -169,6 +178,73 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
+});
+
+test.serial('compareEsGranuleAndPgGranule returns true for matching granules', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = { ...granule };
+  t.true(compareEsGranuleAndPgGranule(granule, granule2));
+});
+
+test.serial('compareEsGranuleAndPgGranule returns false for granules with different values', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = { ...granule, foo: 'bar' };
+  t.false(compareEsGranuleAndPgGranule(granule, granule2));
+});
+
+test.serial('compareEsGranuleAndPgGranule returns false if one granule has files and other does not', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  t.false(compareEsGranuleAndPgGranule(granule, granule2));
+});
+
+test.serial('compareEsGranuleAndPgGranule returns false if granule file is missing from second granule', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key2',
+    }],
+  };
+  t.false(compareEsGranuleAndPgGranule(granule, granule2));
+});
+
+test.serial('compareEsGranuleAndPgGranule returns false if granule files are different', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+      size: 5,
+    }],
+  };
+  t.false(compareEsGranuleAndPgGranule(granule, granule2));
 });
 
 test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
@@ -401,6 +477,68 @@ test.serial('internalRecReportForGranules handles generated granules with custom
 
   const report = await internalRecReportForGranules({ knex });
   t.is(report.okCount, 5);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+});
+
+test.serial('internalRecReportForGranules handles granules with files', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    executionPgModel,
+    filePgModel,
+  } = t.context;
+
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+  const collection = fakeCollectionFactory({
+    ...deconstructCollectionId(collectionId),
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+  await collectionPgModel.upsert(
+    knex,
+    translateApiCollectionToPostgresCollection(collection)
+  );
+  await Promise.all(range(2).map(async () => {
+    const fakeGranule = fakeGranuleFactoryV2({
+      collectionId,
+      files: [fakeFileFactory(), fakeFileFactory(), fakeFileFactory()],
+    });
+
+    const fakeCmrUtils = {
+      getGranuleTemporalInfo: () => Promise.resolve({}),
+    };
+    const apiGranule = await generateGranuleApiRecord({
+      ...fakeGranule,
+      granule: fakeGranule,
+      executionUrl: fakeGranule.execution,
+      workflowStartTime: Date.now(),
+      cmrUtils: fakeCmrUtils,
+    });
+    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+
+    const pgExecutionData = fakeExecutionRecordFactory({
+      url: apiGranule.execution,
+    });
+    const [pgExecution] = await executionPgModel.create(knex, pgExecutionData);
+
+    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
+      knex,
+      pgGranule,
+      pgExecution.cumulus_id
+    );
+    await Promise.all(apiGranule.files.map(async (file) => {
+      const pgFile = translateApiFiletoPostgresFile(file);
+      await filePgModel.create(knex, {
+        ...pgFile,
+        granule_cumulus_id: pgGranuleRecord.cumulus_id,
+      });
+    }));
+    await indexer.indexGranule(esClient, apiGranule, esAlias);
+  }));
+
+  const report = await internalRecReportForGranules({ knex });
+  t.is(report.okCount, 2);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
 });
