@@ -223,6 +223,12 @@ variable "custom_queues" {
   default     = []
 }
 
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
+}
+
 variable "deploy_distribution_s3_credentials_endpoint" {
   description = "Whether or not to include the S3 credentials endpoint in the Thin Egress App"
   type        = bool
