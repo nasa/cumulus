@@ -243,6 +243,16 @@ test('del() returns a 401 bad request if id is not provided', async (t) => {
   t.true(fakeResponse.boom.badRequest.called);
 });
 
+test('DELETE returns a 404 if PostgreSQL async operation cannot be found', async (t) => {
+  const nonExistentAsyncOperation = fakeAsyncOperationFactory();
+  const response = await request(app)
+    .delete(`/asyncOperations/${nonExistentAsyncOperation.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, 'No record found');
+});
+
 test('DELETE deletes the async operation from all data stores', async (t) => {
   const {
     originalDynamoAsyncOperation,
@@ -319,6 +329,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from DynamoDB/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoAsyncOperation,
+    originalPgRecord,
   } = await createAsyncOperationTestRecords(t.context);
   const { id } = originalDynamoAsyncOperation;
 
@@ -326,6 +337,7 @@ test('del() does not remove from DynamoDB/Elasticsearch if removing from Postgre
     delete: () => {
       throw new Error('PG something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {

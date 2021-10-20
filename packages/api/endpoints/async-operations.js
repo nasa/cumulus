@@ -86,14 +86,23 @@ async function del(req, res) {
     return res.boom.badRequest('id parameter is missing');
   }
 
-  let existingAsyncOperation;
+  let existingApiAsyncOperation;
   try {
-    existingAsyncOperation = await asyncOperationModel.get({ id });
+    await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
     throw error;
+  }
+
+  try {
+    // Get DynamoDB async operation to recreate in case of deletion failure
+    existingApiAsyncOperation = await asyncOperationModel.get({ id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   try {
@@ -110,8 +119,8 @@ async function del(req, res) {
   } catch (error) {
     // Delete is idempotent, so there may not be a DynamoDB
     // record to recreate
-    if (existingAsyncOperation) {
-      await asyncOperationModel.create(existingAsyncOperation);
+    if (existingApiAsyncOperation) {
+      await asyncOperationModel.create(existingApiAsyncOperation);
     }
     throw error;
   }
