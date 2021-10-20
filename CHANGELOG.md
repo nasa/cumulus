@@ -57,6 +57,8 @@ upgrades to `knex` package and to address security vulnerabilities.
 
 ### Changed
 
+- **CUMULUS-2720**
+  - Updated Core CI scripts to validate CHANGELOG diffs as part of the lint process
 - **CUMULUS-2695**
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
