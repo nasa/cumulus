@@ -7,6 +7,15 @@ type SchemaReplacements = {
   [key: string]: unknown
 };
 
+/**
+ * Dynamically replace contents of a JSON schema template with specified replacements.
+ *
+ * @param {string} schemaTemplatePath - Input schema template path
+ * @param {string} schemaOutputPath - Path to write updated output schema
+ * @param {Object} replacements
+ *   Object map specifying values to replace in schema template
+ * @returns {void}
+ */
 function templateJsonSchema(
   schemaTemplatePath: string,
   schemaOutputPath: string,
@@ -21,6 +30,13 @@ function templateJsonSchema(
   fs.writeFileSync(schemaOutputPath, schemaOutputString);
 }
 
+/**
+ * Generate output JSON schema from template with file properties updated.
+ *
+ * @param {string} schemaTemplatePath - Input schema template path
+ * @param {string} schemaOutputPath - Path to write updated output schema
+ * @returns {void}
+ */
 function templateJsonSchemaWithFiles(
   schemaTemplatePath: string,
   schemaOutputPath: string
