@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **PR #2535**
+  - NSIDC and other cumulus users had desire for returning formatted dates for
+    the 'url_path' date extraction utilities. Added 'dateExtraction' function as
+    an option for extracting and formating the entire date. See
+    docs/workflow/workflow-configuration-how-to.md for more information.
+
 ## [v9.8.0] 2021-10-19
 
 ### Notable changes
@@ -1075,8 +1083,6 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - PostToCMR task will return CMRInternalError when a `500` status is returned from CMR
 
 ## [v6.0.0] 2021-02-16
-
-- ** - NSIDC and other cumulus users had desire for returning formatted dates for the 'url_path' date extraction utilities. Added 'dateExtraction' function as an option for extracting and formating the entire date. See docs/workflow/workflow-configuration-how-to.md for more information.
 
 ### MIGRATION NOTES
 
