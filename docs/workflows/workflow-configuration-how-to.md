@@ -211,6 +211,7 @@ In addition to `substring`, several datetime-specific functions are available, w
 "url_path": "{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}"
 ```
 or
+
 ```json
  "url_path": "{dateFormat(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime, YYYY-MM-DD[T]HH[:]mm[:]ss)}" 
 ```
