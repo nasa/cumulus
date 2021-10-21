@@ -80,7 +80,6 @@ test('url path has dateFormat operation', async (t) => {
   t.is(result, '2016-12-23T13:45:00');
 });
 
-
 test('url path has metadata fields which has multiple values', async (t) => {
   const metadataObject = await getTestMetadata(measuresXmlFile);
   const urlPath = '{cmrMetadata.Granule.Platforms.Platform[0].ShortName}';
