@@ -195,16 +195,23 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');
+  const esRulesClient = new Search(
+    {},
+    'rule',
+    process.env.ES_INDEX
+  );
 
   let apiRule;
 
   try {
     await rulePgModel.get(knex, { name });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    // If rule doesn't exist in PG or ES, return not found
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esRulesClient.exists(name))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {
