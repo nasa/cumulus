@@ -88,7 +88,7 @@ function fakeGranuleFactory(status = 'completed') {
     version: randomId('vers'),
     collectionId: 'fakeCollection___v1',
     status,
-    execution: randomId('execution'),
+    execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
     updatedAt: Date.now(),
     published: true,

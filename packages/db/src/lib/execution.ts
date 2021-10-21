@@ -2,6 +2,8 @@ import { Knex } from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { TableNames } from '../tables';
 
+import { PostgresExecutionRecord } from '../types/execution';
+
 const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
@@ -13,22 +15,31 @@ export interface ArnRecord {
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
 
 /**
- * Returns a list of executionArns sorted by most recent first, for an input
+ * Returns execution info sorted by most recent first for an input
  * Granule Cumulus ID.
  *
- * @param {Knex | Knex.Transaction} knexOrTransaction
+ * @param {Object} params
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {number} granuleCumulusId - The primary ID for a Granule
- * @param {number} limit - limit to number of executions to query
- * @returns {Promise<arnRecord[]>} - Array of arn objects with the most recent first.
+ * @param {Array<string>} params.executionColumns - Columns to return from executions table
+ * @param {number} params.granuleCumulusId - The primary ID for a Granule
+ * @param {number} [params.limit] - limit to number of executions to query
+ * @returns {Promise<Partial<PostgresExecutionRecord>[]>}
+ *   Array of arn objects with the most recent first.
  */
-export const getExecutionArnsByGranuleCumulusId = async (
+export const getExecutionInfoByGranuleCumulusId = async ({
+  knexOrTransaction,
+  granuleCumulusId,
+  executionColumns = ['arn'],
+  limit,
+}: {
   knexOrTransaction: Knex | Knex.Transaction,
-  granuleCumulusId: Number,
+  granuleCumulusId: number,
+  executionColumns: string[],
   limit?: number
-): Promise<ArnRecord[]> => {
+}): Promise<Partial<PostgresExecutionRecord>[]> => {
   const knexQuery = knexOrTransaction(TableNames.executions)
-    .select(`${TableNames.executions}.arn`)
+    .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
     .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
     .join(
       TableNames.granulesExecutions,

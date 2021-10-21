@@ -4,6 +4,8 @@ set -ex
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
+set -o pipefail
+
 NONCACHE_WORKING_DIR=$(pwd)
 CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
 
@@ -21,12 +23,12 @@ fi
 npm run ci:bootstrap-no-scripts
 
 # Get a list of TS compiled files
-npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
+npm run tsc:listEmittedFiles | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
 cat .ts-build-cache-files
 
 # Generate TS build cache artifact
-tar cf $TS_BUILD_CACHE_FILE -T .ts-build-cache-files
+tar cf "$TS_BUILD_CACHE_FILE" -T .ts-build-cache-files
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  cp $TS_BUILD_CACHE_FILE "$NONCACHE_WORKING_DIR"
+  cp "$TS_BUILD_CACHE_FILE" "$NONCACHE_WORKING_DIR"
 fi

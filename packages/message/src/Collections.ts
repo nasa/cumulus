@@ -17,7 +17,7 @@ type CollectionInfo = {
   version: string
 };
 
-const collectionIdSeparator = '___';
+export const collectionIdSeparator = '___';
 
 /**
  * Returns the collection ID.

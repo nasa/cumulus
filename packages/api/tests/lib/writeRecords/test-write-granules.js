@@ -142,7 +142,11 @@ test.beforeEach(async (t) => {
   t.context.provider = fakeProviderRecordFactory();
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  t.context.files = [fakeFileFactory({ size: 5 })];
+  t.context.files = [
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+  ];
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
     granuleId: t.context.granuleId,
@@ -451,7 +455,7 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
   t.is(Messages.length, 1);
 });
 
-test.serial('writeGranules() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
+test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -530,6 +534,48 @@ test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreS
 
   t.is(granulePgRecord.created_at.getTime(), esRecord.createdAt);
   t.is(granulePgRecord.updated_at.getTime(), esRecord.updatedAt);
+});
+
+test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    granuleModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  // ensure files are written
+  cumulusMessage.meta.status = 'completed';
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  // translate the PG granule to API granule to directly compare to Dynamo
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+  t.deepEqual(translatedPgRecord.files, dynamoRecord.files);
+
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+  t.deepEqual(translatedPgRecord.files, esRecord.files);
 });
 
 test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQL if Postgres write is enabled and workflow status is "completed"', async (t) => {

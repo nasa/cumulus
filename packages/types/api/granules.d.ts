@@ -7,7 +7,7 @@ export type GranuleTemporalInfo = {
   endingDateTime: string
   productionDateTime: string
   lastUpdateDateTime: string
-} | {};
+};
 
 export interface MessageGranule {
   granuleId: string
@@ -18,6 +18,9 @@ export interface MessageGranule {
   post_to_cmr_duration?: number
   files?: import('./files').ApiFile[]
 }
+
+type OptionalGranuleTemporalInfo = GranuleTemporalInfo | {};
+type OptionalGranuleProcessingInfo = import('./executions').ExecutionProcessingTimes | {};
 
 export type ApiGranule = {
   granuleId: string
@@ -37,4 +40,4 @@ export type ApiGranule = {
   timeToPreprocess?: number
   timeToArchive?: number
   files?: Omit<import('./files').ApiFile, 'granuleId'>[]
-} & GranuleTemporalInfo & import('./executions').ExecutionProcessingTimes;
+} & OptionalGranuleTemporalInfo & OptionalGranuleProcessingInfo;

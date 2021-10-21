@@ -14,6 +14,15 @@ upgrades to `knex` package.
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2317**
+    - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
+    records in PostgreSQL and return specified granule information for each file
+    - Added `@cumulus/db/QuerySearchClient` library to handle sequentially fetching and paging
+    through results for an arbitrary PostgreSQL query
+    - Added `insert` method to all `@cumulus/db` models to handle inserting multiple records into
+    the database at once
+    - Added `@cumulus/db/translatePostgresGranuleResultToApiGranule` helper to
+    translate custom PostgreSQL granule result to API granule
   - **CUMULUS-2672**
     - Added migration to add `type` text column to Postgres database `files` table
   - **CUMULUS-2634**
@@ -153,6 +162,8 @@ upgrades to `knex` package.
       - `record.output` is a JSON stringified array
       - `record.output` is a JSON stringified string
       - `record.output` is a string
+  - **CUMULUS-2317**
+    - Changed reconciliation reports to read file records from PostgreSQL instead of DynamoDB
   - **CUMULUS-2304**
     - Updated API rule GET endpoint to read individual rule records from
       PostgreSQL database instead of DynamoDB

@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const sortBy = require('lodash/sortBy');
 const times = require('lodash/times');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -70,6 +71,82 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
       cumulus_id: queryResult[0],
       info,
     }
+  );
+});
+
+test('BasePgModel.insert() creates records and returns cumulus_id by default', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+
+  const queryResult = await basePgModel.insert(knex, [
+    { ...defaultDates, info },
+    { ...defaultDates, info: info2 },
+  ]);
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    sortBy(records, ['cumulus_id']),
+    sortBy([{
+      ...defaultDates,
+      cumulus_id: queryResult[0],
+      info,
+    },
+    {
+      ...defaultDates,
+      cumulus_id: queryResult[1],
+      info: info2,
+    }], ['cumulus_id'])
+  );
+});
+
+test('BasePgModel.insert() creates records and returns specified fields', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+
+  const insertedRecords = await basePgModel.insert(
+    knex,
+    [
+      { ...defaultDates, info },
+      { ...defaultDates, info: info2 },
+    ],
+    '*'
+  );
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    sortBy(records, ['info']),
+    sortBy(insertedRecords, ['info'])
+  );
+});
+
+test('BasePgModel.insert() works with transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+
+  let queryResult;
+  await createRejectableTransaction(knex, async (trx) => {
+    queryResult = await basePgModel.insert(trx, [
+      { ...defaultDates, info },
+      { ...defaultDates, info: info2 },
+    ]);
+  });
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    sortBy(records, ['cumulus_id']),
+    sortBy([{
+      ...defaultDates,
+      cumulus_id: queryResult[0],
+      info,
+    },
+    {
+      ...defaultDates,
+      cumulus_id: queryResult[1],
+      info: info2,
+    }], ['cumulus_id'])
   );
 });
 
