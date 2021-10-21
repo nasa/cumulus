@@ -211,15 +211,21 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { id } = req.params;
+  const esProvidersClient = new Search(
+    {},
+    'provider',
+    process.env.ES_INDEX
+  );
 
   let existingProvider;
   try {
     await providerPgModel.get(knex, { name: id });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esProvidersClient.exists(id))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {
