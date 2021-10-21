@@ -6,6 +6,10 @@ permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
 
 prefix                   = "PREFIX"
 buckets = {
+  glacier = {
+    name = "PREFIX-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "PREFIX-internal"
     type = "internal"
@@ -53,8 +57,28 @@ cmr_oauth_provider = "earthdata"
 archive_api_port = 8000
 private_archive_api_gateway = true
 
+# ORCA Configuration
+database_app_user_pw = "password"
+postgres_user_pw     = "password"
+
+# CSDAP configuration for cumulus distribution
+csdap_client_id = "csdap client id "
+csdap_client_password = "csdap client password"
+## url for uat: "https://auth.csdap.uat.earthdatacloud.nasa.gov"
+csdap_host_url = "csdap host url"
+
+deploy_cumulus_distribution = true
+
+# Optional. Uncomment if using Cumulus Distribution.
+# toggle this after deployed to put the correct port in. (and hosts and config)
+# cumulus_distribution_url = "cumulus distribution url"
+
+# Optional. Uncomment if using TEA.
+# toggle this after deployed to put the correct port in. (and hosts and config)
+# tea_distribution_url = "TEA distribution URL"
+
 # Optional, uncomment if needed. Required if using cmr_oauth_provider = "launchpad".
-/* 
+/*
 launchpad_api = "launchpadApi"
 launchpad_certificate = "certificate"
 launchpad_passphrase = "passphrase"
@@ -89,19 +113,6 @@ saml_assertion_consumer_service = "<Cumulus API endpoint>/saml/auth, e.g. https:
 metrics_es_host = "xxxxxxxxxx.cloudfront.net"
 metrics_es_username = "user"
 metrics_es_password = "password"
-*/
-
-# Optional, uncomment if needed. Required to send EMS ingest/distribution reports.
-/*
-ems_host              = "ems-host.nasa.gov"
-ems_port              = 22
-ems_path              = "/"
-ems_datasource        = "UAT"
-ems_private_key       = "ems-private.pem"
-ems_provider          = "CUMULUS"
-ems_retention_in_days = 30
-ems_submit_report     = true
-ems_username          = "user"
 */
 
 # Optional, uncomment if needed. Required to send logs to the Metrics ELK stack

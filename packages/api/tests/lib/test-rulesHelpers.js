@@ -210,6 +210,13 @@ test('queueMessageForRule includes eventSource in payload, if provided', async (
   t.deepEqual(payload.meta.eventSource, eventSource);
 });
 
+test('queueMessageForRule includes queueUrl in rule, if provided', async (t) => {
+  const rule = fakeRuleFactoryV2({ workflow });
+  rule.queueUrl = 'queue-url';
+  const payload = await rulesHelpers.queueMessageForRule(rule, {}, {});
+  t.deepEqual(payload.queueUrl, rule.queueUrl);
+});
+
 test('rulesHelpers.lookupCollectionInEvent returns collection for standard case', (t) => {
   const event = {
     collection: {

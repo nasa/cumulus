@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 30
+  sf_event_sqs_lambda_timeout = (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -13,7 +13,11 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
-    actions = ["dynamodb:UpdateItem"]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ]
     resources = [
       var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
@@ -30,8 +34,18 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = ["s3:GetObject"]
+    actions   = [
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
+  }
+
+  statement {
+    actions   = [
+      "s3:ListBucket"
+    ]
+    resources = ["arn:aws:s3:::${var.system_bucket}"]
   }
 
   statement {
@@ -57,7 +71,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     actions = [
       "s3:GetObject*",
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -68,7 +82,6 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     ]
     resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.prefix}-sfEventSqsToDbRecordsInputQueue"]
   }
-
 
   # Required for DLQ
   statement {
@@ -87,8 +100,16 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
       "sqs:GetQueueAttributes"
     ]
     resources = [
-      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
+      aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn,
+      aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
     ]
+  }
+
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    resources = [var.rds_user_access_secret_arn]
   }
 }
 
@@ -135,7 +156,7 @@ resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
   name                       = "${var.prefix}-sfEventSqsToDbRecordsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
-  visibility_timeout_seconds = 60
+  visibility_timeout_seconds = (local.sf_event_sqs_lambda_timeout * 6)
   tags                       = var.tags
 }
 
@@ -147,7 +168,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   handler          = "index.handler"
   runtime          = "nodejs12.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 256
+  memory_size      = 1024
 
   dead_letter_config {
     target_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
@@ -155,10 +176,17 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
-      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
+      acquireTimeoutMillis           = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      DeadLetterQueue                = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
+      ExecutionsTable                = var.dynamo_tables.executions.name
+      GranulesTable                  = var.dynamo_tables.granules.name
+      idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
+      PdrsTable                      = var.dynamo_tables.pdrs.name
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
+      reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
     }
   }
 
@@ -166,11 +194,49 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = compact([
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group
+      ])
     }
   }
 
   tags = var.tags
 }
+
+resource "aws_lambda_event_source_mapping" "db_records_dlq_to_s3_mapping" {
+  event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
+  function_name    = aws_lambda_function.write_db_dlq_records_to_s3.arn
+}
+
+resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
+  filename         = "${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/writeDbDlqRecordstoS3/lambda.zip")
+  function_name    = "${var.prefix}-writeDbRecordsDLQtoS3"
+  role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
+  handler          = "index.handler"
+  runtime          = "nodejs12.x"
+  timeout          = local.sf_event_sqs_lambda_timeout
+  memory_size      = 256
+
+  environment {
+    variables = {
+      stackName     = var.prefix
+      system_bucket = var.system_bucket
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = compact([
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group
+      ])
+    }
+  }
+
+  tags = var.tags
+}
+

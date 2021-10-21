@@ -89,7 +89,7 @@ The configuration below will store hdf files in the protected bucket and jpg fil
 
 [Create a rule](../configuration/data-management-types#create-a-rule) to trigger the workflow to discover your granule data and ingest your granule.
 
-Select the previously created provider and collection. See the [Cumulus Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) for a workflow example of using Cumulus tasks to disover and queue data for ingest.
+Select the previously created provider and collection. See the [Cumulus Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf) for a workflow example of using Cumulus tasks to discover and queue data for ingest.
 
 In the rule meta, set the `provider_path` to `test-data`, so the `test-data` folder will be used to discover new granules.
 

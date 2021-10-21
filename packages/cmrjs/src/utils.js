@@ -1,4 +1,4 @@
-const { ValidationError } = require('@cumulus/cmr-client');
+const { ValidationError } = require('@cumulus/errors');
 
 // validate is not part of the public cmr-client API
 const { validate } = require('@cumulus/cmr-client/ingestConcept');
@@ -17,7 +17,7 @@ const xmlParseOptions = {
  * @returns {string} UMM-G metadata format string (e.g. umm_json_v1_4)
  */
 function ummVersionToMetadataFormat(versionNumber, ummFormat = 'json') {
-  return `umm_${ummFormat}_v${versionNumber.replace('.', '_')}`;
+  return `umm_${ummFormat}_v${versionNumber.replace(/\./g, '_')}`;
 }
 
 module.exports = {

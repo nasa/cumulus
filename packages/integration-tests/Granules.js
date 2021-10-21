@@ -8,9 +8,10 @@
  */
 
 const get = require('lodash/get');
-const granulesApi = require('@cumulus/api-client/granules');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
+
+const granulesApi = require('@cumulus/api-client/granules');
 
 class GranuleNotFoundError extends Error {
   constructor(id) {
@@ -21,7 +22,7 @@ class GranuleNotFoundError extends Error {
 }
 
 const getGranule = async (params) => {
-  const response = await granulesApi.getGranule(
+  const response = await granulesApi.getGranuleResponse(
     pick(params, ['prefix', 'granuleId', 'callback'])
   );
 
@@ -34,9 +35,10 @@ const getGranule = async (params) => {
  * Wait for a granule to have an expected status and return the granule
  *
  * @param {Object} params
- * @param {string} params.prefix - the name of the Cumulus stack
+ * @param {string} params.prefix    - the name of the Cumulus stack
  * @param {string} params.granuleId - the `granuleId` of the granule
- * @param {string} params.status - the status to wait for
+ * @param {string} params.status    - the status to wait for
+ * @param {string} params.updatedAt - minimum updatedAt time the granule must have to return
  * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
  * invoke the API Lambda that takes a prefix / user payload
  * @param {integer} [params.timeout=30] - the number of seconds to wait for the
@@ -46,9 +48,10 @@ const getGranule = async (params) => {
  * @alias module:Granules
  */
 const getGranuleWithStatus = async (params = {}) =>
-  pRetry(
+  await pRetry(
     async () => {
       let granule;
+      const updatedAt = params.updatedAt || 0;
 
       try {
         granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback']));
@@ -56,8 +59,7 @@ const getGranuleWithStatus = async (params = {}) =>
         throw new pRetry.AbortError(error);
       }
 
-      if (granule.status === params.status) return granule;
-
+      if (granule.status === params.status && granule.updatedAt > updatedAt) return granule;
       if (['completed', 'failed'].includes(granule.status)) {
         throw new pRetry.AbortError(
           new Error(
@@ -70,10 +72,25 @@ const getGranuleWithStatus = async (params = {}) =>
     },
     {
       retries: get(params, 'timeout', 30),
-      maxTimeout: 1000,
+      maxTimeout: 2000,
     }
   );
 
+/**
+ * Wait for listGranules to return at least a single value before returning an
+ * empty result
+ * @param {Object} params - parameters to listGranules function
+ * @returns {Promise<Object>} - results of a successful listGranules
+ */
+const waitForListGranulesResult = async (params) => await pRetry(
+  async () => {
+    const results = await granulesApi.listGranules(params);
+    if (results.body && JSON.parse(results.body).results.length > 0) return results;
+    throw new Error('Waiting for searched Granule.');
+  }
+);
+
 module.exports = {
   getGranuleWithStatus,
+  waitForListGranulesResult,
 };

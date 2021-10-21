@@ -6,13 +6,13 @@ const proxyquire = require('proxyquire');
 
 const lambdaResponsePayload = { a: 1 };
 
-const { handler } = proxyquire(
-  '..',
+const s3credentials = proxyquire(
+  '@cumulus/api/endpoints/s3credentials',
   {
     '@cumulus/aws-client/services': {
       lambda: () => ({
         invoke: () => ({
-          promise: async () => ({
+          promise: () => Promise.resolve({
             Payload: JSON.stringify(lambdaResponsePayload),
           }),
         }),
@@ -20,8 +20,11 @@ const { handler } = proxyquire(
     },
   }
 );
+const { handler } = proxyquire('..', {
+  '@cumulus/api/endpoints/s3credentials': s3credentials,
+});
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.callerClientId = 'caller-client-id';
 
   t.context.validToken = 'valid-token';

@@ -44,12 +44,15 @@ export const getExecution = async (params: {
  */
 export const getExecutions = async (params: {
   prefix: string,
-  query?: { [key: string]: string },
+  query?: {
+    fields?: string[] | string
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -78,12 +81,168 @@ export const getExecutionStatus = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, arn, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/executions/status/${arn}`,
     },
+  });
+};
+
+/**
+ * Create an execution
+ * POST /executions
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.body         - execution object
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const createExecution = async (params: {
+  prefix: string,
+  body: ExecutionRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/executions',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
+ * Update an execution
+ * PUT /executions/{executionArn}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.body         - execution object
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const updateExecution = async (params: {
+  prefix: string,
+  body: ExecutionRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/executions/${body.arn}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  });
+};
+
+/**
+ * DELETE /executions/{executionArn}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.executionArn - the execution ARN
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const deleteExecution = async (params: {
+  prefix: string,
+  executionArn: string,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, executionArn, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/executions/${executionArn}`,
+    },
+  });
+};
+
+/**
+ * Search executions by granules
+ * POST /executions/search-by-granules
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const searchExecutionsByGranules = async (params: {
+  prefix: string,
+  payload: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, payload, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/search-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
+  });
+};
+
+/**
+ * Gets common workflows for a set of granules
+ * POST /executions/workflows-by-granules
+ * @param {Object} params             - params
+ * @param {Object} params.body       - body to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const workflowsByGranules = async (params: {
+  prefix: string,
+  payload: object,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, payload, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/executions/workflows-by-granules',
+      body: JSON.stringify(payload),
+    },
+    expectedStatusCode: 202,
   });
 };

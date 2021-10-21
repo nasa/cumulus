@@ -10,6 +10,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
   environment {
     variables = {
       CMR_ENVIRONMENT  = var.cmr_environment
+      CMR_HOST         = var.cmr_custom_host
       stackName        = var.prefix
       system_bucket    = var.system_bucket
     }

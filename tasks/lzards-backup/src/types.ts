@@ -3,16 +3,22 @@ export interface HandlerInput {
   [key: string]: unknown
 }
 
-export interface HandlerEvent {
-  input: HandlerInput
+export interface HandlerConfig {
+  urlType: 's3' | 'cloudfront',
+  cloudfrontEndpoint?: string,
 }
 
-export type makeBackupFileRequestResult = {
+export interface HandlerEvent {
+  input: HandlerInput,
+  config: HandlerConfig,
+}
+
+export type MakeBackupFileRequestResult = {
   statusCode?: number
   granuleId: string,
   filename: string,
   body?: string,
-  status: 'COMPLETED' | 'FAILED'
+  status: 'COMPLETED' | 'FAILED',
 };
 
 export type MessageGranuleFilesObject = {
@@ -28,10 +34,11 @@ export interface MessageGranule {
   version: string,
   files: MessageGranuleFilesObject[],
 }
+
 export interface GetCollectionFunctionParams {
   prefix: string
   query: {
     name: string,
     version: string,
-  }
+  },
 }

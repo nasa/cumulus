@@ -7,11 +7,19 @@ const {
   ValidationError,
 } = require('@cumulus/errors');
 
-const isBadRequestError = (err) =>
-  err.name === 'SchemaValidationError' || err instanceof ValidationError;
+// Postgres error codes:
+// https://www.postgresql.org/docs/10/errcodes-appendix.html
+const isPostgresValidationError = (error) => ['22', '23'].includes((error.code || '').substring(0, 2));
+
+const isBadRequestError = (error) =>
+  error.name === 'SchemaValidationError'
+  || error instanceof ValidationError
+  || isPostgresValidationError(error);
+
+const isResourceNotFoundException = (error) =>
+  error.code === 'ResourceNotFoundException';
 
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
-const IndexExistsError = createErrorType('IndexExistsError');
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {
@@ -32,10 +40,25 @@ class EarthdataLoginError extends Error {
   }
 }
 
+const resourceNotFoundInfo = 'One solution may be to check if topic subscription and/or lambda trigger have been manually deleted from AWS. If so, rule may need to be manually disabled/deleted.';
+
+class ResourceNotFoundError extends Error {
+  constructor(error) {
+    super(`${error.message} ${resourceNotFoundInfo}`);
+
+    this.name = 'ResourceNotFoundError';
+    this.code = error.code;
+
+    Error.captureStackTrace(this, ResourceNotFoundError);
+  }
+}
+
 module.exports = {
   AssociatedRulesError,
-  IndexExistsError,
   TokenUnauthorizedUserError,
   EarthdataLoginError,
   isBadRequestError,
+  isResourceNotFoundException,
+  ResourceNotFoundError,
+  resourceNotFoundInfo,
 };

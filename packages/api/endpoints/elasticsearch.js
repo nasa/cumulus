@@ -3,12 +3,14 @@
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
+const asyncOperations = require('@cumulus/async-operations');
+const { IndexExistsError } = require('@cumulus/errors');
+const { defaultIndexAlias, Search } = require('@cumulus/es-client/search');
+const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const { AsyncOperation } = require('../models');
-const { IndexExistsError } = require('../lib/errors');
-const { defaultIndexAlias, Search } = require('../es/search');
-const { createIndex } = require('../es/indexer');
+
+const models = require('../models');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -17,7 +19,7 @@ function timestampedIndexName() {
   return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-async function createEsSnapshot(req, res) {
+function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****
@@ -82,6 +84,10 @@ async function reindex(req, res) {
 
   if (!destIndex) {
     destIndex = timestampedIndexName();
+  }
+
+  if (sourceIndex === destIndex) {
+    return res.boom.badRequest(`source index(${sourceIndex}) and destination index(${destIndex}) must be different.`);
   }
 
   const destExists = await esClient.indices.exists({ index: destIndex })
@@ -199,22 +205,22 @@ async function indicesStatus(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
+  const {
+    startEcsTaskFunc,
+  } = req.testContext || {};
   const esClient = await Search.es();
-
   const indexName = req.body.indexName || timestampedIndexName();
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
+  const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;
     });
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.IndexFromDatabaseLambda,
@@ -235,7 +241,12 @@ async function indexFromDatabase(req, res) {
       esHost: process.env.ES_HOST,
       esRequestConcurrency: process.env.ES_CONCURRENCY,
     },
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig,
+    startEcsTaskFunc,
+  }, models.AsyncOperation);
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
@@ -260,4 +271,7 @@ router.get('/indices-status', indicesStatus);
 router.get('/current-index/:alias', getCurrentIndex);
 router.get('/current-index', getCurrentIndex);
 
-module.exports = router;
+module.exports = {
+  indexFromDatabase,
+  router,
+};

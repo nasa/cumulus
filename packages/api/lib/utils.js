@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const isInteger = require('lodash/isInteger');
 const isObject = require('lodash/isObject');
 const isNil = require('lodash/isNil');
 
@@ -17,11 +16,12 @@ function filenamify(fileName) {
  * Ensures that the exception is returned as an object
  *
  * @param {*} exception - the exception
- * @returns {string} an stringified exception
+ * @returns {Object} an objectified exception
  */
 function parseException(exception) {
   if (isNil(exception)) return {};
   if (isObject(exception)) return exception;
+  if (exception === 'None') return {};
   return {
     Error: 'Unknown Error',
     Cause: exception,
@@ -63,20 +63,6 @@ function extractDate(payload, dateField) {
 }
 
 /**
- * Calculate granule product volume, which is the sum of the file
- * sizes in bytes
- *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
- */
-function getGranuleProductVolume(granuleFiles = []) {
-  return granuleFiles
-    .map((f) => f.size)
-    .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
-}
-
-/**
  * Find a property name in an object in a case-insensitive manner
  *
  * @param {Object} obj - the object to be searched
@@ -107,6 +93,5 @@ module.exports = {
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  getGranuleProductVolume,
   parseException,
 };

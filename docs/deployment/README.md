@@ -20,6 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
+- Creating/configuring a [PostgreSQL 10.2 compatible database](../deployment/postgres_database_deployment), and an AWS Secrets Manager secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
@@ -35,7 +36,7 @@ The process involves:
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 - [Terraform](https://www.terraform.io)
 
-#### Install Terraform
+### Install Terraform
 
 It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
 
@@ -164,6 +165,13 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
+### Look up ECS-optimized AMI (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically determine the AMI ID for you
+based on your `deploy_to_ngap` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
+
+Look up the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the [cumulus-tf module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
+
 ### Set up EC2 key pair (optional)
 
 The key pair will be used to SSH into your EC2 instance(s). It is recommended to [create or import a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and specify it in your Cumulus deployment.
@@ -217,6 +225,39 @@ $ aws dynamodb create-table \
 
 ---
 
+## Configure the PostgreSQL database
+
+Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
+
+- Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
+- The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
+- An AWS Secrets Manager secret exists that has the following format:
+
+```json
+{
+  "database": "databaseName",
+  "host": "xxx",
+  "password": "defaultPassword",
+  "port": 5432,
+  "username": "xxx"
+}
+```
+
+- `database` -- the PostgreSQL database used by the configured user
+- `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
+- `password` -- the database password
+- `port` -- The database connection port, should always be 5432
+- `username` -- the database username
+
+This secret should provide access to a PostgreSQL database provisioned on the cluster.
+
+To configure Cumulus you will need:
+
+- The AWS Secrets Manager ARN for the *user* Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
+- (Optionally) The security group ID that provides access to the cluster to configure `rds_security_group`.
+
+---
+
 ## Deploy the Cumulus instance
 
 A typical Cumulus deployment is broken into two
@@ -248,6 +289,8 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 - `PREFIX` (whatever prefix you've chosen for your deployment)
 
 Fill in the appropriate values in `terraform.tfvars`. See the [data-persistence module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf) for more detail on each variable.
+
+Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuring data-persistence.
 
 **Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus dashboard will not work without Elasticsearch._
 
@@ -327,7 +370,9 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-### Deploy the Cumulus Message Adapter layer
+### Deploy the Cumulus Message Adapter layer (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically download the Cumulus Message Adapter and create the layer for you based on your `cumulus_message_adapter_version` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
@@ -341,7 +386,6 @@ $ aws lambda publish-layer-version \
   --layer-name prefix-CMA-layer \
   --region us-east-1 \
   --zip-file fileb:///path/to/cumulus-message-adapter.zip
-
 {
   ... more output ...
   "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
@@ -373,13 +417,29 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
-- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
+- **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
+- **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
+- **`cumulus_message_adapter_version`**: The version number (e.g. `1.3.0`) of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter/releases) to deploy
+- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional). Adding your `key_name` sets the EC2 keypair
+for deployment's EC2 instances and allows you to connect to them via [SSH/SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html).
+
+Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
+
+#### Choose a distribution API
+
+Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
+
+**IMPORTANT!** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use
+the new API gateway.
 
 #### Configure the Thin Egress App
 
-The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+The Thin Egress App can be used for Cumulus distribution and is the default selection. It allows authentication using Earthdata Login. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+
+#### Configure the Cumulus Distribution API (optional)
+
+If you would prefer to use the Cumulus Distribution API, which supports [AWS Cognito authentication](https://aws.amazon.com/cognito/), follow [these steps](./cumulus_distribution) to configure distribution in your `cumulus-tf` deployment.
 
 #### Initialize Terraform
 
@@ -408,10 +468,10 @@ You will need to add two redirect URLs to your EarthData login application.
 
 1. Login to URS.
 2. Under My Applications -> Application Administration -> use the edit icon of your application.
-3. Under Manage -> redirect URIs, add the Backend API url returned from the stack deployment
-   - e.g. `https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
+3. Under Manage -> redirect URIs, add the Archive API url returned from the stack deployment
+   - e.g. `archive_api_redirect_uri = https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token`.
 4. Also add the Distribution url
-   - e.g. `https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
+   - e.g. `distribution_redirect_uri = https://<kido2r7kji>.execute-api.us-east-1.amazonaws.com/dev/login`[^1].
 5. You may delete the placeholder url you used to create the application.
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
@@ -502,6 +562,37 @@ From the S3 Console:
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
+
+---
+
+## Cumulus Instance Sizing
+
+The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing is highly individual and dependent on expected load and archive size.
+
+> Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+
+### Elasticsearch
+
+The [mappings file](https://github.com/nasa/cumulus/blob/master/packages/api/models/mappings.json) contains all of the data types that will be indexed into Elasticsearch. Elasticsearch sizing is tied to your archive size, including your collections, granules, and workflow executions that will be stored.
+
+AWS provides [documentation](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/sizing-domains.html) on calculating and configuring for sizing.
+
+In addition to size you'll want to consider the [number of nodes](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html) which determine how the system reacts in the event of a failure.
+
+Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf#L16) in `elasticsearch_config` and the [cumulus module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf#L541) in `es_index_shards`.
+
+> If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+
+### EC2 instances and autoscaling groups
+
+EC2 instances are used for long-running operations (i.e. generating a reconciliation report) and long-running workflow tasks. Configuration for your ECS cluster is achieved via [Cumulus deployment variables](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
+
+When configuring your ECS cluster consider:
+
+- The [EC2 instance type](https://aws.amazon.com/ec2/instance-types/) and [EBS volume size](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_constraints.html) needed to accommodate your workloads. Configured as `ecs_cluster_instance_type` and `ecs_cluster_instance_docker_volume_size`.
+- The minimum and desired number of instances on hand to accommodate your workloads. Configured as `ecs_cluster_min_size` and `ecs_cluster_desired_size`.
+- The maximum number of instances you will need and are willing to pay for to accommodate your heaviest workloads. Configured as `ecs_cluster_max_size`.
+- Your autoscaling parameters: `ecs_cluster_scale_in_adjustment_percent`, `ecs_cluster_scale_out_adjustment_percent`, `ecs_cluster_scale_in_threshold_percent`, and `ecs_cluster_scale_out_threshold_percent`.
 
 ---
 

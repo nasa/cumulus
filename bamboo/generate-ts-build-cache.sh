@@ -20,9 +20,6 @@ fi
 # Bootstrap to install/link packages
 npm run ci:bootstrap-no-scripts
 
-# Compile TS files
-npm run tsc
-
 # Get a list of TS compiled files
 npm run tsc:listEmittedFiles --silent | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
 cat .ts-build-cache-files

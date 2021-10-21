@@ -9,21 +9,24 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteGranule } = require('@cumulus/api-client/granules');
+const { createGranule, deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
-
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
-
+const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { loadConfig } = require('../../helpers/testUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
-describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
-  let beforeAllFailed = false;
+describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
+  let beforeAllError;
   let collection;
   let discoverGranulesRule;
   let existingGranuleId;
@@ -34,7 +37,12 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   let newGranuleKey;
   let prefix;
   let provider;
+  let queuedGranuleId;
+  let queuedGranuleKey;
   let sourceBucket;
+  let discoverGranulesExecutionArn;
+  let ingestGranuleExecutionArn;
+  let finishedIngestGranulesArn;
 
   beforeAll(async () => {
     try {
@@ -55,6 +63,29 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
 
       // Create the S3 provider
       provider = await createProvider(prefix, { host: sourceBucket });
+
+      // Stage and Create a queued Granule in S3
+      queuedGranuleId = randomId('queued-granule-');
+      queuedGranuleKey = `${sourcePath}/${queuedGranuleId}.txt`;
+      await s3PutObject({
+        Bucket: sourceBucket,
+        Key: queuedGranuleKey,
+        Body: 'asdf-queued',
+      });
+
+      const collectionId = constructCollectionId(collection.name, collection.version);
+      const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId,
+        granuleId: queuedGranuleId,
+        execution: undefined,
+        status: 'queued',
+        published: false,
+        files: [{ bucket: sourceBucket, key: queuedGranuleKey }],
+      }));
+      await createGranule({
+        prefix,
+        body: randomQueuedGranuleRecord,
+      });
 
       // Stage the existing granule file to S3
       existingGranuleId = randomId('existing-granule-');
@@ -94,11 +125,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "IngestGranule" execution ARN
-      const ingestGranuleExecutionArn = await findExecutionArn(
+      console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
+      ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === ingestGranuleRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -137,11 +172,15 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       );
 
       // Find the "DiscoverGranules" execution ARN
-      const discoverGranulesExecutionArn = await findExecutionArn(
+      console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
+      discoverGranulesExecutionArn = await findExecutionArn(
         prefix,
         (execution) =>
           get(execution, 'originalPayload.testExecutionId') === discoverGranulesRule.payload.testExecutionId,
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': discoverGranulesRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
@@ -152,36 +191,51 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
         status: 'completed',
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = error;
       throw error;
     }
   });
 
-  it('queues one granule for ingest', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+  it('queues one granule for ingest', () => {
+    if (beforeAllError) fail(beforeAllError);
     else expect(finishedDiscoverGranulesExecution.finalPayload.running.length).toEqual(1);
   });
 
   it('queues the correct granule for ingest', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       // The execution ARN of the "IngestGranules" workflow that was
       // created as a result of the "DiscoverGranules" workflow.
-      const arn = finishedDiscoverGranulesExecution.finalPayload.running[0];
+      finishedIngestGranulesArn = finishedDiscoverGranulesExecution.finalPayload.running[0];
 
       // Wait for the execution to end
-      const execution = await getExecutionWithStatus({ prefix, arn, status: 'completed' });
+      const execution = await getExecutionWithStatus({ prefix, arn: finishedIngestGranulesArn, status: 'completed' });
 
       expect(execution.originalPayload.granules[0].granuleId).toEqual(newGranuleId);
     }
   });
 
   it('results in the new granule being ingested', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
-      await expectAsync(
-        getGranuleWithStatus({ prefix, granuleId: newGranuleId, status: 'completed' })
-      ).toBeResolved();
+      const granule = await waitForApiStatus(
+        getGranule,
+        { prefix, granuleId: newGranuleId },
+        'completed'
+      );
+      expect(granule).toBeDefined();
+    }
+  });
+
+  it('leaves the queued granule in the queued state', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const granule = await waitForApiStatus(
+        getGranule,
+        { prefix, granuleId: queuedGranuleId },
+        'queued'
+      );
+      expect(granule).toBeDefined();
     }
   });
 
@@ -195,12 +249,25 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       { stopOnError: false }
     ).catch(console.error);
 
+    // The order of execution deletes matters. Parents must be deleted before children.
+    await deleteExecution({ prefix, executionArn: finishedIngestGranulesArn });
+    await deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn });
+    await deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn });
+
+    await pAll(
+      [
+        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId }),
+        () => deleteGranule({ prefix, granuleId: queuedGranuleId }),
+      ],
+      { stopOnError: false }
+    ).catch(console.error);
+
     await pAll(
       [
         () => deleteS3Object(sourceBucket, existingGranuleKey),
         () => deleteS3Object(sourceBucket, newGranuleKey),
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
-        () => deleteGranule({ prefix, granuleId: newGranuleId }),
+        () => deleteS3Object(sourceBucket, queuedGranuleKey),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

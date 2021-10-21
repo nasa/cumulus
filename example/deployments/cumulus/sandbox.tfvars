@@ -1,4 +1,8 @@
 buckets = {
+  glacier = {
+    name = "cumulus-test-sandbox-orca-glacier"
+    type = "glacier"
+  },
   internal = {
     name = "cumulus-test-sandbox-internal"
     type = "internal"
@@ -28,6 +32,10 @@ s3_replicator_config = {
 }
 system_bucket="cumulus-test-sandbox-internal"
 
+csdap_client_id = "csdap client id "
+csdap_client_password = "csdap client password"
+csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
+
 launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
 
@@ -36,14 +44,7 @@ oauth_user_group = "GSFC-Cumulus-Dev"
 saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
 saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
 
-ems_host              = "fs1.ems.eosdis.nasa.gov"
-ems_port              = 22
-ems_path              = "tmpNat"
-ems_datasource        = "UAT"
-ems_private_key       = "ems-private.pem"
-ems_provider          = "CUMULUS"
-ems_retention_in_days = 30
-ems_submit_report     = true
-ems_username          = "cumulus"
-
 thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
+
+include_orca = false
+orca_drop_database = "True"

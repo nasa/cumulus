@@ -3,9 +3,22 @@
 const pLimit = require('p-limit');
 const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
-const bootstrap = require('../lambdas/bootstrap');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const {
+  AsyncOperationPgModel,
+  CollectionPgModel,
+  ExecutionPgModel,
+  FilePgModel,
+  getKnexClient,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  PdrPgModel,
+  ProviderPgModel,
+  RulePgModel,
+  localStackConnectionEnv,
+} = require('@cumulus/db');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
@@ -54,7 +67,7 @@ async function populateBucket(bucket, stackName) {
   await Promise.all([...workflowPromises, templatePromise]);
 }
 
-function setTableEnvVariables(stackName) {
+async function setTableEnvVariables(stackName) {
   process.env.FilesTable = `${stackName}-FilesTable`;
 
   const tableModels = Object
@@ -62,34 +75,45 @@ function setTableEnvVariables(stackName) {
     .filter((tableModel) => tableModel !== 'Manager');
 
   // generate table names
-  let tableNames = tableModels
+  const tableMapKeys = tableModels
     .map((tableModel) => `${tableModel}sTable`);
 
   // set table env variables
-  tableNames = tableNames.map((tableName) => {
-    process.env[tableName] = `${stackName}-${tableName}`;
-    return process.env[tableName];
+  const tableNamesMap = {};
+  const TableNames = tableMapKeys.map((tableNameKey) => {
+    const tableName = `${stackName}-${tableNameKey}`;
+    tableNamesMap[tableNameKey] = tableName;
+    process.env[tableNameKey] = tableName;
+    return process.env[tableNameKey];
   });
+
+  const dynamoTableNamesParameterName = `${stackName}-dynamo-tables`;
+  process.env.dynamoTableNamesParameterName = dynamoTableNamesParameterName;
+  await systemsManager().putParameter({
+    Name: dynamoTableNamesParameterName,
+    Value: JSON.stringify(tableNamesMap),
+    Overwrite: true,
+  }).promise();
 
   return {
     tableModels,
-    tableNames,
+    TableNames,
   };
 }
 
 // check if the tables and Elasticsearch indices exist
 // if not create them
 async function checkOrCreateTables(stackName) {
-  const tables = setTableEnvVariables(stackName);
-
+  const tables = await setTableEnvVariables(stackName);
   const limit = pLimit(1);
 
   let i = -1;
   const promises = tables.tableModels.map((t) => limit(() => {
     i += 1;
+    console.log(tables.TableNames[i]);
     return createTable(
       models[t],
-      tables.tableNames[i]
+      tables.TableNames[i]
     );
   }));
   await Promise.all(promises);
@@ -97,7 +121,8 @@ async function checkOrCreateTables(stackName) {
 
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
-  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
+  console.log(process.env.ES_HOST);
+  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -148,7 +173,7 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrap.bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
 }
 
 /**
@@ -220,6 +245,11 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomId('tokensecret');
 
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+  };
+
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
@@ -230,7 +260,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
 
     // create tables if not already created
     await pRetry(
-      async () => checkOrCreateTables(stackName),
+      async () => await checkOrCreateTables(stackName),
       {
         onFailedAttempt: (error) => console.log(
           `Failed to Create Tables. Localstack may not be ready, will retry ${error.attemptsLeft} more times.`
@@ -245,7 +275,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     }
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    setTableEnvVariables(process.env.stackName);
+    await setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -288,12 +318,40 @@ async function serveDistributionApi(stackName = localStackName, done) {
     await createDBRecords(stackName);
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    setTableEnvVariables(stackName);
+    await setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);
   const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require
   return distributionApp.listen(port, done);
+}
+
+/**
+* Remove all records from api-related postgres tables
+* @param {Object} knex - knex/knex transaction object
+* @returns {[Promise]} - Array of promises with deletion results
+*/
+async function erasePostgresTables(knex) {
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const rulePgModel = new RulePgModel();
+
+  await granulesExecutionsPgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await pdrPgModel.delete(knex, {});
+  await executionPgModel.delete(knex, {});
+  await asyncOperationPgModel.delete(knex, {});
+  await filePgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await rulePgModel.delete(knex, {});
+  await collectionPgModel.delete(knex, {});
+  await providerPgModel.delete(knex, {});
 }
 
 /**
@@ -316,7 +374,7 @@ async function eraseDynamoTables(stackName, systemBucket) {
 
   try {
     await rulesModel.deleteRules();
-    await Promise.all([
+    await Promise.allSettled([
       collectionModel.deleteCollections(),
       providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
@@ -357,11 +415,10 @@ async function resetTables(
   runIt = false
 ) {
   if (inTestMode() || runIt) {
+    const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
     await eraseDynamoTables(stackName, systemBucket);
-    // Populate tables with original test data (localstack)
-    if (inTestMode()) {
-      await createDBRecords(stackName, user);
-    }
+    await erasePostgresTables(knex);
+    await createDBRecords(stackName, user, knex);
   }
 }
 
@@ -370,4 +427,5 @@ module.exports = {
   serveApi,
   serveDistributionApi,
   resetTables,
+  erasePostgresTables,
 };

@@ -1,5 +1,5 @@
 import got from 'got';
-import ValidationError from './ValidationError';
+import { CMRInternalError, ValidationError } from '@cumulus/errors';
 import { getValidateUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
@@ -35,7 +35,9 @@ async function validate(
     result = error.response;
   }
 
-  const parsed = <{errors: {error: string}}>(await parseXMLString(result.body));
+  const parsed = <{ errors: { error: string } }>(await parseXMLString(result.body));
+
+  if (result.statusCode >= 500 && result.statusCode < 600) throw new CMRInternalError('CMR Internal Error');
 
   throw new ValidationError(
     `Validation was not successful, CMR error message: ${JSON.stringify(parsed.errors.error)}`

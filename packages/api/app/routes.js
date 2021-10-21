@@ -15,6 +15,7 @@ const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
 const logs = require('../endpoints/logs');
+const orca = require('../endpoints/orca');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const replays = require('../endpoints/replays');
 const schemas = require('../endpoints/schemas');
@@ -23,7 +24,8 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
-const ems = require('../endpoints/ems');
+const migrationCounts = require('../endpoints/migrationCounts');
+const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
@@ -33,6 +35,12 @@ if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
+
+// dead letters endpoint
+router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive);
+
+//migrationCounts endpoint
+router.use('/migrationCounts', ensureAuthorized, migrationCounts);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
@@ -50,14 +58,14 @@ router.use('/providers', ensureAuthorized, providers);
 router.use('/pdrs', ensureAuthorized, pdrs);
 
 // rules endpoints
-router.use('/rules', ensureAuthorized, rules);
+router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
 router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/asyncOperations', ensureAuthorized, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
@@ -65,7 +73,10 @@ router.use('/instanceMeta', ensureAuthorized, instanceMeta);
 // logs endpoint
 router.use('/logs', ensureAuthorized, logs);
 
-// logs endpoint
+// orca endpoint
+router.use('/orca', ensureAuthorized, orca);
+
+// reconciliationReports endpoint
 router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
 
 // replays endpoint
@@ -101,9 +112,7 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
-
-router.use('/ems', ensureAuthorized, ems);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);

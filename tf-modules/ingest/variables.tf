@@ -16,6 +16,12 @@ variable "cmr_environment" {
   type = string
 }
 
+variable "cmr_custom_host" {
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
+  type        = string
+  default     = null
+}
+
 variable "cmr_limit" {
   type    = number
   default = 100
@@ -134,6 +140,12 @@ variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
   default     = {}
+}
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
 }
 
 variable "throttled_queues" {

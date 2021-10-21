@@ -6,6 +6,8 @@ const {
 const {
   constructOnlineAccessUrl,
   getGranuleTemporalInfo,
+  getCollectionsByShortNameAndVersion,
+  getUserAccessibleBuckets,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,
@@ -18,6 +20,8 @@ module.exports = {
   constructOnlineAccessUrl,
   ValidationError,
   getGranuleTemporalInfo,
+  getCollectionsByShortNameAndVersion,
+  getUserAccessibleBuckets,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,

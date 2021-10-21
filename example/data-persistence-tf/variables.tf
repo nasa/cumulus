@@ -8,6 +8,15 @@ variable "prefix" {
   type = string
 }
 
+variable "rds_admin_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+  type        = string
+}
+
+variable "rds_security_group" {
+  type = string
+}
+
 variable "subnet_ids" {
   type = list(string)
 }
@@ -45,6 +54,23 @@ variable "enable_point_in_time_tables" {
   description = "DynamoDB table names that should have point in time recovery enabled"
   type        = list(string)
   default     = []
+}
+
+variable "rds_user_password" {
+  description = "Password to set for RDS db user"
+  type = string
+  default = ""
+}
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "tags" {

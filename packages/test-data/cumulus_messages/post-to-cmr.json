@@ -5,17 +5,17 @@
     "task": "CmrStep",
     "workflow_start_time": 1519167138335,
     "execution_name": "d5b6344a-36eb-4c97-a5cf-3f6e83f0692a",
-    "system_bucket": "cumulus-devseed-internal"
+    "system_bucket": "cumulus-test-sandbox-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
     "status": "running",
     "workflow_name": "IngestGranule",
     "collection": {
       "files": [
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-          "s3": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "s3": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
           "bucket": "protected",
           "http": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
@@ -27,15 +27,15 @@
         },
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-          "http": "http://cumulus-devseed-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-          "s3": "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "http": "http://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "s3": "s3://cumulus-test-sandbox-public/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
           "bucket": "public"
         },
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
-          "http": "http://cumulus-devseed-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
-          "s3": "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "http": "http://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "s3": "s3://cumulus-test-sandbox-public/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
           "bucket": "public"
         }
@@ -92,9 +92,9 @@
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "bucket": "cumulus-devseed-protected",
+            "bucket": "cumulus-test-sandbox-protected",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 17865615,
             "type": "data",
             "path": "granules",
@@ -103,9 +103,9 @@
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "bucket": "cumulus-devseed-private",
+            "bucket": "cumulus-test-sandbox-private",
             "checksum": null,
-            "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 44118,
             "type": "metadata",
             "path": "granules",
@@ -191,9 +191,9 @@
   },
   "exception": "None",
   "payload": [
-    "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-    "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-    "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
-    "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+    "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+    "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+    "s3://cumulus-test-sandbox-public/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+    "s3://cumulus-test-sandbox-public/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
   ]
 }

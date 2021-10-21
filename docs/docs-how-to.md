@@ -31,7 +31,7 @@ Adding a new page should be as simple as writing some documentation in markdown,
 
 ```markdown
 ---
-id: doc-unique-id    # unique id for this document. This must be unique accross ALL documentation under docs/
+id: doc-unique-id    # unique id for this document. This must be unique across ALL documentation under docs/
 title: Title Of Doc  # Whatever title you feel like adding. This will show up as the index to this page on the sidebar.
 hide_title: false
 ---

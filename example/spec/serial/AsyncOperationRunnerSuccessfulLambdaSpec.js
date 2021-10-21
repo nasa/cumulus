@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -107,19 +108,23 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     }
   });
 
-  it('updates the status field to "SUCCEEDED"', async () => {
+  it('updates the status field to "SUCCEEDED"', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
-  it('updates the output field in DynamoDB', async () => {
+  it('updates the output field in DynamoDB', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
-
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });
 
-  afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
+  afterAll(async () => {
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    if (asyncOperationId) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
+    }
+  });
 });

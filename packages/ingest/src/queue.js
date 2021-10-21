@@ -55,7 +55,6 @@ async function enqueueParsePdrMessage({
     messageTemplate,
     parentExecutionArn,
     payload,
-    queueUrl,
     workflow,
     customMeta: {
       ...additionalCustomMeta,
@@ -96,7 +95,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  */
 async function enqueueGranuleIngestMessage({
   collection,
-  granule,
+  granules,
   granuleIngestWorkflow,
   parentExecutionArn,
   pdr,
@@ -113,11 +112,7 @@ async function enqueueGranuleIngestMessage({
     getWorkflowFileKey(stack, granuleIngestWorkflow)
   );
 
-  const payload = {
-    granules: [
-      granule,
-    ],
-  };
+  const payload = { granules };
 
   const workflow = {
     name: granuleIngestWorkflow,
@@ -128,7 +123,6 @@ async function enqueueGranuleIngestMessage({
     messageTemplate,
     parentExecutionArn,
     payload,
-    queueUrl,
     workflow,
     customMeta: {
       ...additionalCustomMeta,
@@ -150,3 +144,70 @@ async function enqueueGranuleIngestMessage({
   return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
+
+/**
+ * Enqueue a workflow
+ *
+ * @param {Object} params
+ * @param {Object} params.workflow - the workflow to be enqueued
+ * @param {Object} params.workflowInput - the input that should be passed to the queued workflow
+ * @param {string} [params.queueUrl] - an optional SQS queue to add the message to
+ * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {Object} params.collection - the collection config to be attached to the
+ *   message
+ * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {string} [params.executionNamePrefix] - the prefix to apply to the
+ *   name of the enqueued execution
+ * @returns {Promise} - resolves when the message has been enqueued
+ */
+async function enqueueWorkflowMessage({
+  parentExecutionArn,
+  stack,
+  systemBucket,
+  collection,
+  provider,
+  queueUrl,
+  workflow,
+  workflowInput,
+  executionNamePrefix,
+  additionalCustomMeta = {},
+}) {
+  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+  const { arn: queuedWorkflowArn } = await getJsonS3Object(
+    systemBucket,
+    getWorkflowFileKey(stack, workflow)
+  );
+
+  const payload = {
+    ...workflowInput,
+  };
+
+  const queuedWorkflowDefinition = {
+    name: workflow,
+    arn: queuedWorkflowArn,
+  };
+
+  const message = buildQueueMessageFromTemplate({
+    messageTemplate,
+    parentExecutionArn,
+    payload,
+    queueUrl,
+    workflow: queuedWorkflowDefinition,
+    executionNamePrefix,
+    customMeta: {
+      ...additionalCustomMeta,
+      collection,
+      provider,
+    },
+  });
+
+  const arn = buildExecutionArn(
+    message.cumulus_meta.state_machine,
+    message.cumulus_meta.execution_name
+  );
+
+  await sendSQSMessage(queueUrl, message);
+
+  return arn;
+}
+exports.enqueueWorkflowMessage = enqueueWorkflowMessage;

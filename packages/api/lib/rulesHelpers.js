@@ -55,12 +55,10 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
     ? collectionInNotification
     : rule.collection;
   const item = {
-    workflow: rule.workflow,
-    provider: rule.provider,
+    ...rule,
     collection,
     meta: eventSource ? { ...rule.meta, eventSource } : rule.meta,
     payload: eventObject,
-    executionNamePrefix: rule.executionNamePrefix,
   };
 
   const payload = await Rule.buildPayload(item);

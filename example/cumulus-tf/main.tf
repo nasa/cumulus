@@ -32,6 +32,10 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
+  protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
+  public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
+  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
+  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 }
 
 data "aws_caller_identity" "current" {}
@@ -45,6 +49,10 @@ data "terraform_remote_state" "data_persistence" {
 
 data "aws_lambda_function" "sts_credentials" {
   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
+}
+
+data "aws_lambda_function" "sts_policy_helper" {
+  function_name = "gsfc-ngap-sh-sts-policy-helper"
 }
 
 data "aws_ssm_parameter" "ecs_image_id" {
@@ -66,32 +74,32 @@ module "cumulus" {
   deploy_to_ngap = true
 
   bucket_map_key = var.bucket_map_key
+  throttled_queues = [{
+    url = aws_sqs_queue.throttled_queue.id
+    execution_limit = 30
+  }]
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  async_operation_image           = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
+  rds_security_group                     = local.rds_security_group
+  rds_user_access_secret_arn             = local.rds_credentials_secret_arn
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+
+  async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
+
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? var.lambda_subnet_ids : var.ecs_cluster_instance_subnet_ids
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
+  ecs_include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob
   key_name                        = var.key_name
   ecs_custom_sg_ids               = var.ecs_custom_sg_ids
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
-
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
 
   es_request_concurrency = var.es_request_concurrency
 
@@ -104,6 +112,7 @@ module "cumulus" {
   cmr_username    = var.cmr_username
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
+  cmr_custom_host = var.cmr_custom_host
 
   cmr_oauth_provider = var.cmr_oauth_provider
 
@@ -136,12 +145,11 @@ module "cumulus" {
   elasticsearch_security_group_id = local.elasticsearch_security_group_id
   es_index_shards                 = var.es_index_shards
 
-  dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
+  dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
 
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
-    "brian.tennity",
     "dopeters",
     "jasmine",
     "jennyhliu",
@@ -154,30 +162,36 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mobrien84",
-    "npauzenga"
+    "npauzenga",
+    "ds_jennifertran"
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
+  archive_api_reserved_concurrency = var.api_reserved_concurrency
 
-  # Thin Egress App settings
+  # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
-  tea_api_gateway_stage = local.tea_stage_name
-
-  tea_rest_api_id               = module.thin_egress_app.rest_api.id
-  tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
-  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
+  # tea_api_gateway_stage         = local.tea_stage_name
+  # tea_rest_api_id               = module.thin_egress_app.rest_api.id
+  # tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
+  # tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  # tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
 
+  # Cumulus Distribution settings. Remove/comment to use TEA
+  tea_external_api_endpoint = module.cumulus_distribution.api_uri
+
+  deploy_cumulus_distribution = var.deploy_cumulus_distribution
+
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
+  cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
-
-  ems_deploy = var.ems_deploy
 
   tags = local.tags
 }

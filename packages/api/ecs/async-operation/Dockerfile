@@ -1,4 +1,4 @@
-FROM node:10.16.3
+FROM node:erbium-buster
 
 USER root
 RUN sed -i -e '/jessie-updates/d' /etc/apt/sources.list

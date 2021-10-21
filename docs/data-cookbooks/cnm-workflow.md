@@ -449,7 +449,7 @@ This Lambda will take the files listed in the payload and move them to `s3://{de
 
 Assuming a successful execution of the workflow, this task will recover the `meta.cnm` key from the CMA output, and add a "SUCCESS" record to the notification Kinesis stream.
 
-If a prior step in the the workflow has failed, this will add a "FAILURE" record to the stream instead.
+If a prior step in the workflow has failed, this will add a "FAILURE" record to the stream instead.
 
 The data written to the `response-endpoint` should adhere to the [Response Message Fields](https://github.com/podaac/cloud-notification-message-schema#cumulus-sns-schema) schema.
 

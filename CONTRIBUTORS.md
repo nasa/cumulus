@@ -5,6 +5,7 @@
 * Aimee Barciauskas
 * Andrew Pawloski
 * Anthony Lukach
+* Anthony Ortega
 * Brian Tennity
 * Chuck Daniels
 * Dan Pilone
@@ -31,3 +32,6 @@
 * Phil Osip
 * Sara Chaparro Diaz
 * Seth Vincent
+* Slav Korolev
+* Snyk bot
+* Tobias Nießen

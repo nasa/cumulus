@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 'use strict';
 
 const isEmpty = require('lodash/isEmpty');
@@ -141,7 +143,7 @@ class Collection {
    *    version exists; `false` otherwise
    */
   async exists(name, version) {
-    return this.dynamoDbClient.exists({ name, version });
+    return await this.dynamoDbClient.exists({ name, version });
   }
 
   /**
@@ -167,18 +169,18 @@ class Collection {
     return this.dynamoDbClient.create(item);
   }
 
-  createItems(items) {
-    return Promise.all(
+  async createItems(items) {
+    return await Promise.all(
       items.map((item) => this.createItem(item))
     );
   }
 
-  create(input) {
+  async create(input) {
     if (Array.isArray(input)) {
-      return this.createItems(input);
+      return await this.createItems(input);
     }
 
-    return this.createItem(input);
+    return await this.createItem(input);
   }
 
   /**
@@ -249,7 +251,7 @@ class Collection {
    * @returns {Array<Object>} list of collections
    */
   async getAllCollections() {
-    return this.dynamoDbClient.scan(
+    return await this.dynamoDbClient.scan(
       {
         names: {
           '#name': 'name',
@@ -271,7 +273,7 @@ class Collection {
    * @param {Array<string>} fields - optional, fields to return
    * @returns {Array<Object>} the collection's queue
    */
-  async search(searchParams = {}, fields = []) {
+  search(searchParams = {}, fields = []) {
     const attributeNames = {};
     const attributeValues = {};
     const filterArray = [];
@@ -308,7 +310,7 @@ class Collection {
 
   async deleteCollections() {
     const collections = await this.getAllCollections();
-    return Promise.all(collections.map((collection) => {
+    return await Promise.all(collections.map((collection) => {
       const name = collection.name;
       const version = collection.version;
       return this.delete({ name, version });

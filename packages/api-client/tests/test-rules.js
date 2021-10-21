@@ -3,7 +3,7 @@
 const test = require('ava');
 const rulesApi = require('../rules');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.testName = 'testRule';
   t.context.testRule = { some: 'ruleObject' };
@@ -26,7 +26,7 @@ test('postRule calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -51,7 +51,7 @@ test('updateRule calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -74,7 +74,7 @@ test('listRules calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -94,7 +94,7 @@ test('getRule calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -115,7 +115,7 @@ test('deleteRule calls the callback with the expected object', async (t) => {
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
   };
 
@@ -137,7 +137,7 @@ test('rerunRule calls the updateRule with the expected object', async (t) => {
     body: JSON.stringify({ action: 'rerun' }),
   };
 
-  const callback = async ({ payload }) => {
+  const callback = ({ payload }) => {
     t.deepEqual(payload, expected);
   };
 

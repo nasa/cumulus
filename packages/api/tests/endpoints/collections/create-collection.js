@@ -9,18 +9,27 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  CollectionPgModel,
+  migrationDir,
+} = require('@cumulus/db');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
 
 const AccessToken = require('../../../models/access-tokens');
 const Collection = require('../../../models/collections');
 const RulesModel = require('../../../models/rules');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { post } = require('../../../endpoints/collections');
+const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -42,12 +51,24 @@ let collectionModel;
 let rulesModel;
 let publishStub;
 
-test.before(async () => {
-  process.env = { ...process.env };
+const testDbName = randomString(12);
+
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -68,17 +89,22 @@ test.before(async () => {
 
   process.env.collection_sns_topic_arn = randomString();
   publishStub = sinon.stub(awsServices.sns(), 'publish').returns({
-    promise: async () => true,
+    promise: () => Promise.resolve(true),
   });
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   publishStub.restore();
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -132,6 +158,45 @@ test('POST creates a new collection', async (t) => {
 
   t.is(fetchedDynamoRecord.name, newCollection.name);
   t.is(fetchedDynamoRecord.version, newCollection.version);
+
+  t.true(await t.context.collectionPgModel.exists(
+    t.context.testKnex,
+    {
+      name: newCollection.name,
+      version: newCollection.version,
+    }
+  ));
+});
+
+test('POST creates a new collection in Dynamo and PG with correct timestamps', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const fetchedDynamoRecord = await collectionModel.get({
+    name: newCollection.name,
+    version: newCollection.version,
+  });
+
+  const collectionPgRecord = await t.context.collectionPgModel.get(
+    t.context.testKnex,
+    {
+      name: newCollection.name,
+      version: newCollection.version,
+    }
+  );
+
+  t.true(fetchedDynamoRecord.createdAt > newCollection.createdAt);
+  t.true(fetchedDynamoRecord.updatedAt > newCollection.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(collectionPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(collectionPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('POST without a name returns a 400 error', async (t) => {
@@ -304,4 +369,60 @@ test('POST with non-matching granuleId regex returns 400 bad request response', 
 
   t.is(res.status, 400);
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
+});
+
+test('post() does not write to the database if writing to Dynamo fails', async (t) => {
+  const { testKnex } = t.context;
+
+  const collection = fakeCollectionFactory();
+
+  const fakeCollectionsModel = {
+    exists: () => false,
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const expressRequest = {
+    body: collection,
+    testContext: {
+      dbClient: testKnex,
+      collectionsModel: fakeCollectionsModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  const dbRecords = await t.context.collectionPgModel
+    .search(t.context.testKnex, {
+      name: collection.name,
+      version: collection.version,
+    });
+
+  t.is(dbRecords.length, 0);
+});
+
+test('post() does not write to Dynamo if writing to the database fails', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const fakeDbClient = () => ({
+    insert: () => Promise.reject(new Error('something bad')),
+  });
+
+  const expressRequest = {
+    body: collection,
+    testContext: { dbClient: fakeDbClient },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
+
+  t.false(await collectionModel.exists(collection.name, collection.version));
 });

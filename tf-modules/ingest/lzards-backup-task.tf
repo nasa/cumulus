@@ -6,7 +6,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs12.x"
-  timeout          = 900
+  timeout          = lookup(var.lambda_timeouts, "lzards_backup_task_timeout", 900)
   memory_size      = 512
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
@@ -14,6 +14,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
+      CMR_HOST                         = var.cmr_custom_host
       stackName                        = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR      = "/opt/"
       system_bucket                    = var.system_bucket
@@ -50,7 +51,6 @@ data "aws_iam_policy_document" "lambda_backup_role_policy" {
       type = "AWS"
       identifiers = [var.lambda_processing_role_arn]
     }
-
   }
 }
 
@@ -84,6 +84,10 @@ data "aws_iam_policy_document" "lambda_backup_policy" {
       "s3:GetObject*"
     ]
     resources = [for b in local.all_non_internal_buckets : "arn:aws:s3:::${b}/*"]
+  }
+  statement {
+    actions = ["s3:GetObject*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 }
 

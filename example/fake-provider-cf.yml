@@ -23,6 +23,10 @@ Outputs:
     Value: !Ref S3ProviderBucket
     Export:
       Name: cumulus-fake-s3-provider-bucket
+  S3AltProviderBucket:
+    Value: !Ref S3AltProviderBucket
+    Export:
+      Name: cumulus-fake-s3-provider-bucket-alternate
 
 Resources:
 
@@ -30,6 +34,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${Prefix}-fake-s3-provider"
+
+  S3AltProviderBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Prefix}-fake-s3-provider-alternate"
 
   Role:
     Type: AWS::IAM::Role
@@ -185,9 +194,12 @@ Resources:
             curl -s http://169.254.169.254/latest/meta-data/local-ipv4 |\
               aws s3 cp - s3://${Bucket}/fake-provider-ip
 
-            # Write the fake S3 provider bucket to S3
+            # Write the fake S3 provider buckets to S3
             echo '${S3ProviderBucket}' |\
               aws s3 cp - s3://${Bucket}/fake-s3-provider-bucket
+
+            echo '${S3AltProviderBucket}' |\
+              aws s3 cp - s3://${Bucket}/fake-s3-provider-bucket-alternate
 
             # Copy the self-signed certificate to S3
             aws s3 cp \

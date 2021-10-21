@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:PutBucket*",
       "s3:ListBucket*"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -98,7 +98,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:DeleteObject",
       "s3:DeleteObjectVersion"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -176,7 +176,15 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
     resources = [
       aws_secretsmanager_secret.api_cmr_password.arn,
       aws_secretsmanager_secret.api_launchpad_passphrase.arn,
+      var.rds_user_access_secret_arn
     ]
+  }
+
+  statement {
+    actions = [
+      "ssm:GetParameter"
+    ]
+    resources = [aws_ssm_parameter.dynamo_table_names.arn]
   }
 }
 

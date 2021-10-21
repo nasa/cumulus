@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 2.31.0"
+      version = "~> 3.0,!= 3.14.0"
     }
   }
 }
@@ -12,4 +12,11 @@ locals {
     aws_security_group.no_ingress_all_egress[0].id,
     var.elasticsearch_security_group_id
   ])
+  all_non_internal_buckets = [for k, v in var.buckets : v.name if v.type != "internal"]
+  public_buckets = [for k, v in var.buckets : v.name if v.type == "public"]
+  protected_buckets = [for k, v in var.buckets : v.name if v.type == "protected"]
+  allowed_buckets = compact(flatten([
+    local.all_non_internal_buckets,
+    var.system_bucket
+  ]))
 }

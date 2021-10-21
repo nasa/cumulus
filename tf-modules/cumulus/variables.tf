@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:27"
+  default = "cumuluss/async-operation:36"
 }
 
 variable "cmr_client_id" {
@@ -12,7 +12,7 @@ variable "cmr_client_id" {
 }
 
 variable "cmr_environment" {
-  description = "Environment that should be used for CMR requests (e.g. 'UAT', 'SIT')"
+  description = "Environment that should be used for CMR requests ('UAT', 'SIT', or 'PROD')"
   type        = string
 }
 
@@ -35,6 +35,16 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
   description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
   type        = string
   default     = null
+}
+variable "rds_security_group" {
+  description = "RDS Security Group used for access to RDS cluster"
+  type        = string
+  default     = null
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "RDS User Database Login Credential Secret ARN"
+  type        = string
 }
 
 variable "deploy_to_ngap" {
@@ -90,14 +100,27 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string
 }
 
 variable "sts_credentials_lambda_function_arn" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
+  description = "ARN of lambda function that provides app owners with keys that can be passed on to their app users."
+}
+
+variable "sts_policy_helper_lambda_function_arn" {
+  type        = string
+  default     = null
+  description = "ARN of lambda function that outputs session policies to be passed to the sts key lambda."
 }
 
 variable "system_bucket" {
@@ -108,11 +131,13 @@ variable "system_bucket" {
 variable "tea_external_api_endpoint" {
   description = "Thin Egress App external endpoint URL"
   type        = string
+  default     = null
 }
 
 variable "tea_internal_api_endpoint" {
   description = "Thin Egress App internal endpoint URL"
   type        = string
+  default     = null
 }
 
 variable "token_secret" {
@@ -144,6 +169,12 @@ variable "archive_api_port" {
   default     = null
 }
 
+variable "archive_api_reserved_concurrency" {
+  description = "Reserved Concurrency for the API lambda function"
+  type = number
+  default = 15
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
@@ -158,6 +189,12 @@ variable "buckets" {
 
 variable "bucket_map_key" {
   description = "Optional S3 Key for TEA bucket map object to override default Cumulus configuration"
+  type        = string
+  default     = null
+}
+
+variable "cmr_custom_host" {
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
@@ -248,6 +285,12 @@ variable "ecs_efs_config" {
   default     = null
 }
 
+variable "ecs_include_docker_cleanup_cronjob" {
+  description = "*Experimental* flag to configure a cron to run fstrim on all active container root filesystems"
+  type        = bool
+  default     = false
+}
+
 variable "ecs_service_alarms" {
   description = "List of Cloudwatch alarms monitoring ECS instances"
   type        = list(object({ name = string, arn = string }))
@@ -258,60 +301,6 @@ variable "elasticsearch_alarms" {
   description = "List of Cloudwatch alarms monitoring Elasticsearch domain"
   type        = list(object({ name = string, arn = string }))
   default     = []
-}
-
-variable "ems_datasource" {
-  type        = string
-  description = "the data source of EMS reports"
-  default     = "UAT"
-}
-
-variable "ems_host" {
-  type        = string
-  description = "EMS host"
-  default     = "change-ems-host"
-}
-
-variable "ems_path" {
-  type        = string
-  description = "EMS host directory path for reports"
-  default     = "/"
-}
-
-variable "ems_port" {
-  type        = number
-  description = "EMS host port"
-  default     = 22
-}
-
-variable "ems_private_key" {
-  type        = string
-  description = "the private key file used for sending reports to EMS"
-  default     = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type        = string
-  description = "the provider used for sending reports to EMS"
-  default     = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type        = number
-  description = "the retention in days for reports and s3 server access logs"
-  default     = 30
-}
-
-variable "ems_submit_report" {
-  type        = bool
-  description = "toggle whether the reports will be sent to EMS"
-  default     = false
-}
-
-variable "ems_username" {
-  type        = string
-  description = "the username used for sending reports to EMS"
-  default     = "cumulus"
 }
 
 variable "es_request_concurrency" {
@@ -424,6 +413,18 @@ variable "private_archive_api_gateway" {
   default     = true
 }
 
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
+}
+
 variable "saml_entity_id" {
   description = "The endpoint EntityID from the Launchpad Integration Request"
   type        = string
@@ -487,6 +488,12 @@ variable "urs_url" {
   default     = "https://uat.urs.earthdata.nasa.gov"
 }
 
+variable "cmr_acl_based_credentials" {
+  type = bool
+  default = false
+  description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
+}
+
 variable "vpc_id" {
   description = "VPC used by Lambda functions"
   type        = string
@@ -544,15 +551,14 @@ variable "es_index_shards" {
   default     = 2
 }
 
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
-  type        = bool
-  default     = false
-}
-
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
   type = list(string)
   default = []
 }
 
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = false
+}

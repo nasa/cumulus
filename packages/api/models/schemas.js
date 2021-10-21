@@ -28,6 +28,12 @@ module.exports.accessToken = {
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
       type: 'string',
     },
+    tokenInfo: {
+      title: 'Token Info',
+      description: 'The information associated with the access token, such as user profile information',
+      type: 'object',
+      additionalProperties: true,
+    },
   },
 };
 
@@ -44,7 +50,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report'],
+      enum: ['Data Migration', 'Dead-Letter Processing', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report', 'SQS Replay'],
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -267,9 +273,8 @@ module.exports.granule = {
     },
     status: {
       title: 'Ingest status of the granule',
-      enum: ['running', 'completed', 'failed'],
+      enum: ['running', 'completed', 'failed', 'queued'],
       type: 'string',
-      readonly: true,
     },
     execution: {
       title: 'Step Function Execution link',
@@ -365,7 +370,6 @@ module.exports.granule = {
     'granuleId',
     'collectionId',
     'status',
-    'execution',
     'createdAt',
     'updatedAt',
   ],
@@ -614,6 +618,14 @@ module.exports.provider = {
       title: 'Host',
       type: 'string',
     },
+    allowedRedirects: {
+      title: 'Allowed redirects',
+      description: 'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
     port: {
       title: 'Port',
       type: 'number',
@@ -716,6 +728,7 @@ module.exports.execution = {
     duration: { type: 'number' },
     parentArn: { type: 'string' },
     asyncOperationId: { type: 'string' },
+    cumulusVersion: { type: 'string' },
   },
   required: [
     'arn',

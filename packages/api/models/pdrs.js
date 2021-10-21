@@ -1,15 +1,33 @@
 'use strict';
 
-const get = require('lodash/get');
-
-const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const { getMessageExecutionArn } = require('@cumulus/message/Executions');
+const {
+  getMessageExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
+const {
+  getMessagePdr,
+  getMessagePdrPANSent,
+  getMessagePdrPANMessage,
+  getMessagePdrStats,
+  getPdrPercentCompletion,
+} = require('@cumulus/message/PDRs');
+const {
+  getMessageProviderId,
+} = require('@cumulus/message/Providers');
+const {
+  getMetaStatus,
+  getMessageWorkflowStartTime,
+  getWorkflowDuration,
+} = require('@cumulus/message/workflows');
+const Logger = require('@cumulus/logger');
 const pvl = require('@cumulus/pvl');
-const StepFunctionUtils = require('../lib/StepFunctionUtils');
+
 const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const pdrSchema = require('./schemas').pdr;
+
+const logger = new Logger({ sender: '@cumulus/api/models/pdrs' });
 
 class Pdr extends Manager {
   constructor() {
@@ -52,14 +70,15 @@ class Pdr extends Manager {
    * Generate a PDR record.
    *
    * @param {Object} message - A workflow execution message
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    * @returns {Object|undefined} - A PDR record, or null if `message.payload.pdr` is
    *   not set
    */
-  generatePdrRecord(message) {
-    const pdr = get(message, 'payload.pdr');
+  generatePdrRecord(message, updatedAt = Date.now()) {
+    const pdr = getMessagePdr(message);
 
     if (!pdr) { // We got a message with no PDR (OK)
-      log.info('No PDRs to process on the message');
+      logger.info('No PDRs to process on the message');
       return undefined;
     }
 
@@ -68,42 +87,34 @@ class Pdr extends Manager {
     }
 
     const arn = getMessageExecutionArn(message);
-    const execution = StepFunctionUtils.getExecutionUrl(arn);
+    const execution = getExecutionUrlFromArn(arn);
 
     const collectionId = getCollectionIdFromMessage(message);
     if (!collectionId) {
       throw new CumulusModelError('meta.collection required to generate a PDR record');
     }
 
-    const stats = {
-      processing: get(message, 'payload.running', []).length,
-      completed: get(message, 'payload.completed', []).length,
-      failed: get(message, 'payload.failed', []).length,
-    };
-
-    stats.total = stats.processing + stats.completed + stats.failed;
-    let progress = 0;
-    if (stats.processing > 0 && stats.total > 0) {
-      progress = ((stats.total - stats.processing) / stats.total) * 100;
-    } else if (stats.processing === 0 && stats.total > 0) {
-      progress = 100;
-    }
+    const stats = getMessagePdrStats(message);
+    const progress = getPdrPercentCompletion(stats);
+    const now = Date.now();
+    const workflowStartTime = getMessageWorkflowStartTime(message);
 
     const record = {
       pdrName: pdr.name,
       collectionId,
-      status: get(message, 'meta.status'),
-      provider: get(message, 'meta.provider.id'),
+      status: getMetaStatus(message),
+      provider: getMessageProviderId(message),
       progress,
       execution,
-      PANSent: get(pdr, 'PANSent', false),
-      PANmessage: get(pdr, 'PANmessage', 'N/A'),
+      PANSent: getMessagePdrPANSent(message),
+      PANmessage: getMessagePdrPANMessage(message),
       stats,
-      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now(),
+      createdAt: getMessageWorkflowStartTime(message),
+      timestamp: now,
+      updatedAt,
+      duration: getWorkflowDuration(workflowStartTime, now),
     };
 
-    record.duration = (record.timestamp - record.createdAt) / 1000;
     this.constructor.recordIsValid(record, this.schema);
     return record;
   }
@@ -113,25 +124,35 @@ class Pdr extends Manager {
    * If the record already exists, only update if the execution is different (re-run case).
    *
    * @param {Object} cumulusMessage - cumulus message object
+   * @param {number} [updatedAt] - Optional updated timestamp for record
    */
-  async storePdrFromCumulusMessage(cumulusMessage) {
-    const pdrRecord = this.generatePdrRecord(cumulusMessage);
+  async storePdrFromCumulusMessage(cumulusMessage, updatedAt) {
+    const pdrRecord = this.generatePdrRecord(cumulusMessage, updatedAt);
     if (!pdrRecord) return undefined;
-    const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+
+    logger.info(`About to write PDR ${pdrRecord.pdrName} to DynamoDB`);
+
+    const updateParams = this.generatePdrUpdateParamsFromRecord(pdrRecord);
+
+    // createdAt comes from cumulus_meta.workflow_start_time
+    // records should *not* be updating from createdAt times that are *older* start
+    // times than the existing record, whatever the status
+    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
     if (pdrRecord.status === 'running') {
-      updateParams.ConditionExpression = 'execution <> :execution OR progress < :progress';
-      try {
-        return await this.dynamodbDocClient.update(updateParams).promise();
-      } catch (error) {
-        if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-          const executionArn = getMessageExecutionArn(cumulusMessage);
-          log.info(`Did not process delayed 'running' event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
-          return undefined;
-        }
-        throw error;
-      }
+      updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
-    return this.dynamodbDocClient.update(updateParams).promise();
+    try {
+      const updateResponse = await this.dynamodbDocClient.update(updateParams).promise();
+      logger.info(`Successfully wrote PDR ${pdrRecord.pdrName} to DynamoDB`);
+      return updateResponse;
+    } catch (error) {
+      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
+        const executionArn = getMessageExecutionArn(cumulusMessage);
+        logger.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -140,7 +161,7 @@ class Pdr extends Manager {
    * @param {Object} pdrRecord - the PDR record
    * @returns {Object} DynamoDB update parameters
    */
-  async generatePdrUpdateParamsFromRecord(pdrRecord) {
+  generatePdrUpdateParamsFromRecord(pdrRecord) {
     const mutableFieldNames = Object.keys(pdrRecord);
     const updateParams = this._buildDocClientUpdateParams({
       item: pdrRecord,
@@ -155,7 +176,7 @@ class Pdr extends Manager {
    */
   async deletePdrs() {
     const pdrs = await this.scan();
-    return Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
+    return await Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
   }
 }
 

@@ -28,6 +28,7 @@ async function queuePdrs(event) {
       stack: event.config.stackName,
       systemBucket: event.config.internalBucket,
       executionNamePrefix: event.config.executionNamePrefix,
+      additionalCustomMeta: event.config.childWorkflowMeta,
     }))
   );
 
@@ -44,6 +45,6 @@ exports.queuePdrs = queuePdrs;
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(queuePdrs, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(queuePdrs, event, context);
 }
 exports.handler = handler;

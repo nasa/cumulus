@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "migration_processing_policy" {
       "s3:PutBucket*",
       "s3:ListBucket*",
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -72,12 +72,12 @@ data "aws_iam_policy_document" "migration_processing_policy" {
       "s3:DeleteObject",
       "s3:DeleteObjectVersion",
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
   }
 
   statement {
     actions   = ["s3:PutBucketPolicy"]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -140,6 +140,7 @@ resource "aws_lambda_function" "execute_migrations" {
   environment {
     variables = {
       CMR_ENVIRONMENT            = var.cmr_environment
+      CMR_HOST                   = var.cmr_custom_host
       ES_HOST                    = var.elasticsearch_hostname
       ExecutionsTable            = var.dynamo_tables.executions.name
       FilesTable                 = var.dynamo_tables.files.name
