@@ -1,19 +1,15 @@
 {
   "type": "array",
   "items": {
-    "type": "object",
-    "required": ["bucket", "key"],
     "additionalProperties": false,
+    "type": "object",
+    "required": [
+      "bucket",
+      "key"
+    ],
     "properties": {
       "bucket": {
         "description": "Bucket where file is archived in S3",
-        "type": "string"
-      },
-      "key": {
-        "description": "S3 Key for archived file",
-        "type": "string"
-      },
-      "source": {
         "type": "string"
       },
       "checksum": {
@@ -22,10 +18,17 @@
       "checksumType": {
         "type": "string"
       },
+      "fileName": {
+        "type": "string"
+      },
+      "key": {
+        "description": "S3 Key for archived file",
+        "type": "string"
+      },
       "size": {
         "type": "number"
       },
-      "fileName": {
+      "source": {
         "type": "string"
       },
       "type": {
