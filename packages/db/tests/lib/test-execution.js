@@ -233,7 +233,7 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
   const result = await getExecutionArnsByGranuleCumulusId(
     knex,
     granuleCumulusId,
-    1,
+    1
   );
 
   t.deepEqual(
@@ -775,7 +775,6 @@ test('getApiExecutionCumulusIds() returns list of cumulus ids given a list of AP
   const executionCumulusIds = await getApiExecutionCumulusIds(knex, executionRecords);
 
   t.deepEqual(executionCumulusIds, [executionCumulusId1, executionCumulusId2, executionCumulusId3]);
-
 });
 
 test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids associated with a given execution', async (t) => {
@@ -820,9 +819,9 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
     executionCumulusId1);
 
   const expectedGranuleCumulusIds = [
-    parseInt(granuleCumulusId1),
-    parseInt(granuleCumulusId2),
-    parseInt(granuleCumulusId3),
+    Number.parseInt(granuleCumulusId1),
+    Number.parseInt(granuleCumulusId2),
+    Number.parseInt(granuleCumulusId3),
   ];
 
   const actualGranuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex,
