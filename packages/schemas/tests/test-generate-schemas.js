@@ -30,7 +30,7 @@ test('templateJsonSchema correctly updates schema template', (t) => {
     replacements
   );
   const schemaOutput = fs.readFileSync(schemaOutputPath, 'utf-8');
-  t.deepEqual(schemaOutput, JSON.stringify({ foo: 'bar' }));
+  t.deepEqual(schemaOutput, JSON.stringify({ foo: 'bar' }, undefined, 2));
 });
 
 test('templateJsonSchemaWithFiles correctly inserts file schema to template', (t) => {
@@ -51,5 +51,5 @@ test('templateJsonSchemaWithFiles correctly inserts file schema to template', (t
     schemaOutputPath
   );
   const schemaOutput = fs.readFileSync(schemaOutputPath, 'utf-8');
-  t.deepEqual(schemaOutput, JSON.stringify({ files: filesJsonSchema }));
+  t.deepEqual(schemaOutput, JSON.stringify({ files: filesJsonSchema }, undefined, 2));
 });
