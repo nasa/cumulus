@@ -7,7 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 - ** - NSIDC and other cumulus users had desire for returning formatted dates for the 'url_path' date extraction utilities. Added 'dateExtraction' function as an option for extracting and formating the entire date. See docs/workflow/workflow-configuration-how-to.md for more information.
-:w
 
 ### MIGRATION NOTES
 
