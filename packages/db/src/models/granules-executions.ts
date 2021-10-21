@@ -73,7 +73,7 @@ export default class GranulesExecutionsPgModel {
     executionCumulusIds: Array<number> | number
   ): Promise<Array<number>> {
     const executionCumulusIdsArray = [executionCumulusIds].flat();
-    const granuleExecutions = await knexOrTransaction(this.tableName)
+    const granuleExecutions: Array<PostgresGranuleExecution> = await knexOrTransaction(this.tableName)
       .select('granule_cumulus_id')
       .whereIn('execution_cumulus_id', executionCumulusIdsArray)
       .groupBy('granule_cumulus_id');
