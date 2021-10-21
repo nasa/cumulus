@@ -45,7 +45,7 @@ const deleteS3Files = async (
   );
 
 /**
- * Delete a Granule from Postgres and Dynamo, delete the Granule's
+ * Delete a Granule from Postgres, DynamoDB, ES, delete the Granule's
  * Files from Postgres and S3
  *
  * @param {Object} params
@@ -81,57 +81,50 @@ const deleteGranuleAndFiles = async (params: {
     granuleModelClient = new Granule(),
     esClient = await Search.es(),
   } = params;
-  if (pgGranule === undefined) {
-    logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
-    // Delete only the Dynamo Granule and S3 Files
-    await deleteS3Files(dynamoGranule.files);
-    await granuleModelClient.delete(dynamoGranule);
-    await publishGranuleDeleteSnsMessage(dynamoGranule);
-  } else if (pgGranule.published) {
+  if (pgGranule && pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-  } else {
-    // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
-    logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
-    const files = await filePgModel.search(
-      knex,
-      { granule_cumulus_id: pgGranule.cumulus_id }
-    );
+  }
+  // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+  logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
+  const files = await filePgModel.search(
+    knex,
+    { granule_cumulus_id: pgGranule.cumulus_id }
+  );
 
-    const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
-      collectionPgModel,
-      filePgModel,
-      pdrPgModel: new PdrPgModel(),
-      providerPgModel: new ProviderPgModel(),
-    });
+  const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    filePgModel,
+    pdrPgModel: new PdrPgModel(),
+    providerPgModel: new ProviderPgModel(),
+  });
 
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await granulePgModel.delete(trx, {
-          cumulus_id: pgGranule.cumulus_id,
-        });
-        await granuleModelClient.delete(dynamoGranule);
-        await deleteGranule({
-          esClient,
-          granuleId: dynamoGranule.granuleId,
-          collectionId: dynamoGranule.collectionId,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
+  try {
+    await createRejectableTransaction(knex, async (trx) => {
+      await granulePgModel.delete(trx, {
+        cumulus_id: pgGranule.cumulus_id,
       });
-      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
-      logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
-      await deleteS3Files(files);
-    } catch (error) {
-      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (dynamoGranule) {
-        await granuleModelClient.create(dynamoGranule);
-      }
-      throw error;
+      await granuleModelClient.delete(dynamoGranule);
+      await deleteGranule({
+        esClient,
+        granuleId: dynamoGranule.granuleId,
+        collectionId: dynamoGranule.collectionId,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+    await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
+    logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
+    await deleteS3Files(files);
+  } catch (error) {
+    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
+    // Delete is idempotent, so there may not be a DynamoDB
+    // record to recreate
+    if (dynamoGranule) {
+      await granuleModelClient.create(dynamoGranule);
     }
+    throw error;
   }
 };
 

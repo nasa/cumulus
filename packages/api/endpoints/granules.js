@@ -359,8 +359,6 @@ const associateExecution = async (req, res) => {
 async function del(req, res) {
   const {
     granuleModelClient = new Granule(),
-    collectionPgModel = new CollectionPgModel(),
-    granulePgModel = new GranulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
@@ -371,32 +369,8 @@ async function del(req, res) {
   let dynamoGranule;
   let pgGranule;
 
-  // If the granule does not exist in Dynamo, throw an error
   try {
-    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(error);
-    }
-    throw error;
-  }
-
-  // If the granule does not exist in PG, just log that information. The logic that
-  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
-  // does not exist. see deleteGranuleAndFiles().
-  try {
-    if (dynamoGranule.collectionId) {
-      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-        knex,
-        { name, version }
-      );
-      // Need granule_id + collection_cumulus_id to get truly unique record.
-      pgGranule = await granulePgModel.get(knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      });
-    }
+    pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info(`Postgres Granule with ID ${granuleId} does not exist`);
@@ -405,8 +379,13 @@ async function del(req, res) {
     }
   }
 
-  if (dynamoGranule.published) {
-    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  try {
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(error);
+    }
+    throw error;
   }
 
   await deleteGranuleAndFiles({
