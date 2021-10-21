@@ -15,6 +15,7 @@ const {
   GranulesExecutionsPgModel,
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -671,7 +672,7 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
     collection_cumulus_id: collectionCumulusId,
   });
 
-  const granuleCumulusId = await knex.transaction(async (trx) => {
+  const granuleCumulusId = await createRejectableTransaction(knex, async (trx) => {
     const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
     await granulesExecutionsPgModel.create(trx, {
       execution_cumulus_id: executionCumulusId,
@@ -699,7 +700,8 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
     )
   );
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => granulePgModel.delete(
       trx,
       granule
@@ -739,7 +741,7 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
   });
   let file;
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     const [innerGranuleCumulusId] = await granulePgModel.create(trx, granule);
     file = fakeFileRecordFactory({
       granule_cumulus_id: innerGranuleCumulusId,
@@ -764,7 +766,8 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
     )
   );
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => granulePgModel.delete(
       trx,
       granule

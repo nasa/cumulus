@@ -1,2 +1,2 @@
 export const getBucketsConfigKey = (stackName: string) =>
-  `${stackName}/workflows/buckets.json`;
+  `${stackName}/buckets/buckets.json`;

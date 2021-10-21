@@ -21,7 +21,7 @@ async function deleteConcept(
   identifier: string,
   provider: string,
   headers?: Headers
-): Promise<CMRResponseBody|CMRErrorResponseBody> {
+): Promise<CMRResponseBody | CMRErrorResponseBody> {
   const url = `${getIngestUrl({ provider })}${type}/${identifier}`;
 
   log.info(`deleteConcept ${url}`);

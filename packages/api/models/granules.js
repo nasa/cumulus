@@ -206,8 +206,6 @@ class Granule extends Manager {
       asyncOperationId,
     });
 
-    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
-
     return Lambda.invoke(process.env.invoke, lambdaPayload);
   }
 
@@ -249,8 +247,6 @@ class Granule extends Manager {
       queueUrl,
       asyncOperationId,
     });
-
-    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await Lambda.invoke(process.env.invoke, lambdaPayload);
   }

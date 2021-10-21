@@ -9,7 +9,7 @@ const loadRootPackageJson = () => {
   const rawRootPackageJson = readFileSync(rootPackageJsonFilename, 'utf8');
 
   return JSON.parse(rawRootPackageJson);
-}
+};
 
 const getRootDependencies = () => {
   const rootPackageJson = loadRootPackageJson();
@@ -19,7 +19,7 @@ const getRootDependencies = () => {
   }
 
   return [];
-}
+};
 
 const getRootDevDependencies = () => {
   const rootPackageJson = loadRootPackageJson();
@@ -29,7 +29,7 @@ const getRootDevDependencies = () => {
   }
 
   return [];
-}
+};
 
 module.exports = {
   plugins: [
@@ -39,7 +39,7 @@ module.exports = {
     'lodash',
     'node',
     'promise',
-    'unicorn'
+    'unicorn',
   ],
   extends: [
     'airbnb-base',
@@ -50,12 +50,12 @@ module.exports = {
     'plugin:lodash/recommended',
     'plugin:node/recommended',
     'plugin:promise/recommended',
-    'plugin:unicorn/recommended'
+    'plugin:unicorn/recommended',
   ],
   parser: 'babel-eslint',
   env: {
     jasmine: true,
-    node: true
+    node: true,
   },
   rules: {
     complexity: ['error', 15],
@@ -67,7 +67,7 @@ module.exports = {
       {
         prefer: {
           arg: 'param',
-          return: 'returns'
+          return: 'returns',
         },
         preferType: {
           Boolean: 'boolean',
@@ -78,14 +78,14 @@ module.exports = {
           date: 'Date',
           regexp: 'RegExp',
           Regexp: 'RegExp',
-          promise: 'Promise'
+          promise: 'Promise',
         },
         requireParamDescription: false,
         requireParamType: true,
         requireReturn: false,
         requireReturnDescription: false,
-        requireReturnType: true
-      }
+        requireReturnType: true,
+      },
     ],
     'jsdoc/check-param-names': 'warn',
     'jsdoc/check-tag-names': 'warn',
@@ -123,8 +123,8 @@ module.exports = {
         objects: 'always-multiline',
         imports: 'always-multiline',
         exports: 'always-multiline',
-        functions: 'never'
-      }
+        functions: 'never',
+      },
     ],
     strict: 'off',
     'guard-for-in': 'off',
@@ -134,8 +134,8 @@ module.exports = {
       {
         anonymous: 'always',
         named: 'never',
-        asyncArrow: 'always'
-      }
+        asyncArrow: 'always',
+      },
     ],
     'brace-style': [2, '1tbs'],
     'max-classes-per-file': 'warn',
@@ -145,8 +145,8 @@ module.exports = {
         code: 100,
         ignorePattern: '(https?:|JSON\\.parse|[Uu]rl =)',
         ignoreStrings: true,
-        ignoreTemplateLiterals: true
-      }
+        ignoreTemplateLiterals: true,
+      },
     ],
     'arrow-parens': ['error', 'always'],
     'prefer-destructuring': 'off',
@@ -157,7 +157,7 @@ module.exports = {
     'eslint-comments/no-unused-disable': 'warn',
     'eslint-comments/disable-enable-pair': [
       'error',
-      { allowWholeFile: true }
+      { allowWholeFile: true },
     ],
 
     'lodash/import-scope': ['error', 'method'],
@@ -178,35 +178,39 @@ module.exports = {
     'unicorn/prefer-spread': 'off',
     'unicorn/prefer-string-slice': 'off',
     'unicorn/prefer-trim-start-end': 'off',
-    'unicorn/prevent-abbreviations': 'off'
+    'unicorn/prevent-abbreviations': 'off',
   },
   overrides: [
     {
       files: ['*.ts'],
       parser: '@typescript-eslint/parser',
       plugins: [
-        '@typescript-eslint'
+        '@typescript-eslint',
       ],
       extends: ['airbnb-typescript/lib/shared'],
       rules: {
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
-        'comma-dangle': [
+        '@typescript-eslint/comma-dangle': [
           'error',
           {
             arrays: 'always-multiline',
             objects: 'always-multiline',
             imports: 'always-multiline',
             exports: 'always-multiline',
-            functions: 'never'
-          }
+            functions: 'never',
+          },
         ],
+        '@typescript-eslint/return-await': 'off',
         'import/no-extraneous-dependencies': 'off',
         'import/prefer-default-export': 'off',
-        'lines-between-class-members': 'off',
+        '@typescript-eslint/lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',
-        'node/no-unsupported-features/es-syntax': 'off'
-      }
+        'node/no-unsupported-features/es-syntax': 'off',
+      },
+      parserOptions: {
+        project: './tsconfig.eslint.json',
+      },
     },
     {
       files: [
@@ -214,16 +218,16 @@ module.exports = {
         '**/spec/**/*.js',
         'packages/api/migrations/**/*.js',
         'packages/deployment/**/*.js',
-        'tf-modules/internal/cumulus-test-cleanup/**/*.js'
+        'tf-modules/internal/cumulus-test-cleanup/**/*.js',
       ],
-      rules: { 'no-console': 'off' }
+      rules: { 'no-console': 'off' },
     },
     {
       files: [
         '**/test/**/*.js',
         '**/tests/**/*.js',
         '**/tests/**/*.ts',
-        'example/spec/**/*.js'
+        'example/spec/**/*.js',
       ],
       rules: {
         'max-classes-per-file': 'off',
@@ -235,17 +239,17 @@ module.exports = {
           {
             allowModules: [
               ...getRootDependencies(),
-              ...getRootDevDependencies()
-            ]
-          }
-        ]
-      }
+              ...getRootDevDependencies(),
+            ],
+          },
+        ],
+      },
     },
     {
       files: ['lambdas/db-migration/src/migration-template.ts', 'packages/db/src/migration-template.ts'],
       rules: {
-        '@typescript-eslint/no-unused-vars': 'off'
-      }
-    }
-  ]
+        '@typescript-eslint/no-unused-vars': 'off',
+      },
+    },
+  ],
 };
