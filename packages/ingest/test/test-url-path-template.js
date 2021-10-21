@@ -73,6 +73,14 @@ test('url path has substring operation', async (t) => {
   t.is(result, '6.0');
 });
 
+test('url path has dateFormat operation', async (t) => {
+  const metadataObject = await getTestMetadata(modisXmlFile);
+  const urlPath = '{dateFormat(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime, YYYY-MM-DD[T]HH[:]mm[:]ss)}';
+  const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
+  t.is(result, '2016-12-23T13:45:00');
+});
+
+
 test('url path has metadata fields which has multiple values', async (t) => {
   const metadataObject = await getTestMetadata(measuresXmlFile);
   const urlPath = '{cmrMetadata.Granule.Platforms.Platform[0].ShortName}';

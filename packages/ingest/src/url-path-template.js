@@ -1,4 +1,5 @@
 const get = require('lodash/get');
+const moment = require('moment');
 
 /**
 * evaluate the operation specified in template
@@ -21,6 +22,9 @@ function evaluateOperation(name, args) {
   }
   case 'extractHour': {
     return new Date(valueStr).getUTCHours().toString();
+  }
+  case 'dateFormat': {
+    return moment.utc(valueStr).format(args[1]);
   }
   case 'substring': {
     return String.prototype.substring.apply(String(valueStr), args.slice(1));
@@ -45,7 +49,7 @@ function templateReplacer(context, submatch) {
   // submatch contains operation
   if (submatch.match(expressionRegex)) {
     const name = matches[1];
-    const args = matches[2].split(',');
+    const args = matches[2].split(/\s*,\s*/);
     const jsonPathValue = get(context, args[0], null);
     if (!jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
     args[0] = jsonPathValue;
