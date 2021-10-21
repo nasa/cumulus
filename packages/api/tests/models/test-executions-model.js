@@ -1,9 +1,11 @@
 'use strict';
 
 const test = require('ava');
+const pick = require('lodash/pick');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
+const { fakeExecutionFactoryV2 } = require('../../lib/testUtils');
 
 test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
@@ -11,14 +13,16 @@ test.before(async (t) => {
   await t.context.executionModel.createTable();
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.executionName = randomId('execution');
 
+  t.context.workflowStartTime = Date.now();
   t.context.cumulusMessage = {
     cumulus_meta: {
       state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
       execution_name: t.context.executionName,
-      workflow_start_time: 123,
+      workflow_start_time: t.context.workflowStartTime,
+      cumulus_version: '1.2.3',
     },
     meta: {
       status: 'running',
@@ -39,19 +43,25 @@ test.after.always(async (t) => {
   await t.context.executionModel.deleteTable();
 });
 
-test('generateRecord() returns the correct record in the basic case', (t) => {
-  const { cumulusMessage, executionArn, executionName } = t.context;
+test('generateRecord() returns the correct record from workflow message', (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    executionName,
+    workflowStartTime,
+  } = t.context;
 
   const actualRecord = Execution.generateRecord(cumulusMessage);
 
   const expectedRecord = {
     name: executionName,
     arn: executionArn,
+    cumulusVersion: '1.2.3',
     execution: `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${executionArn}`,
     collectionId: 'my-name___my-version',
     error: {},
     status: 'running',
-    createdAt: 123,
+    createdAt: workflowStartTime,
     timestamp: actualRecord.timestamp,
     updatedAt: actualRecord.updatedAt,
     originalPayload: {
@@ -144,7 +154,7 @@ test('generateRecord() returns a record with correct duration for non-running me
   t.is(record.duration, 1);
 });
 
-test.serial('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { executionModel } = t.context;
 
   const updatedItem = {
@@ -156,11 +166,11 @@ test.serial('_getMutableFieldNames() returns correct fields for running status',
 
   // Fields are included even if not present in the item.
   t.deepEqual(updateFields, [
-    'createdAt', 'updatedAt', 'timestamp', 'originalPayload',
+    'updatedAt', 'timestamp', 'originalPayload',
   ]);
 });
 
-test.serial('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test.serial('_getMutableFieldNames() returns correct fields for completed status', (t) => {
   const { executionModel } = t.context;
 
   const item = {
@@ -173,6 +183,43 @@ test.serial('_getMutableFieldNames() returns correct fields for completed status
   const updateFields = executionModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
+});
+
+test('storeExecutionRecord() can be used to create a new execution', async (t) => {
+  const { executionModel } = t.context;
+  const execution = fakeExecutionFactoryV2();
+  await executionModel.storeExecutionRecord(execution);
+
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.is(fetchedItem.status, execution.status);
+});
+
+test('storeExecutionRecord() can be used to update an execution', async (t) => {
+  const { executionModel } = t.context;
+  const execution = fakeExecutionFactoryV2({
+    asyncOperationId: '1',
+    status: 'running',
+  });
+
+  await executionModel.storeExecutionRecord(execution);
+
+  const checkList = ['asyncOperationId', 'status', 'originalPayload'];
+  const fetchedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedItem, checkList), pick(execution, checkList));
+
+  const newPayload = { foo: 'bar' };
+  const updatedExecution = {
+    ...execution,
+    asyncOperationId: '2',
+    originalPayload: newPayload,
+    status: 'completed',
+  };
+
+  await executionModel.storeExecutionRecord(updatedExecution);
+
+  const fetchedUpdatedItem = await executionModel.get({ arn: execution.arn });
+  t.deepEqual(pick(fetchedUpdatedItem, checkList), pick(updatedExecution, checkList));
+  t.notDeepEqual(pick(fetchedUpdatedItem, checkList), pick(fetchedItem, checkList));
 });
 
 test.serial('storeExecutionFromCumulusMessage() can be used to create a new running execution', async (t) => {

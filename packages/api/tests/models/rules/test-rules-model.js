@@ -35,7 +35,7 @@ async function getKinesisEventMappings() {
     const mappingParms = { FunctionName: lambda };
     return awsServices.lambda().listEventSourceMappings(mappingParms).promise();
   });
-  return Promise.all(mappingPromises);
+  return await Promise.all(mappingPromises);
 }
 
 async function deleteKinesisEventSourceMappings() {
@@ -49,7 +49,7 @@ async function deleteKinesisEventSourceMappings() {
     eventMappings[1].EventSourceMappings
   );
 
-  return Promise.all(allEventMappings.map((e) =>
+  return await Promise.all(allEventMappings.map((e) =>
     awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
 }
 
@@ -74,8 +74,8 @@ test.before(async () => {
   ]);
 });
 
-test.beforeEach(async (t) => {
-  t.context.onetimeRule = {
+test.beforeEach((t) => {
+  t.context.onetimeRule = fakeRuleFactoryV2({
     name: randomString(),
     workflow,
     provider: 'my-provider',
@@ -87,9 +87,9 @@ test.beforeEach(async (t) => {
       type: 'onetime',
     },
     state: 'ENABLED',
-  };
+  });
 
-  t.context.kinesisRule = {
+  t.context.kinesisRule = fakeRuleFactoryV2({
     name: randomString(),
     workflow,
     provider: 'my-provider',
@@ -102,7 +102,7 @@ test.beforeEach(async (t) => {
       value: 'my-kinesis-arn',
     },
     state: 'ENABLED',
-  };
+  });
 });
 
 test.after.always(async () => {
@@ -126,7 +126,7 @@ test('create defaults rule state to ENABLED', async (t) => {
   await rulesModel.delete(rule);
 });
 
-test('create and delete a onetime rule', async (t) => {
+test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
   // create rule
@@ -136,7 +136,7 @@ test('create and delete a onetime rule', async (t) => {
 
   // delete rule
   await rulesModel.delete(rule);
-  t.false(await rulesModel.exists({ name: rule.name }));
+  t.false(await rulesModel.exists(rule.name));
 });
 
 test('Creating a rule with an invalid name throws an error', async (t) => {
@@ -196,7 +196,7 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
   }
 });
 
-test('enabling a disabled rule updates the state', async (t) => {
+test('Enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
@@ -237,7 +237,7 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
   }
 });
 
-test.serial('create a kinesis type rule adds event mappings, creates rule', async (t) => {
+test.serial('Creating a kinesis type rule adds event mappings, creates rule', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
@@ -261,12 +261,12 @@ test.serial('create a kinesis type rule adds event mappings, creates rule', asyn
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('deleting a kinesis style rule removes event mappings', async (t) => {
+test.serial('Deleting a kinesis style rule removes event mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create and delete rule
   const createdRule = await rulesModel.create(kinesisRule);
-  t.true(await rulesModel.exists({ name: createdRule.name }));
+  t.true(await rulesModel.exists(createdRule.name));
 
   await rulesModel.delete(createdRule);
 
@@ -278,7 +278,7 @@ test.serial('deleting a kinesis style rule removes event mappings', async (t) =>
   t.is(logEventMappings.length, 0);
 });
 
-test.serial('update a kinesis type rule state, event source mappings do not change', async (t) => {
+test.serial('Updating a kinesis type rule state does not change event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
@@ -300,7 +300,7 @@ test.serial('update a kinesis type rule state, event source mappings do not chan
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('update a kinesis type rule value, resulting in new event source mappings', async (t) => {
+test.serial('Updaing a kinesis type rule value results in new event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
@@ -328,7 +328,7 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('update a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
+test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
@@ -356,7 +356,7 @@ test.serial('update a kinesis type rule workflow does not affect value or event 
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('create a kinesis type rule, using existing event source mappings', async (t) => {
+test.serial('Creating a kinesis type rule using existing event source mappings does not affect event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create two rules with same value
@@ -382,7 +382,7 @@ test.serial('create a kinesis type rule, using existing event source mappings', 
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('it does not delete event source mappings if they exist for other rules', async (t) => {
+test.serial('It does not delete event source mappings if they exist for other rules', async (t) => {
   const { kinesisRule } = t.context;
 
   // we have three rules to create
@@ -464,7 +464,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   }
 });
 
-test('creating an invalid kinesis type rule does not add event mappings', async (t) => {
+test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   const newKinesisRule = cloneDeep(kinesisRule);
@@ -483,7 +483,7 @@ test('creating an invalid kinesis type rule does not add event mappings', async 
   t.is(logEventMappings.length, 0);
 });
 
-test('Creating a rule with a queueUrl parameter', async (t) => {
+test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   const { onetimeRule } = t.context;
 
   const ruleItem = cloneDeep(onetimeRule);
@@ -498,7 +498,7 @@ test('Creating a rule with a queueUrl parameter', async (t) => {
   t.is(payload.queueUrl, ruleItem.queueUrl);
 });
 
-test('updates rule meta object', async (t) => {
+test('Updates rule meta object', async (t) => {
   const { onetimeRule } = t.context;
 
   const triggerRule = randomId('triggerRule');
@@ -518,7 +518,7 @@ test('updates rule meta object', async (t) => {
   t.is(updatedRule.meta.triggerRule, newTriggerRule);
 });
 
-test('updates a deeply nested key', async (t) => {
+test('Updates a deeply nested key', async (t) => {
   const { onetimeRule } = t.context;
 
   const testObject = {
@@ -545,7 +545,7 @@ test('updates a deeply nested key', async (t) => {
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
 
-test('update preserves nested keys', async (t) => {
+test('Update preserves nested keys', async (t) => {
   const { onetimeRule } = t.context;
 
   const testObject = {
@@ -575,15 +575,15 @@ test('update preserves nested keys', async (t) => {
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
 
-test('create, update and delete sqs type rule', async (t) => {
-  const queueUrls = await createSqsQueues(randomString());
-  const newQueueUrls = await createSqsQueues(randomString());
+test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
+  const queues = await createSqsQueues(randomString());
+  const newQueues = await createSqsQueues(randomString());
 
   const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sqs',
-      value: queueUrls.queueUrl,
+      value: queues.queueUrl,
     },
     state: 'ENABLED',
   });
@@ -605,26 +605,33 @@ test('create, update and delete sqs type rule', async (t) => {
       retries: 6,
     },
     rule: {
-      value: newQueueUrls.queueUrl,
+      value: newQueues.queueUrl,
     },
   };
 
   const updatedRule = await rulesModel.update(createdRule, updates);
 
   t.deepEqual(updatedRule.meta.testObject, testObject);
-  t.is(updatedRule.rule.value, newQueueUrls.queueUrl);
+  t.is(updatedRule.rule.value, newQueues.queueUrl);
   t.is(get(updatedRule, 'meta.visibilityTimeout'), updates.meta.visibilityTimeout);
   t.is(get(updatedRule, 'meta.retries'), updates.meta.retries);
 
   await rulesModel.delete(updatedRule);
 
-  const queues = Object.values(queueUrls).concat(Object.values(newQueueUrls));
+  const queuesToDelete = [
+    queues.queueUrl,
+    queues.deadLetterQueueUrl,
+    newQueues.queueUrl,
+    newQueues.deadLetterQueueUrl,
+  ];
   await Promise.all(
-    queues.map((queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise())
+    queuesToDelete.map(
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+    )
   );
 });
 
-test('creating SQS rule fails if queue does not exist', async (t) => {
+test('Creating SQS rule fails if queue does not exist', async (t) => {
   const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
@@ -639,7 +646,7 @@ test('creating SQS rule fails if queue does not exist', async (t) => {
   );
 });
 
-test('creating SQS rule fails if there is no redrive policy on the queue', async (t) => {
+test('Creating SQS rule fails if there is no redrive policy on the queue', async (t) => {
   const queueUrl = await SQS.createQueue(randomId('queue'));
   const rule = fakeRuleFactoryV2({
     workflow,
@@ -653,4 +660,16 @@ test('creating SQS rule fails if there is no redrive policy on the queue', async
     rulesModel.create(rule),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
+});
+
+test.serial('Rule.exists() returns true when a record exists', async (t) => {
+  const { onetimeRule } = t.context;
+
+  await rulesModel.create(onetimeRule);
+
+  t.true(await rulesModel.exists(onetimeRule.name));
+});
+
+test.serial('Rule.exists() returns false when a record does not exist', async (t) => {
+  t.false(await rulesModel.exists(randomString()));
 });

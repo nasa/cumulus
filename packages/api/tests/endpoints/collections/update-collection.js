@@ -7,15 +7,25 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  CollectionPgModel,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  translateApiCollectionToPostgresCollection,
+  migrationDir,
+} = require('@cumulus/db');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+
 const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.stackName = randomString();
@@ -32,12 +42,22 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 
-test.before(async () => {
-  process.env = { ...process.env };
+const testDbName = randomString(12);
+process.env = {
+  ...process.env,
+  ...localStackConnectionEnv,
+  PG_DATABASE: testDbName,
+};
+
+test.before(async (t) => {
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -54,16 +74,16 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
-  t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
-});
-
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -88,6 +108,111 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT replaces an existing collection', async (t) => {
+  const knex = t.context.testKnex;
+  const originalCollection = fakeCollectionFactory({
+    duplicateHandling: 'replace',
+    process: randomString(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const pgId = await t.context.collectionPgModel.create(t.context.testKnex, insertPgRecord);
+  const originalPgRecord = await t.context.collectionPgModel.get(
+    knex, { cumulus_id: pgId[0] }
+  );
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+  delete updatedCollection.process;
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualCollection = await collectionModel.get({
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  t.like(actualCollection, {
+    ...originalCollection,
+    duplicateHandling: 'error',
+    process: undefined,
+    createdAt: originalCollection.createdAt,
+    updatedAt: actualCollection.updatedAt,
+  });
+
+  t.deepEqual(actualPgCollection, {
+    ...originalPgRecord,
+    duplicate_handling: 'error',
+    process: null,
+    created_at: originalPgRecord.created_at,
+    updated_at: actualPgCollection.updated_at,
+  });
+});
+
+test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
+  const knex = t.context.testKnex;
+  const originalCollection = fakeCollectionFactory({
+    duplicateHandling: 'replace',
+    process: randomString(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  await collectionModel.create(originalCollection);
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualCollection = await collectionModel.get({
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
+  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualCollection.createdAt, originalCollection.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
+  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
+});
+
+test('PUT creates a new record in RDS if one does not exist', async (t) => {
+  const knex = t.context.testKnex;
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
     process: randomString(),
@@ -110,14 +235,21 @@ test('PUT replaces an existing collection', async (t) => {
     .expect(200);
 
   const fetchedDynamoRecord = await collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
+    name: updatedCollection.name,
+    version: updatedCollection.version,
   });
 
-  t.is(fetchedDynamoRecord.name, originalCollection.name);
-  t.is(fetchedDynamoRecord.version, originalCollection.version);
-  t.is(fetchedDynamoRecord.duplicateHandling, 'error');
-  t.is(fetchedDynamoRecord.process, undefined);
+  const fetchedDbRecord = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name, version: originalCollection.version,
+  });
+
+  t.is(fetchedDbRecord.name, originalCollection.name);
+  t.is(fetchedDbRecord.version, originalCollection.version);
+  t.is(fetchedDbRecord.duplicate_handling, 'error');
+  // eslint-disable-next-line unicorn/no-null
+  t.is(fetchedDbRecord.process, null);
+  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
+  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
 });
 
 test('PUT returns 404 for non-existent collection', async (t) => {

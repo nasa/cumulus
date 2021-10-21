@@ -82,7 +82,8 @@ export interface CMRConstructorParams {
   passwordSecretName?: string
   provider: string,
   token?: string,
-  username: string
+  username: string,
+  oauthProvider: string,
 }
 
 /**
@@ -112,6 +113,7 @@ export class CMR {
   clientId: string;
   provider: string;
   username: string;
+  oauthProvider: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
@@ -128,6 +130,7 @@ export class CMR {
    *  passwordSecretName is provided
    * @param {string} params.token - CMR or Launchpad token,
    * if not provided, CMR username and password are used to get a cmr token
+   * @param {string} params.oauthProvider - Oauth provider: earthdata or launchpad
    */
   constructor(params: CMRConstructorParams) {
     this.clientId = params.clientId;
@@ -136,6 +139,7 @@ export class CMR {
     this.password = params.password;
     this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
+    this.oauthProvider = params.oauthProvider;
   }
 
   /**
@@ -179,12 +183,14 @@ export class CMR {
    * @param {Object} params
    * @param {string} [params.token] - CMR request token
    * @param {string} [params.ummgVersion] - UMMG metadata version string or null if echo10 metadata
+   * @param {string} [params.cmrRevisionId] - CMR Revision ID
    * @returns {Object} CMR headers object
    */
   getWriteHeaders(
     params: {
       token?: string,
-      ummgVersion?: string
+      ummgVersion?: string,
+      cmrRevisionId?:string,
     } = {}
   ): Headers {
     const contentType = params.ummgVersion
@@ -196,8 +202,12 @@ export class CMR {
       'Content-type': contentType,
     };
 
-    if (params.token) headers['Echo-Token'] = params.token;
+    if (params.token) {
+      if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
+      else headers['Echo-Token'] = params.token;
+    }
     if (params.ummgVersion) headers.Accept = 'application/json';
+    if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
 
     return headers;
   }
@@ -214,7 +224,10 @@ export class CMR {
       'Client-Id': this.clientId,
     };
 
-    if (params.token) headers['Echo-Token'] = params.token;
+    if (params.token) {
+      if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
+      else headers['Echo-Token'] = params.token;
+    }
 
     return headers;
   }
@@ -227,30 +240,33 @@ export class CMR {
    */
   async ingestCollection(xml: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
   /**
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule XML document
+   * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise.<Object>} the CMR response
    */
-  async ingestGranule(xml: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+  async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
+    const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
+    return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
   /**
    * Adds/Updates UMMG json metadata in the CMR
    *
    * @param {Object} ummgMetadata - UMMG metadata object
+   * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise<Object>} to the CMR response object.
    */
-  async ingestUMMGranule(ummgMetadata: UmmMetadata): Promise<unknown> {
+  async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string): Promise<unknown> {
     const headers = this.getWriteHeaders({
       token: await this.getToken(),
       ummgVersion: ummVersion(ummgMetadata),
+      cmrRevisionId,
     });
 
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
@@ -291,7 +307,7 @@ export class CMR {
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return deleteConcept('collections', datasetID, this.provider, headers);
+    return await deleteConcept('collections', datasetID, this.provider, headers);
   }
 
   /**
@@ -302,7 +318,7 @@ export class CMR {
    */
   async deleteGranule(granuleUR: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return deleteConcept('granules', granuleUR, this.provider, headers);
+    return await deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
   async searchConcept(
@@ -312,7 +328,7 @@ export class CMR {
     recursive = true
   ): Promise<unknown[]> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
-    return searchConcept({
+    return await searchConcept({
       type,
       searchParams,
       previousResults: [],
@@ -338,7 +354,7 @@ export class CMR {
       ...params,
     });
 
-    return this.searchConcept(
+    return await this.searchConcept(
       'collections',
       searchParams,
       format
@@ -361,7 +377,7 @@ export class CMR {
       ...params,
     });
 
-    return this.searchConcept(
+    return await this.searchConcept(
       'granules',
       searchParams,
       format
@@ -376,6 +392,6 @@ export class CMR {
    */
   async getGranuleMetadata(cmrLink: string): Promise<unknown> {
     const headers = this.getReadHeaders({ token: await this.getToken() });
-    return getConceptMetadata(cmrLink, headers);
+    return await getConceptMetadata(cmrLink, headers);
   }
 }

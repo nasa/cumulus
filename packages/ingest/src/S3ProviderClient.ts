@@ -1,7 +1,7 @@
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import * as errors from '@cumulus/errors';
-import { basename, dirname } from 'path';
+import { basename, dirname, join } from 'path';
 import { ProviderClient, S3ProviderClientListItem } from './types';
 
 class S3ProviderClient implements ProviderClient {
@@ -17,14 +17,24 @@ class S3ProviderClient implements ProviderClient {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
+   * @param {string} param.remoteAltBucket - alternate per-file bucket override to this.bucket
+   * bucket
    * @returns {Promise<string>} - the path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<string> {
-    const remoteUrl = `s3://${this.bucket}/${remotePath}`;
+  async download(params: {
+    remotePath: string,
+    localPath: string,
+    remoteAltBucket?: string,
+  }): Promise<string> {
+    const { remotePath, localPath, remoteAltBucket } = params;
+
+    const remoteBucket = remoteAltBucket || this.bucket;
+
+    const remoteUrl = `s3://${remoteBucket}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const s3Obj = {
-      Bucket: this.bucket,
+      Bucket: remoteBucket,
       Key: remotePath,
     };
 
@@ -61,32 +71,66 @@ class S3ProviderClient implements ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {string} sourceKey - the full path to the remote file to be fetched
-   * @param {string} destinationBucket - destination s3 bucket of the file
-   * @param {string} destinationKey - destination s3 key of the file
+   * @param {Object} params - the full path to the remote file to be fetched
+   * @param {string} params.sourceKey - the full path to the remote file to be fetched
+   * @param {string} params.bucket - destination s3 bucket of the file
+   * @param {string} params.destinationBucket - destination s3 bucket of the file
+   * @param {string} params.destinationKey - destination s3 key of the file
    * @returns {Promise.<{ s3uri: string, etag: string }>} an object containing
    *    the S3 URI and ETag of the destination file
    */
   async sync(
-    sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string
-  ): Promise<{s3uri: string, etag: string}> {
+    params: {
+      bucket?: string,
+      destinationBucket: string,
+      destinationKey: string,
+      fileRemotePath: string,
+    }
+  ): Promise<{ s3uri: string, etag: string }> {
+    const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
+    const sourceBucket = bucket || this.bucket;
+    const sourceKey = fileRemotePath;
+
     try {
+      const sourceObject = await S3.headObject(sourceBucket, sourceKey);
       const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);
+
+      // 0 byte files cannot be copied with multipart upload,
+      // so use a regular S3 PUT
+      if (sourceObject.ContentLength === 0) {
+        const { CopyObjectResult } = await S3.s3CopyObject({
+          CopySource: join(sourceBucket, sourceKey),
+          Bucket: destinationBucket,
+          Key: destinationKey,
+        });
+
+        // This error should never actually be reached in practice. It's a
+        // necessary workaround for bad typings in the AWS SDK.
+        //
+        // https://github.com/aws/aws-sdk-js/issues/1719
+        if (!CopyObjectResult || !CopyObjectResult.ETag) {
+          throw new Error(
+            `ETag could not be determined for copy of ${S3.buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
+          );
+        }
+
+        const etag = CopyObjectResult.ETag;
+        return { s3uri, etag };
+      }
+
       const { etag } = await S3.multipartCopyObject({
-        sourceBucket: this.bucket,
+        sourceBucket,
         sourceKey,
+        sourceObject,
         destinationBucket,
         destinationKey,
         ACL: 'private',
         copyTags: true,
       });
-
       return { s3uri, etag };
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
-        const sourceUrl = S3.buildS3Uri(this.bucket, sourceKey);
+        const sourceUrl = S3.buildS3Uri(sourceBucket, fileRemotePath);
         throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
       }
 

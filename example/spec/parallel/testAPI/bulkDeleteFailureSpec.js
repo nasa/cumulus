@@ -2,13 +2,13 @@
 
 const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const Granule = require('@cumulus/api/models/granules');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
-  api: apiTestUtils,
   getClusterArn,
 } = require('@cumulus/integration-tests');
-const { loadConfig } = require('../../helpers/testUtils');
+const { isValidAsyncOperationId, loadConfig } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
@@ -42,13 +42,19 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
     // Query the AsyncOperation API to get the task ARN
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
-    ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
+    ({ taskArn } = asyncOperation);
 
     beforeAllSucceeded = true;
+  });
+
+  afterAll(async () => {
+    if (postBulkDeleteBody.id) {
+      await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
+    }
   });
 
   it('returns a status code of 202', () => {
@@ -58,22 +64,18 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
 
   it('returns an Async Operation Id', () => {
     expect(beforeAllSucceeded).toBeTrue();
-    expect(postBulkDeleteBody.id).toMatch(/[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/);
+    expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
   });
 
   it('creates an AsyncOperation', async () => {
     expect(beforeAllSucceeded).toBeTrue();
 
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
 
-    expect(getAsyncOperationResponse.statusCode).toEqual(200);
-
-    const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-    expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.id);
+    expect(asyncOperation.id).toEqual(postBulkDeleteBody.id);
   });
 
   it('runs an ECS task', async () => {
@@ -99,21 +101,18 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       }
     ).promise();
 
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
 
-    const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-    expect(getAsyncOperationResponse.statusCode).toEqual(200);
-    expect(getAsyncOperationBody.status).toEqual('TASK_FAILED');
+    expect(asyncOperation.status).toEqual('TASK_FAILED');
 
     let output;
     try {
-      output = JSON.parse(getAsyncOperationBody.output);
+      output = JSON.parse(asyncOperation.output);
     } catch (error) {
-      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${asyncOperation.output}`);
     }
 
     expect(output.name).toBe('AggregateError');

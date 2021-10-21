@@ -8,12 +8,16 @@ tmp/**
 docs/**
 _book/**
 website/**
+*.tsbuildinfo
+*.map
 /packages/api-client/*.d.ts
 /packages/api-client/*.js
 /packages/aws-client/*.d.ts
 /packages/aws-client/*.js
 /packages/aws-client/lib/*.d.ts
 /packages/aws-client/lib/*.js
+/packages/checksum/src/*.d.ts
+/packages/cmrjs/*.js
 /packages/cmr-client/*.d.ts
 /packages/cmr-client/*.js
 /packages/cmrjs/*.d.ts
@@ -26,3 +30,8 @@ website/**
 /packages/launchpad-auth/*.js
 /packages/message/*.d.ts
 /packages/message/*.js
+/tf-modules/cumulus-rds-tf/db-provision-user-database*
+/packages/api/src/**/*.js
+/packages/api/src/**/*.d.ts
+/packages/object-store/*.d.ts
+/packages/object-store/*.js

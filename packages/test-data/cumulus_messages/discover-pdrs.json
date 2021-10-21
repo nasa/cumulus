@@ -2,7 +2,7 @@
   "cumulus_meta": {
     "message_source": "local",
     "task": "DiscoverPdrs",
-    "system_bucket": "cumulus-devseed-internal",
+    "system_bucket": "cumulus-test-sandbox-internal",
     "state_machine": "arn:aws:states:us-east-1:00000000000:stateMachine:LpdaacCumulusDiscoverPdrsSt-s1KcHE6MgsTJ",
     "execution_name": "d0bcfc79-cddd-4c27-ad3e-bd0ab86d9e44",
     "workflow_start_time": 1519167132313
@@ -78,7 +78,7 @@
       "updatedAt": 1519166301521,
       "protocol": "http"
     },
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/00000000000/lpdaac-cumulus-startSF"
     },

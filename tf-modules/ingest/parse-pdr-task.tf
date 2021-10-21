@@ -5,7 +5,7 @@ resource "aws_lambda_function" "parse_pdr_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs12.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "parse_pdr_task_timeout", 300)
   memory_size      = 1024
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
@@ -13,6 +13,7 @@ resource "aws_lambda_function" "parse_pdr_task" {
   environment {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment
+      CMR_HOST                    = var.cmr_custom_host
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }

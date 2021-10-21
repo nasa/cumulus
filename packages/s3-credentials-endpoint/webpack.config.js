@@ -1,24 +1,26 @@
 'use strict';
 
-const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
+const { IgnorePlugin } = require('webpack');
 // path to module root
 const root = path.resolve(__dirname);
+
+const ignoredPackages = [
+  'mssql',
+  'mssql/lib/base',
+  'mssql/package.json',
+  'mysql',
+  'mysql2',
+  'oracledb',
+  'pg-native',
+  'pg-query-stream',
+  'sqlite3',
+  'tedious',
+];
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
-  plugins: [
-    // templates to include html for readme
-    new CopyPlugin({
-      patterns: [
-        {
-          from: 'instructions',
-          to: 'instructions',
-        },
-      ],
-    }),
-  ],
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
@@ -46,6 +48,10 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
+      },
     ],
   },
   devtool: 'inline-source-map',
@@ -59,6 +65,11 @@ module.exports = {
       /critical dependency:/i,
     ],
   },
+  plugins: [
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
+  ],
   optimization: {
     nodeEnv: false,
   },

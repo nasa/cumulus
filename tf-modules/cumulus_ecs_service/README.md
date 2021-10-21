@@ -26,8 +26,6 @@ module "example_ecs_service" {
   prefix = "my-prefix"
   name   = "MyServiceName"
 
-  log2elasticsearch_lambda_function_arn = "arn:aws:lambda:us-east-1:1234567890:function:log2elasticsearch"
-
   cluster_arn                           = "arn:aws:ecs:us-east-1:1234567890:cluster/MyECSCluster1"
   desired_count                         = 1
   image                                 = "cumuluss/cumulus-ecs-task:1.7.0"

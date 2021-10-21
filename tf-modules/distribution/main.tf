@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 2.31.0"
+      version = "~> 3.0,!= 3.14.0"
     }
   }
 }
@@ -24,12 +24,12 @@ module "tea_map_cache" {
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
-  depends_on    = [module.tea_map_cache.lambda_function_name]
-  function_name = module.tea_map_cache.lambda_function_name
-  input = jsonencode({
-    bucketList = local.tea_buckets,
-    s3Bucket = var.system_bucket
-    s3Key    = "${var.prefix}/distribution_bucket_map.json"
+  function_name         = module.tea_map_cache.lambda_function_name
+  input                 = jsonencode({
+    bucketList          = local.tea_buckets,
+    s3Bucket            = var.system_bucket
+    s3Key               = "${var.prefix}/distribution_bucket_map.json"
+    replacementTrigger  = timestamp()
   })
 }
 
@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
 
   statement {
     actions   = ["lambda:InvokeFunction"]
-    resources = [var.sts_credentials_lambda_function_arn]
+    resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
   }
 
   statement {
@@ -135,7 +135,7 @@ resource "aws_lambda_function" "s3_credentials" {
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
   runtime          = "nodejs12.x"
-  timeout          = 10
+  timeout          = 50
   memory_size      = 320
 
   vpc_config {
@@ -145,14 +145,19 @@ resource "aws_lambda_function" "s3_credentials" {
 
   environment {
     variables = {
+      AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
+      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
+      CMR_ENVIRONMENT                = var.cmr_environment
       DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
       DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
-      public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
-      AccessTokensTable              = aws_dynamodb_table.access_tokens[0].id
-      STSCredentialsLambda           = var.sts_credentials_lambda_function_arn
+      OAUTH_PROVIDER                 = "earthdata"
+      STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
+      STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
+      cmr_provider                   = var.cmr_provider
+      public_buckets                 = join(",", var.public_buckets)
     }
   }
   tags = var.tags

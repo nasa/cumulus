@@ -14,19 +14,19 @@ This documentation includes both guidelines, examples, and source code docs. It 
 
 ### Get To Know Cumulus
 
-* Getting Started - [here](getting-started) - If you are new to Cumulus we suggest that you begin with this section to help you understand and work in the environment.
-* General Cumulus Documentation - [here](cumulus-docs-readme) <- you're here
+* Getting Started - [here](getting-started.md) - If you are new to Cumulus we suggest that you begin with this section to help you understand and work in the environment.
+* General Cumulus Documentation - [here](README.md) <- you're here
 
 ### Cumulus Reference Docs
 
 * Cumulus API Documentation - [here](https://nasa.github.io/cumulus-api)
 * Cumulus Developer Documentation - [here](https://github.com/nasa/cumulus) - READMEs throughout the main repository.
-* Data Cookbooks - [here](data-cookbooks/about-cookbooks)
+* Data Cookbooks - [here](data-cookbooks/about-cookbooks.md)
 
-### Auxillary Guides
+### Auxiliary Guides
 
-* Integrator Guide - [here](integrator-guide/about-int-guide)
-* Operator Docs - [here](operator-docs/about-operator-docs)
+* Integrator Guide - [here](integrator-guide/about-int-guide.md)
+* Operator Docs - [here](operator-docs/about-operator-docs.md)
 
 ---
 

@@ -28,7 +28,7 @@ npm install
 ## Double bootstrapping required as workaround to
 ## lerna re-bootstrapping issue in older releases
 ## (similiar to  https://github.com/lerna/lerna/issues/1457)
-(npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
+(npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap
 
 npm run package
 

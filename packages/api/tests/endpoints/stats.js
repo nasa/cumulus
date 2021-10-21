@@ -8,9 +8,10 @@ const sinon = require('sinon');
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = rewire('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
-const indexer = rewire('../../es/indexer');
-const { Search } = require('../../es/search');
 const models = require('../../models');
 const {
   fakeGranuleFactoryV2,
@@ -18,7 +19,6 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 
 const assertions = require('../../lib/assertions');
 

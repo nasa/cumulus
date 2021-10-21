@@ -1,6 +1,6 @@
 import got from 'got';
+import { CMRInternalError, ValidationError } from '@cumulus/errors';
 import { getValidateUrl } from './getUrl';
-import ValidationError from './ValidationError';
 
 export interface UmmMetadata {
   GranuleUR?: string,
@@ -51,5 +51,7 @@ export const validateUMMG = async (
 
   if (statusCode === 200) return;
 
-  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify((<{errors: unknown}>body).errors)}`);
+  if (statusCode >= 500 && statusCode < 600) throw new CMRInternalError('CMR Internal Error');
+
+  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify((<{ errors: unknown }>body).errors)}`);
 };

@@ -3,15 +3,26 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
+const omit = require('lodash/omit');
 
+const {
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  translateApiProviderToPostgresProvider,
+  nullifyUndefinedProviderValues,
+  ProviderPgModel,
+  migrationDir,
+} = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const AccessToken = require('../../../models/access-tokens');
 const Provider = require('../../../models/providers');
 const {
@@ -19,14 +30,19 @@ const {
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
+const testDbName = randomString(12);
 process.env.AccessTokensTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+process.env = {
+  ...process.env,
+  ...localStackConnectionEnv,
+  PG_DATABASE: testDbName,
+};
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
@@ -45,12 +61,19 @@ const providerDoesNotExist = async (t, providerId) => {
   );
 };
 
-test.before(async () => {
+test.before(async (t) => {
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+  t.context.providerPgModel = new ProviderPgModel();
+
+  t.context.providerPgModel = new ProviderPgModel();
+
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   providerModel = new Provider();
   await providerModel.createTable();
@@ -66,11 +89,16 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -116,7 +144,46 @@ test('POST with invalid authorization scheme returns an invalid authorization re
 });
 
 test('POST creates a new provider', async (t) => {
-  const newProviderId = 'AQUA';
+  const { providerPgModel } = t.context;
+  const newProviderId = randomString();
+  const newProvider = fakeProviderFactory({
+    id: newProviderId,
+  });
+  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(newProvider);
+
+  const postgresOmitList = ['created_at', 'updated_at', 'cumulus_id'];
+
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { message, record } = response.body;
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
+  t.is(message, 'Record saved');
+  t.is(record.id, newProviderId);
+  t.is(pgRecords.length, 1);
+
+  const [providerPgRecord] = pgRecords;
+
+  t.deepEqual(
+    omit(providerPgRecord, postgresOmitList),
+    omit(
+      nullifyUndefinedProviderValues(postgresExpectedProvider),
+      postgresOmitList
+    )
+  );
+});
+
+test('POST creates a new provider in Dynamo and PG with correct timestamps', async (t) => {
+  const { providerPgModel } = t.context;
+  const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
     id: newProviderId,
   });
@@ -128,9 +195,20 @@ test('POST creates a new provider', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { message, record } = response.body;
-  t.is(message, 'Record saved');
-  t.is(record.id, newProviderId);
+  const { record } = response.body;
+  const pgRecords = await providerPgModel.search(
+    t.context.testKnex,
+    { name: newProviderId }
+  );
+
+  const [providerPgRecord] = pgRecords;
+
+  t.true(record.createdAt > newProvider.createdAt);
+  t.true(record.updatedAt > newProvider.updatedAt);
+
+  // PG and Dynamo records have the same timestamps
+  t.is(providerPgRecord.created_at.getTime(), record.createdAt);
+  t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
 });
 
 test('POST returns a 409 error if the provider already exists', async (t) => {
@@ -138,6 +216,24 @@ test('POST returns a 409 error if the provider already exists', async (t) => {
 
   await providerModel.create(newProvider);
 
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
+
+  const { message } = response.body;
+  t.is(message, (`A record already exists for ${newProvider.id}`));
+});
+
+test('POST returns a 409 error if the provider already exists in RDS', async (t) => {
+  const newProvider = fakeProviderFactory();
+
+  await t.context.providerPgModel.create(
+    t.context.testKnex,
+    await translateApiProviderToPostgresProvider(newProvider)
+  );
   const response = await request(app)
     .post('/providers')
     .send(newProvider)
@@ -171,8 +267,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
 });
 
 test('POST returns a 400 response if invalid record is provided', async (t) => {
-  const newProvider = fakeProviderFactory();
-  delete newProvider.host;
+  const newProvider = { foo: 'bar' };
 
   const response = await request(app)
     .post('/providers')

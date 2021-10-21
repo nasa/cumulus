@@ -26,26 +26,38 @@ function filterOld(streams) {
         return s;
       }
     }
-
-    return null;
+    return undefined;
   });
   return results.filter((r) => r);
 }
 
-function nukeStream(streamName) {
+/** stagger retries from 25 to 30 seconds */
+function randomInterval() {
+  return Math.floor(Math.random() * 5000 + 25000);
+}
+
+async function nukeStream(streamName) {
   console.log(`nuking: ${streamName}`);
-  return kinesis.deleteStream({ StreamName: streamName }).promise();
+  try {
+    return await kinesis.deleteStream({ StreamName: streamName }).promise();
+  } catch (error) {
+    if (error.code === 'LimitExceededException') {
+      const delay = randomInterval();
+      console.log(`Limit exceeded...waiting ${delay / 1000} seconds and retrying to delete ${streamName}`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return await nukeStream(streamName);
+    }
+    throw error;
+  }
 }
 
 async function nukeStreams(listStreams) {
-  // do in serial because of aws limits
-  listStreams.forEach(async (s) => {
-    await nukeStream(s);
-  });
+  console.log(`deleting ${listStreams.length} streams...`);
+  return await Promise.all(listStreams.map((s) => nukeStream(s)));
 }
 
-function runReaper() {
-  return getStreams()
+async function runReaper() {
+  return await getStreams()
     .then(filterOld)
     .then(nukeStreams);
 }

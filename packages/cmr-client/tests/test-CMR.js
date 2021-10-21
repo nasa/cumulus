@@ -5,9 +5,9 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { ValidationError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
-const ValidationError = require('../ValidationError');
 
 test.before(() => {
   nock.disableNetConnect();
@@ -98,17 +98,71 @@ test('getWriteHeaders returns correct Content-type for xml metadata by default',
   t.is(headers.Accept, undefined);
 });
 
-test('getReadHeaders returns clientId and token', (t) => {
+test('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'clientID',
+    username: 'username',
+    password: 'password',
+  });
+  const cmrRevisionId = '100';
+  const headers = cmrInstance.getWriteHeaders({ cmrRevisionId });
+  t.is(headers['Cmr-Revision-Id'], '100');
+});
+
+test('getWriteHeaders returns token for earthdata', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
     password: 'password',
+    oauthProvider: 'earthdata',
+  });
+
+  const headers = cmrInstance.getWriteHeaders({ token: '12345' });
+  t.is(headers['Echo-Token'], '12345');
+});
+
+test('getWriteHeaders returns token for launchpad', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'test-client-id',
+    username: 'username',
+    password: 'password',
+    oauthProvider: 'launchpad',
+  });
+
+  const headers = cmrInstance.getWriteHeaders({ token: '12345' });
+
+  t.is(headers.Authorization, '12345');
+});
+
+test('getReadHeaders returns clientId and token for earthdata', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'test-client-id',
+    username: 'username',
+    password: 'password',
+    oauthProvider: 'earthdata',
   });
 
   const headers = cmrInstance.getReadHeaders({ token: '12345' });
   t.is(headers['Client-Id'], 'test-client-id');
   t.is(headers['Echo-Token'], '12345');
+});
+
+test('getReadHeaders returns clientId and token for launchpad', (t) => {
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'test-client-id',
+    username: 'username',
+    password: 'password',
+    oauthProvider: 'launchpad',
+  });
+
+  const headers = cmrInstance.getReadHeaders({ token: '12345' });
+  t.is(headers['Client-Id'], 'test-client-id');
+  t.is(headers.Authorization, '12345');
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {

@@ -18,7 +18,7 @@ type LoggerConstructorOptions = {
 class Logger {
   private readonly asyncOperationId: string | undefined;
   private readonly executions: string | undefined;
-  private readonly granules: string | undefined;
+  private readonly granules: string | string[] | undefined;
   private readonly parentArn: string | undefined;
   private readonly pretty: boolean;
   private readonly sender: string;
@@ -61,7 +61,7 @@ class Logger {
       let actualMessageArgs = messageArgs.slice(0, messageArgs.length - 1);
       if (actualMessageArgs.length === 0) actualMessageArgs = [error.message];
 
-      const additionalKeys: { error: { name: string, message: string, stack?: string[] }} = {
+      const additionalKeys: { error: { name: string, message: string, stack?: string[] } } = {
         error: {
           name: error.name,
           message: error.message,

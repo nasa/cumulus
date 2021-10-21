@@ -14,6 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -25,19 +26,22 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandling = "error" and a granule re-ingested', () => {
   let beforeAllFailed = false;
   let collection;
-  let firstIngestGranuleRule;
+  let config;
   let granuleId;
+  let ingestGranuleExecution2;
+  let ingestGranuleExecution2Arn;
+  let ingestGranuleExecutionArn1;
+  let ingestGranuleRule1;
   let prefix;
   let provider;
   let sameChecksumFilename;
   let sameChecksumKey;
-  let secondIngestGranuleExecution;
   let secondIngestGranuleRule;
   let sourceBucket;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       sourceBucket = config.bucket;
 
@@ -72,7 +76,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       // Ingest the granule the first time
       const testExecutionId = randomId('test-execution-');
       console.log('testExecutionId:', testExecutionId);
-      firstIngestGranuleRule = await createOneTimeRule(
+      ingestGranuleRule1 = await createOneTimeRule(
         prefix,
         {
           workflow: 'IngestGranule',
@@ -98,21 +102,24 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       );
 
       // Find the execution ARN
-      console.log('firstIngestGranuleRule.payload.testExecutionId', firstIngestGranuleRule.payload.testExecutionId);
-      const firstIngestGranuleExecutionArn = await findExecutionArn(
+      console.log('ingestGranuleRule1.payload.testExecutionId', ingestGranuleRule1.payload.testExecutionId);
+      ingestGranuleExecutionArn1 = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
-          return executionId === firstIngestGranuleRule.payload.testExecutionId;
+          return executionId === ingestGranuleRule1.payload.testExecutionId;
         },
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': ingestGranuleRule1.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
       // Wait for the execution to be completed
       await getExecutionWithStatus({
         prefix,
-        arn: firstIngestGranuleExecutionArn,
+        arn: ingestGranuleExecutionArn1,
         status: 'completed',
       });
 
@@ -147,24 +154,28 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
 
       // Find the execution ARN
       console.log('secondIngestGranuleRule.payload.testExecutionId', secondIngestGranuleRule.payload.testExecutionId);
-      const secondIngestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecution2Arn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
           return executionId === secondIngestGranuleRule.payload.testExecutionId;
         },
-        { timestamp__from: ingestTime },
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testExecutionId': secondIngestGranuleRule.payload.testExecutionId,
+        },
         { timeout: 30 }
       );
 
       // Wait for the execution to be completed
-      secondIngestGranuleExecution = await getExecutionWithStatus({
+      ingestGranuleExecution2 = await getExecutionWithStatus({
         prefix,
-        arn: secondIngestGranuleExecutionArn,
+        arn: ingestGranuleExecution2Arn,
         status: 'completed',
       });
     } catch (error) {
       beforeAllFailed = true;
+      console.log('beforeAllFailed with error:::', error);
       throw error;
     }
   });
@@ -173,7 +184,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(
-        get(secondIngestGranuleExecution, 'error.Error')
+        get(ingestGranuleExecution2, 'error.Error')
       ).toBe('DuplicateFile');
     }
   });
@@ -181,7 +192,7 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
   it('returns the expected files', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const files = secondIngestGranuleExecution.finalPayload.granules[0].files;
+      const files = ingestGranuleExecution2.finalPayload.granules[0].files;
 
       // Make sure we got the expected number of files
       expect(files.length).toBe(2);
@@ -198,16 +209,21 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
     // Must delete rules before deleting associated collection and provider
     await pAll(
       [
-        () => deleteRule({ prefix, ruleName: get(firstIngestGranuleRule, 'name') }),
+        () => deleteRule({ prefix, ruleName: get(ingestGranuleRule1, 'name') }),
         () => deleteRule({ prefix, ruleName: get(secondIngestGranuleRule, 'name') }),
       ],
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteGranule({ prefix, granuleId });
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn1 }),
+      deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
+    ]);
+
     await pAll(
       [
         () => deleteS3Object(sourceBucket, sameChecksumKey),
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

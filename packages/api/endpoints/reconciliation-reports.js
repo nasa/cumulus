@@ -3,23 +3,27 @@
 const router = require('express-promise-router')();
 const {
   deleteS3Object,
-  getS3Object,
   fileExists,
+  getObjectSize,
+  getS3Object,
   parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
-const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const logger = new Logger({ sender: '@cumulus/api' });
+const maxResponsePayloadSize = 6 * 1024 * 1024;
+
 /**
  * List all reconciliation reports
  *
@@ -52,25 +56,38 @@ async function getReport(req, res) {
   try {
     const result = await reconciliationReportModel.get({ name });
     const { Bucket, Key } = parseS3Uri(result.location);
-    if (Key.endsWith('.json')) {
-      const file = await getS3Object(Bucket, Key);
-      logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
-      return res.json(JSON.parse(file.Body.toString()));
+    const reportExists = await fileExists(Bucket, Key);
+    if (!reportExists) {
+      return res.boom.notFound('The report does not exist!');
     }
-    if (Key.endsWith('.csv')) {
-      const downloadFile = Key.split('/').pop();
-      const downloadURL = s3().getSignedUrl('getObject', {
-        Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
-      });
-      return res.json({ url: downloadURL });
+
+    const downloadFile = Key.split('/').pop();
+    const presignedS3Url = s3().getSignedUrl('getObject', {
+      Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+    });
+
+    if (Key.endsWith('.json') || Key.endsWith('.csv')) {
+      const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
+      // estimated payload size, add extra
+      const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
+      if (estimatedPayloadSize > (process.env.maxResponsePayloadSize || maxResponsePayloadSize)) {
+        res.json({
+          presignedS3Url,
+          data: `Error: Report ${name} exceeded maximum allowed payload size`,
+        });
+      } else {
+        const file = await getS3Object(Bucket, Key);
+        logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+        return res.json({
+          presignedS3Url,
+          data: Key.endsWith('.json') ? JSON.parse(file.Body.toString()) : file.Body.toString(),
+        });
+      }
     }
     logger.debug('reconciliation report getReport received an unhandled report type.');
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${name}`);
-    }
-    if (error.name === 'NoSuchKey') {
-      return res.boom.notFound('The report does not exist!');
     }
     throw error;
   }
@@ -117,6 +134,9 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -125,13 +145,7 @@ async function createReport(req, res) {
     return res.boom.badRequest(error.message, error);
   }
 
-  const asyncOperationModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-
-  const asyncOperation = await asyncOperationModel.start({
+  const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     lambdaName: process.env.invokeReconcileLambda,
@@ -139,7 +153,11 @@ async function createReport(req, res) {
     operationType: 'Reconciliation Report',
     payload: validatedInput,
     useLambdaEnvironmentVariables: true,
-  });
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }, models.AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }

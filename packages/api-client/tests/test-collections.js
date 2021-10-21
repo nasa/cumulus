@@ -1,9 +1,10 @@
 'use strict';
 
 const test = require('ava');
+const { randomId } = require('../../common/test-utils');
 const collectionsApi = require('../collections');
 
-test.before(async (t) => {
+test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.collectionName = 'testCollection';
   t.context.collectionVersion = 1;
@@ -19,7 +20,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
 
@@ -32,6 +33,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
 });
 
 test('createCollection calls the callback with the expected object', async (t) => {
+  const collection = { name: randomId('name'), version: randomId('version'), foo: 'bar' };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -39,17 +41,17 @@ test('createCollection calls the callback with the expected object', async (t) =
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
-      body: JSON.stringify(t.context.collection),
+      body: JSON.stringify(collection),
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(collectionsApi.createCollection({
     callback,
     prefix: t.context.testPrefix,
-    collectionName: t.context.collectionName,
+    collection,
   }));
 });
 
@@ -63,9 +65,9 @@ test('getCollection calls the callback with the expected object and returns the 
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await collectionsApi.getCollection({
@@ -89,9 +91,9 @@ test('getCollections calls the callback with the expected object and returns the
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { foo: 'bar' };
+    return Promise.resolve({ foo: 'bar' });
   };
 
   const result = await collectionsApi.getCollections({

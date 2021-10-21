@@ -3,16 +3,15 @@
 const delay = require('delay');
 const pRetry = require('p-retry');
 
-const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
+const { describeStream } = require('@cumulus/aws-client/Kinesis');
+const { kinesis } = require('@cumulus/aws-client/services');
 
 const {
   waitForAllTestSf,
 } = require('@cumulus/integration-tests');
 
 const waitPeriodMs = 1000;
-
-const getRegion = () => process.env.AWS_REGION;
 
 /**
  * Helper to simplify common setup code.  wraps function in try catch block
@@ -46,8 +45,7 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) { // esli
  * @returns {string} stream status
  */
 async function getStreamStatus(StreamName) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  const stream = await kinesis.describeStream({ StreamName }).promise();
+  const stream = await describeStream({ StreamName });
   return stream.StreamDescription.StreamStatus;
 }
 
@@ -63,17 +61,15 @@ async function getStreamStatus(StreamName) {
  * @throws {Error} - Error describing current stream status
  */
 async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-
   let streamStatus = 'UNDEFINED';
   let stream;
   const displayName = streamName.split('-').pop();
 
   await delay(initialDelaySecs * 1000);
 
-  return pRetry(
+  return await pRetry(
     async () => {
-      stream = await kinesis.describeStream({ StreamName: streamName }).promise();
+      stream = await describeStream({ StreamName: streamName });
       streamStatus = stream.StreamDescription.StreamStatus;
       if (streamStatus === 'ACTIVE') return streamStatus;
       throw new Error(`Stream never became active:  status: ${streamStatus}: ${streamName}`);
@@ -96,8 +92,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
  * @returns {Promise<Object>} - a kinesis delete stream proxy object.
  */
 async function deleteTestStream(streamName) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return kinesis.deleteStream({ StreamName: streamName }).promise();
+  return await kinesis().deleteStream({ StreamName: streamName }).promise();
 }
 
 /**
@@ -107,11 +102,10 @@ async function deleteTestStream(streamName) {
  * @returns {Promise<Object>} - kinesis create stream promise if stream to be created.
  */
 async function createKinesisStream(streamName) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return pRetry(
+  return await pRetry(
     async () => {
       try {
-        return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+        return await kinesis().createStream({ StreamName: streamName, ShardCount: 1 }).promise();
       } catch (error) {
         if (error.code === 'LimitExceededException') throw error;
         throw new pRetry.AbortError(error);
@@ -133,11 +127,10 @@ async function createKinesisStream(streamName) {
  * @throws {Error} Kinesis error if stream cannot be created.
  */
 async function createOrUseTestStream(streamName) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
   let stream;
 
   try {
-    stream = await kinesis.describeStream({ StreamName: streamName }).promise();
+    stream = await describeStream({ StreamName: streamName });
   } catch (error) {
     if (error.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
@@ -160,13 +153,11 @@ async function createOrUseTestStream(streamName) {
  * @returns {string}            - Shard iterator
  */
 async function getShardIterator(streamName) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-
   const describeStreamParams = {
     StreamName: streamName,
   };
 
-  const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
+  const streamDetails = await describeStream(describeStreamParams);
   const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
   const startingSequenceNumber = streamDetails.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber;
 
@@ -177,7 +168,7 @@ async function getShardIterator(streamName) {
     StreamName: streamName,
   };
 
-  const shardIterator = await kinesis.getShardIterator(shardIteratorParams).promise();
+  const shardIterator = await kinesis().getShardIterator(shardIteratorParams).promise();
   return shardIterator.ShardIterator;
 }
 
@@ -190,8 +181,7 @@ async function getShardIterator(streamName) {
  * @returns {Array} Array of records from kinesis stream.
  */
 async function getRecords(shardIterator, records = []) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+  const data = await kinesis().getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
     await delay(waitPeriodMs);
@@ -208,8 +198,7 @@ async function getRecords(shardIterator, records = []) {
  * @returns {Promise<Object>} - Kinesis putRecord response proxy object.
  */
 async function putRecordOnStream(streamName, record) {
-  const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: getRegion() });
-  return kinesis.putRecord({
+  return await kinesis().putRecord({
     Data: JSON.stringify(record),
     PartitionKey: '1',
     StreamName: streamName,
@@ -227,7 +216,7 @@ async function putRecordOnStream(streamName, record) {
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
 async function waitForAllTestSfForRecord(recordIdentifier, workflowArn, maxWaitTimeSecs, numExecutions) {
-  return waitForAllTestSf(
+  return await waitForAllTestSf(
     { identifier: recordIdentifier },
     workflowArn,
     maxWaitTimeSecs,
@@ -316,7 +305,7 @@ async function scanQueueForMessage(queueUrl, recordIdentifier) {
  * @returns {Object} - matched Message from SQS.
  */
 async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) {
-  return pRetry(
+  return await pRetry(
     async () => {
       try {
         return await scanQueueForMessage(queueUrl, recordIdentifier);

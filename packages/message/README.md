@@ -16,22 +16,102 @@ Utilities for building and parsing Cumulus workflow messages.
 <dt><a href="#module_Build">Build</a></dt>
 <dd><p>Utility functions for building Cumulus messages</p>
 </dd>
-<dt><a href="#module_Collections">Collections</a></dt>
-<dd><p>Utility functions for generating collection information or parsing collection information
-from a Cumulus message</p>
-</dd>
 <dt><a href="#module_Executions">Executions</a></dt>
 <dd><p>Utility functions for generating execution information or parsing execution information
 from a Cumulus message</p>
-</dd>
-<dt><a href="#module_Granules">Granules</a></dt>
-<dd><p>Utility functions for parsing granule information from a Cumulus message</p>
 </dd>
 <dt><a href="#module_Queue">Queue</a></dt>
 <dd><p>Utility functions for parsing queue information from a Cumulus message</p>
 </dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
 <dd><p>Utility functions for working with AWS Step Function events/messages</p>
+</dd>
+</dl>
+
+### Functions
+
+<dl>
+<dt><a href="#exp_module_AsyncOperations--getMessageAsyncOperationId">getMessageAsyncOperationId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the async operation ID from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_Collections--constructCollectionId">constructCollectionId(name, version)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Returns the collection ID.</p>
+</dd>
+<dt><a href="#deconstructCollectionId">deconstructCollectionId(collectionId)</a> ⇒ <code>Object</code></dt>
+<dd><p>Returns the name and version of a collection based on
+the collectionId used in elasticsearch indexing</p>
+</dd>
+<dt><a href="#exp_module_Collections--getCollectionNameAndVersionFromMessage">getCollectionNameAndVersionFromMessage(message)</a> ⇒ <code>CollectionInfo</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get collection name and version from execution message.</p>
+</dd>
+<dt><a href="#exp_module_Collections--getCollectionIdFromMessage">getCollectionIdFromMessage(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get collection ID from execution message.</p>
+</dd>
+<dt><a href="#exp_module_Granules--getMessageGranules">getMessageGranules(message)</a> ⇒ <code>Array.&lt;Object&gt;</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get granules from payload?.granules of a workflow message.</p>
+</dd>
+<dt><a href="#exp_module_Granules--messageHasGranules">messageHasGranules(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Determine if message has a granules object.</p>
+</dd>
+<dt><a href="#exp_module_Granules--getGranuleStatus">getGranuleStatus(workflowStatus, granule)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Determine the status of a granule.</p>
+</dd>
+<dt><a href="#exp_module_Granules--getGranuleQueryFields">getGranuleQueryFields(message)</a> ⇒ <code>unknown</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the query fields of a granule, if any</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdr">getMessagePdr(message)</a> ⇒ <code>undefined</code> | <code>Object</code> ⏏</dt>
+<dd><p>Get the PDR object from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--messageHasPdr">messageHasPdr(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Determine if message has a PDR.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrPANSent">getMessagePdrPANSent(message)</a> ⇒ <code>boolean</code> ⏏</dt>
+<dd><p>Get the PAN sent status from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrPANMessage">getMessagePdrPANMessage(message)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Get the PAN message status from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrName">getMessagePdrName(message)</a> ⇒ <code>string</code> ⏏</dt>
+<dd><p>Get the PDR name from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrRunningExecutions">getMessagePdrRunningExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of running executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrCompletedExecutions">getMessagePdrCompletedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of completed executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrFailedExecutions">getMessagePdrFailedExecutions(message)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the number of failed executions for a PDR, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getMessagePdrStats">getMessagePdrStats(message)</a> ⇒ <code>PdrStats</code> ⏏</dt>
+<dd><p>Get the PDR stats from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_PDRs--getPdrPercentCompletion">getPdrPercentCompletion(stats)</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the percent completion of PDR executions</p>
+</dd>
+<dt><a href="#exp_module_Providers--getMessageProvider">getMessageProvider(message)</a> ⇒ <code>MessageProvider</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the provider from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_Providers--getMessageProviderId">getMessageProviderId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
+<dd><p>Get the provider ID from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getMetaStatus">getMetaStatus(message)</a> ⇒ <code>Message.WorkflowStatus</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the status of a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getMessageWorkflowTasks">getMessageWorkflowTasks(message)</a> ⇒ <code>Object</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow tasks in a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getMessageWorkflowStartTime">getMessageWorkflowStartTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow start time, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getMessageWorkflowStopTime">getMessageWorkflowStopTime(message)</a> ⇒ <code>number</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow stop time, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getMessageWorkflowName">getMessageWorkflowName(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
+<dd><p>Get the workflow name, if any.</p>
+</dd>
+<dt><a href="#exp_module_workflows--getWorkflowDuration">getWorkflowDuration(startTime, [stopTime])</a> ⇒ <code>number</code> ⏏</dt>
+<dd><p>Get the workflow duration.</p>
 </dd>
 </dl>
 
@@ -44,9 +124,9 @@ Utility functions for building Cumulus messages
 ```js
 const Build = require('@cumulus/message/Build');
 ```
-<a name="exp_module_Build--exports.buildQueueMessageFromTemplate"></a>
+<a name="exp_module_Build--buildQueueMessageFromTemplate"></a>
 
-#### exports.buildQueueMessageFromTemplate(params) ⇒ <code>Message.CumulusMessage</code> ⏏
+#### buildQueueMessageFromTemplate(params) ⇒ <code>Message.CumulusMessage</code> ⏏
 Build an SQS message from a workflow template for queueing executions.
 
 **Kind**: Exported function  
@@ -61,53 +141,10 @@ Build an SQS message from a workflow template for queueing executions.
 | params.messageTemplate | <code>Object</code> | Message template for the workflow |
 | params.payload | <code>Object</code> | Payload for the workflow |
 | params.workflow | <code>Object</code> | workflow name & arn object |
-| [params.queueUrl] | <code>string</code> | SQS queue URL |
 | [params.asyncOperationId] | <code>string</code> | Async operation ID |
 | [params.customCumulusMeta] | <code>Object</code> | Custom data for message.cumulus_meta |
 | [params.customMeta] | <code>Object</code> | Custom data for message.meta |
 | [params.executionNamePrefix] | <code>string</code> | Prefix to apply to the name   of the enqueued execution |
-
-<a name="module_Collections"></a>
-
-### Collections
-Utility functions for generating collection information or parsing collection information
-from a Cumulus message
-
-**Example**  
-```js
-const Collections = require('@cumulus/message/Collections');
-```
-
-* [Collections](#module_Collections)
-    * [exports.constructCollectionId(name, version)](#exp_module_Collections--exports.constructCollectionId) ⇒ <code>string</code> ⏏
-    * [exports.getCollectionIdFromMessage(message)](#exp_module_Collections--exports.getCollectionIdFromMessage) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-
-<a name="exp_module_Collections--exports.constructCollectionId"></a>
-
-#### exports.constructCollectionId(name, version) ⇒ <code>string</code> ⏏
-Returns the collection ID.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> - collectionId  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | <code>string</code> | collection name |
-| version | <code>string</code> | collection version |
-
-<a name="exp_module_Collections--exports.getCollectionIdFromMessage"></a>
-
-#### exports.getCollectionIdFromMessage(message) ⇒ <code>string</code> \| <code>undefined</code> ⏏
-Get collection ID from execution message.
-
-**Kind**: Exported function  
-**Returns**: <code>string</code> \| <code>undefined</code> - - A collection ID or undefined if
-                                message.meta.collection isn't
-                                present  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | An execution message |
 
 <a name="module_Executions"></a>
 
@@ -121,16 +158,20 @@ const Executions = require('@cumulus/message/Executions');
 ```
 
 * [Executions](#module_Executions)
-    * [exports.buildExecutionArn(stateMachineArn, executionName)](#exp_module_Executions--exports.buildExecutionArn) ⇒ <code>string</code> ⏏
-    * [exports.getExecutionUrlFromArn(executionArn)](#exp_module_Executions--exports.getExecutionUrlFromArn) ⇒ <code>string</code> ⏏
-    * [exports.getStateMachineArnFromExecutionArn(executionArn)](#exp_module_Executions--exports.getStateMachineArnFromExecutionArn) ⇒ <code>string</code> ⏏
-    * [exports.getMessageExecutionName(message)](#exp_module_Executions--exports.getMessageExecutionName) ⇒ <code>string</code> ⏏
-    * [exports.getMessageStateMachineArn(message)](#exp_module_Executions--exports.getMessageStateMachineArn) ⇒ <code>string</code> ⏏
-    * [exports.getMessageExecutionArn(message)](#exp_module_Executions--exports.getMessageExecutionArn) ⇒ <code>null</code> \| <code>string</code> ⏏
+    * [buildExecutionArn(stateMachineArn, executionName)](#exp_module_Executions--buildExecutionArn) ⇒ <code>string</code> ⏏
+    * [getExecutionUrlFromArn(executionArn)](#exp_module_Executions--getExecutionUrlFromArn) ⇒ <code>string</code> ⏏
+    * [getStateMachineArnFromExecutionArn(executionArn)](#exp_module_Executions--getStateMachineArnFromExecutionArn) ⇒ <code>string</code> ⏏
+    * [getMessageExecutionName(message)](#exp_module_Executions--getMessageExecutionName) ⇒ <code>string</code> ⏏
+    * [getMessageStateMachineArn(message)](#exp_module_Executions--getMessageStateMachineArn) ⇒ <code>string</code> ⏏
+    * [getMessageExecutionArn(message)](#exp_module_Executions--getMessageExecutionArn) ⇒ <code>null</code> \| <code>string</code> ⏏
+    * [getMessageExecutionParentArn(message)](#exp_module_Executions--getMessageExecutionParentArn) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+    * [getMessageCumulusVersion(message)](#exp_module_Executions--getMessageCumulusVersion) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+    * [getMessageExecutionOriginalPayload(message)](#exp_module_Executions--getMessageExecutionOriginalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+    * [getMessageExecutionFinalPayload(message)](#exp_module_Executions--getMessageExecutionFinalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
 
-<a name="exp_module_Executions--exports.buildExecutionArn"></a>
+<a name="exp_module_Executions--buildExecutionArn"></a>
 
-#### exports.buildExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code> ⏏
+#### buildExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code> ⏏
 Build execution ARN from a state machine ARN and execution name
 
 **Kind**: Exported function  
@@ -141,9 +182,9 @@ Build execution ARN from a state machine ARN and execution name
 | stateMachineArn | <code>string</code> | state machine ARN |
 | executionName | <code>string</code> | state machine's execution name |
 
-<a name="exp_module_Executions--exports.getExecutionUrlFromArn"></a>
+<a name="exp_module_Executions--getExecutionUrlFromArn"></a>
 
-#### exports.getExecutionUrlFromArn(executionArn) ⇒ <code>string</code> ⏏
+#### getExecutionUrlFromArn(executionArn) ⇒ <code>string</code> ⏏
 Returns execution URL from an execution ARN.
 
 **Kind**: Exported function  
@@ -153,9 +194,9 @@ Returns execution URL from an execution ARN.
 | --- | --- | --- |
 | executionArn | <code>string</code> | an execution ARN |
 
-<a name="exp_module_Executions--exports.getStateMachineArnFromExecutionArn"></a>
+<a name="exp_module_Executions--getStateMachineArnFromExecutionArn"></a>
 
-#### exports.getStateMachineArnFromExecutionArn(executionArn) ⇒ <code>string</code> ⏏
+#### getStateMachineArnFromExecutionArn(executionArn) ⇒ <code>string</code> ⏏
 Get state machine ARN from an execution ARN
 
 **Kind**: Exported function  
@@ -165,9 +206,9 @@ Get state machine ARN from an execution ARN
 | --- | --- | --- |
 | executionArn | <code>string</code> | an execution ARN |
 
-<a name="exp_module_Executions--exports.getMessageExecutionName"></a>
+<a name="exp_module_Executions--getMessageExecutionName"></a>
 
-#### exports.getMessageExecutionName(message) ⇒ <code>string</code> ⏏
+#### getMessageExecutionName(message) ⇒ <code>string</code> ⏏
 Get the execution name from a workflow message.
 
 **Kind**: Exported function  
@@ -181,9 +222,9 @@ Get the execution name from a workflow message.
 | --- | --- | --- |
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="exp_module_Executions--exports.getMessageStateMachineArn"></a>
+<a name="exp_module_Executions--getMessageStateMachineArn"></a>
 
-#### exports.getMessageStateMachineArn(message) ⇒ <code>string</code> ⏏
+#### getMessageStateMachineArn(message) ⇒ <code>string</code> ⏏
 Get the state machine ARN from a workflow message.
 
 **Kind**: Exported function  
@@ -197,9 +238,9 @@ Get the state machine ARN from a workflow message.
 | --- | --- | --- |
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="exp_module_Executions--exports.getMessageExecutionArn"></a>
+<a name="exp_module_Executions--getMessageExecutionArn"></a>
 
-#### exports.getMessageExecutionArn(message) ⇒ <code>null</code> \| <code>string</code> ⏏
+#### getMessageExecutionArn(message) ⇒ <code>null</code> \| <code>string</code> ⏏
 Get the execution ARN from a workflow message.
 
 **Kind**: Exported function  
@@ -209,27 +250,53 @@ Get the execution ARN from a workflow message.
 | --- | --- | --- |
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
 
-<a name="module_Granules"></a>
+<a name="exp_module_Executions--getMessageExecutionParentArn"></a>
 
-### Granules
-Utility functions for parsing granule information from a Cumulus message
-
-**Example**  
-```js
-const Granules = require('@cumulus/message/Granules');
-```
-<a name="exp_module_Granules--exports.getMessageGranules"></a>
-
-#### exports.getMessageGranules(message) ⇒ <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> ⏏
-Get granules from execution message.
+#### getMessageExecutionParentArn(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+Get the parent execution ARN from a workflow message, if any.
 
 **Kind**: Exported function  
-**Returns**: <code>Array.&lt;Object&gt;</code> \| <code>undefined</code> - An array of granule objects, or
-  undefined if `message.payload.granules` is not set  
+**Returns**: <code>undefined</code> \| <code>string</code> - A state machine execution ARN  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | An execution message |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--getMessageCumulusVersion"></a>
+
+#### getMessageCumulusVersion(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
+Get the Cumulus version from a workflow message, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>undefined</code> \| <code>string</code> - The cumulus version  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--getMessageExecutionOriginalPayload"></a>
+
+#### getMessageExecutionOriginalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+Get the workflow original payload, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow original payload  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
+
+<a name="exp_module_Executions--getMessageExecutionFinalPayload"></a>
+
+#### getMessageExecutionFinalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
+Get the workflow final payload, if any.
+
+**Kind**: Exported function  
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow final payload  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>Message.CumulusMessage</code> | A workflow message object |
 
 <a name="module_Queue"></a>
 
@@ -242,13 +309,13 @@ const Queue = require('@cumulus/message/Queue');
 ```
 
 * [Queue](#module_Queue)
-    * [exports.getQueueUrl(message)](#exp_module_Queue--exports.getQueueUrl) ⇒ <code>string</code> ⏏
-    * [exports.getMaximumExecutions(message, queueUrl)](#exp_module_Queue--exports.getMaximumExecutions) ⇒ <code>number</code> ⏏
-    * [exports.hasQueueAndExecutionLimit(message)](#exp_module_Queue--exports.hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
+    * [getQueueUrl(message)](#exp_module_Queue--getQueueUrl) ⇒ <code>string</code> ⏏
+    * [getMaximumExecutions(message, queueUrl)](#exp_module_Queue--getMaximumExecutions) ⇒ <code>number</code> ⏏
+    * [hasQueueAndExecutionLimit(message)](#exp_module_Queue--hasQueueAndExecutionLimit) ⇒ <code>boolean</code> ⏏
 
-<a name="exp_module_Queue--exports.getQueueUrl"></a>
+<a name="exp_module_Queue--getQueueUrl"></a>
 
-#### exports.getQueueUrl(message) ⇒ <code>string</code> ⏏
+#### getQueueUrl(message) ⇒ <code>string</code> ⏏
 Get the queue URL from a workflow message.
 
 **Kind**: Exported function  
@@ -256,11 +323,11 @@ Get the queue URL from a workflow message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | A workflow message object |
+| message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
-<a name="exp_module_Queue--exports.getMaximumExecutions"></a>
+<a name="exp_module_Queue--getMaximumExecutions"></a>
 
-#### exports.getMaximumExecutions(message, queueUrl) ⇒ <code>number</code> ⏏
+#### getMaximumExecutions(message, queueUrl) ⇒ <code>number</code> ⏏
 Get the maximum executions for a queue.
 
 **Kind**: Exported function  
@@ -275,9 +342,9 @@ Get the maximum executions for a queue.
 | message | <code>Message.CumulusMessage</code> | A workflow message object |
 | queueUrl | <code>string</code> | A queue URL |
 
-<a name="exp_module_Queue--exports.hasQueueAndExecutionLimit"></a>
+<a name="exp_module_Queue--hasQueueAndExecutionLimit"></a>
 
-#### exports.hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
+#### hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
 Determine if there is a queue and queue execution limit in the message.
 
 **Kind**: Exported function  
@@ -285,7 +352,7 @@ Determine if there is a queue and queue execution limit in the message.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| message | <code>Message.CumulusMessage</code> | A workflow message object |
+| message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
 <a name="module_StepFunctions"></a>
 
@@ -298,12 +365,12 @@ const StepFunctions = require('@cumulus/message/StepFunctions');
 ```
 
 * [StepFunctions](#module_StepFunctions)
-    * [exports.pullStepFunctionEvent(event)](#exp_module_StepFunctions--exports.pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-    * [exports.parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--exports.parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [pullStepFunctionEvent(event)](#exp_module_StepFunctions--pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+    * [parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 
-<a name="exp_module_StepFunctions--exports.pullStepFunctionEvent"></a>
+<a name="exp_module_StepFunctions--pullStepFunctionEvent"></a>
 
-#### exports.pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+#### pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Given a Step Function event, replace specified key in event with contents
 of S3 remote message
 
@@ -318,9 +385,9 @@ of S3 remote message
 | --- | --- | --- |
 | event | <code>Message.CumulusRemoteMessage</code> | Source event |
 
-<a name="exp_module_StepFunctions--exports.parseStepMessage"></a>
+<a name="exp_module_StepFunctions--parseStepMessage"></a>
 
-#### exports.parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
+#### parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Parse step message with CMA keys and replace specified key in event with contents
 of S3 remote message
 
@@ -331,6 +398,19 @@ of S3 remote message
 | --- | --- | --- |
 | stepMessage | <code>CMAMessage</code> | Message for the step |
 | stepName | <code>string</code> | Name of the step |
+
+<a name="deconstructCollectionId"></a>
+
+### deconstructCollectionId(collectionId) ⇒ <code>Object</code>
+Returns the name and version of a collection based on
+the collectionId used in elasticsearch indexing
+
+**Kind**: global function  
+**Returns**: <code>Object</code> - name and version as object  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| collectionId | <code>string</code> | collectionId used in elasticsearch index |
 
 
 ## About Cumulus

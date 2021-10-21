@@ -13,7 +13,7 @@ const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const { ESSearchQueue } = require('../es/esSearchQueue');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const { Collection, Granule } = require('../models');
 const {
   convertToDBCollectionSearchParams,
@@ -35,7 +35,7 @@ const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' }
  * and withConfilcts
  */
 async function internalRecReportForCollections(recReportParams) {
-  log.debug('internal-reconciliation-report internalRecReportForCollections');
+  log.info(`internalRecReportForCollections (${JSON.stringify(recReportParams)})`);
   // compare collection holdings:
   //   Get collection list in ES ordered by granuleId
   //   Get collection list in DynamoDB ordered by granuleId
@@ -50,7 +50,7 @@ async function internalRecReportForCollections(recReportParams) {
 
   // get collections from database and sort them, since the scan result is not ordered
   const dbSearchParams = convertToDBCollectionSearchParams(recReportParams);
-  const dbCollectionsQueue = await (new Collection()).search(dbSearchParams);
+  const dbCollectionsQueue = (new Collection()).search(dbSearchParams);
   const dbCollectionsSearched = await dbCollectionsQueue.empty();
   const dbCollectionItems = sortBy(
     filterDBCollections(dbCollectionsSearched, recReportParams),
@@ -258,7 +258,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
  * and withConfilcts
  */
 async function internalRecReportForGranules(recReportParams) {
-  log.debug('internal-reconciliation-report internalRecReportForGranules');
+  log.info(`internalRecReportForGranules (${JSON.stringify(recReportParams)})`);
   // To avoid 'scan' granules table, we query a Global Secondary Index(GSI) in granules
   // table with collectionId.
   // compare granule holdings:
@@ -309,7 +309,7 @@ exports.internalRecReportForGranules = internalRecReportForGranules;
  *   uploaded to S3
  */
 async function createInternalReconciliationReport(recReportParams) {
-  log.debug(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
+  log.info(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
     reportKey,
     systemBucket,

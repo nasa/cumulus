@@ -38,8 +38,8 @@ async function testWrite(s3, params) {
 }
 
 /**
- * Lambda handler that tests WRITE access on an S3 bucket by calling putObject on
- * a protected bucket. Returns true if the write succeeds, false otherwise.
+ * Lambda handler that tests READ access on an S3 bucket by calling listObjectsV2 on
+ * a protected bucket. Returns true if the read succeeds, false otherwise.
  *
  * @param {S3} s3 - S3 service object
  * @param {Object} params - test parameters
@@ -91,7 +91,7 @@ async function handler(event) {
     'write-object': testWrite,
     'list-objects': testList,
   };
-  return testChoices[testName](s3, params);
+  return await testChoices[testName](s3, params);
 }
 
 exports.handler = handler;

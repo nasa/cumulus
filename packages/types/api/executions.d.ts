@@ -1,5 +1,10 @@
 export type ExecutionRecordStatus = 'completed' | 'failed' | 'running' | 'unknown';
 
+export type ExecutionProcessingTimes = {
+  processingStartDateTime: string
+  processingEndDateTime: string
+} | {};
+
 export interface ExecutionRecord {
   arn: string,
   createdAt: number,
@@ -8,13 +13,14 @@ export interface ExecutionRecord {
   asyncOperationId?: string,
   collectionId?: string,
   duration?: number,
-  error?: unknown,
+  error?: object,
   execution?: string,
-  finalPayload?: unknown,
-  originalPayload?: unknown,
+  finalPayload?: object,
+  originalPayload?: object,
   parentArn?: string,
-  tasks?: unknown,
+  tasks?: object,
   timestamp?: number,
   type?: string,
-  updatedAt: number
+  updatedAt: number,
+  cumulusVersion?: string,
 }

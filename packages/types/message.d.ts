@@ -1,16 +1,18 @@
 type CumulusException = 'None' | object;
 
+export type WorkflowStatus = 'completed' | 'failed' | 'running';
+
 export interface QueueExecutionLimits {
   [queueUrl: string]: number
 }
 
 export interface CumulusMeta {
   execution_name: string
-  queueUrl: string
   state_machine: string
   parentExecutionArn?: string
   asyncOperationId?: string
   queueExecutionLimits: QueueExecutionLimits
+  cumulus_version?: string
 }
 
 export interface ReplaceConfig {
@@ -19,12 +21,18 @@ export interface ReplaceConfig {
   TargetPath?: string
 }
 
+export interface Meta {
+  workflow_name: string
+  collection?: {
+    name?: string
+    version?: string
+  }
+  [key: string]: unknown
+}
+
 export interface CumulusMessage {
   cumulus_meta: CumulusMeta
-  meta: {
-    workflow_name: string
-    [key: string]: unknown
-  }
+  meta: Meta
   payload: unknown
   exception?: CumulusException
 }

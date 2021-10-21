@@ -1,22 +1,25 @@
 'use strict';
 
 const curry = require('lodash/curry');
+const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const isBoolean = require('lodash/isBoolean');
-const Logger = require('@cumulus/logger');
 const map = require('lodash/map');
 const pick = require('lodash/pick');
+const pMap = require('p-map');
+const Logger = require('@cumulus/logger');
 const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
 
-const logger = () => new Logger({
+const logger = (logOptions) => new Logger({
   executions: process.env.EXECUTIONS,
   granules: process.env.GRANULES ? JSON.parse(process.env.GRANULES) : undefined,
   parentArn: process.env.PARENTARN,
-  sender: process.env.SENDER,
+  sender: process.env.SENDER || '@cumulus/discover-granules',
   stackName: process.env.STACKNAME,
   version: process.env.TASKVERSION,
+  ...logOptions,
 });
 
 /**
@@ -196,13 +199,18 @@ const buildGranule = curry(
  *
  */
 const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
-  const response = await granules.getGranule({
-    prefix: process.env.STACKNAME,
-    granuleId,
-  });
-  const responseBody = JSON.parse(response.body);
-  if (response.statusCode === 404 && responseBody.error === 'Not Found') {
-    return granuleId;
+  let response;
+  try {
+    response = await granules.getGranuleResponse({
+      prefix: process.env.STACKNAME,
+      granuleId,
+    });
+  } catch (error) {
+    const responseError = error;
+    if (responseError.statusCode === 404) {
+      return granuleId;
+    }
+    throw new Error(`Unexpected error from Private API lambda: ${responseError.message}`);
   }
 
   if (response.statusCode === 200) {
@@ -211,7 +219,8 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
     }
     return false;
   }
-  throw new Error(`Unexpected return from Private API lambda ${JSON.stringify(response)}`);
+
+  throw new Error(`Unexpected return from Private API lambda: ${JSON.stringify(response)}`);
 };
 
 /**
@@ -222,17 +231,22 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {string[]} granuleIds - Array of granuleIds to filter
- * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ * @param {Object} params - params object
+ * @param {string[]} params.granuleIds - Array of granuleIds to filter
+ * @param {string} params.duplicateHandling - flag that defines this function's behavior
+ *                                            (see description)
+ * @param {number} params.concurrency - limitation on max concurrent granules
+ *                                      to check for duplicates
  *
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
-const filterDuplicates = async (granuleIds, duplicateHandling) => {
-  const keysPromises = granuleIds.map((key) =>
-    checkGranuleHasNoDuplicate(key, duplicateHandling));
-
-  const filteredKeys = await Promise.all(keysPromises);
-  return filteredKeys.filter(Boolean);
+const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) => {
+  const checkResults = await pMap(
+    granuleIds,
+    (key) => checkGranuleHasNoDuplicate(key, duplicateHandling),
+    { concurrency }
+  );
+  return checkResults.filter(Boolean);
 };
 
 /**
@@ -242,18 +256,26 @@ const filterDuplicates = async (granuleIds, duplicateHandling) => {
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
+ * @param {Object} params - params object
+ * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                    matching files for each
  *
- * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ * @param {string} params.duplicateHandling - flag that defines this function's behavior
+ *                                            (see description)
+ * @param {number} params.concurrency - granule duplicate filtering max concurrency
+ *                                      (`skip` or `error` handling only)
  *
  * @returns {Object} returns filesByGranuleId with applicable duplciates removed
  */
-const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
+const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurrency }) => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
-    const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
+    const filteredKeys = await filterDuplicates({
+      granuleIds: Object.keys(filesByGranuleId),
+      duplicateHandling,
+      concurrency,
+    });
     return pick(filesByGranuleId, filteredKeys);
   }
   if (['replace', 'version'].includes(duplicateHandling)) {
@@ -284,16 +306,15 @@ const discoverGranules = async ({ config }) => {
   );
 
   const duplicateHandling = config.duplicateGranuleHandling || 'replace';
-  filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
+  filesByGranuleId = await handleDuplicates({
+    filesByGranuleId,
+    duplicateHandling,
+    concurrency: get(config, 'concurrency', 3),
+  });
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 
-  // Set the environment variable for the logger
-  if (discoveredGranules) {
-    process.env.GRANULES = JSON.stringify(discoveredGranules.map((g) => g.granuleId));
-  }
-
-  logger().info(`Discovered ${discoveredGranules.length} granules.`);
+  logger({ granules: discoveredGranules.map((g) => g.granuleId) }).info(`Discovered ${discoveredGranules.length} granules.`);
   return { granules: discoveredGranules };
 };
 
@@ -305,7 +326,7 @@ const discoverGranules = async ({ config }) => {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-const handler = async (event, context) => runCumulusTask(discoverGranules, event, context);
+const handler = async (event, context) => await runCumulusTask(discoverGranules, event, context);
 
 module.exports = {
   checkGranuleHasNoDuplicate, // exported to support testing

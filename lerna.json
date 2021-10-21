@@ -1,11 +1,13 @@
 {
   "lerna": "3.20.2",
-  "version": "5.0.0",
+  "version": "9.8.0",
   "packages": [
     "example",
     "example/lambdas/*",
+    "example/scripts/*",
     "lambdas/*",
     "packages/*",
+    "packages/api/ecs/async-operation",
     "tasks/*",
     "tf-modules/*"
   ],

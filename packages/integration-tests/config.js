@@ -3,6 +3,7 @@
 const dotenv = require('dotenv');
 const get = require('lodash/get');
 const yaml = require('js-yaml');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const isNil = require('lodash/isNil');
 const { readFile, readFileSync } = require('fs-extra');
@@ -66,7 +67,7 @@ const loadConfig = async () => {
 
   const buckets = await getJsonS3Object(
     configFromFile.bucket,
-    `${configFromFile.stackName}/workflows/buckets.json`
+    getBucketsConfigKey(configFromFile.stackName)
   );
 
   return { ...configFromFile, buckets };
