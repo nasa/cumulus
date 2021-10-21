@@ -9,7 +9,6 @@ const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
-const { deleteGranule } = require('@cumulus/api-client/granules');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
 const {
   buildS3Uri, fileExists, getJsonS3Object, parseS3Uri, s3PutObject,
@@ -352,7 +351,7 @@ describe('When there are granule differences and granule reconciliation is run',
         key: randomString(),
       };
       extraGranuleInDb = {
-        granuleId: randomString(),
+        granuleId: randomId('extra-granule'),
         collectionId,
         status: 'completed',
         files: [extraFileInDb],
@@ -822,20 +821,18 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await updateGranule({
       prefix: config.stackName,
-      granuleId: publishedGranuleId,
-      updateParams: granuleBeforeUpdate,
+      body: {
+        granuleId: publishedGranuleId,
+        ...granuleBeforeUpdate,
+      },
     });
 
     const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
-      removeCollectionAndAllDependencies({ prefix: config.stackName, collection: collection }),
+      removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
       s3().deleteObject(extraS3Object).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
-      deleteGranule({
-        prefix: config.stackName,
-        granuleId: extraGranuleInDb.granuleId,
-      }),
     ]);
     cleanupResults.forEach((result) => {
       if (result.status === 'rejected') {
