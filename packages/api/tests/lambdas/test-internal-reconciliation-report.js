@@ -42,7 +42,6 @@ const {
   fakeFileFactory,
 } = require('../../lib/testUtils');
 const {
-  compareEsGranuleAndPgGranule,
   internalRecReportForCollections,
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
@@ -178,73 +177,6 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
-});
-
-test.serial('compareEsGranuleAndPgGranule returns true for matching granules', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = { ...granule };
-  t.true(compareEsGranuleAndPgGranule(granule, granule2));
-});
-
-test.serial('compareEsGranuleAndPgGranule returns false for granules with different values', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = { ...granule, foo: 'bar' };
-  t.false(compareEsGranuleAndPgGranule(granule, granule2));
-});
-
-test.serial('compareEsGranuleAndPgGranule returns false if one granule has files and other does not', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  t.false(compareEsGranuleAndPgGranule(granule, granule2));
-});
-
-test.serial('compareEsGranuleAndPgGranule returns false if granule file is missing from second granule', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key2',
-    }],
-  };
-  t.false(compareEsGranuleAndPgGranule(granule, granule2));
-});
-
-test.serial('compareEsGranuleAndPgGranule returns false if granule files are different', (t) => {
-  const granule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-    }],
-  };
-  const granule2 = {
-    ...granule,
-    files: [{
-      bucket: 'bucket',
-      key: 'key',
-      size: 5,
-    }],
-  };
-  t.false(compareEsGranuleAndPgGranule(granule, granule2));
 });
 
 test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {

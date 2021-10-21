@@ -32,6 +32,7 @@ const {
   convertToDBGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
+  compareEsGranuleAndApiGranule,
 } = require('../lib/reconciliationReport');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
@@ -224,42 +225,6 @@ async function getCollectionsForGranuleSearch(recReportParams) {
   return collections;
 }
 
-function compareEsGranuleAndPgGranule(esGranule, pgGranule) {
-  // Ignore files in initial comparison so we can ignore file order
-  // in comparison
-  const fieldsIgnored = ['timestamp', 'updatedAt', 'files'];
-  // "dataType" and "version" fields do not exist in the PostgreSQL database
-  // granules table which is now the source of truth
-  const esFieldsIgnored = [...fieldsIgnored, 'dataType', 'version'];
-  const granulesAreEqual = isEqual(
-    omit(esGranule, esFieldsIgnored),
-    omit(pgGranule, fieldsIgnored)
-  );
-
-  if (granulesAreEqual === false) return granulesAreEqual;
-
-  const esGranulesHasFiles = esGranule.files !== undefined;
-  const pgGranuleHasFiles = pgGranule.files !== undefined;
-
-  // If neither granule has files, then return the previous equality result
-  if (!esGranulesHasFiles && !pgGranuleHasFiles) return granulesAreEqual;
-  // If either ES or PG granule does not have files, but the other granule does
-  // have files, then the granules don't match, so return false
-  if ((esGranulesHasFiles && !pgGranuleHasFiles)
-      || (!esGranulesHasFiles && pgGranuleHasFiles)) {
-    return false;
-  }
-
-  // Compare files one-by-one to ignore sort order for comparison
-  return esGranule.files.every((esFile) => {
-    const matchingPgFile = pgGranule.files.find(
-      (pgFile) => pgFile.bucket === esFile.bucket && pgFile.key === esFile.key
-    );
-    if (!matchingPgFile) return false;
-    return isEqual(esFile, matchingPgFile);
-  });
-}
-
 /**
  * Compare the granule holdings for a given collection
  *
@@ -331,7 +296,7 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
       );
 
       // Found an item that is in both ES and DB
-      if (compareEsGranuleAndPgGranule(nextEsItem, apiGranule)) {
+      if (compareEsGranuleAndApiGranule(nextEsItem, apiGranule)) {
         okCount += 1;
       } else {
         withConflicts.push({ es: nextEsItem, db: apiGranule });
@@ -464,7 +429,7 @@ async function createInternalReconciliationReport(recReportParams) {
 }
 
 module.exports = {
-  compareEsGranuleAndPgGranule,
+  compareEsGranuleAndApiGranule,
   internalRecReportForCollections,
   internalRecReportForGranules,
   createInternalReconciliationReport,
