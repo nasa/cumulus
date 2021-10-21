@@ -388,9 +388,12 @@ function removeEtagsFromFileObjects(granule) {
  * @returns {Object} mapping of file S3 URIs to etags
  */
 function mapFileEtags(files) {
-  return Object.fromEntries(
-    files.map(({ bucket, key, etag }) => [getS3UrlOfFile({ bucket, key }), etag])
-  );
+  return files.reduce((filesMap, file) => {
+    const { bucket, key, etag } = file;
+    const s3Uri = getS3UrlOfFile({ bucket, key });
+    filesMap[s3Uri] = etag; // eslint-disable-line no-param-reassign
+    return filesMap;
+  }, {});
 }
 
 /**
