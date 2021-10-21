@@ -34,7 +34,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "fs-extra": "^9.0.0",
     "json-templates": "^4.1.0"
   }
 }
