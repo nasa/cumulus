@@ -175,8 +175,8 @@ export const getApiExecutionCumulusIds = async (
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
  * @param {Array<Object>} executions - array of executions
- * @param {Object} [granulesExecutionsPgModel]
- *   Granules/executions PG model class instance
+ * @param {Object} [executionsPgModel]
+ *   Executions PG model class instance
  * @returns {Promise<number[]>}
  */
 export const getApiGranuleExecutionCumulusIdsByExecution = async (

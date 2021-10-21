@@ -86,6 +86,7 @@ export {
   getWorkflowNameIntersectFromGranuleIds,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionArnsByGranuleCumulusId,
 } from './lib/execution';
 
 export {

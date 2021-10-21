@@ -140,13 +140,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
    * @param {Object} [params] - Optional object with addition params for query
    * @param {number} [params.limit] - number of records to be returned
    * @param {number} [params.offset] - record offset
-   * @returns {Promise<Array<number>>} An array of granules
+   * @returns {Promise<Array<PostgresGranuleRecord>>} An array of granules
    */
   async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     granuleCumulusIds: Array<number> | number,
     params: { limit: number, offset: number }
-  ): Promise<Array<number>> {
+  ): Promise<Array<PostgresGranuleRecord>> {
     const { limit, offset, ...sortQueries } = params || {};
     const sortFields = getSortFields(sortQueries);
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
