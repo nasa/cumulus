@@ -178,7 +178,7 @@ when output of the operation is `undefined`
     modified to throw a descriptive error if the input `collectionId` is
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
-    if an incorrectly formatted collection ID is input.
+    if an incorrectly formatted collectionId is input.
 
 ## [v9.4.0] 2021-08-16
 
