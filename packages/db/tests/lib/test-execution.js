@@ -21,7 +21,7 @@ const {
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
   upsertGranuleWithExecutionJoinRecord,
-  getExecutionArnsByGranuleCumulusId,
+  getExecutionInfoByGranuleCumulusId,
   migrationDir,
   createRejectableTransaction,
 } = require('../../dist');
@@ -112,7 +112,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Granule', async (t) => {
+test('getExecutionInfoByGranuleCumulusId() gets all Executions related to a Granule', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -167,10 +167,10 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
     { cumulus_id: executionBCumulusId }
   );
 
-  const result = await getExecutionArnsByGranuleCumulusId(
-    knex,
-    granuleCumulusId
-  );
+  const result = await getExecutionInfoByGranuleCumulusId({
+    knexOrTransaction: knex,
+    granuleCumulusId,
+  });
 
   t.deepEqual(
     result,
@@ -178,7 +178,7 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
   );
 });
 
-test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Granule with limit configuration', async (t) => {
+test('getExecutionInfoByGranuleCumulusId() gets all Executions related to a Granule with limit configuration', async (t) => {
   const {
     knex,
     collectionCumulusId,
@@ -234,15 +234,77 @@ test('getExecutionArnsByGranuleCumulusId() gets all Executions related to a Gran
     { cumulus_id: executionBCumulusId }
   );
 
-  const result = await getExecutionArnsByGranuleCumulusId(
-    knex,
+  const result = await getExecutionInfoByGranuleCumulusId({
+    knexOrTransaction: knex,
     granuleCumulusId,
-    1
-  );
+    limit: 1,
+  });
 
   t.deepEqual(
     result,
     [{ arn: exepectedExecutionArn1.arn }]
+  );
+});
+
+test('getExecutionInfoByGranuleCumulusId() gets specified execution info', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    executionPgModel,
+    granulePgModel,
+    granulesExecutionsPgModel,
+  } = t.context;
+
+  // Create executions
+  const now = Date.now();
+  const [executionA] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(now) })
+  );
+  const [executionB] = await executionPgModel.create(
+    knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(now - 1) })
+  );
+
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
+
+  // Create Granule
+  const [pgGranule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+  const granuleCumulusId = pgGranule.cumulus_id;
+  // Create GranulesExecuions JOIN records
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionACumulusId,
+    }
+  );
+  await granulesExecutionsPgModel.create(
+    knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+      execution_cumulus_id: executionBCumulusId,
+    }
+  );
+
+  const result = await getExecutionInfoByGranuleCumulusId({
+    knexOrTransaction: knex,
+    executionColumns: ['status', 'url'],
+    granuleCumulusId,
+  });
+
+  t.deepEqual(
+    result,
+    [
+      { status: executionA.status, url: executionA.url },
+      { status: executionB.status, url: executionB.url },
+    ]
   );
 });
 

@@ -12,6 +12,7 @@ const {
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { generateGranuleApiRecord } = require('@cumulus/message/Granules');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -23,9 +24,23 @@ const {
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
   migrationDir,
+  translateApiGranuleToPostgresGranule,
+  GranulePgModel,
+  fakeProviderRecordFactory,
+  ProviderPgModel,
+  upsertGranuleWithExecutionJoinRecord,
+  fakeExecutionRecordFactory,
+  ExecutionPgModel,
+  FilePgModel,
+  translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
 
-const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  // fakeFileFactory,
+  fakeGranuleFactoryV2,
+  fakeFileFactory,
+} = require('../../lib/testUtils');
 const {
   internalRecReportForCollections,
   internalRecReportForGranules,
@@ -37,6 +52,14 @@ const { deconstructCollectionId } = require('../../lib/utils');
 let esAlias;
 let esIndex;
 let esClient;
+
+test.before((t) => {
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.executionPgModel = new ExecutionPgModel();
+  t.context.filePgModel = new FilePgModel();
+});
 
 test.beforeEach(async (t) => {
   process.env.GranulesTable = randomId('granulesTable');
@@ -50,7 +73,6 @@ test.beforeEach(async (t) => {
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
-  await new models.Granule().createTable();
   await new models.ReconciliationReport().createTable();
 
   esAlias = randomId('esalias');
@@ -68,7 +90,6 @@ test.beforeEach(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: t.context.testDbName,
   };
-  t.context.collectionPgModel = new CollectionPgModel();
 });
 
 test.afterEach.always(async (t) => {
@@ -80,7 +101,6 @@ test.afterEach.always(async (t) => {
   await Promise.all(
     flatten([
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.Granule().deleteTable(),
       new models.ReconciliationReport().deleteTable(),
     ])
   );
@@ -160,17 +180,40 @@ test.serial('internalRecReportForCollections reports discrepancy of collection h
 });
 
 test.serial('internalRecReportForGranules reports discrepancy of granule holdings in ES and DB', async (t) => {
-  const { knex, collectionPgModel } = t.context;
-  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
-  const provider = randomId('provider');
+  const {
+    knex,
+    collectionPgModel,
+    providerPgModel,
+    executionPgModel,
+  } = t.context;
 
-  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
-  const additionalMatchingGrans = range(10).map(() => fakeGranuleFactoryV2({ provider }));
-  const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+
+  // Create provider in PG
+  const provider = fakeProviderRecordFactory();
+  await providerPgModel.create(knex, provider);
+
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({
+    collectionId,
+    provider: provider.name,
+  }));
+  const additionalMatchingGrans = range(10).map(() => fakeGranuleFactoryV2({
+    provider: provider.name,
+  }));
+  const extraDbGrans = range(2).map(() => fakeGranuleFactoryV2({
+    collectionId,
+    provider: provider.name,
+  }));
   const additionalExtraDbGrans = range(2).map(() => fakeGranuleFactoryV2());
-  const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({ provider }));
+  const extraEsGrans = range(2).map(() => fakeGranuleFactoryV2({
+    provider: provider.name,
+  }));
   const additionalExtraEsGrans = range(2)
-    .map(() => fakeGranuleFactoryV2({ collectionId, provider }));
+    .map(() => fakeGranuleFactoryV2({
+      collectionId,
+      provider: provider.name,
+    }));
   const conflictGranInDb = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
   const conflictGranInEs = { ...conflictGranInDb, status: 'failed' };
 
@@ -181,20 +224,34 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   // add granules and related collections to es and db
   await Promise.all(
-    esGranules.map(async (gran) => {
-      await indexer.indexGranule(esClient, gran, esAlias);
-      const collection = fakeCollectionFactory({ ...deconstructCollectionId(gran.collectionId) });
+    esGranules.map(async (granule) => {
+      const collection = fakeCollectionFactory({
+        ...deconstructCollectionId(granule.collectionId),
+      });
       await indexer.indexCollection(esClient, collection, esAlias);
       await collectionPgModel.upsert(
         knex,
         translateApiCollectionToPostgresCollection(collection)
       );
+      await indexer.indexGranule(esClient, granule, esAlias);
     })
   );
 
-  await new models.Granule().create(dbGranules);
+  await Promise.all(
+    dbGranules.map(async (granule) => {
+      const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+      let pgExecution = {};
+      if (granule.execution) {
+        const pgExecutionData = fakeExecutionRecordFactory({
+          url: granule.execution,
+        });
+        ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
+      }
+      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+    })
+  );
 
-  let report = await internalRecReportForGranules({});
+  let report = await internalRecReportForGranules({ knex });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -212,7 +269,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
   };
-  report = await internalRecReportForGranules(normalizeEvent(searchParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(searchParams),
+    knex,
+  });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.is(report.onlyInDb.length, 4);
@@ -224,15 +284,21 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     endTimestamp: moment.utc().add(2, 'hour').format(),
   };
 
-  report = await internalRecReportForGranules(normalizeEvent(outOfRangeParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(outOfRangeParams),
+    knex,
+  });
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 0);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 0);
 
   // collectionId, provider parameters
-  const collectionProviderParams = { ...searchParams, collectionId, provider };
-  report = await internalRecReportForGranules(normalizeEvent(collectionProviderParams));
+  const collectionProviderParams = { ...searchParams, collectionId, provider: provider.name };
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(collectionProviderParams),
+    knex,
+  });
   t.is(report.okCount, 10);
   t.is(report.onlyInEs.length, 2);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -243,8 +309,11 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
   t.is(report.withConflicts.length, 0);
 
   // provider parameter
-  const providerParams = { ...searchParams, provider: [randomId('p'), provider] };
-  report = await internalRecReportForGranules(normalizeEvent(providerParams));
+  const providerParams = { ...searchParams, provider: [randomId('p'), provider.name] };
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(providerParams),
+    knex,
+  });
   t.is(report.okCount, 20);
   t.is(report.onlyInEs.length, 4);
   t.deepEqual(report.onlyInEs.map((gran) => gran.granuleId).sort(),
@@ -261,10 +330,147 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
     granuleId: [granuleId, extraEsGrans[0].granuleId, randomId('g')],
     collectionId: [collectionId, extraEsGrans[0].collectionId, extraEsGrans[1].collectionId],
   };
-  report = await internalRecReportForGranules(normalizeEvent(granuleIdParams));
+  report = await internalRecReportForGranules({
+    ...normalizeEvent(granuleIdParams),
+    knex,
+  });
   t.is(report.okCount, 0);
   t.is(report.onlyInEs.length, 1);
   t.is(report.onlyInEs[0].granuleId, extraEsGrans[0].granuleId);
   t.is(report.onlyInDb.length, 0);
   t.is(report.withConflicts.length, 1);
+});
+
+test.serial('internalRecReportForGranules handles generated granules with custom timestamps', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    providerPgModel,
+    executionPgModel,
+  } = t.context;
+
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+  const collection = fakeCollectionFactory({
+    ...deconstructCollectionId(collectionId),
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+  await collectionPgModel.upsert(
+    knex,
+    translateApiCollectionToPostgresCollection(collection)
+  );
+
+  // Create provider in PG
+  const provider = fakeProviderRecordFactory();
+  await providerPgModel.create(knex, provider);
+
+  // Use date string with extra precision to make sure it is saved
+  // correctly in dynamo, PG, an Elasticsearch
+  const dateString = '2018-04-25T21:45:45.524053';
+
+  await Promise.all(range(5).map(async () => {
+    const fakeGranule = fakeGranuleFactoryV2({
+      collectionId,
+      provider: provider.name,
+    });
+
+    const processingTimeInfo = {
+      processingStartDateTime: dateString,
+      processingEndDateTime: dateString,
+    };
+
+    const cmrTemporalInfo = {
+      beginningDateTime: dateString,
+      endingDateTime: dateString,
+      productionDateTime: dateString,
+      lastUpdateDateTime: dateString,
+    };
+
+    const apiGranule = await generateGranuleApiRecord({
+      ...fakeGranule,
+      granule: fakeGranule,
+      executionUrl: fakeGranule.execution,
+      workflowStartTime: Date.now(),
+      processingTimeInfo,
+      cmrTemporalInfo,
+    });
+    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+
+    let pgExecution = {};
+    if (apiGranule.execution) {
+      const pgExecutionData = fakeExecutionRecordFactory({
+        url: apiGranule.execution,
+      });
+      ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
+    }
+    await upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+    await indexer.indexGranule(esClient, apiGranule, esAlias);
+  }));
+
+  const report = await internalRecReportForGranules({ knex });
+  t.is(report.okCount, 5);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
+});
+
+test.serial('internalRecReportForGranules handles granules with files', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    executionPgModel,
+    filePgModel,
+  } = t.context;
+
+  // Create collection in PG/ES
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
+  const collection = fakeCollectionFactory({
+    ...deconstructCollectionId(collectionId),
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+  await collectionPgModel.upsert(
+    knex,
+    translateApiCollectionToPostgresCollection(collection)
+  );
+  await Promise.all(range(2).map(async () => {
+    const fakeGranule = fakeGranuleFactoryV2({
+      collectionId,
+      files: [fakeFileFactory(), fakeFileFactory(), fakeFileFactory()],
+    });
+
+    const fakeCmrUtils = {
+      getGranuleTemporalInfo: () => Promise.resolve({}),
+    };
+    const apiGranule = await generateGranuleApiRecord({
+      ...fakeGranule,
+      granule: fakeGranule,
+      executionUrl: fakeGranule.execution,
+      workflowStartTime: Date.now(),
+      cmrUtils: fakeCmrUtils,
+    });
+    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+
+    const pgExecutionData = fakeExecutionRecordFactory({
+      url: apiGranule.execution,
+    });
+    const [pgExecution] = await executionPgModel.create(knex, pgExecutionData);
+
+    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
+      knex,
+      pgGranule,
+      pgExecution.cumulus_id
+    );
+    await Promise.all(apiGranule.files.map(async (file) => {
+      const pgFile = translateApiFiletoPostgresFile(file);
+      await filePgModel.create(knex, {
+        ...pgFile,
+        granule_cumulus_id: pgGranuleRecord.cumulus_id,
+      });
+    }));
+    await indexer.indexGranule(esClient, apiGranule, esAlias);
+  }));
+
+  const report = await internalRecReportForGranules({ knex });
+  t.is(report.okCount, 2);
+  t.is(report.onlyInEs.length, 0);
+  t.is(report.onlyInDb.length, 0);
 });

@@ -78,7 +78,7 @@ Example response:
             "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
             "s3://cumulus-test-sandbox-private/BROWSE.MYD13Q1.A2017297.h19v10.006.2017313221201.hdf"
         ],
-        "onlyInDynamoDb": [
+        "onlyInDb": [
             {
                 "uri": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
                 "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606"

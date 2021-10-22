@@ -1,5 +1,6 @@
 'use strict';
 
+const chunk = require('lodash/chunk');
 const cloneDeep = require('lodash/cloneDeep');
 const pick = require('lodash/pick');
 const sortBy = require('lodash/sortBy');
@@ -8,19 +9,22 @@ const intersection = require('lodash/intersection');
 const union = require('lodash/union');
 const omit = require('lodash/omit');
 const moment = require('moment');
-const pLimit = require('p-limit');
+const pMap = require('p-map');
+
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const {
   CollectionPgModel,
   translatePostgresCollectionToApiCollection,
   getKnexClient,
+  getCollectionsByGranuleIds,
+  getGranulesByApiPropertiesQuery,
+  QuerySearchClient,
+  translatePostgresGranuleResultToApiGranule,
 } = require('@cumulus/db');
 
-const { Granule } = require('../models');
 const {
   convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
@@ -28,8 +32,8 @@ const {
   convertToDBGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
+  compareEsGranuleAndApiGranule,
 } = require('../lib/reconciliationReport');
-const { DbGranuleSearchQueues } = require('../lib/reconciliationReport/DbGranuleSearchQueues');
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
@@ -44,9 +48,9 @@ async function internalRecReportForCollections(recReportParams) {
   log.debug('internal-reconciliation-report internalRecReportForCollections');
   // compare collection holdings:
   //   Get collection list in ES ordered by granuleId
-  //   Get collection list in DynamoDB ordered by granuleId
+  //   Get collection list in PostgreSQL ordered by granuleId
   //  Report collections only in ES
-  //   Report collections only in DynamoDB
+  //   Report collections only in PostgreSQL
   //   Report collections with different contents
 
   const searchParams = convertToESCollectionSearchParams(recReportParams);
@@ -79,10 +83,9 @@ async function internalRecReportForCollections(recReportParams) {
 
   const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
   let nextEsItem = await esCollectionsIterator.peek();
-  let nextDbItem =
-    dbCollectionItems.length !== 0
-      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-      : undefined;
+  let nextDbItem = dbCollectionItems.length !== 0
+    ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+    : undefined;
 
   while (nextEsItem && nextDbItem) {
     const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
@@ -116,10 +119,9 @@ async function internalRecReportForCollections(recReportParams) {
     }
 
     nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-    nextDbItem =
-      dbCollectionItems.length !== 0
-        ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-        : undefined;
+    nextDbItem = dbCollectionItems.length !== 0
+      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+      : undefined;
   }
 
   // Add any remaining ES items to the report
@@ -134,8 +136,6 @@ async function internalRecReportForCollections(recReportParams) {
 
   return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
-
-exports.internalRecReportForCollections = internalRecReportForCollections;
 
 /**
  * Get all collectionIds from ES and database combined
@@ -158,26 +158,43 @@ async function getAllCollections() {
   return union(dbCollections, esCollections);
 }
 
+async function getAllCollectionIdsByGranuleIds({
+  granuleIds,
+  knex,
+  concurrency,
+}) {
+  const collectionIds = new Set();
+  await pMap(
+    chunk(granuleIds, 100),
+    async (granuleIdsBatch) => {
+      const collections = await getCollectionsByGranuleIds(knex, granuleIdsBatch);
+      collections.forEach(
+        (collection) => {
+          const collectionId = constructCollectionId(collection.name, collection.version);
+          collectionIds.add(collectionId);
+        }
+      );
+    },
+    {
+      concurrency,
+    }
+  );
+  return [...collectionIds];
+}
+
 /**
  * Get list of collections for the given granuleIds
  *
- * @param {Array<string>} granuleIds - list of granuleIds
+ * @param {Object} recReportParams
+ * @param {Array<string>} recReportParams.granuleIds - list of granuleIds
  * @returns {Promise<Array<string>>} list of collectionIds
  */
-async function getCollectionsForGranules(granuleIds) {
-  const limit = pLimit(process.env.CONCURRENCY || 3);
+async function getCollectionsForGranules(recReportParams) {
+  const {
+    granuleIds,
+  } = recReportParams;
 
-  const dbCollections = await Promise.all(
-    granuleIds.map((granuleId) => limit(() =>
-      new Granule().get({ granuleId })
-        .then((granule) => (granule ? granule.collectionId : undefined))
-        .catch((error) => {
-          if (error instanceof RecordDoesNotExist) {
-            return undefined;
-          }
-          throw error;
-        })))
-  );
+  const dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
 
   const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
@@ -185,7 +202,7 @@ async function getCollectionsForGranules(granuleIds) {
   const esCollections = (await esGranulesIterator.empty())
     .map((granule) => (granule ? granule.collectionId : undefined));
 
-  return union(dbCollections, esCollections);
+  return union(dbCollectionIds, esCollections);
 }
 
 /**
@@ -196,10 +213,9 @@ async function getCollectionsForGranules(granuleIds) {
  */
 async function getCollectionsForGranuleSearch(recReportParams) {
   const { collectionIds, granuleIds } = recReportParams;
-  // get collections list in ES and dynamoDB combined
   let collections = [];
   if (granuleIds) {
-    const collectionIdsForGranules = await getCollectionsForGranules(granuleIds);
+    const collectionIdsForGranules = await getCollectionsForGranules(recReportParams);
     collections = (collectionIds)
       ? intersection(collectionIds, collectionIdsForGranules)
       : collectionIdsForGranules;
@@ -220,49 +236,75 @@ async function getCollectionsForGranuleSearch(recReportParams) {
 async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   //   For each collection,
   //     Get granule list in ES ordered by granuleId
-  //     Get granule list in DynamoDB ordered by granuleId
+  //     Get granule list in PostgreSQL ordered by granuleId
   //   Report granules only in ES
-  //   Report granules only in DynamoDB
+  //   Report granules only in PostgreSQL
   //   Report granules with different contents
 
   const esSearchParams = convertToESGranuleSearchParams(recReportParams);
-  const searchParams = convertToDBGranuleSearchParams(recReportParams);
   const esGranulesIterator = new ESSearchQueue(
-    { ...esSearchParams, collectionId, sort_key: ['granuleId'] }, 'granule', process.env.ES_INDEX
+    {
+      ...esSearchParams,
+      collectionId,
+      sort_key: ['granuleId'],
+    },
+    'granule',
+    process.env.ES_INDEX
   );
 
-  const dbGranulesIterator = new DbGranuleSearchQueues(collectionId, searchParams);
+  const searchParams = convertToDBGranuleSearchParams({
+    ...recReportParams,
+    collectionIds: collectionId,
+  });
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+    recReportParams.knex,
+    searchParams,
+    ['collectionName', 'collectionVersion', 'granule_id']
+  );
+  const pgGranulesSearchClient = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+  );
 
   let okCount = 0;
   const withConflicts = [];
   const onlyInEs = [];
   const onlyInDb = [];
-  const fieldsIgnored = ['timestamp', 'updatedAt'];
-
   const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
-  let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+
+  let [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
 
   /* eslint-disable no-await-in-loop */
   while (nextEsItem && nextDbItem) {
-    if (nextEsItem.granuleId < nextDbItem.granuleId) {
+    if (nextEsItem.granuleId < nextDbItem.granule_id) {
       // Found an item that is only in ES and not in DB
       onlyInEs.push(pick(nextEsItem, granuleFields));
       await esGranulesIterator.shift();
-    } else if (nextEsItem.granuleId > nextDbItem.granuleId) {
+    } else if (nextEsItem.granuleId > nextDbItem.granule_id) {
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(
+        recReportParams.knex,
+        nextDbItem
+      );
+
       // Found an item that is only in DB and not in ES
-      onlyInDb.push(pick(nextDbItem, granuleFields));
-      await dbGranulesIterator.shift();
+      onlyInDb.push(pick(apiGranule, granuleFields));
+      await pgGranulesSearchClient.shift();
     } else {
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(
+        recReportParams.knex,
+        nextDbItem
+      );
+
       // Found an item that is in both ES and DB
-      if (isEqual(omit(nextEsItem, fieldsIgnored), omit(nextDbItem, fieldsIgnored))) {
+      if (compareEsGranuleAndApiGranule(nextEsItem, apiGranule)) {
         okCount += 1;
       } else {
-        withConflicts.push({ es: nextEsItem, db: nextDbItem });
+        withConflicts.push({ es: nextEsItem, db: apiGranule });
       }
-      await Promise.all([esGranulesIterator.shift(), dbGranulesIterator.shift()]);
+      await Promise.all([esGranulesIterator.shift(), pgGranulesSearchClient.shift()]);
     }
 
-    [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), dbGranulesIterator.peek()]); // eslint-disable-line max-len
+    [nextEsItem, nextDbItem] = await Promise.all([esGranulesIterator.peek(), pgGranulesSearchClient.peek()]); // eslint-disable-line max-len
   }
 
   // Add any remaining ES items to the report
@@ -272,9 +314,10 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
   }
 
   // Add any remaining DB items to the report
-  while (await dbGranulesIterator.peek()) {
-    const item = await dbGranulesIterator.shift();
-    onlyInDb.push(pick(item, granuleFields));
+  while (await pgGranulesSearchClient.peek()) {
+    const item = await pgGranulesSearchClient.shift();
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(recReportParams.knex, item);
+    onlyInDb.push(pick(apiGranule, granuleFields));
   }
   /* eslint-enable no-await-in-loop */
 
@@ -291,25 +334,26 @@ async function reportForGranulesByCollectionId(collectionId, recReportParams) {
  */
 async function internalRecReportForGranules(recReportParams) {
   log.debug('internal-reconciliation-report internalRecReportForGranules');
-  // To avoid 'scan' granules table, we query a Global Secondary Index(GSI) in granules
-  // table with collectionId.
   // compare granule holdings:
   //   Get collections list from db and es based on request parameters or use the collectionId
   //     from the request
   //   For each collection,
   //     compare granule holdings and get report
   //   Report granules only in ES
-  //   Report granules only in DynamoDB
+  //   Report granules only in PostgreSQL
   //   Report granules with different contents
 
   const collections = await getCollectionsForGranuleSearch(recReportParams);
 
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
   const searchParams = omit(recReportParams, ['collectionIds']);
 
-  const reports = await Promise.all(collections.map((collId) => limit(() =>
-    reportForGranulesByCollectionId(collId, searchParams))));
+  const reports = await pMap(
+    collections,
+    (collectionId) => reportForGranulesByCollectionId(collectionId, searchParams),
+    {
+      concurrency: recReportParams.concurrency,
+    }
+  );
 
   const report = {};
   report.okCount = reports
@@ -324,13 +368,11 @@ async function internalRecReportForGranules(recReportParams) {
   return report;
 }
 
-exports.internalRecReportForGranules = internalRecReportForGranules;
-
 /**
  * Create a Internal Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
- * @param {Object} params.collectionIds - array of collectionIds
+ * @param {Object} recReportParams.collectionIds - array of collectionIds
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
@@ -386,4 +428,9 @@ async function createInternalReconciliationReport(recReportParams) {
   }).promise();
 }
 
-exports.createInternalReconciliationReport = createInternalReconciliationReport;
+module.exports = {
+  compareEsGranuleAndApiGranule,
+  internalRecReportForCollections,
+  internalRecReportForGranules,
+  createInternalReconciliationReport,
+};

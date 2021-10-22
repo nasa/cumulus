@@ -92,6 +92,7 @@ export {
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } from './translate/granules';
 export {
   translateApiPdrToPostgresPdr,
@@ -99,10 +100,19 @@ export {
 } from './translate/pdr';
 
 export {
+  getCollectionsByGranuleIds,
+} from './lib/collection';
+
+export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
+  getExecutionInfoByGranuleCumulusId,
 } from './lib/execution';
+
+export {
+  getFilesAndGranuleInfoQuery,
+} from './lib/file';
 
 export {
   getApiGranuleCumulusIds,
@@ -110,11 +120,12 @@ export {
   getGranuleCollectionId,
   getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
+  getGranulesByApiPropertiesQuery,
 } from './lib/granule';
 
 export {
-  getExecutionArnsByGranuleCumulusId,
-} from './lib/execution';
+  QuerySearchClient,
+} from './lib/QuerySearchClient';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

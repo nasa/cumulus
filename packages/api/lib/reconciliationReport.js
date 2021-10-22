@@ -1,5 +1,8 @@
 'use strict';
 
+const isEqual = require('lodash/isEqual');
+const omit = require('lodash/omit');
+
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
@@ -50,7 +53,7 @@ function dateStringToDateOrNull(dateable) {
 /**
  *
  * @param {Object} params - request params to convert to Elasticsearch params
- * @returns {Object} object of desired parameters formated for Elasticsearch collection search
+ * @returns {Object} object of desired parameters formatted for Elasticsearch collection search
  */
 function convertToESCollectionSearchParams(params) {
   const { collectionIds, startTimestamp, endTimestamp } = params;
@@ -117,53 +120,32 @@ function convertToESGranuleSearchParams(params) {
 }
 
 /**
+ * Convert reconciliation report parameters to PostgreSQL database search params.
  *
  * @param {Object} params - request params to convert to database params
  * @returns {Object} object of desired parameters formated for database granule search
  */
 function convertToDBGranuleSearchParams(params) {
   const {
-    collectionIds: collectionId,
-    granuleIds: granuleId,
-    providers: provider,
+    collectionIds,
+    granuleIds,
+    providers,
     startTimestamp,
     endTimestamp,
+    status,
   } = params;
   const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
-    collectionId,
-    granuleId,
-    provider,
-  };
-  return removeNilProperties(searchParams);
-}
-
-/**
- *
- * @param {Object} params - request params to convert to database params
- * @returns {Object} object of desired parameters formated for database granule search
- */
-function convertToDBScanGranuleSearchParams(params) {
-  const {
-    collectionIds: collectionId,
-    granuleIds: granuleIdsParam,
-    providers: provider,
-    status,
-    startTimestamp,
-    endTimestamp,
-  } = params;
-  const granuleId = (granuleIdsParam && (granuleIdsParam.length === 1))
-    ? granuleIdsParam[0] : granuleIdsParam;
-
-  const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
-    collectionId,
-    granuleId,
-    provider,
+    collectionIds,
+    granuleIds,
+    providerNames: providers,
     status,
   };
+  if (startTimestamp || endTimestamp) {
+    searchParams.updatedAtRange = removeNilProperties({
+      updatedAtFrom: startTimestamp ? new Date(startTimestamp) : undefined,
+      updatedAtTo: endTimestamp ? new Date(endTimestamp) : undefined,
+    });
+  }
   return removeNilProperties(searchParams);
 }
 
@@ -248,15 +230,58 @@ function filterDBCollections(collections, recReportParams) {
   return collections;
 }
 
+/**
+ * Compare granules from Elasticsearch and API for deep equality.
+ *
+ * @param {Object} esGranule - Granule from Elasticsearch
+ * @param {Object} apiGranule - API Granule (translated from PostgreSQL)
+ * @returns {boolean}
+ */
+function compareEsGranuleAndApiGranule(esGranule, apiGranule) {
+  // Ignore files in initial comparison so we can ignore file order
+  // in comparison
+  const fieldsIgnored = ['timestamp', 'updatedAt', 'files'];
+  // "dataType" and "version" fields do not exist in the PostgreSQL database
+  // granules table which is now the source of truth
+  const esFieldsIgnored = [...fieldsIgnored, 'dataType', 'version'];
+  const granulesAreEqual = isEqual(
+    omit(esGranule, esFieldsIgnored),
+    omit(apiGranule, fieldsIgnored)
+  );
+
+  if (granulesAreEqual === false) return granulesAreEqual;
+
+  const esGranulesHasFiles = esGranule.files !== undefined;
+  const apiGranuleHasFiles = apiGranule.files !== undefined;
+
+  // If neither granule has files, then return the previous equality result
+  if (!esGranulesHasFiles && !apiGranuleHasFiles) return granulesAreEqual;
+  // If either ES or PG granule does not have files, but the other granule does
+  // have files, then the granules don't match, so return false
+  if ((esGranulesHasFiles && !apiGranuleHasFiles)
+      || (!esGranulesHasFiles && apiGranuleHasFiles)) {
+    return false;
+  }
+
+  // Compare files one-by-one to ignore sort order for comparison
+  return esGranule.files.every((esFile) => {
+    const matchingFile = apiGranule.files.find(
+      (apiFile) => apiFile.bucket === esFile.bucket && apiFile.key === esFile.key
+    );
+    if (!matchingFile) return false;
+    return isEqual(esFile, matchingFile);
+  });
+}
+
 module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchObject,
   convertToDBGranuleSearchParams,
-  convertToDBScanGranuleSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
   filterCMRCollections,
   filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,
+  compareEsGranuleAndApiGranule,
 };
