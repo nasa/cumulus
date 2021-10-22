@@ -81,6 +81,11 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { id } = req.params || {};
+  const esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    process.env.ES_INDEX
+  );
 
   if (!id) {
     return res.boom.badRequest('id parameter is missing');
@@ -90,10 +95,11 @@ async function del(req, res) {
   try {
     await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esAsyncOperationsClient.exists(id))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {

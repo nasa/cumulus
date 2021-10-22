@@ -243,7 +243,7 @@ test('del() returns a 401 bad request if id is not provided', async (t) => {
   t.true(fakeResponse.boom.badRequest.called);
 });
 
-test('DELETE returns a 404 if PostgreSQL async operation cannot be found', async (t) => {
+test('DELETE returns a 404 if PostgreSQL and Elasticsearch async operation cannot be found', async (t) => {
   const nonExistentAsyncOperation = fakeAsyncOperationFactory();
   const response = await request(app)
     .delete(`/asyncOperations/${nonExistentAsyncOperation.id}`)
@@ -251,6 +251,79 @@ test('DELETE returns a 404 if PostgreSQL async operation cannot be found', async
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
   t.is(response.body.message, 'No record found');
+});
+
+test('DELETE deletes async operation successfully if it exists in PostgreSQL but not Elasticsearch', async (t) => {
+  const {
+    asyncOperationPgModel,
+    esAsyncOperationClient,
+    knex,
+  } = t.context;
+
+  const originalAsyncOperation = fakeAsyncOperationFactory();
+  const insertPgRecord = await translateApiAsyncOperationToPostgresAsyncOperation(
+    originalAsyncOperation,
+    knex
+  );
+  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
+  const id = originalDynamoAsyncOperation.id;
+  await asyncOperationPgModel.create(
+    knex,
+    insertPgRecord
+  );
+  t.true(
+    await asyncOperationPgModel.exists(knex, { id })
+  );
+
+  const response = await request(app)
+    .delete(`/asyncOperations/${id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { message } = response.body;
+
+  t.is(message, 'Record deleted');
+  t.false(await asyncOperationModel.exists({ id }));
+  t.false(
+    await asyncOperationPgModel.exists(knex, { id })
+  );
+  t.false(await esAsyncOperationClient.exists(
+    id
+  ));
+});
+
+test('DELETE deletes async operation successfully if it exists Elasticsearch but not PostgreSQL', async (t) => {
+  const {
+    asyncOperationPgModel,
+    esAsyncOperationClient,
+    esClient,
+    esIndex,
+    knex,
+  } = t.context;
+
+  const originalAsyncOperation = fakeAsyncOperationFactory();
+  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
+  const id = originalDynamoAsyncOperation.id;
+  await indexer.indexAsyncOperation(esClient, originalAsyncOperation, esIndex);
+  t.false(
+    await asyncOperationPgModel.exists(knex, { id })
+  );
+  t.true(await esAsyncOperationClient.exists(
+    id
+  ));
+
+  const response = await request(app)
+    .delete(`/asyncOperations/${id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { message } = response.body;
+
+  t.is(message, 'Record deleted');
+  t.false(await asyncOperationModel.exists({ id }));
+  t.false(await esAsyncOperationClient.exists(
+    id
+  ));
 });
 
 test('DELETE deletes the async operation from all data stores', async (t) => {
