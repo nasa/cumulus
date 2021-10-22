@@ -170,8 +170,8 @@ variable "api_reserved_concurrency" {
   description = "Archive API Lambda reserved concurrency"
 }
 
-variable "archive_api_lambda_vars" {
-  description = "The variables for archive api lambdas"
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
   type        = map(string)
   default     = {}
 }

@@ -163,8 +163,8 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
-variable "archive_api_lambda_vars" {
-  description = "The variables for archive api lambdas"
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
   type        = map(string)
   default     = {}
 }

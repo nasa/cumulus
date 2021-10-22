@@ -5,7 +5,7 @@ module "archive" {
 
   api_url = var.archive_api_url
 
-  api_lambda_vars = var.archive_api_lambda_vars
+  elasticsearch_client_config = var.elasticsearch_client_config
 
   deploy_to_ngap = var.deploy_to_ngap
 

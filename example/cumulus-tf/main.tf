@@ -171,7 +171,7 @@ module "cumulus" {
   api_gateway_stage           = var.api_gateway_stage
   archive_api_reserved_concurrency = var.api_reserved_concurrency
 
-  archive_api_lambda_vars     = var.archive_api_lambda_vars
+  elasticsearch_client_config = var.elasticsearch_client_config
 
   # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
