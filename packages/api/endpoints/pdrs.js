@@ -78,15 +78,21 @@ async function del(req, res) {
 
   const pdrName = req.params.pdrName;
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
+  const esPdrsClient = new Search(
+    {},
+    'pdr',
+    process.env.ES_INDEX
+  );
 
   let existingPdr;
   try {
     await pdrPgModel.get(knex, { name: pdrName });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esPdrsClient.exists(pdrName))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {
