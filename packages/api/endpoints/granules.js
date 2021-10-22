@@ -18,14 +18,10 @@ const {
   indexGranule,
 } = require('@cumulus/es-client/indexer');
 const {
-  DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
-const {
-  deconstructCollectionId,
-} = require('@cumulus/message/Collections');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');

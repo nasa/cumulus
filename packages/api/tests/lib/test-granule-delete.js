@@ -7,10 +7,8 @@ const {
 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
-  createS3Buckets,
   deleteS3Buckets,
   s3ObjectExists,
-  s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
