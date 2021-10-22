@@ -81,50 +81,64 @@ const deleteGranuleAndFiles = async (params: {
     granuleModelClient = new Granule(),
     esClient = await Search.es(),
   } = params;
-  if (pgGranule && pgGranule.published) {
-    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-  }
-  // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
-  logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
-  const files = await filePgModel.search(
-    knex,
-    { granule_cumulus_id: pgGranule.cumulus_id }
-  );
-
-  const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-    collectionPgModel,
-    filePgModel,
-    pdrPgModel: new PdrPgModel(),
-    providerPgModel: new ProviderPgModel(),
-  });
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await granulePgModel.delete(trx, {
-        cumulus_id: pgGranule.cumulus_id,
-      });
-      await granuleModelClient.delete(dynamoGranule);
-      await deleteGranule({
-        esClient,
-        granuleId: dynamoGranule.granuleId,
-        collectionId: dynamoGranule.collectionId,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+  if (pgGranule === undefined) {
+    logger.debug(`PG Granule is undefined, only deleting DynamoDB and Elasticsearch granule ${JSON.stringify(dynamoGranule)}`);
+    // Delete only the Dynamo Granule and S3 Files
+    await deleteS3Files(dynamoGranule.files);
+    await granuleModelClient.delete(dynamoGranule);
+    await publishGranuleDeleteSnsMessage(dynamoGranule);
+    await deleteGranule({
+      esClient,
+      granuleId: dynamoGranule.granuleId,
+      collectionId: dynamoGranule.collectionId,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-    await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
-    logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
-    await deleteS3Files(files);
-  } catch (error) {
-    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (dynamoGranule) {
-      await granuleModelClient.create(dynamoGranule);
+  } else if (pgGranule && pgGranule.published) {
+    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  } else {
+  // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+    logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
+    const files = await filePgModel.search(
+      knex,
+      { granule_cumulus_id: pgGranule.cumulus_id }
+    );
+
+    const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+      collectionPgModel,
+      filePgModel,
+      pdrPgModel: new PdrPgModel(),
+      providerPgModel: new ProviderPgModel(),
+    });
+
+    try {
+      await createRejectableTransaction(knex, async (trx) => {
+        await granulePgModel.delete(trx, {
+          cumulus_id: pgGranule.cumulus_id,
+        });
+        await granuleModelClient.delete(dynamoGranule);
+        await deleteGranule({
+          esClient,
+          granuleId: dynamoGranule.granuleId,
+          collectionId: dynamoGranule.collectionId,
+          index: process.env.ES_INDEX,
+          ignore: [404],
+        });
+      });
+      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
+      logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
+      await deleteS3Files(files);
+    } catch (error) {
+      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (dynamoGranule) {
+        await granuleModelClient.create(dynamoGranule);
+      }
+      throw error;
     }
-    throw error;
   }
 };
 

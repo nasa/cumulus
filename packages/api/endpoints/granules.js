@@ -360,6 +360,11 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
+  const esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
   log.info(`granules.del ${granuleId}`);
 
   let dynamoGranule;
@@ -370,6 +375,9 @@ async function del(req, res) {
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+      if (!(await esGranulesClient.exists(granuleId))) {
+        return res.boom.notFound('No record found');
+      }
     } else {
       throw error;
     }
@@ -378,10 +386,9 @@ async function del(req, res) {
   try {
     dynamoGranule = await granuleModelClient.getRecord({ granuleId });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(error);
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
     }
-    throw error;
   }
 
   await deleteGranuleAndFiles({

@@ -781,6 +781,120 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
+test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
+  const {
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(newGranule, knex);
+  const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
+
+  t.true(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+});
+
+test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
+  const {
+    esClient,
+    esIndex,
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  await indexer.indexGranule(esClient, newGranule, esIndex);
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }
+  ));
+  t.true(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const {
     s3Buckets,
@@ -828,7 +942,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   ]));
 });
 
-test.serial('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule succeeds', async (t) => {
   const {
     s3Buckets,
     newDynamoGranule,
@@ -1663,7 +1777,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test('PUT replaces an existing granule in all data stores', async (t) => {
+test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
     executionUrl,
