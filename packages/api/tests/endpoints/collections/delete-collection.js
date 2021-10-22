@@ -17,11 +17,13 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
   migrationDir,
+  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const EsCollection = require('@cumulus/es-client/collections');
+const { indexCollection } = require('@cumulus/es-client/indexer');
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -186,6 +188,78 @@ test('DELETE returns a 404 if PostgreSQL collection cannot be found', async (t) 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
   t.is(response.body.message, 'No record found');
+});
+
+test('DELETE successfully deletes if collection exists in PostgreSQL but not Elasticsearch', async (t) => {
+  const {
+    collectionPgModel,
+    esCollectionClient,
+    testKnex,
+  } = t.context;
+  const testCollection = fakeCollectionFactory();
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(testCollection);
+  await collectionPgModel.create(testKnex, insertPgRecord);
+  t.true(await collectionPgModel.exists(testKnex, {
+    name: testCollection.name,
+    version: testCollection.version,
+  }));
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
+
+  await request(app)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.false(await collectionPgModel.exists(t.context.testKnex, {
+    name: testCollection.name,
+    version: testCollection.version,
+  }));
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
+});
+
+test('DELETE successfully deletes if collection exists in Elasticsearch but not PostgreSQL', async (t) => {
+  const {
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+    testKnex,
+  } = t.context;
+  const testCollection = fakeCollectionFactory();
+  await indexCollection(esClient, testCollection, process.env.ES_INDEX);
+  t.false(await collectionPgModel.exists(testKnex, {
+    name: testCollection.name,
+    version: testCollection.version,
+  }));
+  t.true(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
+
+  await request(app)
+    .delete(`/collections/${testCollection.name}/${testCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.false(await collectionPgModel.exists(t.context.testKnex, {
+    name: testCollection.name,
+    version: testCollection.version,
+  }));
+  t.false(
+    await esCollectionClient.exists(
+      constructCollectionId(testCollection.name, testCollection.version)
+    )
+  );
 });
 
 test.serial('Deleting a collection removes it from all data stores and publishes an SNS message', async (t) => {

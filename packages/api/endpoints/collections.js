@@ -245,15 +245,22 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { name, version } = req.params;
+  const collectionId = constructCollectionId(name, version);
+  const esCollectionsClient = new Search(
+    {},
+    'collection',
+    process.env.ES_INDEX
+  );
 
   let existingCollection;
   try {
     await collectionPgModel.get(knex, { name, version });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esCollectionsClient.exists(collectionId))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {
@@ -270,7 +277,6 @@ async function del(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         await collectionPgModel.delete(trx, { name, version });
         await collectionsModel.delete({ name, version });
-        const collectionId = constructCollectionId(name, version);
         await deleteCollection({
           esClient,
           collectionId,
