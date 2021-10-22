@@ -190,7 +190,7 @@ test('DELETE returns a 404 if PostgreSQL collection cannot be found', async (t) 
   t.is(response.body.message, 'No record found');
 });
 
-test('DELETE successfully deletes if collection exists in PostgreSQL but not Elasticsearch', async (t) => {
+test.serial('DELETE successfully deletes if collection exists in PostgreSQL but not Elasticsearch', async (t) => {
   const {
     collectionPgModel,
     esCollectionClient,
@@ -226,7 +226,7 @@ test('DELETE successfully deletes if collection exists in PostgreSQL but not Ela
   );
 });
 
-test('DELETE successfully deletes if collection exists in Elasticsearch but not PostgreSQL', async (t) => {
+test.serial('DELETE successfully deletes if collection exists in Elasticsearch but not PostgreSQL', async (t) => {
   const {
     collectionPgModel,
     esClient,
