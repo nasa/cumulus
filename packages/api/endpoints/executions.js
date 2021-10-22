@@ -192,16 +192,22 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { arn } = req.params;
+  const esExecutionsClient = new Search(
+    {},
+    'execution',
+    process.env.ES_INDEX
+  );
 
   let apiExecution;
 
   try {
     await executionPgModel.get(knex, { arn });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    } else if (!(await esExecutionsClient.exists(arn))) {
       return res.boom.notFound('No record found');
     }
-    throw error;
   }
 
   try {

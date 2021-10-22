@@ -739,7 +739,7 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
   t.is(originalExecution2.length, 1);
 });
 
-test.serial('DELETE returns a 404 if PostgreSQL execution cannot be found', async (t) => {
+test.serial('DELETE returns a 404 if PostgreSQL and Elasticsearch execution cannot be found', async (t) => {
   const nonExistentExecution = {
     arn: 'arn9',
     status: 'completed',
@@ -753,6 +753,74 @@ test.serial('DELETE returns a 404 if PostgreSQL execution cannot be found', asyn
     .expect(404);
 
   t.is(response.body.message, 'No record found');
+});
+
+test('DELETE successfully deletes if a PostgreSQL execution exists but not Elasticsearch', async (t) => {
+  const { knex, executionPgModel } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    status: 'completed',
+    name: 'test_execution',
+  });
+
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    newExecution,
+    knex
+  );
+  await executionPgModel.create(knex, executionPgRecord);
+
+  t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
+  t.false(
+    await t.context.esExecutionsClient.exists(
+      newExecution.arn
+    )
+  );
+  await request(app)
+    .delete(`/executions/${newExecution.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const dbRecords = await executionPgModel.search(t.context.knex, {
+    arn: newExecution.arn,
+  });
+
+  t.is(dbRecords.length, 0);
+  t.false(await executionPgModel.exists(knex, { arn: newExecution.arn }));
+});
+
+test('DELETE successfully deletes if an Elasticsearch execution exists but not PostgreSQL', async (t) => {
+  const { knex, esClient, executionPgModel } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    status: 'completed',
+    name: 'test_execution',
+  });
+
+  await indexer.indexExecution(esClient, newExecution, process.env.ES_INDEX);
+
+  t.false(await executionPgModel.exists(knex, { arn: newExecution.arn }));
+  t.true(
+    await t.context.esExecutionsClient.exists(
+      newExecution.arn
+    )
+  );
+  await request(app)
+    .delete(`/executions/${newExecution.arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const dbRecords = await executionPgModel.search(t.context.knex, {
+    arn: newExecution.arn,
+  });
+
+  t.is(dbRecords.length, 0);
+  t.false(
+    await t.context.esExecutionsClient.exists(
+      newExecution.arn
+    )
+  );
 });
 
 test.serial('POST /executions/search-by-granules returns 1 record by default', async (t) => {
