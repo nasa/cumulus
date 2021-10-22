@@ -170,12 +170,6 @@ variable "api_reserved_concurrency" {
   description = "Archive API Lambda reserved concurrency"
 }
 
-variable "elasticsearch_client_config" {
-  description = "Configuration parameters for Elasticsearch client"
-  type        = map(string)
-  default     = {}
-}
-
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
@@ -200,6 +194,12 @@ variable "ecs_cluster_instance_subnet_ids" {
 variable "ecs_include_docker_cleanup_cronjob" {
   type    = bool
   default = false
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {

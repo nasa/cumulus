@@ -142,12 +142,6 @@ variable "api_gateway_stage" {
   description = "The API Gateway stage to create"
 }
 
-variable "elasticsearch_client_config" {
-  description = "Configuration parameters for Elasticsearch client"
-  type        = map(string)
-  default     = {}
-}
-
 variable "api_port" {
   type    = number
   default = null
@@ -188,6 +182,12 @@ variable "cmr_oauth_provider" {
 variable "cmr_page_size" {
   type    = number
   default = 50
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {

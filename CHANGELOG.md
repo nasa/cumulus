@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2640**
+  - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
+  - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
+
 ## [v9.8.0] 2021-10-19
 
 ### Notable changes
