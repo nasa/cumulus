@@ -202,7 +202,7 @@ const _writePostgresGranuleViaTransaction = async ({
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
  * @param {Object} params.workflowError - Error from the workflow
- * @param {string} params.workflowStatus - Workflow status
+ * @param {string} params.status - Workflow status
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {string} params.snsEventType - SNS Event Type
  * @param {Object} [params.granuleModel] - Optional Granule DDB model override
@@ -324,31 +324,31 @@ const writeGranuleToDynamoAndEs = async (params) => {
  * Write a granule record to DynamoDB and PostgreSQL
  *
  * @param {Object} params
- * @param {PostgresGranule} params.postgresGranuleRecord,
  * @param {DynamoDBGranule} params.dynamoGranuleRecord,
- * @param {number} params.executionCumulusId,
- * @param {Knex} params.knex,
- * @param {Object} params.granuleModel = new Granule(),
- * @param {Object} params.granulePgModel,
- * @param {Object} params.esClient - Elasticsearch client
- * @param {string} params.snsEventType - SNS Event Type
+ * @param {number}          params.executionCumulusId,
+ * @param {Object}          params.esClient - Elasticsearch client
+ * @param {Object}          params.granuleModel = new Granule(),
+ * @param {Object}          params.granulePgModel,
+ * @param {Knex}            params.knex,
+ * @param {PostgresGranule} params.postgresGranuleRecord,
+ * @param {string}          params.snsEventType - SNS Event Type
  * returns {Promise}
  * throws
  */
 const _writeGranule = async ({
   postgresGranuleRecord,
-  dynamoGranuleRecord,
+  apiGranuleRecord,
+  esClient,
   executionCumulusId,
-  knex,
   granuleModel,
   granulePgModel,
-  esClient,
+  knex,
   snsEventType,
 }) => {
   let pgGranule;
 
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
-  log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
+  log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
 
   await createRejectableTransaction(knex, async (trx) => {
     pgGranule = await _writePostgresGranuleViaTransaction({
@@ -358,7 +358,7 @@ const _writeGranule = async ({
       granulePgModel,
     });
     await writeGranuleToDynamoAndEs({
-      dynamoGranuleRecord,
+      apiGranuleRecord,
       esClient,
       granuleModel,
     });
@@ -370,9 +370,9 @@ const _writeGranule = async ({
     `,
     postgresGranuleRecord
   );
-  log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
+  log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
 
-  const { files, granuleId, status, error } = dynamoGranuleRecord;
+  const { files, granuleId, status, error } = apiGranuleRecord;
 
   await _writeGranuleFiles({
     files,
@@ -483,7 +483,7 @@ const writeGranuleFromApi = async (
       }
     }
 
-    const dynamoGranuleRecord = await generateGranuleApiRecord({
+    const apiGranuleRecord = await generateGranuleApiRecord({
       granule,
       executionUrl: execution,
       collectionId,
@@ -506,13 +506,13 @@ const writeGranuleFromApi = async (
     });
 
     const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-      dynamoGranuleRecord,
+      apiGranuleRecord,
       knex
     );
 
     await _writeGranule({
       postgresGranuleRecord,
-      dynamoGranuleRecord,
+      apiGranuleRecord,
       executionCumulusId,
       knex,
       granuleModel,
@@ -595,7 +595,7 @@ const writeGranulesFromMessage = async ({
       const status = getGranuleStatus(workflowStatus, granule);
       const updatedAt = now;
 
-      const dynamoGranuleRecord = await generateGranuleApiRecord({
+      const apiGranuleRecord = await generateGranuleApiRecord({
         granule,
         executionUrl,
         collectionId,
@@ -617,13 +617,13 @@ const writeGranulesFromMessage = async ({
       });
 
       const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-        dynamoGranuleRecord,
+        apiGranuleRecord,
         knex
       );
 
       return _writeGranule({
         postgresGranuleRecord,
-        dynamoGranuleRecord,
+        apiGranuleRecord,
         executionCumulusId,
         knex,
         granuleModel,
