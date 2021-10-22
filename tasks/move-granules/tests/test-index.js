@@ -130,6 +130,7 @@ test.beforeEach(async (t) => {
   const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
   t.context.filesToUpload = filesToUpload.map((file) =>
     buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  process.env.default_s3_multipart_chunksize_mb = 5;
   process.env.REINGEST_GRANULE = false;
 });
 
