@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
+- **CUMULUS-2683**
+  - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
+  - Added `default_s3_multipart_chunksize_mb` tfvars to the archive and cumulus terraform modules.
 
 ## [v9.8.0] 2021-10-19
 
