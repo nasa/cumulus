@@ -66,8 +66,8 @@ upgrades to `knex` package.
     - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
       derived table classes to support querying the current max `cumulus_id`.
   - **CUMULUS-2673**
-    - Added `ES_HOST` environment variable to `postgres-migration-async-operation` 
-    Lambda using value of `elasticsearch_hostname` Terraform variable. 
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation`
+    Lambda using value of `elasticsearch_hostname` Terraform variable.
     - Added `elasticsearch_security_group_id` to security groups for
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
@@ -190,6 +190,16 @@ upgrades to `knex` package.
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
+  - **CUMULUS-2674**
+    - Updated `DELETE` endpoints for the following data types to check that record exists in
+      PostgreSQL or Elasticsearch before proceeding with deletion:
+      - `provider`
+      - `async operations`
+      - `collections`
+      - `granules`
+      - `executions`
+      - `PDRs`
+      - `rules`
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
 - Updated default version of async operations Docker image to `cumuluss/async-operation:35`
 - **CUMULUS-2590**
