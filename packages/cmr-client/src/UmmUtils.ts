@@ -53,5 +53,5 @@ export const validateUMMG = async (
 
   if (statusCode >= 500 && statusCode < 600) throw new CMRInternalError('CMR Internal Error');
 
-  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify((<{errors: unknown}>body).errors)}`);
+  throw new ValidationError(`Validation was not successful, CMR error message: ${JSON.stringify((<{ errors: unknown }>body).errors)}`);
 };

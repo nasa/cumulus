@@ -1,8 +1,8 @@
 import * as AWS from 'aws-sdk';
 import { dynamodbDocClient } from './services';
 
-type searchType = 'scan' | 'query';
-type searchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.DocumentClient.QueryInput;
+type SearchType = 'scan' | 'query';
+type SearchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.DocumentClient.QueryInput;
 
 /**
  * Class to efficiently search all of the items in a DynamoDB table, without loading them all into
@@ -10,11 +10,11 @@ type searchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.Documen
  */
 class DynamoDbSearchQueue {
   private readonly dynamodbDocClient: AWS.DynamoDB.DocumentClient;
-  private readonly searchType: searchType;
-  private readonly params: searchParams;
-  private items: Array<AWS.DynamoDB.DocumentClient.AttributeMap|null>;
+  private readonly searchType: SearchType;
+  private readonly params: SearchParams;
+  private items: Array<AWS.DynamoDB.DocumentClient.AttributeMap | null>;
 
-  constructor(params: AWS.DynamoDB.DocumentClient.ScanInput, searchType: searchType = 'scan') {
+  constructor(params: AWS.DynamoDB.DocumentClient.ScanInput, searchType: SearchType = 'scan') {
     this.items = [];
     this.params = params;
     this.dynamodbDocClient = dynamodbDocClient();

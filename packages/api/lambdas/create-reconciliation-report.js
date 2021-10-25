@@ -39,7 +39,7 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 
 /**
  *
- * @param {string} reportType - reconciation report type
+ * @param {string} reportType - reconciliation report type
  * @returns {boolean} - Whether or not to include the link between files and
  * granules in the report.
  */
@@ -147,67 +147,74 @@ async function fetchESCollections(recReportParams) {
  * @returns {Promise<Object>} a report
  */
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
-  const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
-  const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
-
+  log.info(`createReconciliationReportForBucket(S3 vs. Dynamo): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDynamoDb = [];
   const okCountByGranule = {};
+  try {
+    const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
+    const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
+    const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
 
-  log.info('Comparing DynamoDB to S3');
+    let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
+    while (nextS3Object && nextDynamoDbItem) {
+      const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+      const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
 
-  let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
-  while (nextS3Object && nextDynamoDbItem) {
-    const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-    const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+      if (linkFilesAndGranules && !okCountByGranule[nextDynamoDbItem.granuleId]) {
+        okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+      }
 
-    if (linkFilesAndGranules && !okCountByGranule[nextDynamoDbItem.granuleId]) {
-      okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+      if (nextS3Uri < nextDynamoDbUri) {
+        // Found an item that is only in S3 and not in DynamoDB
+        onlyInS3.push(nextS3Uri);
+        s3ObjectsQueue.shift();
+      } else if (nextS3Uri > nextDynamoDbUri) {
+        // Found an item that is only in DynamoDB and not in S3
+        const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
+        onlyInDynamoDb.push({
+          uri: buildS3Uri(Bucket, dynamoDbItem.key),
+          granuleId: dynamoDbItem.granuleId,
+        });
+      } else {
+        // Found an item that is in both S3 and DynamoDB
+        okCount += 1;
+        if (linkFilesAndGranules) {
+          okCountByGranule[nextDynamoDbItem.granuleId] += 1;
+        }
+        s3ObjectsQueue.shift();
+        dynamoDbFilesLister.shift();
+      }
+
+      [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
-    if (nextS3Uri < nextDynamoDbUri) {
-      // Found an item that is only in S3 and not in DynamoDB
-      onlyInS3.push(nextS3Uri);
-      s3ObjectsQueue.shift();
-    } else if (nextS3Uri > nextDynamoDbUri) {
-      // Found an item that is only in DynamoDB and not in S3
-      const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
+    // Add any remaining S3 items to the report
+    while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+      const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+      onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+    }
+
+    // Add any remaining DynamoDB items to the report
+    /* eslint-disable no-await-in-loop */
+    while (await dynamoDbFilesLister.peek()) {
+      const dynamoDbItem = await dynamoDbFilesLister.shift();
       onlyInDynamoDb.push({
         uri: buildS3Uri(Bucket, dynamoDbItem.key),
         granuleId: dynamoDbItem.granuleId,
       });
-    } else {
-      // Found an item that is in both S3 and DynamoDB
-      okCount += 1;
-      if (linkFilesAndGranules) {
-        okCountByGranule[nextDynamoDbItem.granuleId] += 1;
-      }
-      s3ObjectsQueue.shift();
-      dynamoDbFilesLister.shift();
     }
-
-    [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
+    /* eslint-enable no-await-in-loop */
+  } catch (error) {
+    log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}`);
+    log.error(errorify(error));
+    throw error;
   }
-
-  // Add any remaining S3 items to the report
-  while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-    const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-    onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
-  }
-
-  // Add any remaining DynamoDB items to the report
-  while (await dynamoDbFilesLister.peek()) { // eslint-disable-line no-await-in-loop
-    const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop
-    onlyInDynamoDb.push({
-      uri: buildS3Uri(Bucket, dynamoDbItem.key),
-      granuleId: dynamoDbItem.granuleId,
-    });
-  }
-
-  log.info('Compare DynamoDB to S3 completed');
-
+  log.info(`createReconciliationReportForBucket ${Bucket} returning `
+            + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+            + `onlyInDynamoDb: ${onlyInDynamoDb.length}, `
+            + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
   return {
     okCount,
     onlyInS3,
@@ -230,53 +237,59 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Get list of collections from CUMULUS
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
-
+  log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
-
-  // get all collections from CMR and sort them, since CMR query doesn't support
-  // 'Version' as sort_key
-  const cmrSettings = await getCmrSettings();
-  const cmr = new CMR(cmrSettings);
-  const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
-  const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
-
-  const esCollectionIds = await fetchESCollections(recReportParams);
-
-  log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
+  log.debug(`Creating one way report: ${oneWayReport}`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
-  let nextDbCollectionId = esCollectionIds[0];
-  let nextCmrCollectionId = cmrCollectionIds[0];
+  try {
+    // get all collections from CMR and sort them, since CMR query doesn't support
+    // 'Version' as sort_key
+    log.debug('Fetching collections from CMR.');
+    const cmrSettings = await getCmrSettings();
+    const cmr = new CMR(cmrSettings);
+    const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
+    const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
+    const esCollectionIds = await fetchESCollections(recReportParams);
+    log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
-  while (nextDbCollectionId && nextCmrCollectionId) {
-    if (nextDbCollectionId < nextCmrCollectionId) {
-      // Found an item that is only in Cumulus database and not in cmr
-      esCollectionIds.shift();
-      collectionsOnlyInCumulus.push(nextDbCollectionId);
-    } else if (nextDbCollectionId > nextCmrCollectionId) {
-      // Found an item that is only in cmr and not in Cumulus database
-      if (!oneWayReport) collectionsOnlyInCmr.push(nextCmrCollectionId);
-      cmrCollectionIds.shift();
-    } else {
-      // Found an item that is in both cmr and database
-      okCollections.push(nextDbCollectionId);
-      esCollectionIds.shift();
-      cmrCollectionIds.shift();
+    let nextDbCollectionId = esCollectionIds[0];
+    let nextCmrCollectionId = cmrCollectionIds[0];
+
+    while (nextDbCollectionId && nextCmrCollectionId) {
+      if (nextDbCollectionId < nextCmrCollectionId) {
+        // Found an item that is only in Cumulus database and not in cmr
+        esCollectionIds.shift();
+        collectionsOnlyInCumulus.push(nextDbCollectionId);
+      } else if (nextDbCollectionId > nextCmrCollectionId) {
+        // Found an item that is only in cmr and not in Cumulus database
+        if (!oneWayReport) collectionsOnlyInCmr.push(nextCmrCollectionId);
+        cmrCollectionIds.shift();
+      } else {
+        // Found an item that is in both cmr and database
+        okCollections.push(nextDbCollectionId);
+        esCollectionIds.shift();
+        cmrCollectionIds.shift();
+      }
+
+      nextDbCollectionId = (esCollectionIds.length !== 0) ? esCollectionIds[0] : undefined;
+      nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : undefined;
     }
 
-    nextDbCollectionId = (esCollectionIds.length !== 0) ? esCollectionIds[0] : undefined;
-    nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : undefined;
+    // Add any remaining database items to the report
+    collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(esCollectionIds);
+
+    // Add any remaining CMR items to the report
+    if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
+  } catch (error) {
+    log.error(`Error caught in reconciliationReportForCollections. with params ${JSON.stringify(recReportParams)}`);
+    log.error(errorify(error));
+    throw error;
   }
-
-  // Add any remaining database items to the report
-  collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(esCollectionIds);
-
-  // Add any remaining CMR items to the report
-  if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
-
+  log.info(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
   return {
     okCollections,
     onlyInCumulus: collectionsOnlyInCumulus,
@@ -299,93 +312,98 @@ async function reconciliationReportForGranuleFiles(params) {
   let okCount = 0;
   const onlyInCumulus = [];
   const onlyInCmr = [];
+  try {
+    const granuleFiles = keyBy(granuleInDb.files, 'fileName');
 
-  const granuleFiles = keyBy(granuleInDb.files, 'fileName');
+    // URL types for downloading granule files
+    const cmrGetDataTypes = ['GET DATA', 'GET DATA VIA DIRECT ACCESS', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
+    const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
 
-  // URL types for downloading granule files
-  const cmrGetDataTypes = ['GET DATA', 'GET DATA VIA DIRECT ACCESS', 'GET RELATED VISUALIZATION', 'EXTENDED METADATA'];
-  const cmrRelatedDataTypes = ['VIEW RELATED INFORMATION'];
+    const bucketTypes = Object.values(bucketsConfig.buckets)
+      .reduce(
+        (acc, { name, type }) => ({ ...acc, [name]: type }),
+        {}
+      );
 
-  const bucketTypes = Object.values(bucketsConfig.buckets)
-    .reduce(
-      (acc, { name, type }) => ({ ...acc, [name]: type }),
-      {}
-    );
+    // check each URL entry against database records
+    const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
+      // only check URL types for downloading granule files and related data (such as documents)
+      if (cmrGetDataTypes.includes(relatedUrl.Type)
+          || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+        const urlFileName = relatedUrl.URL.split('/').pop();
 
-  // check each URL entry against database records
-  const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
-    // only check URL types for downloading granule files and related data (such as documents)
-    if (cmrGetDataTypes.includes(relatedUrl.Type)
-      || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
-      const urlFileName = relatedUrl.URL.split('/').pop();
+        // filename in both Cumulus and CMR
+        if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
+          // not all files should be in CMR
+          const distributionAccessUrl = await constructOnlineAccessUrl({
+            file: granuleFiles[urlFileName],
+            distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
+            bucketTypes,
+            urlType: 'distribution',
+            distributionBucketMap,
+          });
 
-      // filename in both Cumulus and CMR
-      if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
-        // not all files should be in CMR
-        const distributionAccessUrl = await constructOnlineAccessUrl({
-          file: granuleFiles[urlFileName],
-          distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
-          bucketTypes,
-          urlType: 'distribution',
-          distributionBucketMap,
-        });
+          const s3AccessUrl = await constructOnlineAccessUrl({
+            file: granuleFiles[urlFileName],
+            distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
+            bucketTypes,
+            urlType: 's3',
+            distributionBucketMap,
+            useDirectS3Type: true,
+          });
 
-        const s3AccessUrl = await constructOnlineAccessUrl({
-          file: granuleFiles[urlFileName],
-          distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
-          bucketTypes,
-          urlType: 's3',
-          distributionBucketMap,
-          useDirectS3Type: true,
-        });
+          if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
+            okCount += 1;
+          } else if (s3AccessUrl && relatedUrl.URL === s3AccessUrl.URL) {
+            okCount += 1;
+          } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
+            // ignore any URL which is not for getting data
+            // some files should not be in CMR such as private files
+            onlyInCmr.push({
+              URL: relatedUrl.URL,
+              Type: relatedUrl.Type,
+              GranuleUR: granuleInCmr.GranuleUR,
+            });
+          }
 
-        if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
-          okCount += 1;
-        } else if (s3AccessUrl && relatedUrl.URL === s3AccessUrl.URL) {
-          okCount += 1;
+          delete granuleFiles[urlFileName];
         } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
-          // ignore any URL which is not for getting data
-          // some files should not be in CMR such as private files
+          // no matching database file, only in CMR
           onlyInCmr.push({
             URL: relatedUrl.URL,
             Type: relatedUrl.Type,
             GranuleUR: granuleInCmr.GranuleUR,
           });
         }
+      }
+    });
 
-        delete granuleFiles[urlFileName];
-      } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
-        // no matching database file, only in CMR
-        onlyInCmr.push({
-          URL: relatedUrl.URL,
-          Type: relatedUrl.Type,
-          GranuleUR: granuleInCmr.GranuleUR,
+    await Promise.all(relatedUrlPromises);
+
+    // any remaining database items to the report
+    Object.keys(granuleFiles).forEach((fileName) => {
+      // private file only in database, it's ok
+      if (bucketsConfig.key(granuleFiles[fileName].bucket)
+          && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
+        okCount += 1;
+      } else {
+        let uri = granuleFiles[fileName].source;
+        if (granuleFiles[fileName].bucket && granuleFiles[fileName].key) {
+          uri = buildS3Uri(granuleFiles[fileName].bucket, granuleFiles[fileName].key);
+        }
+
+        onlyInCumulus.push({
+          fileName: fileName,
+          uri,
+          granuleId: granuleInDb.granuleId,
         });
       }
-    }
-  });
-
-  await Promise.all(relatedUrlPromises);
-
-  // any remaining database items to the report
-  Object.keys(granuleFiles).forEach((fileName) => {
-    // private file only in database, it's ok
-    if (bucketsConfig.key(granuleFiles[fileName].bucket)
-      && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
-      okCount += 1;
-    } else {
-      let uri = granuleFiles[fileName].source;
-      if (granuleFiles[fileName].bucket && granuleFiles[fileName].key) {
-        uri = buildS3Uri(granuleFiles[fileName].bucket, granuleFiles[fileName].key);
-      }
-
-      onlyInCumulus.push({
-        fileName: fileName,
-        uri,
-        granuleId: granuleInDb.granuleId,
-      });
-    }
-  });
+    });
+  } catch (error) {
+    log.error(`Error caught in reconciliationReportForGranuleFiles(${granuleInDb.granuleId})`);
+    log.error(errorify(error));
+    throw error;
+  }
   return { okCount, onlyInCumulus, onlyInCmr };
 }
 // export for testing
@@ -409,116 +427,123 @@ async function reconciliationReportForGranules(params) {
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
+  log.info(`reconciliationReportForGranules(${params.collectionId})`);
   const { collectionId, bucketsConfig, distributionBucketMap, recReportParams } = params;
   const { name, version } = deconstructCollectionId(collectionId);
+  const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
+  const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
+  try {
+    const cmrSettings = await getCmrSettings();
+    const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
+    cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
+      searchParams.append(paramName, paramValue);
+    });
 
-  const cmrSettings = await getCmrSettings();
-  const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: ['granule_ur'] });
-  cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
-    searchParams.append(paramName, paramValue);
-  });
+    log.debug(`fetch CMRSearchConceptQueue(${collectionId}) with searchParams: ${JSON.stringify(searchParams)}`);
+    const cmrGranulesIterator = new CMRSearchConceptQueue({
+      cmrSettings,
+      type: 'granules',
+      searchParams,
+      format: 'umm_json',
+    });
 
-  const cmrGranulesIterator = new CMRSearchConceptQueue({
-    cmrSettings,
-    type: 'granules',
-    searchParams,
-    format: 'umm_json',
-  });
+    const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
+      { ...recReportParams, collectionIds: [collectionId] }
+    );
 
-  const esGranuleSearchParamsByCollectionId = convertToESGranuleSearchParams(
-    { ...recReportParams, collectionIds: [collectionId] }
-  );
-  const esGranulesIterator = new ESCollectionGranuleQueue(
-    esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
-  );
-  const oneWay = isOneWayGranuleReport(recReportParams);
+    log.debug(`Create ES granule iterator with ${JSON.stringify(esGranuleSearchParamsByCollectionId)}`);
+    const esGranulesIterator = new ESCollectionGranuleQueue(
+      esGranuleSearchParamsByCollectionId, process.env.ES_INDEX
+    );
+    const oneWay = isOneWayGranuleReport(recReportParams);
+    log.debug(`is oneWay granule report: ${collectionId}, ${oneWay}`);
 
-  const granulesReport = {
-    okCount: 0,
-    onlyInCumulus: [],
-    onlyInCmr: [],
-  };
+    let [nextDbItem, nextCmrItem] = await Promise.all(
+      [esGranulesIterator.peek(), cmrGranulesIterator.peek()]
+    );
 
-  const filesReport = {
-    okCount: 0,
-    onlyInCumulus: [],
-    onlyInCmr: [],
-  };
+    while (nextDbItem && nextCmrItem) {
+      const nextDbGranuleId = nextDbItem.granuleId;
+      const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
 
-  let [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len
+      if (nextDbGranuleId < nextCmrGranuleId) {
+        // Found an item that is only in Cumulus database and not in CMR
+        granulesReport.onlyInCumulus.push({
+          granuleId: nextDbGranuleId,
+          collectionId: collectionId,
+        });
+        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      } else if (nextDbGranuleId > nextCmrGranuleId) {
+        // Found an item that is only in CMR and not in Cumulus database
+        if (!oneWay) {
+          granulesReport.onlyInCmr.push({
+            GranuleUR: nextCmrGranuleId,
+            ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+            Version: nextCmrItem.umm.CollectionReference.Version,
+          });
+        }
+        await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      } else {
+        // Found an item that is in both CMR and Cumulus database
+        granulesReport.okCount += 1;
+        const granuleInDb = {
+          granuleId: nextDbGranuleId,
+          collectionId: collectionId,
+          files: nextDbItem.files,
+        };
+        const granuleInCmr = {
+          GranuleUR: nextCmrGranuleId,
+          ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+          Version: nextCmrItem.umm.CollectionReference.Version,
+          RelatedUrls: nextCmrItem.umm.RelatedUrls,
+        };
+        await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+        await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
 
-  while (nextDbItem && nextCmrItem) {
-    const nextDbGranuleId = nextDbItem.granuleId;
-    const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
+        // compare the files now to avoid keeping the granules' information in memory
+        // eslint-disable-next-line no-await-in-loop
+        const fileReport = await reconciliationReportForGranuleFiles({
+          granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
+        });
+        filesReport.okCount += fileReport.okCount;
+        filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
+        filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
+      }
 
-    if (nextDbGranuleId < nextCmrGranuleId) {
-      // Found an item that is only in Cumulus database and not in CMR
+      [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+    }
+
+    // Add any remaining DynamoDB items to the report
+    while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInCumulus.push({
-        granuleId: nextDbGranuleId,
+        granuleId: dbItem.granuleId,
         collectionId: collectionId,
       });
-      await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    } else if (nextDbGranuleId > nextCmrGranuleId) {
-      // Found an item that is only in CMR and not in Cumulus database
-      if (!oneWay) {
+    }
+
+    // Add any remaining CMR items to the report
+    if (!oneWay) {
+      while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+        const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         granulesReport.onlyInCmr.push({
-          GranuleUR: nextCmrGranuleId,
+          GranuleUR: cmrItem.umm.GranuleUR,
           ShortName: nextCmrItem.umm.CollectionReference.ShortName,
           Version: nextCmrItem.umm.CollectionReference.Version,
         });
       }
-      await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    } else {
-      // Found an item that is in both CMR and Cumulus database
-      granulesReport.okCount += 1;
-      const granuleInDb = {
-        granuleId: nextDbGranuleId,
-        collectionId: collectionId,
-        files: nextDbItem.files,
-      };
-      const granuleInCmr = {
-        GranuleUR: nextCmrGranuleId,
-        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-        Version: nextCmrItem.umm.CollectionReference.Version,
-        RelatedUrls: nextCmrItem.umm.RelatedUrls,
-      };
-      await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-      await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-
-      // compare the files now to avoid keeping the granules' information in memory
-      // eslint-disable-next-line no-await-in-loop
-      const fileReport = await reconciliationReportForGranuleFiles({
-        granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
-      });
-      filesReport.okCount += fileReport.okCount;
-      filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
-      filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
     }
-
-    [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+  } catch (error) {
+    log.error(`Error caught in reconciliationReportForGranules(${collectionId})`);
+    log.error(errorify(error));
+    throw error;
   }
-
-  // Add any remaining DynamoDB items to the report
-  while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-    const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    granulesReport.onlyInCumulus.push({
-      granuleId: dbItem.granuleId,
-      collectionId: collectionId,
-    });
-  }
-
-  // Add any remaining CMR items to the report
-  if (!oneWay) {
-    while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
-      const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-      granulesReport.onlyInCmr.push({
-        GranuleUR: cmrItem.umm.GranuleUR,
-        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
-        Version: nextCmrItem.umm.CollectionReference.Version,
-      });
-    }
-  }
-
+  log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
+           + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
+           + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
+  log.info(`returning reconciliationReportForGranules(${collectionId}) filesReport: `
+           + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
+           + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
   return {
     granulesReport,
     filesReport,
@@ -542,6 +567,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @returns {Promise<Object>}                    - a reconcilation report
  */
 async function reconciliationReportForCumulusCMR(params) {
+  log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
   const { bucketsConfig, distributionBucketMap, recReportParams } = params;
   const collectionReport = await reconciliationReportForCollections(recReportParams);
   const collectionsInCumulusCmr = {
@@ -557,6 +583,8 @@ async function reconciliationReportForCumulusCMR(params) {
     })
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
+  log.info('reconciliationReportForCumulusCMR: All Granule and Granule Files Reports completed. '
+            + `${JSON.stringify(recReportParams)}`);
 
   const granulesInCumulusCmr = {};
   const filesInCumulusCmr = {};
@@ -579,6 +607,7 @@ async function reconciliationReportForCumulusCMR(params) {
     (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.onlyInCmr), []
   );
 
+  log.info('returning reconciliationReportForCumulusCMR');
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
 
@@ -604,6 +633,7 @@ async function createReconciliationReport(recReportParams) {
     systemBucket,
     location,
   } = recReportParams;
+  log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
   const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
@@ -644,11 +674,13 @@ async function createReconciliationReport(recReportParams) {
   // --------------------------------------------
   if (location !== 'CMR') {
     // Create a report for each bucket
+
     const promisedBucketReports = dataBuckets.map(
       (bucket) => createReconciliationReportForBucket(bucket, recReportParams)
     );
 
     const bucketReports = await Promise.all(promisedBucketReports);
+    log.info('bucketReports (S3 vs database) completed');
 
     bucketReports.forEach((bucketReport) => {
       report.filesInCumulus.okCount += bucketReport.okCount;
@@ -680,6 +712,7 @@ async function createReconciliationReport(recReportParams) {
     report = Object.assign(report, cumulusCmrReport);
   }
 
+  log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
   // Create the full report
   report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
@@ -701,6 +734,7 @@ async function createReconciliationReport(recReportParams) {
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
+  log.info(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
   const { reportType, reportName, systemBucket, stackName } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
@@ -717,9 +751,11 @@ async function processRequest(params) {
     location: buildS3Uri(systemBucket, reportKey),
   };
   await reconciliationReportModel.create(reportRecord);
+  log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
 
   try {
     const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else if (reportType === 'Granule Inventory') {
@@ -730,8 +766,8 @@ async function processRequest(params) {
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
-    log.error(JSON.stringify(error)); // helps debug ES errors
     log.error(`Error creating ${reportType} report ${reportRecordName}`, error);
+    log.error(errorify(error));
     const updates = {
       status: 'Failed',
       error: {

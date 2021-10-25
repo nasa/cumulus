@@ -138,7 +138,7 @@ test('shouldBackupFile returns false if there is no collection file defined', (t
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('makeBackupFileRequest returns expected makeBackupFileRequestResult when file.bucket and key do not make a s3 URI', async (t) => {
+test('makeBackupFileRequest returns expected MakeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
   const lzardsPostMethod = () => Promise.resolve({
     body: 'success body',
     statusCode: 201,
@@ -177,7 +177,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult when fi
   t.is(JSON.parse(actual.body).name, 'UriParameterError');
 });
 
-test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZARDS failure', async (t) => {
+test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZARDS failure', async (t) => {
   const lzardsPostMethod = () => Promise.resolve({
     body: 'failure body',
     statusCode: 404,
@@ -217,7 +217,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on LZAR
   t.deepEqual(actual, expected);
 });
 
-test('makeBackupFileRequest returns expected makeBackupFileRequestResult on other failure', async (t) => {
+test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on other failure', async (t) => {
   const lzardsPostMethod = () => Promise.reject(new Error('DANGER WILL ROBINSON'));
   const roleCreds = { fake: 'creds_object' };
   const bucket = 'fakeFileBucket';
@@ -254,7 +254,7 @@ test('makeBackupFileRequest returns expected makeBackupFileRequestResult on othe
   t.deepEqual(actual, expected);
 });
 
-test('makeBackupFileRequest returns expected makeBackupFileRequestResult', async (t) => {
+test('makeBackupFileRequest returns expected MakeBackupFileRequestResult', async (t) => {
   const accessUrl = 'fakeURL';
   const generateAccessUrlMethod = (() => accessUrl);
   const lzardsPostMethod = () => Promise.resolve({
