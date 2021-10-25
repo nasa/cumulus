@@ -104,11 +104,11 @@ const buildRandomizedCollection = (overrides = {}) => ({
  * @returns {Promise<undefined>}
  */
 const addCollection = async (stackName, collection) => {
-  await CollectionsApi.deleteCollection({
-    prefix: stackName,
-    collectionName: collection.name,
-    collectionVersion: collection.version,
-  });
+  // await CollectionsApi.deleteCollection({
+  //   prefix: stackName,
+  //   collectionName: collection.name,
+  //   collectionVersion: collection.version,
+  // });
   const response = await CollectionsApi.createCollection({ prefix: stackName, collection });
   if (response.statusCode !== 200) {
     throw new Error(`Collections API did not return 200: ${JSON.stringify(response)}`);
