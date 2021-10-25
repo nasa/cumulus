@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const flatten = require('lodash/flatten');
 const sortBy = require('lodash/sortBy');
 const times = require('lodash/times');
 
@@ -663,4 +664,45 @@ test('getMaxId throws if knex call returns undefined ', async (t) => {
     message:
       `Invalid .max "cumulus_id" query on ${tableName}, MAX cumulus_id cannot be returned`,
   });
+});
+
+test('baseModelExcluding deletes records based on excluded cumulusIds', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const testLength = 5;
+  const objectPayload = { info: 'baseModelExcluding' };
+  const insertedRecords = await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
+    .insert(objectPayload)
+    .returning('*')));
+  await basePgModel.deleteExcluding({
+    knexOrTransaction: knex,
+    excludeList: [flatten(insertedRecords)[0].cumulus_id],
+    params: objectPayload,
+  });
+
+  const actualRecords = await basePgModel.search(
+    knex,
+    {
+      info: 'baseModelExcluding',
+    }
+  );
+  t.deepEqual(actualRecords, insertedRecords[0]);
+});
+
+test('baseModelExcluding throws if missing explcit query params', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  //TODO: abstract this
+  const testLength = 5;
+  const objectPayload = { info: 'baseModelExcluding' };
+  const insertedRecords = await Promise.all(
+    new Array(testLength)
+      .fill()
+      .map((_i) => knex(tableName).insert(objectPayload).returning('*'))
+  );
+  await t.throwsAsync(
+    basePgModel.deleteExcluding({
+      knexOrTransaction: knex,
+      excludeList: [flatten(insertedRecords)[0].cumulus_id],
+    }),
+    { name: 'TypeError' }
+  );
 });

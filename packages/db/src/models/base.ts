@@ -260,6 +260,23 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       .where(whereClause)
       .update(updateParams, returning);
   }
+
+  async deleteExcluding({
+    knexOrTransaction,
+    excludeList = [],
+    params,
+  }: {
+    knexOrTransaction: Knex | Knex.Transaction,
+    excludeList: Number[],
+    params: Partial<RecordType>,
+  }) {
+    const query = knexOrTransaction(this.tableName)
+      .where(params);
+    excludeList.forEach((cumulus_id) => {
+      query.whereNot({ cumulus_id });
+    });
+    return await query.del();
+  }
 }
 
 export { BasePgModel };

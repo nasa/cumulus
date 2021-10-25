@@ -19,7 +19,8 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     return knexOrTrx(this.tableName)
       .insert(file)
       .onConflict(['bucket', 'key'])
-      .merge();
+      .merge()
+      .returning('*');
   }
 }
 

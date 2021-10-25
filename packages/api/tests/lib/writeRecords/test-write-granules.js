@@ -284,16 +284,16 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     executionUrl,
   } = t.context;
 
-  const dynamoGranuleRecord = {
+  const apiGranuleRecord = {
     ...granule,
     status: 'completed',
   };
   const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-    dynamoGranuleRecord,
+    apiGranuleRecord,
     knex
   );
   await _writeGranule({
-    dynamoGranuleRecord,
+    apiGranuleRecord,
     postgresGranuleRecord,
     executionCumulusId,
     granuleModel,
@@ -336,13 +336,13 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     }
   );
 
-  const updatedDynamoGranuleRecord = {
+  const updatedapiGranuleRecord = {
     ...granule,
     status: 'running',
   };
 
   let updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
-    updatedDynamoGranuleRecord,
+    updatedapiGranuleRecord,
     knex
   );
 
@@ -352,7 +352,7 @@ test.serial('_writeGranule will not allow a running status to replace a complete
   };
 
   await _writeGranule({
-    dynamoGranuleRecord: updatedDynamoGranuleRecord,
+    apiGranuleRecord: updatedapiGranuleRecord,
     postgresGranuleRecord: updatedPgGranuleRecord,
     executionCumulusId,
     granuleModel,
@@ -497,6 +497,52 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
 
   const esRecord = await t.context.esGranulesClient.get(granuleId);
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
+});
+
+test.serial('writeGranulesFromMessage() removes excess granule.files', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    filePgModel,
+    granule,
+    granuleModel,
+    granulePgModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+  const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
+  console.log(returnedGranule);
+
+  const fakeFile = await filePgModel.create(knex, {
+    granule_cumulus_id: returnedGranule[0].cumulus_id,
+    bucket: 'fake_bucket',
+    key: 'fake_key',
+  }, '*');
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  const granuleFiles = await filePgModel.search(knex, {
+    granule_cumulus_id: granuleRecord.cumulus_id,
+  });
+  t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
 });
 
 test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
@@ -984,6 +1030,42 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
 
+test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
+  const {
+    collectionCumulusId,
+    filePgModel,
+    granule,
+    granuleId,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+  const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
+  console.log(returnedGranule);
+
+  const fakeFile = await filePgModel.create(knex, {
+    granule_cumulus_id: returnedGranule[0].cumulus_id,
+    bucket: 'fake_bucket',
+    key: 'fake_key',
+  }, '*');
+
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex);
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  const granuleFiles = await filePgModel.search(knex, {
+    granule_cumulus_id: granuleRecord.cumulus_id,
+  });
+  t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
+});
+
 test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {
   const {
     knex,
@@ -1367,17 +1449,17 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
     QueueUrl,
   } = t.context;
 
-  const dynamoGranuleRecord = {
+  const apiGranuleRecord = {
     ...granule,
     status: 'completed',
   };
   const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-    dynamoGranuleRecord,
+    apiGranuleRecord,
     knex
   );
 
   await _writeGranule({
-    dynamoGranuleRecord,
+    apiGranuleRecord,
     postgresGranuleRecord,
     executionCumulusId,
     granuleModel,

@@ -114,8 +114,9 @@ const _writeFiles = async ({
   fileRecords,
   async (fileRecord) => {
     log.info('About to write file record to PostgreSQL: %j', fileRecord);
-    await filePgModel.upsert(knex, fileRecord);
+    const upsertedRecord = await filePgModel.upsert(knex, fileRecord);
     log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
+    return upsertedRecord[0];
   },
   { stopOnError: false }
 );
@@ -193,6 +194,23 @@ const _writePostgresGranuleViaTransaction = async ({
   return pgGranule;
 };
 
+const _removeExcessFiles = async ({
+  filePgModel = new FilePgModel(),
+  writtenFiles,
+  granuleCumulusId,
+  knex, // TODO Refactor
+}) => {
+  if (writtenFiles.length === 0) {
+    throw new Error('_removeExcessFiles called with no written files');
+  }
+  const excludeList = writtenFiles.map((file) => file.cumulus_id);
+  return await filePgModel.deleteExcluding({
+    knexOrTransaction: knex,
+    params: { cumulus_id: granuleCumulusId },
+    excludeList,
+  });
+};
+
 /**
  * Generate file records based on workflow status, write files to
  * the database, and update granule status if file writes fail
@@ -221,52 +239,57 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
 
+  fileRecords = _generateFilePgRecords({
+    files,
+    granuleCumulusId,
+  });
+
   if (status !== 'running' && status !== 'queued') {
-    fileRecords = _generateFilePgRecords({
-      files,
-      granuleCumulusId,
-    });
-  }
+    try {
+      const writtenFiles = await _writeFiles({
+        fileRecords,
+        knex,
+      });
+      await _removeExcessFiles({
+        writtenFiles,
+        granuleCumulusId,
+        knex,
+      });
+    } catch (error) {
+      if (!isEmpty(workflowError)) {
+        log.error(`Logging existing error encountered by granule ${granuleId} before overwrite`, workflowError);
+      }
+      log.error('Failed writing files to PostgreSQL, updating granule with error', error);
+      const errorObject = {
+        Error: 'Failed writing files to PostgreSQL.',
+        Cause: error.toString(),
+      };
+      await createRejectableTransaction(knex, async (trx) => {
+        await granulePgModel.update(
+          trx,
+          { cumulus_id: granuleCumulusId },
+          {
+            status: 'failed',
+            error: errorObject,
+          },
+          ['*']
+        ).catch((updateError) => {
+          log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
+          throw updateError;
+        });
 
-  try {
-    await _writeFiles({
-      fileRecords,
-      knex,
-    });
-  } catch (error) {
-    if (!isEmpty(workflowError)) {
-      log.error(`Logging existing error encountered by granule ${granuleId} before overwrite`, workflowError);
+        await granuleModel.update(
+          { granuleId },
+          {
+            status: 'failed',
+            error: errorObject,
+          }
+        ).catch((updateError) => {
+          log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
+          throw updateError;
+        });
+      });
     }
-    log.error('Failed writing files to PostgreSQL, updating granule with error', error);
-    const errorObject = {
-      Error: 'Failed writing files to PostgreSQL.',
-      Cause: error.toString(),
-    };
-    await createRejectableTransaction(knex, async (trx) => {
-      await granulePgModel.update(
-        trx,
-        { cumulus_id: granuleCumulusId },
-        {
-          status: 'failed',
-          error: errorObject,
-        },
-        ['*']
-      ).catch((updateError) => {
-        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
-        throw updateError;
-      });
-
-      await granuleModel.update(
-        { granuleId },
-        {
-          status: 'failed',
-          error: errorObject,
-        }
-      ).catch((updateError) => {
-        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
-        throw updateError;
-      });
-    });
   }
 };
 
@@ -297,24 +320,24 @@ const _generateFilesFromGranule = async ({
 
 const writeGranuleToDynamoAndEs = async (params) => {
   const {
-    dynamoGranuleRecord,
+    apiGranuleRecord,
     granuleModel,
     esClient = await Search.es(),
   } = params;
   try {
-    await granuleModel.storeGranule(dynamoGranuleRecord);
+    await granuleModel.storeGranule(apiGranuleRecord);
     await upsertGranule({
       esClient,
-      updates: dynamoGranuleRecord,
+      updates: apiGranuleRecord,
       index: process.env.ES_INDEX,
     });
   } catch (writeError) {
-    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${dynamoGranuleRecord.granuleId}`);
+    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${apiGranuleRecord.granuleId}`);
     // On error, delete the Dynamo record to ensure that all systems
     // stay in sync
     await granuleModel.delete({
-      granuleId: dynamoGranuleRecord.granuleId,
-      collectionId: dynamoGranuleRecord.collectionId,
+      granuleId: apiGranuleRecord.granuleId,
+      collectionId: apiGranuleRecord.collectionId,
     });
     throw writeError;
   }
@@ -324,7 +347,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
  * Write a granule record to DynamoDB and PostgreSQL
  *
  * @param {Object} params
- * @param {DynamoDBGranule} params.dynamoGranuleRecord,
+ * @param {DynamoDBGranule} params.apiGranuleRecord,
  * @param {number}          params.executionCumulusId,
  * @param {Object}          params.esClient - Elasticsearch client
  * @param {Object}          params.granuleModel = new Granule(),
