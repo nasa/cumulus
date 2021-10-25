@@ -34,6 +34,8 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
 
+const MB = 1024 * 1024;
+
 /**
  * Validates the file matched only one collection.file and has a valid bucket
  * config.
@@ -168,7 +170,7 @@ async function moveFileRequest(
     });
   } else {
     const maxChunkSize = process.env.default_s3_multipart_chunksize_mb
-      ? Number(process.env.default_s3_multipart_chunksize_mb) * 1024 * 1024 : undefined;
+      ? Number(process.env.default_s3_multipart_chunksize_mb) * MB : undefined;
     await moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,

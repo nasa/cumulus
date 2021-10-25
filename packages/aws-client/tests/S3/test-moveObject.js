@@ -12,6 +12,7 @@ const {
   s3PutObject,
 } = require('../../S3');
 
+const MB = 1024 * 1024;
 // Create a random id with a prefix
 const randomId = (prefix) =>
   `${prefix}-${cryptoRandomString({ length: 6 })}`;
@@ -46,6 +47,7 @@ test('moveObject() copies the source file to the destination', async (t) => {
     sourceKey,
     destinationBucket,
     destinationKey,
+    maxChunkSize: 5 * MB,
   });
 
   const copiedObject = await getS3Object(destinationBucket, destinationKey);

@@ -65,7 +65,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
   await createDummyObject({
     Bucket: sourceBucket,
     Key: sourceKey,
-    size: 6 * MB,
+    size: 16 * MB,
   });
 
   const sourceChecksum = await md5OfObject({
@@ -78,6 +78,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
     sourceKey,
     destinationBucket,
     destinationKey,
+    maxChunkSize: 6 * MB,
   });
 
   const destinationChecksum = await md5OfObject({
@@ -87,6 +88,33 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
 
   t.is(sourceChecksum, destinationChecksum, 'Source and destination checksums do not match');
   t.truthy(etag, 'Missing etag in copy response');
+});
+
+test('multipartCopyObject() fails when the maxChunkSize is smaller than the minimum allowed object size', async (t) => {
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = randomId('destination-key');
+
+  await createDummyObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    size: 16 * MB,
+  });
+
+  await t.throwsAsync(
+    multipartCopyObject({
+      sourceBucket,
+      sourceKey,
+      destinationBucket,
+      destinationKey,
+      maxChunkSize: 1 * MB,
+    }),
+    {
+      name: 'EntityTooSmall',
+      message: 'Your proposed upload is smaller than the minimum allowed object size.',
+    }
+  );
 });
 
 test("multipartCopyObject() sets the object's ACL", async (t) => {
@@ -107,6 +135,7 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
     destinationBucket,
     destinationKey,
     ACL: 'public-read',
+    maxChunkSize: 5 * MB,
   });
 
   const destinationAcls = await s3().getObjectAcl({
