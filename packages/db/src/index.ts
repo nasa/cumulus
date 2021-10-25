@@ -63,6 +63,7 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
@@ -73,13 +74,19 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
 export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
+  getApiExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionArnsByGranuleCumulusId,
 } from './lib/execution';
 
 export {
