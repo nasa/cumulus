@@ -17,6 +17,7 @@ module "rds_cluster" {
   db_admin_username   = var.db_admin_username
   db_admin_password   = var.db_admin_password
   region              = var.region
+  prefix              = var.prefix
   vpc_id              = var.vpc_id
   subnets             = var.subnets
   engine_version      = var.engine_version
