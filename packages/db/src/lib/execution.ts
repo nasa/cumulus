@@ -1,5 +1,7 @@
 import { Knex } from 'knex';
 import { RecordDoesNotExist } from '@cumulus/errors';
+import { ExecutionPgModel } from '../models/execution';
+import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { TableNames } from '../tables';
 
 const Logger = require('@cumulus/logger');
@@ -11,6 +13,41 @@ export interface ArnRecord {
 }
 
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
+
+/**
+ * Returns a list of executionArns sorted by most recent first, for an input
+ * Granule Cumulus ID.
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {number} granuleCumulusId - The primary ID for a Granule
+ * @param {number} limit - limit to number of executions to query
+ * @returns {Promise<ArnRecord[]>} - Array of arn objects with the most recent first.
+ */
+export const getExecutionArnsByGranuleCumulusId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusId: Number,
+  limit?: number
+): Promise<ArnRecord[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .select(`${TableNames.executions}.arn`)
+    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
+    .join(
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
+    )
+    .join(
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
+    )
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
+  if (limit) {
+    knexQuery.limit(limit);
+  }
+  return await knexQuery;
+};
 
 /**
  * Returns a list of executionArns sorted by most recent first, for an input
@@ -109,4 +146,50 @@ export const getWorkflowNameIntersectFromGranuleIds = async (
     });
   return aggregatedWorkflowCounts
     .map((workflowCounts: { workflow_name: string }) => workflowCounts.workflow_name);
+};
+
+/**
+ * Get cumulus IDs for list of executions
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Array<Object>} executions - array of executions
+ * @param {Object} [executionPgModel] - Execution PG model class instance
+ * @returns {Promise<number[]>}
+ */
+export const getApiExecutionCumulusIds = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  executions: Array<{ arn: string }>,
+  executionPgModel = new ExecutionPgModel()
+) => {
+  const executionCumulusIds: Array<number> = await Promise.all(executions.map(async (execution) =>
+    await executionPgModel.getRecordCumulusId(knexOrTransaction, {
+      arn: execution.arn,
+    })));
+  return [...new Set(executionCumulusIds)];
+};
+
+/**
+ * Get cumulus IDs for all granules associated to a set of executions
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Array<Object>} executions - array of executions
+ * @param {Object} [executionsPgModel]
+ *   Executions PG model class instance
+ * @returns {Promise<number[]>}
+ */
+export const getApiGranuleExecutionCumulusIdsByExecution = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  executions: Array<{ arn: string }>,
+  executionPgModel = new ExecutionPgModel(),
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
+): Promise<Array<number>> => {
+  const executionCumulusIds = await getApiExecutionCumulusIds(
+    knexOrTransaction, executions, executionPgModel
+  );
+  const granuleCumulusIds = await granulesExecutionsPgModel
+    .searchByExecutionCumulusIds(knexOrTransaction, executionCumulusIds);
+
+  return granuleCumulusIds;
 };
