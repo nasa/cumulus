@@ -96,6 +96,20 @@ const buildRandomizedCollection = (overrides = {}) => ({
   ...overrides,
 });
 
+const collectionExists = async (stackName, collection) => {
+  try {
+    await CollectionsApi.getCollection({
+      prefix: stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+  } catch (error) {
+    console.log(`Error: ${error}. Failed to get collection ${collection}`);
+    return false;
+  }
+  return true;
+};
+
 /**
  * Add a new collection to Cumulus
  *
@@ -103,12 +117,17 @@ const buildRandomizedCollection = (overrides = {}) => ({
  * @param {Object} collection - a Cumulus collection
  * @returns {Promise<undefined>}
  */
-const addCollection = async (stackName, collection) => {
-  // await CollectionsApi.deleteCollection({
-  //   prefix: stackName,
-  //   collectionName: collection.name,
-  //   collectionVersion: collection.version,
-  // });
+const addCollection = async (
+  stackName,
+  collection
+) => {
+  if (await collectionExists(stackName, collection)) {
+    await CollectionsApi.deleteCollection({
+      prefix: stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+  }
   const response = await CollectionsApi.createCollection({ prefix: stackName, collection });
   if (response.statusCode !== 200) {
     throw new Error(`Collections API did not return 200: ${JSON.stringify(response)}`);

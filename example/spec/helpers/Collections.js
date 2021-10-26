@@ -1,7 +1,7 @@
 const { listGranules } = require('@cumulus/api-client/granules');
 const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
-const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteCollection, getCollection } = require('@cumulus/api-client/collections');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { deleteGranules } = require('./granuleUtils');
@@ -69,8 +69,16 @@ const removeCollectionAndAllDependencies = async (params) => {
   console.log('Execution Cleanup Complete:');
   console.log(executionsForDeletion);
   console.log(executionDeletionResult);
-
-  await deleteCollection({ prefix, collectionName: collection.name, collectionVersion: collection.version });
+  try {
+    await getCollection({
+      prefix,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+    await deleteCollection({ prefix, collectionName: collection.name, collectionVersion: collection.version });
+  } catch (error) {
+    console.log(`Error: ${error}. Failed to get and delete collection ${collection}`);
+  }
 };
 
 module.exports = { removeCollectionAndAllDependencies };

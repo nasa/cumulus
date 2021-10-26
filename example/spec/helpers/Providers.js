@@ -4,6 +4,7 @@ const isIp = require('is-ip');
 const pWaitFor = require('p-wait-for');
 
 const providersApi = require('@cumulus/api-client/providers');
+const Provider = require('@cumulus/api/models/providers');
 const { listGranules } = require('@cumulus/api-client/granules');
 const { listRules, deleteRule } = require('@cumulus/api-client/rules');
 const pdrsApi = require('@cumulus/api-client/pdrs');
@@ -100,7 +101,21 @@ const throwIfApiReturnFail = (apiResult) => {
   }
 };
 
+const providerExists = async (id) => {
+  const providerModel = new Provider();
+  try {
+    await providerModel.get({ id });
+  } catch (error) {
+    console.log('ERROR: Provider not found', error);
+    return false;
+  }
+  return true;
+};
+
 const createProvider = async (stackName, provider) => {
+  if (await providerExists(provider.id)) {
+    await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+  }
   const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
   throwIfApiReturnFail(createProviderResult);
   return createProviderResult;

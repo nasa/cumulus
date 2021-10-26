@@ -359,7 +359,6 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 
   await Promise.all(
     completeProviders.map(async (provider) => {
-      await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
       await providersApi.createProvider({ prefix: stackName, provider: provider });
     })
   );
