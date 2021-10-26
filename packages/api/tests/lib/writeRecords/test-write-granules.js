@@ -499,7 +499,7 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranulesFromMessage() removes excess granule.files', async (t) => {
+test.serial('writeGranulesFromMessage() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
