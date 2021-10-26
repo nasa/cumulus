@@ -216,7 +216,7 @@ const _removeExcessFiles = async ({
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Object} params.files - File objects
+ * @param {Object} [params.files] - File objects
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
  * @param {Object} params.workflowError - Error from the workflow
@@ -391,7 +391,7 @@ const _writeGranule = async ({
 
   const { files, granuleId, status, error } = apiGranuleRecord;
 
-  if (status !== 'running' && status !== 'queued') {
+  if (status !== 'running' && status !== 'queued' && files.length > 0) {
     await _writeGranuleFiles({
       files,
       granuleCumulusId: pgGranule.cumulus_id,
