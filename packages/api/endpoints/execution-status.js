@@ -68,7 +68,7 @@ async function getEventDetails(event) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-  const knex = await getKnexClient();
+  const knex = await getKnexClient({ env: process.env });
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -93,7 +93,6 @@ async function get(req, res) {
 
   // get the execution information from database
   let response;
-  const knex = await getKnexClient({ env: process.env });
   const executionPgModel = new ExecutionPgModel();
   try {
     response = await executionPgModel.get(knex, { arn });

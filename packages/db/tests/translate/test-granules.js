@@ -6,28 +6,8 @@ const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
-const {
-  CollectionPgModel,
-  ExecutionPgModel,
-  fakeCollectionRecordFactory,
-  fakeExecutionRecordFactory,
-  fakeFileRecordFactory,
-  fakeGranuleRecordFactory,
-  fakePdrRecordFactory,
-  fakeProviderRecordFactory,
-  FilePgModel,
-  generateLocalTestDb,
-  GranulePgModel,
-  GranulesExecutionsPgModel,
-  PdrPgModel,
-  ProviderPgModel,
-  migrationDir,
-} = require('../../dist');
 
-<<<<<<< HEAD
-const { ValidationError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const {
   CollectionPgModel,
@@ -45,13 +25,9 @@ const {
   PdrPgModel,
   ProviderPgModel,
   migrationDir,
-  translateApiGranuleToPostgresGranule,
-  translatePostgresGranuleToApiGranule,
   translatePostgresGranuleResultToApiGranule,
 } = require('../../dist');
 
-=======
->>>>>>> master
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
 const createdAt = new Date(Date.now() - 100 * 1000);
@@ -68,7 +44,6 @@ test.before(async (t) => {
   // Create collection
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.collection = fakeCollectionRecordFactory({ name: 'collectionName', version: 'collectionVersion' });
-<<<<<<< HEAD
   t.context.collectionId = constructCollectionId(
     t.context.collection.name,
     t.context.collection.version
@@ -79,29 +54,17 @@ test.before(async (t) => {
   );
   const collectionCumulusId = collectionPgRecord.cumulus_id;
   t.context.collectionCumulusId = collectionCumulusId;
-=======
-  const [collectionPgRecordId] = await t.context.collectionPgModel.create(
-    knex,
-    t.context.collection
-  );
-  const collectionCumulusId = collectionPgRecordId;
->>>>>>> master
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
   const provider = fakeProviderRecordFactory({ name: 'providerName' });
-<<<<<<< HEAD
   [t.context.providerCumulusId] = await t.context.providerPgModel.create(knex, provider);
-=======
-  const [providerCumulusId] = await t.context.providerPgModel.create(knex, provider);
->>>>>>> master
 
   // Create PDR
   t.context.pdrPgModel = new PdrPgModel();
   const pdr = fakePdrRecordFactory({
     name: 'pdrName',
     collection_cumulus_id: collectionCumulusId,
-<<<<<<< HEAD
     provider_cumulus_id: t.context.providerCumulusId,
   });
   [t.context.pdrCumulusId] = await t.context.pdrPgModel.create(knex, pdr);
@@ -119,40 +82,18 @@ test.beforeEach(async (t) => {
       beginning_date_time: new Date(Date.now() - 300 * 1000),
       cmr_link: cryptoRandomString({ length: 10 }),
       collection_cumulus_id: t.context.collectionCumulusId,
-=======
-    provider_cumulus_id: providerCumulusId,
-  });
-  const [pdrCumulusId] = await t.context.pdrPgModel.create(knex, pdr);
-
-  // Create Granule
-  t.context.granulePgModel = new GranulePgModel();
-  [t.context.granuleCumulusId] = await t.context.granulePgModel.create(
-    knex,
-    fakeGranuleRecordFactory({
-      beginning_date_time: new Date(Date.now() - 300 * 1000),
-      cmr_link: cryptoRandomString({ length: 10 }),
-      collection_cumulus_id: collectionCumulusId,
->>>>>>> master
       created_at: new Date(Date.now() - 200 * 1000),
       duration: 10.1,
       ending_date_time: new Date(Date.now() - 250 * 1000),
       error: {},
       granule_id: cryptoRandomString({ length: 5 }),
       last_update_date_time: new Date(Date.now() - 100 * 1000),
-<<<<<<< HEAD
       pdr_cumulus_id: t.context.pdrCumulusId,
-=======
-      pdr_cumulus_id: pdrCumulusId,
->>>>>>> master
       processing_end_date_time: new Date(Date.now() - 500 * 1000),
       processing_start_date_time: new Date(Date.now() - 400 * 1000),
       product_volume: 1119742,
       production_date_time: new Date(Date.now() - 350 * 1000),
-<<<<<<< HEAD
       provider_cumulus_id: t.context.providerCumulusId,
-=======
-      provider_cumulus_id: providerCumulusId,
->>>>>>> master
       published: false,
       query_fields: { foo: 'bar' },
       status: 'running',
@@ -160,36 +101,6 @@ test.beforeEach(async (t) => {
       time_to_process: 0,
       timestamp: new Date(Date.now() - 120 * 1000),
       updated_at: new Date(Date.now()),
-<<<<<<< HEAD
-    }),
-    '*'
-  );
-  t.context.granuleCumulusId = Number.parseInt(t.context.postgresGranule.cumulus_id, 10);
-
-  // Create executions
-  t.context.executions = await t.context.executionPgModel.insert(
-    t.context.knex,
-    [
-      fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) }),
-      fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) }),
-    ],
-    '*'
-  );
-
-  // Create GranulesExecuions JOIN records
-  await t.context.granulesExecutionsPgModel.create(
-    t.context.knex,
-    {
-      granule_cumulus_id: t.context.granuleCumulusId,
-      execution_cumulus_id: t.context.executions[0].cumulus_id,
-    }
-  );
-  await t.context.granulesExecutionsPgModel.create(
-    t.context.knex,
-    {
-      granule_cumulus_id: t.context.granuleCumulusId,
-      execution_cumulus_id: t.context.executions[1].cumulus_id,
-=======
     })
   );
 
@@ -212,7 +123,7 @@ test.beforeEach(async (t) => {
     await executionPgModel.get(knex, { cumulus_id: executionBCumulusId }),
   ];
 
-  // Create GranulesExecuions JOIN records
+  // Create GranulesExecutions JOIN records
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   await granulesExecutionsPgModel.create(
     knex,
@@ -226,38 +137,26 @@ test.beforeEach(async (t) => {
     {
       granule_cumulus_id: t.context.granuleCumulusId,
       execution_cumulus_id: executionBCumulusId,
->>>>>>> master
     }
   );
 
   // Create files
   t.context.filePgModel = new FilePgModel();
-<<<<<<< HEAD
   t.context.fileKeys = [
     cryptoRandomString({ length: 10 }),
     cryptoRandomString({ length: 10 }),
   ].sort();
-=======
->>>>>>> master
   const files = [
     fakeFileRecordFactory({
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
       created_at: createdAt,
-<<<<<<< HEAD
       file_name: t.context.fileKeys[0],
       file_size: 2098711627776,
       granule_cumulus_id: t.context.granuleCumulusId,
       key: t.context.fileKeys[0],
       path: `sourceDir/${t.context.fileKeys[0]}`,
-=======
-      file_name: 's3://cumulus-test-sandbox-private/firstKey',
-      file_size: '2098711627776',
-      granule_cumulus_id: 1,
-      key: 'firstKey',
-      path: 's3://cumulus-test-sandbox-private/sourceDir/firstKey',
->>>>>>> master
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       updated_at: updatedAt,
     }),
@@ -266,28 +165,16 @@ test.beforeEach(async (t) => {
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
       created_at: createdAt,
-<<<<<<< HEAD
       file_name: t.context.fileKeys[1],
       file_size: 1099511627776,
       granule_cumulus_id: t.context.granuleCumulusId,
       key: t.context.fileKeys[1],
       path: `sourceDir/${t.context.fileKeys[1]}`,
-=======
-      file_name: 's3://cumulus-test-sandbox-private/secondKey',
-      file_size: '1099511627776',
-      granule_cumulus_id: 1,
-      key: 'secondKey',
-      path: 's3://cumulus-test-sandbox-private/sourceDir/secondKey',
->>>>>>> master
       source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       updated_at: updatedAt,
     }),
   ];
-<<<<<<< HEAD
   await t.context.filePgModel.insert(t.context.knex, files);
-=======
-  files.map(async (file) => await t.context.filePgModel.create(knex, file));
->>>>>>> master
 });
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
@@ -297,18 +184,9 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     providerPgModel,
     collectionPgModel,
     filePgModel,
-<<<<<<< HEAD
-    executions,
     postgresGranule,
     fileKeys,
     collectionId,
-  } = t.context;
-
-  const expectedApiGranule = {
-    beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
-    cmrLink: postgresGranule.cmr_link,
-    collectionId,
-=======
     granulePgModel,
     granuleCumulusId,
     executions,
@@ -320,27 +198,18 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
     collectionId: 'collectionName___collectionVersion',
->>>>>>> master
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
     error: postgresGranule.error,
-<<<<<<< HEAD
     execution: executions[0].url,
-=======
-    execution: getExecutionUrlFromArn(executions[0].arn),
->>>>>>> master
     granuleId: postgresGranule.granule_id,
     lastUpdateDateTime: postgresGranule.last_update_date_time.toISOString(),
     pdrName: 'pdrName',
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
     productionDateTime: postgresGranule.production_date_time.toISOString(),
-<<<<<<< HEAD
     productVolume: Number.parseInt(postgresGranule.product_volume, 10),
-=======
-    productVolume: postgresGranule.product_volume,
->>>>>>> master
     provider: 'providerName',
     published: postgresGranule.published,
     queryFields: postgresGranule.query_fields,
@@ -354,30 +223,18 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[0],
         key: fileKeys[0],
         size: 2098711627776,
-=======
-        fileName: 's3://cumulus-test-sandbox-private/firstKey',
-        key: 'firstKey',
-        size: '2098711627776',
->>>>>>> master
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[1],
         key: fileKeys[1],
         size: 1099511627776,
-=======
-        fileName: 's3://cumulus-test-sandbox-private/secondKey',
-        key: 'secondKey',
-        size: '1099511627776',
->>>>>>> master
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       },
     ],
@@ -405,13 +262,8 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     providerPgModel,
     collectionPgModel,
     filePgModel,
-<<<<<<< HEAD
-    executions,
     postgresGranule,
     fileKeys,
-  } = t.context;
-
-=======
     granulePgModel,
     granuleCumulusId,
     executions,
@@ -419,7 +271,6 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
 
   const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
->>>>>>> master
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
@@ -435,11 +286,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
     productionDateTime: postgresGranule.production_date_time.toISOString(),
-<<<<<<< HEAD
     productVolume: Number.parseInt(postgresGranule.product_volume, 10),
-=======
-    productVolume: postgresGranule.product_volume,
->>>>>>> master
     provider: 'providerName',
     published: postgresGranule.published,
     queryFields: postgresGranule.query_fields,
@@ -453,30 +300,18 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[0],
         key: fileKeys[0],
         size: 2098711627776,
-=======
-        fileName: 's3://cumulus-test-sandbox-private/firstKey',
-        key: 'firstKey',
-        size: '2098711627776',
->>>>>>> master
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[1],
         key: fileKeys[1],
         size: 1099511627776,
-=======
-        fileName: 's3://cumulus-test-sandbox-private/secondKey',
-        key: 'secondKey',
-        size: '1099511627776',
->>>>>>> master
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       },
     ],
@@ -507,7 +342,6 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   );
 });
 
-<<<<<<< HEAD
 test('translatePostgresGranuleToApiGranule accepts an optional provider', async (t) => {
   const {
     knex,
@@ -626,8 +460,6 @@ test('translatePostgresGranuleToApiGranule omits files property from API granule
   );
 });
 
-=======
->>>>>>> master
 test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
   const {
     knex,
@@ -635,18 +467,12 @@ test('translatePostgresGranuleToApiGranule throws an error if the Collection doe
     providerPgModel,
     collectionPgModel,
     filePgModel,
-<<<<<<< HEAD
-    postgresGranule,
-  } = t.context;
-
-=======
     granulePgModel,
     granuleCumulusId,
   } = t.context;
 
   const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
->>>>>>> master
   // No cumulus_id set so this will not match the granule's collection_cumulus_id
   const collection = fakeCollectionRecordFactory({
     name: 'collectionName2',
@@ -672,33 +498,22 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     providerPgModel,
     collectionPgModel,
     filePgModel,
-<<<<<<< HEAD
     executions,
     postgresGranule,
     fileKeys,
     collectionId,
-  } = t.context;
-
-=======
     granulePgModel,
     granuleCumulusId,
-    executions,
   } = t.context;
 
   const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
-
->>>>>>> master
   delete postgresGranule.pdr_cumulus_id;
   delete postgresGranule.provider_cumulus_id;
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-<<<<<<< HEAD
     collectionId,
-=======
-    collectionId: 'collectionName___collectionVersion',
->>>>>>> master
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -709,11 +524,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     processingEndDateTime: postgresGranule.processing_end_date_time.toISOString(),
     processingStartDateTime: postgresGranule.processing_start_date_time.toISOString(),
     productionDateTime: postgresGranule.production_date_time.toISOString(),
-<<<<<<< HEAD
     productVolume: Number.parseInt(postgresGranule.product_volume, 10),
-=======
-    productVolume: postgresGranule.product_volume,
->>>>>>> master
     published: postgresGranule.published,
     queryFields: postgresGranule.query_fields,
     status: postgresGranule.status,
@@ -726,32 +537,18 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[0],
         key: fileKeys[0],
         size: 2098711627776,
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-=======
-        fileName: 's3://cumulus-test-sandbox-private/firstKey',
-        key: 'firstKey',
-        size: '2098711627776',
-        source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-
->>>>>>> master
       },
       {
         bucket: 'cumulus-test-sandbox-private',
         checksum: 'bogus-value',
         checksumType: 'md5',
-<<<<<<< HEAD
         fileName: fileKeys[1],
         key: fileKeys[1],
         size: 1099511627776,
-=======
-        fileName: 's3://cumulus-test-sandbox-private/secondKey',
-        key: 'secondKey',
-        size: '1099511627776',
->>>>>>> master
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
       },
     ],
@@ -771,7 +568,6 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     expectedApiGranule
   );
 });
-<<<<<<< HEAD
 
 test('translatePostgresGranuleToApiGranule handles granule with no associated execution', async (t) => {
   const {
@@ -806,8 +602,6 @@ test('translatePostgresGranuleToApiGranule handles granule with no associated ex
     expectedApiGranule
   );
 });
-=======
->>>>>>> master
 
 test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;

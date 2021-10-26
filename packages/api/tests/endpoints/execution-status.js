@@ -11,15 +11,6 @@ const {
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cryptoRandomString = require('crypto-random-string');
 
-const {
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  ExecutionPgModel,
-  localStackConnectionEnv,
-  fakeExecutionRecordFactory,
-  migrationDir,
-} = require('@cumulus/db');
-
 const { randomId } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
