@@ -96,7 +96,7 @@ upgrades to `knex` package.
       - @cumulus/api/lib.writeRecords.updateGranuleFromApi
     - These methods now remove postgres file records that aren't contained in
         the write/update action if such file records exist.  This update
-        maintains consistncy with the writes to elasticsearch/dynamodb.
+        maintains consistency with the writes to elasticsearch/dynamodb.
   - **CUMULUS-2672**
     - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
       instead of dropping it.
