@@ -189,9 +189,23 @@ const event = {
   input: {},
 };
 
+/**
+ * Test helper function to metadata and ETags are updated correctly
+ *
+ * @param {Object} params
+ * @param {Object} params.metadataFile
+ * @param {string} params.metadataFile.bucket - S3 bucket of metadata file
+ * @param {string} params.metadataFile.key - S3 key of metadata file
+ * @param {string} params.originalETag - Original ETag of metadata file
+ * @param {Object} params.output - Output from Lambda function handler
+ * @param {string} params.expectedBodyPath
+ *   Local file path to expected body of generated metadata file
+ * @param {Object} params.t - Ava test assertion client
+ * @param {boolean} [params.isUMMG] - Whether CMR metadata is in the UMM-G format. Default: false.
+ */
 async function verifyUpdatedMetadata({
   metadataFile,
-  inputEtag,
+  originalETag,
   output,
   expectedBodyPath,
   t,
@@ -222,7 +236,7 @@ async function verifyUpdatedMetadata({
     body: expectedString,
   };
 
-  t.false([inputEtag, undefined].includes(outputEtag));
+  t.false([originalETag, undefined].includes(outputEtag));
   t.deepEqual(actualPartial, expectedPartial);
 }
 

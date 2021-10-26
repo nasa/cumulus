@@ -134,7 +134,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   const output = await updateGranulesCmrMetadataFileLinks(newPayload);
   await validateOutput(t, output);
   const newEtag = output.etags[ETagS3URI];
-  t.not(newEtag, previousEtag);
+  t.false([previousEtag, undefined].includes(newEtag));
 });
 
 test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is both and no distribution endpoint is set', async (t) => {
