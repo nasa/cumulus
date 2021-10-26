@@ -28,11 +28,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.7.0",
-    "@cumulus/db": "9.8.0-alpha.0",
-    "@cumulus/errors": "9.7.0",
-    "@cumulus/types": "9.7.0",
-    "@cumulus/es-client": "9.7.0",
+    "@cumulus/aws-client": "9.8.0",
+    "@cumulus/db": "9.8.0",
+    "@cumulus/errors": "9.8.0",
+    "@cumulus/types": "9.8.0",
+    "@cumulus/es-client": "9.8.0",
+    "knex": "0.95.11",
     "uuid": "8.3.2"
   },
   "devDependencies": {
