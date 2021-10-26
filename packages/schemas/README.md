@@ -1,6 +1,6 @@
 # @cumulus/schemas
 
-Utilities for working with and generating schemas
+Utilities for working with and generating cumulus workflow task schemas from common templates
 
 ## Usage
 
