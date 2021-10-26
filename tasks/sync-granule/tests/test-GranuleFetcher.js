@@ -96,7 +96,7 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
   t.is(fileCollectionConfig, undefined);
 });
 
-test.only('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
+test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
   const { collectionConfig, destBucket, internalBucket } = t.context;
 
   const file = {
