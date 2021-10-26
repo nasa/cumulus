@@ -10,6 +10,12 @@
   "engines": {
     "node": ">=12.18.0"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
@@ -19,7 +25,7 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "bin": {
-    "generate-task-schemas": "./generate-task-schemas.js"
+    "generate-task-schemas": "./dist/generate-task-schemas.js"
   },
   "ava": {
     "files": [

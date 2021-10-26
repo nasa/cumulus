@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 const parse = require('json-templates');
-const filesJsonSchema = require('./files.schema.json');
+const filesJsonSchema = require('../files.schema.json');
 
 type SchemaReplacements = {
   [key: string]: unknown
@@ -16,7 +16,7 @@ type SchemaReplacements = {
  *   Object map specifying values to replace in schema template
  * @returns {void}
  */
-function templateJsonSchema(
+export function templateJsonSchema(
   schemaTemplatePath: string,
   schemaOutputPath: string,
   replacements: SchemaReplacements
@@ -37,7 +37,7 @@ function templateJsonSchema(
  * @param {string} schemaOutputPath - Path to write updated output schema
  * @returns {void}
  */
-function templateJsonSchemaWithFiles(
+export function templateJsonSchemaWithFiles(
   schemaTemplatePath: string,
   schemaOutputPath: string
 ) {
@@ -47,8 +47,3 @@ function templateJsonSchemaWithFiles(
     { files: filesJsonSchema }
   );
 }
-
-module.exports = {
-  templateJsonSchema,
-  templateJsonSchemaWithFiles,
-};

@@ -6,7 +6,7 @@ const filesJsonSchema = require('../files.schema.json');
 const {
   templateJsonSchema,
   templateJsonSchemaWithFiles,
-} = require('../generate-schemas');
+} = require('../dist/generate-schemas');
 
 test('templateJsonSchema correctly updates schema template', (t) => {
   const schemaTemplatePath = path.join(__dirname, 'fake-schema-template.json');
