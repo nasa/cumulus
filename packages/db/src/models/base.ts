@@ -270,12 +270,10 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     excludeList: Number[],
     params: Partial<RecordType>,
   }) {
-    const query = knexOrTransaction(this.tableName)
-      .where(params);
-    excludeList.forEach((cumulus_id) => {
-      query.whereNot({ cumulus_id });
-    });
-    return await query.del();
+    return await knexOrTransaction(this.tableName)
+      .where(params)
+      .whereNotIn('cumulus_id', excludeList)
+      .del();
   }
 }
 
