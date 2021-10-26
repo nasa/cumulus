@@ -20,16 +20,36 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
-const models = require('../../models');
+const { randomId } = require('@cumulus/common/test-utils');
+const {
+  localStackConnectionEnv,
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  migrationDir,
+  CollectionPgModel,
+  GranulePgModel,
+  ExecutionPgModel,
+  translateApiExecutionToPostgresExecution,
+  upsertGranuleWithExecutionJoinRecord,
+  fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
+} = require('@cumulus/db');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { AccessToken, Collection, Execution, Granule } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
+  fakeExecutionFactoryV2,
+  fakeCollectionFactory,
   setAuthorizedOAuthUsers,
+  fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
-process.env.AccessTokensTable = cryptoRandomString({ length: 10 });
-process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-process.env.TOKEN_SECRET = cryptoRandomString({ length: 10 });
+process.env.AccessTokensTable = randomString();
+process.env.ExecutionsTable = randomString();
+process.env.CollectionsTable = randomString();
+process.env.GranulesTable = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
@@ -57,6 +77,12 @@ const cumulusMetaOutput = () => ({
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
+const fakeExpiredExecution = fakeExecutionFactoryV2({
+  arn: expiredExecutionArn,
+  parentArn: undefined,
+});
+
+const testDbName = randomId('execution-status_test');
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -165,8 +191,15 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
+let collectionModel;
+let granuleModel;
+let executionModel;
 let mockedSF;
 let mockedSFExecution;
+let collectionPgModel;
+let executionPgModel;
+let granulePgModel;
+let fakeExecutionStatusGranules;
 
 test.before(async (t) => {
   process.env.system_bucket = cryptoRandomString({ length: 10 });
@@ -192,7 +225,7 @@ test.before(async (t) => {
   const username = cryptoRandomString({ length: 10 });
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -219,6 +252,111 @@ test.before(async (t) => {
   await executionPgModel.create(
     t.context.knex,
     t.context.fakeExecutionRecord
+
+  // create fake Collections table
+  collectionModel = new Collection();
+  await collectionModel.createTable();
+
+  // create fake Granules table
+  granuleModel = new Granule();
+  await granuleModel.createTable();
+
+  // create fake Executions table
+  executionModel = new Execution();
+  await executionModel.createTable();
+  await executionModel.create(fakeExpiredExecution);
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  // Generate a local test postgres database
+  const { knex, knexAdmin } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
+  // Create collections in Dynamo and Postgres
+  // we need this because a granule has a foreign key referring to collections
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+
+  collectionPgModel = new CollectionPgModel();
+  granulePgModel = new GranulePgModel();
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+    duplicateHandling: 'error',
+  });
+  const dynamoCollection = await collectionModel.create(
+    t.context.testCollection
+  );
+  t.context.collectionId = constructCollectionId(
+    dynamoCollection.name,
+    dynamoCollection.version
+  );
+
+  const fakePgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  [t.context.collectionCumulusId] = await collectionPgModel.create(
+    knex,
+    fakePgCollection
+  );
+
+  executionPgModel = new ExecutionPgModel();
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    fakeExpiredExecution,
+    knex
+  );
+  const executionPgRecordIds = await executionPgModel.create(knex, executionPgRecord);
+
+  const granuleId1 = randomId('granuleId1');
+  const granuleId2 = randomId('granuleId2');
+
+  // create fake Dynamo granule records
+  t.context.fakeGranules = [
+    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', collectionId: t.context.collectionId }),
+    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
+  ];
+
+  await granuleModel.create(t.context.fakeGranules[0]);
+  await granuleModel.create(t.context.fakeGranules[1]);
+
+  // create fake Postgres granule records
+  t.context.fakePGGranules = [
+    fakeGranuleRecordFactory({
+      granule_id: granuleId1,
+      status: 'completed',
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }),
+    fakeGranuleRecordFactory({
+      granule_id: granuleId2,
+      status: 'failed',
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }),
+  ];
+
+  fakeExecutionStatusGranules = [];
+  fakeExecutionStatusGranules.push({
+    granuleId: granuleId1,
+    collectionId: t.context.collectionId,
+  });
+
+  [t.context.granuleCumulusId] = await Promise.all(
+    t.context.fakePGGranules.map(async (granule) =>
+      await granulePgModel.create(knex, granule))
+  );
+
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], executionPgRecordIds[0]
   );
 });
 
@@ -227,6 +365,10 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();
+  await executionModel.deleteTable();
+  await collectionModel.deleteTable();
+  await granuleModel.deleteTable();
+
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -331,16 +473,11 @@ test('when execution is no longer in step function API, returns status from data
   const executionStatus = response.body;
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
-  t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
-  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.name);
-  t.is(
-    executionStatus.execution.input,
-    JSON.stringify(t.context.fakeExecutionRecord.original_payload)
-  );
-  t.is(
-    executionStatus.execution.output,
-    JSON.stringify(t.context.fakeExecutionRecord.final_payload)
-  );
+  t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
+  t.is(executionStatus.execution.name, fakeExpiredExecution.name);
+  t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
+  t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
+  t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 
 test('when execution not found in step function API nor database, returns not found', async (t) => {

@@ -70,6 +70,7 @@ export {
 } from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
 } from './translate/file';
 
 export {
@@ -107,7 +108,13 @@ export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
+<<<<<<< HEAD
   getExecutionInfoByGranuleCumulusId,
+=======
+  getApiExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionArnsByGranuleCumulusId,
+>>>>>>> master
 } from './lib/execution';
 
 export {

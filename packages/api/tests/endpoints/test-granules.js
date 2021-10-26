@@ -58,6 +58,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -140,7 +141,7 @@ async function setupBucketsConfig() {
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await s3PutObject({
     Bucket: systemBucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`,
+    Key: getBucketsConfigKey(process.env.stackName),
     Body: JSON.stringify(buckets),
   });
   await createBucket(buckets.public.name);
