@@ -7,6 +7,7 @@ const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/in
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const GranuleFetcher = require('../GranuleFetcher');
 const sums = require('./fixtures/sums');
@@ -95,7 +96,7 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
   t.is(fileCollectionConfig, undefined);
 });
 
-test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
+test.only('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
   const { collectionConfig, destBucket, internalBucket } = t.context;
 
   const file = {
@@ -131,7 +132,17 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     duplicate: finalDuplicate,
   } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 2);
-  t.not(finalDuplicate, undefined);
+  t.deepEqual(
+    finalDuplicate,
+    {
+      bucket: destBucket,
+      key: S3.s3Join(
+        fileStagingDir,
+        constructCollectionId(collectionConfig.name, collectionConfig.version),
+        file.name
+      ),
+    }
+  );
 });
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
