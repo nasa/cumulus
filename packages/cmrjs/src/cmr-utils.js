@@ -98,13 +98,32 @@ function isCMRFile(fileobject) {
 function granuleToCmrFileObject({ granuleId, files = [] }) {
   return files
     .filter(isCMRFile)
-    .map((file) => ({
-      // Include etag only if file has one
-      ...pick(file, 'etag'),
-      // handle both new-style and old-style files model
-      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId,
-    }));
+    .map((file) => {
+      const { Bucket, Key } = parseS3Uri(getS3UrlOfFile(file));
+      return {
+        // Include etag only if file has one
+        ...pick(file, 'etag'),
+        bucket: Bucket,
+        key: Key,
+        granuleId,
+      };
+    });
+}
+
+/**
+ * Maps etag values from the specified granules' files.
+ *
+ * @param {Object[]} files - array of file objects with `bucket`, `key` and
+ *    `etag` properties
+ * @returns {Object} mapping of file S3 URIs to etags
+ */
+function mapFileEtags(files) {
+  return files.reduce((filesMap, file) => {
+    const { bucket, key, etag } = file;
+    const s3Uri = getS3UrlOfFile({ bucket, key });
+    filesMap[s3Uri] = etag; // eslint-disable-line no-param-reassign
+    return filesMap;
+  }, {});
 }
 
 /**
@@ -1096,4 +1115,6 @@ module.exports = {
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
+  getS3UrlOfFile,
+  mapFileEtags,
 };

@@ -17,6 +17,57 @@ test.after.always(async (t) => {
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
+test('updateCmrAccessConstraints updates etag for CMR file and leaves other etags intact', async (t) => {
+  const key = `${randomString()}.cmr.xml`;
+  const { ETag } = await S3.s3PutObject({
+    Bucket: t.context.bucket,
+    Key: key,
+    Body: fs.readFileSync(
+      path.join(__dirname, 'fixtures/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml')
+    ),
+  });
+  const cmrFileS3Uri = S3.buildS3Uri(t.context.bucket, key);
+
+  const dataFileKey = `${randomString()}.hdf`;
+  const dataFileS3Uri = S3.buildS3Uri(t.context.bucket, dataFileKey);
+  const dataFileOriginalETag = '"foo"';
+
+  const payloadInput = {
+    granules: [{
+      granuleId: 'abcd1234',
+      files: [{
+        bucket: t.context.bucket,
+        key,
+      }, {
+        bucket: t.context.bucket,
+        key: dataFileKey,
+      }],
+    }],
+  };
+  await validateInput(t, payloadInput);
+  const payloadConfig = {
+    accessConstraints: {
+      value: 17,
+      description: 'Test AccessConstraint Value',
+    },
+    etags: {
+      [cmrFileS3Uri]: ETag,
+      [dataFileS3Uri]: dataFileOriginalETag,
+    },
+  };
+  await validateConfig(t, payloadConfig);
+  const handlerResponse = await updateCmrAccessConstraints({
+    input: payloadInput,
+    config: payloadConfig,
+  });
+  await validateOutput(t, handlerResponse);
+  // ensure updated ETag for CMR file
+  const updatedCmrETag = handlerResponse.etags[cmrFileS3Uri];
+  t.false([ETag, undefined].includes(updatedCmrETag));
+  // ensure other etag is unchanged
+  t.is(handlerResponse.etags[dataFileS3Uri], dataFileOriginalETag);
+});
+
 // ECHO10 XML tests
 test('updateCmrAccessConstraints updates Echo10XML CMR metadata with access constraint', async (t) => {
   const key = `${randomString()}.cmr.xml`;
