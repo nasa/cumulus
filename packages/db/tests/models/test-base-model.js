@@ -676,7 +676,7 @@ test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async
   await basePgModel.deleteExcluding({
     knexOrTransaction: knex,
     excludeList: [flatten(insertedRecords)[0].cumulus_id],
-    params: objectPayload,
+    queryParams: objectPayload,
   });
 
   const actualRecords = await basePgModel.search(

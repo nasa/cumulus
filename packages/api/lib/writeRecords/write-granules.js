@@ -206,7 +206,7 @@ const _removeExcessFiles = async ({
   const excludeList = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
-    params: { cumulus_id: granuleCumulusId },
+    queryParams: { cumulus_id: granuleCumulusId },
     excludeList,
   });
 };
