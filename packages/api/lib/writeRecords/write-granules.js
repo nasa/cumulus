@@ -220,7 +220,6 @@ const _removeExcessFiles = async ({
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
  * @param {Object} params.workflowError - Error from the workflow
- * @param {string} params.status - Workflow status
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {string} params.snsEventType - SNS Event Type
  * @param {Object} [params.granuleModel] - Optional Granule DDB model override
