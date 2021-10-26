@@ -224,11 +224,11 @@ describe('Parsing a PDR with multiple data types and node names', () => {
       }),
       deleteProvider({
         prefix: stackName,
-        provider: testProvider.id,
+        providerId: testProvider.id,
       }),
       deleteProvider({
         prefix: stackName,
-        provider: nodeNameProvider.id,
+        providerId: nodeNameProvider.id,
       }),
     ]);
   });

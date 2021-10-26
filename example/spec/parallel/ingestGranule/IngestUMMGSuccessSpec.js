@@ -231,7 +231,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       }),
       providersApi.deleteProvider({
         prefix: config.stackName,
-        provider: { id: provider.id },
+        providerId: provider.id,
       }),
     ]);
   });

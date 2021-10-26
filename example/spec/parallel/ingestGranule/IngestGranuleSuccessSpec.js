@@ -282,13 +282,9 @@ describe('The S3 Ingest Granules workflow', () => {
     }
 
     // clean up stack state added by test
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
     await providersApi.deleteProvider({
       prefix: config.stackName,
-      provider: { id: provider.id },
+      providerId: provider.id,
     });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
