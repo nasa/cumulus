@@ -515,7 +515,6 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
 
   const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
-  console.log(returnedGranule);
 
   const fakeFile = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
@@ -1042,7 +1041,6 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
 
   const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
-  console.log(returnedGranule);
 
   const fakeFile = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
