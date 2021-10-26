@@ -666,6 +666,13 @@ test('GranulePgModel.upsert() succeeds without an execution for running granule'
   t.true(await granulePgModel.exists(knex, granule));
 });
 
+test('GranulePgModel.deleteExcluding throws Error', async (t) => {
+  const { knex, granulePgModel } = t.context;
+  await t.throwsAsync(
+    granulePgModel.deleteExcluding({ knexOrTransaction: knex })
+  );
+});
+
 test('GranulePgModel.delete() deletes granule and granule/execution join records', async (t) => {
   const {
     knex,

@@ -46,6 +46,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .del();
   }
 
+  async deleteExcluding(): Promise<never> {
+    throw new Error('deleteExcluding not implemented on granule class');
+  }
+
   /**
    * Checks if a granule is present in PostgreSQL
    *
