@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
 ### Added
 
 - [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
@@ -15,10 +16,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Update providers model to try decrypting credentials before encryption to allow for better handling of updating providers
-  
+
 ## [v9.8.0] 2021-10-19
 
 ### Notable changes
