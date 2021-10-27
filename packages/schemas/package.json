@@ -1,0 +1,45 @@
+{
+  "name": "@cumulus/schemas",
+  "version": "9.9.0-alpha.1",
+  "description": "Helpers for managing Cumulus task schemas",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
+  "scripts": {
+    "clean": "git clean -d -x -e node_modules -f",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+  },
+  "bin": {
+    "generate-task-schemas": "./dist/generate-task-schemas.js"
+  },
+  "ava": {
+    "files": [
+      "tests/**"
+    ],
+    "verbose": true,
+    "timeout": "15m"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "json-templates": "^4.1.0"
+  }
+}

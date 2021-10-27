@@ -122,6 +122,18 @@
         "files": [
           {
             "path": "/granules",
+            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg",
+            "size": 15797,
+            "type": "browse"
+          },
+          {
+            "path": "/granules",
+            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
+            "size": 32795,
+            "type": "data"
+          },
+          {
+            "path": "/granules",
             "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
             "size": 5192514,
             "type": "data",
@@ -133,18 +145,6 @@
             "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met",
             "size": 46419,
             "type": "metadata"
-          },
-          {
-            "path": "/granules",
-            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
-            "size": 32795,
-            "type": "data"
-          },
-          {
-            "path": "/granules",
-            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg",
-            "size": 15797,
-            "type": "browse"
           }
         ]
       }

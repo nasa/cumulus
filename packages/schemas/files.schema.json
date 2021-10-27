@@ -1,0 +1,45 @@
+{
+  "type": "array",
+  "items": {
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+      "bucket",
+      "key"
+    ],
+    "properties": {
+      "bucket": {
+        "description": "Bucket where file is archived in S3",
+        "type": "string"
+      },
+      "checksum": {
+        "description": "Checksum value for file",
+        "type": "string"
+      },
+      "checksumType": {
+        "description": "Type of checksum (e.g. md5, sha256, etc)",
+        "type": "string"
+      },
+      "fileName": {
+        "description": "Name of file (e.g. file.txt)",
+        "type": "string"
+      },
+      "key": {
+        "description": "S3 Key for archived file",
+        "type": "string"
+      },
+      "size": {
+        "description": "Size of file (in bytes)",
+        "type": "number"
+      },
+      "source": {
+        "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
+        "type": "string"
+      },
+      "type": {
+        "description": "Type of file (e.g. data, metadata, browse)",
+        "type": "string"
+      }
+    }
+  }
+}
