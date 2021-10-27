@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseString } = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
-const { urlPathTemplate } = require('../url-path-template');
+const { getDOY, urlPathTemplate } = require('../url-path-template');
 
 const modisXmlFile = path.join(
   __dirname,
@@ -33,6 +33,12 @@ function getTestMetadata(xmlFile) {
     });
   });
 }
+
+test('getDOY returns DOY and correctly pads with leading zeros', (t) => {
+  t.is(getDOY(new Date('Dec 31, 2020')), '366');
+  t.is(getDOY(new Date('Jan 31, 2020')), '031');
+  t.is(getDOY(new Date('Jan 1, 2020')), '001');
+});
 
 test('test basic usage', (t) => {
   const urlPath = '/{file.bucket}/{file.name}';
@@ -64,6 +70,10 @@ test('url path has operations on metadata date components', async (t) => {
   const urlPath = yearPart.concat(monthPart, datePart, hourPart);
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, '2016/12/23/13/');
+  const doyPart = '{extractDOY(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
+  const doyUrlPath = yearPart.concat(doyPart);
+  const doyResult = urlPathTemplate(doyUrlPath, { cmrMetadata: metadataObject });
+  t.is(doyResult, '2016/358/');
 });
 
 test('url path has substring operation', async (t) => {

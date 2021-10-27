@@ -47,6 +47,7 @@
     "@cumulus/sftp-client": "9.8.0",
     "aws-sdk": "^2.585.0",
     "cksum": "^1.3.0",
+    "date-fns": "^2.25.0",
     "delay": "^4.3.0",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",

@@ -1,5 +1,11 @@
 const get = require('lodash/get');
 const moment = require('moment');
+const { getDayOfYear } = require('date-fns');
+
+function getDOY(date) {
+  const doy = getDayOfYear(date);
+  return `${doy}`.padStart(3, '0');
+}
 
 /**
 * evaluate the operation specified in template
@@ -11,6 +17,9 @@ const moment = require('moment');
 function evaluateOperation(name, args) {
   const valueStr = args[0];
   switch (name) {
+  case 'extractDOY': {
+    return getDOY(new Date(valueStr));
+  }
   case 'extractYear': {
     return new Date(valueStr).getUTCFullYear();
   }
@@ -82,4 +91,7 @@ function urlPathTemplate(pathTemplate, context) {
   }
 }
 
-module.exports.urlPathTemplate = urlPathTemplate;
+module.exports = {
+  getDOY,
+  urlPathTemplate,
+};
