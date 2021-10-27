@@ -4,15 +4,15 @@ title: Configuration of Tasks
 hide_title: false
 ---
 
-The `cumulus` module exposes values for configuration of some of the provided archive and ingest tasks.   Currently the following are available as configurable variables:
+The `cumulus` module exposes values for configuration for some of the provided archive and ingest tasks.   Currently the following are available as configurable variables:
 
 ## elasticsearch_client_config
 
 Configuration parameters for Elasticsearch client for cumulus archive module tasks in the form:
 
 ```hcl
-<lambda_identifier>>_es_scroll_duration = <duration>
-<lambda_identifier>>_es_scroll_size = <size>
+<lambda_identifier>_es_scroll_duration = <duration>
+<lambda_identifier>_es_scroll_size = <size>
   type = map(string)
 ```
 
