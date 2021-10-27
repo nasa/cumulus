@@ -11,7 +11,7 @@ const {
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const cryptoRandomString = require('crypto-random-string');
 
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -24,6 +24,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { AccessToken, Collection, Execution, Granule } = require('../../models');
@@ -41,8 +42,6 @@ process.env.ExecutionsTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
-
-const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -74,7 +73,6 @@ const fakeExpiredExecution = fakeExecutionFactoryV2({
 });
 
 const testDbName = randomId('execution-status_test');
-
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
     Bucket: process.env.system_bucket,
@@ -239,10 +237,10 @@ test.before(async (t) => {
     original_payload: originalPayload,
     final_payload: finalPayload,
   });
-  const executionPgModel = new ExecutionPgModel();
   await executionPgModel.create(
     t.context.knex,
     t.context.fakeExecutionRecord
+  );
 
   // create fake Collections table
   collectionModel = new Collection();
@@ -262,14 +260,6 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-
-  // Generate a local test postgres database
-  const { knex, knexAdmin } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections

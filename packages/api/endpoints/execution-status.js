@@ -13,7 +13,6 @@ const {
   CollectionPgModel,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const models = require('../models');
 
 /**
  * fetchRemote fetches remote message from S3

@@ -2,12 +2,11 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const { ValidationError } = require('@cumulus/errors');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   CollectionPgModel,
@@ -107,11 +106,11 @@ test.beforeEach(async (t) => {
   // Create executions
   const executionPgModel = new ExecutionPgModel();
   const [executionA] = await executionPgModel.create(
-    knex,
+    t.context.knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
   );
   const [executionB] = await executionPgModel.create(
-    knex,
+    t.context.knex,
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
 
@@ -119,21 +118,21 @@ test.beforeEach(async (t) => {
   const executionBCumulusId = executionB;
 
   t.context.executions = [
-    await executionPgModel.get(knex, { cumulus_id: executionACumulusId }),
-    await executionPgModel.get(knex, { cumulus_id: executionBCumulusId }),
+    await executionPgModel.get(t.context.knex, { cumulus_id: executionACumulusId }),
+    await executionPgModel.get(t.context.knex, { cumulus_id: executionBCumulusId }),
   ];
 
   // Create GranulesExecutions JOIN records
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   await granulesExecutionsPgModel.create(
-    knex,
+    t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
       execution_cumulus_id: executionACumulusId,
     }
   );
   await granulesExecutionsPgModel.create(
-    knex,
+    t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
       execution_cumulus_id: executionBCumulusId,
@@ -186,13 +185,8 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     filePgModel,
     postgresGranule,
     fileKeys,
-    collectionId,
-    granulePgModel,
-    granuleCumulusId,
     executions,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
@@ -264,12 +258,8 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     filePgModel,
     postgresGranule,
     fileKeys,
-    granulePgModel,
-    granuleCumulusId,
     executions,
   } = t.context;
-
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
@@ -502,11 +492,8 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     postgresGranule,
     fileKeys,
     collectionId,
-    granulePgModel,
-    granuleCumulusId,
   } = t.context;
 
-  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
   delete postgresGranule.pdr_cumulus_id;
   delete postgresGranule.provider_cumulus_id;
 
