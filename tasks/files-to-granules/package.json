@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/files-to-granules",
-  "version": "9.7.0",
+  "version": "9.8.0",
   "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
   "main": "index.js",
   "directories": {
@@ -15,7 +15,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
+    "generate-task-schemas": "./node_modules/.bin/generate-task-schemas $(pwd) files",
+    "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
@@ -30,11 +31,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.7.0",
+    "@cumulus/aws-client": "9.8.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.0",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@cumulus/common": "9.7.0"
+    "@cumulus/common": "9.8.0",
+    "@cumulus/schemas": "9.7.0-alpha.0"
   }
 }

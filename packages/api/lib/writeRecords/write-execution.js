@@ -3,6 +3,7 @@ const isNil = require('lodash/isNil');
 const {
   ExecutionPgModel,
   translateApiExecutionToPostgresExecution,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   getMessageExecutionArn,
@@ -86,7 +87,7 @@ const _writeExecutionRecord = ({
   knex,
   executionModel = new Execution(),
   executionPgModel = new ExecutionPgModel(),
-}) => knex.transaction(async (trx) => {
+}) => createRejectableTransaction(knex, async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [executionCumulusId] = await executionPgModel.upsert(trx, postgresRecord);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionCumulusId}`);

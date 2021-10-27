@@ -2,48 +2,94 @@
   "title": "LzardsBackupOutput",
   "description": "Describes the output expected by the LzardsBackup task component",
   "type": "object",
-  "required": ["backupResults", "granules"],
+  "required": [
+    "backupResults",
+    "granules"
+  ],
   "properties": {
     "backupResults": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId"],
+        "required": [
+          "filename",
+          "status",
+          "granuleId"
+        ],
         "properties": {
-          "body": { "type": "string" },
-          "filename": { "type": "string" },
-          "status": { "type": "string" },
-          "granuleId": { "type": "string" },
-          "statusCode": { "type": "number" }
+          "body": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "granuleId": {
+            "type": "string"
+          },
+          "statusCode": {
+            "type": "number"
+          }
         }
       },
       "granules": {
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["files", "granuleId", "dataType", "version"],
+          "required": [
+            "files",
+            "granuleId",
+            "dataType",
+            "version"
+          ],
           "properties": {
-            "granuleId": { "type": "string" },
-            "dataType": { "type": "string" },
-            "version": { "type": "string" },
+            "granuleId": {
+              "type": "string"
+            },
+            "dataType": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
             "files": {
               "type": "array",
               "items": {
                 "type": "object",
                 "required": [
-                  "filename", "name"
+                  "bucket",
+                  "key"
                 ],
+                "additionalProperties": false,
                 "properties": {
-                  "filename": {
-                    "type": "string",
-                    "description": "The s3 bucket/path URI (e.g. s3://{bucket}{object})"
+                  "bucket": {
+                    "description": "Bucket where file is archived in S3",
+                    "type": "string"
                   },
-                  "name": {
-                    "type": "string",
-                    "description": "the filename of the file"
+                  "key": {
+                    "description": "S3 Key for archived file",
+                    "type": "string"
                   },
-                  "checksumType": { "type": "string" },
-                  "checksum": { "type": "string" }
+                  "source": {
+                    "type": "string"
+                  },
+                  "checksum": {
+                    "type": "string"
+                  },
+                  "checksumType": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
                 }
               }
             }

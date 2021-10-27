@@ -6,12 +6,40 @@
     "granules"
   ],
   "properties": {
+    "granuleDuplicates": {
+      "type": "object",
+      "additionalProperties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bucket",
+              "key"
+            ],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "granules": {
       "type": "array",
       "description": "Array of all granules",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": [
+          "granuleId",
+          "files"
+        ],
         "properties": {
           "granuleId": {
             "type": "string"
@@ -20,18 +48,36 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
+              "required": [
+                "bucket",
+                "key"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "name": {
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "filename": {
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "checksum": {
+                  "type": "string"
+                },
+                "checksumType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "fileName": {
                   "type": "string"
                 },
                 "type": {
-                  "type": "string"
-                },
-                "bucket": {
                   "type": "string"
                 }
               }

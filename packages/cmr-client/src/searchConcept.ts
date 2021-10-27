@@ -1,5 +1,6 @@
 import got, { Headers } from 'got';
 import Logger from '@cumulus/logger';
+
 import { getSearchUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
@@ -110,14 +111,15 @@ export async function searchConcept({
     log.error(`Error executing CMR search concept.
       Searching ${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}
       with search parameters ${query}
-      and headers ${headers}`);
+      and headers ${JSON.stringify(headers)}`);
+    log.error(JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw error;
   }
 
   const responseItems
     = format === 'echo10'
       ? (<Echo10Response>(await parseXMLString(<string>response.body))).results.result || []
-      : (<{body: {items: unknown}}>response).body.items || (<JsonResponse>response).body.feed.entry;
+      : (<UmmJsonResponse>response).body.items || (<JsonResponse>response).body.feed.entry;
 
   const fetchedResults = previousResults.concat(responseItems || []);
 
