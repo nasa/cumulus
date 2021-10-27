@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### BREAKING CHANGES
+
+- [PR TBD]()
+  - Allow `urlPathTemplate` to read metadata values from ISO XML files, enabling
+    MoveGranules to work with a `url_path` template in the collection config
+    referencing values from an ISO metadata file.
+    - Change function `isISOFile` from identifying `cmr_iso.xml` files to `.iso.xml`
+    - Add function `isCMRISOFile` to identify `.cmr_iso.xml` files
+    - Change function `isCMRFilename` to return `true` for `.cmr_iso.xml` and
+      `.iso.xml` files; previous behavior would return `true` for `cmr_iso.xml`
+      files and `false` for `.iso.xml` files
+    - Change function `metadataObjectFromCMRFile` to return parsed XML for
+      `.iso.xml` and `.cmr_iso.xml` files; previous behavior would throw an error
+      in either of those cases
+      - `PostToCMR` and `UpdateCMRAccessConstraints` tasks now explicitly throw an
+        error if dealing with an ISO file, before `metadataObjectFromCMRFile` is
+        called; this preserves the behavior of these tasks not supporting ISO
+
 ### Added
 
 - [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
@@ -13,6 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
+
 
 ## [v9.8.0] 2021-10-19
 
