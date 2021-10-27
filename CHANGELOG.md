@@ -14,7 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     docs/workflow/workflow-configuration-how-to.md for more information.
 - CUMULUS-2324
   - Added `extractDOY` function to url-path-template. Similar to `extractYear`,
-    etc., this function will extract the day of year from a given date.
+    etc., this function will extract the day of year from a given date. This
+    function will also 0-pad any DOY number less than three digits, e.g. `002`.
 
 ### Changed
 
