@@ -15,7 +15,7 @@
     "access": "public"
   },
   "scripts": {
-    "generate-task-schemas": "./node_modules/.bin/generate-task-schemas $(pwd) files",
+    "generate-task-schemas": "npx generate-task-schemas . files",
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",

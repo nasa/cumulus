@@ -20,7 +20,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "generate-task-schemas": "./node_modules/.bin/generate-task-schemas $(pwd) files",
+    "generate-task-schemas": "npx generate-task-schemas . files",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
