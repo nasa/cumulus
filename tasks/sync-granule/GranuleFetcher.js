@@ -9,6 +9,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
+const { removeNilProperties } = require('@cumulus/common/util');
 const errors = require('@cumulus/errors');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { handleDuplicateFile } = require('@cumulus/ingest/granule');
@@ -83,9 +84,7 @@ class GranuleFetcher {
 
     // default collectionId, could be overwritten by granule's collection information
     if (collection) {
-      this.collectionId = constructCollectionId(
-        collection.name, collection.version
-      );
+      this.collectionId = constructCollectionId(collection.name, collection.version);
     }
 
     this.provider = provider;
@@ -123,19 +122,45 @@ class GranuleFetcher {
 
     const filesWithChecksums = await this.addChecksumsToFiles(granule.files);
 
-    const downloadFiles = filesWithChecksums
-      .filter((f) => syncChecksumFiles || !this.isChecksumFile(f))
-      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
+    const filesToDownload = filesWithChecksums.filter(
+      (f) => syncChecksumFiles || !this.isChecksumFile(f)
+    );
 
+    const downloadPromises = filesToDownload.map((file) => this.ingestFile(
+      file,
+      bucket,
+      this.duplicateHandling
+    ));
     log.debug('awaiting all download.Files');
-    const files = flatten(await Promise.all(downloadFiles));
+    const downloadResults = await Promise.all(downloadPromises);
     log.debug('finished ingest()');
 
+    const downloadFiles = [];
+    const granuleDuplicates = [];
+    downloadResults.forEach((result) => {
+      downloadFiles.push(result.files);
+      if (result.duplicate) {
+        granuleDuplicates.push(result.duplicate);
+      }
+    });
+    const files = flatten(downloadFiles);
+
+    let granuleDuplicateFiles;
+    if (granuleDuplicates.length > 0) {
+      granuleDuplicateFiles = {
+        granuleId: granule.granuleId,
+        files: granuleDuplicates,
+      };
+    }
+
     return {
-      granuleId: granule.granuleId,
-      dataType: collectionName,
-      version: collectionVersion,
-      files,
+      ingestedGranule: {
+        granuleId: granule.granuleId,
+        dataType: collectionName,
+        version: collectionVersion,
+        files,
+      },
+      granuleDuplicateFiles,
     };
   }
 
@@ -267,23 +292,23 @@ class GranuleFetcher {
         options,
       });
     } else {
-      log.warn(`Could not verify ${file.name} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
+      log.warn(`Could not verify ${path.basename(key)} expected checksum: ${file.checksum} of type ${file.checksumType}.`);
     }
     if (file.size) {
       const ingestedSize = await S3.getObjectSize({ s3: s3(), bucket, key });
       if (ingestedSize !== (file.size)) {
         throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
+          `verifyFile ${path.basename(key)} failed: Actual file size ${ingestedSize}`
           + ` did not match expected file size ${(file.size)}`
         );
       }
     } else {
-      log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
+      log.warn(`Could not verify ${path.basename(key)} expected file size: ${file.size}.`);
     }
 
     return (file.checksumType || file.checksum)
       ? [file.checksumType, file.checksum]
-      : [null, null];
+      : [undefined, undefined];
   }
 
   /**
@@ -320,6 +345,7 @@ class GranuleFetcher {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, destinationBucket, duplicateHandling) {
+    let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
     // place files in the <collectionId> subdirectory
@@ -327,13 +353,20 @@ class GranuleFetcher {
     const destinationKey = S3.s3Join(stagingPath, file.name);
 
     // the staged file expected
-    const stagedFile = {
-      ...file,
-      filename: S3.buildS3Uri(destinationBucket, destinationKey),
-      fileStagingDir: stagingPath,
-      url_path: this.getUrlPath(file),
+    const stagedFile = removeNilProperties({
+      size: file.size,
       bucket: destinationBucket,
-    };
+      key: destinationKey,
+      source: `${file.path}/${file.name}`,
+      fileName: path.basename(destinationKey),
+      type: file.type,
+      checksumType: file.checksumType,
+      checksum: file.checksum ? file.checksum.toString() : file.checksum,
+    });
+
+    // if (file.checksum) {
+    //   stagedFile.checksum = file.checksum.toString();
+    // }
 
     const s3ObjAlreadyExists = await S3.s3ObjectExists(
       { Bucket: destinationBucket, Key: destinationKey }
@@ -352,7 +385,7 @@ class GranuleFetcher {
       );
 
       if (s3ObjAlreadyExists) {
-        stagedFile.duplicate_found = true;
+        duplicateFound = { bucket: destinationBucket, key: destinationKey };
         const stagedFileKey = `${destinationKey}.${uuidv4()}`;
         // returns renamed files for 'version', otherwise empty array
         versionedFiles = await handleDuplicateFile({
@@ -390,16 +423,16 @@ class GranuleFetcher {
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file
     log.debug(`returning ${JSON.stringify(stagedFile)}`);
-    return [stagedFile].concat(versionedFiles.map((f) => (
+    const returnVal = [stagedFile].concat(versionedFiles.map((f) => (
       {
-        bucket: destinationBucket,
-        name: path.basename(f.Key),
-        path: file.path,
-        filename: S3.buildS3Uri(f.Bucket, f.Key),
+        bucket: f.Bucket,
+        key: f.Key,
+        source: `${file.path}/${file.key}`,
         size: f.size,
-        fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file),
+        fileName: path.basename(f.Key),
+        type: f.type,
       })));
+    return { files: returnVal, duplicate: duplicateFound };
   }
 }
 

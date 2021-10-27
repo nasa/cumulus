@@ -20,8 +20,8 @@
               "type": "object",
               "required": [ "name", "path" ],
               "properties": {
-                "name": { "type": "string" },
-                "path": { "type": "string" },
+                "name": { "type": "string", "description": "The filename portion of path/filename" },
+                "path": { "type": "string", "description": "The path portion of path/filename" },
                 "size": { "type": "integer" },
                 "type": { "type": "string" },
                 "time": {

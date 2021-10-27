@@ -18,7 +18,8 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
+    "generate-task-schemas": "./node_modules/.bin/generate-task-schemas $(pwd) files",
+    "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
@@ -47,6 +48,9 @@
     "nock": "^12.0.1",
     "rewire": "^5.0.0",
     "xml2js": "^0.4.23"
+  },
+  "devDependencies": {
+    "@cumulus/schemas": "9.7.0-alpha.0"
   },
   "bugs": {
     "url": "https://github.com/nasa/cumulus/issues"
