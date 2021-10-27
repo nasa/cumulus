@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-
 ### Added
 
 - [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
@@ -17,6 +16,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
   - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
 
+### Changed
+
+- **CUMULUS-2725**
+  - Updated providers endpoint to return encrypted password
+  - Update providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+  
 ## [v9.8.0] 2021-10-19
 
 ### Notable changes
@@ -82,6 +87,13 @@ upgrades to `knex` package and to address security vulnerabilities.
   - Updates cumulus-tf/cumulus/variables.tf to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard for default deployments.
+- **CUMULUS-2584**
+  - Updates `api/endpoints/execution-status.js` `get` method to include associated granules, as
+    an array, for the provided execution.
+  - Added `getExecutionArnsByGranuleCumulusId` returning a list of executionArns sorted by most recent first,
+    for an input Granule Cumulus ID in support of the move of `translatePostgresGranuleToApiGranule` from RDS-Phase2
+    feature branch
+  - Added `getApiExecutionCumulusIds` returning cumulus IDs for a given list of executions
 - **CUMULUS-NONE**
   - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
