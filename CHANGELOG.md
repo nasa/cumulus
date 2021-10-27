@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
+- CUMULUS-2324
+  - Added `extractDOY` function to url-path-template. Similar to `extractYear`,
+    etc., this function will extract the day of year from a given date.
 
 ### Changed
 
