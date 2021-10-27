@@ -59,6 +59,28 @@ export default class GranulesExecutionsPgModel {
     return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
   }
 
+  /**
+   * Get granule_cumulus_id column values from the execution_cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction -
+   *  DB client or transaction
+   * @param {number | Array<number>} executionCumulusIds -
+   * single execution_cumulus_id or array of execution_cumulus_ids
+   * @returns {Promise<Array<number>>} An array of granule_cumulus_ids
+   */
+  async searchByExecutionCumulusIds(
+    knexOrTransaction: Knex | Knex.Transaction,
+    executionCumulusIds: Array<number> | number
+  ): Promise<Array<number>> {
+    const executionCumulusIdsArray = [executionCumulusIds].flat();
+    const granuleExecutions: Array<PostgresGranuleExecution> =
+      await knexOrTransaction(this.tableName)
+        .select('granule_cumulus_id')
+        .whereIn('execution_cumulus_id', executionCumulusIdsArray)
+        .groupBy('granule_cumulus_id');
+    return granuleExecutions.map((granuleExecution) => granuleExecution.granule_cumulus_id);
+  }
+
   async delete(
     knexTransaction: Knex.Transaction,
     params: Partial<PostgresGranuleExecution>
