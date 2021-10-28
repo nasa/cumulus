@@ -26,12 +26,22 @@ const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { moveGranules } = require('..');
 
 async function uploadFiles(files, bucket) {
-  await Promise.all(files.map((file) => promiseS3Upload({
-    Bucket: bucket,
-    Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key,
-  })));
+  await Promise.all(files.map((file) => {
+    let body;
+    if (file.endsWith('.cmr.xml')) {
+      body = fs.createReadStream('tests/data/meta.xml');
+    } else if (file.endsWith('.iso.xml')) {
+      body = fs.createReadStream('tests/data/meta.iso.xml');
+    } else {
+      body = parseS3Uri(file).Key;
+    }
+
+    return promiseS3Upload({
+      Bucket: bucket,
+      Key: parseS3Uri(file).Key,
+      Body: body,
+    });
+  }));
 }
 
 function updateCmrFileType(payload) {
@@ -609,4 +619,32 @@ test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is 
 test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
   const payload = setupDuplicateHandlingCollection(t, 'replace');
   await granuleFilesOverwrittenTest(t, payload);
+});
+
+test.serial('url_path is evaluated correctly when the metadata file is ISO', async (t) => {
+  // redo payload initialization from beforeEach, but for the ISO payload
+  const payloadPath = path.join(__dirname, 'data', 'payload_iso.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  const newPayload = buildPayload(t);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const filename = 'ATL08_20181208064514_10790104_004_01.h5';
+  const outputFile = output.granules[0].files.find((f) => f.name === filename);
+  const expectedKey = `example/2018/12/08/${filename}`;
+
+  t.is(outputFile.filepath, expectedKey);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: expectedKey,
+  });
+  t.true(check);
 });

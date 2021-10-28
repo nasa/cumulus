@@ -31,7 +31,7 @@ const {
   removeEtagsFromFileObjects,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
-const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
+const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
@@ -157,6 +157,32 @@ test('isCMRFile returns false if fileobject is invalid', (t) => {
   t.false(isCMRFile(fileObj));
 });
 
+test('isISOFile returns true if fileobject has valid .iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.iso.xml',
+  };
+  t.true(isISOFile(fileObj));
+});
+
+test('isISOFile returns false if fileobject does not have a valid .iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'invalidfile.xml',
+  };
+  t.false(isISOFile(fileObj));
+});
+
+test('isISOFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.cmr_iso.xml',
+  };
+  t.true(isISOFile(fileObj));
+});
+
+test('isISOFile returns false if fileobject is invalid', (t) => {
+  const fileObj = { bad: 'object' };
+  t.false(isISOFile(fileObj));
+});
+
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
   const granule = {
     granuleId: 'fake-id',
@@ -262,6 +288,76 @@ test('mapFileEtags returns map of S3 URIs to etags', (t) => {
   t.deepEqual(
     mapFileEtags(granuleFiles),
     expectation
+  );
+});
+
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering out non-CMR files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }],
+  };
+  t.deepEqual(
+    granuleToCmrFileObject(granule),
+    [{
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.cmr.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering with a custom filter', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }],
+  };
+  const filterFunc = (fileobject) => fileobject.key.endsWith('.iso.xml');
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.iso.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering with another custom filter', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }],
+  };
+  const filterFunc = (fileobject) => fileobject.key.endsWith('.iso.xml') || fileobject.key.endsWith('cmr.xml');
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.cmr.xml',
+    },
+    {
+      granuleId: 'fake-id',
+      filename: 's3://bucket/fake.iso.xml',
+    }]
   );
 });
 
