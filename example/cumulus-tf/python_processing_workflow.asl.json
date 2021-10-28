@@ -137,15 +137,7 @@
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload}"
-                }
-              ]
-            }
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
           }
         }
       },
