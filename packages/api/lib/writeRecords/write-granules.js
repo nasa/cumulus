@@ -116,7 +116,7 @@ const _writeFiles = async ({
     log.info('About to write file record to PostgreSQL: %j', fileRecord);
     const [upsertedRecord] = await filePgModel.upsert(knex, fileRecord);
     log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
-    return upsertedRecord[0];
+    return upsertedRecord;
   },
   { stopOnError: false }
 );
