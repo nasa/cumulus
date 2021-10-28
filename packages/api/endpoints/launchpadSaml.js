@@ -6,7 +6,6 @@ const path = require('path');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
-const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const moment = require('moment');
 
@@ -76,9 +75,12 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
     }
     throw error;
   }
+
   const metadata = await parseXmlString(launchpadMetatdataXML);
-  const certificate = JSONPath({ wrap: false }, '$..ns1:X509Certificate', metadata);
-  if (certificate) return flatten(certificate);
+  // matches path such as ['ns1:KeyInfo'][0]['ns1:X509Data'][0]['ns1:X509Certificate']
+  const searchPath = '$..[?(@path.endsWith("[\'X509Certificate\']") || @path.endsWith(":X509Certificate\']"))]';
+  const certificates = JSONPath(searchPath, metadata);
+  if (certificates.length >= 1) return certificates.pop();
   throw new Error(
     `Failed to retrieve Launchpad metadata X509 Certificate from ${launchpadPublicMetadataPath}`
   );

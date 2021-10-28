@@ -20,7 +20,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
-  - Update providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+  - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+- **CUMULUS-2734**
+  - Updated `@cumulus/api/launchpadSaml.launchpadPublicCertificate` to correctly retrieve
+    certificate from launchpad IdP metadata with and without namespace prefix.
   
 ## [v9.8.0] 2021-10-19
 
