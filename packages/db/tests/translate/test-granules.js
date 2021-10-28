@@ -114,13 +114,15 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
 
-  const executionACumulusId = executionA;
-  const executionBCumulusId = executionB;
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
 
   t.context.executions = [
     await executionPgModel.get(t.context.knex, { cumulus_id: executionACumulusId }),
     await executionPgModel.get(t.context.knex, { cumulus_id: executionBCumulusId }),
   ];
+
+  t.context.granuleCumulusId = t.context.postgresGranule.cumulus_id;
 
   // Create GranulesExecutions JOIN records
   const granulesExecutionsPgModel = new GranulesExecutionsPgModel();

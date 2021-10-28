@@ -851,14 +851,17 @@ test('getApiExecutionCumulusIds() returns list of cumulus ids given a list of AP
     fakeExecutionRecordFactory({ workflow_name: 'fakeWorkflow3', timestamp: new Date('456') }),
   ];
 
-  let executionCumulusId1;
-  let executionCumulusId2;
-  let executionCumulusId3;
+  let execution1;
+  let execution2;
+  let execution3;
   await createRejectableTransaction(knex, async (trx) => {
-    [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
-    [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
-    [executionCumulusId3] = await executionPgModel.create(trx, executionRecords[2]);
+    [execution1] = await executionPgModel.create(trx, executionRecords[0]);
+    [execution2] = await executionPgModel.create(trx, executionRecords[1]);
+    [execution3] = await executionPgModel.create(trx, executionRecords[2]);
   });
+  const executionCumulusId1 = execution1.cumulus_id;
+  const executionCumulusId2 = execution2.cumulus_id;
+  const executionCumulusId3 = execution3.cumulus_id;
 
   const executionCumulusIds = await getApiExecutionCumulusIds(knex, executionRecords);
 
@@ -889,22 +892,26 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
     fakeExecutionRecordFactory({ workflow_name: 'fakeWorkflow1', timestamp: new Date('1234') }),
   ];
 
-  let executionCumulusId1;
+  let execution1;
   await createRejectableTransaction(knex, async (trx) => {
-    [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
+    [execution1] = await executionPgModel.create(trx, executionRecords[0]);
   });
+  const executionCumulusId1 = execution1.cumulus_id;
 
-  const [granuleCumulusId1] = await upsertGranuleWithExecutionJoinRecord(knex,
+  const [granule1] = await upsertGranuleWithExecutionJoinRecord(knex,
     granuleRecord1,
     executionCumulusId1);
+  const granuleCumulusId1 = granule1.cumulus_id;
 
-  const [granuleCumulusId2] = await upsertGranuleWithExecutionJoinRecord(knex,
+  const [granule2] = await upsertGranuleWithExecutionJoinRecord(knex,
     granuleRecord2,
     executionCumulusId1);
+  const granuleCumulusId2 = granule2.cumulus_id;
 
-  const [granuleCumulusId3] = await upsertGranuleWithExecutionJoinRecord(knex,
+  const [granule3] = await upsertGranuleWithExecutionJoinRecord(knex,
     granuleRecord3,
     executionCumulusId1);
+  const granuleCumulusId3 = granule3.cumulus_id;
 
   const expectedGranuleCumulusIds = [
     Number(granuleCumulusId1),
