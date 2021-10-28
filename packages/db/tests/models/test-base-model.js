@@ -688,7 +688,7 @@ test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async
   t.deepEqual(actualRecords, insertedRecords[0]);
 });
 
-test('deleteExcluding throws if missing explcit query params', async (t) => {
+test('deleteExcluding throws if missing explicit query params', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const testLength = 5;
   const objectPayload = { info: 'baseModelExcluding' };
