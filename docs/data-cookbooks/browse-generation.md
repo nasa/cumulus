@@ -395,47 +395,37 @@ and you should see in the payload from the workflow something similar to:
     {
       "files": [
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "key": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "type": "data",
           "bucket": "cumulus-test-sandbox-protected",
-          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "time": 1553027415000,
           "path": "data",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
-          "duplicate_found": true,
           "size": 1908635
         },
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "key": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
           "type": "metadata",
           "bucket": "cumulus-test-sandbox-private",
-          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "time": 1553027412000,
           "path": "data",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
-          "duplicate_found": true,
           "size": 21708
         },
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "key": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
           "type": "browse",
           "bucket": "cumulus-test-sandbox-protected",
-          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-          "time": 1553027415000,
           "path": "data",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
-          "duplicate_found": true,
           "size": 1908635
         },
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "key": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "type": "metadata",
           "bucket": "cumulus-test-sandbox-protected-2",
-          "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"
         }
       ],
