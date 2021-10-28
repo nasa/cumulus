@@ -264,7 +264,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   /**
   * Deletes items from postgres based on params, excluding any cumulus_ids in the excludeList
   * @param {Object} params
-  * @param {Knex | Knex.Transaction} params.nexOrTransaction - DB client or transaction
+  * @param {Knex | Knex.Transaction} params.knexOrTransaction - DB client or transaction
   * @param {Partial<RecordType>} params.queryParams - An object or any portion
   *                                             of an object of type RecordType
   * @param {[number]} params.excludeList - A list of cumulus_ids to exclude from the deletion
