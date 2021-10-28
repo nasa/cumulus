@@ -163,6 +163,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
+  type        = map(string)
+  default     = {}
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type        = number
