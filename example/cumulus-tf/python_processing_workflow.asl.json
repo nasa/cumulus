@@ -26,10 +26,6 @@
                   "destination": "{$.meta.input_granules}"
                 },
                 {
-                  "source": "{$.granuleDuplicates}",
-                  "destination": "{$.meta.sync_granules.granule_duplicates}"
-                },
-                {
                   "source": "{$}",
                   "destination": "{$.payload}"
                 },
@@ -144,10 +140,6 @@
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
             "cumulus_message": {
               "outputs": [
-                {
-                  "source": "{$.granuleDuplicates}",
-                  "destination": "{$.meta.move_granules.granule_duplicates}"
-                },
                 {
                   "source": "{$}",
                   "destination": "{$.payload}"
