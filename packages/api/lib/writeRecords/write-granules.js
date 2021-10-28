@@ -198,7 +198,7 @@ const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
   writtenFiles,
   granuleCumulusId,
-  knex, // TODO Refactor
+  knex,
 }) => {
   if (writtenFiles.length === 0) {
     throw new Error('_removeExcessFiles called with no written files');
