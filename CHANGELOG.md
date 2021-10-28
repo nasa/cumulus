@@ -10,15 +10,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2388**:
   - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
-    - sync-granule
     - add-missing-file-checksums
     - files-to-granules
-    - move-granules
-    - update-granules-cmr-metadata-file-links
     - hyrax-metadata-updates
-    - post-to-cmr
     - lzards-backup
+    - move-granules
+    - post-to-cmr
+    - sync-granule
     - update-cmr-access-constraints
+    - update-granules-cmr-metadata-file-links
   The primary focus of the schema updates was to standardize the format of granules, and
   particularly their files data. The granule `files` object now matches the file schema in the
   Cumulus database and thus also matches the `files` object produced by the API with use cases like
