@@ -1,0 +1,18 @@
+{
+  "title": "AddMissingFileChecksumsInput",
+  "description": "Describes the input expected by the add-missing-file-checksums task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": "{{files}}"
+        }
+      }
+    }
+  }
+}

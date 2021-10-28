@@ -6,12 +6,40 @@
     "granules"
   ],
   "properties": {
+    "granuleDuplicates": {
+      "type": "object",
+      "additionalProperties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bucket",
+              "key"
+            ],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "granules": {
       "type": "array",
       "description": "Array of all granules",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": [
+          "granuleId",
+          "files"
+        ],
         "properties": {
           "granuleId": {
             "type": "string"
@@ -19,19 +47,43 @@
           "files": {
             "type": "array",
             "items": {
+              "additionalProperties": false,
               "type": "object",
-              "required": ["name"],
+              "required": [
+                "bucket",
+                "key"
+              ],
               "properties": {
-                "name": {
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "filename": {
+                "checksum": {
+                  "description": "Checksum value for file",
+                  "type": "string"
+                },
+                "checksumType": {
+                  "description": "Type of checksum (e.g. md5, sha256, etc)",
+                  "type": "string"
+                },
+                "fileName": {
+                  "description": "Name of file (e.g. file.txt)",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "size": {
+                  "description": "Size of file (in bytes)",
+                  "type": "number"
+                },
+                "source": {
+                  "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
                   "type": "string"
                 },
                 "type": {
-                  "type": "string"
-                },
-                "bucket": {
+                  "description": "Type of file (e.g. data, metadata, browse)",
                   "type": "string"
                 }
               }

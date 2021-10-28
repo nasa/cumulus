@@ -1,0 +1,31 @@
+{
+  "title": "AddMissingFileChecksumsOut",
+  "description": "Describes the output expected from the add-missing-file-checksums task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": {
+            "type": "{{files.type}}",
+            "items": {
+              "type": "{{files.items.type}}",
+              "required": [
+                "bucket",
+                "checksum",
+                "checksumType",
+                "key"
+              ],
+              "additionalProperties": "{{files.items.additionalProperties}}",
+              "properties": "{{files.items.properties}}"
+            }
+          }
+        }
+      }
+    }
+  }
+}

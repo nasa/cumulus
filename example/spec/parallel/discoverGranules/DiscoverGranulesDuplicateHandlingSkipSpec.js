@@ -9,22 +9,23 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
-const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
+const { createGranule, deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-
+const { removeNilProperties } = require('@cumulus/common/util');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
-
+const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
-describe('The DiscoverGranules workflow with one existing granule, one new granule, and duplicateHandling="skip"', () => {
+describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
   let collection;
   let discoverGranulesRule;
@@ -36,6 +37,8 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
   let newGranuleKey;
   let prefix;
   let provider;
+  let queuedGranuleId;
+  let queuedGranuleKey;
   let sourceBucket;
   let discoverGranulesExecutionArn;
   let ingestGranuleExecutionArn;
@@ -60,6 +63,29 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
 
       // Create the S3 provider
       provider = await createProvider(prefix, { host: sourceBucket });
+
+      // Stage and Create a queued Granule in S3
+      queuedGranuleId = randomId('queued-granule-');
+      queuedGranuleKey = `${sourcePath}/${queuedGranuleId}.txt`;
+      await s3PutObject({
+        Bucket: sourceBucket,
+        Key: queuedGranuleKey,
+        Body: 'asdf-queued',
+      });
+
+      const collectionId = constructCollectionId(collection.name, collection.version);
+      const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId,
+        granuleId: queuedGranuleId,
+        execution: undefined,
+        status: 'queued',
+        published: false,
+        files: [{ bucket: sourceBucket, key: queuedGranuleKey }],
+      }));
+      await createGranule({
+        prefix,
+        body: randomQueuedGranuleRecord,
+      });
 
       // Stage the existing granule file to S3
       existingGranuleId = randomId('existing-granule-');
@@ -201,6 +227,18 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
     }
   });
 
+  it('leaves the queued granule in the queued state', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const granule = await waitForApiStatus(
+        getGranule,
+        { prefix, granuleId: queuedGranuleId },
+        'queued'
+      );
+      expect(granule).toBeDefined();
+    }
+  });
+
   afterAll(async () => {
     // Must delete rules before deleting associated collection and provider
     await pAll(
@@ -220,6 +258,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       [
         () => deleteGranule({ prefix, granuleId: existingGranuleId }),
         () => deleteGranule({ prefix, granuleId: newGranuleId }),
+        () => deleteGranule({ prefix, granuleId: queuedGranuleId }),
       ],
       { stopOnError: false }
     ).catch(console.error);
@@ -228,6 +267,7 @@ describe('The DiscoverGranules workflow with one existing granule, one new granu
       [
         () => deleteS3Object(sourceBucket, existingGranuleKey),
         () => deleteS3Object(sourceBucket, newGranuleKey),
+        () => deleteS3Object(sourceBucket, queuedGranuleKey),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

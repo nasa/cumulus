@@ -3,11 +3,18 @@
   "description": "Describes the output produced by the hyrax-metadata-updates task",
   "type": "object",
   "properties": {
+    "etags": {
+      "description": "updated map of s3URIs to ETags",
+      "type": "object"
+    },
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": [
+          "granuleId",
+          "files"
+        ],
         "properties": {
           "granuleId": {
             "type": "string"
@@ -15,21 +22,43 @@
           "files": {
             "type": "array",
             "items": {
+              "additionalProperties": false,
               "type": "object",
+              "required": [
+                "bucket",
+                "key"
+              ],
               "properties": {
-                "name": {
+                "bucket": {
+                  "description": "Bucket where file is archived in S3",
                   "type": "string"
                 },
-                "filename": {
+                "checksum": {
+                  "description": "Checksum value for file",
+                  "type": "string"
+                },
+                "checksumType": {
+                  "description": "Type of checksum (e.g. md5, sha256, etc)",
+                  "type": "string"
+                },
+                "fileName": {
+                  "description": "Name of file (e.g. file.txt)",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "S3 Key for archived file",
+                  "type": "string"
+                },
+                "size": {
+                  "description": "Size of file (in bytes)",
+                  "type": "number"
+                },
+                "source": {
+                  "description": "Source URI of the file from origin system (e.g. S3, FTP, HTTP)",
                   "type": "string"
                 },
                 "type": {
-                  "type": "string"
-                },
-                "bucket": {
-                  "type": "string"
-                },
-                "etag": {
+                  "description": "Type of file (e.g. data, metadata, browse)",
                   "type": "string"
                 }
               }
