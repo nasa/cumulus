@@ -16,7 +16,7 @@ In order to rectify this situation, [CUMULUS-2388] was filed and addressed to cr
 
 ## Updated files schema
 
-The updated granule files schema [can be found here](https://github.com/nasa/cumulus/blob/CUMULUS-2388-task-schema-consistency/packages/schemas/files.schema.json).
+The updated granule files schema [can be found here](https://github.com/nasa/cumulus/blob/master/packages/schemas/files.schema.json).
 
 These former properties were deprecated (with notes about how to derive the same information from the updated schema, if possible):
 
