@@ -343,7 +343,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
  * @param {DynamoDBGranule} params.apiGranuleRecord,
  * @param {number}          params.executionCumulusId,
  * @param {Object}          params.esClient - Elasticsearch client
- * @param {Object}          params.granuleModel = new Granule(),
+ * @param {Object}          params.granuleModel - Instance of DynamoDB granule model
  * @param {Object}          params.granulePgModel,
  * @param {Knex}            params.knex,
  * @param {PostgresGranule} params.postgresGranuleRecord,
