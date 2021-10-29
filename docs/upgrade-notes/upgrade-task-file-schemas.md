@@ -48,7 +48,9 @@ Since the input schema for the above tasks was not updated, that means you canno
 
 ### Upgrading your workflows
 
-For any workflows using the `update-granules-cmr-metadata-file-links` task, update the `Parameters` definition for the step like so:
+### `update-granules-cmr-metadata-file-links`
+
+For any workflows using the `update-granules-cmr-metadata-file-links` task before the `hyrax-metadata-updates` and/or `post-to-cmr` tasks, update the step definition for `update-granules-cmr-metadata-file-links` as follows:
 
 ```hcl
     "UpdateGranulesCmrMetadataFileLinksStep": {
@@ -76,7 +78,9 @@ For any workflows using the `update-granules-cmr-metadata-file-links` task, upda
       ...more configuration...
 ```
 
-Also, update any steps using the `hyrax-metadata-updates` task as follows:
+#### `hyrax-metadata-updates`
+
+For any workflows using the `hyrax-metadata-updates` task before a `post-to-cmr` task, update the definition of the `hyrax-metadata-updates` step as follows:
 
 ```hcl
     "HyraxMetadataUpdatesTask": {
@@ -110,7 +114,9 @@ Also, update any steps using the `hyrax-metadata-updates` task as follows:
       ...more configuration...
 ```
 
-Lastly, update any step definitions using the `post-to-cmr` task to match the following:
+#### `post-to-cmr`
+
+For any workflows using `post-to-cmr` task after the `update-granules-cmr-metadata-file-links` or `hyrax-metadata-updates` tasks, update the `post-to-cmr` step definition as follows:
 
 ```hcl
     "CmrStep": {
@@ -131,6 +137,8 @@ Lastly, update any step definitions using the `post-to-cmr` task to match the fo
       },
       ...more configuration...
 ```
+
+#### Example workflow
 
 For an example workflow integrating all of these changes, please see our example [ingest and publish workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json).
 
