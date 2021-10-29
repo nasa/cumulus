@@ -339,17 +339,17 @@ const writeGranuleToDynamoAndEs = async (params) => {
 /**
  * Write a granule record to DynamoDB and PostgreSQL
  *
- * @param {Object} params
- * @param {DynamoDBGranule} params.apiGranuleRecord,
- * @param {number}          params.executionCumulusId,
+ * @param {Object}          params
+ * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
+ * @param {number}          params.executionCumulusId - Execution ID the granule was written from
  * @param {Object}          params.esClient - Elasticsearch client
  * @param {Object}          params.granuleModel - Instance of DynamoDB granule model
- * @param {Object}          params.granulePgModel,
- * @param {Knex}            params.knex,
- * @param {PostgresGranule} params.postgresGranuleRecord,
+ * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
+ * @param {Knex}            params.knex - Knex object
+ * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
+ *                                                         to database
  * @param {string}          params.snsEventType - SNS Event Type
  * returns {Promise}
- * throws
  */
 const _writeGranule = async ({
   postgresGranuleRecord,
