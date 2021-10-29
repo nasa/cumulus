@@ -3,6 +3,8 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 const pick = require('lodash/pick');
+const path = require('path');
+
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -129,6 +131,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         },
         { timeout: 30 }
       );
+      console.log('ingestGranuleExecution1Arn', ingestGranuleExecution1Arn);
 
       // Wait for the execution to be completed
       await getExecutionWithStatus({
@@ -205,6 +208,8 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
         { timeout: 30 }
       );
 
+      console.log('ingestGranuleExecution2Arn', ingestGranuleExecution2Arn);
+
       // Wait for the execution to be completed
       ingestGranuleExecution2 = await getExecutionWithStatus({
         prefix,
@@ -226,16 +231,16 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       expect(files.length).toBe(5);
 
       // Make sure the three ingested files are present
-      expect(files.find((file) => file.name === sameChecksumFilename)).toBeDefined();
-      expect(files.find((file) => file.name === differentChecksumFilename)).toBeDefined();
-      expect(files.find((file) => file.name === newFileFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === sameChecksumFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === differentChecksumFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === newFileFilename)).toBeDefined();
 
       // Make sure the generated CMR file is present
-      expect(files.find((file) => file.name === `${granuleId}.cmr.xml`)).toBeDefined();
+      expect(files.find((file) => file.fileName === `${granuleId}.cmr.xml`)).toBeDefined();
 
       // Make sure that the modified file resulted in a versioned file
       expect(
-        files.find((file) => file.name.startsWith(`${differentChecksumFilename}.v`))
+        files.find((file) => path.basename(file.key).startsWith(`${differentChecksumFilename}.v`))
       ).toBeDefined();
     }
   });
