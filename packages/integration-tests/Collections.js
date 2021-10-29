@@ -97,6 +97,13 @@ const buildRandomizedCollection = (overrides = {}) => ({
   ...overrides,
 });
 
+/**
+ * Returns true if collection exists. False otherwise.
+ *
+ * @param {string} stackName - the prefix of the Cumulus stack
+ * @param {Object} collection - a Cumulus collection
+ * @returns {boolean}
+ */
 const collectionExists = async (stackName, collection) => {
   let response;
   const exists = await pRetry(
