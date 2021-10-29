@@ -203,11 +203,11 @@ const _removeExcessFiles = async ({
   if (writtenFiles.length === 0) {
     throw new Error('_removeExcessFiles called with no written files');
   }
-  const excludeList = writtenFiles.map((file) => file.cumulus_id);
+  const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
     queryParams: { cumulus_id: granuleCumulusId },
-    excludeList,
+    excludeCumulusIds,
   });
 };
 

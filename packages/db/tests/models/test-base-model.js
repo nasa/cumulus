@@ -675,7 +675,7 @@ test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async
     .returning('*')));
   await basePgModel.deleteExcluding({
     knexOrTransaction: knex,
-    excludeList: [flatten(insertedRecords)[0].cumulus_id],
+    excludeCumulusIds: [flatten(insertedRecords)[0].cumulus_id],
     queryParams: objectPayload,
   });
 
@@ -700,7 +700,7 @@ test('deleteExcluding throws if missing explicit query params', async (t) => {
   await t.throwsAsync(
     basePgModel.deleteExcluding({
       knexOrTransaction: knex,
-      excludeList: [flatten(insertedRecords)[0].cumulus_id],
+      excludeCumulusIds: [flatten(insertedRecords)[0].cumulus_id],
     }),
     { name: 'TypeError' }
   );

@@ -262,27 +262,27 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   }
 
   /**
-  * Deletes items from postgres based on params, excluding any cumulus_ids in the excludeList
+  * Deletes items from postgres based on params, excluding any cumulus_ids in the excludeCumulusIds
   * @param {Object} params
   * @param {Knex | Knex.Transaction} params.knexOrTransaction - DB client or transaction
   * @param {Partial<RecordType>} params.queryParams - An object or any portion
   *                                             of an object of type RecordType
-  * @param {[number]} params.excludeList - A list of cumulus_ids to exclude from the deletion
+  * @param {[number]} params.excludeCumulusIds - A list of cumulus_ids to exclude from the deletion
   *                                       request
   * @returns {Promise<number>} The number of rows deleted
   */
   async deleteExcluding({
     knexOrTransaction,
-    excludeList = [],
+    excludeCumulusIds = [],
     queryParams,
   }: {
     knexOrTransaction: Knex | Knex.Transaction,
-    excludeList: Number[],
+    excludeCumulusIds: Number[],
     queryParams: Partial<RecordType>,
   }) {
     return await knexOrTransaction(this.tableName)
       .where(queryParams)
-      .whereNotIn('cumulus_id', excludeList)
+      .whereNotIn('cumulus_id', excludeCumulusIds)
       .del();
   }
 }
