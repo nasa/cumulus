@@ -1,10 +1,10 @@
 'use strict';
 
 const isIp = require('is-ip');
+const pRetry = require('p-retry');
 const pWaitFor = require('p-wait-for');
 
 const providersApi = require('@cumulus/api-client/providers');
-const Provider = require('@cumulus/api/models/providers');
 const { listGranules } = require('@cumulus/api-client/granules');
 const { listRules, deleteRule } = require('@cumulus/api-client/rules');
 const pdrsApi = require('@cumulus/api-client/pdrs');
@@ -101,19 +101,33 @@ const throwIfApiReturnFail = (apiResult) => {
   }
 };
 
-const providerExists = async (id) => {
-  const providerModel = new Provider();
-  try {
-    await providerModel.get({ id });
-  } catch (error) {
-    console.log('ERROR: Provider not found', error);
-    return false;
-  }
-  return true;
+const providerExists = async (stackName, id) => {
+  let response;
+  const exists = await pRetry(
+    async () => {
+      try {
+        response = await providersApi.getProvider({
+          prefix: stackName,
+          providerId: id,
+        });
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Error: ${error}. Failed to get provider with ID ${id}`);
+          return false;
+        }
+        throw error;
+      }
+      if (response.statusCode === 200) return true;
+      return false;
+    },
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
+  return exists;
 };
 
 const createProvider = async (stackName, provider) => {
-  if (await providerExists(provider.id)) {
+  const exists = await providerExists(stackName, provider.id);
+  if (exists) {
     await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
   }
   const createProviderResult = await providersApi.createProvider({ prefix: stackName, provider });
