@@ -666,7 +666,7 @@ test('getMaxId throws if knex call returns undefined ', async (t) => {
   });
 });
 
-test.only('deleteExcluding deletes records, filtering on excluded cumulus_ids', async (t) => {
+test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const testLength = 5;
   const objectPayload = { info: 'baseModelExcluding' };
