@@ -1,5 +1,5 @@
 ---
-id: update_task_file_schemas
+id: update-task-file-schemas
 title: Updates to task granule file schemas
 hide_title: false
 ---
