@@ -666,16 +666,20 @@ test('getMaxId throws if knex call returns undefined ', async (t) => {
   });
 });
 
-test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async (t) => {
+test.only('deleteExcluding deletes records, filtering on excluded cumulus_ids', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const testLength = 5;
   const objectPayload = { info: 'baseModelExcluding' };
-  const insertedRecords = await Promise.all(new Array(testLength).fill().map((_i) => knex(tableName)
-    .insert(objectPayload)
-    .returning('*')));
+  const insertedRecords = flatten(
+    await Promise.all(
+      new Array(testLength)
+        .fill()
+        .map((_i) => knex(tableName).insert(objectPayload).returning('*'))
+    )
+  );
   await basePgModel.deleteExcluding({
     knexOrTransaction: knex,
-    excludeCumulusIds: [flatten(insertedRecords)[0].cumulus_id],
+    excludeCumulusIds: [insertedRecords[0].cumulus_id],
     queryParams: objectPayload,
   });
 
@@ -685,7 +689,7 @@ test('deleteExcluding deletes records, filtering on excluded cumulus_ids', async
       info: 'baseModelExcluding',
     }
   );
-  t.deepEqual(actualRecords, insertedRecords[0]);
+  t.deepEqual(actualRecords, [insertedRecords[0]]);
 });
 
 test('deleteExcluding throws if missing explicit query params', async (t) => {
