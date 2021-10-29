@@ -21,6 +21,18 @@ const { deleteGranules } = require('./granuleUtils');
 */
 const removeCollectionAndAllDependencies = async (params) => {
   const { prefix, collection } = params;
+  try {
+    await getCollection({
+      prefix,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+  } catch (error) {
+    if (error.statusCode === 404) {
+      console.log(`Error: ${error}. Failed to get collection ${collection}`);
+    }
+    throw error;
+  }
   const collectionGranuleResponse = await listGranules({
     prefix,
     query: {
@@ -70,14 +82,9 @@ const removeCollectionAndAllDependencies = async (params) => {
   console.log(executionsForDeletion);
   console.log(executionDeletionResult);
   try {
-    await getCollection({
-      prefix,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    });
     await deleteCollection({ prefix, collectionName: collection.name, collectionVersion: collection.version });
   } catch (error) {
-    console.log(`Error: ${error}. Failed to get and delete collection ${collection}`);
+    console.log(`Error: ${error}. Failed delete collection ${collection}`);
   }
 };
 
