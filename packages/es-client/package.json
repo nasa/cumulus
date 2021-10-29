@@ -38,7 +38,7 @@
     "aws-elasticsearch-connector": "8.2.0",
     "aws-sdk": "^2.585.0",
     "lodash": "~4.17.20",
-    "moment": "2.24.0",
+    "moment": "2.29.1",
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
