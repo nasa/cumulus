@@ -5,7 +5,7 @@ locals {
 
 resource "null_resource" "get_cnmResponse" {
   triggers = {
-    always_run = local.cnm_response_version
+    always_run = timestamp()
   }
   provisioner "local-exec" {
     command = "curl -s -L -o ${local.cnm_response_filename} https://github.com/podaac/cumulus-cnm-response-task/releases/download/v${local.cnm_response_version}/${local.cnm_response_filename}"
