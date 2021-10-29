@@ -6,13 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Notable changes
-
-- Published new tag [`35` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
-upgrades to `knex` package.
-
 ### Added
 
+- [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
+  - NSIDC and other cumulus users had desire for returning formatted dates for
+    the 'url_path' date extraction utilities. Added 'dateFormat' function as
+    an option for extracting and formating the entire date. See
+    docs/workflow/workflow-configuration-how-to.md for more information.
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2317**
     - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
@@ -66,16 +66,31 @@ upgrades to `knex` package.
     - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
       derived table classes to support querying the current max `cumulus_id`.
   - **CUMULUS-2673**
-    - Added `ES_HOST` environment variable to `postgres-migration-async-operation` 
-    Lambda using value of `elasticsearch_hostname` Terraform variable. 
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation`
+    Lambda using value of `elasticsearch_hostname` Terraform variable.
     - Added `elasticsearch_security_group_id` to security groups for
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
       `postgres-migration-async-operation` lambda.
-- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
-- **CUMULUS-2670**
-  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
-  `update_granules_cmr_metadata_file_links_task_timeout` property
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on executions
+      DynamoDB table.
+    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
+      TF definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+      DynamoDB table.
+    - Removed lambda `publish_collections` TF resource.
+    - Removed `aws_lambda_event_source_mapping` TF definition on granules
+    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
+      DynamoDB table.
 
 ### Changed
 
@@ -190,29 +205,38 @@ upgrades to `knex` package.
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
+
+## [v9.8.0] 2021-10-19
+
+### Notable changes
+
+- Published new tag [`36` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package and to address security vulnerabilities.
+
+### Added
+
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+
+- **CUMULUS-2639**
+  - Increases logging on reconciliation reports.
+
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
+- **CUMULUS-2598**
+  - Add unit and integration tests to describe queued granules as ignored when
+    duplicate handling is 'skip'
+
+### Changed
+
 - Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
-- Updated default version of async operations Docker image to `cumuluss/async-operation:35`
+- Updated default version of async operations Docker image to `cumuluss/async-operation:36`
 - **CUMULUS-2590**
   - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
-
-### Removed
-
-- **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **CUMULUS-2510**
-    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
-      definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on executions
-      DynamoDB table.
-    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
-      TF definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on collections
-      DynamoDB table.
-    - Removed lambda `publish_collections` TF resource.
-    - Removed `aws_lambda_event_source_mapping` TF definition on granules
-    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
-      definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
-      DynamoDB table.
+- **CUMULUS-2643**
+  - relocates system file `buckets.json` out of the
+    `s3://internal-bucket/workflows` directory into
+    `s3://internal-bucket/buckets`.
 
 ## [v9.7.0] 2021-10-01
 
@@ -236,6 +260,8 @@ upgrades to `knex` package.
 
 ### Changed
 
+- **CUMULUS-2720**
+  - Updated Core CI scripts to validate CHANGELOG diffs as part of the lint process
 - **CUMULUS-2695**
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
@@ -244,6 +270,13 @@ upgrades to `knex` package.
   - Updates cumulus-tf/cumulus/variables.tf to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard for default deployments.
+- **CUMULUS-2584**
+  - Updates `api/endpoints/execution-status.js` `get` method to include associated granules, as
+    an array, for the provided execution.
+  - Added `getExecutionArnsByGranuleCumulusId` returning a list of executionArns sorted by most recent first,
+    for an input Granule Cumulus ID in support of the move of `translatePostgresGranuleToApiGranule` from RDS-Phase2
+    feature branch
+  - Added `getApiExecutionCumulusIds` returning cumulus IDs for a given list of executions
 - **CUMULUS-NONE**
   - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
@@ -5145,7 +5178,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.7.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.8.0...HEAD
+[v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0

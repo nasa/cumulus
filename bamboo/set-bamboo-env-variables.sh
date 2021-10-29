@@ -49,6 +49,7 @@ declare -a param_list=(
   "bamboo_SKIP_AUDIT"
   "bamboo_SKIP_INTEGRATION_TESTS"
   "bamboo_SKIP_NPM_PUBLISH"
+  "bamboo_SKIP_CHANGELOG"
   "bamboo_TFSTATE_BUCKET"
   "bamboo_TFSTATE_LOCK_TABLE"
   "bamboo_USE_CACHED_BOOTSTRAP"
