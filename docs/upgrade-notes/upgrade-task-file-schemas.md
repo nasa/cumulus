@@ -12,7 +12,7 @@ However, up to this point, there was inconsistency in the schemas for the granul
 
 Thus, when performing bulk granule operations which pass granules from the database into a Cumulus workflow, it was possible for there to be schema validation failures depending on which task was used to start the workflow and its particular schema.
 
-In order to rectify this situation, [CUMULUS-2388](https://bugs.earthdata.nasa.gov/browse/CUMULUS-2388) was filed and addressed to create a common granule files schema between nearly all of the Cumulus tasks (exceptions discussed below). The following documentation explains the manual changes you need to make to your deployment in order to be compatible with the updated files schema.
+In order to rectify this situation, [CUMULUS-2388](https://bugs.earthdata.nasa.gov/browse/CUMULUS-2388) was filed and addressed to create a common granule files schema between nearly all of the Cumulus tasks (exceptions discussed below) and the Cumulus database. The following documentation explains the manual changes you need to make to your deployment in order to be compatible with the updated files schema.
 
 ## Updated files schema
 
@@ -27,17 +27,22 @@ These former properties were deprecated (with notes about how to derive the same
   - `hyrax-metadata-updates`
 - `fileStagingDir` - no longer supported
 - `url_path` - no longer supported
-- `duplicate_found` - This property is no longer supported, however `sync-granule` and `move-granules` now produce a separate `granuleDuplicates` object as part of their output. The `granuleDuplicates` object is a map of granules by granule ID which includes the files that encountered duplicates during processing. **Please note** that the `granuleDuplicates` output is purely **informational** and does not have any bearing on the separate configuration for how duplicates should be handled. Guidance on how to integrate `granuleDuplicates` information into your workflow configuration is provided below.
+- `duplicate_found` - This property is no longer supported, however `sync-granule` and `move-granules` now produce a separate `granuleDuplicates` object as part of their output. The `granuleDuplicates` object is a map of granules by granule ID which includes the files that encountered duplicates during processing. [Guidance on how to integrate `granuleDuplicates` information into your workflow configuration is provided below](#optional---integrate-granuleduplicates-information).
 
 ## Exceptions
 
-Three workflow tasks did not have their schema for granule files updated:
+These workflow tasks did not have their schema for granule files updated:
 
-- `discover-granules`
-- `queue-granules`
-- `parse-pdr`
+- `discover-granules` - no updates
+- `queue-granules` - no updates
+- `parse-pdr` - no updates
+- `sync-granule` - input schema not updated, output schema was updated
 
-The reason that these task schemas were not updated is that all of these tasks occur prior to files actually being ingested to S3, thus much of the information that is required in the updated files schema like `bucket`, `key`, or `checksum` is not yet known.
+The reason that these task schemas were not updated is that all of these tasks start before the files have been ingested to S3, thus much of the information that is required in the updated files schema like `bucket`, `key`, or `checksum` is not yet known.
+
+### Bulk granule operations
+
+Since the input schema for the above tasks was not updated, that means you cannot run bulk granule operations against workflows **if they start with any of those tasks**. Bulk granule operations work by loading the specified granules from the database and sending them as input to a specified workflow, so if the specified workflow begins with a task whose input schema does not conform to what is coming out of the database, there will be schema errors.
 
 ## Upgrading your deployment
 
@@ -130,6 +135,8 @@ Lastly, update any step definitions using the `post-to-cmr` task to match the fo
 For an example workflow integrating all of these changes, please see our example [ingest and publish workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json).
 
 #### Optional - Integrate granuleDuplicates information
+
+**Please note** that the `granuleDuplicates` output is purely **informational** and does not have any bearing on the separate configuration for how duplicates should be handled.
 
 You can include `granuleDuplicates` output from the `sync-granule` or `move-granules` tasks in your workflow messages like so:
 
