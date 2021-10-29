@@ -193,12 +193,24 @@ const _writePostgresGranuleViaTransaction = async ({
   `);
   return pgGranule;
 };
-
+/**
+* Removes excess files from the postgres database for a given granule
+* @summary Given a list of postgres file objects, remove all other file objects
+* from the postgres database for the provided granuleCumulusId
+* @param {Object} params - Paramter object
+* @param {Object} [params.filePgModel] - @cumulus/db compatible FilePgModel, provided for test/mocks
+* @param {number} params.granuleCumulusId - postgres cumulus_id
+* identifying the granule to be updated
+* @param {Object} params.knex - Instance of a Knex client
+* @param {[Object]} params.writtenFiles - List of postgres file objects that should
+* not be removed by this method.
+* @returns {Promise<Object>} Knex .delete response
+*/
 const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
-  writtenFiles,
   granuleCumulusId,
   knex,
+  writtenFiles,
 }) => {
   if (writtenFiles.length === 0) {
     throw new Error('_removeExcessFiles called with no written files');
