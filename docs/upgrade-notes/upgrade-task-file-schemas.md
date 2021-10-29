@@ -1,6 +1,6 @@
 ---
-id: upgrade_task_file_schemas
-title: Upgrades to task granule file schemas
+id: update_task_file_schemas
+title: Updates to task granule file schemas
 hide_title: false
 ---
 
@@ -12,7 +12,7 @@ However, up to this point, there was inconsistency in the schemas for the granul
 
 Thus, when performing bulk granule operations which pass granules from the database into a Cumulus workflow, it was possible for there to be schema validation failures depending on which task was used to start the workflow and its particular schema.
 
-In order to rectify this situation, [CUMULUS-2388] was filed and addressed to create a common granule files schema between nearly all of the Cumulus tasks (exceptions discussed below). The following documentation explains the manual changes you need to make to your deployment in order to be compatible with the updated files schema.
+In order to rectify this situation, [CUMULUS-2388](https://bugs.earthdata.nasa.gov/browse/CUMULUS-2388) was filed and addressed to create a common granule files schema between nearly all of the Cumulus tasks (exceptions discussed below). The following documentation explains the manual changes you need to make to your deployment in order to be compatible with the updated files schema.
 
 ## Updated files schema
 
@@ -25,16 +25,19 @@ These former properties were deprecated (with notes about how to derive the same
 - `etag` - ETags are no longer provided as an individual file property. Instead, a separate `etags` object mapping S3 URIs to ETag values is provided as output from the following workflow tasks (guidance on how to integrate this output with your workflows is provided in the [Upgrading your workflows](#upgrading-your-workflows) section below):
   - `update-granules-cmr-metadata-file-links`
   - `hyrax-metadata-updates`
-- `fileStagingDir`
-- `url_path`
-- `duplicate_found`
+- `fileStagingDir` - no longer supported
+- `url_path` - no longer supported
+- `duplicate_found` - This property is no longer supported, however `sync-granule` and `move-granules` now produce a separate `granuleDuplicates` object as part of their output. The `granuleDuplicates` object is a map of granules by granule ID which includes the files that encountered duplicates during processing. **Please note** that the `granuleDuplicates` output is purely **informational** and does not have any bearing on the separate configuration for how duplicates should be handled. Guidance on how to integrate `granuleDuplicates` information into your workflow configuration is provided below.
 
-## Execptions
+## Exceptions
 
-Two workflow tasks did not have their schema for granule files updated:
+Three workflow tasks did not have their schema for granule files updated:
 
 - `discover-granules`
--
+- `queue-granules`
+- `parse-pdr`
+
+The reason that these task schemas were not updated is that all of these tasks occur prior to files actually being ingested to S3, thus much of the information that is required in the updated files schema like `bucket`, `key`, or `checksum` is not yet known.
 
 ## Upgrading your deployment
 
@@ -125,6 +128,37 @@ Lastly, update any step definitions using the `post-to-cmr` task to match the fo
 ```
 
 For an example workflow integrating all of these changes, please see our example [ingest and publish workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json).
+
+#### Optional - Integrate granuleDuplicates information
+
+You can include `granuleDuplicates` output from the `sync-granule` or `move-granules` tasks in your workflow messages like so:
+
+```hcl
+    "SyncGranule": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            ...other config...
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granuleDuplicates}",
+                  "destination": "{$.meta.sync_granule.granule_duplicates}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
+          }
+        }
+      }
+      ...more configuration...
+```
+
+The result of this configuration is that the `granuleDuplicates` output from `sync-granule` would be placed in `meta.sync_granule.granule_duplicates` on the workflow message and remain there throughout the rest of the workflow. The same configuration could be replicated for the `move-granules` task, but be sure to use a different `destination` in the workflow message for the `granuleDuplicates` output .
 
 ### Updating collection URL path templates
 
