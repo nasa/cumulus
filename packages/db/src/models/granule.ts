@@ -7,6 +7,7 @@ import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
 import { translateDateToUTC } from '../lib/timestamp';
+import { getSortFields } from '../lib/sort';
 
 interface RecordSelect {
   cumulus_id: number
@@ -127,6 +128,42 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .merge()
       .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
       .returning('cumulus_id');
+  }
+
+  /**
+   * Get granules from the granule cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTrx -
+   *  DB client or transaction
+   * @param {Array<number>} granuleCumulusIds -
+   * single granule cumulus_id or array of granule cumulus_ids
+   * @param {Object} [params] - Optional object with addition params for query
+   * @param {number} [params.limit] - number of records to be returned
+   * @param {number} [params.offset] - record offset
+   * @returns {Promise<Array<PostgresGranuleRecord>>} An array of granules
+   */
+  async searchByCumulusIds(
+    knexOrTrx: Knex | Knex.Transaction,
+    granuleCumulusIds: Array<number> | number,
+    params: { limit: number, offset: number }
+  ): Promise<Array<PostgresGranuleRecord>> {
+    const { limit, offset, ...sortQueries } = params || {};
+    const sortFields = getSortFields(sortQueries);
+    const granuleCumulusIdsArray = [granuleCumulusIds].flat();
+    const granules = await knexOrTrx(this.tableName)
+      .whereIn('cumulus_id', granuleCumulusIdsArray)
+      .modify((queryBuilder) => {
+        if (limit) queryBuilder.limit(limit);
+        if (offset) queryBuilder.offset(offset);
+        if (sortFields.length >= 1) {
+          sortFields.forEach((sortObject: { [key: string]: { order: string } }) => {
+            const sortField = Object.keys(sortObject)[0];
+            const { order } = sortObject[sortField];
+            queryBuilder.orderBy(sortField, order);
+          });
+        }
+      });
+    return granules;
   }
 }
 
