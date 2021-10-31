@@ -13,6 +13,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
+- **CUMULUS-2640**
+  - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
+  - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
+
+### Changed
+
+- Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-2725**
+  - Updated providers endpoint to return encrypted password
+  - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+- **CUMULUS-2734**
+  - Updated `@cumulus/api/launchpadSaml.launchpadPublicCertificate` to correctly retrieve
+    certificate from launchpad IdP metadata with and without namespace prefix.
 
 ## [v9.8.0] 2021-10-19
 

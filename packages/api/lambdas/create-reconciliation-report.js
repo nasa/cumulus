@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
+const pickBy = require('lodash/pickBy');
 const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -785,6 +786,10 @@ async function handler(event) {
   // increase the limit of search result from CMR.searchCollections/searchGranules
   process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
+
+  const varsToLog = ['CMR_LIMIT', 'CMR_PAGE_SIZE', 'ES_SCROLL', 'ES_SCROLL_SIZE'];
+  const envsToLog = pickBy(process.env, (value, key) => varsToLog.includes(key));
+  log.info(`CMR and ES Environment variables: ${JSON.stringify(envsToLog)}`);
 
   return await processRequest(event);
 }

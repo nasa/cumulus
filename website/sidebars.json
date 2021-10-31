@@ -38,7 +38,7 @@
       "configuration/cloudwatch-retention",
       "configuration/lifecycle-policies",
       "configuration/collection-storage-best-practices",
-      "configuration/ingest-task-configuration"
+      "configuration/task-configuration"
     ],
     "Development": [
       "workflows/developing-a-cumulus-workflow",
