@@ -39,3 +39,8 @@ test('decryptBase64String() properly decrypts a value', async (t) => {
   const plaintext = await KMS.decryptBase64String(ciphertext);
   t.is(plaintext, 'asdf');
 });
+
+test('decryptBase64String() throws an error if value is not encrypted', async (t) => {
+  await t.throwsAsync(() => KMS.decryptBase64String('notencrypted'),
+    { code: 'InvalidCiphertextException' });
+});
