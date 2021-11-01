@@ -1,6 +1,7 @@
 import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
+import path from 'path';
 import { Context } from 'aws-lambda';
 
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -10,7 +11,7 @@ import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
-import { parseS3Uri } from '@cumulus/aws-client/S3';
+import { buildS3Uri } from '@cumulus/aws-client/S3';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
@@ -121,8 +122,8 @@ export const setLzardsChecksumQueryType = (
   if (file.checksumType === 'sha256') {
     return { expectedSha256Hash: file.checksum };
   }
-  log.error(`${granuleId}: File ${file.filename} did not have a checksum or supported checksumType defined`);
-  throw new ChecksumError(`${granuleId}: File ${file.filename} did not have a checksum or checksumType defined`);
+  log.error(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or supported checksumType defined`);
+  throw new ChecksumError(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or checksumType defined`);
 };
 
 export const postRequestToLzards = async (params: {
@@ -152,7 +153,7 @@ export const postRequestToLzards = async (params: {
           provider,
           objectUrl: accessUrl,
           metadata: {
-            filename: file.filename,
+            filename: buildS3Uri(file.bucket, file.key),
             collection,
             granuleId,
           },
@@ -194,8 +195,8 @@ export const makeBackupFileRequest = async (params: {
   } = params;
 
   try {
-    const { Key, Bucket } = parseS3Uri(file.filename);
-    log.info(`${granuleId}: posting backup request to LZARDS: ${file.filename}`);
+    const { key: Key, bucket: Bucket } = file;
+    log.info(`${granuleId}: posting backup request to LZARDS: ${buildS3Uri(file.bucket, file.key)}`);
     const accessUrl = await generateAccessUrlMethod({
       Bucket,
       Key,
@@ -210,14 +211,14 @@ export const makeBackupFileRequest = async (params: {
     });
     if (statusCode !== 201) {
       log.error(`${granuleId}: Request failed - LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-      return { statusCode, granuleId, filename: file.filename, body, status: 'FAILED' };
+      return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'FAILED' };
     }
-    return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
+    return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
     return {
       granuleId,
-      filename: file.filename,
+      filename: buildS3Uri(file.bucket, file.key),
       body: JSON.stringify({ name: error.name, stack: error.stack }),
       status: 'FAILED',
     };
@@ -276,7 +277,7 @@ export const backupGranule = async (params: {
     });
     const collectionId = constructCollectionId(granule.dataType, granule.version);
     const backupFiles = granule.files.filter(
-      (file) => shouldBackupFile(file.name, granuleCollection)
+      (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );
 
     log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
