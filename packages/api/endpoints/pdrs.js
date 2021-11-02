@@ -89,13 +89,15 @@ async function del(req, res) {
     await pdrPgModel.get(knex, { name: pdrName });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
+      log.info('PDR does not exist in PostgreSQL');
       if (!(await esPdrsClient.exists(pdrName))) {
         log.info('PDR does not exist in Elasticsearch');
         return res.boom.notFound('No record found');
       }
       log.info('PDR does not exist in PostgreSQL, it only exists in Elasticsearch');
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   try {
