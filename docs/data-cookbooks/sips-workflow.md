@@ -35,7 +35,7 @@ We need to build a collection. Details on collections can be found
       "bucket": "protected",
       "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-      "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}"
     },
     {
       "bucket": "private",
@@ -54,7 +54,7 @@ We need to build a collection. Details on collections can be found
     }
   ],
   "duplicateHandling": "replace",
-  "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.fileName, 0, 3)}",
 }
 ```
 

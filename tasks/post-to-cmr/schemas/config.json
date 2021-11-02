@@ -68,6 +68,10 @@
       "description": "Adds the option to allow PostToCMR to pass when processing a granule without a metadata file.",
       "default": false,
       "type": "boolean"
+    },
+    "etags": {
+      "type": "object",
+      "description": "map of s3URIs to ETags"
     }
   }
 }

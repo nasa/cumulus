@@ -1,0 +1,24 @@
+{
+  "title": "UpdateGranulesCmrMetadataFileLinksInput",
+  "description": "Describes the input expected by the update-granules-cmr-metadata-file-links task",
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    }
+  }
+}

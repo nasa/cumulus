@@ -21,7 +21,8 @@ test.before((t) => {
 
 test('addChecksumToGranuleFile() does not update a granule file if checksumType is set but checksum is not', async (t) => {
   const granuleFile = {
-    filename: 's3://bucket/key',
+    bucket: 'bucket',
+    key: 'key',
     checksumType: 'md5',
   };
 
@@ -36,7 +37,8 @@ test('addChecksumToGranuleFile() does not update a granule file if checksumType 
 
 test('addChecksumToGranuleFile() does not update a granule file if checksum is set but checksumType is not', async (t) => {
   const granuleFile = {
-    filename: 's3://bucket/key',
+    bucket: 'bucket',
+    key: 'key',
     checksum: 'asdf',
   };
 
@@ -64,7 +66,8 @@ test('addChecksumToGranuleFile() does not update a granule file if it does not h
 
 test('addChecksumToGranuleFile() returns the file if checksumType and checksum are already set', async (t) => {
   const granuleFile = {
-    filename: 's3://bucket/key',
+    bucket: 'bucket',
+    key: 'key',
     checksumType: 'md5',
     checksum: 'asdf',
   };
@@ -80,7 +83,8 @@ test('addChecksumToGranuleFile() returns the file if checksumType and checksum a
 
 test('addChecksumToGranuleFile() adds the checksumType and checksum to the file if they are missing', async (t) => {
   const granuleFile = {
-    filename: 's3://my-bucket/path/to/file.txt',
+    bucket: 'bucket',
+    key: 'path/to/file.txt',
   };
 
   const fakeGetObject = sinon.fake.returns({
@@ -95,7 +99,7 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
 
   t.true(
     fakeGetObject.calledOnceWithExactly({
-      Bucket: 'my-bucket',
+      Bucket: 'bucket',
       Key: 'path/to/file.txt',
     })
   );
@@ -121,7 +125,8 @@ test('The handler does not update files that already have a checksum', async (t)
           granuleId: 'g-1',
           files: [
             {
-              filename: 's3://bucket/key',
+              bucket: 'bucket',
+              key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
             },
@@ -160,7 +165,7 @@ test('The handler updates files that do not have a checksum', async (t) => {
         {
           granuleId: 'g-1',
           files: [
-            { filename: `s3://${bucket}/${key}` },
+            { bucket, key },
           ],
         },
       ],
@@ -185,7 +190,8 @@ test('The handler preserves extra input properties', async (t) => {
           granuleId: 'g-1',
           files: [
             {
-              filename: 's3://bucket/key',
+              bucket: 'bucket',
+              key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
             },
@@ -212,7 +218,8 @@ test('The handler preserves extra granule properties', async (t) => {
           foo: 'bar',
           files: [
             {
-              filename: 's3://bucket/key',
+              bucket: 'bucket',
+              key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
             },
@@ -239,7 +246,8 @@ test('The handler preserves extra granule file properties', async (t) => {
           files: [
             {
               foo: 'bar',
-              filename: 's3://bucket/key',
+              bucket: 'bucket',
+              key: 'key',
               checksumType: 'c-type',
               checksum: 'c-value',
             },
