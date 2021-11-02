@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
+- **NDCUM-624**:
+  - Functions in @cumulus/cmrjs renamed for consistency with `isCMRFilename` and `isCMRFile`
+    - `isECHO10File` -> `isECHO10Filename`
+    - `isUMMGFile` -> `isUMMGFilename`
+    - `isISOFile` -> `isCMRISOFilename`
 - **CUMULUS-2388**:
   - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
     - add-missing-file-checksums
@@ -31,10 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   separate objects stored in `meta`.
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
-- Functions renamed for consistency with `isCMRFilename` and `isCMRFile`
-  - `isECHO10File` -> `isECHO10Filename`
-  - `isUMMGFile` -> `isUMMGFilename`
-  - `isISOFile` -> `isCMRISOFilename`
+
+### Added
+
 - **NDCUM-624**: Add support for ISO metadata files for the `MoveGranules` step
   - Add function `isISOFile` to check if a given file object is an ISO file;
     uses same logic as `isCMRFile`
@@ -46,9 +50,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `granulesToCmrFileObjects` to check for `isISOFile` in addition to
       `isCMRFile`, so that metadata from `.iso.xml` files can be used in the
       `urlPathTemplate`
-
-### Added
-
 - [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
   - NSIDC and other cumulus users had desire for returning formatted dates for
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
