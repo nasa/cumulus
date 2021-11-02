@@ -207,6 +207,7 @@ module.exports = {
         '@typescript-eslint/lines-between-class-members': 'off',
         'lodash/prefer-lodash-typecheck': 'off',
         'node/no-unsupported-features/es-syntax': 'off',
+        'node/shebang': 'off',
       },
       parserOptions: {
         project: './tsconfig.eslint.json',

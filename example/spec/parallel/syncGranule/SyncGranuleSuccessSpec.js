@@ -1,5 +1,7 @@
 const fs = require('fs');
 const difference = require('lodash/difference');
+const path = require('path');
+
 const {
   addCollections,
   addProviders,
@@ -17,7 +19,6 @@ const {
   s3GetObjectTagging,
   s3Join,
   s3ObjectExists,
-  parseS3Uri,
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -61,6 +62,7 @@ describe('The Sync Granules workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let newGranuleId;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -105,8 +107,13 @@ describe('The Sync Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    inputPayload.granules[0].files[0] = Object.assign(inputPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
-    const newGranuleId = inputPayload.granules[0].granuleId;
+
+    const fileChecksumFixture = { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' };
+    inputPayload.granules[0].files[0] = Object.assign(
+      inputPayload.granules[0].files[0],
+      fileChecksumFixture
+    );
+    newGranuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
@@ -119,13 +126,13 @@ describe('The Sync Granules workflow', () => {
             files: [
               {
                 bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf`,
               },
               {
                 bucket: config.buckets.internal.name,
-                filename: `s3://${config.buckets.internal.name}/custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                fileStagingDir: `custom-staging-dir/${config.stackName}/replace-me-collectionId`,
+                key: `custom-staging-dir/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
+                source: `${testDataFolder}/replace-me-granuleId.hdf.met`,
               },
             ],
           },
@@ -142,7 +149,12 @@ describe('The Sync Granules workflow', () => {
     );
 
     expectedPayload.granules[0].dataType += testSuffix;
-    expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
+    expectedPayload.granules[0].files[0] = Object.assign(
+      expectedPayload.granules[0].files[0],
+      fileChecksumFixture
+    );
+
+    expectedPayload.granuleDuplicates = {};
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -196,17 +208,16 @@ describe('The Sync Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       files = lambdaOutput.payload.granules[0].files;
-      key1 = s3Join(files[0].fileStagingDir, files[0].name);
-      key2 = s3Join(files[1].fileStagingDir, files[1].name);
+      key1 = s3Join(files[0].key);
+      key2 = s3Join(files[1].key);
 
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
         s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
       ]);
-      syncedTaggings = await Promise.all(files.map((file) => {
-        const { Bucket, Key } = parseS3Uri(file.filename);
-        return s3GetObjectTagging(Bucket, Key);
-      }));
+      syncedTaggings = await Promise.all(files.map(
+        (file) => s3GetObjectTagging(file.bucket, file.key)
+      ));
     });
 
     it('receives payload with file objects updated to include file staging location', () => {
@@ -236,7 +247,7 @@ describe('The Sync Granules workflow', () => {
 
     it('receives files with custom staging directory', () => {
       files.forEach((file) => {
-        expect(file.fileStagingDir).toMatch('custom-staging-dir\/.*');
+        expect(file.key.startsWith('custom-staging-dir')).toBeTrue();
       });
     });
 
@@ -279,14 +290,14 @@ describe('The Sync Granules workflow', () => {
     beforeAll(async () => {
       granule = await getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
+        granuleId: newGranuleId,
       });
 
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
       const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
+        granuleId: newGranuleId,
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
@@ -306,7 +317,7 @@ describe('The Sync Granules workflow', () => {
         stackName: config.stackName,
         bucket: config.bucket,
         findExecutionFn: isReingestExecutionForGranuleId,
-        findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+        findExecutionFnParams: { granuleId: newGranuleId },
         startTask: 'SyncGranule',
       });
 
@@ -321,13 +332,17 @@ describe('The Sync Granules workflow', () => {
         'SyncGranule'
       );
 
-      syncGranuleTaskOutput.payload.granules[0].files.forEach((f) => {
-        expect(f.duplicate_found).toBeTrue();
+      inputPayload.granules.forEach((inputGranule) => {
+        const outputGranuleDuplicates = syncGranuleTaskOutput.payload.granuleDuplicates[inputGranule.granuleId];
+        inputGranule.files.forEach((inputFile) => {
+          const duplicateFound = outputGranuleDuplicates.files.find((outputFile) => path.basename(outputFile.key) === inputFile.name);
+          expect(duplicateFound).toBeDefined();
+        });
       });
 
       await waitForModelStatus(
         granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+        { granuleId: newGranuleId },
         'completed'
       );
 

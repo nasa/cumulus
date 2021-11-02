@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration steps
+
+- Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
+
+### BREAKING CHANGES
+
+- **CUMULUS-2388**:
+  - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
+    - add-missing-file-checksums
+    - files-to-granules
+    - hyrax-metadata-updates
+    - lzards-backup
+    - move-granules
+    - post-to-cmr
+    - sync-granule
+    - update-cmr-access-constraints
+    - update-granules-cmr-metadata-file-links
+  The primary focus of the schema updates was to standardize the format of granules, and
+  particularly their files data. The granule `files` object now matches the file schema in the
+  Cumulus database and thus also matches the `files` object produced by the API with use cases like
+  `applyWorkflow`. This includes removal of `name` and `filename` in favor of `bucket` and `key`,
+  removal of certain properties such as `etag` and `duplicate_found` and outputting them as
+  separate objects stored in `meta`.
+  - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
+  checksum formatting across the Cumulus library.
+
 ### Added
 
 - [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
@@ -13,10 +39,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the 'url_path' date extraction utilities. Added 'dateFormat' function as
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
+- [**PR #2548**](https://github.com/nasa/cumulus/pull/2548)
+  - Updated webpack configuration for html-loader v2
+- **CUMULUS-2640**
+  - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
+  - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
 - **CUMULUS-2683**
   - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
   - Added `default_s3_multipart_chunksize_mb` tfvars to the cumulus and ingest terraform modules.
-  - Added optional parameter `maxChunkSize` to `@cumulus/aws-client/S3.moveObject` and `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.
+  - Added optional parameter `maxChunkSize` to `@cumulus/aws-client/S3.moveObject` and
+    `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.
+
+### Changed
+
+- Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-2725**
+  - Updated providers endpoint to return encrypted password
+  - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+- **CUMULUS-2734**
+  - Updated `@cumulus/api/launchpadSaml.launchpadPublicCertificate` to correctly retrieve
+    certificate from launchpad IdP metadata with and without namespace prefix.
 
 ## [v9.8.0] 2021-10-19
 
@@ -95,8 +137,9 @@ upgrades to `knex` package and to address security vulnerabilities.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
 ### Fixed
-  - **CUMULUS-2583**
-    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
 
 ## [v9.6.0] 2021-09-20
 
