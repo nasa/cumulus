@@ -1,3 +1,7 @@
+'use strict';
+
+const pRetry = require('p-retry');
+
 const { listGranules } = require('@cumulus/api-client/granules');
 const { getPdrs, deletePdr } = require('@cumulus/api-client/pdrs');
 const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
@@ -5,6 +9,41 @@ const { deleteCollection, getCollection } = require('@cumulus/api-client/collect
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { deleteGranules } = require('./granuleUtils');
+
+/**
+ * COPIED from integration-tests package. Returns true if collection exists. False otherwise.
+ *
+ * @param {string} stackName - the prefix of the Cumulus stack
+ * @param {Object} collection - a Cumulus collection
+ * @returns {boolean}
+ */
+const collectionExists = async (stackName, collection) => {
+  let response;
+  const exists = await pRetry(
+    async () => {
+      try {
+        response = await getCollection({
+          prefix: stackName,
+          collectionName: collection.name,
+          collectionVersion: collection.version,
+        });
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Error: ${error}. Failed to get collection ${JSON.stringify(collection)}`);
+          return false;
+        }
+        throw error;
+      }
+      if (response.statusCode === 200) {
+        return true;
+      }
+      return false;
+    },
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
+  console.log('Collection exists:', exists);
+  return exists;
+};
 
 /**
 * Helper to remove a collection and all its dependencies
@@ -20,19 +59,8 @@ const { deleteGranules } = require('./granuleUtils');
 * @returns {Promise<undefined>}
 */
 const removeCollectionAndAllDependencies = async (params) => {
+  let granuleDeletionResult;
   const { prefix, collection } = params;
-  try {
-    await getCollection({
-      prefix,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    });
-  } catch (error) {
-    if (error.statusCode === 404) {
-      console.log(`Error: ${error}. Failed to get collection ${collection}`);
-    }
-    throw error;
-  }
   const collectionGranuleResponse = await listGranules({
     prefix,
     query: {
@@ -42,7 +70,13 @@ const removeCollectionAndAllDependencies = async (params) => {
   });
 
   const granulesForDeletion = JSON.parse(collectionGranuleResponse.body).results;
-  const granuleDeletionResult = await deleteGranules(prefix, granulesForDeletion);
+  try {
+    granuleDeletionResult = await deleteGranules(prefix, granulesForDeletion);
+  } catch (error) {
+    if (error.statusCode === 404) {
+      console.log('No granule to delete');
+    }
+  }
 
   console.log('Granule Cleanup Complete:');
   console.log(granulesForDeletion);
@@ -82,6 +116,7 @@ const removeCollectionAndAllDependencies = async (params) => {
   console.log(executionsForDeletion);
   console.log(executionDeletionResult);
   try {
+    await collectionExists(prefix, collection);
     await deleteCollection({ prefix, collectionName: collection.name, collectionVersion: collection.version });
   } catch (error) {
     console.log(`Error: ${error}. Failed delete collection ${collection}`);
