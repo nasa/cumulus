@@ -256,10 +256,14 @@ async function del(req, res) {
   try {
     await collectionPgModel.get(knex, { name, version });
   } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esCollectionsClient.exists(collectionId))) {
+        log.info('Collection does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Collection does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
       throw error;
-    } else if (!(await esCollectionsClient.exists(collectionId))) {
-      return res.boom.notFound('No record found');
     }
   }
 
