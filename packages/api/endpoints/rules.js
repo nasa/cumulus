@@ -207,10 +207,14 @@ async function del(req, res) {
     await rulePgModel.get(knex, { name });
   } catch (error) {
     // If rule doesn't exist in PG or ES, return not found
-    if (!(error instanceof RecordDoesNotExist)) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esRulesClient.exists(name))) {
+        log.info('Rule does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Rule does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
       throw error;
-    } else if (!(await esRulesClient.exists(name))) {
-      return res.boom.notFound('No record found');
     }
   }
 
