@@ -203,10 +203,14 @@ async function del(req, res) {
   try {
     await executionPgModel.get(knex, { arn });
   } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esExecutionsClient.exists(arn))) {
+        log.info('Execution does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Execution does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
       throw error;
-    } else if (!(await esExecutionsClient.exists(arn))) {
-      return res.boom.notFound('No record found');
     }
   }
 
