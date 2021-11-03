@@ -291,7 +291,6 @@ test('mapFileEtags returns map of S3 URIs to etags', (t) => {
   );
 });
 
-
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering out non-CMR files', (t) => {
   const granule = {
     granuleId: 'fake-id',
