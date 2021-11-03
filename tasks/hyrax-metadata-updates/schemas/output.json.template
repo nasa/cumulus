@@ -1,0 +1,24 @@
+{
+  "title": "HyraxMetadataUpdatesOutput",
+  "description": "Describes the output produced by the hyrax-metadata-updates task",
+  "type": "object",
+  "properties": {
+    "etags": {
+      "description": "updated map of s3URIs to ETags",
+      "type": "object"
+    },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    }
+  }
+}

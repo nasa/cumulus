@@ -6,7 +6,6 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { parseS3Uri } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   addCollections,
@@ -181,12 +180,10 @@ describe('The TestPythonProcessing workflow', () => {
     await pMap(
       executionOutput.payload.granules[0].files,
       async (file) => {
-        const { Bucket, Key } = parseS3Uri(file.filename);
-
         const granuleId = await pRetry(
           async () => {
-            const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
+            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
             return id;
           },
           { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
