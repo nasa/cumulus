@@ -296,7 +296,7 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleId: 'fake-id',
     files: [{
       bucket: 'bucket',
-      key: 'fake.iso.xml',
+      key: 'fake.cmr.xml',
     },
     {
       bucket: 'bucket',
@@ -308,7 +308,7 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     [{
       granuleId: 'fake-id',
       bucket: 'bucket',
-      key: 'fake.iso.xml',
+      key: 'fake.cmr.xml',
     }]
   );
 });
