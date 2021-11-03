@@ -296,7 +296,7 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleId: 'fake-id',
     files: [{
       bucket: 'bucket',
-      key: 'fake.cmr.xml',
+      key: 'fake.iso.xml',
     },
     {
       bucket: 'bucket',
@@ -307,7 +307,8 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleToCmrFileObject(granule),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
     }]
   );
 });
@@ -329,7 +330,8 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleToCmrFileObject(granule, filterFunc),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.iso.xml',
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
     }]
   );
 });
@@ -351,11 +353,13 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleToCmrFileObject(granule, filterFunc),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
     },
     {
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.iso.xml',
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
     }]
   );
 });
