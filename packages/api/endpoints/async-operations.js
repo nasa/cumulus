@@ -95,10 +95,14 @@ async function del(req, res) {
   try {
     await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esAsyncOperationsClient.exists(id))) {
+        logger.info('Async Operation does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      logger.info('Async Operation does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
       throw error;
-    } else if (!(await esAsyncOperationsClient.exists(id))) {
-      return res.boom.notFound('No record found');
     }
   }
 
