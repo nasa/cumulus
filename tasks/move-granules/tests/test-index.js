@@ -626,7 +626,10 @@ test.serial('url_path is evaluated correctly when the metadata file is ISO', asy
   const payloadPath = path.join(__dirname, 'data', 'payload_iso.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
-  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
   t.context.filesToUpload = filesToUpload.map((file) =>
     buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
 
@@ -636,11 +639,10 @@ test.serial('url_path is evaluated correctly when the metadata file is ISO', asy
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
 
-  const filename = 'ATL08_20181208064514_10790104_004_01.h5';
-  const outputFile = output.granules[0].files.find((f) => f.name === filename);
-  const expectedKey = `example/2018/12/08/${filename}`;
+  const expectedKey = 'example/2018/12/08/ATL08_20181208064514_10790104_004_01.h5';
+  const outputFile = output.granules[0].files.find((f) => f.key === expectedKey);
 
-  t.is(outputFile.filepath, expectedKey);
+  t.is(outputFile.key, expectedKey);
 
   const check = await s3ObjectExists({
     Bucket: t.context.protectedBucket,

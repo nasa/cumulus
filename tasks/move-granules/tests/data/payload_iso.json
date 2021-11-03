@@ -43,18 +43,16 @@
         "granuleId": "ATL08_20181208064514_10790104_004_01",
         "files": [
           {
-            "name": "ATL08_20181208064514_10790104_004_01.h5",
+            "fileName": "ATL08_20181208064514_10790104_004_01.h5",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/ATL08_20181208064514_10790104_004_01.h5",
-            "type": "data",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/ATL08_20181208064514_10790104_004_01.h5",
+            "type": "data"
           },
           {
-            "name": "ATL08_20181208064514_10790104_004_01.iso.xml",
+            "fileName": "ATL08_20181208064514_10790104_004_01.iso.xml",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/ATL08_20181208064514_10790104_004_01.iso.xml",
-            "type": "metadata",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/ATL08_20181208064514_10790104_004_01.iso.xml",
+            "type": "metadata"
           }
         ]
       }
