@@ -76,6 +76,11 @@ if [[ $BRANCH == master ]]; then
   echo export GIT_PR=true >> .bamboo_env_vars
 fi
 
+## SKIP CL eval if current branch is equal to the PR branch
+if [[ $BRANCH == "$PR_BRANCH" ]]; then
+   export SKIP_CHANGELOG=true
+fi
+
 ## This should take a blank value from the global options, and
 ## is intended to allow an override for a custom branch build.
 if [[ -n $bamboo_GIT_PR ]]; then
