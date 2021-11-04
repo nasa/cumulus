@@ -1,6 +1,7 @@
 locals {
-  cnm_response_version = "2.0.0"
-  cnm_response_filename = "cnmResponse-${local.cnm_response_version}.zip"
+  cnm_response_version          = "2.0.0"
+  cnm_response_filename         = "cnmResponse-${local.cnm_response_version}.zip"
+  path_to_cnm_response_filename = "${path.module}/${local.cnm_response_filename}"
 }
 
 resource "null_resource" "get_cnmResponse" {
@@ -12,23 +13,16 @@ resource "null_resource" "get_cnmResponse" {
   }
 }
 
-resource aws_s3_bucket_object "cnm_response_lambda_zip" {
-  depends_on = [null_resource.get_cnmResponse]
-  bucket = var.system_bucket
-  key = local.cnm_response_filename
-  source = local.cnm_response_filename
-}
-
 resource "aws_lambda_function" "cnm_response_task" {
-  depends_on = [aws_s3_bucket_object.cnm_response_lambda_zip]
-  function_name = "${var.prefix}-CnmResponse"
-  filename      = aws_s3_bucket_object.cnm_response_lambda_zip.id
-  handler       = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
-  role          = module.cumulus.lambda_processing_role_arn
-  runtime       = "java8"
-  timeout       = 300
-  memory_size   = 256
-  source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag
+  depends_on       = [null_resource.get_cnmResponse]
+  function_name    = "${var.prefix}-CnmResponse"
+  handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "java8"
+  timeout          = 300
+  memory_size      = 256
+  filename         = local.path_to_cnm_response_filename
+  source_code_hash = filebase64sha256(local.path_to_cnm_response_filename)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

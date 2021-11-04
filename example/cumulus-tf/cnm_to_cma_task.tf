@@ -1,6 +1,7 @@
 locals {
-  cnm_to_cma_version = "1.4.2"
-  cnm_to_cma_filename = "cnmToGranule-${local.cnm_to_cma_version}.zip"
+  cnm_to_cma_version          = "1.4.2"
+  cnm_to_cma_filename         = "cnmToGranule-${local.cnm_to_cma_version}.zip"
+  path_to_cnm_to_cma_filename = "${path.module}/${local.cnm_to_cma_filename}"
 }
 
 resource "null_resource" "get_cnmToGranule" {
@@ -12,23 +13,16 @@ resource "null_resource" "get_cnmToGranule" {
   }
 }
 
-resource aws_s3_bucket_object "cnm_to_cma_lambda_zip" {
-  depends_on = [null_resource.get_cnmToGranule]
-  bucket = var.system_bucket
-  key = local.cnm_to_cma_filename
-  source = local.cnm_to_cma_filename
-}
-
 resource "aws_lambda_function" "cnm_to_cma_task" {
-  depends_on = [aws_s3_bucket_object.cnm_to_cma_lambda_zip]
-  function_name = "${var.prefix}-CNMToCMA"
-  filename      = aws_s3_bucket_object.cnm_to_cma_lambda_zip.id
-  handler       = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
-  role          = module.cumulus.lambda_processing_role_arn
-  runtime       = "java8"
-  timeout       = 300
-  memory_size   = 128
-  source_code_hash = aws_s3_bucket_object.cnm_to_cma_lambda_zip.etag
+  depends_on       = [null_resource.get_cnmToGranule]
+  function_name    = "${var.prefix}-CNMToCMA"
+  handler          = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "java8"
+  timeout          = 300
+  memory_size      = 128
+  filename         = local.path_to_cnm_to_cma_filename
+  source_code_hash = filebase64sha256(local.path_to_cnm_to_cma_filename)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 
