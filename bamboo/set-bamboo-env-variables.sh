@@ -76,12 +76,6 @@ if [[ $BRANCH == master ]]; then
   echo export GIT_PR=true >> .bamboo_env_vars
 fi
 
-## SKIP CL eval if current branch is equal to the PR branch
-if [[ $BRANCH == "$PR_BRANCH" ]]; then
-   export SKIP_CHANGELOG=true
-   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
-fi
-
 ## This should take a blank value from the global options, and
 ## is intended to allow an override for a custom branch build.
 if [[ -n $bamboo_GIT_PR ]]; then
@@ -105,6 +99,12 @@ if [[ -z $BRANCH ]]; then
 fi
 echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 
+
+## SKIP CL eval if current branch is equal to the PR branch
+if [[ $BRANCH == "$PR_BRANCH" ]]; then
+   export SKIP_CHANGELOG=true
+   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
+fi
 
 ## If tag matching the current ref is a version tag, set
 GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
