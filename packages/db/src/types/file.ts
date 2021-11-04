@@ -5,15 +5,21 @@ export interface PostgresFile {
   checksum_type?: string,
   checksum_value?: string,
   file_name?: string,
-  file_size?: number,
+  file_size?: bigint,
   path?: string,
   source?: string,
   type?: string,
+  created_at?: Date,
+  updated_at?: Date,
 }
 
 // file_size is stored as a BigInt in Postgres. It returns from PG to Node
 // as a "string" type.
-export interface PostgresFileRecord extends Omit<PostgresFile, 'file_size'> {
+// TODO - Let's fix this
+export interface PostgresFileRecord extends Omit<PostgresReturnFileRecord, 'file_size'> {
+  file_size?: bigint,
+}
+export interface PostgresReturnFileRecord extends Omit<PostgresFile, 'file_size'> {
   bucket: string,
   key: string,
   cumulus_id: number,

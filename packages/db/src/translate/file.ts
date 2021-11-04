@@ -25,7 +25,7 @@ export const translatePostgresFileToApiFile = (
   checksumType: filePgRecord.checksum_type,
   fileName: filePgRecord.file_name,
   key: filePgRecord.key,
-  size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
+  size: filePgRecord.file_size,
   source: filePgRecord.source,
   type: filePgRecord.type,
 });
@@ -45,5 +45,7 @@ export const translateApiFiletoPostgresFile = (
     path: file.path,
     source: file.source,
     type: file.type,
+    /*     created_at: new Date(file.createdAt),
+    updated_at: new Date(file.updatedAt), */
   };
 };

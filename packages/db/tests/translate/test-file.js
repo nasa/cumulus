@@ -16,7 +16,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
     checksum_type: 'md5',
     checksum_value: 'bogus-value',
     file_name: 's3://cumulus-test-sandbox-private/firstKey',
-    file_size: '100',
+    file_size: BigInt(100),
     key: 'firstKey',
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
     created_at: new Date(Date.now()),
@@ -34,7 +34,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
         checksumType: postgresFile.checksum_type,
         fileName: postgresFile.file_name,
         key: postgresFile.key,
-        size: Number.parseInt(postgresFile.file_size, 10),
+        size: postgresFile.file_size,
         source: postgresFile.source,
         type: postgresFile.type,
       },
@@ -50,7 +50,7 @@ test('translateApiFiletoPostgresFile converts API file to Postgres', (t) => {
     fileName: cryptoRandomString({ length: 3 }),
     checksumType: 'md5',
     checksum: 'bogus-value',
-    size: 100,
+    size: BigInt(100),
     source: 'fake-source',
     type: 'data',
   };
@@ -79,7 +79,7 @@ test('translateApiFiletoPostgresFile gets a bucket and key from filename', (t) =
     filename: 's3://cumulus-test-sandbox-private/somekey',
     fileName: cryptoRandomString({ length: 3 }),
     key: undefined,
-    size: 100,
+    size: BigInt(100),
     source: 'fake-source',
   };
   t.deepEqual(
