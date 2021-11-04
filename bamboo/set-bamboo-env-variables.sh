@@ -79,6 +79,7 @@ fi
 ## SKIP CL eval if current branch is equal to the PR branch
 if [[ $BRANCH == "$PR_BRANCH" ]]; then
    export SKIP_CHANGELOG=true
+   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
 fi
 
 ## This should take a blank value from the global options, and
