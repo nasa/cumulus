@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+## [v9.9.0] 2021-11-03
+
 ### Added
 
 - **NDCUM-624**: Add support for ISO metadata files for the `MoveGranules` step
@@ -64,6 +66,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
@@ -5003,7 +5007,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.8.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.0...HEAD
+[v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
