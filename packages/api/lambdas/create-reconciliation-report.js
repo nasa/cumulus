@@ -15,7 +15,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
@@ -30,7 +30,6 @@ const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  filterCMRCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 
@@ -109,6 +108,37 @@ function shouldAggregateGranulesForCollections(searchParams) {
     'granuleId__in',
     'provider__in',
   ].some((e) => !!searchParams[e]);
+}
+
+/**
+ * fetch CMR collections and filter the returned UMM CMR collections by the desired collectionIds
+ *
+ * @param {Object} recReportParams - input report params
+ * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
+ * @returns {Array<string>} filtered list of collectionIds returned from CMR
+ */
+async function fetchCMRCollections(recReportParams) {
+  const cmrSettings = await getCmrSettings();
+  log.debug('fetch CMRSearchConceptQueue(collections)');
+  const cmrCollectionsIterator = new CMRSearchConceptQueue({
+    cmrSettings,
+    type: 'collections',
+    format: 'umm_json',
+  });
+
+  const allCmrCollectionIds = [];
+  let nextCmrItem = await cmrCollectionsIterator.shift();
+  while (nextCmrItem) {
+    allCmrCollectionIds
+      .push(constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version));
+    nextCmrItem = await cmrCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+  }
+
+  const cmrCollectionIds = allCmrCollectionIds.sort();
+
+  const { collectionIds } = recReportParams;
+  if (!collectionIds) return cmrCollectionIds;
+  return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
 /**
@@ -250,10 +280,7 @@ async function reconciliationReportForCollections(recReportParams) {
     // get all collections from CMR and sort them, since CMR query doesn't support
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
-    const cmrSettings = await getCmrSettings();
-    const cmr = new CMR(cmrSettings);
-    const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
-    const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
+    const cmrCollectionIds = await fetchCMRCollections(recReportParams);
     const esCollectionIds = await fetchESCollections(recReportParams);
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
@@ -287,7 +314,7 @@ async function reconciliationReportForCollections(recReportParams) {
     if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
   } catch (error) {
     log.error(`Error caught in reconciliationReportForCollections. with params ${JSON.stringify(recReportParams)}`);
-    log.error(errorify(error));
+    log.error(JSON.stringify(error));
     throw error;
   }
   log.info(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
@@ -402,7 +429,7 @@ async function reconciliationReportForGranuleFiles(params) {
     });
   } catch (error) {
     log.error(`Error caught in reconciliationReportForGranuleFiles(${granuleInDb.granuleId})`);
-    log.error(errorify(error));
+    log.error(JSON.stringify(error));
     throw error;
   }
   return { okCount, onlyInCumulus, onlyInCmr };
@@ -536,7 +563,7 @@ async function reconciliationReportForGranules(params) {
     }
   } catch (error) {
     log.error(`Error caught in reconciliationReportForGranules(${collectionId})`);
-    log.error(errorify(error));
+    log.error(JSON.stringify(error));
     throw error;
   }
   log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `

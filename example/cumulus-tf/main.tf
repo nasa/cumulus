@@ -114,6 +114,8 @@ module "cumulus" {
   cmr_provider    = var.cmr_provider
   cmr_custom_host = var.cmr_custom_host
 
+  cmr_search_client_config = var.cmr_search_client_config
+
   cmr_oauth_provider = var.cmr_oauth_provider
 
   launchpad_api         = var.launchpad_api

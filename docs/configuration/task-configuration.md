@@ -6,6 +6,29 @@ hide_title: false
 
 The `cumulus` module exposes values for configuration for some of the provided archive and ingest tasks.   Currently the following are available as configurable variables:
 
+## cmr_search_client_config
+
+Configuration parameters for CMR search client for cumulus archive module tasks in the form:
+```hcl
+<lambda_identifier>_report_cmr_limit = <duration>
+<lambda_identifier>_report_cmr_page_size = <size>
+  type = map(string)
+```
+
+Currently the following values are supported:
+
+- create_reconciliation_report_cmr_limit
+- create_reconciliation_report_cmr_page_size
+
+### Example
+
+```tf
+cmr_search_client_config = {
+  create_reconciliation_report_cmr_limit = 2500
+  create_reconciliation_report_cmr_page_size = 250
+}
+```
+
 ## elasticsearch_client_config
 
 Configuration parameters for Elasticsearch client for cumulus archive module tasks in the form:

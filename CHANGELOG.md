@@ -32,6 +32,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Added
+
+- **CUMULUS-2439**
+  - Added CMR search client setting to the CreateReconciliationReport lambda function.
+  - Added `cmr_search_client_config` tfvars to the archive and cumulus terraform modules.
+  - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
+
 ## [v9.9.0] 2021-11-03
 
 ### Added
