@@ -374,10 +374,11 @@ async function del(req, res) {
     pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
       if (!(await esGranulesClient.exists(granuleId))) {
+        log.info('Granule does not exist in Elasticsearch and PostgreSQL');
         return res.boom.notFound('No record found');
       }
+      log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch. Proceeding with deletion.`);
     } else {
       throw error;
     }

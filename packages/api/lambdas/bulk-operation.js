@@ -97,10 +97,9 @@ async function bulkGranuleDelete(
         pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
       } catch (error) {
         if (error instanceof RecordDoesNotExist) {
-          log.info(error.message);
+          log.error(error.message);
+          return { granuleId, err: error };
         }
-
-        return;
       }
 
       if (pgGranule.published && forceRemoveFromCmr) {
@@ -119,6 +118,7 @@ async function bulkGranuleDelete(
       });
 
       deletedGranules.push(granuleId);
+      return deletedGranules;
     },
     {
       concurrency: 10, // is this necessary?
