@@ -16,7 +16,7 @@ test('translatePgFileToApiFile converts Postgres file to API file', (t) => {
     checksum_type: 'md5',
     checksum_value: 'bogus-value',
     file_name: 's3://cumulus-test-sandbox-private/firstKey',
-    file_size: BigInt(100),
+    file_size: '100',
     key: 'firstKey',
     source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
     created_at: new Date(Date.now()),

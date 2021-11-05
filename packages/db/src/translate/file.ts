@@ -25,7 +25,7 @@ export const translatePostgresFileToApiFile = (
   checksumType: filePgRecord.checksum_type,
   fileName: filePgRecord.file_name,
   key: filePgRecord.key,
-  size: filePgRecord.file_size,
+  size: filePgRecord.file_size ? String(filePgRecord.file_size) : undefined,
   source: filePgRecord.source,
   type: filePgRecord.type,
 });
@@ -41,7 +41,7 @@ export const translateApiFiletoPostgresFile = (
     checksum_type: file.checksumType,
     checksum_value: file.checksum,
     file_name: file.fileName,
-    file_size: file.size,
+    file_size: file.size ? BigInt(file.size) : undefined,
     path: file.path,
     source: file.source,
     type: file.type,

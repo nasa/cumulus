@@ -9,7 +9,7 @@ export interface ApiFile {
   key?: string
   name?: string
   path?: string
-  size?: bigint
+  size?: string,
   // TODO -- Was this *originally actually a
   // number coming from the endpoints or are we the victim of duck typing here
   // hopefully yes.
