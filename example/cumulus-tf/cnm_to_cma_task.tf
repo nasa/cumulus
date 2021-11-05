@@ -5,7 +5,7 @@ locals {
 
 resource "null_resource" "get_cnmToGranule" {
   triggers = {
-    always_run = timestamp()
+    always_run = local.cnm_to_cma_version
   }
   provisioner "local-exec" {
     command = "curl -s -L -o ${local.cnm_to_cma_filename} https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v${local.cnm_to_cma_version}/${local.cnm_to_cma_filename}"
