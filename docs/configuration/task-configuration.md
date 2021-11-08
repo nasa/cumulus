@@ -9,6 +9,7 @@ The `cumulus` module exposes values for configuration for some of the provided a
 ## cmr_search_client_config
 
 Configuration parameters for CMR search client for cumulus archive module tasks in the form:
+
 ```hcl
 <lambda_identifier>_report_cmr_limit = <duration>
 <lambda_identifier>_report_cmr_page_size = <size>
