@@ -48,7 +48,7 @@ class TestConsole extends Console {
   }
 }
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.testConsole = new TestConsole();
 });
 

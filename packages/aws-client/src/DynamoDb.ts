@@ -176,7 +176,7 @@ export const parallelScan = async (
     retryOptions,
   } = params;
 
-  return pMap(
+  return await pMap(
     range(totalSegments),
     async (_, segmentIndex) => {
       let exclusiveStartKey: DocumentClient.Key | undefined;

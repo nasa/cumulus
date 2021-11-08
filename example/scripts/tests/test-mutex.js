@@ -12,9 +12,9 @@ test.beforeEach((t) => {
     Item: { sha: t.context.sha, key: t.context.key, expire: t.context.timeout },
   };
   t.context.docClient = {
-    get: () => ({ promise: () => t.context.getResults }),
+    get: () => ({ promise: () => Promise.resolve(t.context.getResults) }),
     put: (params) => ({ promise: () => Promise.resolve(params) }),
-    delete: () => ({ promise: () => true }),
+    delete: () => ({ promise: () => Promise.resolve(true) }),
   };
   t.context.mutex = new Mutex(t.context.docClient, t.context.tableName);
 });
@@ -68,7 +68,7 @@ test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', asyn
     throw new Error('test error');
   };
   docClient.get = () => ({
-    promise: () => ({
+    promise: () => Promise.resolve({
       Item: { sha: 'someOtherSha', key: t.context.key, expire: t.context.timeout },
     }),
   });
@@ -87,7 +87,7 @@ test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatch
     throw new Error('test error');
   };
   docClient.get = () => ({
-    promise: () => ({}),
+    promise: () => Promise.resolve({}),
   });
   const mutex = new Mutex(docClient, 'sometable');
   await t.throwsAsync(

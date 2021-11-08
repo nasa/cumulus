@@ -59,7 +59,7 @@ class Rule extends Manager {
   async deleteRules() {
     const rules = await this.scan();
     const deletePromises = rules.Items.map((r) => this.delete(r));
-    return Promise.all(deletePromises);
+    return await Promise.all(deletePromises);
   }
 
   async delete(item) {
@@ -88,7 +88,7 @@ class Rule extends Manager {
   }
 
   async getAllRules() {
-    return this.dynamoDbClient.scan({
+    return await this.dynamoDbClient.scan({
       names: {
         '#name': 'name',
       },
@@ -375,7 +375,7 @@ class Rule extends Manager {
         }
       )
     );
-    return Promise.all(deleteEventPromises);
+    return await Promise.all(deleteEventPromises);
   }
 
   /**
@@ -478,6 +478,7 @@ class Rule extends Manager {
   async deleteSnsTrigger(item) {
     // If event source mapping is shared by other rules, don't delete it
     if (await this.isEventSourceMappingShared(item, 'arn')) {
+      log.info(`Event source mapping ${item} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
       return Promise.resolve();
     }
     // delete permission statement
@@ -606,7 +607,7 @@ class Rule extends Manager {
    * @returns {boolean} `true` if the rule with the specified name exists, false otherwise
    */
   async exists(name) {
-    return super.exists({ name });
+    return await super.exists({ name });
   }
 }
 

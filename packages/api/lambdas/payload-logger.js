@@ -9,7 +9,7 @@ const { inTestMode, throwTestError } = require('@cumulus/common/test-utils');
  * @param {Object} logger - Cumulus common log object.  Can be overriden for testing.
  * @returns {Object} returns event object with data field deserialized
  */
-async function kinesisEventLogger(event, logger = log) {
+function kinesisEventLogger(event, logger = log) {
   const outputEvent = event;
   const outputRecords = event.Records.map((record) => {
     const updateRecord = record;
@@ -28,7 +28,7 @@ async function kinesisEventLogger(event, logger = log) {
  * @returns {void} returns nothing
  */
 async function handler(event) {
-  return kinesisEventLogger(event);
+  return await kinesisEventLogger(event);
 }
 exports.handler = handler;
 exports.kinesisEventLogger = inTestMode() ? kinesisEventLogger : throwTestError;

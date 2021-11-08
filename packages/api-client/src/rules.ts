@@ -21,7 +21,7 @@ export const postRule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, rule, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
@@ -60,7 +60,7 @@ export const updateRule = async (params: {
     callback = invokeApi,
   } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'PUT',
@@ -91,7 +91,7 @@ export const listRules = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query = {}, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -118,9 +118,13 @@ export const getRule = async (params: {
   ruleName: string,
   callback: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, ruleName, callback = invokeApi } = params;
+  const {
+    prefix,
+    ruleName,
+    callback = invokeApi,
+  } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -147,7 +151,7 @@ export const deleteRule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, ruleName, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -182,7 +186,7 @@ export async function rerunRule(params: {
     callback = invokeApi,
   } = params;
 
-  return updateRule({
+  return await updateRule({
     prefix,
     ruleName,
     updateParams: {

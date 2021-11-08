@@ -2,9 +2,11 @@
 
 * Alireza Jazayeri
 * Abdelhak Marouane
+* Adithya Krishna
 * Aimee Barciauskas
 * Andrew Pawloski
 * Anthony Lukach
+* Anthony Ortega
 * Brian Tennity
 * Chuck Daniels
 * Dan Pilone
@@ -23,6 +25,7 @@
 * Lauren Frederick
 * Marc Huffnagle
 * Mark Boyd
+* Mark Schwab
 * Matt Savoie
 * Menno Van Diermen
 * Nate Pauzenga
@@ -31,5 +34,6 @@
 * Phil Osip
 * Sara Chaparro Diaz
 * Seth Vincent
+* Slav Korolev
 * Snyk bot
 * Tobias Nießen

@@ -22,7 +22,14 @@ const { randomId, readJsonFixture, randomString } = require('@cumulus/common/tes
 const errors = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 
-const { getCmrSettings, constructCmrConceptLink, granuleToCmrFileObject } = require('../../cmr-utils');
+const {
+  addEtagsToFileObjects,
+  constructCmrConceptLink,
+  getCmrSettings,
+  granuleToCmrFileObject,
+  mapFileEtags,
+  removeEtagsFromFileObjects,
+} = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
@@ -42,13 +49,15 @@ const {
   '@cumulus/aws-client/S3': {
     buildS3Uri,
     getS3Object,
-    getJsonS3Object: async () => stubDistributionBucketMap,
+    getJsonS3Object: () => Promise.resolve(stubDistributionBucketMap),
     parseS3Uri,
     promiseS3Upload,
     s3GetObjectTagging,
     s3TagSetToQueryString,
   },
 });
+
+const sortByURL = (a, b) => (a.URL < b.URL ? -1 : 1);
 
 const launchpadSecret = randomId('launchpad-secret');
 const launchpadPassphrase = randomId('launchpad-passphrase');
@@ -108,65 +117,44 @@ test.after.always(async (t) => {
   t.context.launchpadStub.restore();
 });
 
-test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.xml',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid xml name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.xml',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid json name', (t) => {
-  const fileObj = {
-    name: 'validfile.cmr.json',
-  };
-  t.truthy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns falsy if fileobject does not valid json name', (t) => {
-  const fileObj = {
-    name: 'invalidfile.json',
-  };
-  t.falsy(isCMRFile(fileObj));
-});
-
-test('isCMRFile returns truthy if fileobject has valid xml filenamename', (t) => {
+test('isCMRFile returns true if fileobject has valid .cmr.xml filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.xml',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid xml filenamename', (t) => {
+test('isCMRFile returns false if fileobject does not have a valid xml filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.xml',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns truthy if fileobject has valid json filenamename', (t) => {
+test('isCMRFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.cmr_iso.xml',
+  };
+  t.true(isCMRFile(fileObj));
+});
+
+test('isCMRFile returns true if fileobject has valid json filename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.json',
   };
-  t.truthy(isCMRFile(fileObj));
+  t.true(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject does not valid json filenamename', (t) => {
+test('isCMRFile returns false if fileobject does not valid json filename', (t) => {
   const fileObj = {
     filename: 'invalidfile.json',
   };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
-test('isCMRFile returns falsy if fileobject is invalid', (t) => {
+test('isCMRFile returns false if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
-  t.falsy(isCMRFile(fileObj));
+  t.false(isCMRFile(fileObj));
 });
 
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
@@ -181,7 +169,8 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     granuleToCmrFileObject(granule),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
     }]
   );
 });
@@ -197,8 +186,82 @@ test('granuleToCmrFileObject returns correct objects for files with a filename',
     granuleToCmrFileObject(granule),
     [{
       granuleId: 'fake-id',
-      filename: 's3://bucket/fake.cmr.xml',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
     }]
+  );
+});
+
+test('addEtagsToFileObjects adds etag for granule file', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granule = {
+    files: [
+      {
+        bucket,
+        key,
+      },
+    ],
+  };
+  const etags = {
+    [buildS3Uri(bucket, key)]: etag,
+  };
+  const expectation = {
+    files: [
+      {
+        bucket,
+        key,
+        etag,
+      },
+    ],
+  };
+  addEtagsToFileObjects(granule, etags);
+  t.deepEqual(granule, expectation);
+});
+
+test('removeEtagsFromFileObjects removes etag from granule file', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granule = {
+    files: [
+      {
+        bucket,
+        key,
+        etag,
+      },
+    ],
+  };
+  const expectation = {
+    files: [
+      {
+        bucket,
+        key,
+      },
+    ],
+  };
+  removeEtagsFromFileObjects(granule);
+  t.deepEqual(granule, expectation);
+});
+
+test('mapFileEtags returns map of S3 URIs to etags', (t) => {
+  const bucket = 'test-bucket';
+  const key = 'some-file.cmr.json';
+  const etag = '"abcd1234"';
+  const granuleFiles = [
+    {
+      bucket,
+      key,
+      etag,
+    },
+  ];
+  const expectation = {
+    [buildS3Uri(bucket, key)]: etag,
+  };
+  t.deepEqual(
+    mapFileEtags(granuleFiles),
+    expectation
   );
 });
 
@@ -214,16 +277,6 @@ test('constructCmrConceptLink returns umm_json link', (t) => {
     constructCmrConceptLink('G1234-DAAC', 'umm_json'),
     'https://cmr.earthdata.nasa.gov/search/concepts/G1234-DAAC.umm_json'
   );
-});
-
-test('mapACNMTypeToCMRType returns a mapping', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('EXTENDED METADATA', mapCNMTypeToCMRType('qa'));
-});
-
-test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
-  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
-  t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
 });
 
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
@@ -316,6 +369,10 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf`,
       URLDescription: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+    },
   ];
   const onlineResourcesExpected = [
     {
@@ -328,11 +385,20 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json',
+      Type: 'EXTENDED METADATA',
+      Description: 'This link provides direct download access via S3 to the granule',
+    },
   ];
   const AssociatedBrowseExpected = [
     {
       URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg`,
       Description: 'Download MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
     },
   ];
 
@@ -346,15 +412,15 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL,
-      onlineAccessURLsExpected);
-    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource,
-      onlineResourcesExpected);
+    t.deepEqual(metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL.sort(sortByURL),
+      onlineAccessURLsExpected.sort(sortByURL));
+    t.deepEqual(metadataObject.Granule.OnlineResources.OnlineResource.sort(sortByURL),
+      onlineResourcesExpected.sort(sortByURL));
     t.deepEqual(
-      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl,
-      AssociatedBrowseExpected
+      metadataObject.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl.sort(sortByURL),
+      AssociatedBrowseExpected.sort(sortByURL)
     );
-    t.truthy(uploadEchoSpy.calledWith('testXmlString',
+    t.true(uploadEchoSpy.calledWith('testXmlString',
       { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
   } finally {
     revertMetaObject();
@@ -363,7 +429,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   }
 });
 
-test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.5 ', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
   // Yes, ETag values always include enclosing double-quotes
@@ -411,6 +477,21 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION',
     },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
   ];
 
   try {
@@ -423,7 +504,89 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
     });
 
     t.is(etag, expectedEtag, "ETag doesn't match");
-    t.deepEqual(metadataObject.RelatedUrls, expectedRelatedURLs);
+    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
+  } finally {
+    revertMetaObject();
+    revertMockUpload();
+  }
+});
+
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule with UMM-G version 1.6.2 ', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  // Yes, ETag values always include enclosing double-quotes
+  const expectedEtag = '"abc"';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: expectedEtag }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const distEndpoint = 'https://distendpoint.com';
+
+  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
+
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
+
+  const expectedRelatedURLs = [
+    {
+      URL: 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
+      Description: 'Download MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Type: 'EXTENDED METADATA',
+    },
+    {
+      URL: `${distEndpoint}/s3credentials`,
+      Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+      Type: 'VIEW RELATED INFORMATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA VIA DIRECT ACCESS',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: 's3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json',
+      Description: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
+  ];
+
+  try {
+    const { metadataObject, etag } = await updateUMMGMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      bucketTypes,
+      distributionBucketMap,
+    });
+
+    t.is(etag, expectedEtag, "ETag doesn't match");
+    t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
   } finally {
     revertMetaObject();
     revertMockUpload();
@@ -433,7 +596,6 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.json', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -446,12 +608,14 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.json',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
@@ -459,7 +623,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.xml', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -472,17 +635,46 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   try {
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
-      files: [],
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.xml',
+      }],
     });
 
     t.deepEqual(temporalInfo, expectedTemporalInfo);
   } finally {
-    revertCmrFileObject();
     revertMetaObject();
   }
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', async (t) => {
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR ISO xml file', async (t) => {
+  const cmrXml = await fs.readFile('./tests/fixtures/ATL03_20190101000418_00540208_004_01.cmr_iso.xml', 'utf8');
+  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2019-01-01T00:04:18.809303Z',
+    endingDateTime: '2019-01-01T00:11:20.899913Z',
+    productionDateTime: '2021-02-05T04:23:58.000000Z',
+    lastUpdateDateTime: '2021-05-07T09:10:59.891292Z',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr_iso.xml',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertMetaObject();
+  }
+});
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -492,17 +684,17 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -512,17 +704,17 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', as
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -531,17 +723,17 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 's3',
+    urlType: 's3',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, filename);
 });
 
-test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', async (t) => {
+test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -551,17 +743,17 @@ test.serial('generateFileUrl returns undefined for cmrGranuleUrlType none', asyn
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
-    cmrGranuleUrlType: 'none',
+    urlType: 'none',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, undefined);
 });
 
-test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with bucket map defined', async (t) => {
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution with bucket map defined', (t) => {
   const filename = 's3://mapped-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -571,18 +763,18 @@ test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distrib
     key: 'folder/key.txt',
   };
 
-  const url = await generateFileUrl({
+  const url = generateFileUrl({
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   });
 
   t.is(url, 'www.example.com/mapped/path/example/folder/key.txt');
 });
 
-test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', async (t) => {
+test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution with no bucket map defined', (t) => {
   const filename = 's3://other-fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
 
@@ -592,11 +784,11 @@ test.serial('generateFileUrl throws error for cmrGranuleUrlType distribution wit
     key: 'folder/key.txt',
   };
 
-  await t.throwsAsync(generateFileUrl({
+  t.throws(() => generateFileUrl({
     file,
     distEndpoint,
     teaEndpoint: 'fakeTeaEndpoint',
-    cmrGranuleUrlType: 'distribution',
+    urlType: 'distribution',
     distributionBucketMap: stubDistributionBucketMap,
   }), { instanceOf: errors.MissingBucketMap });
 });
@@ -609,6 +801,7 @@ test('getCmrSettings uses values in environment variables by default', async (t)
     clientId: 'Cumulus-Client-Id',
     password: cmrPassword,
     username: 'cmr-user',
+    oauthProvider: 'earthdata',
   });
 });
 
@@ -619,6 +812,7 @@ test('getCmrSettings uses values in environment variables by default for launchp
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
     token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`,
+    oauthProvider: 'launchpad',
   });
 });
 
@@ -644,6 +838,7 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
       clientId: 'test-client-id',
       password: testPassword,
       username: 'cumulus',
+      oauthProvider: 'earthdata',
     });
   } finally {
     await secretsManager().deleteSecret({
@@ -674,6 +869,7 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
       provider: 'CUMULUS-TEST',
       clientId: 'Cumulus-Client-Id',
       token: `${testPassphrase}-test-api-test-certificate`,
+      oauthProvider: 'launchpad',
     });
   } finally {
     await secretsManager().deleteSecret({
@@ -744,9 +940,9 @@ const testMetadataObjectFromCMRFile = (filename, etag = 'foo') => async (t) => {
     '../../cmr-utils',
     {
       '@cumulus/aws-client/S3': {
-        waitForObject: async (_, params) => {
+        waitForObject: (_, params) => {
           t.is(params.IfMatch, etag);
-          throw Object.assign(new Error(), errorSelector);
+          return Promise.reject(Object.assign(new Error(), errorSelector));
         },
       },
     }

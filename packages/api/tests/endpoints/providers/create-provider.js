@@ -12,6 +12,7 @@ const {
   translateApiProviderToPostgresProvider,
   nullifyUndefinedProviderValues,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
@@ -19,8 +20,9 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const AccessToken = require('../../../models/access-tokens');
 const Provider = require('../../../models/providers');
 const {
@@ -28,7 +30,6 @@ const {
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 const testDbName = randomString(12);
@@ -45,7 +46,6 @@ process.env = {
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
 const esIndex = randomString();
@@ -73,7 +73,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   providerModel = new Provider();
   await providerModel.createTable();

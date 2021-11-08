@@ -6,9 +6,8 @@ const {
   fakeRuleRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `rule_${cryptoRandomString({ length: 10 })}`;
 

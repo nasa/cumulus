@@ -10,7 +10,7 @@ const { createBucket, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const EsCollection = require('../../es/collections');
+const EsCollection = require('@cumulus/es-client/collections');
 const models = require('../../models');
 const { createJwtToken } = require('../../lib/token');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');

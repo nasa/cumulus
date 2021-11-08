@@ -78,7 +78,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
 
   try {
     output = await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -138,7 +138,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
 
   try {
     output = await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -210,7 +210,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
 
   try {
     await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -253,7 +253,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
   const executionNamePrefix = randomId('prefix');
 
   await queue.enqueueGranuleIngestMessage({
-    granule,
+    granules: [granule],
     queueUrl,
     granuleIngestWorkflow: workflow,
     provider,

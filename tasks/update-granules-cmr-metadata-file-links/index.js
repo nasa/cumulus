@@ -3,20 +3,17 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash/get');
 const keyBy = require('lodash/keyBy');
-const mapValues = require('lodash/mapValues');
-const set = require('lodash/set');
 
-const {
-  getJsonS3Object,
-} = require('@cumulus/aws-client/S3');
-
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const {
+  addEtagsToFileObjects,
   isCMRFile,
   granulesToCmrFileObjects,
+  mapFileEtags,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
 } = require('@cumulus/cmrjs');
 
@@ -43,10 +40,10 @@ async function updateEachCmrFileAccessURLs(
   bucketTypes,
   distributionBucketMap
 ) {
-  return Promise.all(cmrFiles.map((cmrFile) => {
+  return await Promise.all(cmrFiles.map(async (cmrFile) => {
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
-    return updateCMRMetadata({
+    return await updateCMRMetadata({
       granuleId,
       cmrFile: granule.files.find(isCMRFile),
       files: granule.files,
@@ -59,43 +56,20 @@ async function updateEachCmrFileAccessURLs(
   }));
 }
 
-/**
- * Adds etag values to the specified granules' CMR files.
- *
- * @param {Object} granulesByGranuleId - mapping of granule IDs to granules,
- *    each containing a list of `files`
- * @param {Object[]} cmrFiles - array of CMR file objects with `filename` and
- *    `etag` properties
- * @returns {Object} granule mapping identical to input granule mapping, but
- *    with CMR file objects updated with the `etag` values supplied via the
- *    array of CMR file objects, matched by `filename`
- */
-function addCmrFileEtags(granulesByGranuleId, cmrFiles) {
-  const etagsByFilename = Object.fromEntries(cmrFiles
-    .map(({ filename, etag }) => [filename, etag]));
-  const addEtag = (file) => set(file, 'etag', etagsByFilename[file.filename]);
-  const addEtags = (files) => files.map((f) => (isCMRFile(f) ? addEtag(f) : f));
-
-  return mapValues(granulesByGranuleId,
-    (granule) => ({ ...granule, files: addEtags(granule.files) }));
-}
-
 async function updateGranulesCmrMetadataFileLinks(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const bucketTypes = Object.fromEntries(Object.values(bucketsConfig.buckets)
     .map(({ name, type }) => [name, type]));
 
-  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
+  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'both');
 
-  const granules = event.input.granules;
+  const incomingETags = event.config.etags || {};
+  const granules = event.input.granules.map((g) => addEtagsToFileObjects(g, incomingETags));
   const cmrFiles = granulesToCmrFileObjects(granules);
   const granulesByGranuleId = keyBy(granules, 'granuleId');
 
-  const distributionBucketMap = await getJsonS3Object(
-    process.env.system_bucket,
-    getDistributionBucketMapKey(process.env.stackName)
-  );
+  const distributionBucketMap = await fetchDistributionBucketMap();
   const updatedCmrFiles = await updateEachCmrFileAccessURLs(
     cmrFiles,
     granulesByGranuleId,
@@ -105,10 +79,14 @@ async function updateGranulesCmrMetadataFileLinks(event) {
     distributionBucketMap
   );
 
-  // Transfer etag info to granules' CMR files
-  const result = addCmrFileEtags(granulesByGranuleId, updatedCmrFiles);
-
-  return { granules: Object.values(result) };
+  // Map etag info from granules' CMR files
+  const updatedCmrETags = mapFileEtags(updatedCmrFiles);
+  const outputGranules = Object.values(granulesByGranuleId);
+  outputGranules.forEach(removeEtagsFromFileObjects);
+  return {
+    granules: outputGranules,
+    etags: { ...incomingETags, ...updatedCmrETags },
+  };
 }
 
 /**
@@ -120,7 +98,10 @@ async function updateGranulesCmrMetadataFileLinks(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(updateGranulesCmrMetadataFileLinks, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(
+    updateGranulesCmrMetadataFileLinks,
+    event, context
+  );
 }
 
 exports.handler = handler;

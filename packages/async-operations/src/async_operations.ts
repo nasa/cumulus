@@ -5,6 +5,8 @@ import {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   AsyncOperationPgModel,
+  createRejectableTransaction,
+  Knex,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,6 +16,8 @@ import type { PromiseResult } from 'aws-sdk/lib/request';
 import type { AsyncOperationModelClass } from './types';
 
 const { EcsStartTaskError } = require('@cumulus/errors');
+
+type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
 export const getLambdaEnvironmentVariables = async (
   functionName: string
@@ -64,7 +68,7 @@ export const startECSTask = async ({
   payloadKey: string,
   useLambdaEnvironmentVariables?: boolean,
   dynamoTableName: string,
-}): Promise<PromiseResult<ECS.RunTaskResponse, AWSError>> => {
+}): StartEcsTaskReturnType => {
   const envVars = [
     { name: 'asyncOperationId', value: id },
     { name: 'asyncOperationsTable', value: dynamoTableName },
@@ -118,19 +122,22 @@ export const startECSTask = async ({
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: {
-  asyncOperationTaskDefinition: string,
-  cluster: string,
-  description: string,
-  dynamoTableName: string,
-  knexConfig?: NodeJS.ProcessEnv,
-  lambdaName: string,
-  operationType: AsyncOperationType,
-  payload: unknown,
-  stackName: string,
-  systemBucket: string,
-  useLambdaEnvironmentVariables?: boolean,
-}, AsyncOperation: AsyncOperationModelClass
+export const startAsyncOperation = async (
+  params: {
+    asyncOperationTaskDefinition: string,
+    cluster: string,
+    description: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    lambdaName: string,
+    operationType: AsyncOperationType,
+    payload: unknown,
+    stackName: string,
+    systemBucket: string,
+    useLambdaEnvironmentVariables?: boolean,
+    startEcsTaskFunc?: () => StartEcsTaskReturnType
+  },
+  AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,
@@ -140,6 +147,7 @@ export const startAsyncOperation = async (params: {
     stackName,
     dynamoTableName,
     knexConfig = process.env,
+    startEcsTaskFunc = startECSTask,
   } = params;
 
   const id = uuidv4();
@@ -154,7 +162,7 @@ export const startAsyncOperation = async (params: {
   }).promise();
 
   // Start the task in ECS
-  const runTaskResponse = await startECSTask({
+  const runTaskResponse = await startEcsTaskFunc({
     ...params,
     id,
     payloadBucket,
@@ -175,7 +183,7 @@ export const startAsyncOperation = async (params: {
   const asyncOperationPgModel = new AsyncOperationPgModel();
 
   const knex = await getKnexClient({ env: knexConfig });
-  return knex.transaction(async (trx) => {
+  return createRejectableTransaction<ApiAsyncOperation>(knex, async (trx: Knex.Transaction) => {
     const createObject: ApiAsyncOperation = {
       id,
       status: 'RUNNING',

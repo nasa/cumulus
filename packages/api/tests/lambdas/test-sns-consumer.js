@@ -94,7 +94,7 @@ test.before(async () => {
   sandbox.stub(Collection.prototype, 'get').resolves(collection);
 });
 
-test.afterEach.always(async () => {
+test.afterEach.always(() => {
   queueMessageStub.resetHistory();
 });
 

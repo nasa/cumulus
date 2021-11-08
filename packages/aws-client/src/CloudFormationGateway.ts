@@ -16,7 +16,7 @@ class CloudFormationGateway {
    * @returns {string} the stack status
    */
   async getStackStatus(StackName: string) {
-    return pRetry(
+    return await pRetry(
       async () => {
         try {
           const stackDetails = await this.cloudFormationService.describeStacks({

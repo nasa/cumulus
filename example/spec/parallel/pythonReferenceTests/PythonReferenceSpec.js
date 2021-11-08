@@ -1,8 +1,8 @@
 'use strict';
 
 const { ActivityStep, LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 const workflowName = 'PythonReferenceWorkflow';
@@ -37,7 +37,7 @@ describe('The Python Reference workflow', () => {
   });
 
   it('executes successfully', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   it('contains the expected output from the PythonReferenceTask', async () => {

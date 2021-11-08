@@ -3,11 +3,13 @@
 const keyBy = require('lodash/keyBy');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const {
+  addEtagsToFileObjects,
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR,
+  removeEtagsFromFileObjects,
 } = require('@cumulus/cmrjs');
-const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { getCmrSettings, getS3UrlOfFile } = require('@cumulus/cmrjs/cmr-utils');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/errors');
@@ -47,11 +49,11 @@ function buildOutput(results, granules) {
  * @returns {Promise<Array<Object>>} clone of input array with each object
  *    updated with its metadata as a `metadataObject` property
  */
-function addMetadataObjects(cmrFiles) {
-  return Promise.all(
+async function addMetadataObjects(cmrFiles) {
+  return await Promise.all(
     cmrFiles.map(async (cmrFile) => {
       const metadataObject = await metadataObjectFromCMRFile(
-        cmrFile.filename,
+        getS3UrlOfFile(cmrFile),
         cmrFile.etag
       );
 
@@ -105,11 +107,15 @@ function checkForMetadata(granules, cmrFiles) {
  * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
+  const { cmrRevisionId, granules } = event.input;
+  const { etags = {} } = event.config;
+
+  granules.forEach((granule) => addEtagsToFileObjects(granule, etags));
+
   // get cmr files and metadata
-  const revisionId = event.input.cmrRevisionId;
-  const cmrFiles = granulesToCmrFileObjects(event.input.granules);
+  const cmrFiles = granulesToCmrFileObjects(granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);
-  if (!event.config.skipMetaCheck) checkForMetadata(event.input.granules, cmrFiles);
+  if (!event.config.skipMetaCheck) checkForMetadata(granules, cmrFiles);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
@@ -123,19 +129,21 @@ async function postToCMR(event) {
 
   // post all meta files to CMR
   const results = await Promise.all(
-    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, revisionId))
+    updatedCMRFiles.map((cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId))
   );
 
   const endTime = Date.now();
 
+  const outputGranules = buildOutput(
+    results,
+    granules
+  ).map((granule) => ({
+    ...granule,
+    post_to_cmr_duration: endTime - startTime,
+  }));
+  outputGranules.forEach(removeEtagsFromFileObjects);
   return {
-    granules: buildOutput(
-      results,
-      event.input.granules
-    ).map((g) => ({
-      ...g,
-      post_to_cmr_duration: endTime - startTime,
-    })),
+    granules: outputGranules,
   };
 }
 
@@ -148,7 +156,7 @@ async function postToCMR(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
 }
 
 exports.handler = handler;

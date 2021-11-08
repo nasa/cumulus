@@ -72,7 +72,7 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
   { message: 'Could not find name on PDR object {}' });
 });
 
-test('generatePdrRecord() generates a completed PDR record', async (t) => {
+test('generatePdrRecord() generates a completed PDR record', (t) => {
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
@@ -106,7 +106,7 @@ test('generatePdrRecord() generates a completed PDR record', async (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generatePdrRecord() generates a failed PDR record', async (t) => {
+test('generatePdrRecord() generates a failed PDR record', (t) => {
   const collectionId = `${randomId('MOD')}___${randomNumber()}`;
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
@@ -142,7 +142,7 @@ test('generatePdrRecord() generates a failed PDR record', async (t) => {
   t.is(typeof record.duration, 'number');
 });
 
-test('generatePdrRecord() sets PDR properties when included', async (t) => {
+test('generatePdrRecord() sets PDR properties when included', (t) => {
   const pdrName = randomId('pdr');
   const message = createPdrMessage();
   const PANmessage = 'test message';

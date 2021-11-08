@@ -15,12 +15,12 @@ const granulesApi = require('@cumulus/api-client/granules');
  */
 async function getGranule(params) {
   deprecate('@cumulus/integration-tests/granules.getGranule', '1.21.0', '@cumulus/api-client/granules.getGranule');
-  return granulesApi.getGranule(params);
+  return await granulesApi.getGranule(params);
 }
 
 async function waitForGranule(params) {
   deprecate('@cumulus/integration-tests/granules.waitForGranule', '1.21.0', '@cumulus/api-client/granules.waitForGranule');
-  return granulesApi.waitForGranule(params);
+  return await granulesApi.waitForGranule(params);
 }
 
 /**
@@ -35,7 +35,7 @@ async function waitForGranule(params) {
  */
 async function reingestGranule(params) {
   deprecate('@cumulus/integration-tests/granules.reingestGranule', '1.21.0', '@cumulus/api-client/granules.reingestGranule');
-  return granulesApi.reingestGranule(params);
+  return await granulesApi.reingestGranule(params);
 }
 
 /**
@@ -50,7 +50,7 @@ async function reingestGranule(params) {
  */
 async function removeFromCMR(params) {
   deprecate('@cumulus/integration-tests/granules.removeFromCMR', '1.21.0', '@cumulus/api-client/granules.removeFromCMR');
-  return granulesApi.removeFromCMR(params);
+  return await granulesApi.removeFromCMR(params);
 }
 
 /**
@@ -66,7 +66,7 @@ async function removeFromCMR(params) {
  */
 async function applyWorkflow(params) {
   deprecate('@cumulus/integration-tests/granules.applyWorkflow', '1.21.0', '@cumulus/api-client/granules.applyWorkflow');
-  return granulesApi.applyWorkflow(params);
+  return await granulesApi.applyWorkflow(params);
 }
 
 /**
@@ -81,7 +81,7 @@ async function applyWorkflow(params) {
  */
 async function deleteGranule(params) {
   deprecate('@cumulus/integration-tests/granules.deleteGranule', '1.21.0', '@cumulus/api-client/granules.deleteGranule');
-  return granulesApi.deleteGranule(params);
+  return await granulesApi.deleteGranule(params);
 }
 
 /**
@@ -97,7 +97,7 @@ async function deleteGranule(params) {
  */
 async function moveGranule(params) {
   deprecate('@cumulus/integration-tests/granules.moveGranule', '1.21.0', '@cumulus/api-client/granules.moveGranule');
-  return granulesApi.moveGranule(params);
+  return await granulesApi.moveGranule(params);
 }
 
 /**
@@ -112,12 +112,12 @@ async function moveGranule(params) {
  */
 async function removePublishedGranule(params) {
   deprecate('@cumulus/integration-tests/granules.removePublishedGranule', '1.21.0', '@cumulus/api-client/granules.removePublishedGranule');
-  return granulesApi.removePublishedGranule(params);
+  return await granulesApi.removePublishedGranule(params);
 }
 
 async function listGranules(params) {
   deprecate('@cumulus/integration-tests/granules.listGranules', '1.21.0', '@cumulus/api-client/granules.listGranules');
-  return granulesApi.listGranules(params);
+  return await granulesApi.listGranules(params);
 }
 
 module.exports = {

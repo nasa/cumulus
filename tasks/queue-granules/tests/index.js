@@ -19,10 +19,22 @@ const {
 } = require('@cumulus/common/test-utils');
 const sinon = require('sinon');
 const pMap = require('p-map');
+const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
+const fakeProvidersApi = {};
+const { groupAndBatchGranules } = require('..');
+const fakeGranulesApi = {
+  updateGranule: noop,
+};
 
-const { queueGranules } = proxyquire('..', { 'p-map': pMapSpy });
+const { queueGranules } = proxyquire('..', {
+  'p-map': pMapSpy,
+  '@cumulus/api-client': {
+    providers: fakeProvidersApi,
+    granules: fakeGranulesApi,
+  },
+});
 
 test.beforeEach(async (t) => {
   pMapSpy.resetHistory();
@@ -88,6 +100,63 @@ test.afterEach(async (t) => {
     recursivelyDeleteS3Bucket(t.context.internalBucket),
     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
   ]);
+});
+
+test('groupAndBatchGranules uses default if batchSize is NaN', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, null);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules batches granules by collection', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '002' },
+    { granuleId: '3', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = granules.map((g) => [g]);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules respects batchSize', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001' },
+    { granuleId: '3', dataType: 'ABC', version: '001' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+    { granuleId: '5', dataType: 'ABC', version: '002' },
+    { granuleId: '6', dataType: 'XYZ', version: '001' },
+  ];
+  const expectedBatchGranules = [
+    [granules[0], granules[1]],
+    [granules[2]],
+    [granules[3], granules[4]],
+    [granules[5]],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 2);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
+});
+
+test('groupAndBatchGranules further divides batches by provider if granules have one', (t) => {
+  const granules = [
+    { granuleId: '1', dataType: 'ABC', version: '001' },
+    { granuleId: '2', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '3', dataType: 'ABC', version: '001', provider: 'prov' },
+    { granuleId: '4', dataType: 'ABC', version: '002' },
+  ];
+  const expectedBatchGranules = [
+    [granules[0]],
+    [granules[1], granules[2]],
+    [granules[3]],
+  ];
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, 3);
+  t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
 test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
@@ -445,7 +514,16 @@ test.serial('If a granule has a provider property, that provider is used', async
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
-  const provider = { host: randomString() };
+  const provider = { id: randomString(), host: randomString() };
+
+  fakeProvidersApi.getProvider = ({ prefix, providerId }) => {
+    t.is(prefix, t.context.stackName);
+    t.is(providerId, provider.id);
+
+    return Promise.resolve({
+      body: JSON.stringify(provider),
+    });
+  };
 
   const { event } = t.context;
 
@@ -453,7 +531,7 @@ test.serial('If a granule has a provider property, that provider is used', async
     {
       dataType,
       version,
-      provider,
+      provider: provider.id,
       granuleId: randomString(),
       files: [],
     },
@@ -498,12 +576,12 @@ test.serial('A default concurrency of 3 is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
-  t.true(pMapSpy.calledWithMatch(
+  t.true(pMapSpy.calledThrice);
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 3 })
-  ));
+  )));
 });
 
 test.serial('A configured concurrency is used', async (t) => {
@@ -527,12 +605,12 @@ test.serial('A configured concurrency is used', async (t) => {
 
   await queueGranules(event);
 
-  t.true(pMapSpy.calledOnce);
-  t.true(pMapSpy.calledWithMatch(
+  t.true(pMapSpy.calledThrice);
+  pMapSpy.getCalls().forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
     sinon.match({ concurrency: 99 })
-  ));
+  )));
 });
 
 test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
@@ -630,4 +708,31 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
   t.deepEqual(
     message.meta.cnm, cnm
   );
+});
+
+test('createdAt for queued granule is older than enqueueGranuleIngestMessage date', async (t) => {
+  const { event } = t.context;
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+  event.input.granules = [
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+    {
+      dataType, version, granuleId: randomString(), files: [],
+    },
+  ];
+
+  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
+  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
+
+  const testMocks = {
+    updateGranuleMock,
+    enqueueGranuleIngestMessageMock,
+  };
+
+  await queueGranules(event, testMocks);
+  t.assert(updateGranuleMock.returnValues[0] < enqueueGranuleIngestMessageMock.returnValues[0]);
 });

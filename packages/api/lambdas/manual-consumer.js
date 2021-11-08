@@ -243,7 +243,7 @@ async function handler(event) {
 
   if (event.type === 'kinesis' && event.kinesisStream !== undefined) {
     log.info(`Processing records from stream ${event.kinesisStream}`);
-    return processStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
+    return await processStream(event.kinesisStream, event.kinesisStreamCreationTimestamp);
   }
 
   const errMsg = 'Manual consumer could not determine expected operation'

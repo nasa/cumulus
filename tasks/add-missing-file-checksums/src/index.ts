@@ -5,24 +5,6 @@ import { Context } from 'aws-lambda';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
-const parseS3Uri = (uri: string) => {
-  const { Bucket, Key } = S3.parseS3Uri(uri);
-
-  if (!Bucket) {
-    throw new TypeError(
-      `Unable to determine S3 bucket from ${uri}`
-    );
-  }
-
-  if (!Key) {
-    throw new TypeError(
-      `Unable to determine S3 key from ${uri}`
-    );
-  }
-
-  return { bucket: Bucket, key: Key };
-};
-
 const calculateGranuleFileChecksum = async (params: {
   s3: { getObject: S3.GetObjectCreateReadStreamMethod },
   algorithm: string,
@@ -30,9 +12,9 @@ const calculateGranuleFileChecksum = async (params: {
 }) => {
   const { s3, algorithm, granuleFile } = params;
 
-  const { bucket, key } = parseS3Uri(granuleFile.filename);
+  const { bucket, key } = granuleFile;
 
-  return S3.calculateObjectHash({ s3, algorithm, bucket, key });
+  return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
 };
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
@@ -42,13 +24,13 @@ const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
 const granuleFileHasChecksum = (granuleFile: GranuleFile) =>
   granuleFile.checksumType && granuleFile.checksum;
 
-const granuleFileDoesNotHaveFilename = (granuleFile: GranuleFile) =>
-  !granuleFile.filename;
+const granuleFileDoesNotHaveBucketAndKey = (granuleFile: GranuleFile) =>
+  !granuleFile.bucket || !granuleFile.key;
 
 const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
   granuleFileHasChecksum(granuleFile)
   || granuleFileHasPartialChecksum(granuleFile)
-  || granuleFileDoesNotHaveFilename(granuleFile);
+  || granuleFileDoesNotHaveBucketAndKey(granuleFile);
 
 export const addChecksumToGranuleFile = async (params: {
   s3: { getObject: S3.GetObjectCreateReadStreamMethod },
@@ -118,4 +100,4 @@ export const handler = async (event: HandlerEvent) => {
 export const cmaHandler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
-) => runCumulusTask(handler, event, context);
+) => await runCumulusTask(handler, event, context);

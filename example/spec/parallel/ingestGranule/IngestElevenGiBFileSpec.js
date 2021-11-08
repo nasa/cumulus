@@ -14,6 +14,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
@@ -24,15 +25,17 @@ const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 describe('The IngestGranule workflow ingesting an 11G file', () => {
   let beforeAllFailed = false;
   let collection;
-  let ingestGranuleRule;
+  let config;
   let granuleId;
   let ingestGranuleExecution;
+  let ingestGranuleExecutionArn;
+  let ingestGranuleRule;
   let prefix;
   let provider;
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       const { fakeS3ProviderBucket } = await fetchFakeS3ProviderBuckets();
 
@@ -79,7 +82,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       );
 
       // Find the execution ARN
-      const ingestGranuleExecutionArn = await findExecutionArn(
+      ingestGranuleExecutionArn = await findExecutionArn(
         prefix,
         (execution) => {
           const executionId = get(execution, 'originalPayload.testExecutionId');
@@ -125,9 +128,10 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       { stopOnError: false }
     ).catch(console.error);
 
+    await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
+    await deleteGranule({ prefix, granuleId });
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId }),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

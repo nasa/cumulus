@@ -3,11 +3,11 @@
 const pRetry = require('p-retry');
 
 const {
-  buildAndStartWorkflow,
   waitForCompletedExecution,
   executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
 
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
   protectFile,
@@ -24,8 +24,8 @@ const workflowsYmlFile = './workflows.yml';
 const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
 const deployTimeout = 15; // deployment timeout in minutes
 
-function redeployWithRetries(config) {
-  return pRetry(
+async function redeployWithRetries(config) {
+  return await pRetry(
     () => runKes(config, { timeout: deployTimeout }),
     {
       retries: 2,
@@ -40,7 +40,7 @@ xdescribe('When a workflow', () => {
     config = await loadConfig();
   });
 
-  afterAll(() => redeployWithRetries(config));
+  afterAll(async () => await redeployWithRetries(config));
 
   describe('is updated and deployed during a workflow execution', () => {
     let workflowExecutionArn;

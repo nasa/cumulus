@@ -37,21 +37,21 @@ const fakeProvider = {
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
 
 class FakeCollection {
-  async get(item) {
+  get(item) {
     if (item.name !== fakeCollection.name
         || item.version !== fakeCollection.version) {
-      throw new Error('Collection could not be found');
+      return Promise.reject(new Error('Collection could not be found'));
     }
-    return fakeCollection;
+    return Promise.resolve(fakeCollection);
   }
 }
 
 class FakeProvider {
-  async get({ id }) {
+  get({ id }) {
     if (id !== fakeProvider.id) {
-      throw new Error('Provider could not be found');
+      return Promise.reject(new Error('Provider could not be found'));
     }
-    return fakeProvider;
+    return Promise.resolve(fakeProvider);
   }
 }
 

@@ -13,7 +13,7 @@ const { s3 } = require('@cumulus/aws-client/services');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function get(req, res) {
+function get(req, res) {
   const [Bucket, Key] = getFileBucketAndKey(req.params[0]);
 
   return s3().getObject({ Bucket, Key })

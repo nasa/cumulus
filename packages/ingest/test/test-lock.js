@@ -26,7 +26,7 @@ const { checkOldLocks, countLock, proceed } = proxyquire(
   }
 );
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.bucket = randomString();
   t.context.providerName = randomString();
 });

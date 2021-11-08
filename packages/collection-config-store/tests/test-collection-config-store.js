@@ -99,7 +99,7 @@ test.serial('get() throws an exception if the collection config could not be fou
   const collectionId = constructCollectionId(invalidName, version);
 
   await t.throwsAsync(
-    async () => collectionConfigStore.get(invalidName, version),
+    () => collectionConfigStore.get(invalidName, version),
     { message: new RegExp(`${collectionId}`) }
   );
 });
@@ -111,7 +111,7 @@ test.serial('get() throws an exception if the bucket does not exist', async (t) 
     stackName);
 
   await t.throwsAsync(
-    async () => collectionConfigStore.get(name, version),
+    () => collectionConfigStore.get(name, version),
     { message: new RegExp(`${invalidBucket}`) }
   );
 });
@@ -201,7 +201,7 @@ test('delete() the collection config from the cache', async (t) => {
 
   // Try to get the config, which should hit S3 and fail if it isn't cached
   await t.throwsAsync(
-    async () => collectionConfigStore.get(name, version),
+    () => collectionConfigStore.get(name, version),
     { message: new RegExp(`${constructCollectionId(name, version)}`) }
   );
 });

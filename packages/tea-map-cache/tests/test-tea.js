@@ -7,7 +7,7 @@ test('getTeaBucketPath returns a mapped bucket path on an expected response from
   const { getTeaBucketPath } = proxyquire('../dist/tea', {
     got: {
       default: {
-        get: async (_param) => ({ body: '["fake-bucket-redirect/path"]' }),
+        get: (_param) => Promise.resolve({ body: '["fake-bucket-redirect/path"]' }),
       },
     },
   });
@@ -23,7 +23,7 @@ test('getTeaBucketPath throws error if multiple paths are returned', async (t) =
   const { getTeaBucketPath } = proxyquire('../dist/tea', {
     got: {
       default: {
-        get: async (_param) => ({ body: '["fake-bucket-redirect/path", "some-other-path"]' }),
+        get: (_param) => Promise.resolve({ body: '["fake-bucket-redirect/path", "some-other-path"]' }),
       },
     },
   });
@@ -37,14 +37,14 @@ test('getTeaBucketPath returns empty string if TEA throws a 404', async (t) => {
   const { getTeaBucketPath } = proxyquire('../dist/tea', {
     got: {
       default: {
-        get: async () => {
+        get: () => {
           const error = new Error('Response code 404 (Not Found)');
           error.statusCode = 404;
           error.name = 'HTTPError';
           error.response = {
             body: 'No route defined for test-bucket',
           };
-          throw error;
+          return Promise.reject(error);
         },
       },
     },
@@ -57,14 +57,14 @@ test('getTeaBucketPath throws an error empty string if non-bucket-search 404 is 
   const { getTeaBucketPath } = proxyquire('../dist/tea', {
     got: {
       default: {
-        get: async () => {
+        get: () => {
           const error = new Error('Response code 404 (Not Found)');
           error.statusCode = 404;
           error.name = 'HTTPError';
           error.response = {
             body: 'Some other error page from API gateway/etc',
           };
-          throw error;
+          return Promise.reject(error);
         },
       },
     },

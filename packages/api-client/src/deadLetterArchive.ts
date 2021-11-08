@@ -21,7 +21,7 @@ export const postRecoverCumulusMessages = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, payload, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
@@ -32,5 +32,6 @@ export const postRecoverCumulusMessages = async (params: {
       path: '/deadLetterArchive/recoverCumulusMessages',
       body: JSON.stringify(payload),
     },
+    expectedStatusCode: 202,
   });
 };

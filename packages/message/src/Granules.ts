@@ -38,6 +38,18 @@ export const getMessageGranules = (
 ): unknown[] => message.payload?.granules ?? [];
 
 /**
+ * Determine if message has a granules object.
+ *
+ * @param {MessageWithOptionalGranules} message - A workflow message object
+ * @returns {boolean} true if message has a granules object
+ *
+ * @alias module:Granules
+ */
+export const messageHasGranules = (
+  message: MessageWithGranules
+): boolean => getMessageGranules(message).length !== 0;
+
+/**
  * Determine the status of a granule.
  *
  * @param {string} workflowStatus - The workflow status

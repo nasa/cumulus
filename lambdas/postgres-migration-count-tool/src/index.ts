@@ -20,7 +20,7 @@ import {
   getDynamoTableEntries,
 } from './utils';
 
-import { reportObject } from './types';
+import { ReportObject } from './types';
 
 import { pMapMapper } from './mapper';
 
@@ -66,7 +66,7 @@ export const handler = async (
   }
 ): Promise<any> => {
   const {
-    dbConcurrency = 20,
+    dbConcurrency = 1,
     dbMaxPool = 20,
     reportBucket,
     reportPath,
@@ -178,7 +178,7 @@ export const handler = async (
     collectionsNotMapped: collectionFailures,
     records_in_dynamo_not_in_postgres: aggregateReportObj,
     pdr_granule_and_execution_records_not_in_postgres_by_collection: CollectionReportObject,
-  } as reportObject;
+  } as ReportObject;
 
   // Output results
   logger.info(`Records found in dynamo not found in postgres: ${JSON.stringify(aggregateReportObj)}`);

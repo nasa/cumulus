@@ -146,7 +146,7 @@ test.beforeEach(async (t) => {
   t.context.createdRule = await ruleModel.create(kinesisRule);
 });
 
-test.afterEach.always(async () => {
+test.afterEach.always(() => {
   queueMessageStub.resetHistory();
   publishStub.restore();
 });

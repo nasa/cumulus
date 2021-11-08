@@ -13,15 +13,17 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
+  migrationDir,
 } = require('@cumulus/db');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+
 const models = require('../../../models');
-const bootstrap = require('../../../lambdas/bootstrap');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
@@ -47,8 +49,6 @@ process.env = {
   PG_DATABASE: testDbName,
 };
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
-
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
@@ -57,7 +57,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 

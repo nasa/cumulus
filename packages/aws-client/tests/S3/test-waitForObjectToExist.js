@@ -10,14 +10,14 @@ const fakeS3 = () => ({
     headObjectCallCount += 1;
 
     return {
-      promise: async () => {
+      promise: () => {
         if (headObjectCallCount === 1) {
           const err = new Error('NotFound');
           err.code = 'NotFound';
-          throw err;
+          return Promise.reject(err);
         }
 
-        return {};
+        return Promise.resolve({});
       },
     };
   },

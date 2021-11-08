@@ -14,10 +14,10 @@ This task utilizes the incoming ```config.inputGranules``` and the task input li
 
   **Please note** Files passed in without metadata defined previously for ```config.inputGranules``` will be added with the following keys:
 
-* name
+* size
 * bucket
-* filename
-* fileStagingDir
+* key
+* fileName
 
 It is primarily intended to support compatibility with the standard output of a processing task, and convert that output into a granule object accepted as input by the majority of other Cumulus tasks.
 

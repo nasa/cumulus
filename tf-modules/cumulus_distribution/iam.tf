@@ -28,13 +28,51 @@ data "aws_iam_policy_document" "lambda_distribution_api_gateway_policy" {
     resources = ["arn:aws:logs:*:*:*"]
   }
 
-    statement {
+  statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "ec2:DeleteNetworkInterface",
     ]
     resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem"
+    ]
+    resources = [aws_dynamodb_table.access_tokens.arn]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject*"
+    ]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
+  }
+
+  statement {
+    actions   = [
+      "s3:PutObject"
+    ]
+    resources = ["arn:aws:s3:::${var.system_bucket}/${local.distribution_bucket_map_key}"]
+  }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.api_oauth_client_password.arn
+    ]
+  }
+
+  dynamic "statement" {
+    for_each = var.sts_credentials_lambda_function_arn != null ? [1] : []
+    content {
+      actions   = ["lambda:InvokeFunction"]
+      resources = [var.sts_credentials_lambda_function_arn, var.sts_policy_helper_lambda_function_arn]
+    }
   }
 }
 

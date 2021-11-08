@@ -1,5 +1,6 @@
 {
   "process": "modis",
+  "granuleDuplicates": {},
   "granules": [
     {
       "granuleId": "replace-me-granuleId",
@@ -7,31 +8,28 @@
       "version": "006",
       "files": [
         {
-          "name": "replace-me-granuleId.hdf",
+          "source": "replace-me-path/replace-me-granuleId.hdf",
+          "fileName": "replace-me-granuleId.hdf",
           "bucket": "",
-          "filename": "",
+          "key": "",
           "size": 1098034,
-          "type": "data",
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+          "type": "data"
         },
         {
-          "name": "replace-me-granuleId.hdf.met",
+          "source": "replace-me-path/replace-me-granuleId.hdf.met",
+          "fileName": "replace-me-granuleId.hdf.met",
           "bucket": "",
-          "filename": "",
+          "key": "",
           "size": 21708,
-          "type": "metadata",
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+          "type": "metadata"
         },
         {
-          "name": "replace-me-granuleId_ndvi.jpg",
+          "source": "replace-me-path/replace-me-granuleId_ndvi.jpg",
+          "fileName": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
-          "filename": "",
+          "key": "",
           "size": 9728,
-          "type": "browse",
-          "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+          "type": "browse"
         }
       ]
     }

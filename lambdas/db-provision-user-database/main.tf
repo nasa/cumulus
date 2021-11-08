@@ -19,7 +19,11 @@ resource "aws_lambda_function" "provision_database" {
   timeout          = 500
   environment {
     variables = {
-      dbHeartBeat = var.rds_connection_heartbeat
+      acquireTimeoutMillis      = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis       = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis         = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis        = var.rds_connection_timing_configuration.reapIntervalMillis
     }
   }
 

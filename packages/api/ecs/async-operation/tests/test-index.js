@@ -11,13 +11,12 @@ const {
   generateLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  migrationDir,
 } = require('@cumulus/db');
 // eslint-disable-next-line unicorn/import-index
 const { updateAsyncOperation } = require('../index');
 
 const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 test.before(async (t) => {
   t.context.dynamoTableName = cryptoRandomString({ length: 10 });
@@ -127,6 +126,51 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     ...t.context.testAsyncOperation,
     status,
     output: JSON.stringify(output),
+    updatedAt: Number(updateTime),
+  });
+});
+
+test('updateAsyncOperation updates records correctly when output is undefined', async (t) => {
+  const status = 'SUCCEEDED';
+  const output = undefined;
+  const updateTime = (Number(Date.now())).toString();
+  const result = await updateAsyncOperation(
+    status,
+    output,
+    {
+      asyncOperationsTable: t.context.dynamoTableName,
+      asyncOperationId: t.context.asyncOperationId,
+      ...localStackConnectionEnv,
+      PG_DATABASE: testDbName,
+      updateTime,
+    }
+  );
+
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel
+    .get(
+      t.context.testKnex,
+      {
+        id: t.context.asyncOperationId,
+      }
+    );
+  const dynamoResponse = await DynamoDb.get({
+    tableName: t.context.dynamoTableName,
+    item: { id: t.context.asyncOperationId },
+    client: t.context.dynamodbDocClient,
+    getParams: { ConsistentRead: true },
+  });
+
+  t.is(result.$response.httpResponse.statusCode, 200);
+  t.like(asyncOperationPgRecord, {
+    ...t.context.testAsyncOperationPgRecord,
+    id: t.context.asyncOperationId,
+    status,
+    output: null,
+    updated_at: new Date(Number(updateTime)),
+  });
+  t.deepEqual(dynamoResponse, {
+    ...t.context.testAsyncOperation,
+    status,
     updatedAt: Number(updateTime),
   });
 });

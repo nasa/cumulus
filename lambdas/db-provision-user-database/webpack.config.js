@@ -17,7 +17,9 @@ const ignoredPackages = [
 
 module.exports = {
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`))
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   mode: 'production',
   entry: './dist/lambda/index.js',

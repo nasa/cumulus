@@ -163,7 +163,7 @@ test('files existing at location returns both files if both exist', async (t) =>
       Key: filename,
       Body: 'test',
     };
-    return awsServices.s3().putObject(params).promise();
+    return await awsServices.s3().putObject(params).promise();
   });
 
   await Promise.all(dataSetupPromises);
@@ -720,7 +720,7 @@ test.serial(
       provider: 'someProvider',
       queueUrl,
     };
-    const fileExists = async () => true;
+    const fileExists = () => Promise.resolve(true);
     const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
     const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
 
@@ -738,7 +738,7 @@ test.serial(
   }
 );
 
-test('_getMutableFieldNames() returns correct fields for running status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { granuleModel } = t.context;
 
   const updatedItem = {
@@ -753,7 +753,7 @@ test('_getMutableFieldNames() returns correct fields for running status', async 
   ]);
 });
 
-test('_getMutableFieldNames() returns correct fields for completed status', async (t) => {
+test('_getMutableFieldNames() returns correct fields for completed status', (t) => {
   const { granuleModel } = t.context;
 
   const item = {
@@ -784,7 +784,7 @@ test('applyWorkflow throws error if workflow argument is missing', async (t) => 
   );
 });
 
-test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
+test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -805,9 +805,6 @@ test.serial('applyWorkflow updates granule status and invokes Lambda to schedule
   });
 
   await granuleModel.applyWorkflow(granule, workflow);
-
-  const { status } = await granuleModel.get({ granuleId: granule.granuleId });
-  t.is(status, 'running');
 
   t.true(lambdaInvokeStub.called);
   t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);

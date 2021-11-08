@@ -16,11 +16,9 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../../lambdas/db-migration');
 
 const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
 

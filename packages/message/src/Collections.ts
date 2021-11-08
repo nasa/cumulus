@@ -30,6 +30,30 @@ export const constructCollectionId = (name: string, version: string) =>
   `${name}___${version}`;
 
 /**
+ * Returns the name and version of a collection based on
+ * the collectionId used in elasticsearch indexing
+ *
+ * @param {string} collectionId - collectionId used in elasticsearch index
+ * @returns {Object} name and version as object
+ */
+export const deconstructCollectionId = (collectionId: string) => {
+  let name;
+  let version;
+  try {
+    [name, version] = collectionId.split('___');
+  } catch (error) {
+    throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
+  }
+  if (name && version) {
+    return {
+      name,
+      version,
+    };
+  }
+  throw new Error(`invalid collectionId: ${collectionId}`);
+};
+
+/**
  * Get collection name from execution message.
  *
  * @param {Message.CumulusMessage} message - An execution message

@@ -109,7 +109,7 @@ test.before(async () => {
   await manager.createTable();
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.semaphore = new Semaphore(
     awsServices.dynamodbDocClient(),
     process.env.SemaphoresTable

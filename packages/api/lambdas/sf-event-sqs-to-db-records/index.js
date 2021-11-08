@@ -6,7 +6,7 @@ const AggregateError = require('aggregate-error');
 
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
 } = require('@cumulus/db');
@@ -30,20 +30,22 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
-  writeExecution,
-} = require('./write-execution');
+  writeExecutionRecordFromMessage,
+} = require('../../lib/writeRecords/write-execution');
 
 const {
   writePdr,
 } = require('./write-pdr');
 
 const {
-  writeGranules,
-} = require('./write-granules');
+  writeGranulesFromMessage,
+} = require('../../lib/writeRecords/write-granules');
+
+const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 const writeRecordsToDynamoDb = async ({
   cumulusMessage,
@@ -140,7 +142,7 @@ const writeRecords = async ({
     });
   }
 
-  const executionCumulusId = await writeExecution({
+  const executionCumulusId = await writeExecutionRecordFromMessage({
     cumulusMessage,
     collectionCumulusId,
     asyncOperationCumulusId,
@@ -160,9 +162,8 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,
@@ -181,13 +182,14 @@ const handler = async (event) => {
 
   const sqsMessages = get(event, 'Records', []);
 
-  return Promise.all(sqsMessages.map(async (message) => {
+  return await Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
+      log.fatal(`Writing message failed with error: ${error.name} ---- ${error.message}`);
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }

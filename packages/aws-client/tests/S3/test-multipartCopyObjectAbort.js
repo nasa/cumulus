@@ -12,14 +12,15 @@ const S3 = proxyquire(
     './services': {
       s3: () => ({
         headObject: () => ({
-          promise: async () => ({ ContentLength: 5 }),
+          promise: () => Promise.resolve({ ContentLength: 5 }),
         }),
       }),
     },
     './lib/S3MultipartUploads': {
-      abortMultipartUpload: async (params) => {
+      abortMultipartUpload: (params) => {
         abortMultipartUploadWasCalled = true;
         abortMultipartUploadParams = params;
+        return Promise.resolve();
       },
       createMultipartUpload: () => Promise.resolve({ UploadId: 'abc-123' }),
       uploadPartCopy: () => Promise.reject(new Error('uh oh')),

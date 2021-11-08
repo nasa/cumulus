@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "lambdas/**/*.ts",
+    "packages/**/*.ts",
+    "tasks/**/*.ts",
+    ".eslintrc.js",
+  ]
+}

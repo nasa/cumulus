@@ -6,8 +6,8 @@ const pLimit = require('p-limit');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
 
-const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 
 /**
  * Return specified concurrency for ES requests.
