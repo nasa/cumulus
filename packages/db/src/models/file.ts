@@ -1,14 +1,14 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresFile, PostgresFileRecord } from '../types/file';
 
 class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
   constructor() {
     super({
-      tableName: tableNames.files,
+      tableName: TableNames.files,
     });
   }
 
@@ -19,7 +19,8 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     return knexOrTrx(this.tableName)
       .insert(file)
       .onConflict(['bucket', 'key'])
-      .merge();
+      .merge()
+      .returning('*');
   }
 }
 

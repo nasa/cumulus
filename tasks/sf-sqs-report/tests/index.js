@@ -14,7 +14,7 @@ test.before(async () => {
   process.env.reporting_queue_url = QueueUrl;
 });
 
-test.after.always(async () => {
+test.after.always(() => {
   delete process.env.reporting_queue_arn;
 });
 

@@ -7,10 +7,10 @@ const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
 
 const models = require('../../models');
-const { Search } = require('../../es/search');
-const bootstrap = require('../../lambdas/bootstrap');
 const dbIndexer = rewire('../../lambdas/db-indexer');
 const {
   fakeCollectionFactory,
@@ -146,7 +146,7 @@ test.before(async (t) => {
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
 
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 });
 
 test.after.always(async () => {
@@ -211,6 +211,7 @@ test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
 
 test('getTableIndexDetails() returns the correct function name and index type', (t) => {
   t.deepEqual(getTableIndexDetails(process.env.CollectionsTable), {
+    deleteFnName: 'deleteCollection',
     indexFnName: 'indexCollection',
     indexType: 'collection',
   });
@@ -237,7 +238,7 @@ test('performDelete() deletes a record from ES', async (t) => {
   const indexedRecord = await providerIndex.get(provider.id);
   t.is(indexedRecord.id, provider.id);
 
-  await performDelete(esClient, 'provider', provider.id);
+  await performDelete('deleteProvider', esClient, 'provider', provider.id);
   const deletedRecord = await providerIndex.get(provider.id);
   t.is(deletedRecord.detail, 'Record not found');
 });

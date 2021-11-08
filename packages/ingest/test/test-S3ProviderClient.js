@@ -29,7 +29,7 @@ test.before(async (t) => {
   });
 });
 
-test.after.always(async (t) => Promise.all([
+test.after.always(async (t) => await Promise.all([
   S3.recursivelyDeleteS3Bucket(t.context.sourceBucket),
   S3.recursivelyDeleteS3Bucket(t.context.targetBucket),
 ]));
@@ -68,7 +68,22 @@ test.serial('S3ProviderClient.download downloads a file to local disk', async (t
   const localPath = './tmp.json';
   t.teardown(() => fs.unlinkSync(localPath));
 
-  await s3ProviderClient.download(t.context.sourceKey, localPath);
+  await s3ProviderClient.download({ remotePath: t.context.sourceKey, localPath });
+  t.true(fs.existsSync(localPath));
+  t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
+});
+
+test.serial('S3ProviderClient.download downloads a file to local disk when source_bucket is set', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: 'fake_bucket' });
+
+  const localPath = './tmp.json';
+  t.teardown(() => fs.unlinkSync(localPath));
+
+  await s3ProviderClient.download({
+    remotePath: t.context.sourceKey,
+    localPath,
+    remoteAltBucket: t.context.sourceBucket,
+  });
   t.true(fs.existsSync(localPath));
   t.is(fs.readFileSync(localPath).toString(), t.context.fileContent);
 });

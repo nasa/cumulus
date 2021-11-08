@@ -1,17 +1,16 @@
 const fs = require('fs');
 const difference = require('lodash/difference');
 const {
-  buildAndExecuteWorkflow,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
   cleanupCollections,
-  granulesApi: granulesApiTestUtils,
-  waitForTestExecutionStart,
+  cleanupProviders,
   waitForCompletedExecution,
+  waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Execution, Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   s3GetObjectTagging,
@@ -21,6 +20,10 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -34,9 +37,9 @@ const {
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'SyncGranule';
 const providersDir = './data/providers/s3/';
@@ -45,13 +48,14 @@ const collectionsDir = './data/collections/s3_MOD09GQ_006';
 describe('The Sync Granules workflow', () => {
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
-  let granuleModel;
+  let failingExecutionArn;
   let inputPayload;
   let lambdaStep;
   let provider;
+  let reingestGranuleExecutionArn;
+  let syncGranuleExecutionArn;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
@@ -61,7 +65,6 @@ describe('The Sync Granules workflow', () => {
     lambdaStep = new LambdaStep();
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -79,10 +82,6 @@ describe('The Sync Granules workflow', () => {
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
     await Promise.all([
@@ -141,18 +140,32 @@ describe('The Sync Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+
+    syncGranuleExecutionArn = workflowExecution.executionArn;
   });
 
   afterAll(async () => {
     // clean up stack state added by test
+    await Promise.all(inputPayload.granules.map(
+      async (granule) => {
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
+          ['completed', 'failed']
+        );
+      }
+    ));
+
+    await Promise.all([
+      deleteExecution({ prefix: config.stackName, executionArn: syncGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: reingestGranuleExecutionArn }),
+      deleteExecution({ prefix: config.stackName, executionArn: failingExecutionArn }),
+    ]);
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
@@ -162,11 +175,11 @@ describe('The Sync Granules workflow', () => {
   });
 
   it('completes execution with success status', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowExecution.status).toEqual('completed');
   });
 
   describe('the SyncGranule Lambda function', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
     let files;
     let key1;
     let key2;
@@ -238,11 +251,14 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
+  describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: workflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -253,18 +269,18 @@ describe('The Sync Granules workflow', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
+    let syncGranuleTaskOutput;
     let granule;
 
     beforeAll(async () => {
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-      granule = JSON.parse(granuleResponse.body);
 
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
-      const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
+      const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
@@ -290,12 +306,14 @@ describe('The Sync Granules workflow', () => {
         startTask: 'SyncGranule',
       });
 
-      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+      reingestGranuleExecutionArn = reingestGranuleExecution.executionArn;
 
-      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+      console.log(`Wait for completed execution ${reingestGranuleExecutionArn}`);
 
-      const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
-        reingestGranuleExecution.executionArn,
+      await waitForCompletedExecution(reingestGranuleExecutionArn);
+
+      syncGranuleTaskOutput = await lambdaStep.getStepOutput(
+        reingestGranuleExecutionArn,
         'SyncGranule'
       );
 
@@ -303,18 +321,19 @@ describe('The Sync Granules workflow', () => {
         expect(f.duplicate_found).toBeTrue();
       });
 
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'completed'
       );
 
-      const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
+      const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-
-      const updatedGranule = JSON.parse(updatedGranuleResponse.body);
       expect(updatedGranule.status).toEqual('completed');
       expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
       expect(updatedGranule.execution).not.toEqual(oldExecution);
@@ -332,19 +351,21 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('when a bad checksum is provided', () => {
-    let lambdaOutput = null;
-    let failingExecution = null;
+    let lambdaOutput;
+    let failingExecution;
 
     beforeAll(async () => {
       inputPayload.granules[0].files[0].checksum = 'badCheckSum01';
       failingExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+      failingExecutionArn = failingExecution.executionArn;
+
       lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
     });
 
     it('completes execution with failure status', () => {
-      expect(failingExecution.status).toEqual('FAILED');
+      expect(failingExecution.status).toEqual('failed');
     });
 
     it('raises an error', () => {

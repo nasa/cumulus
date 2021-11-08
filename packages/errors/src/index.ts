@@ -169,3 +169,5 @@ export class PostgresValidationError extends ValidationError {
 }
 
 export const PostgresUpdateFailed = createErrorType('PostgresUpdateFailed');
+
+export const IndexExistsError = createErrorType('IndexExistsError');

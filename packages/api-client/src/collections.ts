@@ -23,13 +23,47 @@ export const createCollection = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, collection, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
+      body: JSON.stringify(collection),
+    },
+  });
+};
+
+/**
+ * PUT /collections/{collectionName}/{collectionVersion}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.collection   - collection object to update in the database
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                     that takes a prefix / user payload.  Defaults
+ *                                     to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - the response from the callback
+ */
+export const updateCollection = async (params: {
+  prefix: string,
+  collection: NewCollectionRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    collection,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: `/collections/${collection.name}/${collection.version}`,
       body: JSON.stringify(collection),
     },
   });
@@ -60,7 +94,7 @@ export const deleteCollection = async (params: {
     callback = invokeApi,
   } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -109,7 +143,7 @@ export const getCollection = async (params: {
 };
 
 /**
- * Get a list of collection from Cumulus via the API lambda
+ * Get a list of collections from Cumulus via the API lambda
  * GET /collections
  *
  * @param {Object} params                     - params
@@ -126,7 +160,7 @@ export const getCollections = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, query, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',

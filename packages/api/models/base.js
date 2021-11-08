@@ -22,7 +22,7 @@ async function enableStream(tableName) {
 
   await pWaitFor(
     async () =>
-      awsServices.dynamodb().describeTable({ TableName: tableName }).promise()
+      await awsServices.dynamodb().describeTable({ TableName: tableName }).promise()
         .then((response) => response.TableStatus !== 'UPDATING'),
     { interval: 5 * 1000 }
   );
@@ -220,7 +220,7 @@ class Manager {
    * @returns {Promise} The record found
    */
   async get(item) {
-    return DynamoDb.get({
+    return await DynamoDb.get({
       tableName: this.tableName,
       item,
       client: this.dynamodbDocClient,
@@ -241,7 +241,7 @@ class Manager {
       params.RequestItems[this.tableName].AttributesToGet = attributes;
     }
 
-    return this.dynamodbDocClient.batchGet(params).promise();
+    return await this.dynamodbDocClient.batchGet(params).promise();
   }
 
   async batchWrite(deletes, puts = []) {
@@ -278,7 +278,7 @@ class Manager {
       },
     };
 
-    return this.dynamodbDocClient.batchWrite(params).promise();
+    return await this.dynamodbDocClient.batchWrite(params).promise();
   }
 
   addTimeStampsToItem(item) {
@@ -331,7 +331,7 @@ class Manager {
   }
 
   async scan(query, fields, limit, select, startKey) {
-    return DynamoDb.scan({
+    return await DynamoDb.scan({
       tableName: this.tableName,
       client: this.dynamodbDocClient,
       query,
@@ -348,7 +348,7 @@ class Manager {
       Key: item,
     };
 
-    return this.dynamodbDocClient.delete(params).promise();
+    return await this.dynamodbDocClient.delete(params).promise();
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {

@@ -4,9 +4,10 @@ const get = require('lodash/get');
 
 const AggregateError = require('aggregate-error');
 
+const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
-const log = require('@cumulus/common/log');
+const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
 } = require('@cumulus/db');
@@ -30,20 +31,24 @@ const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
-} = require('./utils');
+} = require('../../lib/writeRecords/utils');
 
 const {
   shouldWriteExecutionToPostgres,
-  writeExecution,
-} = require('./write-execution');
+  writeExecutionToDynamoAndES,
+  writeExecutionRecordFromMessage,
+} = require('../../lib/writeRecords/write-execution');
 
 const {
   writePdr,
+  writePdrToDynamoAndEs,
 } = require('./write-pdr');
 
 const {
-  writeGranules,
-} = require('./write-granules');
+  writeGranulesFromMessage,
+} = require('../../lib/writeRecords/write-granules');
+
+const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 const writeRecordsToDynamoDb = async ({
   cumulusMessage,
@@ -51,9 +56,16 @@ const writeRecordsToDynamoDb = async ({
   executionModel = new Execution(),
   pdrModel = new Pdr(),
 }) => {
+  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
   const results = await Promise.allSettled([
-    executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
-    pdrModel.storePdrFromCumulusMessage(cumulusMessage),
+    writePdrToDynamoAndEs({
+      cumulusMessage,
+      pdrModel,
+    }),
+    writeExecutionToDynamoAndES({
+      dynamoRecord: executionApiRecord,
+      executionModel,
+    }),
     granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);
   const failures = results.filter((result) => result.status === 'rejected');
@@ -88,7 +100,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB and not RDS');
+    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB/Elasticsearch and not RDS');
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,
@@ -132,6 +144,8 @@ const writeRecords = async ({
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
+
+    // TODO - Throw error here in phase 2 instead of writing to Dynamo
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,
@@ -140,7 +154,7 @@ const writeRecords = async ({
     });
   }
 
-  const executionCumulusId = await writeExecution({
+  const executionCumulusId = await writeExecutionRecordFromMessage({
     cumulusMessage,
     collectionCumulusId,
     asyncOperationCumulusId,
@@ -160,9 +174,8 @@ const writeRecords = async ({
     pdrModel,
   });
 
-  return writeGranules({
+  return writeGranulesFromMessage({
     cumulusMessage,
-    collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
     pdrCumulusId,
@@ -181,13 +194,14 @@ const handler = async (event) => {
 
   const sqsMessages = get(event, 'Records', []);
 
-  return Promise.all(sqsMessages.map(async (message) => {
+  return await Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
     const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
 
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
+      log.fatal(`Writing message failed with error: ${JSON.stringify(error)}`);
       log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }

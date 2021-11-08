@@ -3,7 +3,6 @@
 const get = require('lodash/get');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  buildAndExecuteWorkflow,
   loadCollection,
   loadProvider,
 } = require('@cumulus/integration-tests');
@@ -13,10 +12,16 @@ const {
 const {
   createCollection, deleteCollection,
 } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
-const { loadConfig } = require('../../helpers/testUtils');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+} = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with a non-existent bucket', () => {
   let beforeAllCompleted = false;
@@ -34,7 +39,7 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
 
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
-    const testId = randomString();
+    const testId = createTimestampedTestId(stackName, 'DiscoverGranulesS3Failure');
 
     // Create the provider
     provider = await loadProvider({
@@ -65,19 +70,21 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     beforeAllCompleted = true;
   });
 
-  afterAll(() =>
-    Promise.all([
+  afterAll(async () => {
+    await deleteExecution({ prefix: stackName, executionArn: workflowExecution.executionArn });
+    await Promise.all([
       deleteCollection({
         prefix: stackName,
         collectionName: collection.name,
         collectionVersion: collection.version,
       }),
       deleteProvider({ prefix: stackName, providerId: provider.id }),
-    ]));
+    ]);
+  });
 
   it('fails', () => {
     if (!beforeAllCompleted) fail('beforeAll() failed');
-    else expect(workflowExecution.status).toEqual('FAILED');
+    else expect(workflowExecution.status).toEqual('failed');
   });
 
   it('records the correct execution failure reason in the API', async () => {

@@ -1,0 +1,217 @@
+{
+  "cumulus_meta": {
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
+    "message_source": "sfn",
+    "workflow_start_time": 1519157005525,
+    "execution_name": "bfa82fe0-c362-40c2-af3e-264ca31cc7a4",
+    "system_bucket": "cumulus-test-sandbox-internal"
+  },
+  "meta": {
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
+    "status": "failed",
+    "workflow_name": "IngestGranule",
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
+    },
+    "collection": {
+      "files": [
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
+          "bucket": "public"
+        }
+      ],
+      "name": "MOD09GQ",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+      "process": "modis",
+      "dataType": "MOD09GQ",
+      "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
+      "version": "006",
+      "updatedAt": 1519154288958,
+      "duplicateHandling": "replace",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "createdAt": 1519154288958
+    },
+    "cmr": {
+      "username": "devseed",
+      "password": "",
+      "clientId": "CUMULUS",
+      "provider": "CUMULUS"
+    },
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "provider": {
+      "protocol": "https",
+      "globalConnectionLimit": 10,
+      "host": "07f1bfba.ngrok.io",
+      "updatedAt": 1519154219892,
+      "id": "local_ngrok",
+      "createdAt": 1519154219892
+    },
+    "stack": "lpdaac-cumulus",
+    "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
+    "input_granules": [
+      {
+        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+        "files": [
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "bucket": "cumulus-test-sandbox-protected",
+            "checksum": null,
+            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "size": 17865615,
+            "path": "granules",
+            "url_path": "",
+            "checksumType": null
+          },
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "bucket": "cumulus-test-sandbox-private",
+            "checksum": null,
+            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "size": 44118,
+            "path": "granules",
+            "url_path": "",
+            "checksumType": null
+          }
+        ]
+      }
+    ],
+    "buckets": {
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
+    }
+  },
+  "payload": {
+    "process": "modis",
+    "granules": [
+      {
+        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606_v2",
+        "files": [
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "bucket": "cumulus-test-sandbox-protected",
+            "checksum": null,
+            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "size": 17865615,
+            "path": "granules",
+            "url_path": "",
+            "checksumType": null
+          },
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "bucket": "cumulus-test-sandbox-private",
+            "checksum": null,
+            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "size": 44118,
+            "path": "granules",
+            "url_path": "",
+            "checksumType": null
+          }
+        ]
+      }
+    ]
+  },
+  "exception": {
+    "Error": "OSError",
+    "Cause": "{\"stackTrace\": [[\"/var/task/lambda_handler.py\", 19, \"handler\", \"payload = MODIS.cumulus_handler(event)\"], [\"/var/task/lib/python2.7/site-packages/cumulus_process/process.py\", 243, \"cumulus_handler\", \"return run_cumulus_task(cls.handler, event, context)\"], [\"/var/task/lib/python2.7/site-packages/run_cumulus_task.py\", 55, \"run_cumulus_task\", \"task_response = task_function(nested_event, context)\"], [\"/var/task/lib/python2.7/site-packages/cumulus_process/process.py\", 238, \"handler\", \"return cls.run(**event)\"], [\"/var/task/lib/python2.7/site-packages/cumulus_process/process.py\", 263, \"run\", \"process = cls(*args, **kwargs)\"], [\"/var/task/lib/python2.7/site-packages/cumulus_process/process.py\", 62, \"__init__\", \"self.path = mkdtemp()\"], [\"/usr/lib64/python2.7/tempfile.py\", 339, \"mkdtemp\", \"_os.mkdir(file, 0700)\"]], \"errorType\": \"OSError\", \"errorMessage\": \"[Errno 28] No space left on device: '/tmp/tmpO1crth'\"}"
+  },
+  "workflow_config": {
+    "StopStatus": {},
+    "WorkflowFailed": {},
+    "CmrStep": {
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "input_granules": "{{$.meta.input_granules}}",
+      "stack": "{{$.meta.stack}}",
+      "cmr": "{{$.meta.cmr}}"
+    },
+    "ModisProcess": {
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "files_config": "{{$.meta.collection.files}}",
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "input": "{[$.payload.granules[*].files[*].filename]}",
+        "outputs": [
+          {
+            "source": "{{$}}",
+            "destination": "{{$.meta.all_the_files}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          }
+        ]
+      },
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "url_path": "{{$.meta.collection.url_path}}"
+    },
+    "Report": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "outputs": [
+          {
+            "source": "{{$.granules}}",
+            "destination": "{{$.meta.input_granules}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          }
+        ]
+      },
+      "collection": "{{$.meta.collection}}",
+      "provider": "{{$.meta.provider}}"
+    },
+    "ChooseProcess": {},
+    "AsterProcess": {
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "files_config": "{{$.meta.collection.files}}",
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "input": "{[$.payload.granules[*].files[*].filename]}",
+        "outputs": [
+          {
+            "source": "{{$}}",
+            "destination": "{{$.meta.all_the_files}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          }
+        ]
+      },
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "url_path": "{{$.meta.collection.url_path}}"
+    }
+  }
+}

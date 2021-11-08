@@ -47,8 +47,8 @@ function buildOutput(results, granules) {
  * @returns {Promise<Array<Object>>} clone of input array with each object
  *    updated with its metadata as a `metadataObject` property
  */
-function addMetadataObjects(cmrFiles) {
-  return Promise.all(
+async function addMetadataObjects(cmrFiles) {
+  return await Promise.all(
     cmrFiles.map(async (cmrFile) => {
       const metadataObject = await metadataObjectFromCMRFile(
         cmrFile.filename,
@@ -148,7 +148,7 @@ async function postToCMR(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(postToCMR, event, context);
 }
 
 exports.handler = handler;

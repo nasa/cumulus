@@ -18,10 +18,16 @@ const addChecksumToFile = async (providerClient, dataFile, checksumFile) => {
   if (checksumFile === undefined) return dataFile;
 
   const checksumType = checksumFile.name.split('.').pop();
-  const checksum = (await fetchTextFile(
+
+  let checksum = (await fetchTextFile({
     providerClient,
-    path.join(checksumFile.path, checksumFile.name)
-  )).split(' ').shift();
+    remotePath: path.join(checksumFile.path, checksumFile.name),
+    remoteAltBucket: checksumFile.source_bucket,
+  })).split(' ').shift();
+
+  if (checksumType === 'cksum') {
+    checksum = Number(checksum);
+  }
 
   return { ...dataFile, checksum, checksumType };
 };

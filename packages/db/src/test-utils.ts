@@ -1,6 +1,9 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
+import pRetry from 'p-retry';
+
+import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
@@ -20,7 +23,7 @@ export const createTestDatabase = async (knex: Knex, dbName: string, dbUser: str
 };
 
 export const deleteTestDatabase = async (knex: Knex, dbName: string) =>
-  knex.raw(`drop database if exists "${dbName}"`);
+  await knex.raw(`drop database if exists "${dbName}"`);
 
 export const generateLocalTestDb = async (
   testDbName: string,
@@ -49,7 +52,7 @@ export const destroyLocalTestDb = async ({
   testDbName: string
 }) => {
   knex.destroy();
-  await deleteTestDatabase(knexAdmin, testDbName);
+  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
   knexAdmin.destroy();
 };
 
@@ -77,19 +80,28 @@ export const fakeCollectionRecordFactory = (
     regex: 'fake-regex',
     sampleFileName: 'file.txt',
   }]),
+  meta: { foo: 'bar' },
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 
 export const fakeExecutionRecordFactory = (
   params: Partial<PostgresExecution>
-): PostgresExecution => ({
-  arn: cryptoRandomString({ length: 10 }),
-  status: 'running',
-  created_at: new Date(),
-  updated_at: new Date(),
-  timestamp: new Date(),
-  ...params,
-});
+): PostgresExecution => {
+  const executionId = uuidv4();
+  const executionARN = `arn:aws:states:us-east-1:12345:execution:test-TestExecution:${executionId}`;
+
+  return {
+    arn: executionARN,
+    url: getExecutionUrlFromArn(executionARN),
+    status: 'running',
+    created_at: new Date(),
+    updated_at: new Date(),
+    timestamp: new Date(),
+    ...params,
+  };
+};
 
 export const fakeProviderRecordFactory = (
   params: Partial<PostgresProvider>
@@ -132,7 +144,7 @@ export const fakeAsyncOperationRecordFactory = (
 export const fakePdrRecordFactory = (
   params: Partial<PostgresPdr>
 ) => ({
-  name: `pdr${cryptoRandomString({ length: 3 })}`,
+  name: `pdr${cryptoRandomString({ length: 10 })}`,
   status: 'running',
   created_at: new Date(),
   ...params,

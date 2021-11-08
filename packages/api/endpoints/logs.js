@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const { Search } = require('../es/search');
+const { Search } = require('@cumulus/es-client/search');
 
 const metrics = () => ('log_destination_arn' in process.env);
 

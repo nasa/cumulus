@@ -23,7 +23,7 @@ export const publishSnsMessage = async (
   message: any,
   retryOptions = {}
 ) =>
-  pRetry(
+  await pRetry(
     async () => {
       if (!snsTopicArn) {
         throw new pRetry.AbortError('Missing SNS topic ARN');
@@ -36,7 +36,7 @@ export const publishSnsMessage = async (
     },
     {
       maxTimeout: 5000,
-      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${message}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+      onFailedAttempt: (err) => log.debug(`publishSnsMessage('${snsTopicArn}', '${JSON.stringify(message)}') failed with ${err.retriesLeft} retries left: ${JSON.stringify(err)}`),
       ...retryOptions,
     }
   );

@@ -103,7 +103,7 @@ exports.filesToGranules = filesToGranules;
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(
+  return await cumulusMessageAdapter.runCumulusTask(
     filesToGranules, event, context
   );
 }

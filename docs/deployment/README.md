@@ -20,7 +20,7 @@ The process involves:
 - Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html)
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
-- Creating/configuring a PostgreSQL 10.2 compatible database, and an AWS Secrets Manager secret to allow database access
+- Creating/configuring a [PostgreSQL 10.2 compatible database](../deployment/postgres_database_deployment), and an AWS Secrets Manager secret to allow database access
 - Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
@@ -36,7 +36,7 @@ The process involves:
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
 - [Terraform](https://www.terraform.io)
 
-#### Install Terraform
+### Install Terraform
 
 It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
 
@@ -164,6 +164,13 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 ```
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
+
+### Look up ECS-optimized AMI (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically determine the AMI ID for you
+based on your `deploy_to_ngap` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
+
+Look up the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the [cumulus-tf module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
 ### Set up EC2 key pair (optional)
 
@@ -331,7 +338,9 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-### Deploy the Cumulus Message Adapter layer
+### Deploy the Cumulus Message Adapter layer (DEPRECATED)
+
+> **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically download the Cumulus Message Adapter and create the layer for you based on your `cumulus_message_adapter_version` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
 The [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter) is necessary for interpreting the input and output of Cumulus workflow steps. The CMA is now integrated with Cumulus workflow steps as a Lambda layer.
 
@@ -345,7 +354,6 @@ $ aws lambda publish-layer-version \
   --layer-name prefix-CMA-layer \
   --region us-east-1 \
   --zip-file fileb:///path/to/cumulus-message-adapter.zip
-
 {
   ... more output ...
   "LayerVersionArn": "arn:aws:lambda:us-east-1:1234567890:layer:prefix-CMA-layer:1",
@@ -377,18 +385,29 @@ Notes on specific variables:
 
 - **`deploy_to_ngap`**: This variable controls the provisioning of certain resources and policies that are specific to an NGAP environment. **If you are deploying to NGAP, you must set this variable to `true`.**
 - **`prefix`**: The value should be the same as the `prefix` from the data-persistence deployment.
-- **`token_secret`**: A string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is **strongly recommended that this value be a 32-character string**.
 - **`data_persistence_remote_state_config`**: This object should contain the remote state values that you configured in `data-persistence-tf/terraform.tf`. These settings allow `cumulus-tf` to determine the names of the resources created in `data-persistence-tf`.
-- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional)
 - **`rds_security_group`**: The ID of the security group used to allow access to the PostgreSQL database
 - **`rds_user_access_secret_arn`**: The ARN for the Secrets Manager secret that provides database access information
-- **`rds_connection_heartbeat`**:  When using RDS/Aurora Serverless as a database backend, this should be set to `true`, this tells Core to always use a 'heartbeat' query when establishing a database connection to avoid spin-up timeout failures.
+- **`cumulus_message_adapter_version`**: The version number (e.g. `1.3.0`) of the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter/releases) to deploy
+- **`key_name` (optional)**: The name of your key pair from [setting up your key pair](#set-up-ec2-key-pair-optional). Adding your `key_name` sets the EC2 keypair
+for deployment's EC2 instances and allows you to connect to them via [SSH/SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html).
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
+#### Choose a distribution API
+
+Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
+
+**IMPORTANT!** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use
+the new API gateway.
+
 #### Configure the Thin Egress App
 
-The Thin Egress App is used for Cumulus distribution. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+The Thin Egress App can be used for Cumulus distribution and is the default selection. It allows authentication using Earthdata Login. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
+
+#### Configure the Cumulus Distribution API (optional)
+
+If you would prefer to use the Cumulus Distribution API, which supports [AWS Cognito authentication](https://aws.amazon.com/cognito/), follow [these steps](./cumulus_distribution) to configure distribution in your `cumulus-tf` deployment.
 
 #### Initialize Terraform
 
@@ -516,7 +535,7 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 ## Cumulus Instance Sizing
 
-The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing his highly individual and dependent on expected load and archive size.
+The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing is highly individual and dependent on expected load and archive size.
 
 > Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
 

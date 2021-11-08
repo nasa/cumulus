@@ -144,7 +144,7 @@ exports.syncGranule = function syncGranule(event) {
  *                              See schemas/output.json for detailed output schema
  */
 exports.handler = async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(
+  return await cumulusMessageAdapter.runCumulusTask(
     exports.syncGranule,
     event,
     context

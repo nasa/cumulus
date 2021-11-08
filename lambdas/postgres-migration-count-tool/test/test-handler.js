@@ -29,7 +29,7 @@ test('handler returns the expected report', async (t) => {
     new Array(60),
     new Array(1000),
   ];
-  const getKnexClientStub = async () => ({ val: true });
+  const getKnexClientStub = () => Promise.resolve({ val: true });
   const actual = await handler({
     countPostgresRecordsFunction: countPostgresRecordsFunctionStub,
     mapperFunction: mapperFunctionStub,

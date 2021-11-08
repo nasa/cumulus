@@ -112,7 +112,7 @@ class Provider extends Manager {
   }
 
   async getAllProviders() {
-    return this.dynamoDbClient.scan({
+    return await this.dynamoDbClient.scan({
       names: {
         '#id': 'id',
       },
@@ -122,7 +122,7 @@ class Provider extends Manager {
 
   async deleteProviders() {
     const providers = await this.scan();
-    return Promise.all(providers.Items.map((p) => this.delete({ id: p.id })));
+    return await Promise.all(providers.Items.map((p) => this.delete({ id: p.id })));
   }
 
   /**

@@ -19,6 +19,7 @@ const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 
 // PG mock data factories
@@ -32,9 +33,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const {
   migrateExecutionRecord,
@@ -135,10 +133,11 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   const existingExecution = await executionsModel.create(fakeExecution);
 
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const asyncOperationPgModel = new AsyncOperationPgModel();
   const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
@@ -175,7 +174,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     async_operation_cumulus_id: asyncOperationCumulusId,
-    collection_cumulus_id: collectionCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });

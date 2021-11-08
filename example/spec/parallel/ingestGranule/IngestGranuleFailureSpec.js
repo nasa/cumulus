@@ -1,27 +1,28 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { models: { Execution, Granule } } = require('@cumulus/api');
+const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
   addProviders,
-  buildAndExecuteWorkflow,
+  api: apiTestUtils,
   cleanupCollections,
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
-  granulesApi: granulesApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
+const { deleteExecution } = require('@cumulus/api-client/executions');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
-  waitForModelStatus,
-} = require('../../helpers/apiUtils');
-const {
-  loadConfig,
-  uploadTestDataToBucket,
-  deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
+  deleteFolder,
+  loadConfig,
+  uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -39,14 +40,13 @@ describe('The Ingest Granule failure workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
+  let beforeAllFailed = false;
   let config;
-  let executionModel;
-  let granuleModel;
   let inputPayload;
+  let pdrFilename;
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
-  let beforeAllFailed = false;
 
   beforeAll(async () => {
     try {
@@ -59,10 +59,6 @@ describe('The Ingest Granule failure workflow', () => {
       const provider = { id: `s3_provider${testSuffix}` };
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
-
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
 
       // populate collections, providers and test data
       await Promise.all([
@@ -74,16 +70,16 @@ describe('The Ingest Granule failure workflow', () => {
       const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
       // update test data filepaths
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+      pdrFilename = inputPayload.pdr.name;
 
       // add a non-existent file to input payload to cause lambda error
-      const nonexistentFile = {
-        path: 'non-existent-path',
-        name: 'non-existent-file',
-      };
-      inputPayload.granules[0].files.push(nonexistentFile);
-
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+      inputPayload.granules[0].files = [
+        {
+          name: 'non-existent-file',
+          key: 'non-existent-path/non-existent-file',
+          bucket: 'non-existent-bucket',
+        },
+      ];
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
@@ -100,23 +96,40 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   afterAll(async () => {
-    // clean up stack state added by test
+    // The granule provided cannot clean up the
+    // fake S3 objects, so we expect it to fail
+    try {
+      await deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+        pRetryOptions: {
+          retries: 0,
+        },
+      });
+    } catch (error) {
+      const apiMessage = JSON.parse(error.apiMessage);
+      if (apiMessage.code !== 'NoSuchBucket') {
+        throw new Error(`Could not complete test cleanup ${error.apiMessage}`);
+      }
+    }
+
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-      }),
     ]);
   });
 
   it('completes execution with failure status', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      expect(workflowExecution.status).toEqual('FAILED');
+      expect(workflowExecution.status).toEqual('failed');
     }
   });
 
@@ -136,9 +149,13 @@ describe('The Ingest Granule failure workflow', () => {
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status
-      await waitForModelStatus(
-        executionModel,
-        { arn: executionArn },
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: executionArn,
+        },
         'failed'
       );
       execution = await executionsApiTestUtils.getExecution({
@@ -147,7 +164,7 @@ describe('The Ingest Granule failure workflow', () => {
       });
     });
 
-    it('branches appropriately according to the CMA output', async () => {
+    it('branches appropriately according to the CMA output', () => {
       expect(executionStatus.executionHistory).toBeTruthy();
       const { events } = executionStatus.executionHistory;
 
@@ -188,34 +205,37 @@ describe('The Ingest Granule failure workflow', () => {
       expect(choiceVerified).toBeTrue();
     });
 
-    it('propagates the error message to CMA output for next step', async () => {
+    it('propagates the error message to CMA output for next step', () => {
       const syncGranExceptionCause = JSON.parse(syncGranStepOutput.exception.Cause);
       const syncGranFailedCause = JSON.parse(syncGranFailedDetail.cause);
       expect(syncGranStepOutput.exception.Error).toBe(syncGranFailedDetail.error);
       expect(syncGranExceptionCause).toEqual(syncGranFailedCause);
     });
 
-    it('logs the execution with the error message', async () => {
+    it('The execution error object has the expected values for the Error, failedExecutionStepName and Cause keys', () => {
       expect(execution.error.Error).toBe(syncGranFailedDetail.error);
+      expect(execution.error.failedExecutionStepName).toBe('SyncGranule');
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
 
-    it('fails the granule with the error message', async () => {
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+    it('fails the granule with an error object', async () => {
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'failed'
       );
 
-      const granuleResponse = await granulesApiTestUtils.getGranule({
+      const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
       });
-      const granule = JSON.parse(granuleResponse.body);
 
       expect(granule.status).toBe('failed');
-      expect(granule.error.Error).toBe(syncGranFailedDetail.error);
-      expect(JSON.parse(granule.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
+      expect(granule.error.Error).toBeDefined();
+      expect(granule.error.Cause).toBeDefined();
     });
   });
 });

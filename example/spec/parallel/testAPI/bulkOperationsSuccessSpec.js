@@ -4,7 +4,9 @@ const get = require('lodash/get');
 const pAll = require('p-all');
 
 const granules = require('@cumulus/api-client/granules');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { deleteCollection } = require('@cumulus/api-client/collections');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
@@ -14,7 +16,6 @@ const {
 } = require('@cumulus/aws-client/SQS');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  api: apiTestUtils,
   getClusterArn,
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
@@ -61,6 +62,8 @@ describe('POST /granules/bulk', () => {
     let ingestedGranule;
     let scheduleQueueUrl;
     let bulkRequestTime;
+    let ingestGranuleExecution1Arn;
+    let bulkOperationExecutionArn;
 
     beforeAll(async () => {
       try {
@@ -98,6 +101,7 @@ describe('POST /granules/bulk', () => {
         });
 
         granuleId = randomId('granule-id-');
+        console.log('granuleId', granuleId);
 
         const ingestTime = Date.now() - 1000 * 30;
 
@@ -132,20 +136,25 @@ describe('POST /granules/bulk', () => {
         );
 
         // Find the execution ARN
-        const firstIngestGranuleExecutionArn = await findExecutionArn(
+        ingestGranuleExecution1Arn = await findExecutionArn(
           prefix,
           (execution) => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
-          { timestamp__from: ingestTime },
-          { timeout: 15 }
+          {
+            timestamp__from: ingestTime,
+            'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+          },
+          { timeout: 30 }
         );
+
+        console.log(`Ingest Execution ARN is : ${ingestGranuleExecution1Arn}`);
 
         // Wait for the execution to be completed
         await getExecutionWithStatus({
           prefix,
-          arn: firstIngestGranuleExecutionArn,
+          arn: ingestGranuleExecution1Arn,
           status: 'completed',
           timeout: 60,
         });
@@ -165,12 +174,14 @@ describe('POST /granules/bulk', () => {
         });
         postBulkOperationsBody = JSON.parse(postBulkGranulesResponse.body);
 
+        console.log(`bulk operations async operation ID: ${postBulkOperationsBody.id}`);
+
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
-        ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
+        ({ taskArn } = asyncOperation);
       } catch (error) {
         beforeAllFailed = true;
         console.log(error);
@@ -179,8 +190,15 @@ describe('POST /granules/bulk', () => {
     });
 
     afterAll(async () => {
-      // Must delete rules before deleting associated collection and provider
+      // Must delete rules and executions before deleting associated collection and provider
       await deleteRule({ prefix, ruleName: get(ingestGranuleRule, 'name') });
+      await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
+      await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
+
+      await granules.deleteGranule({ prefix, granuleId });
+      if (postBulkOperationsBody.id) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkOperationsBody.id });
+      }
 
       await pAll(
         [
@@ -190,7 +208,6 @@ describe('POST /granules/bulk', () => {
             collectionName: get(collection, 'name'),
             collectionVersion: get(collection, 'version'),
           }),
-          () => granules.deleteGranule({ prefix, granuleId }),
         ],
         { stopOnError: false }
       ).catch(console.error);
@@ -220,16 +237,11 @@ describe('POST /granules/bulk', () => {
     it('creates an AsyncOperation', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
-
-        expect(getAsyncOperationResponse.statusCode).toEqual(200);
-
-        const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-        expect(getAsyncOperationBody.id).toEqual(postBulkOperationsBody.id);
+        expect(asyncOperation.id).toEqual(postBulkOperationsBody.id);
       }
     });
 
@@ -257,37 +269,45 @@ describe('POST /granules/bulk', () => {
           }
         ).promise();
 
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+        const asyncOperation = await getAsyncOperation({
           prefix,
-          id: postBulkOperationsBody.id,
+          asyncOperationId: postBulkOperationsBody.id,
         });
 
-        const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-        expect(getAsyncOperationResponse.statusCode).toEqual(200);
-        expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
+        expect(asyncOperation.status).toEqual('SUCCEEDED');
 
         let output;
         try {
-          output = JSON.parse(getAsyncOperationBody.output);
+          output = JSON.parse(asyncOperation.output);
         } catch (error) {
-          throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+          throw new SyntaxError(`asyncOperation.output is not valid JSON: ${asyncOperation.output}`);
         }
+
+        await getGranuleWithStatus({
+          prefix,
+          granuleId: JSON.parse(asyncOperation.output)[0],
+          status: 'running',
+          timeout: 120,
+          updatedAt: ingestedGranule.updatedAt,
+        });
         expect(output).toEqual([granuleId]);
       }
     });
 
-    xit('starts a workflow with an execution message referencing the correct queue URL', async () => {
+    it('starts a workflow with an execution message referencing the correct queue URL', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         // Find the execution ARN
-        const bulkOperationExecutionArn = await findExecutionArn(
+        bulkOperationExecutionArn = await findExecutionArn(
           prefix,
           (execution) => {
             const asyncOperationId = get(execution, 'asyncOperationId');
             return asyncOperationId === postBulkOperationsBody.id;
           },
-          { timestamp__from: bulkRequestTime },
+          {
+            timestamp__from: bulkRequestTime,
+            asyncOperationId: postBulkOperationsBody.id,
+          },
           { timeout: 60 }
         );
         console.log('bulkOperationExecutionArn', bulkOperationExecutionArn);

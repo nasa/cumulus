@@ -1,12 +1,15 @@
 'use strict';
 
 const get = require('lodash/get');
+const Logger = require('@cumulus/logger');
+const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const log = require('@cumulus/common/log');
-const { Consumer } = require('@cumulus/ingest/consumer');
+const { archiveSqsMessageToS3 } = require('@cumulus/ingest/sqs');
+
 const rulesHelpers = require('../lib/rulesHelpers');
-const Rule = require('../models/rules');
+
+const log = new Logger({ sender: '@cumulus/sqs-message-consumer' });
 
 /**
  * Looks up enabled 'sqs'-type rules, and processes the messages from
@@ -18,17 +21,10 @@ const Rule = require('../models/rules');
  * messages from SQS queue are processed
  */
 async function processQueues(event, dispatchFn) {
-  const rulesModel = new Rule();
-  let rules;
-
-  try {
-    rules = await rulesModel.queryRules({
-      type: 'sqs',
-      state: 'ENABLED',
-    });
-  } catch (error) {
-    log.error(error);
-  }
+  const rules = await rulesHelpers.fetchRules({
+    type: 'sqs',
+    state: 'ENABLED',
+  });
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
@@ -61,30 +57,32 @@ async function processQueues(event, dispatchFn) {
       visibilityTimeout,
       deleteProcessedMessage: false,
     });
-    log.info(`processing queue ${queueUrl}`);
 
+    log.info(`Processing queue ${queueUrl}`);
     const messageConsumerFn = dispatchFn.bind({ rulesForQueue });
+
     return consumer.consume(messageConsumerFn);
   }));
 }
 
 /**
- * Process an SQS message
+ * Archive and process an SQS message
  *
  * @param {string} queueUrl - Queue URL for incoming message
  * @param {Object} message - incoming queue message
  * @returns {Promise} - promise resolved when the message is dispatched
  */
-function dispatch(queueUrl, message) {
+async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
+  await archiveSqsMessageToS3(queueUrl, message);
 
   const eventObject = JSON.parse(message.Body);
   const eventCollection = rulesHelpers.lookupCollectionInEvent(eventObject);
 
   const rulesToSchedule = rulesHelpers.filterRulesbyCollection(rulesForQueue, eventCollection);
 
-  return Promise.all(rulesToSchedule.map((rule) => {
+  return await Promise.all(rulesToSchedule.map((rule) => {
     if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {
       log.debug(`message ${message.MessageId} from queue ${queueUrl} has been processed ${messageReceiveCount - 1} times, no more retries`);
       // update visibilityTimeout to 5s
@@ -126,7 +124,7 @@ function dispatch(queueUrl, message) {
  * @throws {Error}
  */
 async function handler(event) {
-  return processQueues(event, dispatch);
+  return await processQueues(event, dispatch);
 }
 
 module.exports = {

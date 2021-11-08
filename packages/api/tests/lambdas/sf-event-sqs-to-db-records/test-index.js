@@ -6,7 +6,13 @@ const test = require('ava');
 const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
+const proxyquire = require('proxyquire');
 
+const { randomString } = require('@cumulus/common/test-utils');
+const {
+  sns,
+  sqs,
+} = require('@cumulus/aws-client/services');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -16,28 +22,44 @@ const {
   PdrPgModel,
   ExecutionPgModel,
   GranulePgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
 } = require('@cumulus/errors');
-const proxyquire = require('proxyquire');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
+const {
+  generateExecutionApiRecordFromMessage,
+} = require('@cumulus/message/Executions');
+const {
+  generateGranuleApiRecord,
+} = require('@cumulus/message/Granules');
+const {
+  generatePdrApiRecordFromMessage,
+} = require('@cumulus/message/PDRs');
 
-const { randomString } = require('@cumulus/common/test-utils');
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
-
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 const {
   handler,
   writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
-    sendSQSMessage: async (queue, message) => [queue, message],
+    sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
   },
   '@cumulus/aws-client/StepFunctions': {
-    describeExecution: async () => ({}),
+    describeExecution: () => Promise.resolve({}),
   },
 });
 
@@ -111,6 +133,26 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
+  t.context.esExecutionsClient = new Search(
+    {},
+    'execution',
+    t.context.esIndex
+  );
+  t.context.esPdrsClient = new Search(
+    {},
+    'pdr',
+    t.context.esIndex
+  );
+  t.context.esGranulesClient = new Search(
+    {},
+    'granule',
+    t.context.esIndex
+  );
+
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
@@ -126,10 +168,10 @@ test.before(async (t) => {
   t.context.executionModel = executionModel;
 
   const fakeFileUtils = {
-    buildDatabaseFiles: async (params) => params.files,
+    buildDatabaseFiles: (params) => Promise.resolve(params.files),
   };
   const fakeStepFunctionUtils = {
-    describeExecution: async () => ({}),
+    describeExecution: () => Promise.resolve({}),
   };
   const granuleModel = new Granule({
     fileUtils: fakeFileUtils,
@@ -143,6 +185,15 @@ test.before(async (t) => {
   t.context.pdrModel = pdrModel;
 
   fixture = await loadFixture('execution-running-event.json');
+
+  const executionsTopicName = cryptoRandomString({ length: 10 });
+  const pdrsTopicName = cryptoRandomString({ length: 10 });
+  const executionsTopic = await sns().createTopic({ Name: executionsTopicName }).promise();
+  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName }).promise();
+  process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
+  process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
+  t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
+  t.context.PdrsTopicArn = pdrsTopic.TopicArn;
 });
 
 test.beforeEach(async (t) => {
@@ -151,6 +202,35 @@ test.beforeEach(async (t) => {
   t.context.preRDSDeploymentVersion = '2.9.99';
 
   t.context.collection = generateRDSCollectionRecord();
+  t.context.collectionId = constructCollectionId(
+    t.context.collection.name,
+    t.context.collection.version
+  );
+
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
 
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
@@ -172,12 +252,15 @@ test.beforeEach(async (t) => {
   };
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
-  const files = [fakeFileFactory()];
-  const granule = fakeGranuleFactoryV2({ files, granuleId: t.context.granuleId });
+  t.context.files = [fakeFileFactory()];
+  t.context.granule = fakeGranuleFactoryV2({
+    files: t.context.files,
+    granuleId: t.context.granuleId,
+  });
 
   t.context.cumulusMessage = {
     cumulus_meta: {
-      workflow_start_time: 122,
+      workflow_start_time: Date.now(),
       cumulus_version: t.context.postRDSDeploymentVersion,
       state_machine: t.context.stateMachineArn,
       execution_name: t.context.executionName,
@@ -190,12 +273,13 @@ test.beforeEach(async (t) => {
     payload: {
       key: 'my-payload',
       pdr: t.context.pdr,
-      granules: [granule],
+      granules: [t.context.granule],
     },
   };
 
-  [t.context.collectionCumulusId] = await t.context.collectionPgModel
+  const [pgCollectionRecord] = await t.context.collectionPgModel
     .create(t.context.testKnex, t.context.collection);
+  t.context.collectionCumulusId = pgCollectionRecord.cumulus_id;
 
   [t.context.providerCumulusId] = await t.context.providerPgModel
     .create(t.context.testKnex, {
@@ -209,7 +293,9 @@ test.after.always(async (t) => {
   const {
     executionModel,
     pdrModel,
+    PdrsTopicArn,
     granuleModel,
+    ExecutionsTopicArn,
   } = t.context;
   await executionModel.deleteTable();
   await pdrModel.deleteTable();
@@ -219,10 +305,14 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName: t.context.testDbName,
   });
+  await cleanupTestIndex(t.context);
+  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
+  await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
 });
 
 test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     testKnex,
     executionModel,
@@ -253,7 +343,10 @@ test('writeRecords() writes records only to Dynamo if message comes from pre-RDS
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
@@ -273,8 +366,9 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   );
 });
 
-test('writeRecords() writes records only to Dynamo if requirements to write execution to Postgres are not met', async (t) => {
+test('writeRecords() writes records to Dynamo/Elasticsearch if requirements to write execution to PostgreSQL are not met', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -294,9 +388,76 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
     granuleModel,
   });
 
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
+  const dynamoExecution = await executionModel.get({ arn: executionArn });
+  const esExecution = await t.context.esExecutionsClient.get(executionArn);
+  const apiExecutionRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  const expectedExecutionRecord = {
+    ...apiExecutionRecord,
+    timestamp: dynamoExecution.timestamp,
+    updatedAt: dynamoExecution.updatedAt,
+  };
+  t.deepEqual(
+    dynamoExecution,
+    expectedExecutionRecord
+  );
+  t.like(
+    esExecution,
+    {
+      ...expectedExecutionRecord,
+      timestamp: esExecution.timestamp,
+    }
+  );
+
+  const dynamoPdr = await pdrModel.get({ pdrName });
+  const esPdr = await t.context.esPdrsClient.get(pdrName);
+  const apiPdrRecord = generatePdrApiRecordFromMessage(cumulusMessage);
+  const expectedPdrRecord = {
+    ...apiPdrRecord,
+    duration: dynamoPdr.duration,
+    timestamp: dynamoPdr.timestamp,
+    updatedAt: dynamoPdr.updatedAt,
+  };
+  t.deepEqual(
+    dynamoPdr,
+    expectedPdrRecord
+  );
+  t.like(
+    esPdr,
+    {
+      ...expectedPdrRecord,
+      timestamp: esPdr.timestamp,
+    }
+  );
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const esGranule = await t.context.esGranulesClient.get(granuleId);
+  const granuleApiRecord = await generateGranuleApiRecord({
+    collectionId: t.context.collectionId,
+    granule: t.context.granule,
+    files: t.context.files,
+    workflowStartTime: t.context.cumulusMessage.cumulus_meta.workflow_start_time,
+    workflowStatus: t.context.cumulusMessage.meta.status,
+    cmrUtils: {
+      getGranuleTemporalInfo: () => Promise.resolve({}),
+    },
+  });
+  const expectedGranuleRecord = {
+    ...granuleApiRecord,
+    duration: dynamoGranule.duration,
+    updatedAt: dynamoGranule.updatedAt,
+    timestamp: dynamoGranule.timestamp,
+  };
+  t.like(
+    dynamoGranule,
+    expectedGranuleRecord
+  );
+  t.like(
+    esGranule,
+    {
+      ...expectedGranuleRecord,
+      timestamp: esGranule.timestamp,
+    }
+  );
 
   t.false(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -305,12 +466,16 @@ test('writeRecords() writes records only to Dynamo if requirements to write exec
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
 test('writeRecords() does not write granules/PDR if writeExecution() throws general error', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -340,12 +505,16 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.false(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
-test('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -369,14 +538,17 @@ test('writeRecords() writes records to Dynamo and RDS', async (t) => {
     await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
   );
   t.true(
-    await t.context.granulePgModel.exists(t.context.testKnex, { granule_id: granuleId })
+    await t.context.granulePgModel.exists(
+      t.context.testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )
   );
 });
 
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   // make execution write throw an error
   const fakeExecutionModel = {
-    storeExecutionFromCumulusMessage: () => {
+    storeExecution: () => {
       throw new Error('execution Dynamo error');
     },
   };
@@ -392,8 +564,9 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     granuleModel,
     pdrModel,
@@ -419,7 +592,10 @@ test('writeRecords() discards an out of order message that is older than an exis
 
   t.deepEqual(
     new Date(timestamp),
-    (await granulePgModel.get(testKnex, { granule_id: granuleId })).created_at
+    (await granulePgModel.get(
+      testKnex,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    )).created_at
   );
   t.deepEqual(
     new Date(timestamp),
@@ -427,8 +603,9 @@ test('writeRecords() discards an out of order message that is older than an exis
   );
 });
 
-test('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
+test.serial('writeRecords() discards an out of order message that has an older status without error or write', async (t) => {
   const {
+    collectionCumulusId,
     cumulusMessage,
     executionModel,
     granuleModel,
@@ -454,6 +631,9 @@ test('writeRecords() discards an out of order message that has an older status w
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
-  t.is('completed', (await granulePgModel.get(testKnex, { granule_id: granuleId })).status);
+  t.is('completed', (await granulePgModel.get(
+    testKnex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  )).status);
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });

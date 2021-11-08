@@ -17,7 +17,7 @@ const xmlParseOptions = {
  * @returns {string} UMM-G metadata format string (e.g. umm_json_v1_4)
  */
 function ummVersionToMetadataFormat(versionNumber, ummFormat = 'json') {
-  return `umm_${ummFormat}_v${versionNumber.replace('.', '_')}`;
+  return `umm_${ummFormat}_v${versionNumber.replace(/\./g, '_')}`;
 }
 
 module.exports = {

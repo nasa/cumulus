@@ -1,15 +1,23 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
+import { getSortFields } from '../lib/sort';
 
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
-      tableName: tableNames.executions,
+      tableName: TableNames.executions,
     });
+  }
+
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresExecution
+  ) {
+    return super.create(knexOrTransaction, item, '*');
   }
 
   async upsert(
@@ -17,7 +25,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution
   ) {
     if (execution.status === 'running') {
-      return knexOrTrx(this.tableName)
+      return await knexOrTrx(this.tableName)
         .insert(execution)
         .onConflict('arn')
         .merge({
@@ -26,13 +34,49 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
           timestamp: execution.timestamp,
           original_payload: execution.original_payload,
         })
-        .returning('cumulus_id');
+        .returning('*');
     }
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(execution)
       .onConflict('arn')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
+  }
+
+  /**
+   * Get executions from the execution cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTrx -
+   *  DB client or transaction
+   * @param {Array<number>} executionCumulusIds -
+   * single execution cumulus_id or array of exeuction cumulus_ids
+   * @param {Object} [params] - Optional object with addition params for query
+   * @param {number} [params.limit] - number of records to be returned
+   * @param {number} [params.offset] - record offset
+   * @returns {Promise<Array<number>>} An array of exeuctions
+   */
+  async searchByCumulusIds(
+    knexOrTrx: Knex | Knex.Transaction,
+    executionCumulusIds: Array<number> | number,
+    params: { limit: number, offset: number }
+  ): Promise<Array<number>> {
+    const { limit, offset, ...sortQueries } = params || {};
+    const sortFields = getSortFields(sortQueries);
+    const executionCumulusIdsArray = [executionCumulusIds].flat();
+    const executions = await knexOrTrx(this.tableName)
+      .whereIn('cumulus_id', executionCumulusIdsArray)
+      .modify((queryBuilder) => {
+        if (limit) queryBuilder.limit(limit);
+        if (offset) queryBuilder.offset(offset);
+        if (sortFields.length >= 1) {
+          sortFields.forEach((sortObject: { [key: string]: { order: string } }) => {
+            const sortField = Object.keys(sortObject)[0];
+            const { order } = sortObject[sortField];
+            queryBuilder.orderBy(sortField, order);
+          });
+        }
+      });
+    return executions;
   }
 }
 

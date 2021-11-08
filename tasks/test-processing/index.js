@@ -69,7 +69,7 @@ async function fakeProcessing(event) {
  * @returns {Promise<string[]>} - the list of s3 locations for granule files
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(fakeProcessing, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(fakeProcessing, event, context);
 }
 
 exports.handler = handler;

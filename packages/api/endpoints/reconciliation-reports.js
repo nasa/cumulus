@@ -14,11 +14,11 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
-const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const logger = new Logger({ sender: '@cumulus/api' });

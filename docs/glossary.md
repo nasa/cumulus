@@ -33,6 +33,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 ### AWS Access Keys
 
   Access credentials that give you access to AWS to act as a IAM user programmatically or from the command line.
+  
   For more information, see the [AWS IAM Documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
 
 ### Bucket
@@ -102,10 +103,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 ### ECS Activity
 
   An ECS instance run via a Step Function.
-
-### EMS
-
-  [ESDIS Metrics System](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/esdis-metrics-system-ems)
 
 ### Execution (Cumulus)
 
@@ -214,6 +211,13 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 ### Step Function
 
   AWS's web service that allows you to compose complex workflows as a state machine comprised of tasks (Lambdas, activities hosted on EC2/ECS, some AWS service APIs, etc).   See [AWS's Step Function Documentation](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html) for more information.    In the context of Cumulus these are the underlying AWS service used to create Workflows.
+
+### Terraform
+
+  Terraform is the tool that you will use for deployment and configuration of your Cumulus environment.
+
+* For more information on Terraform and how it works, see [Introduction to Terraform](https://www.terraform.io/intro/index.html).
+* For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](../deployment/deployment-readme).
 
 ### Workflows
 

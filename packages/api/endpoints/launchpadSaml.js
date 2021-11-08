@@ -255,7 +255,7 @@ const getIncomingUrlFromRequest = (apiBaseUrl, requestPath) => {
  * @returns {Object} - Either JWToken presented as a query string in the
  * request or a redirect back to saml/login endpoing to receive the token.
  */
-const samlToken = async (req, res) => {
+const samlToken = (req, res) => {
   const { token } = req.query;
   if (token) return res.send({ message: { token } });
 
@@ -283,7 +283,7 @@ const samlToken = async (req, res) => {
   return res.redirect(redirectUrl.toString());
 };
 
-const notImplemented = async (req, res) =>
+const notImplemented = (req, res) =>
   res.boom.notImplemented(
     `endpoint: "${req.path}" not implemented. Login with launchpad.`
   );

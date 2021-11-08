@@ -20,6 +20,6 @@ cp ./*.py ./dist/
 
 cd ./dist || exit 1
 
-find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip 
+find . -type f -print0 | xargs -0 node ../../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip)
 
 cd .. || exit 1

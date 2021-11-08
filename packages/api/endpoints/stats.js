@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 const get = require('lodash/get');
-const Stats = require('../es/stats');
+const Stats = require('@cumulus/es-client/stats');
 
 /**
  * Map requested stats types to supported types

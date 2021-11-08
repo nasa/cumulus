@@ -13,9 +13,11 @@ const manualConsumer = rewire('../../lambdas/manual-consumer');
 
 const Kinesis = awsServices.kinesis();
 let describeStreamStub;
+const fakeStackName = 'fake-stack';
+const rulesArray = [];
 
 test.before(() => {
-  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(async () => ({
+  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(() => Promise.resolve({
     StreamDescription: {
       StreamARN: 'fake-stream-arn',
     },
@@ -104,7 +106,8 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
     const result = await manualConsumer.processRecordBatch('fake-stream-arn', [
       { Data: 'record1', ApproximateArrivalTimestamp: Date.now() },
       { Data: 'record2', ApproximateArrivalTimestamp: Date.now() },
-    ]);
+    ],
+    rulesArray);
 
     t.is(result, 2);
     t.true(processRecord.calledTwice);
@@ -114,12 +117,14 @@ test.serial('processRecordBatch calls processRecord on each valid record and ret
         data: 'record1',
       },
     });
+    t.deepEqual(processRecord.args[0][2], rulesArray);
     t.deepEqual(processRecord.args[1][0], {
       eventSourceARN: 'fake-stream-arn',
       kinesis: {
         data: 'record2',
       },
     });
+    t.deepEqual(processRecord.args[1][2], rulesArray);
   } finally {
     processRecord.restore();
   }
@@ -216,7 +221,7 @@ test.serial('processShard returns number of records processed from shard', async
     }),
   });
   const logError = sinon.spy(log, 'error');
-  const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', async () => [Promise.resolve(2), Promise.resolve(3)]);
+  const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', () => [Promise.resolve(2), Promise.resolve(3)]);
   const output = await manualConsumer.processShard('fakestream', 'fake-stream-arn', 'fakeshard');
   logError.restore();
   restoreProcessShard();
@@ -247,7 +252,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
       },
     }),
   });
-  const restoreHandleShard = manualConsumer.__set__('processShard', async () => Promise.resolve(1));
+  const restoreHandleShard = manualConsumer.__set__('processShard', () => Promise.resolve(1));
   const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', 'fake-arn', [], {});
   restoreHandleShard();
   restoreKinesis();
@@ -255,7 +260,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
 });
 
 test.serial('processStream returns records processed', async (t) => {
-  const restoreProcessStream = manualConsumer.__set__('iterateOverStreamRecursivelyToDispatchShards', async () => [Promise.resolve(12), Promise.resolve(13)]);
+  const restoreProcessStream = manualConsumer.__set__('iterateOverStreamRecursivelyToDispatchShards', () => [Promise.resolve(12), Promise.resolve(13)]);
   const output = await manualConsumer.processStream('fakestream', 'faketimestamp');
   restoreProcessStream();
   t.is(output, 'Processed 25 kinesis records from stream fakestream');
@@ -264,14 +269,12 @@ test.serial('processStream returns records processed', async (t) => {
 test.serial('processStream does not throw error if describeStream throws', async (t) => {
   const restoreProcessStream = manualConsumer.__set__(
     'iterateOverStreamRecursivelyToDispatchShards',
-    async () => [Promise.resolve(5)]
+    () => [Promise.resolve(5)]
   );
 
   describeStreamStub.restore();
   describeStreamStub = sinon.stub(kinesisUtils, 'describeStream')
-    .callsFake(async () => {
-      throw new Error('error');
-    });
+    .callsFake(() => Promise.reject(new Error('error')));
 
   try {
     await t.notThrowsAsync(
@@ -317,10 +320,31 @@ test('handler returns error string if no valid param is provided to determine in
 test.serial('handler calls processStream if valid parameters are provided', async (t) => {
   const logInfo = sinon.spy(log, 'info');
   const expectedOutput = 'testing-output';
+  const restorefetchEnabledRules = manualConsumer.__set__('fetchEnabledRules', () => Promise.resolve(rulesArray));
   const restoreprocessStream = manualConsumer.__set__('processStream', () => Promise.resolve(expectedOutput));
   const actualOutput = await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
   logInfo.restore();
   restoreprocessStream();
+  restorefetchEnabledRules();
   t.is(actualOutput, expectedOutput);
   t.true(logInfo.calledOnce);
+});
+
+test.serial('handler calls fetchEnabledRules if valid parameters are provided', async (t) => {
+  const fetchEnabledRulesStub = sinon.stub().callsFake(() => {
+    t.is(process.env.stackName, fakeStackName);
+    return Promise.resolve(rulesArray);
+  });
+  const restorefetchEnabledRules = manualConsumer.__set__('fetchEnabledRules', fetchEnabledRulesStub);
+  const restoreprocessStream = manualConsumer.__set__('processStream', (_1, _2, rulesArg) => {
+    t.deepEqual(rulesArg, rulesArray);
+    return Promise.resolve({});
+  });
+  process.env.stackName = fakeStackName;
+  await manualConsumer.handler({ type: 'kinesis', kinesisStream: 'validstream' });
+  delete process.env.stackName;
+  restorefetchEnabledRules();
+  restoreprocessStream();
+
+  t.true(fetchEnabledRulesStub.calledOnce);
 });

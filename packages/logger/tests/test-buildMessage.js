@@ -3,7 +3,7 @@
 const test = require('ava');
 const Logger = require('../dist');
 
-test('buildMessage() returns the correct message', async (t) => {
+test('buildMessage() returns the correct message', (t) => {
   const logger = new Logger();
 
   const logEvent = logger.buildMessage('warn', 'asdf');
@@ -13,7 +13,7 @@ test('buildMessage() returns the correct message', async (t) => {
   t.is(parsedLogEvent.message, 'asdf');
 });
 
-test('buildMessage() returns the correct level', async (t) => {
+test('buildMessage() returns the correct level', (t) => {
   const logger = new Logger();
 
   const logEvent = logger.buildMessage('warn', 'asdf');

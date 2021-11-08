@@ -91,14 +91,22 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
 
   environment {
     variables = {
-      system_bucket   = var.system_bucket
-      stackName       = var.prefix
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
-      dbHeartBeat     = var.rds_connection_heartbeat
+      acquireTimeoutMillis           = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
-      RDS_DEPLOYMENT_CUMULUS_VERSION = "5.0.0"
+      ExecutionsTable                = var.dynamo_tables.executions.name
+      execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
+      GranulesTable                  = var.dynamo_tables.granules.name
+      granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
+      idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
+      PdrsTable                      = var.dynamo_tables.pdrs.name
+      pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
+      reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
+      stackName                      = var.prefix
+      system_bucket                  = var.system_bucket
+      RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
+      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 

@@ -1,9 +1,13 @@
 'use strict';
 
 const test = require('ava');
+const { randomId } = require('../../common/test-utils');
 const collectionsApi = require('../collections');
+const { fakeCollectionFactory } = require('../../api/lib/testUtils');
+const { randomString } = require('../../common/test-utils');
 
-test.before(async (t) => {
+test.before((t) => {
+  process.env.stackName = randomString();
   t.context.testPrefix = 'unitTestStack';
   t.context.collectionName = 'testCollection';
   t.context.collectionVersion = 1;
@@ -19,7 +23,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
 
@@ -32,6 +36,7 @@ test('deleteCollection calls the callback with the expected object', async (t) =
 });
 
 test('createCollection calls the callback with the expected object', async (t) => {
+  const collection = { name: randomId('name'), version: randomId('version'), foo: 'bar' };
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -39,17 +44,17 @@ test('createCollection calls the callback with the expected object', async (t) =
       resource: '/{proxy+}',
       headers: { 'Content-Type': 'application/json' },
       path: '/collections',
-      body: JSON.stringify(t.context.collection),
+      body: JSON.stringify(collection),
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(collectionsApi.createCollection({
     callback,
     prefix: t.context.testPrefix,
-    collectionName: t.context.collectionName,
+    collection,
   }));
 });
 
@@ -63,9 +68,9 @@ test('getCollection calls the callback with the expected object and returns the 
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await collectionsApi.getCollection({
@@ -89,9 +94,9 @@ test('getCollections calls the callback with the expected object and returns the
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
-    return { foo: 'bar' };
+    return Promise.resolve({ foo: 'bar' });
   };
 
   const result = await collectionsApi.getCollections({
@@ -100,4 +105,28 @@ test('getCollections calls the callback with the expected object and returns the
   });
 
   t.deepEqual(result, { foo: 'bar' });
+});
+
+test('updateCollection calls the callback with the expected object', async (t) => {
+  const collection = fakeCollectionFactory();
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: { 'Content-Type': 'application/json' },
+      path: `/collections/${collection.name}/${collection.version}`,
+      body: JSON.stringify(collection),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+  await t.notThrowsAsync(collectionsApi.updateCollection({
+    callback,
+    prefix: t.context.testPrefix,
+    collection,
+  }));
 });

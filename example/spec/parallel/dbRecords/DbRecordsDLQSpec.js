@@ -29,7 +29,7 @@ describe('When a bad record is sent on the DLQ', () => {
 
     const granuleId = randomString(10);
     const files = [fakeFileFactory()];
-    const granule = fakeGranuleFactoryV2({ files, granuleId });
+    const granule = fakeGranuleFactoryV2({ files, granuleId, published: false });
 
     executionName = `execution-${randomString(16)}`;
 

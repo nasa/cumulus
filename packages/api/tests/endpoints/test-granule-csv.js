@@ -8,11 +8,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
-const { Search } = require('../../es/search');
-const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
-const indexer = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 
 const {
@@ -49,7 +49,7 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);

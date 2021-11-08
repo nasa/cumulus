@@ -283,8 +283,23 @@ export async function handleDuplicateFile(params: {
   return [];
 }
 
-export const getNameOfFile = (file: File): string | undefined =>
-  file.fileName ?? file.name;
+/**
+ * Get the name of the file from the following properties (in order of preference):
+ * 1. fileName (e.g. 'granuleFileNamec.md')
+ * 2. name (e.g. 'granuleFileName.md')
+ * 3. key (e.g. 'stackname/filepath/granuleFileName.md')
+ * @param {File} file - file object with the above properties
+ * @returns {string | undefined} - The file name as a string or undefined
+ */
+export const getNameOfFile = (file: File): string | undefined => {
+  const fileName = file.fileName ?? file.name;
+
+  if (!fileName) {
+    return file.key?.split('/').pop();
+  }
+
+  return fileName;
+};
 
 /**
  * For each source file, see if there is a destination and generate the source

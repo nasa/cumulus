@@ -45,6 +45,6 @@ exports.queuePdrs = queuePdrs;
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(queuePdrs, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(queuePdrs, event, context);
 }
 exports.handler = handler;

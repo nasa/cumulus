@@ -289,7 +289,7 @@ async function moveGranules(event) {
  *                              See schemas/output.json for detailed output schema
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(moveGranules, event, context);
 }
 
 exports.handler = handler;

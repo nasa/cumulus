@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { getKnexConfig, getKnexClient } from '@cumulus/db';
 
@@ -13,10 +13,10 @@ export interface HandlerEvent {
 }
 
 export const dbExists = async (tableName: string, knex: Knex) =>
-  knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
+  await knex('pg_database').select('datname').where(knex.raw(`datname = CAST('${tableName}' as name)`));
 
 export const userExists = async (userName: string, knex: Knex) =>
-  knex('pg_catalog.pg_user').where(knex.raw(`usename = CAST('${userName}' as name)`));
+  await knex('pg_catalog.pg_user').where(knex.raw(`usename = CAST('${userName}' as name)`));
 
 const validateEvent = (event: HandlerEvent): void => {
   if (event.dbPassword === undefined || event.prefix === undefined) {
@@ -42,7 +42,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getKnexClient({
       env: {
         databaseCredentialSecretArn: event.rootLoginSecret,
-        dbHeartBeat: process.env.dbHeartBeat,
       },
       secretsManager,
     });

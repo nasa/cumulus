@@ -4,7 +4,866 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Unreleased
+
+### Added
+
+- [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
+  - NSIDC and other cumulus users had desire for returning formatted dates for
+    the 'url_path' date extraction utilities. Added 'dateFormat' function as
+    an option for extracting and formating the entire date. See
+    docs/workflow/workflow-configuration-how-to.md for more information.
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2714**
+    - Added `@cumulus/db/base.deleteExcluding` method to allow for deletion of a
+      record set with an exclusion list of cumulus_ids
+  - **CUMULUS-2317**
+    - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
+    records in PostgreSQL and return specified granule information for each file
+    - Added `@cumulus/db/QuerySearchClient` library to handle sequentially fetching and paging
+    through results for an arbitrary PostgreSQL query
+    - Added `insert` method to all `@cumulus/db` models to handle inserting multiple records into
+    the database at once
+    - Added `@cumulus/db/translatePostgresGranuleResultToApiGranule` helper to
+    translate custom PostgreSQL granule result to API granule
+  - **CUMULUS-2672**
+    - Added migration to add `type` text column to Postgres database `files` table
+  - **CUMULUS-2634**
+    - Added new functions for upserting data to Elasticsearch:
+      - `@cumulus/es-client/indexer.upsertExecution` to upsert an execution
+      - `@cumulus/es-client/indexer.upsertPdr` to upsert a PDR
+      - `@cumulus/es-client/indexer.upsertGranule` to upsert a granule
+  - **CUMULUS-2510**
+    - Added `execution_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added to `sf_event_sqs_to_db_records_lambda` IAM policy to include
+      permissions for SNS publish for `report_executions_topic`
+    - Added `collection_sns_topic_arn` environment variable to
+      `PrivateApiLambda` and `ApiEndpoints` lambdas.
+    - Added `updateCollection` to `@cumulus/api-client`.
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_sns_topic_arn`, `report_pdrs_sns_topic_arn`,
+      `report_granules_sns_topic_arn`
+    - Added variables for report topic ARNs to `process_dead_letter_archive.tf`
+    - Added variable for granule report topic ARN to `bulk_operation.tf`
+    - Added `pdr_sns_topic_arn` environment variable to
+      `sf_event_sqs_to_db_records` lambda TF definition.
+    - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
+      publish SNS messages to the report topics to PDRs, Collections, and
+      Executions.
+    - Added the following functions in `publishSnsMessageUtils` to handle
+      publishing SNS messages for specific data and event types:
+      - `publishCollectionUpdateSnsMessage`
+      - `publishCollectionCreateSnsMessage`
+      - `publishCollectionDeleteSnsMessage`
+      - `publishGranuleUpdateSnsMessage`
+      - `publishGranuleDeleteSnsMessage`
+      - `publishGranuleCreateSnsMessage`
+      - `publishExecutionSnsMessage`
+      - `publishPdrSnsMessage`
+      - `publishGranuleSnsMessageByEventType`
+    - Added to `ecs_cluster` IAM policy to include permissions for SNS publish
+      for `report_executions_topic` and `report_pdrs_topic`.
+  - **CUMULUS-2315**
+    - Added `paginateByCumulusId` to `@cumulus/db` `BasePgModel` to allow for paginated
+      full-table select queries in support of elasticsearch indexing.
+    - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
+      derived table classes to support querying the current max `cumulus_id`.
+  - **CUMULUS-2673**
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation`
+    Lambda using value of `elasticsearch_hostname` Terraform variable.
+    - Added `elasticsearch_security_group_id` to security groups for
+      `postgres-migration-async-operation` lambda.
+    - Added permission for `DynamoDb:DeleteItem` to
+      `postgres-migration-async-operation` lambda.
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex
+  transaction that **will throw an error** if the transaction rolls back. [As
+  of Knex 0.95+, promise rejection on transaction rollback is no longer the
+  default
+  behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2510**
+    - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on executions
+      DynamoDB table.
+    - Removed `stream_enabled` and `stream_view_type` from `collections_table`
+      TF definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+      DynamoDB table.
+    - Removed lambda `publish_collections` TF resource.
+    - Removed `aws_lambda_event_source_mapping` TF definition on granules
+    - Removed `stream_enabled` and `stream_view_type` from `pdrs_table` TF
+      definition.
+    - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
+      DynamoDB table.
+
+### Changed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2714**
+    - Updated
+      - @cumulus/api/lib.writeRecords.writeGranulesFromMessage
+      - @cumulus/api/lib.writeRecords.writeGranuleFromApi
+      - @cumulus/api/lib.writeRecords.createGranuleFromApi
+      - @cumulus/api/lib.writeRecords.updateGranuleFromApi
+    - These methods now remove postgres file records that aren't contained in
+        the write/update action if such file records exist.  This update
+        maintains consistency with the writes to elasticsearch/dynamodb.
+  - **CUMULUS-2672**
+    - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
+      instead of dropping it.
+    - Updated `@cumlus/db` `translateApiFiletoPostgresFile` to retain `type`
+    - Updated `@cumulus/db` `translatePostgresFileToApiFile` to retain `type`
+    - Updated `@cumulus/types.api.file` to add `type` to the typing.
+  - **CUMULUS-2315**
+    - Update `index-from-database` lambda/ECS task and elasticsearch endpoint to read
+      from PostgreSQL database
+    - Update `index-from-database` endpoint to add the following configuration
+      tuning parameters:
+      - postgresResultPageSize -- The number of records to read from each
+        postgres table per request.   Default is 1000.
+      - postgresConnectionPoolSize -- The max number of connections to allow the
+        index function to make to the database.  Default is 10.
+      - esRequestConcurrency -- The maximium number of concurrent record
+        translation/ES record update requests.   Default is 10.
+  - **CUMULUS-2308**
+    - Update `/granules/<granule_id>` GET endpoint to return PostgreSQL Granules instead of DynamoDB Granules
+    - Update `/granules/<granule_id>` PUT endpoint to use PostgreSQL Granule as source rather than DynamoDB Granule
+    - Update `unpublishGranule` (used in /granules PUT) to use PostgreSQL Granule as source rather than DynamoDB Granule
+    - Update integration tests to use `waitForApiStatus` instead of `waitForModelStatus`
+    - Update Granule ingest to update the Postgres Granule status as well as the DynamoDB Granule status
+  - **CUMULUS-2302**
+    - Update API collection GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+    - Update API granule `reingest` endpoint to read collection from PostgreSQL
+      database instead of DynamoDB
+    - Update internal-reconciliation report to base report Collection comparison
+      on PostgreSQL instead of DynamoDB
+    - Moved createGranuleAndFiles `@cumulus/api` unit helper from `./lib` to
+      `.test/helpers`
+  - **CUMULUS-2208**
+    - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+    - Updated logic for collections API POST/PUT/DELETE to create/update/delete
+      records directly in Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for rules API POST/PUT/DELETE to create/update/delete
+      records directly in Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for providers API POST/PUT/DELETE to create/update/delete
+      records directly in  Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for PDRs API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for executions API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for granules API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to
+      Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+      - executions
+      - PDRs
+      - granules
+    - All async operations are now written directly to Elasticsearch in parallel
+      with DynamoDB/PostgreSQL
+    - Updated logic for async operation API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Moved:
+      - `packages/api/lib/granules.getGranuleProductVolume` ->
+      `@cumulus/message/Granules.getGranuleProductVolume`
+      - `packages/api/lib/granules.getGranuleTimeToPreprocess`
+      -> `@cumulus/message/Granules.getGranuleTimeToPreprocess`
+      - `packages/api/lib/granules.getGranuleTimeToArchive` ->
+      `@cumulus/message/Granules.getGranuleTimeToArchive`
+      - `packages/api/models/Granule.generateGranuleRecord`
+      -> `@cumulus/message/Granules.generateGranuleApiRecord`
+  - **CUMULUS-2306**
+    - Updated API local serve (`api/bin/serve.js`) setup code to add cleanup/executions
+    related records
+    - Updated @cumulus/db/models/granules-executions to add a delete method in
+      support of local cleanup
+    - Add spec/helpers/apiUtils/waitForApiStatus integration helper to retry API
+      record retrievals on status in lieu of using `waitForModelStatus`
+  - **CUMULUS-2303**
+    - Update API provider GET endpoint to read individual provider records from
+      PostgreSQL database instead of DynamoDB
+    - Update sf-scheduler lambda to utilize API endpoint to get provider record
+      from database via Private API lambda
+  - **CUMULUS-2301**
+    - Updated `getAsyncOperation` to read from PostgreSQL database instead of
+      DynamoDB.
+    - Added `translatePostgresAsyncOperationToApiAsyncOperation` function in
+      `@cumulus/db/translate/async-operation`.
+    - Updated `translateApiAsyncOperationToPostgresAsyncOperation` function to
+      ensure that `output` is properly translated to an object for the
+      PostgreSQL record for the following cases of `output` on the incoming API
+      record:
+      - `record.output` is a JSON stringified object
+      - `record.output` is a JSON stringified array
+      - `record.output` is a JSON stringified string
+      - `record.output` is a string
+  - **CUMULUS-2317**
+    - Changed reconciliation reports to read file records from PostgreSQL instead of DynamoDB
+  - **CUMULUS-2304**
+    - Updated API rule GET endpoint to read individual rule records from
+      PostgreSQL database instead of DynamoDB
+    - Updated internal consumer lambdas for SNS, SQS and Kinesis to read
+      rules from PostgreSQL.
+  - **CUMULUS-2634**
+    - Changed `sfEventSqsToDbRecords` Lambda to use new upsert helpers for executions, granules, and PDRs
+    to ensure out-of-order writes are handled correctly when writing to Elasticsearch
+  - **CUMULUS-2510**
+    - Updated `@cumulus/api/lib/writeRecords/write-execution` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+    - Updated functions `create` and `upsert` in the `db` model for Executions
+      to return an array of objects containing all columns of the created or
+      updated records.
+    - Updated `@cumulus/api/endpoints/collections` to publish an SNS message
+      after a successful collection delete, update (PUT), create (POST).
+    - Updated functions `create` and `upsert` in the `db` model for Collections
+      to return an array of objects containing all columns for the created or
+      updated records.
+    - Updated functions `create` and `upsert` in the `db` model for Granules
+      to return an array of objects containing all columns for the created or
+      updated records.
+    - Updated `@cumulus/api/lib/writeRecords/write-granules` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+    - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
+      messages after a successful write to Postgres, DynamoDB, and ES.
+
+## [v9.8.0] 2021-10-19
+
+### Notable changes
+
+- Published new tag [`36` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package and to address security vulnerabilities.
+
+### Added
+
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+
+- **CUMULUS-2639**
+  - Increases logging on reconciliation reports.
+
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
+- **CUMULUS-2598**
+  - Add unit and integration tests to describe queued granules as ignored when
+    duplicate handling is 'skip'
+
+### Changed
+
+- Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
+- Updated default version of async operations Docker image to `cumuluss/async-operation:36`
+- **CUMULUS-2590**
+  - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
+- **CUMULUS-2643**
+  - relocates system file `buckets.json` out of the
+    `s3://internal-bucket/workflows` directory into
+    `s3://internal-bucket/buckets`.
+
+## [v9.7.0] 2021-10-01
+
+### Notable Changes
+
+- **CUMULUS-2583**
+  - The `queue-granules` task now updates granule status to `queued` when a granule is queued. In order to prevent issues with the private API endpoint and Lambda API request and concurrency limits, this functionality runs with limited concurrency, which may increase the task's overall runtime when large numbers of granules are being queued. If you are facing Lambda timeout errors with this task, we recommend converting your `queue-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- **CUMULUS-2676**
+  - The `discover-granules` task has been updated to limit concurrency on checks to identify and skip already ingested granules in order to prevent issues with the private API endpoint and Lambda API request and concurrency limits. This may increase the task's overall runtime when large numbers of granules are discovered. If you are facing Lambda timeout errors with this task, we recommend converting your `discover-granules` task to an ECS activity. This concurrency is configurable via the task config's `concurrency` value.
+- Updated memory of `<prefix>-sfEventSqsToDbRecords` Lambda to 1024MB
+
+### Added
+
+- **CUMULUS-2000**
+  - Updated `@cumulus/queue-granules` to respect a new config parameter: `preferredQueueBatchSize`. Queue-granules will respect this batchsize as best as it can to batch granules into workflow payloads. As workflows generally rely on information such as collection and provider expected to be shared across all granules in a workflow, queue-granules will break batches up by collection, as well as provider if there is a `provider` field on the granule. This may result in batches that are smaller than the preferred size, but never larger ones. The default value is 1, which preserves current behavior of queueing 1 granule per workflow.
+- **CUMULUS-2630**
+  - Adds a new workflow `DiscoverGranulesToThrottledQueue` that discovers and writes
+    granules to a throttled background queue.  This allows discovery and ingest
+    of larger numbers of granules without running into limits with lambda
+    concurrency.
+
+### Changed
+
+- **CUMULUS-2720**
+  - Updated Core CI scripts to validate CHANGELOG diffs as part of the lint process
+- **CUMULUS-2695**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
+    functions. If you see throttling errors on the `<stack>-apiEndpoints` you
+    should increase this value.
+  - Updates cumulus-tf/cumulus/variables.tf to change
+    `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
+    the dashboard for default deployments.
+- **CUMULUS-2584**
+  - Updates `api/endpoints/execution-status.js` `get` method to include associated granules, as
+    an array, for the provided execution.
+  - Added `getExecutionArnsByGranuleCumulusId` returning a list of executionArns sorted by most recent first,
+    for an input Granule Cumulus ID in support of the move of `translatePostgresGranuleToApiGranule` from RDS-Phase2
+    feature branch
+  - Added `getApiExecutionCumulusIds` returning cumulus IDs for a given list of executions
+- **CUMULUS-NONE**
+  - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
+  - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
+
+### Fixed
+
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as   "queued" were not able to be set as "running" or "completed"
+
+## [v9.6.0] 2021-09-20
+
+### Added
+
+- **CUMULUS-2576**
+  - Adds `PUT /granules` API endpoint to update a granule
+  - Adds helper `updateGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2606**
+  - Adds `POST /granules/{granuleId}/executions` API endpoint to associate an execution with a granule
+  - Adds helper `associateExecutionWithGranule` to `@cumulus/api-client/granules`
+- **CUMULUS-2583**
+  - Adds `queued` as option for granule's `status` field
+
+### Changed
+
+- Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
+  upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
+  issue in previous version.
+- **CUMULUS-2583**
+  - `QueueGranules` task now updates granule status to `queued` once it is added to the queue.
+
+- **CUMULUS-2617**
+  - Use the `Authorization` header for CMR Launchpad authentication instead of the deprecated `Echo-Token` header.
+
+### Fixed
+
+- Added missing permission for `<prefix>_ecs_cluster_instance_role` IAM role (used when running ECS services/tasks)
+to allow `kms:Decrypt` on the KMS key used to encrypt provider credentials. Adding this permission fixes the `sync-granule` task when run as an ECS activity in a Step Function, which previously failed trying to decrypt credentials for providers.
+
+- **CUMULUS-2576**
+  - Adds default value to granule's timestamp when updating a granule via API.
+
+## [v9.5.0] 2021-09-07
+
+### BREAKING CHANGES
+
+- Removed `logs` record type from mappings from Elasticsearch. This change **should not have**
+any adverse impact on existing deployments, even those which still contain `logs` records,
+but technically it is a breaking change to the Elasticsearch mappings.
+- Changed `@cumulus/api-client/asyncOperations.getAsyncOperation` to return parsed JSON body
+of response and not the raw API endpoint response
+
+### Added
+
+- **CUMULUS-2670**
+  - Updated core `cumulus` module to take lambda_timeouts string map variable that allows timeouts of ingest tasks to be configurable. Allowed properties for the mapping include:
+  - discover_granules_task_timeout
+  - discover_pdrs_task_timeout
+  - hyrax_metadata_update_tasks_timeout
+  - lzards_backup_task_timeout
+  - move_granules_task_timeout
+  - parse_pdr_task_timeout
+  - pdr_status_check_task_timeout
+  - post_to_cmr_task_timeout
+  - queue_granules_task_timeout
+  - queue_pdrs_task_timeout
+  - queue_workflow_task_timeout
+  - sync_granule_task_timeout
+- **CUMULUS-2575**
+  - Adds `POST /granules` API endpoint to create a granule
+  - Adds helper `createGranule` to `@cumulus/api-client`
+- **CUMULUS-2577**
+  - Adds `POST /executions` endpoint to create an execution
+- **CUMULUS-2578**
+  - Adds `PUT /executions` endpoint to update an execution
+- **CUMULUS-2592**
+  - Adds logging when messages fail to be added to queue
+- **CUMULUS-2644**
+  - Pulled `delete` method for `granules-executions.ts` implemented as part of CUMULUS-2306
+  from the RDS-Phase-2 feature branch in support of CUMULUS-2644.
+  - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
+  and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
+  - Added `resetPostgresDb` method to support resetting between integration test suite runs
+
+### Changed
+
+- Updated `processDeadLetterArchive` Lambda to return an object where
+`processingSucceededKeys` is an array of the S3 keys for successfully
+processed objects and `processingFailedKeys` is an array of S3 keys
+for objects that could not be processed
+- Updated async operations to handle writing records to the databases
+when output of the operation is `undefined`
+
+- **CUMULUS-2644**
+  - Moved `migration` directory from the `db-migration-lambda` to the `db` package and
+  updated unit test references to migrationDir to be pulled from `@cumulus/db`
+  - Updated `@cumulus/api/bin/serveUtils` to write records to PostgreSQL tables
+
+- **CUMULUS-2575**
+  - Updates model/granule to allow a granule created from API to not require an
+    execution to be associated with it. This is a backwards compatible change
+    that will not affect granules created in the normal way.
+  - Updates `@cumulus/db/src/model/granules` functions `get` and `exists` to
+    enforce parameter checking so that requests include either (granule\_id
+    and collection\_cumulus\_id) or (cumulus\_id) to prevent incorrect results.
+  - `@cumulus/message/src/Collections.deconstructCollectionId` has been
+    modified to throw a descriptive error if the input `collectionId` is
+    undefined rather than `TypeError: Cannot read property 'split' of
+    undefined`. This function has also been updated to throw descriptive errors
+    if an incorrectly formated collectionId is input.
+
+## [v9.4.0] 2021-08-16
+
+### Notable changes
+
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2591**
+  - Adds `failedExecutionStepName` to failed execution's jsonb error records.
+    This is the name of the Step Function step for the last failed event in the
+    execution's event history.
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+- **CUMULUS-2373**
+  - Added `replaySqsMessages` lambda to replay archived incoming SQS
+    messages from S3.
+  - Added `/replays/sqs` endpoint to trigger an async operation for
+    the `replaySqsMessages` lambda.
+  - Added unit tests and integration tests for new endpoint and lambda.
+  - Added `getS3PrefixForArchivedMessage` to `ingest/sqs` package to get prefix
+    for an archived message.
+  - Added new `async_operation` type `SQS Replay`.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/workflows-by-granules for retrieving workflow names common to a set of granules
+  - Adds `workflowsByGranules` to `@cumulus/api-client/executions`
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+
+### Fixed
+
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
+
+### Changed
+
+- **CUMULUS-2373**
+  - Updated `getS3KeyForArchivedMessage` in `ingest/sqs` to store SQS messages
+    by `queueName`.
+- **CUMULUS-2630**
+  - Updates the example/cumulus-tf deployment to change
+    `archive_api_reserved_concurrency` from 2 to 8 to prevent throttling with
+    the dashboard.
+
+## [v9.3.0] 2021-07-26
+
+### BREAKING CHANGES
+
+- All API requests made by `@cumulus/api-client` will now throw an error if the status code
+does not match the expected response (200 for most requests and 202 for a few requests that
+trigger async operations). Previously the helpers in this package would return the response
+regardless of the status code, so you may need to update any code using helpers from this
+package to catch or to otherwise handle errors that you may encounter.
+- The Cumulus API Lambda function has now been configured with reserved concurrency to ensure
+availability in a high-concurrency environment. However, this also caps max concurrency which
+may result in throttling errors if trying to reach the Cumulus API multiple times in a short
+period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
+terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
+The default reserved concurrency value is 8.
+
+### Notable changes
+
+- `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
+  integrate with a custom CMR host name and protocol (e.g.
+  `http://custom-cmr-host.com`). Note that you **must** include a protocol
+  (`http://` or `https://)  if specifying a value for this variable.
+- The cumulus module configuration value`rds_connetion_heartbeat` and it's
+  behavior has been replaced by a more robust database connection 'retry'
+  solution.   Users can remove this value from their configuration, regardless
+  of value.  See the `Changed` section notes on CUMULUS-2528 for more details.
+
+### Added
+
+- Added user doc describing new features related to the Cumulus dead letter archive.
+- **CUMULUS-2327**
+  - Added reserved concurrency setting to the Cumulus API lambda function.
+  - Added relevant tfvars to the archive and cumulus terraform modules.
+- **CUMULUS-2460**
+  - Adds `POST` /executions/search-by-granules for retrieving executions from a list of granules or granule query
+  - Adds `searchExecutionsByGranules` to `@cumulus/api-client/executions`
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2463**
+  - `PUT /granules` reingest action allows a user to override the default execution
+    to use by providing an optional `workflowName` or `executionArn` parameter on
+    the request body.
+  - `PUT /granules/bulkReingest` action allows a user to override the default
+    execution/workflow combination to reingest with by providing an optional
+    `workflowName` on the request body.
+- Adds `workflowName` and `executionArn` params to @cumulus/api-client/reingestGranules
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+- **CUMULUS-2478**
+  - Implemented [bucket map](https://github.com/asfadmin/thin-egress-app#bucket-mapping).
+  - Implemented /locate endpoint
+  - Cumulus distribution API checks the file request against bucket map:
+    - retrieves the bucket and key from file path
+    - determines if the file request is public based on the bucket map rather than the bucket type
+    - (EDL only) restricts download from PRIVATE_BUCKETS to users who belong to certain EDL User Groups
+    - bucket prefix and object prefix are supported
+  - Add 'Bearer token' support as an authorization method
+- **CUMULUS-2486**
+  - Implemented support for custom headers
+  - Added 'Bearer token' support as an authorization method
+- **CUMULUS-2487**
+  - Added integration test for cumulus distribution API
+- **CUMULUS-2569**
+  - Created bucket map cache for cumulus distribution API
+- **CUMULUS-2568**
+  - Add `deletePdr`/PDR deletion functionality to `@cumulus/api-client/pdrs`
+  - Add `removeCollectionAndAllDependencies` to integration test helpers
+  - Added `example/spec/apiUtils.waitForApiStatus` to wait for a
+  record to be returned by the API with a specific value for
+  `status`
+  - Added `example/spec/discoverUtils.uploadS3GranuleDataForDiscovery` to upload granule data fixtures
+  to S3 with a randomized granule ID for `discover-granules` based
+  integration tests
+  - Added `example/spec/Collections.removeCollectionAndAllDependencies` to remove a collection and
+  all dependent objects (e.g. PDRs, granules, executions) from the
+  database via the API
+  - Added helpers to `@cumulus/api-client`:
+    - `pdrs.deletePdr` - Delete a PDR via the API
+    - `replays.postKinesisReplays` - Submit a POST request to the `/replays` endpoint for replaying Kinesis messages
+
+- `@cumulus/api-client/granules.getGranuleResponse` to return the raw endpoint response from the GET `/granules/<granuleId>` endpoint
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Added `@cumulus/message/utils.parseException` to parse exception objects
+    - Added helpers to `@cumulus/message/Granules`:
+      - `getGranuleProductVolume`
+      - `getGranuleTimeToPreprocess`
+      - `getGranuleTimeToArchive`
+      - `generateGranuleApiRecord`
+    - Added `@cumulus/message/PDRs/generatePdrApiRecordFromMessage` to generate PDR from Cumulus workflow message
+    - Added helpers to `@cumulus/es-client/indexer`:
+      - `deleteAsyncOperation` to delete async operation records from Elasticsearch
+      - `updateAsyncOperation` to update an async operation record in Elasticsearch
+    - Added granules `PUT` endpoint to Cumulus API for updating a granule.
+    Requests to this endpoint should be submitted **without an `action`**
+    attribute in the request body.
+    - Added `@cumulus/api-client/granules.updateGranule` to update granule via the API
+  - **CUMULUS-2303**
+    - Add translatePostgresProviderToApiProvider method to `@cumulus/db/translate/providers`
+  - **CUMULUS-2306**
+    - Updated API execution GET endpoint to read individual execution records
+      from PostgreSQL database instead of DynamoDB
+    - Updated API execution-status endpoint to read execution records from
+      PostgreSQL database instead of DynamoDB
+  - **CUMULUS-2302**
+    - Added translatePostgresCollectionToApiCollection method to
+      `@cumulus/db/translate/collections`
+    - Added `searchWithUpdatedAtRange` method to
+      `@cumulus/db/models/collections`
+  - **CUMULUS-2301**
+    - Created API asyncOperations POST endpoint to create async operations.
+  - **CUMULUS-2307**
+    - Updated API PDR GET endpoint to read individual PDR records from
+      PostgreSQL database instead of DynamoDB
+    - Added `deletePdr` to `@cumulus/api-client/pdrs`
+
+### Changed
+
+- Moved functions from `@cumulus/integration-tests` to `example/spec/helpers/workflowUtils`:
+  - `startWorkflowExecution`
+  - `startWorkflow`
+  - `executeWorkflow`
+  - `buildWorkflow`
+  - `testWorkflow`
+  - `buildAndExecuteWorkflow`
+  - `buildAndStartWorkflow`
+- `example/spec/helpers/workflowUtils.executeWorkflow` now uses
+`waitForApiStatus` to ensure that the execution is `completed` or
+`failed` before resolving
+- `example/spec/helpers/testUtils.updateAndUploadTestFileToBucket`
+now accepts an object of parameters rather than positional
+arguments
+- Removed PDR from the `payload` in the input payload test fixture for reconciliation report integration tests
+- The following integration tests for PDR-based workflows were
+updated to use randomized granule IDs:
+  - `example/spec/parallel/ingest/ingestFromPdrSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithChildWorkflowMetaSpec.js`
+  - `example/spec/parallel/ingest/ingestFromPdrWithExecutionNamePrefixSpec.js`
+  - `example/spec/parallel/ingest/ingestPdrWithNodeNameSpec.js`
+- Updated the `@cumulus/api-client/CumulusApiClientError` error class to include new properties that can be accessed directly on
+the error object:
+  - `statusCode` - The HTTP status code of the API response
+  - `apiMessage` - The message from the API response
+- Added `params.pRetryOptions` parameter to
+`@cumulus/api-client/granules.deleteGranule` to control the retry
+behavior
+- Updated `cmr_custom_host` variable to accept a full protocol and host name
+(e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
+- **CUMULUS-2463**
+  - Increases the duration of allowed backoff times for a successful test from
+    0.5 sec to 1 sec.
+- **CUMULUS-2528**
+  - Removed `rds_connection_heartbeat` as a configuration option from all
+    Cumulus terraform modules
+  - Removed `dbHeartBeat` as an environmental switch from
+    `@cumulus/db.getKnexClient` in favor of more comprehensive general db
+    connect retry solution
+  - Added new `rds_connection_timing_configuration` string map to allow for
+    configuration and tuning of Core's internal database retry/connection
+    timeout behaviors.  These values map to connection pool configuration
+    values for tarn (https://github.com/vincit/tarn.js/) which Core's database
+    module / knex(https://www.npmjs.com/package/knex) use for this purpose:
+    - acquireTimeoutMillis
+    - createRetryIntervalMillis
+    - createTimeoutMillis
+    - idleTimeoutMillis
+    - reapIntervalMillis
+      Connection errors will result in a log line prepended with 'knex failed on
+      attempted connection error' and sent from '@cumulus/db/connection'
+  - Updated `@cumulus/db` and all terraform mdules to set default retry
+    configuration values for the database module to cover existing database
+    heartbeat connection failures as well as all other knex/tarn connection
+    creation failures.
+
+### Fixed
+
+- Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
+- Fixed bug where `parse-pdr` set a granule's provider to the entire provider record when a `NODE_NAME`
+  is present. Expected behavior consistent with other tasks is to set the provider name in that field.
+- **CUMULUS-2568**
+  - Update reconciliation report integration test to have better cleanup/failure behavior
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct endpoint for returning a PDR from the API
+- **CUMULUS-2620**
+  - Fixed a bug where a granule could be removed from CMR but still be set as
+  `published: true` and with a CMR link in the Dynamo/PostgreSQL databases. Now,
+  the CMR deletion and the Dynamo/PostgreSQL record updates will all succeed or fail
+  together, preventing the database records from being out of sync with CMR.
+  - Fixed `@cumulus/api-client/pdrs.getPdr` to request correct
+  endpoint for returning a PDR from the API
+
+## [v9.2.2] 2021-08-06 - [BACKPORT]
+
+**Please note** changes in 9.2.2 may not yet be released in future versions, as
+this is a backport and patch release on the 9.2.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Added
+
+- **CUMULUS-2635**
+  - Added helper functions:
+    - `@cumulus/db/translate/file/translateApiPdrToPostgresPdr`
+
+### Fixed
+
+- **CUMULUS-2635**
+  - Update `data-migration2` to migrate PDRs before migrating granules.
+  - Update `data-migration2` unit tests testing granules migration to reference
+    PDR records to better model the DB schema.
+  - Update `migratePdrRecord` to use `translateApiPdrToPostgresPdr` function.
+
+## [v9.2.1] 2021-07-29 - [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2626**
+  - Update [PDR migration](https://github.com/nasa/cumulus/blob/master/lambdas/data-migration2/src/pdrs.ts) to correctly find Executions by a Dynamo PDR's `execution` field
+
+## [v9.2.0] 2021-06-22
+
+### Added
+
+- **CUMULUS-2475**
+  - Adds `GET` endpoint to distribution API
+- **CUMULUS-2476**
+  - Adds handler for authenticated `HEAD` Distribution requests replicating current behavior of TEA
+
+### Changed
+
+- **CUMULUS-2482**
+  - Switches the default distribution app in the `example/cumulus-tf` deployment to the new Cumulus Distribution
+  - TEA is still available by following instructions in `example/README.md`
+
+### Fixed
+
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2558**
+  - Fixed issue where executions original_payload would not be retained on successful execution
+
+### Removed
+
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2208**
+    - Removed trigger for `dbIndexer` Lambda for DynamoDB tables:
+      - `<prefix>-AsyncOperationsTable`
+      - `<prefix>-CollectionsTable`
+      - `<prefix>-ExecutionsTable`
+      - `<prefix>-GranulesTable`
+      - `<prefix>-PdrsTable`
+      - `<prefix>-ProvidersTable`
+      - `<prefix>-RulesTable`
+
+## [v9.1.0] 2021-06-03
+
+### BREAKING CHANGES
+
+- @cumulus/api-client/granules.getGranule now returns the granule record from the GET /granules/<granuleId> endpoint, not the raw endpoint response
+- **CUMULUS-2434**
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule  UMM-G metadata should have version 1.6.2 or later, since CMR s3
+    link type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+- **CUMULUS-2488**
+  - Removed all EMS reporting including lambdas, endpoints, params, etc as all
+    reporting is now handled through Cloud Metrics
+- **CUMULUS-2472**
+  - Moved existing `EarthdataLoginClient` to
+    `@cumulus/oauth-client/EarthdataLoginClient` and updated all references in
+    Cumulus Core.
+  - Rename `EarthdataLoginClient` property from `earthdataLoginUrl` to
+    `loginUrl for consistency with new OAuth clients. See example in
+    [oauth-client
+    README](https://github.com/nasa/cumulus/blob/master/packages/oauth-client/README.md)
+
+### Added
+
+- **HYRAX-439** - Corrected README.md according to a new Hyrax URL format.
+- **CUMULUS-2354**
+  - Adds configuration options to allow `/s3credentials` endpoint to distribute
+    same-region read-only tokens based on a user's CMR ACLs.
+  - Configures the example deployment to enable this feature.
+- **CUMULUS-2442**
+  - Adds option to generate cloudfront URL to lzards-backup task. This will require a few new task config options that have been documented in the [task README](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/README.md).
+- **CUMULUS-2470**
+  - Added `/s3credentials` endpoint for distribution API
+- **CUMULUS-2471**
+  - Add `/s3credentialsREADME` endpoint to distribution API
+- **CUMULUS-2473**
+  - Updated `tf-modules/cumulus_distribution` module to take earthdata or cognito credentials
+  - Configured `example/cumulus-tf/cumulus_distribution.tf` to use CSDAP credentials
+- **CUMULUS-2474**
+  - Add `S3ObjectStore` to `aws-client`. This class allows for interaction with the S3 object store.
+  - Add `object-store` package which contains abstracted object store functions for working with various cloud providers
+- **CUMULUS-2477**
+  - Added `/`, `/login` and `/logout` endpoints to cumulus distribution api
+- **CUMULUS-2479**
+  - Adds /version endpoint to distribution API
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+- **CUMULUS-2371**
+  - Added helpers to `@cumulus/ingest/sqs`:
+    - `archiveSqsMessageToS3` - archives an incoming SQS message to S3
+    - `deleteArchivedMessageFromS3` - deletes a processed SQS message from S3
+  - Added call to `archiveSqsMessageToS3` to `sqs-message-consumer` which
+    archives all incoming SQS messages to S3.
+  - Added call to `deleteArchivedMessageFrom` to `sqs-message-remover` which
+    deletes archived SQS message from S3 once it has been processed.
+
+### Changed
+
+- **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
+  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
+    timeout for Knex library to acquire dataase connections
+- **CUMULUS-2517**
+  - Updated postgres-migration-count-tool default concurrency to '1'
+- **CUMULUS-2489**
+  - Updated docs for Terraform references in FAQs, glossary, and in Deployment sections
+- **CUMULUS-2434**
+  - Updated `@cumulus/cmrjs` `updateCMRMetadata` and related functions to add
+    both HTTPS URLS and S3 URIs to CMR metadata.
+  - Updated `update-granules-cmr-metadata-file-links` task to add both HTTPS
+    URLs and S3 URIs to the OnlineAccessURLs field of CMR metadata. The task
+    configuration parameter `cmrGranuleUrlType` now has default value `both`.
+  - To use the updated `update-granules-cmr-metadata-file-links` task, the
+    granule UMM-G metadata should have version 1.6.2 or later, since CMR s3 link
+    type 'GET DATA VIA DIRECT ACCESS' is not valid until UMM-G version
+    [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
+- **CUMULUS-2472**
+  - Renamed `@cumulus/earthdata-login-client` to more generic
+    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
+  - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
+- **CUMULUS-2532**
+  - Changed integration tests to use `api-client/granules` functions as opposed to granulesApi from `@cumulus/integration-tests`.
+
+### Fixed
+
+- **CUMULUS-2519**
+  - Update @cumulus/integration-tests.buildWorkflow to fail if provider/collection API response is not successful
+- **CUMULUS-2518**
+  - Update sf-event-sqs-to-db-records to not throw if a collection is not
+    defined on a payload that has no granules/an empty granule payload object
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
+- **CUMULUS-2520**
+  - Fixed error that prevented `/elasticsearch/index-from-database` from starting.
+- **CUMULUS-2532**
+  - Fixed integration tests to have granule deletion occur before provider and
+    collection deletion in test cleanup.
+- **[2231](https://github.com/nasa/cumulus/issues/2231)**
+  - Fixes broken relative path links in `docs/README.md`
+
+### Removed
+
+- **CUMULUS-2502**
+  - Removed outdated documenation regarding Kibana index patterns for metrics.
+
+## [v9.0.1] 2021-05-07
+
+### Migration Steps
+
+Please review the migration steps for 9.0.0 as this release is only a patch to
+correct a failure in our build script and push out corrected release artifacts. The previous migration steps still apply.
+
+### Changed
+
+- Corrected `@cumulus/db` configuration to correctly build package.
+
+## [v9.0.0] 2021-05-03
 
 ### Migration steps
 
@@ -264,6 +1123,78 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2455**
     - `@cumulus/ingest/moveGranuleFiles`
 
+## [v8.1.2] 2021-07-29
+
+**Please note** changes in 8.1.2 may not yet be released in future versions, as this
+is a backport/patch release on the 8.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Notable changes
+
+- `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
+integrate with a custom CMR host name and protocol (e.g. `http://custom-cmr-host.com`). Note
+that you **must** include a protocol (`http://` or `https://`) if specifying a value for this
+variable.
+- `@cumulus/sync-granule` task should now properly handle
+syncing files from HTTP/HTTPS providers where basic auth is
+required and involves a redirect to a different host (e.g.
+downloading files protected by Earthdata Login)
+
+### Added
+
+- **CUMULUS-2548**
+  - Added `allowed_redirects` field to PostgreSQL `providers` table
+  - Added `allowedRedirects` field to DynamoDB `<prefix>-providers` table
+  - Added `@cumulus/aws-client/S3.streamS3Upload` to handle uploading the contents
+  of a readable stream to S3 and returning a promise
+
+### Changed
+
+- Updated `cmr_custom_host` variable to accept a full protocol and host name
+(e.g. `http://cmr-custom-host.com`), whereas it previously only accepted a host name
+
+### Fixed
+
+- Fixed bug where `cmr_custom_host` variable was not properly forwarded into `archive`, `ingest`, and `sqs-message-remover` modules from `cumulus` module
+- **CUMULUS-2548**
+  - Fixed `@cumulus/ingest/HttpProviderClient.sync` to
+properly handle basic auth when redirecting to a different
+host and/or host with a different port
+
+## [v8.1.1] 2021-04-30 -- Patch Release
+
+**Please note** changes in 8.1.1 may not yet be released in future versions, as this
+is a backport/patch release on the 8.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-2497**
+  - Created `isISOFile()` to check if a CMR file is a CMR ISO file.
+
+### Fixed
+
+- **CUMULUS-2512**
+  - Updated ingest package S3 provider client to take additional parameter
+    `remoteAltBucket` on `download` method to allow for per-file override of
+    provider bucket for checksum
+  - Updated @cumulus/ingest.fetchTextFile's signature to be parameterized and
+    added `remoteAltBucket`to allow for an override of the passed in provider
+    bucket for the source file
+  - Update "eslint-plugin-import" to be pinned to 2.22.1
+
+### Changed
+
+- **CUMULUS-2497**
+  - Changed the `@cumulus/cmrjs` package:
+    - Updated `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo()` so it now
+      returns temporal info for CMR ISO 19115 SMAP XML files.
+    - Updated `@cumulus/cmrjs/cmr-utils.isCmrFilename()` to include
+      `isISOFile()`.
+
+- **[2216](https://github.com/nasa/cumulus/issues/2216)**
+  - Removed "node-forge", "xml-crypto" from audit whitelist, added "underscore"
+
 ## [v8.1.0] 2021-04-29
 
 ### Added
@@ -275,7 +1206,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   request additional granule information.
   - Published `@cumulus/api@7.2.1-alpha.0` for dashboard testing
 - **CUMULUS-2469**
-  - Added `tf-modules/cumulus_distribution` module to standup a skeleton distribution api
+  - Added `tf-modules/cumulus_distribution` module to standup a skeleton
+    distribution api
 
 ## [v8.0.0] 2021-04-08
 
@@ -362,8 +1294,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     environment variable `DISABLE_S3_CREDENTIALS`. If set to "true", the
     endpoint will not dispense S3 credentials and instead return a message
     indicating that the endpoint has been disabled.
-- **CUMULUS-2355**
-  - Added logic to disable `/s3Credentials` endpoint based upon value for environment variable `DISABLE_S3_CREDENTIALS`. If set to "true",  the endpoint will not dispense S3 credentials and instead return a message indicating that the endpoint has been disabled.
 - **CUMULUS-2397**
   - Updated `/elasticsearch` endpoint's `reindex` function to prevent
     reindexing when source and destination indices are the same.
@@ -435,7 +1365,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2350**
   - If the  `/s3credentialsREADME`, does not appear to be working after
-    deploymnt, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
+    deployment, [manual redeployment](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api-with-console.html)
     of the API-gateway stage may be necessary to finish the deployment.
 
 ### BREAKING CHANGES
@@ -4281,7 +5211,19 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v8.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.8.0...HEAD
+[v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
+[v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
+[v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
+[v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
+[v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
+[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
+[v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
+[v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
+[v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
+[v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
+[v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
+[v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
 [v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
 [v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
 [v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0

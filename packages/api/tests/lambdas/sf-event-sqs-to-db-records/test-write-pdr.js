@@ -14,15 +14,22 @@ const {
   ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
+  translatePostgresPdrToApiPdr,
+  migrationDir,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const { sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const {
   generatePdrRecord,
-  getPdrCumulusIdFromQueryResultOrLookup,
   writePdr,
+  writePdrViaTransaction,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Pdr = require('../../../models/pdrs');
 
 test.before(async (t) => {
@@ -40,6 +47,15 @@ test.before(async (t) => {
   );
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
+
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esPdrClient = new Search(
+    {},
+    'pdr',
+    t.context.esIndex
+  );
 });
 
 test.beforeEach(async (t) => {
@@ -54,7 +70,11 @@ test.beforeEach(async (t) => {
 
   const collection = fakeCollectionRecordFactory();
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(t.context.knex, collection);
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const provider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
@@ -62,7 +82,11 @@ test.beforeEach(async (t) => {
 
   const execution = fakeExecutionRecordFactory();
   const executionPgModel = new ExecutionPgModel();
-  [t.context.executionCumulusId] = await executionPgModel.create(t.context.knex, execution);
+  const [pgExecution] = await executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
 
   t.context.runningPdrRecord = {
     name: t.context.pdr.name,
@@ -85,6 +109,8 @@ test.beforeEach(async (t) => {
 
   t.context.cumulusMessage = {
     cumulus_meta: {
+      state_machine: 'machine1',
+      execution_name: 'execution1',
       workflow_start_time: t.context.workflowStartTime,
     },
     meta: {
@@ -107,6 +133,39 @@ test.beforeEach(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
 });
 
+test.beforeEach(async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.pdr_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
+});
+
 test.after.always(async (t) => {
   const {
     pdrModel,
@@ -115,6 +174,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     ...t.context,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test('generatePdrRecord() generates correct PDR record', (t) => {
@@ -165,29 +225,40 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   );
 });
 
-test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {
-  const { runningPdrRecord } = t.context;
+test('writePdrViaTransaction() returns PDR from database if query result is empty', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    runningPdrRecord,
+  } = t.context;
 
-  const fakePdrCumulusId = Math.floor(Math.random() * 1000);
   const fakePdrPgModel = {
-    getRecordCumulusId: async (_, record) => {
+    get: (_, record) => {
       if (record.name === runningPdrRecord.name) {
-        return fakePdrCumulusId;
+        return Promise.resolve(runningPdrRecord);
       }
-      return undefined;
+      return Promise.resolve();
     },
+    upsert: () => Promise.resolve([]),
   };
 
-  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup({
-    trx: {},
-    queryResult: [],
-    pdrRecord: runningPdrRecord,
+  const pdr = await writePdrViaTransaction({
+    cumulusMessage,
+    trx: knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
     pdrPgModel: fakePdrPgModel,
+    updatedAt: Date.now(),
   });
-  t.is(fakePdrCumulusId, pdrCumulusId);
+
+  t.is(runningPdrRecord, pdr);
 });
 
-test('writePdr() returns true if there is no PDR on the message', async (t) => {
+test.serial('writePdr() returns true if there is no PDR on the message', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -208,7 +279,7 @@ test('writePdr() returns true if there is no PDR on the message', async (t) => {
   );
 });
 
-test('writePdr() throws an error if collection is not provided', async (t) => {
+test.serial('writePdr() throws an error if collection is not provided', async (t) => {
   const { cumulusMessage, knex, providerCumulusId } = t.context;
   await t.throwsAsync(
     writePdr({
@@ -220,7 +291,7 @@ test('writePdr() throws an error if collection is not provided', async (t) => {
   );
 });
 
-test('writePdr() throws an error if provider is not provided', async (t) => {
+test.serial('writePdr() throws an error if provider is not provided', async (t) => {
   const { cumulusMessage, knex, collectionCumulusId } = t.context;
   await t.throwsAsync(
     writePdr({
@@ -232,7 +303,83 @@ test('writePdr() throws an error if provider is not provided', async (t) => {
   );
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', async (t) => {
+test.serial('writePdr() does not update PDR record if update is from an older execution', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.running = [];
+  cumulusMessage.payload.completed = ['arn1'];
+  cumulusMessage.payload.failed = [];
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const dynamoRecord = await pdrModel.get({ pdrName: pdr.name });
+  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const esRecord = await t.context.esPdrClient.get(pdr.name);
+
+  const stats = {
+    processing: 0,
+    total: 1,
+  };
+  t.like(dynamoRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(pgRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(esRecord, {
+    status: 'completed',
+    stats,
+  });
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload.running = ['arn2'];
+  cumulusMessage.payload.completed = [];
+  cumulusMessage.payload.failed = [];
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const updatedDynamoRecord = await pdrModel.get({ pdrName: pdr.name });
+  const updatedPgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const updatedEsRecord = await t.context.esPdrClient.get(pdr.name);
+  t.like(updatedDynamoRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(updatedPgRecord, {
+    status: 'completed',
+    stats,
+  });
+  t.like(updatedEsRecord, {
+    status: 'completed',
+    stats,
+  });
+});
+
+test.serial('writePdr() saves a PDR record to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -254,9 +401,10 @@ test('writePdr() saves a PDR record to Dynamo and RDS if RDS write is enabled', 
 
   t.true(await pdrModel.exists({ pdrName: pdr.name }));
   t.true(await pdrPgModel.exists(knex, { name: pdr.name }));
+  t.true(await t.context.esPdrClient.exists(pdr.name));
 });
 
-test('writePdr() saves a PDR record to Dynamo and RDS with same timestamps', async (t) => {
+test.serial('writePdr() saves a PDR record to DynamoDB/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -280,9 +428,13 @@ test('writePdr() saves a PDR record to Dynamo and RDS with same timestamps', asy
   const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+
+  const esRecord = await t.context.esPdrClient.get(pdr.name);
+  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write fails', async (t) => {
+test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if DynamoDB write fails', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -303,9 +455,10 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
   };
 
   const fakePdrModel = {
-    storePdrFromCumulusMessage: () => {
+    storePdr: () => {
       throw new Error('PDR dynamo error');
     },
+    delete: () => Promise.resolve(true),
   };
 
   await t.throwsAsync(
@@ -322,9 +475,10 @@ test.serial('writePdr() does not persist records Dynamo or RDS if Dynamo write f
 
   t.false(await pdrModel.exists({ pdrName: pdr.name }));
   t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
+  t.false(await t.context.esPdrClient.exists(pdr.name));
 });
 
-test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fails', async (t) => {
+test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if PostgreSQL write fails', async (t) => {
   const {
     cumulusMessage,
     pdrModel,
@@ -368,4 +522,107 @@ test.serial('writePdr() does not persist records Dynamo or RDS if RDS write fail
 
   t.false(await pdrModel.exists({ pdrName: pdr.name }));
   t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
+  t.false(await t.context.esPdrClient.exists(pdr.name));
+});
+
+test.serial('writePdr() does not write to DynamoDB/PostgreSQL/Elasticsearch if Elasticsearch write fails', async (t) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    pdrPgModel,
+  } = t.context;
+
+  const pdr = {
+    name: cryptoRandomString({ length: 5 }),
+    PANSent: false,
+    PANmessage: 'test',
+  };
+  cumulusMessage.payload = {
+    pdr,
+  };
+
+  cumulusMessage.meta.status = 'completed';
+
+  const fakeEsClient = {
+    update: () => {
+      throw new Error('PDR ES error');
+    },
+  };
+
+  await t.throwsAsync(
+    writePdr({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      knex,
+      esClient: fakeEsClient,
+    }),
+    { message: 'PDR ES error' }
+  );
+
+  t.false(await pdrModel.exists({ pdrName: pdr.name }));
+  t.false(await pdrPgModel.exists(knex, { name: pdr.name }));
+  t.false(await t.context.esPdrClient.exists(pdr.name));
+});
+
+test.serial('writePdr() successfully publishes an SNS message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    pdr,
+    pdrPgModel,
+    QueueUrl,
+  } = t.context;
+
+  await writePdr({
+    cumulusMessage,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId: executionCumulusId,
+    knex,
+  });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const pdrRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await pdrPgModel.get(knex, { name: pdr.name });
+  const translatedRecord = await translatePostgresPdrToApiPdr(pgRecord, knex);
+
+  t.is(pdrRecord.pdrName, pdr.name);
+  t.is(pdrRecord.status, cumulusMessage.meta.status);
+  t.deepEqual(pdrRecord, translatedRecord);
+});
+
+test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
+  process.env.pdr_sns_topic_arn = undefined;
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    providerCumulusId,
+    executionCumulusId,
+    QueueUrl,
+  } = t.context;
+
+  await t.throwsAsync(
+    writePdr({
+      cumulusMessage,
+      collectionCumulusId,
+      providerCumulusId,
+      executionCumulusId: executionCumulusId,
+      knex,
+    }),
+    { message: 'Topic does not exist' }
+  );
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.is(Messages, undefined);
 });

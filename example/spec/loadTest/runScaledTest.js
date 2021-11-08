@@ -13,10 +13,8 @@ const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { collections, granules, providers } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const {
-  api: apiTestUtils,
-  buildAndExecuteWorkflow,
-} = require('@cumulus/integration-tests');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 
 const {
   createTestSuffix,

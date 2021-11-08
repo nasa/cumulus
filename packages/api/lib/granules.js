@@ -1,15 +1,17 @@
 'use strict';
 
-const isInteger = require('lodash/isInteger');
+const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
+const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
 
 const {
   generateMoveFileParams,
   moveGranuleFile,
+  getNameOfFile,
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -18,11 +20,9 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
-
-const {
-  getBucketsConfigKey,
-  getDistributionBucketMapKey,
-} = require('@cumulus/common/stack');
+const { Search } = require('@cumulus/es-client/search');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
@@ -56,32 +56,6 @@ const getExecutionProcessingTimeInfo = ({
   }
   return processingTimeInfo;
 };
-
-/* eslint-disable camelcase */
-
-const getGranuleTimeToPreprocess = ({
-  sync_granule_duration = 0,
-} = {}) => sync_granule_duration / 1000;
-
-const getGranuleTimeToArchive = ({
-  post_to_cmr_duration = 0,
-} = {}) => post_to_cmr_duration / 1000;
-
-/* eslint-enable camelcase */
-
-/**
- * Calculate granule product volume, which is the sum of the file
- * sizes in bytes
- *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
- */
-function getGranuleProductVolume(granuleFiles = []) {
-  return granuleFiles
-    .map((f) => f.size)
-    .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
-}
 
 const renameProperty = (from, to, obj) => {
   const newObj = { ...obj, [to]: obj[from] };
@@ -153,7 +127,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       });
       // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push(file);
+      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
@@ -198,12 +172,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     .reduce(
       (acc, { name, type }) => ({ ...acc, [name]: type }),
       {}
-    );
-
-  const distributionBucketMap = await s3Utils.getJsonS3Object(
-    process.env.system_bucket,
-    getDistributionBucketMapKey(process.env.stackName)
-  );
+    ); const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,
@@ -229,12 +198,124 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
   }
 }
 
+const SCROLL_SIZE = 500; // default size in Kibana
+
+async function granuleEsQuery({
+  index,
+  query,
+  source,
+}) {
+  const granules = [];
+  const responseQueue = [];
+
+  const client = await Search.es(undefined, true);
+  const searchResponse = await client.search({
+    index,
+    scroll: '30s',
+    size: SCROLL_SIZE,
+    _source: source,
+    body: query,
+  });
+
+  responseQueue.push(searchResponse);
+
+  while (responseQueue.length) {
+    const { body } = responseQueue.shift();
+
+    body.hits.hits.forEach((hit) => {
+      granules.push(hit._source);
+    });
+
+    const totalHits = body.hits.total.value || body.hits.total;
+
+    if (totalHits !== granules.length) {
+      responseQueue.push(
+        // eslint-disable-next-line no-await-in-loop
+        await client.scroll({
+          scrollId: body._scroll_id,
+          scroll: '30s',
+        })
+      );
+    }
+  }
+  return granules;
+}
+
+/**
+ * Return a unique list of granule IDs based on the provided list or the response from the
+ * query to ES using the provided query and index.
+ *
+ * @param {Object} payload
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES
+ * @param {string} [payload.index] - Optional parameter of ES index to query.
+ * Must exist if payload.query exists.
+ * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @returns {Promise<Array<string>>}
+ */
+async function getGranuleIdsForPayload(payload) {
+  const { ids, index, query } = payload;
+  const granuleIds = ids || [];
+
+  // query ElasticSearch if needed
+  if (granuleIds.length === 0 && payload.query) {
+    log.info('No granule ids detected. Searching for granules in Elasticsearch.');
+
+    const granules = await granuleEsQuery({
+      index,
+      query,
+      source: ['granuleId'],
+    });
+
+    granules.map((granule) => granuleIds.push(granule.granuleId));
+  }
+
+  // Remove duplicate Granule IDs
+  // TODO: could we get unique IDs from the query directly?
+  const uniqueGranuleIds = [...new Set(granuleIds)];
+  return uniqueGranuleIds;
+}
+
+/**
+ * Return a unique list of granules based on the provided list or the response from the
+ * query to ES using the provided query and index.
+ *
+ * @param {Object} payload
+ * @param {Object} [payload.granules] - Optional list of granules with granuleId and collectionId
+ * @param {Object} [payload.query] - Optional parameter of query to send to ES
+ * @param {string} [payload.index] - Optional parameter of ES index to query.
+ * Must exist if payload.query exists.
+ * @returns {Promise<Array<Object>>}
+ */
+async function getGranulesForPayload(payload) {
+  const { granules, index, query } = payload;
+  const queryGranules = granules || [];
+
+  // query ElasticSearch if needed
+  if (!granules && query) {
+    log.info('No granules detected. Searching for granules in Elasticsearch.');
+
+    const esGranules = await granuleEsQuery({
+      index,
+      query,
+      source: ['granuleId', 'collectionId'],
+    });
+
+    esGranules.map((granule) => queryGranules.push({
+      granuleId: granule.granuleId,
+      collectionId: granule.collectionId,
+    }));
+  }
+  // Remove duplicate Granule IDs
+  // TODO: could we get unique IDs from the query directly?
+  const uniqueGranules = uniqWith(queryGranules, isEqual);
+  return uniqueGranules;
+}
+
 module.exports = {
   moveGranule,
   translateGranule,
   getExecutionProcessingTimeInfo,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
+  getGranulesForPayload,
+  getGranuleIdsForPayload,
   moveGranuleFilesAndUpdateDatastore,
 };

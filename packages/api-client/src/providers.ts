@@ -11,14 +11,14 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  *                                     that takes a prefix / user payload
  * @returns {Promise<Object>}        - promise that resolves to the output of the callback
  */
-export const createProvider = (params: {
+export const createProvider = async (params: {
   prefix: string,
   provider: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, provider, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
@@ -42,14 +42,14 @@ export const createProvider = (params: {
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the callback
  */
-export const deleteProvider = (params: {
+export const deleteProvider = async (params: {
   prefix: string,
   providerId: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, providerId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'DELETE',
@@ -71,14 +71,14 @@ export const deleteProvider = (params: {
  * @returns {Promise<Object>}          - promise that resolves to the output
  *                                       of the API lambda
  */
-export const getProvider = (params: {
+export const getProvider = async (params: {
   prefix: string,
   providerId: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, providerId, callback = invokeApi } = params;
 
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',
@@ -99,7 +99,7 @@ export const getProvider = (params: {
  *   api lambda that takes a prefix / user payload.
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
-export const getProviders = (params: {
+export const getProviders = async (params: {
   prefix: string,
   queryStringParameters?: {
     fields?: string[],
@@ -110,7 +110,7 @@ export const getProviders = (params: {
   const { prefix, queryStringParameters, callback = invokeApi } = params;
 
   // TODO consider making this more consistent with other api-client methods
-  return callback({
+  return await callback({
     prefix,
     payload: {
       httpMethod: 'GET',

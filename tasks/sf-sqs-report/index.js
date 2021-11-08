@@ -48,7 +48,7 @@ exports.reportSQSMessage = reportSQSMessage;
  * @returns {Promise<Object>} - Returns payload object from the Cumulus message
  */
 async function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(reportSQSMessage, event, context);
+  return await cumulusMessageAdapter.runCumulusTask(reportSQSMessage, event, context);
 }
 
 exports.handler = handler;

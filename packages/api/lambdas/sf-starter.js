@@ -109,7 +109,7 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
     timeLimit,
     visibilityTimeout,
   });
-  return consumer.consume(dispatchFn);
+  return await consumer.consume(dispatchFn);
 }
 
 /**
@@ -131,7 +131,9 @@ function handleThrottledEvent(event, visibilityTimeout) {
 
 async function handleSourceMappingEvent(event) {
   const sqsRecords = event.Records;
-  return Promise.all(sqsRecords.map((sqsRecord) => dispatch(sqsRecord.eventSourceARN, sqsRecord)));
+  return await Promise.all(sqsRecords.map(
+    (sqsRecord) => dispatch(sqsRecord.eventSourceARN, sqsRecord)
+  ));
 }
 
 /**
@@ -142,7 +144,7 @@ async function handleSourceMappingEvent(event) {
  * @throws {Error}
  */
 async function sqs2sfHandler(event) {
-  return handleEvent(event, dispatch);
+  return await handleEvent(event, dispatch);
 }
 
 /**
@@ -153,7 +155,7 @@ async function sqs2sfHandler(event) {
  * @throws {Error}
  */
 async function sqs2sfThrottleHandler(event) {
-  return handleThrottledEvent(event);
+  return await handleThrottledEvent(event);
 }
 
 /**
@@ -164,7 +166,7 @@ async function sqs2sfThrottleHandler(event) {
  * @throws {Error}
  */
 async function sqs2sfEventSourceHandler(event) {
-  return handleSourceMappingEvent(event);
+  return await handleSourceMappingEvent(event);
 }
 
 module.exports = {

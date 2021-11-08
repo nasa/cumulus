@@ -207,9 +207,9 @@ test('Download remote file to local disk', async (t) => {
   const { mySftpProviderClient } = t.context;
 
   const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
-  await mySftpProviderClient.download(
-    '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath
-  );
+  await mySftpProviderClient.download({
+    remotePath: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath,
+  });
 
   const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));
   t.is(sum, 1435712144);

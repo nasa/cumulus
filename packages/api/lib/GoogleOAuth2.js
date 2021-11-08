@@ -74,8 +74,8 @@ class GoogleOAuth2 {
     };
   }
 
-  async refreshAccessToken() {
-    throw new Error('Not implemented');
+  refreshAccessToken() {
+    return Promise.reject(new Error('Not implemented'));
   }
 }
 module.exports = GoogleOAuth2;

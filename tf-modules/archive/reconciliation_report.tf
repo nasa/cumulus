@@ -39,7 +39,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = local.lambda_security_group_ids
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 }

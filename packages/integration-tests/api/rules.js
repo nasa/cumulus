@@ -16,7 +16,7 @@ const rulesApi = require('@cumulus/api-client/rules');
  */
 async function postRule(params) {
   deprecate('@cumulus/integration-tests/rules.getExecution', '1.21.0', '@cumulus/api-client/rules.getExecution');
-  return rulesApi.postRule(params);
+  return await rulesApi.postRule(params);
 }
 
 /**
@@ -32,7 +32,7 @@ async function postRule(params) {
  */
 async function updateRule(params) {
   deprecate('@cumulus/integration-tests/rules.updateRule', '1.21.0', '@cumulus/api-client/rules.updateRule');
-  return rulesApi.updateRule(params);
+  return await rulesApi.updateRule(params);
 }
 
 /**
@@ -47,7 +47,7 @@ async function updateRule(params) {
  */
 async function listRules(params) {
   deprecate('@cumulus/integration-tests/rules.listRules', '1.21.0', '@cumulus/api-client/rules.listRules');
-  return rulesApi.listRules(params);
+  return await rulesApi.listRules(params);
 }
 
 /**
@@ -63,7 +63,7 @@ async function listRules(params) {
  */
 async function getRule(params) {
   deprecate('@cumulus/integration-tests/rules.getRule', '1.21.0', '@cumulus/api-client/rules.getRule');
-  return rulesApi.getRule(params);
+  return await rulesApi.getRule(params);
 }
 
 /**
@@ -78,7 +78,7 @@ async function getRule(params) {
  */
 async function deleteRule(params) {
   deprecate('@cumulus/integration-tests/rules.deleteRule', '1.21.0', '@cumulus/api-client/rules.deleteRule');
-  return rulesApi.deleteRule(params);
+  return await rulesApi.deleteRule(params);
 }
 
 /**
@@ -95,7 +95,7 @@ async function deleteRule(params) {
  */
 async function rerunRule(params) {
   deprecate('@cumulus/integration-tests/rules.rerunRule', '1.21.0', '@cumulus/api-client/rules.rerunRule');
-  return rulesApi.rerunRule(params);
+  return await rulesApi.rerunRule(params);
 }
 
 module.exports = {

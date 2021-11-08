@@ -15,7 +15,7 @@ const {
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getDistributionBucketMapKey } = require('@cumulus/common/stack');
+const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const { updateGranulesCmrMetadataFileLinks } = require('..');
 
@@ -122,7 +122,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   t.not(newEtag, previousEtag);
 });
 
-test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is both and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
   delete newPayload.config.distribution_endpoint;
 
@@ -131,6 +131,6 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
 
   await t.throwsAsync(
     () => updateGranulesCmrMetadataFileLinks(newPayload),
-    { message: 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.' }
+    { message: 'cmrGranuleUrlType is both, but no distribution endpoint is configured.' }
   );
 });

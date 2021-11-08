@@ -24,7 +24,6 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
-const ems = require('../endpoints/ems');
 const migrationCounts = require('../endpoints/migrationCounts');
 const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
@@ -47,26 +46,26 @@ router.use('/migrationCounts', ensureAuthorized, migrationCounts);
 router.use('/collections', ensureAuthorized, collections.router);
 
 // granules endpoints
-router.use('/granules', ensureAuthorized, granules);
+router.use('/granules', ensureAuthorized, granules.router);
 
 // granule csv endpoints
 router.use('/granule-csv', ensureAuthorized, granuleCsv);
 
 // provider endpoints
-router.use('/providers', ensureAuthorized, providers);
+router.use('/providers', ensureAuthorized, providers.router);
 
 // pdr endpoints
-router.use('/pdrs', ensureAuthorized, pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs.router);
 
 // rules endpoints
 router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
-router.use('/executions', ensureAuthorized, executions);
+router.use('/executions', ensureAuthorized, executions.router);
 
 // async operation endpoint
-router.use('/asyncOperations', ensureAuthorized, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
@@ -113,9 +112,7 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
-
-router.use('/ems', ensureAuthorized, ems);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);
