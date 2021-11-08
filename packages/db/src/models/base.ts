@@ -1,18 +1,18 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { isRecordDefined } from '../database';
 
 class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
-  readonly tableName: tableNames;
+  readonly tableName: TableNames;
 
   constructor({
     tableName,
   }: {
-    tableName: tableNames,
+    tableName: TableNames,
   }) {
     this.tableName = tableName;
   }

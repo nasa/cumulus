@@ -13,7 +13,7 @@ export interface PostgresProvider {
   host: string,
   name: string,
   password?: string,
-  port?: number| null,
+  port?: number | null,
   private_key?: string | null,
   protocol: string,
   updated_at?: Date | null,

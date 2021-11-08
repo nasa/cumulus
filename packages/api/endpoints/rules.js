@@ -8,7 +8,7 @@ const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
   RulePgModel,
-  tableNames,
+  TableNames,
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
@@ -180,7 +180,7 @@ async function del(req, res) {
   }
 
   await dbClient.transaction(async (trx) => {
-    await trx(tableNames.rules).where({ name }).del();
+    await trx(TableNames.rules).where({ name }).del();
     await model.delete(apiRule);
   });
 

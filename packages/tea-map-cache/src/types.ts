@@ -1,5 +1,5 @@
-export type bucketMapResponse = string[];
+export type BucketMapResponse = string[];
 
-export interface bucketMapObject {
+export interface BucketMapObject {
   [key: string]: string
 }

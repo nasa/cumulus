@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';

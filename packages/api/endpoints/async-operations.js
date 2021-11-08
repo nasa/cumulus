@@ -6,6 +6,7 @@ const pick = require('lodash/pick');
 const {
   AsyncOperationPgModel,
   getKnexClient,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { AsyncOperation: AsyncOperationModel } = require('../models');
@@ -70,7 +71,7 @@ async function deleteAsyncOperation(req, res) {
     return res.boom.badRequest('id parameter is missing');
   }
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await asyncOperationPgModel.delete(trx, { id });
     await asyncOperationModel.delete({ id });
   });

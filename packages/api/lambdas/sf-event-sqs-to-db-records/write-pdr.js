@@ -2,6 +2,7 @@
 
 const {
   PdrPgModel,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
   getMessagePdrName,
@@ -135,7 +136,7 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return await knex.transaction(async (trx) => {
+  return await createRejectableTransaction(knex, async (trx) => {
     // eslint-disable-next-line camelcase
     const [cumulus_id] = await writePdrViaTransaction({
       cumulusMessage,

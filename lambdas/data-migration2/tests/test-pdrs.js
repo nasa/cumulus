@@ -17,7 +17,7 @@ const {
   destroyLocalTestDb,
   PdrPgModel,
   ProviderPgModel,
-  tableNames,
+  TableNames,
   migrationDir,
 } = require('@cumulus/db');
 const {
@@ -103,9 +103,9 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await t.context.knex(tableNames.pdrs).del();
-  await t.context.knex(tableNames.providers).del();
-  await t.context.knex(tableNames.collections).del();
+  await t.context.knex(TableNames.pdrs).del();
+  await t.context.knex(TableNames.providers).del();
+  await t.context.knex(TableNames.collections).del();
 });
 
 test.after.always(async (t) => {
@@ -325,7 +325,7 @@ test.serial('migratePdrs skips already migrated record', async (t) => {
       migrated: 0,
     });
 
-  const records = await knex(tableNames.pdrs).where({ name: testPdr.pdrName });
+  const records = await knex(TableNames.pdrs).where({ name: testPdr.pdrName });
   t.is(records.length, 1);
   t.teardown(() => pdrsModel.delete({ pdrName: testPdr.pdrName }));
 });
@@ -361,7 +361,7 @@ test.serial('migratePdrs processes multiple PDR records', async (t) => {
     failed: 0,
     migrated: 2,
   });
-  const records = await knex(tableNames.pdrs);
+  const records = await knex(TableNames.pdrs);
   t.is(records.length, 2);
 });
 
@@ -402,7 +402,7 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
     failed: 1,
     migrated: 1,
   });
-  const records = await knex(tableNames.pdrs);
+  const records = await knex(TableNames.pdrs);
   t.is(records.length, 1);
 });
 

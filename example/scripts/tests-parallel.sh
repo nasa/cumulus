@@ -21,7 +21,8 @@ echo parallel tests complete: $result suite failures
 # print test output to console
 find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-passed.txt' -exec cat {} \;
 echo "********* FAILED TESTS ***************"
-find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-failed.txt' -exec echo '********************************' cat {} \;
+find "$testOutputDir" -mindepth 1 -maxdepth 1 -name '*-failed.txt' -exec cat {} \;
+echo '**************************************'
 
 rm -rf $testOutputDir
 

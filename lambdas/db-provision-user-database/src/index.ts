@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { getKnexConfig, getKnexClient } from '@cumulus/db';
 

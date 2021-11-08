@@ -152,8 +152,8 @@ export const waitForGranule = async (params: {
 export const reingestGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  workflowName?: string|undefined,
-  executionArn?: string|undefined,
+  workflowName?: string | undefined,
+  executionArn?: string | undefined,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, workflowName, executionArn, callback = invokeApi } = params;

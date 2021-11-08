@@ -61,7 +61,7 @@ class Logger {
       let actualMessageArgs = messageArgs.slice(0, messageArgs.length - 1);
       if (actualMessageArgs.length === 0) actualMessageArgs = [error.message];
 
-      const additionalKeys: { error: { name: string, message: string, stack?: string[] }} = {
+      const additionalKeys: { error: { name: string, message: string, stack?: string[] } } = {
         error: {
           name: error.name,
           message: error.message,

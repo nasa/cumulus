@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:34"
+  default = "cumuluss/async-operation:36"
 }
 
 variable "cmr_client_id" {
@@ -161,6 +161,12 @@ variable "api_gateway_stage" {
   type        = string
   default     = "dev"
   description = "The archive API Gateway stage to create"
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
+  type        = map(string)
+  default     = {}
 }
 
 variable "archive_api_port" {

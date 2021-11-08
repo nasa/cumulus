@@ -3,9 +3,9 @@ import got, { HTTPError, Response } from 'got';
 import { OAuthClient } from './OAuthClient';
 import { EarthdataLoginError } from './EarthdataLoginError';
 
-type VerifyTokenResponse = Response<{uid: string}>;
+type VerifyTokenResponse = Response<{ uid: string }>;
 
-type EarthdataLoginErrorResponse = Response<{error: string}>;
+type EarthdataLoginErrorResponse = Response<{ error: string }>;
 
 const isHttpBadRequestError = (error: unknown) =>
   error instanceof HTTPError && error.response.statusCode === 400;

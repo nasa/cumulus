@@ -13,7 +13,11 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
+const {
+  getKnexClient,
+  AsyncOperationPgModel,
+  createRejectableTransaction,
+} = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
@@ -209,7 +213,7 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
   const knex = await getKnexClient({ env });
-  return knex.transaction(async (trx) => {
+  return createRejectableTransaction(knex, async (trx) => {
     await writeAsyncOperationToPostgres({
       dbOutput,
       env,

@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import Knex from 'knex';
+import { knex, Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
 import { getKnexConfig } from './config';
@@ -50,14 +50,14 @@ export const getKnexClient = async ({
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
   const knexConfig = await getKnexConfig({ env, secretsManager });
-  const knex = Knex(knexConfig);
+  const knexClient = knex(knexConfig);
   //@ts-ignore
   // context is an internal object that isn't typed
   // this is needed to force tarn to log per-retry failures
   // and allow propagateCreateError to be set `false`
-  knex.context.client.pool.on('createFail', (_, error) => {
+  knexClient.context.client.pool.on('createFail', (_, error) => {
     knexLogger.warn('knex failed on attempted connection', error);
     throw error;
   });
-  return knex;
+  return knexClient;
 };

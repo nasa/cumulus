@@ -119,7 +119,7 @@ export const sendSQSMessage = improveStackTrace(
   }
 );
 
-type receiveSQSMessagesOptions = {
+type ReceiveSQSMessagesOptions = {
   numOfMessages?: number,
   visibilityTimeout?: number,
   waitTimeSeconds?: number
@@ -139,7 +139,7 @@ type receiveSQSMessagesOptions = {
  */
 export const receiveSQSMessages = async (
   queueUrl: string,
-  options: receiveSQSMessagesOptions
+  options: ReceiveSQSMessagesOptions
 ): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,

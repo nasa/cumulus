@@ -1,6 +1,6 @@
 import * as path from 'path';
 
-export { default as Knex } from 'knex';
+export { Knex } from 'knex';
 export {
   createTestDatabase,
   deleteTestDatabase,
@@ -18,7 +18,8 @@ export {
 
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
-export { tableNames } from './tables';
+export { createRejectableTransaction } from './database';
+export { TableNames } from './tables';
 export const migrationDir = path.join(__dirname, 'migrations');
 
 export {
@@ -62,6 +63,7 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
@@ -72,13 +74,19 @@ export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
 export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
   newestExecutionArnFromGranuleIdWorkflowName,
   getWorkflowNameIntersectFromGranuleIds,
+  getApiExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionArnsByGranuleCumulusId,
 } from './lib/execution';
 
 export {

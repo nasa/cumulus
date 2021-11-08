@@ -6,11 +6,91 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration steps
+
+- Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
+
+### BREAKING CHANGES
+
+- **CUMULUS-2388**:
+  - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
+    - add-missing-file-checksums
+    - files-to-granules
+    - hyrax-metadata-updates
+    - lzards-backup
+    - move-granules
+    - post-to-cmr
+    - sync-granule
+    - update-cmr-access-constraints
+    - update-granules-cmr-metadata-file-links
+  The primary focus of the schema updates was to standardize the format of granules, and
+  particularly their files data. The granule `files` object now matches the file schema in the
+  Cumulus database and thus also matches the `files` object produced by the API with use cases like
+  `applyWorkflow`. This includes removal of `name` and `filename` in favor of `bucket` and `key`,
+  removal of certain properties such as `etag` and `duplicate_found` and outputting them as
+  separate objects stored in `meta`.
+  - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
+  checksum formatting across the Cumulus library.
+
+## [v9.9.0] 2021-11-03
+
 ### Added
+
+- [**PR #2535**](https://github.com/nasa/cumulus/pull/2535)
+  - NSIDC and other cumulus users had desire for returning formatted dates for
+    the 'url_path' date extraction utilities. Added 'dateFormat' function as
+    an option for extracting and formating the entire date. See
+    docs/workflow/workflow-configuration-how-to.md for more information.
+- [**PR #2548**](https://github.com/nasa/cumulus/pull/2548)
+  - Updated webpack configuration for html-loader v2
+- **CUMULUS-2640**
+  - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
+  - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
+
+### Changed
+
+- Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
+- **CUMULUS-2725**
+  - Updated providers endpoint to return encrypted password
+  - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
+- **CUMULUS-2734**
+  - Updated `@cumulus/api/launchpadSaml.launchpadPublicCertificate` to correctly retrieve
+    certificate from launchpad IdP metadata with and without namespace prefix.
+
+## [v9.8.0] 2021-10-19
+
+### Notable changes
+
+- Published new tag [`36` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/35/images/sha256-cf777a6ef5081cd90a0f9302d45243b6c0a568e6d977c0ee2ccc5a90b12d45d0?context=explore) for compatibility with
+upgrades to `knex` package and to address security vulnerabilities.
+
+### Added
+
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex transaction that **will throw an error** if the transaction rolls back. [As of Knex 0.95+, promise rejection on transaction rollback is no longer the default behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+
+- **CUMULUS-2639**
+  - Increases logging on reconciliation reports.
 
 - **CUMULUS-2670**
   - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
   `update_granules_cmr_metadata_file_links_task_timeout` property
+- **CUMULUS-2598**
+  - Add unit and integration tests to describe queued granules as ignored when
+    duplicate handling is 'skip'
+
+### Changed
+
+- Updated `knex` version from 0.23.11 to 0.95.11 to address security vulnerabilities
+- Updated default version of async operations Docker image to `cumuluss/async-operation:36`
+- **CUMULUS-2590**
+  - Granule applyWorkflow, Reingest actions and Bulk operation now update granule status to `queued` when scheduling the granule.
+
+- **CUMULUS-2643**
+  - relocates system file `buckets.json` out of the
+    `s3://internal-bucket/workflows` directory into
+    `s3://internal-bucket/buckets`.
 
 ## [v9.7.0] 2021-10-01
 
@@ -34,6 +114,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2720**
+  - Updated Core CI scripts to validate CHANGELOG diffs as part of the lint process
 - **CUMULUS-2695**
   - Updates the example/cumulus-tf deployment to change
     `archive_api_reserved_concurrency` from 8 to 5 to use fewer reserved lambda
@@ -42,13 +124,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates cumulus-tf/cumulus/variables.tf to change
     `archive_api_reserved_concurrency` from 8 to 15 to prevent throttling on
     the dashboard for default deployments.
+- **CUMULUS-2584**
+  - Updates `api/endpoints/execution-status.js` `get` method to include associated granules, as
+    an array, for the provided execution.
+  - Added `getExecutionArnsByGranuleCumulusId` returning a list of executionArns sorted by most recent first,
+    for an input Granule Cumulus ID in support of the move of `translatePostgresGranuleToApiGranule` from RDS-Phase2
+    feature branch
+  - Added `getApiExecutionCumulusIds` returning cumulus IDs for a given list of executions
 - **CUMULUS-NONE**
   - Downgrades elasticsearch version in testing container to 5.3 to match AWS version.
   - Update serve.js -> `eraseDynamoTables()`. Changed the call `Promise.all()` to `Promise.allSettled()` to ensure all dynamo records (provider records in particular) are deleted prior to reseeding.
 
 ### Fixed
-  - **CUMULUS-2583**
-    - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
+
+- **CUMULUS-2583**
+  - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
 
 ## [v9.6.0] 2021-09-20
 
@@ -149,7 +239,7 @@ when output of the operation is `undefined`
     modified to throw a descriptive error if the input `collectionId` is
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
-    if an incorrectly formated collectionId is input.
+    if an incorrectly formatted collectionId is input.
 
 ## [v9.4.0] 2021-08-16
 
@@ -224,7 +314,7 @@ package to catch or to otherwise handle errors that you may encounter.
 availability in a high-concurrency environment. However, this also caps max concurrency which
 may result in throttling errors if trying to reach the Cumulus API multiple times in a short
 period. Reserved concurrency can be configured with the `archive_api_reserved_concurrency`
-terraform variable on the Cumulus module and increased if you are seeing throttling erorrs.
+terraform variable on the Cumulus module and increased if you are seeing throttling errors.
 The default reserved concurrency value is 8.
 
 ### Notable changes
@@ -540,7 +630,7 @@ releases.
 ### Removed
 
 - **CUMULUS-2502**
-  - Removed outdated documenation regarding Kibana index patterns for metrics.
+  - Removed outdated documentation regarding Kibana index patterns for metrics.
 
 ## [v9.0.1] 2021-05-07
 
@@ -953,7 +1043,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 ### Added
 
 - `tf-modules/cumulus` module now supports a `cmr_custom_host` variable that can
-  be used to set to an arbitray  host for making CMR requests (e.g.
+  be used to set to an arbitrary  host for making CMR requests (e.g.
   `https://custom-cmr-host.com`).
 - Added `buckets` variable to `tf-modules/archive`
 - **CUMULUS-2345**
@@ -977,7 +1067,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   supports accessing all buckets defined in your `buckets` variable except
   "internal" buckets
 - Updated the default scroll duration used in ESScrollSearch and part of the
-  reconcilation report functions as a result of testing and seeing timeouts
+  reconciliation report functions as a result of testing and seeing timeouts
   at its current value of 2min.
 - **CUMULUS-2355**
   - Added logic to disable `/s3Credentials` endpoint based upon value for
@@ -992,7 +1082,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
     and use exponential backoff.  Increased the total test duration for both
     AsycOperation specs and the ReconciliationReports tests.
   - Updated the default scroll duration used in ESScrollSearch and part of the
-    reconcilation report functions as a result of testing and seeing timeouts
+    reconciliation report functions as a result of testing and seeing timeouts
     at its current value of 2min.
 - **CUMULUS-2427**
   - Removed `queueUrl` from the parameters object for `@cumulus/message/Build.buildQueueMessageFromTemplate`
@@ -2065,16 +2155,16 @@ the [release page](https://github.com/nasa/cumulus/releases)
 - The deprecated `@cumulus/common/message.hasQueueAndExecutionLimit` function
   has been removed
 - The deprecated `@cumulus/common/Semaphore` class has been removed
-- The deprecated `@cumulus/common/string.globalReplace` functon has been removed
-- The deprecated `@cumulus/common/string.isNonEmptyString` functon has been
+- The deprecated `@cumulus/common/string.globalReplace` function has been removed
+- The deprecated `@cumulus/common/string.isNonEmptyString` function has been
   removed
-- The deprecated `@cumulus/common/string.isValidHostname` functon has been
+- The deprecated `@cumulus/common/string.isValidHostname` function has been
   removed
-- The deprecated `@cumulus/common/string.match` functon has been removed
-- The deprecated `@cumulus/common/string.matches` functon has been removed
-- The deprecated `@cumulus/common/string.replace` functon has been removed
-- The deprecated `@cumulus/common/string.toLower` functon has been removed
-- The deprecated `@cumulus/common/string.toUpper` functon has been removed
+- The deprecated `@cumulus/common/string.match` function has been removed
+- The deprecated `@cumulus/common/string.matches` function has been removed
+- The deprecated `@cumulus/common/string.replace` function has been removed
+- The deprecated `@cumulus/common/string.toLower` function has been removed
+- The deprecated `@cumulus/common/string.toUpper` function has been removed
 - The deprecated `@cumulus/common/testUtils.getLocalstackEndpoint` function has been removed
 - The deprecated `@cumulus/common/util.setErrorStack` function has been removed
 - The `@cumulus/common/util.uuid` function has been removed
@@ -2305,7 +2395,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Fixed @cumulus/api webpack config for missing underscore object due to underscore update
 
 - **CUMULUS-2210**
-  - Fixed `cmr_oauth_provider` variable not being propogated to reconciliation reports
+  - Fixed `cmr_oauth_provider` variable not being propagated to reconciliation reports
 
 ### Deprecated
 
@@ -3234,7 +3324,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
 - **CUMULUS-1574**
 
   - Added `GET /token` endpoint for SAML authorization when cumulus is protected by Launchpad.
-    This lets a user retieve a token by hand that can be presented to the API.
+    This lets a user retrieve a token by hand that can be presented to the API.
 
 - **CUMULUS-1625**
 
@@ -3379,7 +3469,7 @@ SfSnsReport:
     - when Cumulus configured to protect API via Launchpad:
       - New endpoints
         - `GET /saml/login` - starting point for SAML SSO creates the login request url and redirects to the SAML Identity Provider Service (IDP)
-        - `POST /saml/auth` - SAML Assertion Consumer Service. POST receiver from SAML IDP. Validates response, logs the user in, and returnes a SAML-based JWT.
+        - `POST /saml/auth` - SAML Assertion Consumer Service. POST receiver from SAML IDP. Validates response, logs the user in, and returns a SAML-based JWT.
     - Disabled endpoints
       - `POST /refresh`
       - Changes authorization worklow:
@@ -3472,13 +3562,13 @@ SfSnsReport:
 
 - **CUMULUS-800** Several items:
 
-  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API. Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
+  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API. Instructions are included in the documentation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
 
   - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
 
   - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`. More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
 
-  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination. More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
+  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination. More information in the documentation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
 
   - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
 
@@ -4215,7 +4305,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     incoming events via a Kinesis event triggered lambda.
     CUMULUS-975-migration-4
   - Update migration code to require explicit migration names per run
-  - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
+  - Added migration_4 to migrate/update existing Kinesis rules to have a log event mapping
   - Added new IAM policy for migration lambda
 - **CUMULUS-775**
   - Adds a instance metadata endpoint to the `@cumulus/api` package.
@@ -4227,7 +4317,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
     `@cumulus/test-data.loadTestData()`, and
     `@cumulus/test-data.streamTestData()` to safely load test data. These
     functions should be used instead of using `require()` to load test data,
-    which could lead to tests interferring with each other.
+    which could lead to tests interfering with each other.
   - Add a `@cumulus/common/util/deprecate()` function to mark a piece of code as
     deprecated
 - **CUMULUS-986**
@@ -4423,7 +4513,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ### Fixed
 
 - **CUMULUS-836** - `@cumulus/deployment` uses `overlay2` driver by default and does not attempt to write `--storage-opt dm.basesize` to fix [this error](https://github.com/moby/moby/issues/37039).
-- **CUMULUS-413** Kinesis processing now captures all errrors.
+- **CUMULUS-413** Kinesis processing now captures all errors.
   - Added kinesis fallback mechanism when errors occur during record processing.
   - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
   - Adds fallbackConsumer lambda to `@cumulus/api`
@@ -4524,9 +4614,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ### Added
 
-- **GITC-776-2** - Add support for versioned collectons
+- **GITC-776-2** - Add support for versioned collections
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
-- **CUMULUS-480** Add suport for backup and recovery:
+- **CUMULUS-480** Add support for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
   - Add ability to write all records to S3
   - Add ability to download all DynamoDB records in form json files
@@ -4901,7 +4991,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.7.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.0...HEAD
+[v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
+[v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0

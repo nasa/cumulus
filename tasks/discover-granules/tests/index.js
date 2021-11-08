@@ -40,7 +40,14 @@ const fakeGranulesModule = {
     if (granuleId === 'duplicate') {
       return Promise.resolve({
         statusCode: 200,
-        body: '{}',
+        body: '{"status": "completed"}',
+      });
+    }
+
+    if (granuleId === 'queued') {
+      return Promise.resolve({
+        statusCode: 200,
+        body: '{"status": "queued"}',
       });
     }
 
@@ -367,7 +374,7 @@ test('handleDuplicates does not filter when duplicateHandling is set to "version
 test('filterDuplicates returns a set of filtered keys', async (t) => {
   t.deepEqual(
     await filterDuplicates({
-      granuleIds: ['duplicate', 'key1', 'key2'],
+      granuleIds: ['duplicate', 'queued', 'key1', 'key2'],
       duplicateHandling: 'skip',
     }),
     ['key1', 'key2']

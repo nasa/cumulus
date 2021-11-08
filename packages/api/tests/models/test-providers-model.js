@@ -149,6 +149,44 @@ test('Providers.create() encrypts the credentials using KMS', async (t) => {
   );
 });
 
+test('Providers.create() does not encrypt already encrypted credentials', async (t) => {
+  const { providersModel } = t.context;
+
+  const encryptedUsername = await KMS.encrypt(process.env.provider_kms_key_id, 'my-username');
+  const encryptedPassword = await KMS.encrypt(process.env.provider_kms_key_id, 'my-password');
+
+  const provider = fakeProviderFactory({
+    username: encryptedUsername,
+    password: encryptedPassword,
+  });
+
+  await providersModel.create(provider);
+
+  const fetchedProvider = await providersModel.get({ id: provider.id });
+
+  t.true(fetchedProvider.encrypted);
+
+  t.is(
+    fetchedProvider.username,
+    encryptedUsername
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.username),
+    'my-username'
+  );
+
+  t.is(
+    fetchedProvider.password,
+    encryptedPassword
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.password),
+    'my-password'
+  );
+});
+
 test('Providers.create() allows creation of a provider without a globalConnectionLimit', async (t) => {
   const { providersModel } = t.context;
 
@@ -223,5 +261,58 @@ test('Providers.update() encrypts the credentials using KMS', async (t) => {
   t.is(
     await KMS.decryptBase64String(fetchedProvider.password),
     'my-password-2'
+  );
+});
+
+test('Providers.update() does not encrypt already encrypted credentials', async (t) => {
+  const { providersModel } = t.context;
+
+  const encryptedUsername = await KMS.encrypt(process.env.provider_kms_key_id, 'my-username');
+  const encryptedPassword = await KMS.encrypt(process.env.provider_kms_key_id, 'my-password');
+
+  const provider = fakeProviderFactory({
+    host: 'host-1',
+    username: encryptedUsername,
+    password: encryptedPassword,
+  });
+
+  await providersModel.create(provider);
+
+  await providersModel.update(
+    { id: provider.id },
+    {
+      host: 'host-2',
+      username: encryptedUsername,
+      password: encryptedPassword,
+    }
+  );
+
+  const fetchedProvider = await providersModel.get({ id: provider.id });
+
+  t.true(fetchedProvider.encrypted);
+
+  t.is(
+    fetchedProvider.host,
+    'host-2'
+  );
+
+  t.is(
+    fetchedProvider.username,
+    encryptedUsername
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.username),
+    'my-username'
+  );
+
+  t.is(
+    fetchedProvider.password,
+    encryptedPassword
+  );
+
+  t.is(
+    await KMS.decryptBase64String(fetchedProvider.password),
+    'my-password'
   );
 });

@@ -1,7 +1,11 @@
 const { GranuleNotPublished, RecordDoesNotExist } = require('@cumulus/errors');
 const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
-const { CollectionPgModel, GranulePgModel } = require('@cumulus/db');
+const {
+  CollectionPgModel,
+  GranulePgModel,
+  createRejectableTransaction,
+} = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { deconstructCollectionId } = require('./utils');
 
@@ -72,7 +76,7 @@ const unpublishGranule = async (
 
   let dynamoGranuleDeleted = false;
   try {
-    return await knex.transaction(async (trx) => {
+    return await createRejectableTransaction(knex, async (trx) => {
       let pgGranule;
       if (pgGranuleCumulusId) {
         [pgGranule] = await granulePgModel.update(
