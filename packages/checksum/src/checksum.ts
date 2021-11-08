@@ -3,10 +3,10 @@ import * as crypto from 'crypto';
 import { Readable, TransformOptions } from 'stream';
 
 // Calculate the cksum of a readable stream
-async function getCksumFromStream(stream: Readable): Promise<number> {
+async function getCksumFromStream(stream: Readable): Promise<string> {
   return await new Promise((resolve, reject) =>
     stream
-      .pipe(cksum.stream((value: Buffer) => resolve(value.readUInt32BE(0))))
+      .pipe(cksum.stream((value: Buffer) => resolve(value.readUInt32BE(0).toString())))
       .on('error', reject));
 }
 

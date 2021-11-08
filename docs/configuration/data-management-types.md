@@ -141,7 +141,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |ignoreFilesConfigForDiscovery|`false` (default)|No|By default, during discovery only files that match one of the regular expressions in this collection's `files` attribute (see above) are ingested.  Setting this to `true` will ignore the `files` attribute during discovery, meaning that all files for a granule (i.e., all files with filenames matching `granuleIdExtraction`) will be ingested even when they don't match a regular expression in the `files` attribute at _discovery_ time.  (NOTE: this attribute does not appear in the example file, but is listed here for completeness.)
 |process|`"modis"`|No|Example options for this are found in the ChooseProcess step definition in [the IngestAndPublish workflow definition](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
-|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
+|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.fileName, 0, 3)}"`|No|Filename without extension|
 
 #### files-object
 
@@ -151,7 +151,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |sampleFileName|`MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|Filename used to validate the provided regex|
 |type|`"data"`|No|Value to be assigned to the Granule File Type. CNM types are used by Cumulus CMR steps, non-CNM values will be treated as 'data' type.  Currently only utilized in DiscoverGranules task|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
-|url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
+|url_path|`"${collectionShortName}/{substring(file.fileName, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 |checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
 </details>
 

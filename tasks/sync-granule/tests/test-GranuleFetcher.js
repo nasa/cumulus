@@ -7,6 +7,7 @@ const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/in
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const GranuleFetcher = require('../GranuleFetcher');
 const sums = require('./fixtures/sums');
@@ -116,16 +117,32 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
     duplicateHandling,
   });
 
-  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: oldfiles,
+    duplicate: initialDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
-  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(initialDuplicate, undefined);
 
   // update the source file with different content and ingest again
   params.Body = randomString();
   await S3.s3PutObject(params);
-  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: newfiles,
+    duplicate: finalDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 2);
-  t.true(newfiles[0].duplicate_found);
+  t.deepEqual(
+    finalDuplicate,
+    {
+      bucket: destBucket,
+      key: S3.s3Join(
+        fileStagingDir,
+        constructCollectionId(collectionConfig.name, collectionConfig.version),
+        file.name
+      ),
+    }
+  );
 });
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
@@ -185,17 +202,23 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
     duplicateHandling,
   });
 
-  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: oldfiles,
+    duplicate: initialDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
-  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(initialDuplicate, undefined);
   t.is(oldfiles[0].size, params.Body.length);
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
   await S3.s3PutObject(params);
-  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: newfiles,
+    duplicate: finalDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
-  t.true(newfiles[0].duplicate_found);
+  t.not(finalDuplicate, undefined);
   t.is(newfiles[0].size, oldfiles[0].size);
   t.not(newfiles[0].size, params.Body.length);
 });
@@ -220,17 +243,23 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
     duplicateHandling,
   });
 
-  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: oldfiles,
+    duplicate: initialDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
-  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(initialDuplicate, undefined);
   t.is(oldfiles[0].size, params.Body.length);
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
   await S3.s3PutObject(params);
-  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const {
+    files: newfiles,
+    duplicate: finalDuplicate,
+  } = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
-  t.true(newfiles[0].duplicate_found);
+  t.not(finalDuplicate, undefined);
   t.not(newfiles[0].size, oldfiles[0].size);
   t.is(newfiles[0].size, params.Body.length);
 });

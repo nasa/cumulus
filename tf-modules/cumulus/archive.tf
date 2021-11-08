@@ -5,6 +5,8 @@ module "archive" {
 
   api_url = var.archive_api_url
 
+  elasticsearch_client_config = var.elasticsearch_client_config
+
   deploy_to_ngap = var.deploy_to_ngap
 
   permissions_boundary_arn = var.permissions_boundary_arn

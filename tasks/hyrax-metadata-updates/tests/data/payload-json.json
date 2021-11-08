@@ -63,6 +63,9 @@
       "version": "006",
       "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
       "id": "MOD11A1"
+    },
+    "etags": {
+      "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json": "\"13f2bb38e22496fe9d42e761c42a0e67\""
     }
   },
   "input": {
@@ -71,32 +74,24 @@
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
         "files": [
           {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "type": "data",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "type": "data"
           },
           {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-            "type": "browse",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "type": "browse"
           },
           {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-            "type": "browse",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "type": "browse"
           },
           {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
-            "type": "metadata",
-            "fileStagingDir": "file-staging/subdir"
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json",
+            "type": "metadata"
           }
         ]
       }
