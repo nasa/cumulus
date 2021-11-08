@@ -363,11 +363,7 @@ upgrades to `knex` package and to address security vulnerabilities.
 ### Fixed
 
 - **CUMULUS-2583**
-<<<<<<< HEAD
-  - Fixed a race condition where granules set as   "queued" were not able to be set as "running" or "completed"
-=======
   - Fixed a race condition where granules set as “queued” were not able to be set as “running” or “completed”
->>>>>>> master
 
 ## [v9.6.0] 2021-09-20
 
