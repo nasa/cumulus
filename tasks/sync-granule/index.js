@@ -58,6 +58,10 @@ async function download({
       });
       const endTime = Date.now();
 
+      if (!ingestedGranule.createdAt) {
+        ingestedGranule.createdAt = startTime;
+      }
+
       return {
         ingestedGranule: {
           ...ingestedGranule,
@@ -96,8 +100,6 @@ function syncGranule(event) {
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
 
-  log.debug(`ANTHONY GRANULES: ${JSON.stringify(input.granules)}`);
-
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
@@ -129,9 +131,6 @@ function syncGranule(event) {
     const granuleDuplicates = {};
     const granules = [];
     granuleResults.forEach((gr) => {
-      if (!gr.ingestedGranule.createdAt) {
-        gr.ingestedGranule.createdAt = new Date().getTime();
-      }
       granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {
         granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {

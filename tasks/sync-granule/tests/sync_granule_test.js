@@ -623,6 +623,37 @@ test.serial('validate file properties', async (t) => {
   );
 });
 
+test.serial('verify that all returned granules have createdAt set', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  t.context.event.input.granules[0].files[0].path = '/granules';
+  const [file] = t.context.event.input.granules[0].files;
+
+  t.context.event.input.granules[0].files[1] = {
+    ...file,
+    name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg',
+  };
+
+  t.context.event.config.collection.files[0].url_path = 'file-example/';
+  t.context.event.config.collection.url_path = 'collection-example/';
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  const output = await syncGranule(t.context.event);
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.true(g.createdAt >= 0);
+  });
+});
+
 test.serial('attempt to download file from non-existent path - throw error', async (t) => {
   const granuleFilePath = randomString();
   //const granuleFileName = payload.input.granules[0].files[0].name;
