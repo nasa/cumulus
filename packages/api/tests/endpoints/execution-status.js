@@ -9,9 +9,9 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { randomString } = require('@cumulus/common/test-utils');
+const cryptoRandomString = require('crypto-random-string');
 
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -20,17 +20,16 @@ const {
   CollectionPgModel,
   GranulePgModel,
   ExecutionPgModel,
-  translateApiExecutionToPostgresExecution,
   upsertGranuleWithExecutionJoinRecord,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
+  fakeExecutionRecordFactory,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { AccessToken, Collection, Execution, Granule } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  fakeExecutionFactoryV2,
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
   fakeGranuleFactoryV2,
@@ -66,13 +65,7 @@ const cumulusMetaOutput = () => ({
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
-const fakeExpiredExecution = fakeExecutionFactoryV2({
-  arn: expiredExecutionArn,
-  parentArn: undefined,
-});
-
 const testDbName = randomId('execution-status_test');
-
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
     Bucket: process.env.system_bucket,
@@ -186,12 +179,11 @@ let executionModel;
 let mockedSF;
 let mockedSFExecution;
 let collectionPgModel;
-let executionPgModel;
 let granulePgModel;
 let fakeExecutionStatusGranules;
 
 test.before(async (t) => {
-  process.env.system_bucket = randomString();
+  process.env.system_bucket = cryptoRandomString({ length: 10 });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   await putJsonS3Object(
@@ -211,13 +203,39 @@ test.before(async (t) => {
     .stub(awsServices.sfn(), 'describeExecution')
     .callsFake(executionExistsMock);
 
-  const username = randomString();
+  const username = cryptoRandomString({ length: 10 });
   await setAuthorizedOAuthUsers([username]);
 
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const originalPayload = {
+    original: 'payload',
+  };
+  const finalPayload = {
+    final: 'payload',
+  };
+  t.context.fakeExecutionRecord = fakeExecutionRecordFactory({
+    arn: expiredExecutionArn,
+    original_payload: originalPayload,
+    final_payload: finalPayload,
+  });
+  const executionPgModel = new ExecutionPgModel();
+  const [createdExpiredExecutionRecord] = await executionPgModel.create(
+    t.context.knex,
+    t.context.fakeExecutionRecord
+  );
+  const executionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
 
   // create fake Collections table
   collectionModel = new Collection();
@@ -230,21 +248,12 @@ test.before(async (t) => {
   // create fake Executions table
   executionModel = new Execution();
   await executionModel.createTable();
-  await executionModel.create(fakeExpiredExecution);
 
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-
-  // Generate a local test postgres database
-  const { knex, knexAdmin } = await generateLocalTestDb(
-    testDbName,
-    migrationDir
-  );
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -272,17 +281,11 @@ test.before(async (t) => {
     version: collectionVersion,
   });
 
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     knex,
     fakePgCollection
   );
-
-  executionPgModel = new ExecutionPgModel();
-  const executionPgRecord = await translateApiExecutionToPostgresExecution(
-    fakeExpiredExecution,
-    knex
-  );
-  const executionPgRecordIds = await executionPgModel.create(knex, executionPgRecord);
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
@@ -322,7 +325,7 @@ test.before(async (t) => {
   );
 
   await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[0], executionPgRecordIds[0]
+    knex, t.context.fakePGGranules[0], executionPgRecordId
   );
 });
 
@@ -439,10 +442,17 @@ test('when execution is no longer in step function API, returns status from data
   const executionStatus = response.body;
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
-  t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
-  t.is(executionStatus.execution.name, fakeExpiredExecution.name);
-  t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
-  t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
+  t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
+  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.name);
+  t.is(
+    executionStatus.execution.input,
+    JSON.stringify(t.context.fakeExecutionRecord.original_payload)
+  );
+  t.is(
+    executionStatus.execution.output,
+    JSON.stringify(t.context.fakeExecutionRecord.final_payload)
+  );
+
   t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 
@@ -455,5 +465,5 @@ test('when execution not found in step function API nor database, returns not fo
 
   const executionStatus = response.body;
   t.is(executionStatus.error, 'Not Found');
-  t.is(executionStatus.message, 'Execution not found in API or database');
+  t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
 });

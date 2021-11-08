@@ -13,6 +13,13 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     });
   }
 
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresExecution
+  ) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     execution: PostgresExecution
@@ -27,13 +34,13 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
           timestamp: execution.timestamp,
           original_payload: execution.original_payload,
         })
-        .returning('cumulus_id');
+        .returning('*');
     }
     return await knexOrTrx(this.tableName)
       .insert(execution)
       .onConflict('arn')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 
   /**

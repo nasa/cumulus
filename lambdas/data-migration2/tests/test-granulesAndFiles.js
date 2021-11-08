@@ -116,7 +116,7 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionPgModel = collectionPgModel;
   t.context.testCollection = testCollection;
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   const executionPgModel = new ExecutionPgModel();
   t.context.executionUrl = cryptoRandomString({ length: 5 });
@@ -124,10 +124,11 @@ test.beforeEach(async (t) => {
     url: t.context.executionUrl,
   });
 
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     testExecution
   );
+  t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.testExecution = testExecution;
 
   const providerPgModel = new ProviderPgModel();
@@ -265,7 +266,8 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 
   const testFile = testGranule.files[0];
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -285,6 +287,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
+      type: testFile.type,
     }
   );
 });
@@ -305,7 +308,8 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   testGranule.files = [testFile];
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(
@@ -328,6 +332,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
       file_size: null,
       file_name: testFile.fileName,
       source: null,
+      type: null,
     }
   );
 });
@@ -531,9 +536,11 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
+  delete testFile.type;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -553,6 +560,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
       file_name: null,
       source: null,
       path: null,
+      type: null,
     }
   );
 });

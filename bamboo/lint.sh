@@ -12,7 +12,8 @@ set -ex
 (npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
 npm run lint
 
-if [[ $SKIP_CHANGELOG != "true" && ! $(git --no-pager diff --name-only origin/$PR_BRANCH:CHANGELOG.md -- CHANGELOG.md) =~ ^CHANGELOG.md$ ]]; then
+GIT_DIFF=$(git --no-pager diff --name-only origin/$PR_BRANCH:CHANGELOG.md -- CHANGELOG.md)
+if [[ $SKIP_CHANGELOG != "true" && ! $GIT_DIFF =~ ^CHANGELOG.md$ ]]; then
   echo "**** ERROR -- NO CHANGELOG CHANGE DETECTED.  Failing Lint...."
   echo "GIT DIFF OUTPUT: $GIT_DIFF"
   exit 1

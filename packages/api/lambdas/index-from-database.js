@@ -7,6 +7,23 @@ const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
 
 const { Search } = require('@cumulus/es-client/search');
+const {
+  CollectionPgModel,
+  ExecutionPgModel,
+  AsyncOperationPgModel,
+  GranulePgModel,
+  ProviderPgModel,
+  RulePgModel,
+  PdrPgModel,
+  getKnexClient,
+  translatePostgresCollectionToApiCollection,
+  translatePostgresExecutionToApiExecution,
+  translatePostgresAsyncOperationToApiAsyncOperation,
+  translatePostgresGranuleToApiGranule,
+  translatePostgresProviderToApiProvider,
+  translatePostgresPdrToApiPdr,
+  translatePostgresRuleToApiRule,
+} = require('@cumulus/db');
 const indexer = require('@cumulus/es-client/indexer');
 
 /**
@@ -43,7 +60,8 @@ const getEsRequestConcurrency = (event) => {
   return 10;
 };
 
-async function indexModel({
+// Legacy method used for indexing Reconciliation Reports only
+async function indexReconciliationReports({
   esClient,
   tableName,
   esIndex,
@@ -98,73 +116,194 @@ async function indexModel({
   return totalItemsIndexed;
 }
 
+/**
+* indexModel - Index a postgres RDS table's contents to ElasticSearch
+*
+* @param {Object} params                  -- parameters
+* @param {any} params.esClient            -- ElasticSearch client
+* @param {any} params.postgresModel       -- @cumulus/db model
+* @param {string} params.esIndex          -- esIndex to write records to
+* @param {any} params.indexFn             -- Indexer function that maps to the database model
+* @param {any} params.limitEsRequests     -- limitEsRequests method (used for testing)
+* @param {Knex} params.knex               -- configured knex instance
+* @param {any} params.translationFunction -- function to translate postgres record
+*                                            to API record for ES
+* @param {number} params.pageSize         -- Page size for postgres pagination
+* @returns {number}                       -- number of items indexed
+*/
+async function indexModel({
+  esClient,
+  postgresModel,
+  esIndex,
+  indexFn,
+  limitEsRequests,
+  knex,
+  translationFunction,
+  pageSize,
+}) {
+  let startId = 1;
+  let totalItemsIndexed = 0;
+  let done;
+  let maxIndex = await postgresModel.getMaxCumulusId(knex);
+  let failCount = 0;
+
+  log.info(`Starting index of ${postgresModel.tableName} with max cumulus_id of ${maxIndex}`);
+  /* eslint-disable no-await-in-loop */
+  while (done !== true && maxIndex > 0) {
+    const pageResults = await postgresModel.paginateByCumulusId(knex, startId, pageSize);
+    log.info(
+      `Attempting to index ${pageResults.length} records from ${postgresModel.tableName}`
+    );
+
+    const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
+      let translationResult;
+      try {
+        translationResult = await translationFunction(pageResult);
+        return await indexFn(esClient, translationResult, esIndex);
+      } catch (error) {
+        log.error(
+          `Error indexing record ${JSON.stringify(translationResult)}, error: ${error.message}`
+        );
+        return false;
+      }
+    }));
+
+    const results = await Promise.all(indexPromises);
+    const successfulResults = results.filter((result) => result !== false);
+    failCount += (results.length - successfulResults.length);
+
+    totalItemsIndexed += successfulResults.length;
+
+    log.info(`Completed index of ${successfulResults.length} records from ${postgresModel.tableName}`);
+    startId += pageSize;
+    if (startId > maxIndex) {
+      startId = maxIndex;
+      log.info(`Continuing indexing from cumulus_id ${startId} to account for new rows from ${postgresModel.tableName}`);
+      const oldMaxIndex = maxIndex;
+      maxIndex = await postgresModel.getMaxCumulusId(knex);
+      if (maxIndex <= oldMaxIndex) {
+        done = true;
+      }
+    }
+  }
+  /* eslint-enable no-await-in-loop */
+  log.info(`Completed successful index of ${totalItemsIndexed} records from ${postgresModel.tableName}`);
+  if (failCount) {
+    log.warn(`${failCount} records failed indexing from ${postgresModel.tableName}`);
+  }
+  return totalItemsIndexed;
+}
+
 async function indexFromDatabase(event) {
   const {
     indexName: esIndex,
-    tables,
     esHost = process.env.ES_HOST,
+    reconciliationReportsTable = process.env.ReconciliationReportsTable,
+    postgresResultPageSize,
+    postgresConnectionPoolSize,
   } = event;
   const esClient = await Search.es(esHost);
+  const knex = event.knex || (await getKnexClient({
+    env: {
+      dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
+      ...process.env,
+    },
+  }));
 
+  const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
   const esRequestConcurrency = getEsRequestConcurrency(event);
+  log.info(
+    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize} `
+  );
+
   const limitEsRequests = pLimit(esRequestConcurrency);
 
   await Promise.all([
     indexModel({
       esClient,
-      tableName: tables.collectionsTable,
       esIndex,
       indexFn: indexer.indexCollection,
       limitEsRequests,
+      postgresModel: new CollectionPgModel(),
+      translationFunction: translatePostgresCollectionToApiCollection,
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
-      tableName: tables.executionsTable,
       esIndex,
       indexFn: indexer.indexExecution,
       limitEsRequests,
+      postgresModel: new ExecutionPgModel(),
+      translationFunction: (record) =>
+        translatePostgresExecutionToApiExecution(
+          record,
+          knex
+        ),
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
-      tableName: tables.asyncOperationsTable,
       esIndex,
       indexFn: indexer.indexAsyncOperation,
       limitEsRequests,
+      postgresModel: new AsyncOperationPgModel(),
+      translationFunction: translatePostgresAsyncOperationToApiAsyncOperation,
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
-      tableName: tables.granulesTable,
       esIndex,
       indexFn: indexer.indexGranule,
       limitEsRequests,
+      postgresModel: new GranulePgModel(),
+      translationFunction: (record) =>
+        translatePostgresGranuleToApiGranule({
+          granulePgRecord: record,
+          knexOrTransaction: knex,
+        }),
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
-      tableName: tables.pdrsTable,
       esIndex,
       indexFn: indexer.indexPdr,
       limitEsRequests,
+      postgresModel: new PdrPgModel(),
+      translationFunction: (record) =>
+        translatePostgresPdrToApiPdr(record, knex),
+      knex,
+      pageSize,
     }),
     indexModel({
       esClient,
-      tableName: tables.providersTable,
       esIndex,
       indexFn: indexer.indexProvider,
       limitEsRequests,
+      postgresModel: new ProviderPgModel(),
+      translationFunction: translatePostgresProviderToApiProvider,
+      knex,
+      pageSize,
     }),
-    indexModel({
+    indexReconciliationReports({
       esClient,
-      tableName: tables.reconciliationReportsTable,
+      tableName: reconciliationReportsTable,
       esIndex,
       indexFn: indexer.indexReconciliationReport,
       limitEsRequests,
     }),
     indexModel({
       esClient,
-      tableName: tables.rulesTable,
       esIndex,
       indexFn: indexer.indexRule,
       limitEsRequests,
+      postgresModel: new RulePgModel(),
+      translationFunction: translatePostgresRuleToApiRule,
+      knex,
+      pageSize,
     }),
   ]);
 }

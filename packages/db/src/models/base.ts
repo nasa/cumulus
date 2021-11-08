@@ -2,11 +2,12 @@ import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
+import { UpdatedAtRange } from '../types/record';
+import { BaseRecord } from '../types/base';
 import { TableNames } from '../tables';
-
 import { isRecordDefined } from '../database';
 
-class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
+class BasePgModel<ItemType, RecordType extends BaseRecord> {
   readonly tableName: TableNames;
 
   constructor({
@@ -15,6 +16,32 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     tableName: TableNames,
   }) {
     this.tableName = tableName;
+  }
+
+  /**
+   * Fetches multiple items from Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @param {UpdatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
+   * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
+   */
+  async searchWithUpdatedAtRange(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<RecordType>,
+    updatedAtParams: UpdatedAtRange
+  ): Promise<RecordType[]> {
+    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
+      .where((builder) => {
+        builder.where(params);
+        if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
+          builder.whereBetween('updated_at', [
+            updatedAtParams?.updatedAtFrom ?? new Date(0),
+            updatedAtParams?.updatedAtTo ?? new Date(),
+          ]);
+        }
+      });
+    return records;
   }
 
   async count(
@@ -54,6 +81,26 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     }
 
     return record;
+  }
+
+  async getMaxCumulusId(
+    knexOrTransaction: Knex | Knex.Transaction
+  ): Promise<number> {
+    const result = await knexOrTransaction(this.tableName).max('cumulus_id').first();
+    if (!result) {
+      throw new Error(`Invalid .max "cumulus_id" query on ${this.tableName}, MAX cumulus_id cannot be returned`);
+    }
+    return Number(result.max);
+  }
+
+  async paginateByCumulusId(
+    knexOrTransaction: Knex | Knex.Transaction,
+    startId: number = 0,
+    pageSize: number = 100
+  ): Promise<RecordType[]> {
+    return await knexOrTransaction.select()
+      .from(this.tableName)
+      .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
   }
 
   /**
@@ -99,11 +146,11 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   /**
    * Get cumulus_id column value for multiple records in Postgres
    *
-   * @param {Knex | Knex.Transaction} knexOrTransaction -
+   * @param {Knex | Knex.Transaction} knexOrTransaction
    *  DB client or transaction
-   * @param {Array<keyof RecordType>} columnNames - column names for whereIn query
-   * @param {Array<string>} values - record values for whereIn query
-   * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
+   * @param {Array<string>} columnNames - column names for whereIn query
+   * @param {Array<any>} values - record values for whereIn query
+   * @returns {Promise<Array>} An array of cumulus_ids for the returned records
    */
   async getRecordsCumulusIds(
     knexOrTransaction: Knex | Knex.Transaction,
@@ -143,15 +190,39 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {ItemType} item - A record to insert into the DB
-   * @returns {Promise<number[]>} List of IDs of the inserted records
+   * @param {string | Array<string>} returningFields - A string or array of strings
+   *   of columns to return. Defaults to 'cumulus_id'.
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
+   *   array of values from the specified column(s) from returningFields.
    */
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
-    item: ItemType
-  ): Promise<number[]> {
+    item: ItemType,
+    returningFields: string | string[] = 'cumulus_id'
+  ): Promise<unknown[] | Object[]> {
     return await knexOrTransaction(this.tableName)
       .insert(item)
-      .returning('cumulus_id');
+      .returning(returningFields);
+  }
+
+  /**
+   * Creates multiple items in Postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {ItemType[]} items - Records to insert into the DB
+   * @param {string | Array<string>} returningFields - A string or array of strings
+   *   of columns to return. Defaults to 'cumulus_id'.
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
+   *   array of values from the specified column(s) from returningFields.
+   */
+  async insert(
+    knexOrTransaction: Knex | Knex.Transaction,
+    items: ItemType[],
+    returningFields: string | string[] = 'cumulus_id'
+  ): Promise<unknown[] | Object[]> {
+    return await knexOrTransaction(this.tableName)
+      .insert(items)
+      .returning(returningFields);
   }
 
   /**
@@ -188,6 +259,31 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
     return await knexOrTransaction(this.tableName)
       .where(whereClause)
       .update(updateParams, returning);
+  }
+
+  /**
+  * Deletes items from postgres based on params, excluding any cumulus_ids in the excludeCumulusIds
+  * @param {Object} params
+  * @param {Knex | Knex.Transaction} params.knexOrTransaction - DB client or transaction
+  * @param {Partial<RecordType>} params.queryParams - An object or any portion
+  *                                             of an object of type RecordType
+  * @param {[number]} params.excludeCumulusIds - A list of cumulus_ids to exclude from the deletion
+  *                                       request
+  * @returns {Promise<number>} The number of rows deleted
+  */
+  async deleteExcluding({
+    knexOrTransaction,
+    excludeCumulusIds = [],
+    queryParams,
+  }: {
+    knexOrTransaction: Knex | Knex.Transaction,
+    excludeCumulusIds: Number[],
+    queryParams: Partial<RecordType>,
+  }) {
+    return await knexOrTransaction(this.tableName)
+      .where(queryParams)
+      .whereNotIn('cumulus_id', excludeCumulusIds)
+      .del();
   }
 }
 

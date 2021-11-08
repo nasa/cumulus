@@ -35,7 +35,8 @@
       "!tests/endpoints/fixtures/**/*.js",
       "!tests/endpoints/utils.js",
       "!tests/es/helpers/**/*.js",
-      "!tests/endpoints/granules/helpers.js"
+      "!tests/endpoints/granules/helpers.js",
+      "!tests/helpers/**/*.js"
     ],
     "fail-fast": true,
     "verbose": true,

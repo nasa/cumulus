@@ -11,9 +11,31 @@
  */
 
 import isString from 'lodash/isString';
-import { Message } from '@cumulus/types';
+import isNil from 'lodash/isNil';
+import omitBy from 'lodash/omitBy';
 
-import { getMetaStatus } from './workflows';
+import { Message } from '@cumulus/types';
+import { ExecutionRecord } from '@cumulus/types/api/executions';
+
+import {
+  getMessageAsyncOperationId,
+} from './AsyncOperations';
+import {
+  getCollectionIdFromMessage,
+} from './Collections';
+import {
+  getMetaStatus,
+  getMessageWorkflowTasks,
+  getMessageWorkflowStartTime,
+  getMessageWorkflowStopTime,
+  getMessageWorkflowName,
+  getWorkflowDuration,
+} from './workflows';
+import { parseException } from './utils';
+
+interface MessageWithPayload extends Message.CumulusMessage {
+  payload: object
+}
 
 /**
  * Build execution ARN from a state machine ARN and execution name
@@ -152,14 +174,14 @@ export const getMessageCumulusVersion = (
 /**
  * Get the workflow original payload, if any.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {MessageWithPayload} message - A workflow message object
  * @returns {unknown|undefined} The workflow original payload
  *
  * @alias module:Executions
  */
 export const getMessageExecutionOriginalPayload = (
-  message: Message.CumulusMessage
-): unknown | undefined => {
+  message: MessageWithPayload
+) => {
   const status = getMetaStatus(message);
   return status === 'running' ? message.payload : undefined;
 };
@@ -167,14 +189,62 @@ export const getMessageExecutionOriginalPayload = (
 /**
  * Get the workflow final payload, if any.
  *
- * @param {Message.CumulusMessage} message - A workflow message object
+ * @param {MessageWithPayload} message - A workflow message object
  * @returns {unknown|undefined} The workflow final payload
  *
  * @alias module:Executions
  */
 export const getMessageExecutionFinalPayload = (
-  message: Message.CumulusMessage
-): unknown | undefined => {
+  message: MessageWithPayload
+) => {
   const status = getMetaStatus(message);
   return status === 'running' ? undefined : message.payload;
+};
+
+/**
+ * Generate an execution record for the API from the message.
+ *
+ * @param {MessageWithPayload} message - A workflow message object
+ * @param {string} [updatedAt] - Optional updated timestamp to apply to record
+ * @returns {ExecutionRecord} An execution API record
+ *
+ * @alias module:Executions
+ */
+export const generateExecutionApiRecordFromMessage = (
+  message: MessageWithPayload,
+  updatedAt = Date.now()
+): ExecutionRecord => {
+  const arn = getMessageExecutionArn(message);
+  if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
+
+  const status = getMetaStatus(message);
+  if (!status) throw new Error('Unable to determine status from Cumulus message');
+
+  const now = Date.now();
+  const workflowStartTime = getMessageWorkflowStartTime(message);
+  const workflowStopTime = getMessageWorkflowStopTime(message);
+  const collectionId = getCollectionIdFromMessage(message);
+
+  const record: ExecutionRecord = {
+    name: getMessageExecutionName(message),
+    cumulusVersion: getMessageCumulusVersion(message),
+    arn,
+    asyncOperationId: getMessageAsyncOperationId(message),
+    parentArn: getMessageExecutionParentArn(message),
+    execution: getExecutionUrlFromArn(arn),
+    tasks: getMessageWorkflowTasks(message),
+    error: parseException(message.exception),
+    type: getMessageWorkflowName(message),
+    collectionId,
+    status,
+    createdAt: workflowStartTime,
+    timestamp: now,
+    updatedAt,
+    originalPayload: getMessageExecutionOriginalPayload(message),
+    finalPayload: getMessageExecutionFinalPayload(message),
+    duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
+  };
+
+  const updated = <ExecutionRecord>omitBy(record, isNil);
+  return updated;
 };

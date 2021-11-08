@@ -46,7 +46,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
         let executions = JSON.parse(body);
         const { results } = executions;
         if (isNil(results)) {
-          throw new Error('Not Found');
+          throw new Error('API executions list was empty');
         }
 
         execution = results.find(matcher);
@@ -68,7 +68,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
         throw new pRetry.AbortError(error);
       }
 
-      if (isNil(execution)) throw new Error('Not Found');
+      if (isNil(execution)) throw new Error('Execution never found in API');
 
       return execution.arn;
     },

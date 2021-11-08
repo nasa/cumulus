@@ -8,7 +8,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "clean": "rm -f ./dist/*.js ./dist/*.d.ts",
+    "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
@@ -28,10 +28,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.9.0",
-    "@cumulus/db": "9.9.0",
-    "@cumulus/errors": "9.9.0",
-    "@cumulus/types": "9.9.0",
+    "@cumulus/aws-client": "9.8.0",
+    "@cumulus/db": "9.8.0",
+    "@cumulus/errors": "9.8.0",
+    "@cumulus/types": "9.8.0",
+    "@cumulus/es-client": "9.8.0",
+    "knex": "0.95.11",
     "uuid": "8.3.2"
   },
   "devDependencies": {
