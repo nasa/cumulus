@@ -24,6 +24,10 @@ provider "aws" {
   alias   = "usw2"
   region  = "us-west-2"
   profile = var.aws_profile
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 locals {
