@@ -138,6 +138,8 @@ terraform import module.{module_name}.aws_rds_cluster.cumulus <new cluster ident
 
 #### 5. Run a terraform plan.   ***Be very careful*** to ensure that the `module.rds_cluster.aws_rds_cluster.cumulus` resource is not being recreated as this will wipe the postgres database.    You should expect to see the cluster be modified, not replaced, and the rds_login secret *version* will be replaced, as the host name will change
 
+You should not need to reconfigure either, as the secret ARN and the security group should not change, however double-check the configured values are as expected.
+
 You should expect to see output that looks like the following (with sensitive identifiers removed):
 
 ![Screenshot of shell output showing module.rds_cluster.aws_rds_cluster.cumulus resource changes](assets/rds_cluster_update.jpg)
@@ -152,17 +154,12 @@ and
 terraform apply
 ```
 
-#### 6. Redeploy the data persistence and Cumulus deployments
-
-You should not need to reconfigure either, as the secret ARN and the security group should not change, however double-check the configured values are as expected
-
-&nbsp;\
 ***Snapshot Recovery***
 
 A RDS cluster can be recreated from a manually created snapshot
 or one of your automated backups.   These backups do not require a live cluster,
 and can be used for recovery in case of accidental deletion or full cluster/backup failure. The
-`rds-cluster-tf` terraform  module supports the variable `snapshot identifier` - this
+`rds-cluster-tf` terraform  module supports the variable `snapshot_identifier` - this
 variable, when set, will on cluster creation utilize an existing snapshot to
 create a new cluster.
 

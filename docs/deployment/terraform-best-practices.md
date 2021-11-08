@@ -243,15 +243,11 @@ terraform destroy
 
 Destroying your data persistence layer does not destroy any of your RDS resources. Next, **destroy your database resources**.
 
-To teardown the entire cluster, if it was deployed by Terraform, run the following commands:
-```bash
-tfenv use 0.13.6
-cd rds-cluster-tf
-terraform init -reconfigure
-terraform destroy
-```
+To teardown the entire cluster, if it was deployed by Terraform, use the `terraform destroy` command to delete your cluster.
 
 If using a shared cluster and you just want to destroy the database created by Cumulus for your deployment you must manually delete that individual database. The database is named `<prefix>_db`.
+
+Delete any manual backups you have made that are no longer needed.
 
 Finally, since we tag the resources in your deployment, you should see if there
 are any dangling resources left behind for any reason, by running the following

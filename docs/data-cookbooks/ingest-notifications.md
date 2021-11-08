@@ -6,12 +6,11 @@ hide_title: false
 
 On deployment, an [SQS queue](https://aws.amazon.com/sqs/) and three [SNS topics](https://aws.amazon.com/sns/), one for executions, granules, and PDRs, are created and used for handling notification messages related to the workflow.
 
+The ingest notification reporting SQS queue is populated via a [Cloudwatch rule for any Step Function execution state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html). The `sfEventSqsToDbRecords` Lambda consumes this queue. The queue and Lambda are included in the `cumulus` module and the Cloudwatch rule in the `workflow` module and are included by default in a Cumulus deployment.
+
 The `sfEventSqsToDbRecords` Lambda function reads from the `sfEventSqsToDbRecordsInputQueue` queue and updates the RDS database records for granules, executions, and PDRs. When the records are updated, messages are posted to the three SNS topics. This Lambda is invoked both when the workflow starts and when it reaches a terminal state (completion or failure).
 
-LAUREN FIX THIS
 ![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](assets/interfaces.svg)
-
-The ingest notification reporting SQS queue is populated via a [Cloudwatch rule for any Step Function execution state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html). The `sfEventSqsToDbRecords` Lambda consumes this queue. The queue and Lambda are included in the `cumulus` module and the Cloudwatch rule in the `workflow` module and are included by default in a Cumulus deployment.
 
 ## Sending SQS messages to report status
 
