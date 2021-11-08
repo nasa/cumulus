@@ -176,7 +176,7 @@ export class SftpClient {
    * @returns {Promise}
    */
   async syncFromS3(
-    s3object: {Bucket: string, Key: string},
+    s3object: { Bucket: string, Key: string },
     remotePath: string
   ): Promise<void> {
     const s3uri = S3.buildS3Uri(s3object.Bucket, s3object.Key);

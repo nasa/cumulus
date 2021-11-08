@@ -1,6 +1,7 @@
 import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
+import path from 'path';
 import { Context } from 'aws-lambda';
 
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -10,29 +11,48 @@ import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
-import { parseS3Uri } from '@cumulus/aws-client/S3';
+import { buildS3Uri } from '@cumulus/aws-client/S3';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
+import {
+  constructDistributionUrl,
+  fetchDistributionBucketMap,
+} from '@cumulus/distribution-utils';
 
 import {
   ChecksumError,
   CollectionNotDefinedError,
   CollectionInvalidRegexpError,
   GetAuthTokenError,
+  InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
-import { makeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
+import { MakeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
 const CREDS_EXPIRY_SECONDS = 1000;
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 
-export const generateAccessUrl = async (params: {
-  roleCreds: AWS.STS.AssumeRoleResponse,
+export const generateCloudfrontUrl = async (params: {
+  Bucket: string,
   Key: string,
-  Bucket: string
+  cloudfrontEndpoint?: string,
+}) => {
+  const distributionBucketMap = await fetchDistributionBucketMap();
+  return constructDistributionUrl(
+    params.Bucket,
+    params.Key,
+    distributionBucketMap,
+    params.cloudfrontEndpoint
+  );
+};
+
+export const generateDirectS3Url = async (params: {
+  roleCreds: AWS.STS.AssumeRoleResponse,
+  Bucket: string,
+  Key: string,
   usePassedCredentials?: boolean
 }) => {
   const { roleCreds, Key, Bucket, usePassedCredentials } = params;
@@ -58,7 +78,38 @@ export const generateAccessUrl = async (params: {
     coreS3().config.update({ signatureVersion: 'v4' });
     s3 = coreS3();
   }
-  return s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
+  return await s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
+};
+
+export const generateAccessUrl = async (params: {
+  Bucket: string,
+  Key: string,
+  urlConfig: {
+    roleCreds: AWS.STS.AssumeRoleResponse,
+    urlType?: string,
+    cloudfrontEndpoint?: string,
+  },
+}) => {
+  const {
+    Bucket,
+    Key,
+    urlConfig: {
+      roleCreds,
+      urlType,
+      cloudfrontEndpoint,
+    },
+  } = params;
+
+  try {
+    switch ((urlType || 's3')) {
+      case 's3': return await generateDirectS3Url({ roleCreds, Bucket, Key });
+      case 'cloudfront': return await generateCloudfrontUrl({ Bucket, Key, cloudfrontEndpoint });
+      default: throw new InvalidUrlTypeError(`${urlType} is not a recognized type for access URL generation`);
+    }
+  } catch (error) {
+    log.error(`${urlType} access URL generation failed for s3://${Bucket}/${Key}: ${error}`);
+    throw error;
+  }
 };
 
 export const setLzardsChecksumQueryType = (
@@ -71,8 +122,8 @@ export const setLzardsChecksumQueryType = (
   if (file.checksumType === 'sha256') {
     return { expectedSha256Hash: file.checksum };
   }
-  log.error(`${granuleId}: File ${file.filename} did not have a checksum or supported checksumType defined`);
-  throw new ChecksumError(`${granuleId}: File ${file.filename} did not have a checksum or checksumType defined`);
+  log.error(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or supported checksumType defined`);
+  throw new ChecksumError(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or checksumType defined`);
 };
 
 export const postRequestToLzards = async (params: {
@@ -95,37 +146,48 @@ export const postRequestToLzards = async (params: {
 
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
-  return got.post(lzardsApiUrl,
-    {
-      json: {
-        provider,
-        objectUrl: accessUrl,
-        metadata: {
-          filename: file.filename,
-          collection,
-          granuleId,
+  try {
+    return await got.post(lzardsApiUrl,
+      {
+        json: {
+          provider,
+          objectUrl: accessUrl,
+          metadata: {
+            filename: buildS3Uri(file.bucket, file.key),
+            collection,
+            granuleId,
+          },
+          ...checksumConfig,
         },
-        ...checksumConfig,
-      },
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+  } catch (error) {
+    log.error('got encountered error:', error);
+    if (error.options) log.debug('erroring request:', JSON.stringify(error.options));
+    if (error.response) log.debug('error response:', JSON.stringify(error.response.body));
+    throw error;
+  }
 };
 
 export const makeBackupFileRequest = async (params: {
-  authToken: string,
+  backupConfig: {
+    roleCreds: AWS.STS.AssumeRoleResponse,
+    authToken: string,
+    urlType: string,
+    cloudfrontEndpoint?: string,
+  },
   collectionId: string,
-  roleCreds: AWS.STS.AssumeRoleResponse,
   file: MessageGranuleFilesObject,
   granuleId: string,
   lzardsPostMethod?: typeof postRequestToLzards,
   generateAccessUrlMethod?: typeof generateAccessUrl,
-}): Promise<makeBackupFileRequestResult> => {
+}): Promise<MakeBackupFileRequestResult> => {
   const {
-    authToken,
     collectionId,
-    roleCreds,
+    backupConfig,
+    backupConfig: { authToken },
     file,
     granuleId,
     lzardsPostMethod = postRequestToLzards,
@@ -133,12 +195,12 @@ export const makeBackupFileRequest = async (params: {
   } = params;
 
   try {
-    const { Key, Bucket } = parseS3Uri(file.filename);
-    log.info(`${granuleId}: posting backup request to LZARDS: ${file.filename}`);
+    const { key: Key, bucket: Bucket } = file;
+    log.info(`${granuleId}: posting backup request to LZARDS: ${buildS3Uri(file.bucket, file.key)}`);
     const accessUrl = await generateAccessUrlMethod({
       Bucket,
-      roleCreds,
       Key,
+      urlConfig: backupConfig,
     });
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
@@ -149,14 +211,14 @@ export const makeBackupFileRequest = async (params: {
     });
     if (statusCode !== 201) {
       log.error(`${granuleId}: Request failed - LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-      return { statusCode, granuleId, filename: file.filename, body, status: 'FAILED' };
+      return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'FAILED' };
     }
-    return { statusCode, granuleId, filename: file.filename, body, status: 'COMPLETED' };
+    return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
     return {
       granuleId,
-      filename: file.filename,
+      filename: buildS3Uri(file.bucket, file.key),
       body: JSON.stringify({ name: error.name, stack: error.stack }),
       status: 'FAILED',
     };
@@ -190,7 +252,7 @@ export const getGranuleCollection = async (params: {
   if (!collectionName && !collectionVersion) {
     throw new CollectionNotDefinedError('Collection Name and Version not defined');
   }
-  return getCollection({
+  return await getCollection({
     prefix,
     collectionName,
     collectionVersion,
@@ -198,15 +260,15 @@ export const getGranuleCollection = async (params: {
 };
 
 export const backupGranule = async (params: {
-  roleCreds: AWS.STS.AssumeRoleResponse,
-  authToken: string,
   granule: MessageGranule,
+  backupConfig: {
+    roleCreds: AWS.STS.AssumeRoleResponse,
+    authToken: string,
+    urlType: string,
+    cloudfrontEndpoint?: string,
+  },
 }) => {
-  const {
-    roleCreds,
-    authToken,
-    granule,
-  } = params;
+  const { granule, backupConfig } = params;
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
   try {
     const granuleCollection = await getGranuleCollection({
@@ -215,13 +277,12 @@ export const backupGranule = async (params: {
     });
     const collectionId = constructCollectionId(granule.dataType, granule.version);
     const backupFiles = granule.files.filter(
-      (file) => shouldBackupFile(file.name, granuleCollection)
+      (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );
 
     log.info(`${JSON.stringify(granule)}: Backing up ${JSON.stringify(backupFiles)}`);
     return Promise.all(backupFiles.map((file) => makeBackupFileRequest({
-      roleCreds,
-      authToken,
+      backupConfig,
       file,
       collectionId,
       granuleId: granule.granuleId,
@@ -265,8 +326,14 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   const roleCreds = await generateAccessCredentials();
   const authToken = await getAuthToken();
 
+  const backupConfig = {
+    ...event.config,
+    roleCreds,
+    authToken,
+  };
+
   const backupPromises = (event.input.granules.map(
-    (granule) => backupGranule({ roleCreds, authToken, granule })
+    (granule) => backupGranule({ granule, backupConfig })
   ));
 
   const backupResults = await Promise.allSettled(backupPromises);
@@ -280,7 +347,7 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
   }
   const filteredResults = backupResults.filter(
     (result) => isFulfilledPromise(result)
-  ) as PromiseFulfilledResult<makeBackupFileRequestResult[]>[];
+  ) as PromiseFulfilledResult<MakeBackupFileRequestResult[]>[];
   return {
     backupResults: filteredResults.map((result) => result.value).flat(),
     granules: event.input.granules,
@@ -291,4 +358,4 @@ export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
 ): Promise<CumulusMessageWithAssignedPayload
-| CumulusRemoteMessage> => runCumulusTask(backupGranulesToLzards, event, context);
+| CumulusRemoteMessage> => await runCumulusTask(backupGranulesToLzards, event, context);

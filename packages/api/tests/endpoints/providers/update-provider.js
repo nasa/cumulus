@@ -15,9 +15,11 @@ const {
   nullifyUndefinedProviderValues,
   translateApiProviderToPostgresProvider,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
+const { Search } = require('@cumulus/es-client/search');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
@@ -25,7 +27,6 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 
-const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const testDbName = randomString(12);
 
@@ -41,7 +42,6 @@ process.env = {
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 
 let providerModel;
 const esIndex = randomString();
@@ -60,7 +60,7 @@ test.before(async (t) => {
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   providerModel = new models.Provider();
   await providerModel.createTable();

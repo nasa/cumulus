@@ -15,17 +15,21 @@ const {
   ExecutionPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
+  fakePdrRecordFactory,
+  fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  GranulesExecutionsPgModel,
   GranulePgModel,
+  GranulesExecutionsPgModel,
+  PdrPgModel,
+  ProviderPgModel,
   translateApiGranuleToPostgresGranule,
+  migrationDir,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const {
   migrateGranuleRecord,
   migrateFileRecord,
@@ -52,7 +56,7 @@ const fakeFile = () => fakeFileFactory({
 });
 
 const generateTestGranule = (params) => ({
-  granuleId: cryptoRandomString({ length: 5 }),
+  granuleId: cryptoRandomString({ length: 10 }),
   status: 'running',
   cmrLink: cryptoRandomString({ length: 10 }),
   published: false,
@@ -126,9 +130,31 @@ test.beforeEach(async (t) => {
   );
   t.context.testExecution = testExecution;
 
+  const providerPgModel = new ProviderPgModel();
+  t.context.testProvider = fakeProviderRecordFactory();
+
+  const providerResponse = await providerPgModel.create(
+    t.context.knex,
+    t.context.testProvider
+  );
+  t.context.providerCumulusId = providerResponse[0];
+
+  const pdrPgModel = new PdrPgModel();
+  const testPdr = fakePdrRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+  [t.context.pdrCumulusId] = await pdrPgModel.create(
+    t.context.knex,
+    testPdr
+  );
+  t.context.testPdr = testPdr;
+  t.context.pdrPgModel = pdrPgModel;
+
   t.context.testGranule = generateTestGranule({
     collectionId: buildCollectionId(testCollection.name, testCollection.version),
     execution: t.context.executionUrl,
+    pdrName: testPdr.name,
   });
 });
 
@@ -149,11 +175,15 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
     executionCumulusId,
     granulesExecutionsPgModel,
     granulePgModel,
+    pdrCumulusId,
     knex,
     testGranule,
   } = t.context;
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(testGranule, trx)
+  );
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -174,7 +204,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       product_volume: testGranule.productVolume.toString(),
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
-      pdr_cumulus_id: null,
+      pdr_cumulus_id: pdrCumulusId,
       provider_cumulus_id: null,
       query_fields: null,
       beginning_date_time: new Date(testGranule.beginningDateTime),
@@ -210,7 +240,10 @@ test.serial('migrateGranuleRecord successfully migrates granule record with miss
   // refer to non-existent execution
   testGranule.execution = cryptoRandomString({ length: 10 });
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(testGranule, trx)
+  );
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -329,7 +362,10 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.queryFields;
   delete testGranule.version;
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(testGranule, trx)
+  );
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -389,7 +425,10 @@ test.serial('migrateGranuleRecord throws RecordAlreadyMigrated error if previous
     updatedAt: Date.now() - 1000,
   };
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(testGranule, trx)
+  );
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -415,7 +454,10 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
     status: 'running',
   });
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(testGranule, trx)
+  );
 
   // We do not allow updates on granules where the status is "running"
   // and a GranulesExecutions record has already been created to prevent out-of-order writes.
@@ -451,14 +493,17 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
     updatedAt: Date.now() - 1000,
   });
 
-  await knex.transaction((trx) => migrateGranuleRecord(testGranule, trx));
+  await createRejectableTransaction(knex, (trx) => migrateGranuleRecord(testGranule, trx));
 
   const newerGranule = {
     ...testGranule,
     updatedAt: Date.now(),
   };
 
-  const granuleCumulusId = await knex.transaction((trx) => migrateGranuleRecord(newerGranule, trx));
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(newerGranule, trx)
+  );
   const record = await granulePgModel.get(knex, {
     cumulus_id: granuleCumulusId,
   });
@@ -952,10 +997,12 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records w
 test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
   const {
     collectionPgModel,
+    pdrPgModel,
     knex,
     testCollection,
     testExecution,
     testGranule,
+    testPdr,
   } = t.context;
   const key = `${process.env.stackName}/data-migration2-granulesAndFiles-errors-123.json`;
 
@@ -964,6 +1011,11 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
     collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
     execution: testExecution.url,
   });
+  // remove PDR record that references collection before removing collection record
+  await pdrPgModel.delete(
+    t.context.knex,
+    testPdr
+  );
 
   // remove collection record references so migration will fail
   await collectionPgModel.delete(
@@ -977,8 +1029,10 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
   ]);
 
   t.teardown(async () => {
-    granulesModel.delete({ granuleId: testGranule.granuleId });
-    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    await Promise.all([
+      granulesModel.delete({ granuleId: testGranule.granuleId }),
+      granulesModel.delete({ granuleId: testGranule2.granuleId }),
+    ]);
   });
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');
@@ -1020,8 +1074,10 @@ test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 obj
   await migrateGranuleRecord(testGranule, knex);
 
   t.teardown(async () => {
-    granulesModel.delete({ granuleId: testGranule.granuleId });
-    granulesModel.delete({ granuleId: testGranule2.granuleId });
+    await Promise.all([
+      granulesModel.delete({ granuleId: testGranule.granuleId }),
+      granulesModel.delete({ granuleId: testGranule2.granuleId }),
+    ]);
   });
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');

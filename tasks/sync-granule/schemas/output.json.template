@@ -1,0 +1,50 @@
+{
+  "title": "SyncGranuleOutput",
+  "description": "Describes the output produced by the sync-granule task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granuleDuplicates": {
+      "type": "object",
+      "additionalProperties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["bucket", "key"],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "dataType", "version", "files"],
+        "properties": {
+          "granuleId": {"type": "string"},
+          "dataType": {"type": "string"},
+          "version": {"type": "string"},
+          "files": "{{files}}"
+        }
+      }
+    },
+    "pdr": {
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}

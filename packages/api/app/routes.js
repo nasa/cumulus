@@ -24,7 +24,6 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
-const ems = require('../endpoints/ems');
 const migrationCounts = require('../endpoints/migrationCounts');
 const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
@@ -66,7 +65,7 @@ router.use('/executions/status', ensureAuthorized, executionStatus);
 router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/asyncOperations', ensureAuthorized, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
 
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthorized, instanceMeta);
@@ -113,9 +112,7 @@ router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
-
-router.use('/ems', ensureAuthorized, ems);
+router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);

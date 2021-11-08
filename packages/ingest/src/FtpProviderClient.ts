@@ -112,11 +112,17 @@ class FtpProviderClient implements ProviderClient {
   /**
    * Download a remote file to disk
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} localPath - the full local destination file path
-   * @returns {Promise.<string>} - the path that the file was saved to
+   * @param {Object} params             - parameter object
+   * @param {string} params.remotePath  - the full path to the remote file to be fetched
+   * @param {string} params.localPath   - the full local destination file path
+   * @returns {Promise.<string>}        - the path that the file was saved to
    */
-  async download(remotePath: string, localPath: string): Promise<string> {
+  async download(params: {
+    remotePath: string,
+    localPath: string,
+  }): Promise<string> {
+    const { remotePath, localPath } = params;
+
     const remoteUrl = `ftp://${this.host}/${remotePath}`;
     logger.info(`Downloading ${remoteUrl} to ${localPath}`);
 
@@ -209,7 +215,7 @@ class FtpProviderClient implements ProviderClient {
     fileRemotePath: string,
     destinationBucket: string,
     destinationKey: string
-  }): Promise<{s3uri: string, etag: string}> {
+  }): Promise<{ s3uri: string, etag: string }> {
     const { fileRemotePath, destinationBucket, destinationKey } = params;
     const remoteUrl = `ftp://${this.host}/${fileRemotePath}`;
     const s3uri = S3.buildS3Uri(destinationBucket, destinationKey);

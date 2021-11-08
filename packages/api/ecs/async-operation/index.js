@@ -13,7 +13,11 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
+const {
+  getKnexClient,
+  AsyncOperationPgModel,
+  createRejectableTransaction,
+} = require('@cumulus/db');
 const { dynamodb } = require('@cumulus/aws-client/services');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
@@ -154,7 +158,7 @@ const writeAsyncOperationToPostgres = async (params) => {
   const { trx, env, dbOutput, status, updatedTime } = params;
   const id = env.asyncOperationId;
   const asyncOperationPgModel = new AsyncOperationPgModel();
-  return asyncOperationPgModel
+  return await asyncOperationPgModel
     .update(
       trx,
       { id },
@@ -168,20 +172,26 @@ const writeAsyncOperationToPostgres = async (params) => {
 
 const writeAsyncOperationToDynamoDb = async (params) => {
   const { env, status, dbOutput, updatedTime } = params;
-  return dynamodb().updateItem({
+  const ExpressionAttributeNames = {
+    '#S': 'status',
+    '#U': 'updatedAt',
+  };
+  const ExpressionAttributeValues = {
+    ':s': { S: status },
+    ':u': { N: updatedTime },
+  };
+  let UpdateExpression = 'SET #S = :s, #U = :u';
+  if (dbOutput) {
+    ExpressionAttributeNames['#O'] = 'output';
+    ExpressionAttributeValues[':o'] = { S: dbOutput };
+    UpdateExpression += ', #O = :o';
+  }
+  return await dynamodb().updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
-    ExpressionAttributeNames: {
-      '#S': 'status',
-      '#O': 'output',
-      '#U': 'updatedAt',
-    },
-    ExpressionAttributeValues: {
-      ':s': { S: status },
-      ':o': { S: dbOutput },
-      ':u': { N: updatedTime },
-    },
-    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    UpdateExpression,
   }).promise();
 };
 
@@ -197,13 +207,13 @@ const writeAsyncOperationToDynamoDb = async (params) => {
  * @returns {Promise} resolves when the item has been updated
  */
 const updateAsyncOperation = async (status, output, envOverride = {}) => {
-  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+  logger.info(`Updating AsyncOperation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
   const knex = await getKnexClient({ env });
-  return knex.transaction(async (trx) => {
+  return createRejectableTransaction(knex, async (trx) => {
     await writeAsyncOperationToPostgres({
       dbOutput,
       env,
@@ -224,6 +234,8 @@ const updateAsyncOperation = async (status, output, envOverride = {}) => {
 async function runTask() {
   let lambdaInfo;
   let payload;
+
+  logger.debug('Running async operation %s', process.env.asyncOperationId);
 
   try {
     // Get some information about the lambda function that we'll be calling

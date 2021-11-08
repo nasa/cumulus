@@ -10,7 +10,7 @@ import {
   Knex,
 } from '@cumulus/db';
 
-import { getEsCutoffQuery, getDbCount, countPostgresRecords } from './utils';
+import { getEsCutoffQuery, getEsCount, countPostgresRecords } from './utils';
 import { StatsObject, CollectionMapping } from './types';
 
 const postgresGranuleModel = new GranulePgModel();
@@ -66,7 +66,7 @@ export const mapper = async (params: {
   return {
     collectionId,
     counts: await Promise.all([
-      getDbCount(
+      getEsCount(
         getPdrsFunction({
           prefix,
           query: getEsCutoffQuery(
@@ -76,7 +76,7 @@ export const mapper = async (params: {
           ),
         })
       ),
-      getDbCount(
+      getEsCount(
         listGranulesFunction({
           prefix,
           query: getEsCutoffQuery(
@@ -86,7 +86,7 @@ export const mapper = async (params: {
           ),
         })
       ),
-      getDbCount(
+      getEsCount(
         getExecutionsFunction({
           prefix,
           query: getEsCutoffQuery(

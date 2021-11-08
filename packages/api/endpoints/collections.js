@@ -13,13 +13,17 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
   getKnexClient,
-  tableNames,
+  TableNames,
   translateApiCollectionToPostgresCollection,
+  createRejectableTransaction,
 } = require('@cumulus/db');
-const { Search } = require('../es/search');
-const { addToLocalES, indexCollection } = require('../es/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  addToLocalES,
+  indexCollection,
+} = require('@cumulus/es-client/indexer');
+const Collection = require('@cumulus/es-client/collections');
 const models = require('../models');
-const Collection = require('../es/collections');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
@@ -221,8 +225,8 @@ async function del(req, res) {
 
   const knex = await getKnexClient({ env: process.env });
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.collections).where({ name, version }).del();
+    await createRejectableTransaction(knex, async (trx) => {
+      await trx(TableNames.collections).where({ name, version }).del();
       await collectionsModel.delete({ name, version });
       if (inTestMode()) {
         const collectionId = constructCollectionId(name, version);
@@ -236,6 +240,7 @@ async function del(req, res) {
     });
     return res.send({ message: 'Record deleted' });
   } catch (error) {
+    log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
     if (error instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
       return res.boom.conflict(message);

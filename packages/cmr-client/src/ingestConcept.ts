@@ -8,8 +8,12 @@ import { parseXMLString } from './Utils';
 
 const log = new Logger({ sender: 'cmr-client' });
 
-const logDetails: {[key: string]: string} = {
+const logDetails: { [key: string]: string } = {
   file: 'cmr-client/ingestConcept.js',
+};
+
+type IngestResponseErrors = {
+  errors?: { error: string }
 };
 
 /**
@@ -46,7 +50,7 @@ async function ingestConcept(
       }
     );
 
-    const ingestResponseBody = <{errors?: {error: string}}>(await parseXMLString(response.body));
+    const ingestResponseBody = <IngestResponseErrors>(await parseXMLString(response.body));
 
     if (ingestResponseBody.errors) {
       const xmlObjectError = JSON.stringify(ingestResponseBody.errors.error);

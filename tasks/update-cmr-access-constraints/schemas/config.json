@@ -20,6 +20,10 @@
           "type": "string"
         }
       }
+    },
+    "etags": {
+      "description": "map of s3URIs to ETags",
+      "type": "object"
     }
   }
 }

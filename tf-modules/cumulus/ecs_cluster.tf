@@ -63,7 +63,8 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
 
   statement {
     actions = [
-      "sqs:Send*"
+      "sqs:Send*",
+      "sqs:GetQueueUrl",
     ]
     resources = ["arn:aws:sqs:*:*:*"]
   }
@@ -136,6 +137,11 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
     resources = [
       var.rds_user_access_secret_arn
     ]
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [module.archive.provider_kms_key_arn]
   }
 }
 

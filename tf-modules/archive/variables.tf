@@ -76,10 +76,6 @@ variable "elasticsearch_security_group_id" {
   default = ""
 }
 
-variable "ems_host" {
-  type = string
-}
-
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
@@ -151,6 +147,11 @@ variable "api_port" {
   default = null
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 8
+}
+
 variable "api_url" {
   type        = string
   default     = null
@@ -163,9 +164,9 @@ variable "buckets" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "cmr_limit" {
@@ -183,44 +184,10 @@ variable "cmr_page_size" {
   default = 50
 }
 
-variable "ems_datasource" {
-  type    = string
-  default = "UAT"
-}
-
-variable "ems_path" {
-  type    = string
-  default = "/"
-}
-
-variable "ems_port" {
-  type    = number
-  default = 22
-}
-
-variable "ems_private_key" {
-  type    = string
-  default = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type    = string
-  default = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type    = number
-  default = 30
-}
-
-variable "ems_submit_report" {
-  type    = bool
-  default = false
-}
-
-variable "ems_username" {
-  type    = string
-  default = "cumulus"
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {
@@ -279,10 +246,16 @@ variable "private_archive_api_gateway" {
   default = true
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "saml_entity_id" {
@@ -370,10 +343,4 @@ variable "es_index_shards" {
   description = "The number of shards for the Elasticsearch index"
   type        = number
   default     = 2
-}
-
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
-  type        = bool
-  default     = false
 }

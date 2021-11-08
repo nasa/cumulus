@@ -104,7 +104,6 @@ The following variables were added to the Cumulus module
 
 - `rds_security_group`
 - `rds_user_access_secret_arn`
-- `rds_connection_heartbeat`
 
 For reference on how to set these values, see our template-deploy repo: <https://github.com/nasa/cumulus-template-deploy/tree/master/cumulus-tf>
 
@@ -185,7 +184,7 @@ Also, each run of these data migration will write a timestamped log of any error
 
 ### 6. Run validation tool
 
-We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](./../lambdas/postgres-migration-count-tool/README.md)
+We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](https://github.com/nasa/cumulus/blob/master/lambdas/postgres-migration-count-tool/README.md).
 
 This tool can be run in the following two ways:
 

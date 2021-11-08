@@ -25,7 +25,7 @@ services:
   localstack:
     image: localstack/localstack:0.10.7
   elasticsearch:
-    image: elasticsearch:5.6
+    image: elasticsearch:5.3
   sftp:
     image: nsidc/panubo_sshd:latest
   http:

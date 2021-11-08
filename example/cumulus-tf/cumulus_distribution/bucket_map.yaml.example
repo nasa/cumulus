@@ -1,0 +1,23 @@
+MAP:
+  path1:
+    bucket: bucket-path-1
+    headers:
+        Content-Type: "text/plain"
+  
+  path2:
+    path2a: bucket-path-2a
+    path2b: bucket-path-2b
+    
+  path3:
+    path3a:
+      path3ai: bucket-path-3ai
+  data-bucket: data-bucket
+
+PUBLIC_BUCKETS:
+  path2: 'public bucket'
+  data-bucket/browse: "Browse image"
+
+PRIVATE_BUCKETS:
+  data-bucket/pre-commission-data:
+    - internal_users
+    - external_team

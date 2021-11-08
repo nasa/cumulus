@@ -61,7 +61,7 @@ exports.handler = async (event) => {
   const payload = Buffer.from(event.awslogs.data, 'base64');
   const decompressedData = await gunzip(payload);
   const logData = JSON.parse(decompressedData.toString('ascii'));
-  return Promise.all(logData.logEvents.map(async (logEvent) => {
+  return await Promise.all(logData.logEvents.map(async (logEvent) => {
     const logMessage = JSON.parse(logEvent.message);
     if (['error', 'fatal'].includes(logMessage.level)) {
       return sns.publish({

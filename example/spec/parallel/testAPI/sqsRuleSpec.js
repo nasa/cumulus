@@ -7,26 +7,36 @@ const pWaitFor = require('p-wait-for');
 
 const { Granule } = require('@cumulus/api/models');
 const { deleteGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
   receiveSQSMessages,
   sendSQSMessage,
   getQueueUrlByName,
+  getQueueNameFromUrl,
 } = require('@cumulus/aws-client/SQS');
+const { s3 } = require('@cumulus/aws-client/services');
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const {
   addCollections,
   addRules,
   addProviders,
+  api: apiTestUtils,
   cleanupProviders,
   cleanupCollections,
   readJsonFilesFromDir,
   deleteRules,
   setProcessEnvironment,
   getExecutionInputObject,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { randomId } = require('@cumulus/common/test-utils');
+
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const { getExecutions } = require('@cumulus/api-client/executions');
 
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -41,11 +51,16 @@ const {
 } = require('../../helpers/testUtils');
 
 let config;
+let executionArn;
+let inputPayload;
+let key;
+let pdrFilename;
+let queueName;
+let ruleOverride;
+let ruleSuffix;
+let testDataFolder;
 let testId;
 let testSuffix;
-let testDataFolder;
-let ruleSuffix;
-let ruleOverride;
 
 const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 const providersDir = './data/providers/s3/';
@@ -56,6 +71,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const ruleDirectory = './spec/parallel/testAPI/data/rules/sqs';
 
 let queues = {};
+let collectionResult;
 
 async function setupCollectionAndTestData() {
   const s3data = [
@@ -65,7 +81,7 @@ async function setupCollectionAndTestData() {
   ];
 
   // populate collections, providers and test data
-  await Promise.all([
+  [, collectionResult] = await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
@@ -77,7 +93,32 @@ async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
+
+  await apiTestUtils.deletePdr({
+    prefix: config.stackName,
+    pdr: pdrFilename,
+  });
+
+  const collection = collectionResult[0];
+  // Delete successful execution and 2 failed executions
+  const executions = JSON.parse((await getExecutions({
+    prefix: config.stackName,
+    query: {
+      fields: ['arn'],
+      collectionId: constructCollectionId(collection.name, collection.version),
+    },
+  })).body).results;
+  await Promise.all(executions.map(
+    (execution) => waitForCompletedExecution(execution.arn)
+      .then(deleteExecution({ prefix: config.stackName, executionArn: execution.arn }))
+  ));
+
+  await Promise.all(inputPayload.granules.map(
+    (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
+  ));
+
   await Promise.all([
+    deleteS3Object(config.bucket, key),
     deleteFolder(config.bucket, testDataFolder),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
@@ -89,7 +130,8 @@ async function cleanUp() {
 async function sendIngestGranuleMessage(queueUrl) {
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
-  const inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+  inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+  pdrFilename = inputPayload.pdr.name;
   const granuleId = inputPayload.granules[0].granuleId;
   await sendSQSMessage(queueUrl, inputPayload);
   return granuleId;
@@ -162,7 +204,7 @@ describe('The SQS rule', () => {
     await cleanUp();
   });
 
-  it('SQS rules are added', async () => {
+  it('SQS rules are added', () => {
     expect(ruleList.length).toBe(1);
     expect(ruleList[0].rule.value).toBe(queues.sourceQueueUrl);
     expect(ruleList[0].meta.visibilityTimeout).toBe(300);
@@ -171,6 +213,7 @@ describe('The SQS rule', () => {
 
   describe('When posting messages to the configured SQS queue', () => {
     let granuleId;
+    let messageId;
     const invalidMessage = JSON.stringify({ foo: 'bar' });
 
     beforeAll(async () => {
@@ -178,11 +221,14 @@ describe('The SQS rule', () => {
       granuleId = await sendIngestGranuleMessage(queues.sourceQueueUrl);
 
       // post a non-processable message
-      await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      const message = await sendSQSMessage(queues.sourceQueueUrl, invalidMessage);
+      messageId = message.MessageId;
+      queueName = getQueueNameFromUrl(queues.sourceQueueUrl);
+      key = getS3KeyForArchivedMessage(config.stackName, messageId, queueName);
     });
 
     afterAll(async () => {
-      await deleteGranule({ prefix: config.stackName, granuleId });
+      await deleteS3Object(config.bucket, key);
     });
 
     describe('If the message is processable by the workflow', () => {
@@ -198,7 +244,7 @@ describe('The SQS rule', () => {
         );
       });
 
-      it('workflow is kicked off, and the granule from the message is successfully ingested', async () => {
+      it('workflow is kicked off, and the granule from the message is successfully ingested', () => {
         expect(record.granuleId).toBe(granuleId);
         expect(record.execution).toContain(workflowName);
       });
@@ -209,7 +255,7 @@ describe('The SQS rule', () => {
       });
 
       it('references the correct queue URL in the execution message', async () => {
-        const executionArn = record.execution.split('/').reverse()[0];
+        executionArn = record.execution.split('/').reverse()[0];
         const executionInput = await getExecutionInputObject(executionArn);
         expect(executionInput.cumulus_meta.queueUrl).toBe(queues.scheduleQueueUrl);
       });
@@ -237,6 +283,14 @@ describe('The SQS rule', () => {
 
     it('messages are picked up and removed from source queue', async () => {
       await expectAsync(waitForQueueMessageCount(queues.sourceQueueUrl, 0)).toBeResolved();
+    });
+
+    it('stores incoming messages on S3', async () => {
+      const message = await s3().getObject({
+        Bucket: config.bucket,
+        Key: key,
+      }).promise();
+      expect(message.Body.toString()).toBe(invalidMessage);
     });
   });
 });

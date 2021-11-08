@@ -6,19 +6,21 @@ const test = require('ava');
 const range = require('lodash/range');
 
 const SQS = require('@cumulus/aws-client/SQS');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
+  s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const Rule = require('../../models/rules');
-const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
-const rulesHelpers = require('../../lib/rulesHelpers');
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
+const { getQueueNameFromUrl } = require('@cumulus/aws-client/SQS');
 
-const {
-  handler,
-} = require('../../lambdas/sqs-message-consumer');
+const { handler } = require('../../lambdas/sqs-message-consumer');
+const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
+const Rule = require('../../models/rules');
+const rulesHelpers = require('../../lib/rulesHelpers');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -79,12 +81,14 @@ async function cleanupRulesAndQueues(rules, queues) {
     rules.map((rule) => rulesModel.delete(rule))
   );
 
-  const queueUrls = queues.reduce(
-    (accumulator, currentValue) => accumulator.concat(Object.values(currentValue)), []
-  );
+  // Delete queueName for each object in list
+  queues.forEach((q) => delete q.queueName);
 
   await Promise.all(
-    queueUrls.map((queueUrl) => SQS.deleteQueue(queueUrl))
+    queues.map(async (queue) => {
+      await SQS.deleteQueue(queue.queueUrl);
+      await SQS.deleteQueue(queue.deadLetterQueueUrl);
+    })
   );
 }
 
@@ -114,11 +118,11 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
 });
 
@@ -132,7 +136,7 @@ test.serial('processQueues does nothing when there is no message', async (t) => 
 test.serial('processQueues does nothing when queue does not exist', async (t) => {
   const { queueMessageStub } = t.context;
   const validateSqsRuleStub = sinon.stub(Rule.prototype, 'validateAndUpdateSqsRule')
-    .callsFake(async (item) => item);
+    .callsFake((item) => Promise.resolve(item));
   await rulesModel.create(fakeRuleFactoryV2({
     workflow,
     rule: {
@@ -360,5 +364,83 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
 
   t.teardown(async () => {
     await cleanupRulesAndQueues(rules, [queue]);
+  });
+});
+
+test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
+  const { stackName } = process.env;
+  const { rules, queues } = await createRulesAndQueues();
+  const message = { testdata: randomString() };
+
+  // Send message to ENABLED queue
+  const firstMessage = await SQS.sendSQSMessage(
+    queues[0].queueUrl,
+    message
+  );
+
+  // Send message to DISABLED queue
+  const secondMessage = await SQS.sendSQSMessage(
+    queues[1].queueUrl,
+    { testdata: randomString() }
+  );
+
+  const firstMessageId = firstMessage.MessageId;
+  const secondMessageId = secondMessage.MessageId;
+
+  const enabledQueueName = getQueueNameFromUrl(queues[0].queueUrl);
+  const disabledQueueName = getQueueNameFromUrl(queues[1].queueUrl);
+
+  const enabledQueueKey = getS3KeyForArchivedMessage(stackName, firstMessageId, enabledQueueName);
+  const deadLetterKey = getS3KeyForArchivedMessage(stackName, secondMessageId, disabledQueueName);
+
+  await handler(event);
+
+  const item = await s3().getObject({
+    Bucket: process.env.system_bucket,
+    Key: enabledQueueKey,
+  }).promise();
+
+  t.deepEqual(message, JSON.parse(item.Body));
+
+  t.false(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: deadLetterKey,
+  }));
+
+  t.teardown(async () => {
+    await cleanupRulesAndQueues(rules, queues);
+  });
+});
+
+test.serial('processQueues archives multiple messages', async (t) => {
+  const { stackName } = process.env;
+  const { rules, queues } = await createRulesAndQueues();
+
+  // Send message to ENABLED queue
+  const messages = await Promise.all(
+    range(4).map(() =>
+      SQS.sendSQSMessage(
+        queues[0].queueUrl,
+        { testdata: randomString() }
+      ))
+  );
+  const queueName = getQueueNameFromUrl(queues[0].queueUrl);
+  const deriveKey = (m) => getS3KeyForArchivedMessage(stackName, m.MessageId, queueName);
+  const keys = messages.map((m) => deriveKey(m));
+
+  await handler(event);
+
+  const items = await Promise.all(keys.map((k) =>
+    s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: k,
+    })));
+
+  const itemExists = (i) => t.true(i);
+
+  items.every(itemExists);
+
+  t.teardown(async () => {
+    await cleanupRulesAndQueues(rules, queues);
   });
 });

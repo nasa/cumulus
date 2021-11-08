@@ -1,7 +1,7 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 import { translateDateToUTC } from '../lib/timestamp';
@@ -9,7 +9,7 @@ import { translateDateToUTC } from '../lib/timestamp';
 export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrRecord> {
   constructor() {
     super({
-      tableName: tableNames.pdrs,
+      tableName: TableNames.pdrs,
     });
   }
 
@@ -21,7 +21,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
       throw new Error(`To upsert pdr record must have 'created_at' set: ${JSON.stringify(pdr)}`);
     }
     if (pdr.status === 'running') {
-      return knexOrTrx(this.tableName)
+      return await knexOrTrx(this.tableName)
         .insert(pdr)
         .onConflict('name')
         .merge()
@@ -34,7 +34,7 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         })
         .returning('cumulus_id');
     }
-    return knexOrTrx(this.tableName)
+    return await knexOrTrx(this.tableName)
       .insert(pdr)
       .onConflict('name')
       .merge()

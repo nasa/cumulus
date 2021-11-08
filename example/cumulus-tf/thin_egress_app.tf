@@ -1,7 +1,4 @@
 locals {
-  protected_bucket_names = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names    = [for k, v in var.buckets : v.name if v.type == "public"]
-
   tea_stack_name = "${var.prefix}-thin-egress-app"
   tea_stage_name = "DEV"
 }
@@ -41,7 +38,7 @@ module "thin_egress_app" {
   bucket_map_file               = aws_s3_bucket_object.bucket_map_yaml.id
   bucketname_prefix             = ""
   config_bucket                 = var.system_bucket
-  domain_name                   = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  domain_name                   = var.tea_distribution_url == null ? null : replace(replace(var.tea_distribution_url, "/^https?:///", ""), "//$/", "")
   jwt_secret_name               = var.thin_egress_jwt_secret_name
   permissions_boundary_name     = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                   = var.vpc_id

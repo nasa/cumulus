@@ -14,6 +14,7 @@ const {
   ExecutionPgModel,
   PdrPgModel,
   ProviderPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 
 const {
@@ -22,7 +23,6 @@ const {
   writePdr,
 } = require('../../../lambdas/sf-event-sqs-to-db-records/write-pdr');
 
-const { migrationDir } = require('../../../../../lambdas/db-migration');
 const Pdr = require('../../../models/pdrs');
 
 test.before(async (t) => {
@@ -170,11 +170,11 @@ test('getPdrCumulusIdFromQueryResultOrLookup() returns cumulus ID from database 
 
   const fakePdrCumulusId = Math.floor(Math.random() * 1000);
   const fakePdrPgModel = {
-    getRecordCumulusId: async (_, record) => {
+    getRecordCumulusId: (_, record) => {
       if (record.name === runningPdrRecord.name) {
-        return fakePdrCumulusId;
+        return Promise.resolve(fakePdrCumulusId);
       }
-      return undefined;
+      return Promise.resolve();
     },
   };
 

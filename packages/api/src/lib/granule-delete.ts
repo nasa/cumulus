@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import pMap from 'p-map';
 
 import { deleteS3Object } from '@cumulus/aws-client/S3';
@@ -7,12 +7,15 @@ import {
   GranulePgModel,
   PostgresGranuleRecord,
   PostgresFileRecord,
+  createRejectableTransaction,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
 import { ApiFile, ApiGranule } from '@cumulus/types';
+import Logger from '@cumulus/logger';
 
 const FileUtils = require('../../lib/FileUtils');
 const Granule = require('../../models/granules');
+const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
 
 /**
  * Delete a list of files from S3
@@ -20,10 +23,10 @@ const Granule = require('../../models/granules');
  * @param {Array} files - A list of S3 files
  * @returns {Promise<void>}
  */
-const _deleteS3Files = async (
+const deleteS3Files = async (
   files: (ApiFile | PostgresFileRecord)[] = []
 ) =>
-  pMap(
+  await pMap(
     files,
     async (file) => {
       await deleteS3Object(
@@ -61,26 +64,33 @@ const deleteGranuleAndFiles = async ({
   granuleModelClient: typeof Granule
 }) => {
   if (pgGranule === undefined) {
+    logger.debug(`PG Granule is undefined, only deleting DynamoDB granule ${JSON.stringify(dynamoGranule)}`);
     // Delete only the Dynamo Granule and S3 Files
-    await _deleteS3Files(dynamoGranule.files);
+    await deleteS3Files(dynamoGranule.files);
     await granuleModelClient.delete(dynamoGranule);
   } else if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+    logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
     const files = await filePgModel.search(
       knex,
       { granule_cumulus_id: pgGranule.cumulus_id }
     );
 
-    await knex.transaction(async (trx) => {
-      await granulePgModel.delete(trx, {
-        cumulus_id: pgGranule.cumulus_id,
+    try {
+      await createRejectableTransaction(knex, async (trx) => {
+        await granulePgModel.delete(trx, {
+          cumulus_id: pgGranule.cumulus_id,
+        });
+        await granuleModelClient.delete(dynamoGranule);
       });
-      await granuleModelClient.delete(dynamoGranule);
-    });
-
-    await _deleteS3Files(files);
+      logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
+      await deleteS3Files(files);
+    } catch (error) {
+      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
+      throw error;
+    }
   }
 };
 

@@ -55,7 +55,7 @@ async function backup(table, region = 'us-east-1', folder = 'backups') {
 
   console.log(`Starting back up for ${table} ...`);
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     data.on('err', reject);
     data.on('finish', () => resolve(`Backup completed! ${count} records were backed up.`));
   });

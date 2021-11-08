@@ -31,7 +31,7 @@ const { parsePdr } = proxyquire(
 );
 
 async function setUpTestPdrAndValidate(t) {
-  return Promise.all([
+  return await Promise.all([
     s3PutObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
@@ -299,19 +299,19 @@ test.serial('parse-pdr sets the provider of a granule with NODE_NAME set', async
   t.context.payload.input.pdr.name = 'MOD09GQ-with-NODE_NAME.PDR';
   await setUpTestPdrAndValidate(t).catch(t.fail);
 
-  const provider = { host: 'modpdr01' };
+  const provider = { id: 'provider001', host: 'modpdr01' };
 
-  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+  fakeProvidersApi.getProviders = ({ prefix, queryStringParameters }) => {
     t.is(prefix, t.context.stackName);
     t.deepEqual(queryStringParameters, { host: provider.host });
 
-    return {
+    return Promise.resolve({
       body: JSON.stringify({
         results: [
           provider,
         ],
       }),
-    };
+    });
   };
 
   const result = await parsePdr(t.context.payload);
@@ -322,7 +322,7 @@ test.serial('parse-pdr sets the provider of a granule with NODE_NAME set', async
 
   const granule = result.granules[0];
 
-  t.deepEqual(granule.provider, provider);
+  t.deepEqual(granule.provider, provider.id);
 });
 
 test.serial('parse-pdr throws an exception if the provider specified in NODE_NAME does not exist', async (t) => {
@@ -331,15 +331,15 @@ test.serial('parse-pdr throws an exception if the provider specified in NODE_NAM
 
   const provider = { host: 'modpdr01' };
 
-  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+  fakeProvidersApi.getProviders = ({ prefix, queryStringParameters }) => {
     t.is(prefix, t.context.stackName);
     t.deepEqual(queryStringParameters, { host: provider.host });
 
-    return {
+    return Promise.resolve({
       body: JSON.stringify({
         results: [],
       }),
-    };
+    });
   };
 
   await t.throwsAsync(parsePdr(t.context.payload));
@@ -351,18 +351,18 @@ test.serial('parse-pdr throws an exception if multiple providers for the specifi
 
   const host = 'modpdr01';
 
-  fakeProvidersApi.getProviders = async ({ prefix, queryStringParameters }) => {
+  fakeProvidersApi.getProviders = ({ prefix, queryStringParameters }) => {
     t.is(prefix, t.context.stackName);
     t.deepEqual(queryStringParameters, { host });
 
-    return {
+    return Promise.resolve({
       body: JSON.stringify({
         results: [
           { id: 'z', host },
           { id: 'y', host },
         ],
       }),
-    };
+    });
   };
 
   await t.throwsAsync(parsePdr(t.context.payload));

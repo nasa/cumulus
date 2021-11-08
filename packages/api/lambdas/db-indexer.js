@@ -5,8 +5,8 @@ const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
-const indexer = require('../es/indexer');
-const { Search } = require('../es/search');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const unwrap = AttributeValue.unwrap;
 
 /**
@@ -178,12 +178,16 @@ async function indexRecord(esClient, record) {
   const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
+    log.debug(`removing ${indexType}, id: ${id}`);
     const parentId = getParentId(indexType, oldData);
     const deletedObject = await performDelete(esClient, indexType, id, parentId);
+    log.debug(`finished removing ${indexType}, id: ${id}`);
     return deletedObject;
   }
 
+  log.debug(`about to index ${indexType}, id: ${id}`);
   const response = await performIndex(indexFnName, esClient, data);
+  log.debug(`finished indexing ${indexType}, id: ${id}`);
   return response;
 }
 
@@ -208,7 +212,7 @@ async function indexRecords(records) {
  * @param {Object} event - aws lambda event object.
  */
 const handler = async ({ Records }) =>
-  (Records ? indexRecords(Records) : 'No records found in event');
+  (Records ? await indexRecords(Records) : 'No records found in event');
 
 module.exports = {
   getTableName,

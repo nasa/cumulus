@@ -4,16 +4,17 @@ const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
 
+const SQS = require('@cumulus/aws-client/SQS');
 const { localStackConnectionEnv } = require('@cumulus/db');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const asyncOperations = require('@cumulus/async-operations');
 
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { app } = require('../../app');
-const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken, createSqsQueues, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
 const AccessToken = require('../../models/access-tokens');
 
 let accessTokenModel;
@@ -31,9 +32,10 @@ const envs = {
   RulesTable: randomString(),
   stackName: randomString(),
   system_bucket: randomString(),
+  ReplaySqsMessagesLambda: randomString(),
 };
 
-test.before(async () => {
+test.before(async (t) => {
   process.env = { ...process.env, ...localStackConnectionEnv };
   Object.keys(envs).forEach((key) => {
     process.env[key] = envs[key];
@@ -48,11 +50,14 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
+
+  t.context.queues = await createSqsQueues(randomString());
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await SQS.deleteQueue(t.context.queues.queueUrl);
 
   Object.keys(envs).forEach((key) => {
     delete process.env[key];
@@ -63,14 +68,12 @@ test.serial('request to replays endpoint returns 400 when no type is specified',
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
-
   await request(app)
     .post('/replays')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({})
     .expect(400, /replay type is required/);
-
   asyncOperationStartStub.restore();
   t.false(asyncOperationStartStub.called);
 });
@@ -79,7 +82,6 @@ test.serial('request to replays endpoint returns 400 if type is kinesis but no k
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
-
   const body = {
     type: 'kinesis',
   };
@@ -99,7 +101,6 @@ test.serial('request to replays endpoint with valid kinesis parameters starts an
   const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
     { id: '1234' }
   );
-
   const body = {
     type: 'kinesis',
     kinesisStream: 'fakestream',
@@ -158,7 +159,6 @@ test.serial('request to /replays endpoint returns 503 if starting ECS task throw
     endTimestamp: 12345678,
     startTimestamp: 12356789,
   };
-
   try {
     const response = await request(app)
       .post('/replays')
@@ -166,6 +166,79 @@ test.serial('request to /replays endpoint returns 503 if starting ECS task throw
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(body);
     t.is(response.status, 503);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('POST /replays/sqs starts an async-operation with specified payload', async (t) => {
+  const { queues } = t.context;
+  const id = randomId('asyncOperationId');
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
+    new Promise((resolve) => resolve({ id }))
+  );
+  const body = {
+    queueName: queues.queueName,
+  };
+
+  try {
+    const response = await request(app)
+      .post('/replays/sqs')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(body)
+      .expect(202);
+
+    // expect a returned async operation ID
+    t.is(response.body.asyncOperationId, id);
+    const {
+      lambdaName,
+      cluster,
+      description,
+      payload,
+    } = asyncOperationStartStub.args[0][0];
+    t.true(asyncOperationStartStub.calledOnce);
+    t.is(cluster, process.env.EcsCluster);
+    t.is(description, 'SQS Replay');
+    t.is(lambdaName, process.env.ReplaySqsMessagesLambda);
+    t.deepEqual(payload, body);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('POST /replays/sqs does not start an async-operation without queueName', async (t) => {
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
+    new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
+  );
+
+  try {
+    await request(app)
+      .post('/replays/sqs')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({})
+      .expect(400);
+    t.false(asyncOperationStartStub.called);
+  } finally {
+    asyncOperationStartStub.restore();
+  }
+});
+
+test.serial('POST /replays/sqs returns an error if SQS queue does not exist', async (t) => {
+  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
+    new Promise((resolve) => resolve({ id: randomId('asyncOperationId') }))
+  );
+
+  try {
+    const response = await request(app)
+      .post('/replays/sqs')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ queueName: 'some-queue' })
+      .expect(400);
+    t.false(asyncOperationStartStub.called);
+    t.true(response.body.message.includes('AWS.SimpleQueueService.NonExistentQueue'));
   } finally {
     asyncOperationStartStub.restore();
   }

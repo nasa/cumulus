@@ -8,7 +8,7 @@ const { getAggregateMetricQuery, getInvocationCount } = require('../metrics');
 test('getAggregateMetricQuery returns the max average for an Average metrics query', async (t) => {
   const cloudwatch = () => ({
     getMetricStatistics: (_val) => ({
-      promise: async () => ({ Datapoints: [{ Average: 10 }, { Average: 20 }] }),
+      promise: () => Promise.resolve({ Datapoints: [{ Average: 10 }, { Average: 20 }] }),
     }),
   });
   const actual = await getAggregateMetricQuery({ Statistics: ['Average'] }, cloudwatch);
@@ -18,7 +18,7 @@ test('getAggregateMetricQuery returns the max average for an Average metrics que
 test('getAggregateMetricQuery returns the maximum for a Maximum metrics query', async (t) => {
   const cloudwatch = () => ({
     getMetricStatistics: (_val) => ({
-      promise: async () => ({ Datapoints: [{ Maximum: 10 }, { Maximum: 30 }] }),
+      promise: () => Promise.resolve({ Datapoints: [{ Maximum: 10 }, { Maximum: 30 }] }),
     }),
   });
   const actual = await getAggregateMetricQuery({ Statistics: ['Maximum'] }, cloudwatch);
@@ -28,7 +28,7 @@ test('getAggregateMetricQuery returns the maximum for a Maximum metrics query', 
 test('getAggregateMetricQuery returns the minimum for a Minimum metrics query', async (t) => {
   const cloudwatch = () => ({
     getMetricStatistics: (_val) => ({
-      promise: async () => ({ Datapoints: [{ Minimum: 10 }, { Minimum: 30 }] }),
+      promise: () => Promise.resolve({ Datapoints: [{ Minimum: 10 }, { Minimum: 30 }] }),
     }),
   });
   const actual = await getAggregateMetricQuery({ Statistics: ['Minimum'] }, cloudwatch);
@@ -38,7 +38,7 @@ test('getAggregateMetricQuery returns the minimum for a Minimum metrics query', 
 test('getAggregateMetricQuery returns the total for a Sum query', async (t) => {
   const cloudwatch = () => ({
     getMetricStatistics: (_val) => ({
-      promise: async () => ({ Datapoints: [{ Sum: 10 }, { Sum: 30 }] }),
+      promise: () => Promise.resolve({ Datapoints: [{ Sum: 10 }, { Sum: 30 }] }),
     }),
   });
   const actual = await getAggregateMetricQuery({ Statistics: ['Sum'] }, cloudwatch);

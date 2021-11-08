@@ -91,7 +91,7 @@ async function handler(event) {
     'write-object': testWrite,
     'list-objects': testList,
   };
-  return testChoices[testName](s3, params);
+  return await testChoices[testName](s3, params);
 }
 
 exports.handler = handler;

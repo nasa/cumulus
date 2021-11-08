@@ -14,23 +14,24 @@ const {
   ProviderPgModel,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const {
   fakePdrRecordFactory,
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const {
   createFakeJwtAuthToken,
   fakePdrFactory,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
@@ -78,7 +79,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
 
   // add fake elasticsearch index
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   // create a fake bucket
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();

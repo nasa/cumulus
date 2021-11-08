@@ -25,8 +25,8 @@ const {
 } = sfStarter;
 
 class stubConsumer {
-  async consume() {
-    return 9;
+  consume() {
+    return Promise.resolve(9);
   }
 }
 

@@ -1,0 +1,17 @@
+{
+  "title": "LzardsBackupConfig",
+  "description": "Describes config options for the LZARDS backup task",
+  "type": "object",
+  "properties": {
+    "urlType": {
+      "description": "The type of access URL to pass to LZARDS: S3 direct access OR cloudfront",
+      "type": "string",
+      "default": "s3",
+      "enum": ["s3", "cloudfront"]
+    },
+    "cloudfrontEndpoint": {
+      "description": "cloudfront endpoint URL/host. Required if urlType is cloudfront",
+      "type": "string"
+    }
+  }
+}

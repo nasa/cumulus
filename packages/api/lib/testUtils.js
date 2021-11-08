@@ -328,7 +328,8 @@ async function createFakeJwtAuthToken({ accessTokenModel, username }) {
  * @param {number} maxReceiveCount
  *   Maximum number of times message can be removed before being sent to DLQ
  * @param {string} visibilityTimeout - visibility timeout for queue messages
- * @returns {Object} - {deadLetterQueueUrl: <url>, queueUrl: <url>} queues created
+ * @returns {Object}
+ *   - {deadLetterQueueUrl: <url>, queueName: <string>, queueUrl: <url>}
  */
 async function createSqsQueues(
   queueNamePrefix,
@@ -366,7 +367,7 @@ async function createSqsQueues(
   };
 
   const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
-  return { deadLetterQueueUrl, queueUrl };
+  return { deadLetterQueueUrl, queueName, queueUrl };
 }
 
 /**

@@ -5,8 +5,14 @@ const test = require('ava');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
+const { getQueueNameFromUrl, receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
+const {
+  createBucket,
+  s3ObjectExists,
+  s3PutObject,
+} = require('@cumulus/aws-client/S3');
+const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 
 const { updateSqsQueue } = require('..');
 
@@ -180,6 +186,9 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
 });
 
 test('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
+  process.env.system_bucket = randomString();
+  await createBucket(process.env.system_bucket);
+
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
@@ -232,4 +241,42 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
   await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+});
+
+test.serial('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
+  process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
+  await createBucket(process.env.system_bucket);
+
+  const sqsQueues = await createSqsQueues(randomString());
+  const msgBody = JSON.stringify({ testdata: randomString() });
+
+  await awsServices.sqs().sendMessage({
+    QueueUrl: sqsQueues.queueUrl, MessageBody: msgBody,
+  }).promise();
+  const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
+  const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
+  const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];
+
+  const eventSource = createEventSource({ messageId, receiptHandle, queueUrl: sqsQueues.queueUrl });
+  const eventMessage = createCloudwatchEventMessage({
+    status: 'SUCCEEDED',
+    eventSource,
+  });
+  const queueName = getQueueNameFromUrl(sqsQueues.queueUrl);
+  const key = getS3KeyForArchivedMessage(process.env.stackName, eventSource.messageId, queueName);
+
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: msgBody,
+  });
+
+  await updateSqsQueue(eventMessage);
+
+  // Check that item no longer exists
+  t.false(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }));
 });

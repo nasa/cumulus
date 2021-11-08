@@ -7,16 +7,16 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 
-const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
-const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
@@ -49,7 +49,7 @@ test.before(async () => {
 
   await Promise.all([
     accessTokenModel.createTable(),
-    bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias),
+    bootstrapElasticSearch('fakehost', esIndex, esAlias),
     providerModel.createTable(),
   ]);
 

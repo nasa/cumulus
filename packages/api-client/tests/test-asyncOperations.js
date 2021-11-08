@@ -16,10 +16,10 @@ test('getAsyncOperation calls the callback with the expected object and returns 
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
 
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await asyncOperations.getAsyncOperation({
@@ -28,7 +28,38 @@ test('getAsyncOperation calls the callback with the expected object and returns 
     callback,
   });
 
-  t.deepEqual(JSON.parse(result.body), { foo: 'bar' });
+  t.deepEqual(result, { foo: 'bar' });
+});
+
+test('deleteAsyncOperation calls the callback with the expected object and returns the parsed response', async (t) => {
+  const prefix = 'unitTestStack';
+  const asyncOperationId = 'id-1234';
+
+  const expected = {
+    prefix,
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/{proxy+}',
+      path: `/asyncOperations/${asyncOperationId}`,
+    },
+  };
+  const resultBody = {
+    foo: 'bar',
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+
+    return { body: JSON.stringify(resultBody) };
+  };
+
+  const result = await asyncOperations.deleteAsyncOperation({
+    prefix,
+    asyncOperationId,
+    callback,
+  });
+
+  t.deepEqual(JSON.parse(result.body), resultBody);
 });
 
 test('listAsyncOperations calls the callback with the expected object and returns the parsed response', async (t) => {
@@ -45,10 +76,10 @@ test('listAsyncOperations calls the callback with the expected object and return
     },
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(configObject, expected);
 
-    return { body: '{ "foo": "bar" }' };
+    return Promise.resolve({ body: '{ "foo": "bar" }' });
   };
 
   const result = await asyncOperations.listAsyncOperations({

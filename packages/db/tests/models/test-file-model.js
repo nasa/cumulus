@@ -10,9 +10,8 @@ const {
   fakeCollectionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `file_${cryptoRandomString({ length: 10 })}`;
 

@@ -26,7 +26,7 @@ test.before(async () => {
   }).promise();
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.client = awsServices.dynamodbDocClient();
 });
 
@@ -153,9 +153,9 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
   )));
 
   let totalResults = [];
-  const testProcessItems = async (scanResults) => {
+  const testProcessItems = (scanResults) => {
     totalResults = totalResults.concat(scanResults);
-    return totalResults;
+    return Promise.resolve(totalResults);
   };
 
   await DynamoDb.parallelScan({
@@ -172,9 +172,9 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
 test.serial('DynamoDb.parallelScan() retries on DynamoDB scan failure', async (t) => {
   const totalSegments = 10;
   let results = [];
-  const testProcessItems = async (items) => {
+  const testProcessItems = (items) => {
     results = results.concat(items);
-    return results;
+    return Promise.resolve(results);
   };
 
   const scanPromiseStub = sinon.stub();

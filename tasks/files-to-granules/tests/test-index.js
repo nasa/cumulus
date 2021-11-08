@@ -9,7 +9,7 @@ const {
   randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { s3 } = require('@cumulus/aws-client/services');
-const { parseS3Uri, recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
+const { recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');
 const { filesToGranules } = require('..');
 const readFile = promisify(fs.readFile);
 
@@ -30,7 +30,7 @@ test.beforeEach(async (t) => {
     const testdata = randomId('testdata');
     await s3PutObject({
       Bucket: t.context.bucket,
-      Key: parseS3Uri(f.filename).Key,
+      Key: f.key,
       Body: testdata,
     });
     // only new files for the granule have the size added
@@ -41,9 +41,7 @@ test.beforeEach(async (t) => {
   await Promise.all(updates);
 });
 
-test.afterEach(async (t) => {
-  recursivelyDeleteS3Bucket(t.context.bucket);
-});
+test.afterEach(async (t) => await recursivelyDeleteS3Bucket(t.context.bucket));
 
 test('files-to-granules transforms files array to granules object', async (t) => {
   const event = t.context.payload;

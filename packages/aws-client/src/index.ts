@@ -13,4 +13,5 @@ export * as utils from './utils';
 export import client = require('./client');
 export import DynamoDbSearchQueue = require('./DynamoDbSearchQueue');
 export import S3ListObjectsV2Queue = require('./S3ListObjectsV2Queue');
+export import S3ObjectStore = require('./S3ObjectStore');
 /* eslint-enable @typescript-eslint/no-unused-vars */

@@ -18,10 +18,9 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
 } = require('@cumulus/db');
 
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 const { handler } = require('../dist/lambda');
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 const workflow = cryptoRandomString({ length: 10 });

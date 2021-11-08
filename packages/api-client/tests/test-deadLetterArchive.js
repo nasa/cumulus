@@ -16,9 +16,10 @@ test('postRecoverCumulusMessages call the callback with the expected object when
       path: '/deadLetterArchive/recoverCumulusMessages',
       body: undefined,
     },
+    expectedStatusCode: 202,
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({
@@ -43,9 +44,10 @@ test('postRecoverCumulusMessages calls the callback with the expected object', a
       path: '/deadLetterArchive/recoverCumulusMessages',
       body: JSON.stringify(payload),
     },
+    expectedStatusCode: 202,
   };
 
-  const callback = async (configObject) => {
+  const callback = (configObject) => {
     t.deepEqual(expected, configObject);
   };
   await t.notThrowsAsync(deadLetterArchiveApi.postRecoverCumulusMessages({

@@ -30,7 +30,7 @@ async function run(_options) {
   }
 
   const updateItemPromises = updateItems.map((item) => manager.create(item));
-  return Promise.all(updateItemPromises);
+  return await Promise.all(updateItemPromises);
 }
 
 module.exports.name = 'migration_4';

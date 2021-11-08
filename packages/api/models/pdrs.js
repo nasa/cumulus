@@ -1,6 +1,5 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
 const {
   getMessageExecutionArn,
@@ -21,10 +20,14 @@ const {
   getMessageWorkflowStartTime,
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
+const Logger = require('@cumulus/logger');
 const pvl = require('@cumulus/pvl');
+
 const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const pdrSchema = require('./schemas').pdr;
+
+const logger = new Logger({ sender: '@cumulus/api/models/pdrs' });
 
 class Pdr extends Manager {
   constructor() {
@@ -75,7 +78,7 @@ class Pdr extends Manager {
     const pdr = getMessagePdr(message);
 
     if (!pdr) { // We got a message with no PDR (OK)
-      log.info('No PDRs to process on the message');
+      logger.info('No PDRs to process on the message');
       return undefined;
     }
 
@@ -126,7 +129,10 @@ class Pdr extends Manager {
   async storePdrFromCumulusMessage(cumulusMessage, updatedAt) {
     const pdrRecord = this.generatePdrRecord(cumulusMessage, updatedAt);
     if (!pdrRecord) return undefined;
-    const updateParams = await this.generatePdrUpdateParamsFromRecord(pdrRecord);
+
+    logger.info(`About to write PDR ${pdrRecord.pdrName} to DynamoDB`);
+
+    const updateParams = this.generatePdrUpdateParamsFromRecord(pdrRecord);
 
     // createdAt comes from cumulus_meta.workflow_start_time
     // records should *not* be updating from createdAt times that are *older* start
@@ -136,11 +142,13 @@ class Pdr extends Manager {
       updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
     try {
-      return await this.dynamodbDocClient.update(updateParams).promise();
+      const updateResponse = await this.dynamodbDocClient.update(updateParams).promise();
+      logger.info(`Successfully wrote PDR ${pdrRecord.pdrName} to DynamoDB`);
+      return updateResponse;
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         const executionArn = getMessageExecutionArn(cumulusMessage);
-        log.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
+        logger.info(`Did not process delayed event for PDR: ${pdrRecord.pdrName} (execution: ${executionArn})`);
         return undefined;
       }
       throw error;
@@ -153,7 +161,7 @@ class Pdr extends Manager {
    * @param {Object} pdrRecord - the PDR record
    * @returns {Object} DynamoDB update parameters
    */
-  async generatePdrUpdateParamsFromRecord(pdrRecord) {
+  generatePdrUpdateParamsFromRecord(pdrRecord) {
     const mutableFieldNames = Object.keys(pdrRecord);
     const updateParams = this._buildDocClientUpdateParams({
       item: pdrRecord,
@@ -168,7 +176,7 @@ class Pdr extends Manager {
    */
   async deletePdrs() {
     const pdrs = await this.scan();
-    return Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
+    return await Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
   }
 }
 

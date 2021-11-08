@@ -35,6 +35,21 @@ variable "cmr_oauth_provider" {
   default = "earthdata"
 }
 
+variable "csdap_client_id" {
+  type        = string
+  description = "The csdap client id"
+}
+
+variable "csdap_client_password" {
+  type        = string
+  description = "The csdap client password"
+}
+
+variable "csdap_host_url" {
+  type        = string
+  description = "The csdap host url"
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -149,12 +164,24 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "api_reserved_concurrency" {
+  type = number
+  default = 5
+  description = "Archive API Lambda reserved concurrency"
+}
+
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
 }
 
-variable "distribution_url" {
+variable "cumulus_distribution_url" {
+  type        = string
+  default     = null
+  description = "The url of cumulus distribution API Gateway endpoint"
+}
+
+variable "tea_distribution_url" {
   type    = string
   default = null
 }
@@ -169,58 +196,10 @@ variable "ecs_include_docker_cleanup_cronjob" {
   default = false
 }
 
-variable "ems_datasource" {
-  type        = string
-  description = "the data source of EMS reports"
-  default     = "UAT"
-}
-
-variable "ems_host" {
-  type        = string
-  description = "EMS host"
-  default     = "change-ems-host"
-}
-
-variable "ems_path" {
-  type        = string
-  description = "EMS host directory path for reports"
-  default     = "/"
-}
-
-variable "ems_port" {
-  type        = number
-  description = "EMS host port"
-  default     = 22
-}
-
-variable "ems_private_key" {
-  type        = string
-  description = "the private key file used for sending reports to EMS"
-  default     = "ems-private.pem"
-}
-
-variable "ems_provider" {
-  type        = string
-  description = "the provider used for sending reports to EMS"
-  default     = "CUMULUS"
-}
-
-variable "ems_retention_in_days" {
-  type        = number
-  description = "the retention in days for reports and s3 server access logs"
-  default     = 30
-}
-
-variable "ems_submit_report" {
-  type        = bool
-  description = "toggle whether the reports will be sent to EMS"
-  default     = false
-}
-
-variable "ems_username" {
-  type        = string
-  description = "the username used for sending reports to EMS"
-  default     = "cumulus"
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {
@@ -326,22 +305,22 @@ variable "pdr_node_name_provider_bucket" {
   default = "cumulus-sandbox-pdr-node-name-provider"
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
-}
-
-variable "ems_deploy" {
-  description = "If true, deploys the EMS reporting module"
-  type        = bool
-  default     = true
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "32"
+  default = "36"
 }
 
 variable "cumulus_process_activity_version" {
@@ -359,7 +338,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "12"
+    default = "13"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
@@ -408,7 +387,7 @@ variable "database_app_user_pw" {
   description = "ORCA application database user password."
 }
 
-variable "drop_database" {
+variable "orca_drop_database" {
   default = "False"
   type = string
   description = "Tells ORCA to drop the database on deployments."
@@ -418,6 +397,11 @@ variable "ddl_dir" {
   default = "ddl/"
   type = string
   description = "The location of the ddl dir that contains the sql to create the application database."
+}
+
+variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
 }
 
 variable "lambda_timeout" {
@@ -450,4 +434,16 @@ variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
+}
+
+variable "cmr_custom_host" {
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
+  type        = string
+  default     = null
+}
+
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = true
 }

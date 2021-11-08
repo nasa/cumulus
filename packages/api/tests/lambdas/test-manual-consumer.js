@@ -15,7 +15,7 @@ const Kinesis = awsServices.kinesis();
 let describeStreamStub;
 
 test.before(() => {
-  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(async () => ({
+  describeStreamStub = sinon.stub(kinesisUtils, 'describeStream').callsFake(() => Promise.resolve({
     StreamDescription: {
       StreamARN: 'fake-stream-arn',
     },
@@ -216,7 +216,7 @@ test.serial('processShard returns number of records processed from shard', async
     }),
   });
   const logError = sinon.spy(log, 'error');
-  const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', async () => [Promise.resolve(2), Promise.resolve(3)]);
+  const restoreProcessShard = manualConsumer.__set__('iterateOverShardRecursively', () => [Promise.resolve(2), Promise.resolve(3)]);
   const output = await manualConsumer.processShard('fakestream', 'fake-stream-arn', 'fakeshard');
   logError.restore();
   restoreProcessShard();
@@ -247,7 +247,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
       },
     }),
   });
-  const restoreHandleShard = manualConsumer.__set__('processShard', async () => Promise.resolve(1));
+  const restoreHandleShard = manualConsumer.__set__('processShard', () => Promise.resolve(1));
   const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', 'fake-arn', [], {});
   restoreHandleShard();
   restoreKinesis();
@@ -255,7 +255,7 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShard
 });
 
 test.serial('processStream returns records processed', async (t) => {
-  const restoreProcessStream = manualConsumer.__set__('iterateOverStreamRecursivelyToDispatchShards', async () => [Promise.resolve(12), Promise.resolve(13)]);
+  const restoreProcessStream = manualConsumer.__set__('iterateOverStreamRecursivelyToDispatchShards', () => [Promise.resolve(12), Promise.resolve(13)]);
   const output = await manualConsumer.processStream('fakestream', 'faketimestamp');
   restoreProcessStream();
   t.is(output, 'Processed 25 kinesis records from stream fakestream');
@@ -264,14 +264,12 @@ test.serial('processStream returns records processed', async (t) => {
 test.serial('processStream does not throw error if describeStream throws', async (t) => {
   const restoreProcessStream = manualConsumer.__set__(
     'iterateOverStreamRecursivelyToDispatchShards',
-    async () => [Promise.resolve(5)]
+    () => [Promise.resolve(5)]
   );
 
   describeStreamStub.restore();
   describeStreamStub = sinon.stub(kinesisUtils, 'describeStream')
-    .callsFake(async () => {
-      throw new Error('error');
-    });
+    .callsFake(() => Promise.reject(new Error('error')));
 
   try {
     await t.notThrowsAsync(

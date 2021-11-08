@@ -14,21 +14,21 @@ test('getExecutionWithStatus() will retry if the execution does not exist', asyn
   const callback = (() => {
     let callCount = 0;
 
-    return async () => {
+    return () => {
       callCount += 1;
 
       if (callCount === 1) {
-        return {
+        return Promise.resolve({
           body: JSON.stringify({ statusCode: 404 }),
-        };
+        });
       }
 
-      return {
+      return Promise.resolve({
         body: JSON.stringify({
           statusCode: 200,
           status: 'completed',
         }),
-      };
+      });
     };
   })();
 

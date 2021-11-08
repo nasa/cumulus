@@ -3,9 +3,12 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
-const { localStackConnectionEnv } = require('../../dist/config');
-const { getKnexClient } = require('../../dist/connection');
-const { BasePgModel } = require('../../dist/models/base');
+const {
+  localStackConnectionEnv,
+  createRejectableTransaction,
+  getKnexClient,
+  BasePgModel,
+} = require('../../dist');
 
 test.before(async (t) => {
   t.context.knex = await getKnexClient({
@@ -43,7 +46,8 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  const queryResult = await knex.transaction(
+  const queryResult = await createRejectableTransaction(
+    knex,
     (trx) => basePgModel.create(trx, { info })
   );
 
@@ -74,7 +78,7 @@ test('BasePgModel.get() works with knex transaction', async (t) => {
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
   t.like(
-    await knex.transaction((trx) => basePgModel.get(trx, { info })),
+    await createRejectableTransaction(knex, (trx) => basePgModel.get(trx, { info })),
     {
       info,
     }
@@ -85,7 +89,7 @@ test('BasePgModel.get() throws an error when a record is not found', async (t) =
   const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 10 });
   await t.throwsAsync(
-    knex.transaction((trx) => basePgModel.get(trx, { info })),
+    createRejectableTransaction(knex, (trx) => basePgModel.get(trx, { info })),
     { instanceOf: RecordDoesNotExist }
   );
 });
@@ -109,7 +113,8 @@ test('BasePgModel.getRecordCumulusId() works with knex transaction', async (t) =
     .insert({ info })
     .returning('cumulus_id');
   t.is(
-    await knex.transaction(
+    await createRejectableTransaction(
+      knex,
       (trx) => basePgModel.getRecordCumulusId(trx, { info })
     ),
     recordCumulusId
@@ -125,6 +130,37 @@ test('BasePgModel.getRecordCumulusId() throws RecordDoesNotExist error for missi
   );
 });
 
+test('BasePgModel.getRecordsCumulusIds() returns correct values', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordsCumulusIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+  t.is(recordsCumulusIds.length, 2);
+  t.deepEqual(
+    await basePgModel.getRecordsCumulusIds(knex, ['info'], [info1, info2]),
+    recordsCumulusIds
+  );
+});
+
+test('BasePgModel.getRecordsCumulusIds() works with knex transaction', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const recordsCumulusIds = await knex(tableName)
+    .insert([{ info: info1 }, { info: info2 }])
+    .returning('cumulus_id');
+  t.is(recordsCumulusIds.length, 2);
+  t.deepEqual(
+    await createRejectableTransaction(
+      knex,
+      (trx) => basePgModel.getRecordsCumulusIds(trx, ['info'], [info1, info2])
+    ),
+    recordsCumulusIds
+  );
+});
+
 test('BasePgModel.exists() correctly returns true', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -136,7 +172,8 @@ test('BasePgModel.exists() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   await knex(tableName).insert({ info });
-  t.true(await knex.transaction(
+  t.true(await createRejectableTransaction(
+    knex,
     (trx) => basePgModel.exists(trx, { info })
   ));
 });
@@ -189,11 +226,13 @@ test('BasePgModel.count() returns valid counts', async (t) => {
     .insert({ info: 3 })
     .returning('cumulus_id');
 
-  t.deepEqual(await knex.transaction(
+  t.deepEqual(await createRejectableTransaction(
+    knex,
     (trx) => basePgModel.count(trx, [[{ info: 2 }]])
   ), [{ count: '1' }]);
 
-  t.deepEqual(await knex.transaction(
+  t.deepEqual(await createRejectableTransaction(
+    knex,
     (trx) => basePgModel.count(trx, [['info', '=', '2']])
   ), [{ count: '1' }]);
 });
@@ -206,7 +245,8 @@ test('BasePgModel.delete() works with knex transaction', async (t) => {
     .insert({ info })
     .returning('cumulus_id');
 
-  t.is(await knex.transaction(
+  t.is(await createRejectableTransaction(
+    knex,
     (trx) => basePgModel.delete(trx, { cumulus_id: recordCumulusId })
   ), 1);
 
@@ -255,8 +295,8 @@ test('BasePgModel.search() works with knex transaction', async (t) => {
     knex(tableName).insert(recordBody),
   ]);
 
-  const searchResponse = await knex.transaction(async (trx) =>
-    basePgModel.search(trx, recordBody));
+  const searchResponse = await createRejectableTransaction(knex, async (trx) =>
+    await basePgModel.search(trx, recordBody));
 
   t.is(searchResponse.length, 3);
 
@@ -328,8 +368,8 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
   const newInfo = cryptoRandomString({ length: 5 });
 
   // Use existing transation rather than knex client
-  await knex.transaction(async (trx) =>
-    basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
+  await createRejectableTransaction(knex, async (trx) =>
+    await basePgModel.update(trx, { cumulus_id: cumulusId }, { info: newInfo }));
 
   const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(

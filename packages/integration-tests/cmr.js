@@ -5,6 +5,7 @@ const got = require('got');
 const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 const { getSearchUrl } = require('@cumulus/cmr-client');
 
@@ -227,15 +228,15 @@ function generateCmrXml(granule, collection, additionalUrls) {
  */
 async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
   const xml = generateCmrXml(granule, collection, additionalUrls);
-  const granuleFiles = granule.files.map((f) => f.filename);
+  const granuleFiles = granule.files.map((f) => `s3://${f.bucket}/${f.key}`);
 
-  const stagingDir = granule.files[0].fileStagingDir;
+  const stagingDir = 'file-staging';
 
-  const filename = `${stagingDir}/${granule.granuleId}.cmr.xml`;
+  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.xml`;
 
   const params = {
     Bucket: bucket,
-    Key: filename,
+    Key: fileKey,
     Body: xml,
     ContentType: 'application/xml',
     Tagging: `granuleId=${granule.granuleId}`,
@@ -243,8 +244,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 
   await s3().putObject(params).promise();
 
-  granuleFiles.push(`s3://${bucket}/${filename}`);
-  log.info(`s3://${bucket}/${filename}`);
+  granuleFiles.push(`s3://${bucket}/${fileKey}`);
+  log.info(`s3://${bucket}/${fileKey}`);
   log.info(granuleFiles);
   return granuleFiles;
 }
@@ -257,7 +258,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  */
 function metadataFormatToVersion(typeStr) {
   try {
-    return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
+    return typeStr.match(/umm_json_v(.*)/)[1].replace(/_/g, '.');
   } catch (error) {
     return '';
   }
@@ -332,10 +333,12 @@ async function getOnlineResourcesUMMG(cmrLink) {
  */
 async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
   if (cmrMetadataFormat === 'echo10') {
-    return getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
+    console.log(cmrLink);
+    return await getOnlineResourcesECHO10(cmrLink.replace(/(.echo10)$/, '.json'));
   }
   if (isUMMGMetadataFormat(cmrMetadataFormat)) {
-    return getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
+    console.log(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
+    return await getOnlineResourcesUMMG(`${getSearchUrl()}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
 }
@@ -376,7 +379,8 @@ async function generateAndStoreCmrUmmJson(
   }
 
   const defaultVersion = 1.4;
-  if (Number(versionString) > defaultVersion) {
+  // convert version string like 1.6.2 to 1.62 for comparision
+  if (Number(versionString.replace('.', '_').replace(/\./g, '').replace('_', '.')) > defaultVersion) {
     jsonObject.MetadataSpecification = {
       URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
       Name: 'UMM-G',
@@ -384,13 +388,13 @@ async function generateAndStoreCmrUmmJson(
     };
   }
 
-  const stagingDir = granule.files[0].fileStagingDir;
+  const stagingDir = 'file-staging';
 
-  const filename = `${stagingDir}/${granule.granuleId}.cmr.json`;
+  const fileKey = `${stagingDir}/${granule.granuleId}.cmr.json`;
 
   const params = {
     Bucket: bucket,
-    Key: filename,
+    Key: fileKey,
     Body: JSON.stringify(jsonObject),
     ContentType: 'application/json',
     Tagging: `granuleId=${granule.granuleId}`,
@@ -398,9 +402,9 @@ async function generateAndStoreCmrUmmJson(
 
   await s3().putObject(params).promise();
 
-  const granuleFiles = granule.files.map((f) => f.filename);
-  granuleFiles.push(`s3://${bucket}/${filename}`);
-  log.info(`s3://${bucket}/${filename}`);
+  const granuleFiles = granule.files.map((f) => buildS3Uri(f.bucket, f.key));
+  granuleFiles.push(`s3://${bucket}/${fileKey}`);
+  log.info(`s3://${bucket}/${fileKey}`);
   log.info(granuleFiles);
   return granuleFiles;
 }

@@ -10,12 +10,11 @@ const {
   fakeExecutionRecordFactory,
   fakeProviderRecordFactory,
   fakePdrRecordFactory,
-  tableNames,
+  TableNames,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `pdr_${cryptoRandomString({ length: 10 })}`;
 
@@ -75,7 +74,7 @@ test('PdrPgModel.upsert() does not update record with same execution if progress
 
   pdrRecord.status = 'running';
   pdrRecord.progress = 75;
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.progress, 75);
@@ -103,7 +102,7 @@ test('PdrPgModel.upsert() overwrites record with same execution if progress is g
 
   pdrRecord.status = 'running';
   pdrRecord.progress = 25;
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.progress, 25);
@@ -135,7 +134,7 @@ test('PdrPgModel.upsert() updates a "completed" record to "running" if execution
   pdrRecord.status = 'completed';
   pdrRecord.created_at = new Date(testDate);
 
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.status, 'completed');
@@ -173,7 +172,7 @@ test('PdrPgModel.upsert() does not update a "completed" record to "running" if e
   pdrRecord.status = 'completed';
   pdrRecord.created_at = new Date(testDate);
 
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.status, 'completed');
@@ -211,7 +210,7 @@ test('PdrPgModel.upsert() does not update a final (failed) record to a final sta
   pdrRecord.status = 'failed';
   pdrRecord.created_at = new Date(testDate);
 
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.status, 'failed');
@@ -249,7 +248,7 @@ test('PdrPgModel.upsert() does update a final (failed) record to a final state (
   pdrRecord.status = 'failed';
   pdrRecord.created_at = new Date(testDate);
 
-  const [insertResult] = await knex(tableNames.pdrs)
+  const [insertResult] = await knex(TableNames.pdrs)
     .insert(pdrRecord)
     .returning('*');
   t.is(insertResult.status, 'failed');

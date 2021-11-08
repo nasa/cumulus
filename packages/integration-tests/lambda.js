@@ -3,7 +3,7 @@
 const { lambda } = require('@cumulus/aws-client/services');
 
 async function getEventSourceMapping(uuid) {
-  return lambda().getEventSourceMapping({ UUID: uuid }).promise();
+  return await lambda().getEventSourceMapping({ UUID: uuid }).promise();
 }
 
 /**
@@ -43,7 +43,7 @@ async function getLambdaAliases(lambdaFunctionName) {
     MaxItems: 10000,
     FunctionName: lambdaFunctionName,
   };
-  return getAllPages(config, 'Aliases', lambda().listAliases.bind(lambda()));
+  return await getAllPages(config, 'Aliases', lambda().listAliases.bind(lambda()));
 }
 
 /**
@@ -56,7 +56,7 @@ async function getLambdaAliases(lambdaFunctionName) {
  */
 async function getLambdaVersions(lambdaFunctionName) {
   const config = { FunctionName: lambdaFunctionName };
-  return getAllPages(config, 'Versions',
+  return await getAllPages(config, 'Versions',
     lambda().listVersionsByFunction.bind(lambda()));
 }
 

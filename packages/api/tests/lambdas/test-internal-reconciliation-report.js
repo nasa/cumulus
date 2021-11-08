@@ -10,16 +10,17 @@ const {
 const awsServices = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const { fakeCollectionFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
 const {
   internalRecReportForCollections,
   internalRecReportForGranules,
 } = require('../../lambdas/internal-reconciliation-report');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const models = require('../../models');
-const indexer = require('../../es/indexer');
 const { deconstructCollectionId } = require('../../lib/utils');
 
 let esAlias;

@@ -139,12 +139,11 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
     const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
     const fullTaskOutput = await pullStepFunctionEvent(parsedPayload);
 
-    const fileUrl = fullTaskOutput.payload.granules[0].files[0].filename;
-    const parsedFileUrl = S3.parseS3Uri(fileUrl);
+    const file = fullTaskOutput.payload.granules[0].files[0];
 
     await pAll(
       [
-        () => S3.deleteS3Object(parsedFileUrl.Bucket, parsedFileUrl.Key),
+        () => S3.deleteS3Object(file.bucket, file.key),
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),
         () => deleteCollection({
           prefix,

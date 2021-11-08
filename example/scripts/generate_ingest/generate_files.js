@@ -29,9 +29,9 @@ const uploadTestFiles = async (Bucket, path, batches) => {
     batchCount += 1;
     console.log(`Uploading batch ${batchCount}`);
     const uploadBatchPromises = new Array(BATCHSIZE).fill().map(
-      () => {
+      async () => {
         const granString = randomStringFromRegex(granuleRegExp);
-        return Promise.all(['hdf', 'jpg', 'hdf.met'].map((extension) => s3PutObject({
+        return await Promise.all(['hdf', 'jpg', 'hdf.met'].map((extension) => s3PutObject({
           Bucket,
           Key: `${path}/${granString}.${extension}`,
           Body: 'fake_test_data',

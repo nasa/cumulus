@@ -48,6 +48,13 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
+        options: {
+          esModule: false
+        },
+      },
     ],
   },
   devtool: 'inline-source-map',
@@ -62,7 +69,9 @@ module.exports = {
     ],
   },
   plugins: [
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   optimization: {
     nodeEnv: false,

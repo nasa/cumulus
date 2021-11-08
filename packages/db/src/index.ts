@@ -1,8 +1,11 @@
-export { default as Knex } from 'knex';
+import * as path from 'path';
+
+export { Knex } from 'knex';
 export {
   createTestDatabase,
   deleteTestDatabase,
   destroyLocalTestDb,
+  fakeAsyncOperationRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
@@ -15,7 +18,9 @@ export {
 
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
-export { tableNames } from './tables';
+export { createRejectableTransaction } from './database';
+export { TableNames } from './tables';
+export const migrationDir = path.join(__dirname, 'migrations');
 
 export {
   validateProviderHost,
@@ -58,16 +63,35 @@ export {
 export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
+  translatePostgresFileToApiFile,
 } from './translate/file';
 export { translateApiCollectionToPostgresCollection } from './translate/collections';
 export {
   translateApiProviderToPostgresProvider,
 } from './translate/providers';
 export { translateApiRuleToPostgresRule } from './translate/rules';
-export { translateApiExecutionToPostgresExecution } from './translate/executions';
-export { translateApiGranuleToPostgresGranule } from './translate/granules';
+export {
+  translateApiExecutionToPostgresExecution,
+  translatePostgresExecutionToApiExecution,
+} from './translate/executions';
+export {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} from './translate/granules';
+export { translateApiPdrToPostgresPdr } from './translate/pdrs';
 
 export {
+  executionArnsFromGranuleIdsAndWorkflowNames,
+  newestExecutionArnFromGranuleIdWorkflowName,
+  getWorkflowNameIntersectFromGranuleIds,
+  getApiExecutionCumulusIds,
+  getApiGranuleExecutionCumulusIdsByExecution,
+  getExecutionArnsByGranuleCumulusId,
+} from './lib/execution';
+
+export {
+  getApiGranuleCumulusIds,
+  getApiGranuleExecutionCumulusIds,
   upsertGranuleWithExecutionJoinRecord,
 } from './lib/granule';
 

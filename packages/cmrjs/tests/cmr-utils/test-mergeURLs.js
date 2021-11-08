@@ -184,8 +184,8 @@ test('Does Complicated merging', (t) => {
     },
     {
       URL: 'https://replaced/path/to/metadata.cmr.xml',
-      Type: 'keeps Type: ORIGINAL',
-      MimeType: 'also from original: text/xml',
+      Type: 'ORIGINAL Type',
+      MimeType: 'from original: text/xml',
     },
     {
       URL: 'https://original/path/to/passthrough.jpg',
@@ -197,7 +197,7 @@ test('Does Complicated merging', (t) => {
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'from Updated',
-      Type: 'SHOULD BE IGNORED: GET DATA',
+      Type: 'GET DATA VIA DIRECT ACCESS',
     },
     {
       URL: 's3://new/path/to/data.hdf',
@@ -226,8 +226,8 @@ test('Does Complicated merging', (t) => {
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'from Updated',
-      Type: 'keeps Type: ORIGINAL',
-      MimeType: 'also from original: text/xml',
+      Type: 'GET DATA VIA DIRECT ACCESS',
+      MimeType: 'from original: text/xml',
     },
   ];
 

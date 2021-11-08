@@ -25,10 +25,13 @@ const {
 } = require('@cumulus/message/workflows');
 const isNil = require('lodash/isNil');
 const { removeNilProperties } = require('@cumulus/common/util');
+const Logger = require('@cumulus/logger');
 
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
+
+const logger = new Logger({ sender: '@cumulus/api/models/executions' });
 
 class Execution extends Manager {
   constructor() {
@@ -123,7 +126,7 @@ class Execution extends Manager {
       }
       return Promise.resolve();
     }));
-    return Promise.all(updatePromises);
+    return await Promise.all(updatePromises);
   }
 
   /**
@@ -131,7 +134,9 @@ class Execution extends Manager {
    */
   async deleteExecutions() {
     const executions = await this.scan();
-    return Promise.all(executions.Items.map((execution) => super.delete({ arn: execution.arn })));
+    return await Promise.all(executions.Items.map(
+      (execution) => super.delete({ arn: execution.arn })
+    ));
   }
 
   /**
@@ -148,6 +153,30 @@ class Execution extends Manager {
   }
 
   /**
+   * Store an execution record
+   *
+   * @param {Object} record - an execution record
+   * @returns {Promise}
+   */
+  async storeExecutionRecord(record) {
+    logger.info(`About to write execution ${record.arn} to DynamoDB`);
+
+    // TODO: Refactor this all to use model.update() to avoid having to manually call
+    // schema validation and the actual client.update() method.
+    await this.constructor.recordIsValid(record, this.schema, this.removeAdditional);
+
+    const mutableFieldNames = this._getMutableFieldNames(record);
+    const updateParams = this._buildDocClientUpdateParams({
+      item: record,
+      itemKey: { arn: record.arn },
+      mutableFieldNames,
+    });
+
+    await this.dynamodbDocClient.update(updateParams).promise();
+    logger.info(`Successfully wrote execution ${record.arn} to DynamoDB`);
+  }
+
+  /**
    * Generate and store an execution record from a Cumulus message.
    *
    * @param {Object} cumulusMessage - Cumulus workflow message
@@ -156,19 +185,7 @@ class Execution extends Manager {
    */
   async storeExecutionFromCumulusMessage(cumulusMessage, updatedAt) {
     const executionItem = Execution.generateRecord(cumulusMessage, updatedAt);
-
-    // TODO: Refactor this all to use model.update() to avoid having to manually call
-    // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(executionItem, this.schema, this.removeAdditional);
-
-    const mutableFieldNames = this._getMutableFieldNames(executionItem);
-    const updateParams = this._buildDocClientUpdateParams({
-      item: executionItem,
-      itemKey: { arn: executionItem.arn },
-      mutableFieldNames,
-    });
-
-    await this.dynamodbDocClient.update(updateParams).promise();
+    await this.storeExecutionRecord(executionItem);
   }
 }
 

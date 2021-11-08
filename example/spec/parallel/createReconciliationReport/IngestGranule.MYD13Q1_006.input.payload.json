@@ -31,11 +31,5 @@
         }
       ]
     }
-  ],
-  "pdr": {
-    "path": "cumulus-test-data/pdrs",
-    "size": 596,
-    "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.PDR",
-    "time": 1520873050000
-  }
+  ]
 }

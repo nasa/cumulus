@@ -2,7 +2,7 @@ import Logger from '@cumulus/logger';
 import pRetry from 'p-retry';
 import got from 'got';
 
-import { bucketMapResponse } from './types';
+import { BucketMapResponse } from './types';
 
 const log = new Logger({ sender: '@cumulus/tea-map-cache/tea' });
 
@@ -25,7 +25,7 @@ export const getTeaBucketPath = async (params: {
     teaEndPoint,
     retries = 5,
   } = params;
-  return pRetry(
+  return await pRetry(
     async () => {
       let apiResponse;
       try {
@@ -39,7 +39,7 @@ export const getTeaBucketPath = async (params: {
         }
         throw error;
       }
-      const bucketMapList = <bucketMapResponse>JSON.parse(apiResponse.body);
+      const bucketMapList = <BucketMapResponse>JSON.parse(apiResponse.body);
       if (bucketMapList.length > 1) {
         throw new pRetry.AbortError(`BucketMap configured with multiple responses from ${bucket},
         this package cannot resolve a distirbution URL as configured for this bucket`);

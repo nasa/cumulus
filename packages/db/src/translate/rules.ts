@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { RuleRecord } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';

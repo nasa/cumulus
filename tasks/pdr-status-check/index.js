@@ -153,7 +153,7 @@ function describeExecutionStatus(executionArn) {
 async function checkPdrStatuses(event) {
   const executionArns = event.input.running || [];
 
-  return Promise.all(executionArns.map(describeExecutionStatus))
+  return await Promise.all(executionArns.map(describeExecutionStatus))
     .then(groupExecutionsByStatus)
     .then((groupedExecutions) => {
       const counter = getCounterFromEvent(event) + 1;
@@ -180,7 +180,7 @@ exports.checkPdrStatuses = checkPdrStatuses;
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-function handler(event, context) {
-  return cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context);
+async function handler(event, context) {
+  return await cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context);
 }
 exports.handler = handler;

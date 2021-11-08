@@ -7,10 +7,7 @@ const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const cloneDeep = require('lodash/cloneDeep');
 const isEqual = require('lodash/isEqual');
-const merge = require('lodash/merge');
 const Handlebars = require('handlebars');
-const uuidv4 = require('uuid/v4');
-const fs = require('fs-extra');
 const pRetry = require('p-retry');
 const pWaitFor = require('p-wait-for');
 const pMap = require('p-map');
@@ -18,16 +15,13 @@ const moment = require('moment');
 
 const {
   ecs,
-  sfn,
 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
-  templateKey,
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const ProvidersModel = require('@cumulus/api/models/providers');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
@@ -36,7 +30,6 @@ const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const rulesApi = require('./api/rules');
-const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const api = require('./api/api');
@@ -80,14 +73,12 @@ async function waitForAsyncOperationStatus({
   },
 }) {
   let operation;
-  return pRetry(
+  return await pRetry(
     async () => {
-      const response = await asyncOperationsApi.getAsyncOperation({
+      operation = await asyncOperationsApi.getAsyncOperation({
         prefix: stackName,
         asyncOperationId: id,
       });
-
-      operation = JSON.parse(response.body);
 
       if (operation.status === status) return operation;
       throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
@@ -204,96 +195,6 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
 }
 
 /**
- * Kick off a workflow execution
- *
- * @param {string} workflowArn - ARN for the workflow
- * @param {Object} workflowMsg - workflow message
- * @returns {Promise.<Object>} execution details: {executionArn, startDate}
- */
-async function startWorkflowExecution(workflowArn, workflowMsg) {
-  // Give this execution a unique name
-  workflowMsg.cumulus_meta.execution_name = uuidv4();
-  workflowMsg.cumulus_meta.workflow_start_time = Date.now();
-  workflowMsg.cumulus_meta.state_machine = workflowArn;
-
-  const workflowParams = {
-    stateMachineArn: workflowArn,
-    input: JSON.stringify(workflowMsg),
-    name: workflowMsg.cumulus_meta.execution_name,
-  };
-
-  return sfn().startExecution(workflowParams).promise();
-}
-
-/**
- * Start the workflow and return the execution Arn. Does not wait
- * for workflow completion.
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {Object} workflowMsg - workflow message
- * @returns {string} - executionArn
- */
-async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
-  const { arn: workflowArn } = await getJsonS3Object(
-    bucketName,
-    getWorkflowFileKey(stackName, workflowName)
-  );
-  const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
-
-  console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
-
-  return executionArn;
-}
-
-/**
- * Execute the given workflow.
- * Wait for workflow to complete to get the status
- * Return the execution arn and the workflow status.
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {Object} workflowMsg - workflow message
- * @param {number} [timeout=600] - number of seconds to wait for execution to complete
- * @returns {Object} - {executionArn: <arn>, status: <status>}
- */
-async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout = 600) {
-  const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
-
-  // Wait for the execution to complete to get the status
-  const status = await waitForCompletedExecution(executionArn, timeout);
-
-  return { status, executionArn };
-}
-
-/**
- * Test the given workflow and report whether the workflow failed or succeeded
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {string} inputFile - path to input JSON file
- * @returns {*} undefined
- */
-async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
-  try {
-    const rawInput = await fs.readFile(inputFile, 'utf8');
-    const parsedInput = JSON.parse(rawInput);
-    const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, parsedInput);
-
-    if (workflowStatus.status === 'SUCCEEDED') {
-      console.log(`Workflow ${workflowName} execution succeeded.`);
-    } else {
-      console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
-    }
-  } catch (error) {
-    console.log(`Error executing workflow ${workflowName}. Error: ${error}`);
-  }
-}
-
-/**
  * Set environment variables and read in seed files from dataDirectory
  *
  * @param {string} stackName - Cloud formation stack name
@@ -317,7 +218,7 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
  * @returns {Object} a collection
  */
 const loadCollection = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((collection) => buildCollection({ ...params, collection }));
 
 /**
@@ -327,14 +228,14 @@ const loadCollection = async (params = {}) =>
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} collections - List of collections to delete
  * @param {string} postfix - string that was appended to collection name
- * @returns {Promise.<number>} number of deleted collections
+ * @returns {Array<Object>} a list of the http responses
  */
 async function deleteCollections(stackName, bucketName, collections, postfix) {
   // setProcessEnvironment is not needed by this function, but other code
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
 
-  await Promise.all(
+  return await Promise.all(
     collections.map(
       ({ name, version }) => {
         const realName = postfix ? `${name}${postfix}` : name;
@@ -346,7 +247,6 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
       }
     )
   );
-  return collections.length;
 }
 
 /**
@@ -426,7 +326,7 @@ const buildProvider = (params = {}) => {
  * @returns {Object} a provider
  */
 const loadProvider = async (params = {}) =>
-  readJsonFile(params.filename)
+  await readJsonFile(params.filename)
     .then((provider) => buildProvider({ ...params, provider }));
 
 /**
@@ -530,7 +430,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   // Rules should be added in serial because, in the case of SNS and Kinesis rule types,
   // they may share an event source mapping and running them in parallel will cause a
   // race condition
-  return pMap(
+  return await pMap(
     rules,
     (rule) => {
       if (postfix) {
@@ -575,7 +475,7 @@ function addRules(config, dataDirectory, overrides) {
  */
 async function _deleteOneRule(name) {
   const rulesModel = new RulesModel();
-  return rulesModel.get({ name }).then((item) => rulesModel.delete(item));
+  return await rulesModel.get({ name }).then((item) => rulesModel.delete(item));
 }
 
 /**
@@ -628,124 +528,6 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   );
 
   return rules.length;
-}
-
-/**
- * build workflow message
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {Object} collection - collection information
- * @param {Object} collection.name - collection name
- * @param {Object} collection.version - collection version
- * @param {Object} provider - provider information
- * @param {Object} provider.id - provider id
- * @param {Object} payload - payload information
- * @param {Object} meta - additional keys to add to meta field
- * @returns {Object} workflow message
- */
-async function buildWorkflow(
-  stackName,
-  bucketName,
-  workflowName,
-  collection,
-  provider,
-  payload,
-  meta
-) {
-  const template = await getJsonS3Object(bucketName, templateKey(stackName));
-
-  if (collection) {
-    template.meta.collection = await collectionsApi.getCollection({
-      prefix: stackName,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
-    });
-  } else {
-    template.meta.collection = {};
-  }
-
-  if (provider) {
-    const providersModel = new ProvidersModel();
-    template.meta.provider = await providersModel.get({ id: provider.id });
-  } else {
-    template.meta.provider = {};
-  }
-
-  template.meta.workflow_name = workflowName;
-  template.meta = merge(template.meta, meta);
-  template.payload = payload || {};
-
-  return template;
-}
-
-/**
- * build workflow message and execute the workflow
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {Object} collection - collection information
- * @param {Object} collection.name - collection name
- * @param {Object} collection.version - collection version
- * @param {Object} provider - provider information
- * @param {Object} provider.id - provider id
- * @param {Object} payload - payload information
- * @param {Object} meta - additional keys to add to meta field
- * @param {number} [timeout=600] - number of seconds to wait for execution to complete
- * @returns {Object} - {executionArn: <arn>, status: <status>}
- */
-async function buildAndExecuteWorkflow(
-  stackName,
-  bucketName,
-  workflowName,
-  collection,
-  provider,
-  payload,
-  meta = {},
-  timeout = 600
-) {
-  const workflowMsg = await buildWorkflow(
-    stackName,
-    bucketName,
-    workflowName,
-    collection,
-    provider,
-    payload,
-    meta
-  );
-  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
-}
-
-/**
- * build workflow message and start the workflow. Does not wait
- * for workflow completion.
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @param {Object} collection - collection information
- * @param {Object} collection.name - collection name
- * @param {Object} collection.version - collection version
- * @param {Object} provider - provider information
- * @param {Object} provider.id - provider id
- * @param {Object} payload - payload information
- * @param {Object} meta - additional keys to add to meta field
- * @returns {string} - executionArn
- */
-async function buildAndStartWorkflow(
-  stackName,
-  bucketName,
-  workflowName,
-  collection,
-  provider,
-  payload,
-  meta = {}
-) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
-  return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
 /**
@@ -855,6 +637,8 @@ async function waitForAllTestSf(
   const workflowExecutions = [];
   const startTime = moment();
 
+  console.log('expectedPayload', expectedPayload);
+
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
     await delay(waitPeriodMs);
@@ -865,6 +649,9 @@ async function waitForAllTestSf(
       const execution = executions[ctr];
       if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
         const executionInput = await getExecutionInputObject(execution.executionArn);
+        if (executionInput === null) {
+          console.log(`no execution input for ARN ${execution.executionArn}`);
+        }
         if (executionInput !== null
           && payloadContainsExpected(executionInput.payload, expectedPayload)) {
           workflowExecutions.push(execution);
@@ -919,10 +706,7 @@ module.exports = {
   addRules,
   addRulesWithPostfix,
   api,
-  buildAndExecuteWorkflow,
-  buildAndStartWorkflow,
   buildCollection,
-  buildWorkflow,
   cleanupCollections,
   cleanupProviders,
   conceptExists: cmr.conceptExists,
@@ -931,8 +715,6 @@ module.exports = {
   deleteRules,
   distributionApi,
   EarthdataLogin,
-  emsApi,
-  executeWorkflow,
   executionsApi,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   generateCmrXml: cmr.generateCmrXml,
@@ -955,7 +737,6 @@ module.exports = {
   removeRuleAddedParams,
   rulesApi,
   setProcessEnvironment,
-  testWorkflow,
   waitForAllTestSf,
   waitForAsyncOperationStatus,
   waitForCompletedExecution,

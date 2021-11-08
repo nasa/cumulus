@@ -9,10 +9,18 @@ const omit = require('lodash/omit');
 const path = require('path');
 const pWaitFor = require('p-wait-for');
 
-const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
-const { listGranules } = require('@cumulus/api-client/granules');
+const {
+  deleteGranule,
+  getGranule,
+  listGranules,
+  removePublishedGranule,
+} = require('@cumulus/api-client/granules');
+
+const { waitForApiStatus } = require('./apiUtils');
 
 /**
  * Adds updated url_path to a granule's files object.
@@ -51,12 +59,11 @@ const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
     const granule = cloneDeep(originalGranule);
 
     granule.files.forEach((file) => {
-      const { Bucket, Key } = parseS3Uri(file.filename);
-      const { dir, base } = path.parse(Key);
+      const { dir, base } = path.parse(file.key);
       const updateKey = `${dir}/${filePath}/${base}`;
 
       Object.assign(file, {
-        filename: buildS3Uri(Bucket, updateKey),
+        filename: buildS3Uri(file.bucket, updateKey),
         filepath: updateKey,
       });
     });
@@ -74,9 +81,9 @@ const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
  * @param {string} newGranuleId - new granule id
  * @returns {Promise<Array>} - AWS S3 copyObject responses
  */
-function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
-  const copyFile = (file) =>
-    s3().copyObject({
+async function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
+  const copyFile = async (file) =>
+    await s3().copyObject({
       Bucket: bucket,
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`,
@@ -86,7 +93,7 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
         throw error;
       });
 
-  return Promise.all(granuleFiles.map(copyFile));
+  return await Promise.all(granuleFiles.map(copyFile));
 }
 
 /**
@@ -138,6 +145,34 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   ])(baseInputPayload);
 }
 
+const deleteGranules = async (prefix, granules) => {
+  process.env.GranulesTable = `${prefix}-GranulesTable`;
+  const granuleModel = new Granule();
+  return await Promise.all(
+    granules.map(async (granule) => {
+      // Temporary fix to handle granules that are in a bad state
+      // and cannot be deleted via the API
+      try {
+        if (granule.published === true) {
+          return await removePublishedGranule({
+            prefix,
+            granuleId: granule.granuleId,
+          });
+        }
+        return await deleteGranule({
+          prefix,
+          granuleId: granule.granuleId,
+        });
+      } catch (error) {
+        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
+          return await granuleModel.delete({ granuleId: granule.granuleId });
+        }
+        throw error;
+      }
+    })
+  );
+};
+
 /**
  * Read the file, update it with the new granule id, path, collectionId, and
  * stackId, and return the file as a JS object.
@@ -167,7 +202,7 @@ const loadFileWithUpdatedGranuleIdPathAndCollection = (
   ])(fileContents);
 };
 
-const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIsIncluded = true, additionalQueryParams = {}) => pWaitFor(
+const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIsIncluded = true, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     const resp = await listGranules({
       prefix: stackName,
@@ -187,20 +222,20 @@ const waitForGranuleRecordInOrNotInList = async (stackName, granuleId, granuleIs
 );
 
 const waitForGranuleRecordNotInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, false, additionalQueryParams);
+  await waitForGranuleRecordInOrNotInList(stackName, granuleId, false, additionalQueryParams);
 
-const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+const waitForGranuleRecordsNotInList = async (stackName, granuleIds, additionalQueryParams = {}) => await Promise.all(
   granuleIds.map((id) => waitForGranuleRecordNotInList(stackName, id, additionalQueryParams))
 );
 
 const waitForGranuleRecordInList = async (stackName, granuleId, additionalQueryParams = {}) =>
-  waitForGranuleRecordInOrNotInList(stackName, granuleId, true, additionalQueryParams);
+  await waitForGranuleRecordInOrNotInList(stackName, granuleId, true, additionalQueryParams);
 
-const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => Promise.all(
+const waitForGranuleRecordsInList = async (stackName, granuleIds, additionalQueryParams = {}) => await Promise.all(
   granuleIds.map((id) => waitForGranuleRecordInList(stackName, id, additionalQueryParams))
 );
 
-const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => pWaitFor(
+const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     const fieldsIgnored = ['timestamp', 'updatedAt'];
     const resp = await listGranules({
@@ -222,12 +257,31 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
+const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = {}) => {
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix,
+      granuleId,
+    },
+    status,
+    retryConfig
+  );
+  // clean up stack state added by test
+  await deleteGranule({
+    prefix,
+    granuleId,
+  });
+};
+
 module.exports = {
   addUniqueGranuleFilePathToGranuleFiles,
   addUrlPathToGranuleFiles,
+  deleteGranules,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
   waitForGranuleRecordUpdatedInList,
+  waitForGranuleAndDelete,
 };

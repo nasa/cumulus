@@ -5,9 +5,10 @@ const router = require('express-promise-router')();
 const {
   getKnexClient,
   ProviderPgModel,
-  tableNames,
+  TableNames,
   translateApiProviderToPostgresProvider,
   validateProviderHost,
+  createRejectableTransaction,
 } = require('@cumulus/db');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
@@ -16,11 +17,11 @@ const {
   ValidationError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+const { Search } = require('@cumulus/es-client/search');
+const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-const { Search } = require('../es/search');
-const { addToLocalES, indexProvider } = require('../es/indexer');
 
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -63,7 +64,6 @@ async function get(req, res) {
   } catch (error) {
     if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
   }
-  delete result.password;
   return res.send(result);
 }
 
@@ -104,7 +104,7 @@ async function post(req, res) {
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    await knex.transaction(async (trx) => {
+    await createRejectableTransaction(knex, async (trx) => {
       await providerPgModel.create(trx, postgresProvider);
       record = await providerModel.create(apiProvider);
     });
@@ -163,7 +163,7 @@ async function put({ params: { id }, body }, res) {
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await providerPgModel.upsert(trx, postgresProvider);
     record = await providerModel.create(apiProvider);
   });
@@ -187,8 +187,8 @@ async function del(req, res) {
   const knex = await getKnexClient({ env: process.env });
 
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
+    await createRejectableTransaction(knex, async (trx) => {
+      await trx(TableNames.providers).where({ name: req.params.id }).del();
       await providerModel.delete({ id: req.params.id });
       if (inTestMode()) {
         const esClient = await Search.es(process.env.ES_HOST);
@@ -204,6 +204,10 @@ async function del(req, res) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
       const messageDetail = error.rules || [error.detail];
       const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
+      return res.boom.conflict(message);
+    }
+    if (error.constraint === 'granules_provider_cumulus_id_foreign') {
+      const message = `Cannot delete provider ${req.params.id} with associated granules.`;
       return res.boom.conflict(message);
     }
     throw error;

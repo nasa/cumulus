@@ -196,7 +196,7 @@ test.serial('Collection.exists() returns true when a record exists', async (t) =
       bucket: 'publicbucket',
       regex: '^.*\\.jpg$',
       sampleFileName: 'samplefile.jpg',
-      reportToEms: false,
+      reportToEms: true,
     },
   ];
 
@@ -269,7 +269,7 @@ test.serial(
     // If the collection was successfully deleted from the config store, we
     // expect attempting to get it from the config store to throw an exception.
     await t.throwsAsync(
-      async () => collectionConfigStore.get(name, version),
+      () => collectionConfigStore.get(name, version),
       { message: new RegExp(`${collectionId}`) }
     );
   }
@@ -338,7 +338,7 @@ test('Collection.search() returns the matching collections', async (t) => {
     updatedAt__to: Date.now(),
   };
   const fields = ['name', 'version', 'createdAt'];
-  const collectionsQueue = await collectionsModel.search(searchParams, fields);
+  const collectionsQueue = collectionsModel.search(searchParams, fields);
   const fetchedCollections = await collectionsQueue.empty();
   t.is(fetchedCollections.length, 2);
   const expectedCollections = collections.slice(0, 2).map((collection) => pick(collection, fields));

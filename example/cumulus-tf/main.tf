@@ -24,6 +24,10 @@ provider "aws" {
   alias   = "usw2"
   region  = "us-west-2"
   profile = var.aws_profile
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 locals {
@@ -32,6 +36,8 @@ locals {
   elasticsearch_domain_arn        = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_domain_arn", null)
   elasticsearch_hostname          = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_hostname", null)
   elasticsearch_security_group_id = lookup(data.terraform_remote_state.data_persistence.outputs, "elasticsearch_security_group_id", "")
+  protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
+  public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 }
@@ -49,6 +55,10 @@ data "aws_lambda_function" "sts_credentials" {
   function_name = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
+data "aws_lambda_function" "sts_policy_helper" {
+  function_name = "gsfc-ngap-sh-sts-policy-helper"
+}
+
 data "aws_ssm_parameter" "ecs_image_id" {
   name = "image_id_ecs_amz2"
 }
@@ -60,6 +70,7 @@ data "aws_ecr_repository" "async_operation" {
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
+
   cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 
   prefix = var.prefix
@@ -67,13 +78,17 @@ module "cumulus" {
   deploy_to_ngap = true
 
   bucket_map_key = var.bucket_map_key
+  throttled_queues = [{
+    url = aws_sqs_queue.throttled_queue.id
+    execution_limit = 30
+  }]
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  rds_security_group         = local.rds_security_group
-  rds_user_access_secret_arn = local.rds_credentials_secret_arn
-  rds_connection_heartbeat   = var.rds_connection_heartbeat
+  rds_security_group                     = local.rds_security_group
+  rds_user_access_secret_arn             = local.rds_credentials_secret_arn
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
@@ -90,16 +105,6 @@ module "cumulus" {
   urs_client_id       = var.urs_client_id
   urs_client_password = var.urs_client_password
 
-  ems_host              = var.ems_host
-  ems_port              = var.ems_port
-  ems_path              = var.ems_path
-  ems_datasource        = var.ems_datasource
-  ems_private_key       = var.ems_private_key
-  ems_provider          = var.ems_provider
-  ems_retention_in_days = var.ems_retention_in_days
-  ems_submit_report     = var.ems_submit_report
-  ems_username          = var.ems_username
-
   es_request_concurrency = var.es_request_concurrency
 
   metrics_es_host     = var.metrics_es_host
@@ -111,6 +116,7 @@ module "cumulus" {
   cmr_username    = var.cmr_username
   cmr_password    = var.cmr_password
   cmr_provider    = var.cmr_provider
+  cmr_custom_host = var.cmr_custom_host
 
   cmr_oauth_provider = var.cmr_oauth_provider
 
@@ -148,7 +154,6 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
-    "brian.tennity",
     "dopeters",
     "jasmine",
     "jennyhliu",
@@ -161,30 +166,38 @@ module "cumulus" {
     "mboyd",
     "menno.vandiermen",
     "mobrien84",
-    "npauzenga"
+    "npauzenga",
+    "ds_jennifertran"
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
+  archive_api_reserved_concurrency = var.api_reserved_concurrency
 
-  # Thin Egress App settings
+  elasticsearch_client_config = var.elasticsearch_client_config
+
+  # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
-  tea_api_gateway_stage = local.tea_stage_name
-
-  tea_rest_api_id               = module.thin_egress_app.rest_api.id
-  tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
-  tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
-  tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
+  # tea_api_gateway_stage         = local.tea_stage_name
+  # tea_rest_api_id               = module.thin_egress_app.rest_api.id
+  # tea_rest_api_root_resource_id = module.thin_egress_app.rest_api.root_resource_id
+  # tea_internal_api_endpoint     = module.thin_egress_app.internal_api_endpoint
+  # tea_external_api_endpoint     = module.thin_egress_app.api_endpoint
 
   log_destination_arn = var.log_destination_arn
 
+  # Cumulus Distribution settings. Remove/comment to use TEA
+  tea_external_api_endpoint = module.cumulus_distribution.api_uri
+
+  deploy_cumulus_distribution = var.deploy_cumulus_distribution
+
   # S3 credentials endpoint
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
+  cmr_acl_based_credentials = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
-
-  ems_deploy = var.ems_deploy
 
   tags = local.tags
 }

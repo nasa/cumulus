@@ -23,7 +23,7 @@ export const publishSnsMessage = async (
   message: any,
   retryOptions = {}
 ) =>
-  pRetry(
+  await pRetry(
     async () => {
       if (!snsTopicArn) {
         throw new pRetry.AbortError('Missing SNS topic ARN');

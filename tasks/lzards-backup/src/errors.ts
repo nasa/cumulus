@@ -26,6 +26,14 @@ export class GetAuthTokenError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'GetAuthTokenError';
-    Error.captureStackTrace(this, ChecksumError);
+    Error.captureStackTrace(this, GetAuthTokenError);
+  }
+}
+
+export class InvalidUrlTypeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidUrlTypeError';
+    Error.captureStackTrace(this, InvalidUrlTypeError);
   }
 }

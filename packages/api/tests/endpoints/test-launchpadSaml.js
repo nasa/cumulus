@@ -44,6 +44,10 @@ const xmlMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/launchpad-sbx-metadata.xml`,
   'utf8'
 );
+const xmlMetadataFixtureV2 = fs.readFileSync(
+  `${__dirname}/fixtures/launchpad-prod-metadata.xml`,
+  'utf8'
+);
 const badMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/bad-metadata.xml`,
   'utf8'
@@ -52,11 +56,15 @@ const goodMetadataFile = {
   key: 'valid-metadata.xml',
   content: xmlMetadataFixture,
 };
+const goodMetadataFileV2 = {
+  key: 'valid-metadataV2.xml',
+  content: xmlMetadataFixtureV2,
+};
 const badMetadataFile = {
   key: 'bad-metadata.xml',
   content: badMetadataFixture,
 };
-const testFiles = [goodMetadataFile, badMetadataFile];
+const testFiles = [goodMetadataFile, goodMetadataFileV2, badMetadataFile];
 
 const certificate = require('./fixtures/_certificateFixture');
 
@@ -90,7 +98,7 @@ test.before(async () => {
 });
 
 let sandbox;
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   sandbox = sinon.createSandbox();
   const validIndex = randomId('session_index');
   const validUser = randomId('userId');
@@ -139,7 +147,7 @@ test.beforeEach(async (t) => {
   };
 });
 
-test.afterEach(async () => {
+test.afterEach(() => {
   sandbox.restore();
 });
 
@@ -153,6 +161,17 @@ test.serial(
   async (t) => {
     const parsedCertificate = await launchpadPublicCertificate(
       `s3://${testBucketName}/valid-metadata.xml`
+    );
+
+    t.deepEqual(parsedCertificate, certificate);
+  }
+);
+
+test.serial(
+  'launchpadPublicCertificate returns a certificate from valid file with different namespace prefix.',
+  async (t) => {
+    const parsedCertificate = await launchpadPublicCertificate(
+      `s3://${testBucketName}/valid-metadataV2.xml`
     );
 
     t.deepEqual(parsedCertificate, certificate);

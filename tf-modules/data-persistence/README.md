@@ -2,8 +2,6 @@
 
 This module deploys data persistence resources, including DynamoDB tables, RDS database and tables, and an Elasticsearch instance (which is optional).
 
-LAUREN CHANGE
-
 ## Included resources
 
 - DynamoDB tables:

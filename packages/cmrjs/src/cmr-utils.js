@@ -1,6 +1,7 @@
 'use strict';
 
 const got = require('got');
+const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
@@ -9,6 +10,7 @@ const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
+const omit = require('lodash/omit');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -20,15 +22,17 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
-const log = require('@cumulus/common/log');
-const omit = require('lodash/omit');
+const Logger = require('@cumulus/logger');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
-
+const { constructDistributionUrl } = require('@cumulus/distribution-utils');
+const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -53,14 +57,20 @@ function getFilename(file) {
   return undefined;
 }
 
-function getFileDescription(file) {
+function getFileDescription(file, urlType = 'distribution') {
+  if (urlType === 's3') {
+    return 'This link provides direct download access via S3 to the granule';
+  }
   const filename = getFilename(file);
   return filename ? `Download ${filename}` : 'File to download';
 }
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
+const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRFilename = (filename) => isECHO10File(filename)
+  || isUMMGFile(filename)
+  || isISOFile(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
@@ -83,18 +93,21 @@ function isCMRFile(fileobject) {
  * @param {Array<Object>} granule.files - array of files for a granule
  * @param {string} granule.granuleId - granule ID
  * @returns {Array<Object>} an array of CMR file objects, each with properties
- *    `granuleId`, `filename`, and possibly `etag` (if present on input)
+ *    `granuleId`, `bucket`, `key`, and possibly `etag` (if present on input)
  */
 function granuleToCmrFileObject({ granuleId, files = [] }) {
   return files
     .filter(isCMRFile)
-    .map((file) => ({
-      // Include etag only if file has one
-      ...pick(file, 'etag'),
-      // handle both new-style and old-style files model
-      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId,
-    }));
+    .map((file) => {
+      const { Bucket, Key } = parseS3Uri(getS3UrlOfFile(file));
+      return {
+        // Include etag only if file has one
+        ...pick(file, 'etag'),
+        bucket: Bucket,
+        key: Key,
+        granuleId,
+      };
+    });
 }
 
 /**
@@ -102,7 +115,7 @@ function granuleToCmrFileObject({ granuleId, files = [] }) {
  *
  * @param {Array<Object>} granules - granule objects array
  *
- * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
 function granulesToCmrFileObjects(granules) {
   return granules.flatMap(granuleToCmrFileObject);
@@ -190,13 +203,14 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  */
 async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
+  const cmrFileName = getFilename(cmrPublishObject);
 
   // choose xml or json and do the things.
-  if (isECHO10File(cmrPublishObject.filename)) {
-    return publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+  if (isECHO10File(cmrFileName)) {
+    return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-  if (isUMMGFile(cmrPublishObject.filename)) {
-    return publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
+  if (isUMMGFile(cmrFileName)) {
+    return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
   throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
@@ -210,14 +224,14 @@ async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  * @param {string|undefined} [etag] - entity tag of the desired object (optional)
  * @returns {Promise} result of `AWS.S3.getObject()` as a Promise
  */
-function getObjectByFilename(filename, etag) {
+async function getObjectByFilename(filename, etag) {
   const { Bucket, Key } = parseS3Uri(filename);
 
   const params = etag
     ? { Bucket, Key, IfMatch: etag }
     : { Bucket, Key };
 
-  return waitForObject(s3(), params, { retries: 5 });
+  return await waitForObject(s3(), params, { retries: 5 });
 }
 
 /**
@@ -243,7 +257,7 @@ async function getXMLMetadataAsString(xmlFilePath, etag) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return promisify(xml2js.parseString)(xml, xmlParseOptions);
+  return await promisify(xml2js.parseString)(xml, xmlParseOptions);
 }
 
 /**
@@ -314,9 +328,11 @@ function getS3CredentialsObject(s3CredsUrl) {
  * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
  * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
+ * @param {string} urlType - url type, distribution or s3
+ * @param {boolean} useDirectS3Type - indicate if direct s3 access type is used
  * @returns {( string | undefined )} type - UMM/ECHO10 resource type
  */
-function mapCNMTypeToCMRType(type) {
+function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = false) {
   const mapping = {
     ancillary: 'VIEW RELATED INFORMATION',
     data: 'GET DATA',
@@ -325,30 +341,84 @@ function mapCNMTypeToCMRType(type) {
     metadata: 'EXTENDED METADATA',
     qa: 'EXTENDED METADATA',
   };
-  if (!mapping[type]) {
-    log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
-    return 'GET DATA';
+  const mappedType = mapping[type] || 'GET DATA';
+
+  // The CMR Type for the s3 link of science file is "GET DATA VIA DIRECT ACCESS".
+  // For non-science file, the Type for the s3 link is the same as its Type for the HTTPS URL.
+  if (urlType === 's3' && mappedType === 'GET DATA' && useDirectS3Type) {
+    return 'GET DATA VIA DIRECT ACCESS';
   }
-  return mapping[type];
+  return mappedType;
 }
 
-async function generateFileUrl({
+/**
+ * Add ETags to file objects as some downstream functions expect this structure.
+ *
+ * @param {Object} granule - input granule object
+ * @param {Object} etags - map of s3URIs and ETags
+ * @returns {Object} - updated granule object
+ */
+function addEtagsToFileObjects(granule, etags) {
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
+    const fileURI = getS3UrlOfFile(file);
+    if (etags[fileURI]) file.etag = etags[fileURI];
+  });
+  return granule;
+}
+
+/**
+ * Remove ETags to match output schema
+ *
+ * @param {Object} granule - output granule object
+ * @returns {undefined}
+ */
+function removeEtagsFromFileObjects(granule) {
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
+    delete file.etag;
+  });
+}
+
+/**
+ * Maps etag values from the specified granules' files.
+ *
+ * @param {Object[]} files - array of file objects with `bucket`, `key` and
+ *    `etag` properties
+ * @returns {Object} mapping of file S3 URIs to etags
+ */
+function mapFileEtags(files) {
+  return files.reduce((filesMap, file) => {
+    const { bucket, key, etag } = file;
+    const s3Uri = getS3UrlOfFile({ bucket, key });
+    filesMap[s3Uri] = etag; // eslint-disable-line no-param-reassign
+    return filesMap;
+  }, {});
+}
+
+/**
+ * generate a url for a given file and a url type.
+ *
+ * @param {Object} params - input parameters
+ * @param {Object} params.file - file object
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {Object} params.urlType - url type, distribution or s3
+ * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
+ *                                                               for all distribution bucketss
+ * @returns {(Object | undefined)} online access url object, undefined if no URL exists
+ */
+function generateFileUrl({
   file,
   distEndpoint,
-  cmrGranuleUrlType = 'distribution',
+  urlType = 'distribution',
   distributionBucketMap,
 }) {
-  if (cmrGranuleUrlType === 'distribution') {
-    const bucketPath = distributionBucketMap[file.bucket];
-    if (!bucketPath) {
-      throw new errors.MissingBucketMap(`No distribution bucket mapping exists for ${file.bucket}`);
-    }
-
-    const urlPath = urljoin(bucketPath, getS3KeyOfFile(file));
-    return urljoin(distEndpoint, urlPath);
+  if (urlType === 'distribution') {
+    const fileKey = getS3KeyOfFile(file);
+    return constructDistributionUrl(file.bucket, fileKey, distributionBucketMap, distEndpoint);
   }
 
-  if (cmrGranuleUrlType === 's3') {
+  if (urlType === 's3') {
     /* The check for file.filename is here
        for legacy compliance reasons due to model simplification in
        CUMULUS-1139 where filename was remapped to bucket and key*/
@@ -362,34 +432,37 @@ async function generateFileUrl({
 }
 
 /**
- * Construct online access url for a given file.
+ * Construct online access url for a given file and a url type.
  *
  * @param {Object} params - input parameters
  * @param {Object} params.file - file object
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
+ * @param {Object} params.urlType - url type, distribution or s3
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
+ * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {(Object | undefined)} online access url object, undefined if no URL exists
  */
-async function constructOnlineAccessUrl({
+function constructOnlineAccessUrl({
   file,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType = 'distribution',
+  urlType = 'distribution',
   distributionBucketMap,
+  useDirectS3Type = false,
 }) {
   const bucketType = bucketTypes[file.bucket];
   const distributionApiBuckets = ['protected', 'public'];
   if (distributionApiBuckets.includes(bucketType)) {
-    const fileUrl = await generateFileUrl({ file, distEndpoint, cmrGranuleUrlType, distributionBucketMap });
+    const fileUrl = generateFileUrl({ file, distEndpoint, urlType, distributionBucketMap });
     if (fileUrl) {
-      const fileDescription = getFileDescription(file);
+      const fileDescription = getFileDescription(file, urlType);
       return {
         URL: fileUrl,
         URLDescription: fileDescription, // used by ECHO10
         Description: fileDescription, // used by UMMG
-        Type: mapCNMTypeToCMRType(file.type), // used by UMMG
+        Type: mapCNMTypeToCMRType(file.type, urlType, useDirectS3Type), // used by ECHO10/UMMG
       };
     }
   }
@@ -403,30 +476,52 @@ async function constructOnlineAccessUrl({
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket name to bucket type
+ * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution bucketss
+ * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
  *    online access url objects
  */
-async function constructOnlineAccessUrls({
+function constructOnlineAccessUrls({
   files,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType = 'distribution',
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  useDirectS3Type = false,
 }) {
-  if (cmrGranuleUrlType === 'distribution' && !distEndpoint) {
-    throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+  if (['distribution', 'both'].includes(cmrGranuleUrlType) && !distEndpoint) {
+    throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
   }
 
-  const urlListPromises = files.map((file) => constructOnlineAccessUrl({
-    file,
-    distEndpoint,
-    bucketTypes,
-    cmrGranuleUrlType,
-    distributionBucketMap,
-  }));
-  const urlList = await Promise.all(urlListPromises);
+  const urlListCalls = files.map((file) => {
+    const urls = [];
+    if (['both', 'distribution'].includes(cmrGranuleUrlType)) {
+      const url = constructOnlineAccessUrl({
+        file,
+        distEndpoint,
+        bucketTypes,
+        urlType: 'distribution',
+        distributionBucketMap,
+        useDirectS3Type,
+      });
+      urls.push(url);
+    }
+    if (['both', 's3'].includes(cmrGranuleUrlType)) {
+      const url = constructOnlineAccessUrl({
+        file,
+        distEndpoint,
+        bucketTypes,
+        urlType: 's3',
+        distributionBucketMap,
+        useDirectS3Type,
+      });
+      urls.push(url);
+    }
+    return urls;
+  });
+  const urlList = flatten(urlListCalls);
   return urlList.filter((urlObj) => urlObj);
 }
 
@@ -438,27 +533,31 @@ async function constructOnlineAccessUrls({
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
+ * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {Promise<[{URL: string, string, Description: string, Type: string}]>}
  *   an array of online access url objects
  */
-async function constructRelatedUrls({
+function constructRelatedUrls({
   files,
   distEndpoint,
   bucketTypes,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution',
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
+  useDirectS3Type = false,
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
-  const cmrUrlObjects = await constructOnlineAccessUrls({
+  const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    useDirectS3Type,
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -524,18 +623,8 @@ function mergeURLs(original, updated = [], removed = []) {
       (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
     );
     if (matchedOriginal.length === 1) {
-      // merge original urlObject into the updated urlObject,
-      // preferring all metadata from original except the new url.URL
-      // and description
-      const updatedMetadata = {
-        URL: url.URL,
-      };
-      if (url.Description) {
-        updatedMetadata.Description = url.Description;
-      }
-      if (url.URLDescription) {
-        updatedMetadata.URLDescription = url.URLDescription;
-      }
+      // merge original urlObject into the updated urlObject
+      const updatedMetadata = pick(url, ['URL', 'Description', 'URLDescription', 'Type']);
       return {
         ...url,
         ...matchedOriginal[0],
@@ -568,6 +657,23 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
 }
 
 /**
+ * check if the direct s3 access type should be used,
+ * s3 link type 'GET DATA VIA DIRECT ACCESS' isn't valid until UMM-G version 1.6.2
+ *
+ * @param {Object} metadataObject - the UMMG metadata object
+ * @returns {boolean} indicate if direct s3 access type is used
+ */
+function shouldUseDirectS3Type(metadataObject) {
+  const versionWithDirectS3Type = 1.62;
+  const versionString = ummVersion(metadataObject);
+  // convert version string like 1.6.1 to 1.61 for comparision
+  if (Number(versionString.replace('.', '_').replace(/\./g, '').replace('_', '.')) >= versionWithDirectS3Type) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * After files are moved, create new online access URLs and then update the S3
  * UMMG cmr.json file with this information.
  *
@@ -576,6 +682,7 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
  * @param {Array<Object>} params.files - array of moved file objects.
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType - cmrGranuleUrlType from config
  * @param {Object} params.distributionBucketMap - Object with bucket:tea-path
  *    mapping for all distribution buckets
  * @returns {Promise<{ metadataObject: Object, etag: string}>} an object
@@ -587,20 +694,23 @@ async function updateUMMGMetadata({
   files,
   distEndpoint,
   bucketTypes,
-  cmrGranuleUrlType = 'distribution',
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
-  const newURLs = await constructRelatedUrls({
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataObject = await metadataObjectFromCMRJSONFile(filename);
+  const useDirectS3Type = shouldUseDirectS3Type(metadataObject);
+
+  const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
     bucketTypes,
     cmrGranuleUrlType,
     distributionBucketMap,
+    useDirectS3Type,
   });
-  const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const filename = getS3UrlOfFile(cmrFile);
-  const metadataObject = await metadataObjectFromCMRJSONFile(filename);
 
+  const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
   const originalURLs = get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   set(metadataObject, 'RelatedUrls', mergedURLs);
@@ -631,6 +741,7 @@ async function getCmrSettings(cmrConfig = {}) {
   const cmrCredentials = {
     provider: cmrConfig.provider || process.env.cmr_provider,
     clientId: cmrConfig.clientId || process.env.cmr_client_id,
+    oauthProvider,
   };
 
   if (oauthProvider === 'launchpad') {
@@ -736,7 +847,7 @@ async function updateEcho10XMLMetadata({
   distEndpoint,
   bucketTypes,
   s3CredsEndpoint = 's3credentials',
-  cmrGranuleUrlType = 'distribution',
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
   // add/replace the OnlineAccessUrls
@@ -753,7 +864,7 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, bucketTypes);
-  const newURLs = await constructOnlineAccessUrls({
+  const newURLs = constructOnlineAccessUrls({
     files,
     distEndpoint,
     bucketTypes,
@@ -765,7 +876,7 @@ async function updateEcho10XMLMetadata({
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
   const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs,
-    removedURLs, ['GET DATA'], ['Type', 'Description']);
+    removedURLs, ['GET DATA', 'GET DATA VIA DIRECT ACCESS'], ['Type', 'Description']);
   const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs,
     removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
 
@@ -803,7 +914,7 @@ async function updateCMRMetadata({
   distEndpoint,
   published,
   bucketTypes,
-  cmrGranuleUrlType = 'distribution',
+  cmrGranuleUrlType = 'both',
   distributionBucketMap,
 }) {
   const filename = getS3UrlOfFile(cmrFile);
@@ -854,26 +965,29 @@ async function updateCMRMetadata({
  * @param {string} params.distEndpoint - distribution endpoint URL
  * @param {boolean} params.published - boolean true if the data should be published to
  *   the CMR service.
+ * @param {Object} params.bucketTypes - map of bucket names to bucket types
+ * @param {string} params.cmrGranuleUrlType - type of granule CMR url
  * @param {distributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path mapping
  *                                                               for all distribution buckets
- * @param {Object} params.bucketTypes - map of bucket names to bucket types
  */
 async function reconcileCMRMetadata({
   granuleId,
   updatedFiles,
   distEndpoint,
   published,
-  distributionBucketMap,
   bucketTypes,
+  cmrGranuleUrlType = 'both',
+  distributionBucketMap,
 }) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
-    return updateCMRMetadata({
+    return await updateCMRMetadata({
       granuleId,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
       distEndpoint,
       published,
+      cmrGranuleUrlType,
       distributionBucketMap,
       bucketTypes,
     });
@@ -934,6 +1048,19 @@ async function getCollectionsByShortNameAndVersion(results) {
 }
 
 /**
+ * Call CMR to get a list of bucket/paths that a user has access to
+ *
+ * @param {string} edlUser - users earthdata login name
+ * @param {string} cmrProvider - cumulus CMR provider name
+ * @returns {Object} list of bucket/paths that a user has access to
+ */
+async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_provider) {
+  const searchParams = { user_id: edlUser, 'provider[]': cmrProvider };
+  const cmrResult = await got.get(getBucketAccessUrl({}), { searchParams });
+  return JSON.parse(cmrResult.body);
+}
+
+/**
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
@@ -944,7 +1071,28 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
   if (cmrFile.length === 0) return {};
 
-  const cmrFilename = cmrFile[0].filename;
+  const cmrFilename = getS3UrlOfFile(cmrFile[0]);
+
+  if (isISOFile(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
+    const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
+
+    // Get beginning and ending date time from beginPosition and endPosition
+    const identificationInfo = metadataMI['gmd:identificationInfo'];
+    const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
+    const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
+    const beginningDateTime = temporalInfo['gml:beginPosition'];
+    const endingDateTime = temporalInfo['gml:endPosition'];
+
+    // Get production date time from LE_ProcessStep
+    const productionDateTime = metadataMI['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
+
+    // Get last update date time from CI_Citation with UpdateTime
+    const citation = identificationInfo.find((dataIdObject) => dataIdObject['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
+    const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
+
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
   if (isECHO10File(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
@@ -973,6 +1121,7 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  addEtagsToFileObjects,
   constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
@@ -984,14 +1133,19 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
+  getS3UrlOfFile,
+  getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,
   isECHO10File,
+  isISOFile,
   isUMMGFile,
+  mapFileEtags,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,

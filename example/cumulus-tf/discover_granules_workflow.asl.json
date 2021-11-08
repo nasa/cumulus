@@ -58,7 +58,8 @@
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
             "granuleIngestWorkflow": "${ingest_granule_workflow_name}",
-            "childWorkflowMeta": { "staticValue": "aStaticValue", "interpolatedValueStackName": "{$.meta.stack}" }
+            "childWorkflowMeta": { "staticValue": "aStaticValue", "interpolatedValueStackName": "{$.meta.stack}" },
+            "preferredQueueBatchSize": "{$.meta.queueBatchSize}"
           }
         }
       },

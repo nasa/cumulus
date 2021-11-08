@@ -29,7 +29,7 @@ const EXECUTION_LIST_LIMIT = 50;
  * @alias module:Executions
  */
 const findExecutionArn = async (prefix, matcher, queryParameters = { }, options = { timeout: 0 }) =>
-  pRetry(
+  await pRetry(
     async () => {
       let execution;
       let pageNumber = 1;
@@ -44,7 +44,12 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
           },
         });
         let executions = JSON.parse(body);
-        execution = executions.results.find(matcher);
+        const { results } = executions;
+        if (isNil(results)) {
+          throw new Error('Not Found');
+        }
+
+        execution = results.find(matcher);
 
         while (isNil(execution) && executions.meta.count > (EXECUTION_LIST_LIMIT * pageNumber)) {
           // eslint-disable-next-line no-await-in-loop
@@ -107,7 +112,7 @@ const getExecution = async (params) => {
  * @alias module:Executions
  */
 const getExecutionWithStatus = async (params) =>
-  pRetry(
+  await pRetry(
     async () => {
       let execution;
 
@@ -132,7 +137,7 @@ const getExecutionWithStatus = async (params) =>
     },
     {
       retries: get(params, 'timeout', 30),
-      maxTimeout: 1000,
+      maxTimeout: 2000,
     }
   );
 
