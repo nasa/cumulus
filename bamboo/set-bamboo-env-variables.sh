@@ -146,7 +146,7 @@ fi
 # Target master by default.
 # Update with appropriate conditional
 # when creating a feature branch.
-export PR_BRANCH="jk/CUMULUS-1-fix-bamboo-script"
+export PR_BRANCH="master"
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the
