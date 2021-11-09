@@ -11,8 +11,17 @@ const Rule = require('./rules');
 const schemas = require('./schemas');
 const { AssociatedRulesError } = require('../lib/errors');
 
-const encryptValueWithKMS = (value) =>
-  KMS.encrypt(process.env.provider_kms_key_id, value);
+const encryptValueWithKMS = async (value) => {
+  try {
+    await KMS.decryptBase64String(value);
+    return value;
+  } catch (error) {
+    if (error.code === 'InvalidCiphertextException') {
+      return await KMS.encrypt(process.env.provider_kms_key_id, value);
+    }
+    throw error;
+  }
+};
 
 const buildValidationError = ({ detail }) => {
   const err = new ValidationError('The record has validation errors');
@@ -70,6 +79,7 @@ class Provider extends Manager {
     if (item.username) {
       record.username = await encryptValueWithKMS(item.username);
     }
+
     if (item.password) {
       record.password = await encryptValueWithKMS(item.password);
     }
@@ -85,6 +95,7 @@ class Provider extends Manager {
     if (item.username) {
       record.username = await encryptValueWithKMS(item.username);
     }
+
     if (item.password) {
       record.password = await encryptValueWithKMS(item.password);
     }

@@ -7,7 +7,7 @@ const mime = require('mime-types');
 const path = require('path');
 const replace = require('lodash/replace');
 
-const { headObject, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { headObject } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const { loadConfig } = require('@cumulus/integration-tests/config');
@@ -161,31 +161,20 @@ function getExecutionUrl(executionArn) {
 }
 
 async function getFileMetadata(file) {
-  let Bucket;
-  let Key;
-  if (file.bucket && file.filepath) {
-    Bucket = file.bucket;
-    Key = file.filepath;
-  } else if (file.bucket && file.key) {
-    Bucket = file.bucket;
-    Key = file.key;
-  } else if (file.filename) {
-    const parsedUrl = parseS3Uri(file.filename);
-    Bucket = parsedUrl.Bucket;
-    Key = parsedUrl.Key;
-  } else {
+  if (!file.bucket || !file.key) {
     throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
   }
 
   try {
-    const headObjectResponse = await headObject(Bucket, Key);
+    const headObjectResponse = await headObject(file.bucket, file.key);
     return {
-      filename: file.filename,
+      bucket: file.bucket,
+      key: file.key,
       size: headObjectResponse.ContentLength,
       LastModified: headObjectResponse.LastModified,
     };
   } catch (error) {
-    log.error(`Failed to headObject the object at ${Bucket}/${Key} in s3.`);
+    log.error(`Failed to headObject the object at ${file.bucket}/${file.key} in s3.`);
     throw (error);
   }
 }

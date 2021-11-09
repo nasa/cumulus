@@ -196,6 +196,12 @@ variable "ecs_include_docker_cleanup_cronjob" {
   default = false
 }
 
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "es_request_concurrency" {
   type = number
   default = 10
@@ -332,7 +338,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "12"
+    default = "13"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"

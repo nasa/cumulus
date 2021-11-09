@@ -197,7 +197,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
     bucket: process.env.system_bucket,
     key,
   });
-  t.is(sum, 1435712144);
+  t.is(sum, '1435712144');
 
   const s3HeadResponse = await S3.headObject(process.env.system_bucket, key);
   t.is(expectedContentType, s3HeadResponse.ContentType);
@@ -212,6 +212,6 @@ test('Download remote file to local disk', async (t) => {
   });
 
   const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));
-  t.is(sum, 1435712144);
+  t.is(sum, '1435712144');
   fs.unlinkSync(localPath);
 });
