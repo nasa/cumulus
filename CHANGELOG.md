@@ -36,6 +36,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 
+### Changed
+- **CUMULUS-2638**
+  - Removes typescript type BucketType.  User transparent, but was this was
+    incorrectly typed, and misleading.
+
+
 ## [v9.9.0] 2021-11-03
 
 ### Added

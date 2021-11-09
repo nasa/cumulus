@@ -197,7 +197,7 @@ async function moveFileRequest(
 }
 
 /**
- * Move all files in a collection of granules from staging location fo final location,
+ * Move all files in a collection of granules from staging location to final location,
  * and update granule files to include renamed files if any.
  *
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId

@@ -619,7 +619,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.location - location to invetory for report
+ * @param {string} recReportParams.location - location to inventory for report
  * @param {string} recReportParams.reportKey - the s3 report key
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
