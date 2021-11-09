@@ -375,7 +375,9 @@ test.serial('Deleting a PDR that exists in Elastisearch and not PostgreSQL succe
   t.is(detail, 'Record deleted');
 
   t.false(
-    await t.context.pdrModel.exists({ pdrName: originalDynamoPdr.pdrName })
+    await t.context.pdrModel.exists({
+      pdrName: originalDynamoPdr.pdrName,
+    })
   );
   t.false(
     await esPdrsClient.exists(

@@ -200,8 +200,15 @@ test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succee
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(await providerModel.exists(testProvider.id));
-  t.false(await t.context.providerPgModel.exists(t.context.testKnex, { name: testProvider.id }));
+  t.false(
+    await providerModel.exists(testProvider.id)
+  );
+  t.false(
+    await t.context.providerPgModel.exists(
+      t.context.testKnex,
+      { name: testProvider.id }
+    )
+  );
   t.false(
     await t.context.esProviderClient.exists(
       testProvider.id
@@ -225,8 +232,15 @@ test('Deleting a provider that exists in Elasticsearch and not PostgreSQL succee
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-  t.false(await providerModel.exists(testProvider.id));
-  t.false(await t.context.providerPgModel.exists(t.context.testKnex, { name: testProvider.id }));
+  t.false(
+    await providerModel.exists(testProvider.id)
+  );
+  t.false(
+    await t.context.providerPgModel.exists(
+      t.context.testKnex,
+      { name: testProvider.id }
+    )
+  );
   t.false(
     await t.context.esProviderClient.exists(
       testProvider.id

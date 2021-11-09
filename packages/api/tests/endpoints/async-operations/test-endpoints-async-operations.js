@@ -308,9 +308,9 @@ test('DELETE deletes async operation successfully if it exists Elasticsearch but
   t.false(
     await asyncOperationPgModel.exists(knex, { id })
   );
-  t.true(await esAsyncOperationClient.exists(
-    id
-  ));
+  t.true(
+    await esAsyncOperationClient.exists(id)
+  );
 
   const response = await request(app)
     .delete(`/asyncOperations/${id}`)
@@ -320,10 +320,12 @@ test('DELETE deletes async operation successfully if it exists Elasticsearch but
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(await asyncOperationModel.exists({ id }));
-  t.false(await esAsyncOperationClient.exists(
-    id
-  ));
+  t.false(
+    await asyncOperationModel.exists({ id })
+  );
+  t.false(
+    await esAsyncOperationClient.exists(id)
+  );
 });
 
 test('DELETE deletes the async operation from all data stores', async (t) => {
