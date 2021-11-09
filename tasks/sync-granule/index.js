@@ -135,7 +135,8 @@ function syncGranule(event, testMocks = {}) {
     const granules = [];
     granuleResults.forEach((gr) => {
       if (!gr.ingestedGranule.createdAt) {
-        gr.ingestedGranule.createdAt = new Date().getTime();
+        const createdAt = new Date().getTime();
+        gr.ingestedGranule.createdAt = createdAt;
         granules.push(gr.ingestedGranule);
         // update granule to ensure createdAt date ends up in DB
         updateGranule({
