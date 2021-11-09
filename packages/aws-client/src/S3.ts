@@ -956,6 +956,7 @@ const uploadPartCopy = async (
  *   Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
+ * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
  *    destination object
  */
@@ -968,7 +969,6 @@ export const multipartCopyObject = async (
     sourceObject?: AWS.S3.HeadObjectOutput,
     ACL?: AWS.S3.ObjectCannedACL,
     copyTags?: boolean,
-    copyMetadata?: boolean,
     chunkSize?: number
   }
 ): Promise<{ etag: string }> => {
@@ -1056,6 +1056,7 @@ export const multipartCopyObject = async (
  * @param {string} params.destinationKey
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
+ * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  * @returns {Promise<undefined>}
  */
 export const moveObject = async (
