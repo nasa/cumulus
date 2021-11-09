@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     an option for extracting and formating the entire date. See
     docs/workflow/workflow-configuration-how-to.md for more information.
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2714**
+    - Added `@cumulus/db/base.deleteExcluding` method to allow for deletion of a
+      record set with an exclusion list of cumulus_ids
   - **CUMULUS-2317**
     - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
     records in PostgreSQL and return specified granule information for each file
@@ -48,7 +51,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added the new function `publishSnsMessageByDataType` in `@cumulus/api` to
       publish SNS messages to the report topics to PDRs, Collections, and
       Executions.
-    - Added the following functions in `publishSnsMessageUtils` to handle publishing SNS messages for specific data and event types:
+    - Added the following functions in `publishSnsMessageUtils` to handle
+      publishing SNS messages for specific data and event types:
       - `publishCollectionUpdateSnsMessage`
       - `publishCollectionCreateSnsMessage`
       - `publishCollectionDeleteSnsMessage`
@@ -72,6 +76,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
       `postgres-migration-async-operation` lambda.
+- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex
+  transaction that **will throw an error** if the transaction rolls back. [As
+  of Knex 0.95+, promise rejection on transaction rollback is no longer the
+  default
+  behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
+- **CUMULUS-2670**
+  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
+  `update_granules_cmr_metadata_file_links_task_timeout` property
 
 ### Removed
 
@@ -95,6 +107,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2714**
+    - Updated
+      - @cumulus/api/lib.writeRecords.writeGranulesFromMessage
+      - @cumulus/api/lib.writeRecords.writeGranuleFromApi
+      - @cumulus/api/lib.writeRecords.createGranuleFromApi
+      - @cumulus/api/lib.writeRecords.updateGranuleFromApi
+    - These methods now remove postgres file records that aren't contained in
+        the write/update action if such file records exist.  This update
+        maintains consistency with the writes to elasticsearch/dynamodb.
   - **CUMULUS-2672**
     - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
       instead of dropping it.
@@ -131,18 +152,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `.test/helpers`
   - **CUMULUS-2208**
     - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
-    - Updated logic for collections API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for rules API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for providers API POST/PUT/DELETE to create/update/delete records directly in Elasticsearch in parallel with updates to DynamoDb/PostgreSQL
-    - Updated logic for PDRs API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - Updated logic for executions API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - Updated logic for granules API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
-    - `sfEventSqsToDbRecords` Lambda now writes following data directly to Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
+    - Updated logic for collections API POST/PUT/DELETE to create/update/delete
+      records directly in Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for rules API POST/PUT/DELETE to create/update/delete
+      records directly in Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for providers API POST/PUT/DELETE to create/update/delete
+      records directly in  Elasticsearch in parallel with updates to
+      DynamoDb/PostgreSQL
+    - Updated logic for PDRs API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for executions API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - Updated logic for granules API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - `sfEventSqsToDbRecords` Lambda now writes following data directly to
+      Elasticsearch in parallel with writes to DynamoDB/PostgreSQL:
       - executions
       - PDRs
       - granules
-    - All async operations are now written directly to Elasticsearch in parallel with DynamoDB/PostgreSQL
-    - Updated logic for async operation API DELETE to delete records directly in Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
+    - All async operations are now written directly to Elasticsearch in parallel
+      with DynamoDB/PostgreSQL
+    - Updated logic for async operation API DELETE to delete records directly in
+      Elasticsearch in parallel with deletes to DynamoDB/PostgreSQL
     - Moved:
       - `packages/api/lib/granules.getGranuleProductVolume` ->
       `@cumulus/message/Granules.getGranuleProductVolume`
