@@ -14,6 +14,20 @@ upgrades to `knex` package.
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2641**
+    - Update `@cumulus/db` package to return BigInt for `granule.file.size`
+      internally.
+    - Update `@cumulu/db/translate` file translation methods to translate
+      properly between 'API' and 'postgres' file types.
+    - Update `@cumulus/db/model/base` model class to allow a
+      `convertRecordFunction` that can be set and will be run against methods on the base class that
+      return RecordType or RecordType[] to allow modification in JS of the
+      postgres return.
+    - Update `@cumulus/api` granule endpoints and related support code to expect
+      granule.file[*].size to be of type `string`.
+    - Update Cumulus API `granule.file.size` type to string to accomidate file
+      sizes larger than javascript numbers.
+    - Update data-migration2 lambda to utilize corresponding updated types
   - **CUMULUS-2317**
     - Added `@cumulus/db/getFilesAndGranuleInfoQuery()` to build a query for searching file
     records in PostgreSQL and return specified granule information for each file
@@ -66,8 +80,8 @@ upgrades to `knex` package.
     - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
       derived table classes to support querying the current max `cumulus_id`.
   - **CUMULUS-2673**
-    - Added `ES_HOST` environment variable to `postgres-migration-async-operation` 
-    Lambda using value of `elasticsearch_hostname` Terraform variable. 
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation`
+    Lambda using value of `elasticsearch_hostname` Terraform variable.
     - Added `elasticsearch_security_group_id` to security groups for
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
