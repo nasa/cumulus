@@ -42,8 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **NDCUM-624**: Add support for ISO metadata files for the `MoveGranules` step
-  - Add function `isISOFile` to check if a given file object is an ISO file;
-    uses same logic as `isCMRFile`
+  - Add function `isISOFile` to check if a given file object is an ISO file
   - `granuleToCmrFileObject` and `granulesToCmrFileObjects` now take a
     `filterFunc` argument
     - `filterFunc`'s default value is `isCMRFile`, so the previous behavior is

@@ -22,15 +22,16 @@ const {
   randomString, randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
+const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
 
 const { moveGranules } = require('..');
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => {
     let body;
-    if (file.endsWith('.cmr.xml')) {
+    if (isECHO10Filename('.cmr.xml')) {
       body = fs.createReadStream('tests/data/meta.xml');
-    } else if (file.endsWith('.iso.xml')) {
+    } else if (isISOFilename('.iso.xml')) {
       body = fs.createReadStream('tests/data/meta.iso.xml');
     } else {
       body = parseS3Uri(file).Key;

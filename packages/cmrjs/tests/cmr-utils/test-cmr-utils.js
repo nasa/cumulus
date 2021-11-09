@@ -313,7 +313,7 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
   );
 });
 
-test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering with a custom filter', (t) => {
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for ISO files', (t) => {
   const granule = {
     granuleId: 'fake-id',
     files: [{
@@ -325,7 +325,7 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
       key: 'fake.iso.xml',
     }],
   };
-  const filterFunc = (fileobject) => fileobject.key.endsWith('.iso.xml');
+  const filterFunc = isISOFile;
   t.deepEqual(
     granuleToCmrFileObject(granule, filterFunc),
     [{
@@ -336,7 +336,31 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
   );
 });
 
-test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering with another custom filter', (t) => {
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for "easterbunny" files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.easterbunny.xml',
+    }],
+  };
+  const filterFunc = (fileobject) => fileobject.key.endsWith('.easterbunny.xml');
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.easterbunny.xml',
+    }]
+  );
+});
+
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for ISO and CMR files', (t) => {
   const granule = {
     granuleId: 'fake-id',
     files: [{
@@ -346,6 +370,10 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
     {
       bucket: 'bucket',
       key: 'fake.iso.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.other.xml',
     }],
   };
   const filterFunc = (fileobject) => fileobject.key.endsWith('.iso.xml') || fileobject.key.endsWith('cmr.xml');
