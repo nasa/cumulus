@@ -8,14 +8,25 @@ hide_title: false
 
 ### Bucket configuration
 
-Buckets configured in your deployment for the `cumulus` module's inputs will ultimately become part of the workflow configuration. The `type` property of a bucket relies on the how that bucket will be used:
+Buckets configured in your deployment for the `cumulus` module's inputs will
+ultimately become part of the workflow configuration. The `type` property of a
+bucket describes how that bucket will be used:
 
 * `public` indicates a completely public bucket.
-* `internal` type is for system use.
-* `protected` buckets are for any information that should be behind either Earthdata Login (if using TEA for distribution) or Cognito authentication (if using the Cumulus Distribution API for distribution)
+* `internal` type is for Cumulus system use.
+* `protected` buckets are for any information that should be behind either
+  Earthdata Login (if using TEA for distribution) or Cognito authentication (if
+  using the Cumulus Distribution API for distribution)
 * `private` buckets are for private data.
+*  Any other type is allowed and the bucket will be configured with limited IAM
+   privileges used by your system but not directly related to your ingest and
+   distribution.  For example, your glacier backup bucket could have a type
+   `glacier` or `recovery` and it would be accessible to Cumulus but not part
+   of the ingest/distrubution system.
 
-Consider the following `buckets` configuration variable for the `cumulus` module for all following examples:
+
+Consider the following `buckets` configuration variable for the `cumulus`
+module for all following examples:
 
 ```tcl
 buckets =  {
@@ -38,6 +49,14 @@ buckets =  {
   protected-2 = {
     name = "sample-protected-bucket-2",
     type = "protected"
+  },
+  dashboard = {
+    name = "dashboard-bucket",
+    type = "dashboard"
+  },
+  glacier = {
+     name = "glacier-backup-bucket",
+     type = "glacier"
   }
 }
 ```
