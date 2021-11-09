@@ -31,6 +31,8 @@ module "ingest" {
   cmr_page_size      = var.cmr_page_size
   cmr_custom_host    = var.cmr_custom_host
 
+  default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+
   lambda_timeouts    = var.lambda_timeouts
   # Launchpad config
   launchpad_api         = var.launchpad_api
