@@ -7,11 +7,11 @@ const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const GranuleFetcher = require('./GranuleFetcher');
 const {
   granules: granulesApi,
 } = require('@cumulus/api-client');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const GranuleFetcher = require('./GranuleFetcher');
 
 /**
  * Ingest a list of granules
@@ -138,18 +138,17 @@ function syncGranule(event, testMocks = {}) {
         gr.ingestedGranule.createdAt = new Date().getTime();
         granules.push(gr.ingestedGranule);
         // update granule to ensure createdAt date ends up in DB
-        const createdAt = Date.now();
         updateGranule({
-            prefix: event.config.stackName,
-            body: {
-              collectionId: constructCollectionId(
-                gr.ingestedGranule.dataType,
-                gr.ingestedGranule.version
-              ),
-              granuleId: gr.ingestedGranule.granuleId,
-              createdAt,
-            },
-          });
+          prefix: event.config.stackName,
+          body: {
+            collectionId: constructCollectionId(
+              gr.ingestedGranule.dataType,
+              gr.ingestedGranule.version
+            ),
+            granuleId: gr.ingestedGranule.granuleId,
+            createdAt: gr.ingestedGranule.createdAt,
+          },
+        });
       }
       if (gr.granuleDuplicateFiles) {
         granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {

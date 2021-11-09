@@ -30,7 +30,7 @@ const { syncGranule } = require('..');
 const updateGranuleMock = sinon.spy(({ body }) => body);
 
 const testMocks = {
-  updateGranuleMock
+  updateGranuleMock,
 };
 
 // prepare the s3 event and data
@@ -261,14 +261,6 @@ test.serial('verify that all returned granules have sync_granule_duration set', 
 
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
-
-  const updateGranuleMock = sinon.spy(({ body }) => body.sync_granule_duration);
-  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
-
-  const testMocks = {
-    updateGranuleMock,
-    enqueueGranuleIngestMessageMock,
-  };
 
   const output = await syncGranule(t.context.event, testMocks);
 
@@ -658,14 +650,6 @@ test.serial('verify that all returned granules have createdAt set', async (t) =>
 
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
-
-  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
-
-  const testMocks = {
-    updateGranuleMock,
-    enqueueGranuleIngestMessageMock,
-  };
 
   const output = await syncGranule(t.context.event, testMocks);
 
