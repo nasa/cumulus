@@ -153,7 +153,7 @@ export const migrateFileRecord = async (
     bucket,
     key,
     granule_cumulus_id: granuleCumulusId,
-    file_size: file.size,
+    file_size: file.size ? BigInt(file.size) : undefined,
     checksum_value: file.checksum,
     checksum_type: file.checksumType,
     file_name: file.fileName,
