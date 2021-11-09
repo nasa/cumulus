@@ -135,7 +135,6 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
     destinationBucket,
     destinationKey,
     ACL: 'public-read',
-    chunkSize: 5 * MB,
   });
 
   const destinationAcls = await s3().getObjectAcl({
