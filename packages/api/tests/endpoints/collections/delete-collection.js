@@ -214,10 +214,12 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL but 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(await collectionPgModel.exists(t.context.testKnex, {
-    name: testCollection.name,
-    version: testCollection.version,
-  }));
+  t.false(
+    await collectionPgModel.exists(t.context.testKnex, {
+      name: testCollection.name,
+      version: testCollection.version,
+    })
+  );
   t.false(
     await esCollectionClient.exists(
       constructCollectionId(testCollection.name, testCollection.version)
@@ -250,10 +252,12 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(await collectionPgModel.exists(t.context.testKnex, {
-    name: testCollection.name,
-    version: testCollection.version,
-  }));
+  t.false(
+    await collectionPgModel.exists(t.context.testKnex, {
+      name: testCollection.name,
+      version: testCollection.version,
+    })
+  );
   t.false(
     await esCollectionClient.exists(
       constructCollectionId(testCollection.name, testCollection.version)
