@@ -12,12 +12,12 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  localStackConnectionEnv,
-  generateLocalTestDb,
-  destroyLocalTestDb,
   CollectionPgModel,
+  destroyLocalTestDb,
+  fakeCollectionRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
   migrationDir,
-  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -196,9 +196,8 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL but 
     esCollectionClient,
     testKnex,
   } = t.context;
-  const testCollection = fakeCollectionFactory();
-  const insertPgRecord = await translateApiCollectionToPostgresCollection(testCollection);
-  await collectionPgModel.create(testKnex, insertPgRecord);
+  const testCollection = fakeCollectionRecordFactory();
+  await collectionPgModel.create(testKnex, testCollection);
   t.true(await collectionPgModel.exists(testKnex, {
     name: testCollection.name,
     version: testCollection.version,
@@ -233,7 +232,7 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
     esCollectionClient,
     testKnex,
   } = t.context;
-  const testCollection = fakeCollectionFactory();
+  const testCollection = fakeCollectionRecordFactory();
   await indexCollection(esClient, testCollection, process.env.ES_INDEX);
   t.false(await collectionPgModel.exists(testKnex, {
     name: testCollection.name,
