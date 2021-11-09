@@ -179,7 +179,7 @@ async function moveFileRequest(
       duplicateHandling,
     });
   } else {
-    const maxChunkSize = process.env.default_s3_multipart_chunksize_mb
+    const chunkSize = process.env.default_s3_multipart_chunksize_mb
       ? Number(process.env.default_s3_multipart_chunksize_mb) * MB : undefined;
     await moveObject({
       sourceBucket: source.Bucket,
@@ -187,7 +187,7 @@ async function moveFileRequest(
       destinationBucket: target.Bucket,
       destinationKey: target.Key,
       copyTags: true,
-      maxChunkSize,
+      chunkSize,
     });
   }
 

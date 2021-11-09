@@ -47,7 +47,7 @@ test('moveObject() copies the source file to the destination', async (t) => {
     sourceKey,
     destinationBucket,
     destinationKey,
-    maxChunkSize: 5 * MB,
+    chunkSize: 5 * MB,
   });
 
   const copiedObject = await getS3Object(destinationBucket, destinationKey);

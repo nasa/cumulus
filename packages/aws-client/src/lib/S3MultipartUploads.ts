@@ -27,13 +27,13 @@ const MB = 1024 * 1024;
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPartCopy.html
 export const createMultipartChunks = (
   objectSize: number,
-  maxChunkSize = 250 * MB
+  chunkSize = 250 * MB
 ): Chunk[] =>
-  range(0, objectSize, maxChunkSize)
+  range(0, objectSize, chunkSize)
     .map(
       (start) => ({
         start,
-        end: Math.min(start + maxChunkSize, objectSize) - 1,
+        end: Math.min(start + chunkSize, objectSize) - 1,
       })
     );
 
