@@ -38,9 +38,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 - **CUMULUS-2638**
-  - Removes typescript type BucketType.  User transparent, but was this was
-    incorrectly typed, and misleading.
-
+  - Transparent to users, remove typescript type `BucketType`.
 
 ## [v9.9.0] 2021-11-03
 
