@@ -32,6 +32,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Added
+
+### Changed
+
+- **CUMULUS-2718**
+  - Updated SyncGranules to provide `createdAt` on output and ensure DB reflects accordingly
+
 ## [v9.9.0] 2021-11-03
 
 ### Added
