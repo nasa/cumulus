@@ -388,15 +388,15 @@ test.serial('Deleting a PDR that exists in Elastisearch and not PostgreSQL succe
 
 test.serial('DELETE a pdr', async (t) => {
   const {
-    originalDynamoPdr,
+    originalPgRecord,
   } = await createPdrTestRecords(t.context);
   // create a new pdr
 
-  const key = `${process.env.stackName}/pdrs/${originalDynamoPdr.pdrName}`;
+  const key = `${process.env.stackName}/pdrs/${originalPgRecord.name}`;
   await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
   const response = await request(app)
-    .delete(`/pdrs/${originalDynamoPdr.pdrName}`)
+    .delete(`/pdrs/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
