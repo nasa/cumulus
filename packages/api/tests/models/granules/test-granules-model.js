@@ -292,7 +292,7 @@ test('get() will translate an old-style granule file into the new schema', async
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234,
+    fileSize: '1234',
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
@@ -313,7 +313,7 @@ test('get() will translate an old-style granule file into the new schema', async
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234,
+      size: '1234',
     }
   );
 });
@@ -325,7 +325,7 @@ test('get() will correctly return a granule file stored using the new schema', a
     fileName: 'file123.txt',
     checksumType: 'my-checksumType',
     checksum: 'my-checksumValue',
-    size: 1234,
+    size: '1234',
   };
 
   const granule = fakeGranuleFactoryV2({ files: [newFile] });
@@ -346,7 +346,7 @@ test('get() will correctly return a granule file stored using the new schema', a
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234,
+      size: '1234',
     }
   );
 });
@@ -378,7 +378,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234,
+    fileSize: '1234',
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
@@ -403,7 +403,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234,
+      size: '1234',
     }
   );
 });
@@ -418,7 +418,7 @@ test('scan() will translate old-style granule files into the new schema', async 
     checksumType: 'my-checksumType',
     checksumValue: 'my-checksumValue',
     url_path: 'some-url-path',
-    fileSize: 1234,
+    fileSize: '1234',
   };
 
   const granule = fakeGranuleFactoryV2({ files: [oldFile] });
@@ -443,7 +443,7 @@ test('scan() will translate old-style granule files into the new schema', async 
       fileName: 'file123.txt',
       checksumType: 'my-checksumType',
       checksum: 'my-checksumValue',
-      size: 1234,
+      size: '1234',
     }
   );
 });

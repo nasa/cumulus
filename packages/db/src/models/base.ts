@@ -270,11 +270,12 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     knexOrTransaction: Knex | Knex.Transaction,
     whereClause: Partial<RecordType>,
     updateParams: Partial<RecordType>,
-    returning: Array<string> = []
+    returning: Array<string> | string = '*'
   ) {
     const records = await knexOrTransaction(this.tableName)
       .where(whereClause)
-      .update(updateParams, returning) as RecordType[];
+      .update(updateParams)
+      .returning(returning) as RecordType[];
     if (this.convertRecordFunction) {
       return records.map((record) => this.convertRecordFunction(record));
     }

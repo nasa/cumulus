@@ -3,7 +3,7 @@
 'use strict';
 
 const flow = require('lodash/flow');
-const isInteger = require('lodash/isInteger');
+const isString = require('lodash/isString');
 const partial = require('lodash/partial');
 const pick = require('lodash/pick');
 const urljoin = require('url-join');
@@ -57,9 +57,9 @@ const setFileName = simpleFieldAdder('fileName', getFileName);
 const setKey = simpleFieldAdder('key', getKey);
 
 const setS3FileSize = async (s3, file) => {
-  if (isInteger(file.size)) return file;
+  if (isString(file.size)) return file;
 
-  if (isInteger(file.fileSize)) {
+  if (isString(file.fileSize)) {
     const newFileObj = { ...file, size: file.fileSize };
     delete newFileObj.fileSize;
     return newFileObj;
@@ -72,7 +72,7 @@ const setS3FileSize = async (s3, file) => {
       key: file.key,
     });
 
-    return { ...file, size };
+    return { ...file, size: String(size) };
   } catch (error) {
     log.debug(`Unable to get object size for file: ${JSON.stringify(file, null, 2)}, Cause: ${error}`);
     return file;

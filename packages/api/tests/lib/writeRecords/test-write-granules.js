@@ -143,9 +143,9 @@ test.beforeEach(async (t) => {
 
   t.context.granuleId = cryptoRandomString({ length: 10 });
   t.context.files = [
-    fakeFileFactory({ size: 5 }),
-    fakeFileFactory({ size: 5 }),
-    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: '5' }),
+    fakeFileFactory({ size: '5' }),
+    fakeFileFactory({ size: '5' }),
   ];
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
@@ -619,7 +619,7 @@ test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQ
       (pgFile) => file.bucket === pgFile.bucket && file.key === pgFile.key
     );
     t.like(
-      matchingPgFile,
+      { ...omit(matchingPgFile, ['file_size']), file_size: String(matchingPgFile.file_size) },
       {
         bucket: file.bucket,
         key: file.key,

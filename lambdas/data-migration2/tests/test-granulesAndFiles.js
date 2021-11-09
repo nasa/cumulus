@@ -47,7 +47,7 @@ const fileOmitList = ['granule_cumulus_id', 'cumulus_id', 'created_at', 'updated
 const fakeFile = () => fakeFileFactory({
   bucket,
   key: cryptoRandomString({ length: 10 }),
-  size: 1098034,
+  size: '1098034',
   fileName: 'MOD09GQ.A4369670.7bAGCH.006.0739896140643.hdf',
   checksum: 'checkSum01',
   checksumType: 'md5',
@@ -284,7 +284,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       checksum_type: testFile.checksumType,
       key: testFile.key,
       path: null,
-      file_size: testFile.size.toString(),
+      file_size: BigInt(testFile.size),
       file_name: testFile.fileName,
       source: testFile.source,
       type: testFile.type,

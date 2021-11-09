@@ -100,7 +100,7 @@ export const getGranuleQueryFields = (
 export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): number => {
   if (granuleFiles.length === 0) return 0;
   return granuleFiles
-    .map((f) => f.size ?? 0)
+    .map((f) => (f.size ? Number.parseInt(f.size, 10) : 0))
     .filter(isInteger)
     .reduce((x, y) => x + y, 0);
 };

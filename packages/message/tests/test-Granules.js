@@ -155,12 +155,12 @@ test('getGranuleTimeToPreprocess() returns correct duration', (t) => {
   );
 });
 
-test('getGranuleProductVolume() returns correct product volume', (t) => {
+test.only('getGranuleProductVolume() returns correct product volume', (t) => {
   t.is(
     getGranuleProductVolume([{
-      size: 1,
+      size: '1',
     }, {
-      size: 2,
+      size: '2',
     }]),
     3
   );

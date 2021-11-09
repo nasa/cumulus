@@ -2,6 +2,7 @@
 
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -113,9 +114,9 @@ const _writeFiles = async ({
 }) => await pMap(
   fileRecords,
   async (fileRecord) => {
-    log.info('About to write file record to PostgreSQL: %j', fileRecord);
+    log.info('About to write file record to PostgreSQL: %j', { ...omit(fileRecord, 'file_size'), size: String(fileRecord.file_size) });
     await filePgModel.upsert(knex, fileRecord);
-    log.info('Successfully wrote file record to PostgreSQL: %j', fileRecord);
+    log.info('Successfully wrote file record to PostgreSQL: %j', { ...omit(fileRecord, 'file_size'), size: String(fileRecord.file_size) });
   },
   { stopOnError: false }
 );

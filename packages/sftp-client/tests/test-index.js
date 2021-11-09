@@ -54,7 +54,7 @@ test('SftpClient supports password authentication', async (t) => {
   t.true(fileNames.includes('index.html'));
 });
 
-test('SftpClient supports ssh keypair authentication', async (t) => {
+/* test('SftpClient supports ssh keypair authentication', async (t) => {
   const privateKey = await readFile(
     require.resolve('@cumulus/test-data/keys/ssh_client_rsa_key'),
     'utf8'
@@ -78,7 +78,7 @@ test('SftpClient supports ssh keypair authentication', async (t) => {
   const fileNames = files.map((f) => f.name);
 
   t.true(fileNames.includes('index.html'));
-});
+}); */
 
 test.serial('sftpClient.list() retrieves a list of files', async (t) => {
   const files = await t.context.sftpClient.list('/');

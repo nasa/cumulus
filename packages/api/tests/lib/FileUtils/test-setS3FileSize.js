@@ -24,16 +24,16 @@ test.before((t) => {
 });
 
 test('setS3FileSize() returns the value of the fileSize property in the size field', async (t) => {
-  const file = { fileSize: 1234 };
+  const file = { fileSize: '1234' };
 
   t.deepEqual(
     await setS3FileSize(t.context.fakeS3, file),
-    { size: 1234 }
+    { size: '1234' }
   );
 });
 
 test('setS3FileSize() returns the value of the size property in the size field', async (t) => {
-  const file = { size: 1234 };
+  const file = { size: '1234' };
 
   t.deepEqual(
     await setS3FileSize(t.context.fakeS3, file),
@@ -43,13 +43,13 @@ test('setS3FileSize() returns the value of the size property in the size field',
 
 test('setS3FileSize() prefers size over fileSize', async (t) => {
   const file = {
-    fileSize: 1234,
-    size: 4321,
+    fileSize: '1234',
+    size: '4321',
   };
 
   t.is(
     (await setS3FileSize(t.context.fakeS3, file)).size,
-    4321
+    '4321'
   );
 });
 
@@ -58,7 +58,7 @@ test('setS3FileSize() fetches the file size from S3 if file and fileSize are not
 
   const updatedFile = await setS3FileSize(t.context.fakeS3, file);
 
-  t.is(updatedFile.size, 4);
+  t.is(updatedFile.size, '4');
 });
 
 test('setS3FileSize() returns the file without a size if size and fileSize are not set, and the object does not exist in S3', async (t) => {

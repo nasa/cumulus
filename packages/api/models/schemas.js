@@ -309,7 +309,7 @@ module.exports.granule = {
           createdAt: { type: 'integer' },
           fileName: { type: 'string' },
           key: { type: 'string' },
-          size: { type: 'integer' },
+          size: { type: 'string' },
           source: { type: 'string' },
           type: { type: 'string' },
           updatedAt: { type: 'integer' },
