@@ -9,14 +9,15 @@ This module deploys data persistence resources, including DynamoDB tables, RDS d
   - `SemaphoresTable`
 - RDS database within the PostgreSQL-compatible cluster
 - RDS database tables:
-  - `AsyncOperationsTable`
-  - `CollectionsTable`
-  - `ExecutionsTable`
-  - `FilesTable`
-  - `GranulesTable`
-  - `PdrsTable`
-  - `ProvidersTable`
-  - `RulesTable`
+  - `async_operations`
+  - `collections`
+  - `executions`
+  - `files`
+  - `granules`
+  - `granules_executions`
+  - `pdrs`
+  - `providers`
+  - `rules`
 - Elasticsearch domain (with optional VPC configuration)
 - Cloudwatch alarm for Elasticsearch node count
 
