@@ -2,6 +2,7 @@
 
 const path = require('path');
 const test = require('ava');
+const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   calculateObjectHash,
@@ -25,6 +26,12 @@ const {
   validateOutput,
 } = require('@cumulus/common/test-utils');
 const { syncGranule } = require('..');
+
+const updateGranuleMock = sinon.spy(({ body }) => body);
+
+const testMocks = {
+  updateGranuleMock
+};
 
 // prepare the s3 event and data
 async function prepareS3DownloadEvent(t) {
@@ -132,7 +139,7 @@ test.afterEach.always((t) => Promise.all([
 test.serial('should return empty granules list given empty granules list on input', async (t) => {
   t.context.event.input.granules = [];
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   t.deepEqual(output.granules, [], 'output granules list should be empty');
 });
@@ -140,7 +147,7 @@ test.serial('should return empty granules list given empty granules list on inpu
 test.serial('should return empty granules list given no granules list on input', async (t) => {
   delete t.context.event.input.granules;
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   t.deepEqual(output.granules, [], 'output granules list should be empty');
 });
@@ -149,7 +156,7 @@ test.serial('error when provider info is missing', async (t) => {
   delete t.context.event.config.provider;
 
   try {
-    await syncGranule(t.context.event);
+    await syncGranule(t.context.event, testMocks);
     t.fail();
   } catch (error) {
     t.true(error instanceof errors.ProviderNotFound);
@@ -168,7 +175,7 @@ test.serial('no error when collection info is not provided in the event', async 
     password: 'testpass',
   };
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
   await validateOutput(t, output);
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
@@ -187,7 +194,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
 
@@ -221,7 +228,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
 
@@ -255,7 +262,15 @@ test.serial('verify that all returned granules have sync_granule_duration set', 
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const output = await syncGranule(t.context.event);
+  const updateGranuleMock = sinon.spy(({ body }) => body.sync_granule_duration);
+  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
+
+  const testMocks = {
+    updateGranuleMock,
+    enqueueGranuleIngestMessageMock,
+  };
+
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
 
@@ -282,7 +297,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
 
@@ -366,7 +381,7 @@ test.serial('download granule from S3 provider with checksum and data file in an
     Body: '1435712144',
   });
 
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
 
@@ -418,7 +433,7 @@ test.serial('download granule from S3 provider', async (t) => {
       Body: streamTestData(`granules/${granuleFileName}`),
     });
 
-    const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event, testMocks);
 
     await validateOutput(t, output);
 
@@ -469,7 +484,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   await validateInput(t, input);
 
   const checksumFilename = input.granules[0].files[1].name;
-  const output = await syncGranule(event);
+  const output = await syncGranule(event, testMocks);
 
   await validateOutput(t, output);
 
@@ -518,7 +533,7 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   await validateConfig(t, config);
   await validateInput(t, input);
 
-  const output = await syncGranule(event);
+  const output = await syncGranule(event, testMocks);
 
   await validateOutput(t, output);
 
@@ -583,7 +598,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
   await t.throwsAsync(
-    () => syncGranule(t.context.event),
+    () => syncGranule(t.context.event, testMocks),
     { message: errorMessage }
   );
 });
@@ -610,7 +625,7 @@ test.serial('validate file properties', async (t) => {
   await validateInput(t, t.context.event.input);
 
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
-  const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
   t.is(output.granules.length, 1);
@@ -644,7 +659,15 @@ test.serial('verify that all returned granules have createdAt set', async (t) =>
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const output = await syncGranule(t.context.event);
+  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
+  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
+
+  const testMocks = {
+    updateGranuleMock,
+    enqueueGranuleIngestMessageMock,
+  };
+
+  const output = await syncGranule(t.context.event, testMocks);
 
   await validateOutput(t, output);
   t.is(output.granules.length, 1);
@@ -675,7 +698,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   try {
     await t.throwsAsync(
-      () => syncGranule(t.context.event),
+      () => syncGranule(t.context.event, testMocks),
       undefined,
       'Source file not found'
     );
@@ -690,10 +713,10 @@ async function duplicateHandlingErrorTest(t) {
   const granuleFileName = t.context.event.input.granules[0].files[0].name;
 
   try {
-    const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event, testMocks);
     await validateOutput(t, output);
 
-    await syncGranule(t.context.event);
+    await syncGranule(t.context.event, testMocks);
     t.fail();
   } catch (error) {
     const collection = t.context.event.config.collection;
@@ -736,7 +759,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   try {
     // staging the granule
-    let output = await syncGranule(t.context.event);
+    let output = await syncGranule(t.context.event, testMocks);
 
     await validateOutput(t, output);
 
@@ -761,7 +784,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       key,
     });
 
-    output = await syncGranule(t.context.event);
+    output = await syncGranule(t.context.event, testMocks);
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 2);
@@ -806,7 +829,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       key,
     });
 
-    output = await syncGranule(t.context.event);
+    output = await syncGranule(t.context.event, testMocks);
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 3);
@@ -835,7 +858,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
 
   try {
     // staging the granule
-    let output = await syncGranule(t.context.event);
+    let output = await syncGranule(t.context.event, testMocks);
 
     await validateOutput(t, output);
 
@@ -860,7 +883,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
       key,
     });
 
-    output = await syncGranule(t.context.event);
+    output = await syncGranule(t.context.event, testMocks);
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
@@ -902,7 +925,7 @@ async function granuleFilesOverwrittenTest(t) {
 
   try {
     // staging the granule
-    let output = await syncGranule(t.context.event);
+    let output = await syncGranule(t.context.event, testMocks);
 
     await validateOutput(t, output);
 
@@ -924,7 +947,7 @@ async function granuleFilesOverwrittenTest(t) {
       key,
     });
 
-    output = await syncGranule(t.context.event);
+    output = await syncGranule(t.context.event, testMocks);
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
@@ -980,7 +1003,7 @@ test.serial('download multiple granules from S3 provider to staging directory', 
   try {
     await prepareS3DownloadEvent(t);
 
-    const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event, testMocks);
 
     await validateOutput(t, output);
 
