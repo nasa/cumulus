@@ -587,7 +587,6 @@ test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing fro
 test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoExecution,
-    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
@@ -595,11 +594,9 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
   const { arn } = originalDynamoExecution;
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
-  const fakeExecutionPgModel = {
-    delete: () => {
-      throw new Error('something bad');
-    },
-    get: () => Promise.resolve(originalPgRecord),
+  const fakeExecutionPgModel = new ExecutionPgModel();
+  fakeExecutionPgModel.delete = () => {
+    throw new Error('something bad');
   };
 
   const expressRequest = {
