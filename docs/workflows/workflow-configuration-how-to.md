@@ -18,12 +18,11 @@ bucket describes how that bucket will be used:
   Earthdata Login (if using TEA for distribution) or Cognito authentication (if
   using the Cumulus Distribution API for distribution)
 * `private` buckets are for private data.
-*  Any other type is allowed and the bucket will be configured with limited IAM
+* Any other type is allowed and the bucket will be configured with limited IAM
    privileges used by your system but not directly related to your ingest and
    distribution.  For example, your glacier backup bucket could have a type
    `glacier` or `recovery` and it would be accessible to Cumulus but not part
    of the ingest/distrubution system.
-
 
 Consider the following `buckets` configuration variable for the `cumulus`
 module for all following examples:
