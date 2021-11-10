@@ -29,9 +29,9 @@ const { moveGranules } = require('..');
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => {
     let body;
-    if (isECHO10Filename('.cmr.xml')) {
+    if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.xml');
-    } else if (isISOFilename('.iso.xml')) {
+    } else if (isISOFilename(file)) {
       body = fs.createReadStream('tests/data/meta.iso.xml');
     } else {
       body = parseS3Uri(file).Key;
