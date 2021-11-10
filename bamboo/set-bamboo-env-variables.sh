@@ -100,6 +100,12 @@ fi
 echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 
 
+## SKIP CL eval if current branch is equal to the PR branch
+if [[ $BRANCH == "$PR_BRANCH" ]]; then
+   export SKIP_CHANGELOG=true
+   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
+fi
+
 ## If tag matching the current ref is a version tag, set
 GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
 export GIT_TAG

@@ -61,6 +61,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2640**
   - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
   - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
+- **CUMULUS-2683**
+  - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
+  - Added `default_s3_multipart_chunksize_mb` tfvars to the cumulus and ingest terraform modules.
+  - Added optional parameter `chunkSize` to `@cumulus/aws-client/S3.moveObject` and
+    `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.
+  - Renamed optional parameter `maxChunkSize` to `chunkSize` in
+    `@cumulus/aws-client/lib/S3MultipartUploads.createMultipartChunks`.
 
 ### Changed
 
