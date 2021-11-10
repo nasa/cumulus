@@ -67,6 +67,7 @@
             "provider": "{$.meta.provider}",
             "syncChecksumFiles": true,
             "stack": "{$.meta.stack}",
+            "workflow_start_time": "{$.cumulus_meta.workflow_start_time}",
             "cumulus_message": {
               "outputs": [
                 {

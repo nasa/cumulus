@@ -7,9 +7,6 @@ const lock = require('@cumulus/ingest/lock');
 const { duplicateHandlingType } = require('@cumulus/ingest/granule');
 const { s3Join } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
-const {
-  granules: granulesApi,
-} = require('@cumulus/api-client');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const GranuleFetcher = require('./GranuleFetcher');
 
@@ -86,11 +83,10 @@ async function download({
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
- * @param {Object} testMocks - Object containing mock functions for testing
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
 
-function syncGranule(event, testMocks = {}) {
+function syncGranule(event) {
   const config = event.config;
   const input = event.input;
   const stack = config.stack;
@@ -100,8 +96,7 @@ function syncGranule(event, testMocks = {}) {
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
-
-  const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
+  const workflowStartTime = config.workflow_start_time;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
@@ -133,25 +128,13 @@ function syncGranule(event, testMocks = {}) {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};
     const granules = [];
+    const createdAt = workflowStartTime || Date.now();
     granuleResults.forEach((gr) => {
       if (!gr.ingestedGranule.createdAt) {
-        const createdAt = new Date().getTime();
         const granule = gr;
         granule.ingestedGranule.createdAt = createdAt;
-        granules.push(gr.ingestedGranule);
-        // update granule to ensure createdAt date ends up in DB
-        updateGranule({
-          prefix: event.config.stackName,
-          body: {
-            collectionId: constructCollectionId(
-              gr.ingestedGranule.dataType,
-              gr.ingestedGranule.version
-            ),
-            granuleId: gr.ingestedGranule.granuleId,
-            createdAt: gr.ingestedGranule.createdAt,
-          },
-        });
       }
+      granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {
         granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {
           files: gr.granuleDuplicateFiles.files,
