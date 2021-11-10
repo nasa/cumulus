@@ -8,8 +8,8 @@ const {
   generateEcho10XMLString,
   getS3UrlOfFile,
   mapFileEtags,
-  isECHO10File,
-  isUMMGFile,
+  isECHO10Filename,
+  isUMMGFilename,
   metadataObjectFromCMRFile,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,
@@ -129,7 +129,7 @@ async function updateCmrFileAccessConstraint(
   );
   const { Bucket, Key } = parseS3Uri(cmrS3Url);
   // ECHO10XML logic
-  if (isECHO10File(cmrS3Url)) {
+  if (isECHO10Filename(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setRestrictionMetadataInEcho10XMLMetadata(
       cmrMetadataContentsObject,
       accessConstraints
@@ -142,7 +142,7 @@ async function updateCmrFileAccessConstraint(
     return { ...cmrFileObject, etag: updatedCmrFile.ETag };
   }
   // UMMG-JSON logic
-  if (isUMMGFile(cmrS3Url)) {
+  if (isUMMGFilename(cmrS3Url)) {
     const updatedCmrMetadataContentsObject = setAccessConstraintMetadataInUMMGJSONMetadata(
       cmrMetadataContentsObject,
       accessConstraints
