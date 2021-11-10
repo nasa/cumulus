@@ -359,7 +359,6 @@ test('granuleToCmrFileObject returns correct objects for files with a bucket/key
   );
 });
 
-
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for ISO and CMR files', (t) => {
   const granule = {
     granuleId: 'fake-id',
