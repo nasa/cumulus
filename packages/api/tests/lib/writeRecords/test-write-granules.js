@@ -1112,9 +1112,10 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   );
 });
 
-test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.', async (t) => {
+test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and Elasticsearch.', async (t) => {
   const {
     collectionCumulusId,
+    esGranulesClient,
     granule,
     granuleId,
     granuleModel,
@@ -1130,6 +1131,9 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and DynamoDB.'
   t.true(await granulePgModel.exists(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(
+    granuleId
   ));
 });
 
