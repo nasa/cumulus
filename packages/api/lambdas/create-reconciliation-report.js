@@ -117,9 +117,8 @@ function shouldAggregateGranulesForCollections(searchParams) {
  * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
  * @returns {Array<string>} filtered list of collectionIds returned from CMR
  */
-async function fetchCMRCollections(recReportParams) {
+async function fetchCMRCollections({ collectionIds }) {
   const cmrSettings = await getCmrSettings();
-  log.debug('fetch CMRSearchConceptQueue(collections)');
   const cmrCollectionsIterator = new CMRSearchConceptQueue({
     cmrSettings,
     type: 'collections',
@@ -136,7 +135,6 @@ async function fetchCMRCollections(recReportParams) {
 
   const cmrCollectionIds = allCmrCollectionIds.sort();
 
-  const { collectionIds } = recReportParams;
   if (!collectionIds) return cmrCollectionIds;
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }

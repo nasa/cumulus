@@ -11,10 +11,12 @@ The `cumulus` module exposes values for configuration for some of the provided a
 Configuration parameters for CMR search client for cumulus archive module tasks in the form:
 
 ```hcl
-<lambda_identifier>_report_cmr_limit = <duration>
-<lambda_identifier>_report_cmr_page_size = <size>
+<lambda_identifier>_report_cmr_limit = <maximum number records can be returned from cmr-client search, this should be greater than cmr_page_size>
+<lambda_identifier>_report_cmr_page_size = <number of records for each page returned from CMR>
   type = map(string)
 ```
+
+More information about cmr limit and cmr page_size can be found from [@cumulus/cmr-client](https://github.com/nasa/cumulus/blob/master/packages/cmr-client/src/searchConcept.ts) and [CMR Search API document](https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html#query-parameters).
 
 Currently the following values are supported:
 
