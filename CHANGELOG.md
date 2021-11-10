@@ -53,10 +53,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2640**
   - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
   - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
+- **CUMULUS-2683**
+  - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
+  - Added `default_s3_multipart_chunksize_mb` tfvars to the cumulus and ingest terraform modules.
+  - Added optional parameter `chunkSize` to `@cumulus/aws-client/S3.moveObject` and
+    `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.
+  - Renamed optional parameter `maxChunkSize` to `chunkSize` in
+    `@cumulus/aws-client/lib/S3MultipartUploads.createMultipartChunks`.
 
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
