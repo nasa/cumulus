@@ -20,9 +20,14 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
+              "required": ["bucket", "key"],
               "properties": {
-                "filename": {
+                "bucket": {
+                  "description": "Bucket in-process file is being staged in in S3",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "S3 Key for in-process file",
                   "type": "string"
                 }
               }

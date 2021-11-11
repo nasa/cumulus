@@ -2,6 +2,7 @@
 
 * Alireza Jazayeri
 * Abdelhak Marouane
+* Adithya Krishna
 * Aimee Barciauskas
 * Andrew Pawloski
 * Anthony Lukach
@@ -24,6 +25,7 @@
 * Lauren Frederick
 * Marc Huffnagle
 * Mark Boyd
+* Mark Schwab
 * Matt Savoie
 * Menno Van Diermen
 * Nate Pauzenga
