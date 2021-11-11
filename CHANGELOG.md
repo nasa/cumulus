@@ -37,6 +37,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Added
+- **CUMULUS-2638**
+  - Adds documentation to clarify bucket config object use.
+
+### Changed
+- **CUMULUS-2638**
+  - Transparent to users, remove typescript type `BucketType`.
+
 ## [v9.9.0] 2021-11-03
 
 ### Added
