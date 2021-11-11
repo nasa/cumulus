@@ -11,7 +11,7 @@ hide_title: false
 Inventory reports provide a detailed report of collections, granules and files in Cumulus and CMR.
 This report shows the following data:
 
-* Granule files in Cumulus, those that are in S3 but missing in the internal data store and those in the internal data store but not S3
+* Granule files in Cumulus, those that are in S3[^note] but missing in the internal data store and those in the internal data store but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
 * All Granules in Cumulus and CMR belonging to collections found in both, highlighting any granules only in Cumulus or only in CMR
 * All granule files in Cumulus and CMR belonging to granules found in both, highlighting any files only in Cumulus or only in CMR
@@ -134,3 +134,8 @@ Example response:
     }
 }
 ```
+
+[^note]: Reconciliation reports only search data buckets for objects during the
+    report generation.  The data buckets will include any buckets in your
+    Cumulus buckets configuration that have type `public`, `protected` or
+    `private`.

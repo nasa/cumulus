@@ -43,6 +43,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added CMR search client setting to the CreateReconciliationReport lambda function.
   - Added `cmr_search_client_config` tfvars to the archive and cumulus terraform modules.
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
+- **CUMULUS-2638**
+  - Adds documentation to clarify bucket config object use.
+
+### Changed
+
+- **CUMULUS-2638**
+  - Transparent to users, remove typescript type `BucketType`.
 
 ## [v9.9.0] 2021-11-03
 
