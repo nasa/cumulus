@@ -312,7 +312,7 @@ async function reconciliationReportForCollections(recReportParams) {
     if (!oneWayReport) collectionsOnlyInCmr = collectionsOnlyInCmr.concat(cmrCollectionIds);
   } catch (error) {
     log.error(`Error caught in reconciliationReportForCollections. with params ${JSON.stringify(recReportParams)}`);
-    log.error(JSON.stringify(error));
+    log.error(errorify(error));
     throw error;
   }
   log.info(`reconciliationReportForCollections returning {okCollections: ${okCollections.length}, onlyInCumulus: ${collectionsOnlyInCumulus.length}, onlyInCmr: ${collectionsOnlyInCmr.length}}`);
@@ -427,7 +427,7 @@ async function reconciliationReportForGranuleFiles(params) {
     });
   } catch (error) {
     log.error(`Error caught in reconciliationReportForGranuleFiles(${granuleInDb.granuleId})`);
-    log.error(JSON.stringify(error));
+    log.error(errorify(error));
     throw error;
   }
   return { okCount, onlyInCumulus, onlyInCmr };
@@ -561,7 +561,7 @@ async function reconciliationReportForGranules(params) {
     }
   } catch (error) {
     log.error(`Error caught in reconciliationReportForGranules(${collectionId})`);
-    log.error(JSON.stringify(error));
+    log.error(errorify(error));
     throw error;
   }
   log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
