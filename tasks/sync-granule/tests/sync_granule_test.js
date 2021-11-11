@@ -652,7 +652,8 @@ test.serial('when workflow_start_time is NOT provided, then createdAt is set to 
   };
   const now = Date.now();
 
-  sinon.stub(Date, 'now').returns(now);
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
 
   const output = await syncGranule(t.context.event);
 
