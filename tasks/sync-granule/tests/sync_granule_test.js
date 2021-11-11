@@ -1,5 +1,6 @@
 'use strict';
 
+const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -651,6 +652,45 @@ test.serial('verify that all returned granules have createdAt set', async (t) =>
   output.granules.forEach((g) => {
     t.true(Number.isInteger(g.createdAt));
     t.true(g.createdAt >= 0);
+  });
+});
+
+test.serial('when workflow_start_time is provided, then createdAt is set to workflow_start_time', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const workflowStartTime = 1636334502146;
+  t.context.event.config.workflow_start_time = workflowStartTime;
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, workflowStartTime);
+  });
+});
+
+test.serial('when workflow_start_time is NOT provided, then createdAt is set to Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+
+  sinon.stub(Date, 'now').returns(now);
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
   });
 });
 
