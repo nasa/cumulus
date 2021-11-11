@@ -13,7 +13,7 @@
             "downloadBucket": "{$.cumulus_meta.system_bucket}",
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
             "pdr": "{$.meta.pdr}",
-            "workflow_start_time": "{$.cumulus_meta.workflow_start_time}",
+            "workflowStartTime": "{$.cumulus_meta.workflow_start_time}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [

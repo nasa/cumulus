@@ -663,7 +663,7 @@ test.serial('when workflow_start_time is provided, then createdAt is set to work
     port: 3030,
   };
   const workflowStartTime = 1636334502146;
-  t.context.event.config.workflow_start_time = workflowStartTime;
+  t.context.event.config.workflowStartTime = workflowStartTime;
 
   const output = await syncGranule(t.context.event);
 
