@@ -42,15 +42,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2718**
-  - Updated config for SyncGranules to support optional `workflow_start_time`
-  - Updated SyncGranules to provide `createdAt` on output based on `workflow_start_time` if provided,
+  - Updated config for SyncGranules to support optional `workflowStartTime`
+  - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated cookbook_browse_example_workflow.asl.json,
   ingest_and_publish_granule_with_orca_workflow.asl.json, ingest_and_publish_granule_workflow.asl.json,
   ingest_granule_catch_duplicate_error_test_workflow.asl.json, ingest_granule_with_queue_workflow.asl.json,
   ingest_granule_workflow.asl.json, kinesis_trigger_test_workflow.asl.json,
   python_processing_workflow.asl.json, sync_granule_catch_duplicate_error_test_workflow.asl.json,
-  and sync_granule_workflow.asl.json to include optional `workflow_start_time` set to
+  and sync_granule_workflow.asl.json to include optional `workflowStartTime` set to
   `$.cumulus_meta.workflow_start_time`
 
 ## [v9.9.0] 2021-11-03
