@@ -234,7 +234,7 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
     esCollectionClient,
     testKnex,
   } = t.context;
-  const testCollection = fakeCollectionRecordFactory();
+  const testCollection = fakeCollectionFactory();
   await indexCollection(esClient, testCollection, process.env.ES_INDEX);
   t.false(await collectionPgModel.exists(testKnex, {
     name: testCollection.name,
