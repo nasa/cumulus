@@ -931,14 +931,14 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
 
   const dynamoGranule = await granuleModel.get({ granuleId });
   t.is(dynamoGranule.status, 'failed');
-  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to PostgreSQL.');
+  t.deepEqual(JSON.parse(dynamoGranule.error.Errors)[0].Error, 'Failed writing files to PostgreSQL.');
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
+  t.deepEqual(JSON.parse(pgGranule.error.Errors)[0].Error, 'Failed writing files to PostgreSQL.');
 });
 
 test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
@@ -1025,8 +1025,9 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
-  t.true(pgGranule.error.Cause.includes('AggregateError'));
+  const pgGranuleError = JSON.parse(pgGranule.error.Errors)[0];
+  t.deepEqual(pgGranuleError.Error, 'Failed writing files to PostgreSQL.');
+  t.true(pgGranuleError.Cause.includes('AggregateError'));
 });
 
 test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
@@ -1377,8 +1378,9 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   const pgGranule = await t.context.granulePgModel.get(
     knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
-  t.true(pgGranule.error.Cause.includes('AggregateError'));
+  const pgGranuleError = JSON.parse(pgGranule.error.Errors)[0];
+  t.deepEqual(pgGranuleError.Error, 'Failed writing files to PostgreSQL.');
+  t.true(pgGranuleError.Cause.includes('AggregateError'));
 });
 
 test.serial('updateGranuleStatusToQueued() updates granule status in the database', async (t) => {
