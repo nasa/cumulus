@@ -257,6 +257,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
+  - **CUMULUS-2733**
+    - Updated `_writeGranuleFiles` function to set granule error to be an errors object that
+      contains a stringified list of errors.
 
 ## [v9.9.0] 2021-11-03
 
