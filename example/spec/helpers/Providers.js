@@ -109,6 +109,9 @@ const providerExists = async (stackName, id) => {
         response = await providersApi.getProvider({
           prefix: stackName,
           providerId: id,
+          pRetryOptions: {
+            retries: 0,
+          },
         });
       } catch (error) {
         if (error.statusCode === 404) {

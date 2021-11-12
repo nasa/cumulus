@@ -113,6 +113,9 @@ const collectionExists = async (stackName, collection) => {
           prefix: stackName,
           collectionName: collection.name,
           collectionVersion: collection.version,
+          pRetryOptions: {
+            retries: 0,
+          },
         });
       } catch (error) {
         if (error.statusCode === 404) {
