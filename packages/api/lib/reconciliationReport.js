@@ -189,26 +189,6 @@ function initialReportHeader(recReportParams) {
 }
 
 /**
- * filters the returned UMM CMR collections by the desired collectionIds
- *
- * @param {Array<Object>} collections - CMR.searchCollections result
- * @param {Object} recReportParams - input report params
- * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
- * @returns {Array<string>} filtered list of collectionIds returned from CMR
- */
-function filterCMRCollections(collections, recReportParams) {
-  const { collectionIds } = recReportParams;
-
-  const CMRCollectionIds = collections
-    .map((item) => constructCollectionId(item.umm.ShortName, item.umm.Version))
-    .sort();
-
-  if (!collectionIds) return CMRCollectionIds;
-
-  return CMRCollectionIds.filter((item) => collectionIds.includes(item));
-}
-
-/**
  * filters the returned database collections by the desired collectionIds
  *
  * @param {Array<Object>} collections - database collections
@@ -233,7 +213,6 @@ module.exports = {
   convertToESGranuleSearchParams,
   convertToDBGranuleSearchParams,
   convertToDBScanGranuleSearchParams,
-  filterCMRCollections,
   filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,
