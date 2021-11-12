@@ -26,7 +26,7 @@ These DLQs are setup with the following configuration:
 
 The following built-in Cumulus Lambdas are setup with DLQs to allow handling of process failures:
 
-* dbIndexer (Updates Elasticsearch based on DynamoDB events)
+* dbIndexer (Updates Elasticsearch)
 * JobsLambda (writes logs outputs to Elasticsearch)
 * ScheduleSF (the SF Scheduler Lambda that places messages on the queue that is used to start workflows, see [Workflow Triggers](../workflows/workflow-triggers.md))
 * publishReports  (Lambda that publishes messages to the SNS topics for execution, granule and PDR reporting)
