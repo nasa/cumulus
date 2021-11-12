@@ -1,3 +1,4 @@
+prefix              = "prefix"
 db_admin_username   = "changethisuser"
 db_admin_password   = "changethispassword"
 region              = "us-east-1"

@@ -260,6 +260,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2733**
     - Updated `_writeGranuleFiles` function to set granule error to be an errors object that
       contains a stringified list of errors.
+  - **CUMULUS-2294**
+    - Updated architecture and deployment documentation to reference RDS
 
 ## [v9.9.0] 2021-11-03
 
