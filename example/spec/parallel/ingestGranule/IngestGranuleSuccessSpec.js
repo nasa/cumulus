@@ -451,7 +451,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  fdescribe('the SyncGranules task', () => {
+  describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
     let subTestSetupError;
@@ -502,7 +502,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });
 
-    fit('sets granule.createdAt with value from SyncGranule', async () => {
+    it('sets granule.createdAt with value from SyncGranule', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
 
       await waitForModelStatus(
