@@ -451,7 +451,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the SyncGranules task', () => {
+  fdescribe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
     let subTestSetupError;
@@ -500,6 +500,25 @@ describe('The S3 Ingest Granules workflow', () => {
         createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
+    });
+
+    fit('sets granule.createdAt with value from SyncGranule', async () => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+
+      await waitForModelStatus(
+        granuleModel,
+        { granuleId: lambdaOutput.meta.input_granules[0].granuleId },
+        ['completed']
+      );
+
+      const granule = await getGranule({
+        prefix: config.stackName,
+        granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+      });
+
+      expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
+      expect(granule.createdAt).toEqual(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(granule.status).toEqual('completed');
     });
   });
 
