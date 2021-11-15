@@ -24,7 +24,6 @@ const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const Execution = require('../../models/executions');
-const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
@@ -55,7 +54,6 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
 
 const writeRecordsToDynamoDb = async ({
   cumulusMessage,
-  granuleModel = new Granule(),
   executionModel = new Execution(),
   pdrModel = new Pdr(),
 }) => {
@@ -69,7 +67,6 @@ const writeRecordsToDynamoDb = async ({
       dynamoRecord: executionApiRecord,
       executionModel,
     }),
-    granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
   ]);
   const failures = results.filter((result) => result.status === 'rejected');
   if (failures.length > 0) {

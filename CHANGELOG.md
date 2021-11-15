@@ -122,6 +122,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       definition.
     - Removed `aws_lambda_event_source_mapping` TF definition on PDRs
       DynamoDB table.
+  - **CUMULUS-2694**
+    - Removed `@cumulus/api/models/granules.storeGranulesFromCumulusMessage()` method
 
 ### Changed
 
@@ -259,6 +261,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       messages after a successful write to Postgres, DynamoDB, and ES.
   - **CUMULUS-2294**
     - Updated architecture and deployment documentation to reference RDS
+  - **CUMULUS-2694**
+    - Updated database write logic in `sfEventSqsToDbRccords` to throw error if Cumulus
+    workflow message is from pre-RDS deployment or if requirements to write execution cannot
+    be met
 
 ## [v9.9.0] 2021-11-03
 

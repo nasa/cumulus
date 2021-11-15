@@ -1,5 +1,4 @@
 const test = require('ava');
-const sinon = require('sinon');
 
 const S3 = require('@cumulus/aws-client/S3');
 const awsClients = require('@cumulus/aws-client/services');
