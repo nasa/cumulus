@@ -1,3 +1,4 @@
+const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const semver = require('semver');
 
@@ -11,7 +12,6 @@ const {
 const {
   MissingRequiredEnvVarError,
   RecordDoesNotExist,
-  InvalidArgument,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
@@ -40,9 +40,7 @@ const isPostRDSDeploymentExecution = (cumulusMessage) => {
   }
 };
 
-const isFailedLookupError = (error) =>
-  error instanceof InvalidArgument
-  || error instanceof RecordDoesNotExist;
+const isFailedLookupError = (error) => error instanceof RecordDoesNotExist;
 
 const getAsyncOperationCumulusId = async (
   asyncOperationId,
@@ -51,7 +49,8 @@ const getAsyncOperationCumulusId = async (
 ) => {
   try {
     if (isNil(asyncOperationId)) {
-      throw new InvalidArgument('There is no async operation ID to lookup on the message, skipping');
+      log.info('There is no async operation ID to lookup on the message, skipping');
+      return undefined;
     }
     return await asyncOperationPgModel.getRecordCumulusId(
       knex,
@@ -61,7 +60,7 @@ const getAsyncOperationCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      log.info(error);
+      log.info(error.message);
       return undefined;
     }
     throw error;
@@ -75,7 +74,8 @@ const getParentExecutionCumulusId = async (
 ) => {
   try {
     if (isNil(parentExecutionArn)) {
-      throw new InvalidArgument('There is no parent execution ARN to lookup on the message, skipping');
+      log.info('There is no parent execution ARN to lookup on the message, skipping');
+      return undefined;
     }
     return await executionPgModel.getRecordCumulusId(
       knex,
@@ -85,7 +85,7 @@ const getParentExecutionCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      log.info(error);
+      log.info(error.message);
       return undefined;
     }
     throw error;
@@ -99,7 +99,8 @@ const getCollectionCumulusId = async (
 ) => {
   try {
     if (isNil(collectionNameVersion)) {
-      throw new InvalidArgument('There is no collection name/version on the message to lookup, skipping');
+      log.info('There is no collection name/version on the message to lookup, skipping');
+      return undefined;
     }
     return await collectionPgModel.getRecordCumulusId(
       knex,
@@ -107,7 +108,7 @@ const getCollectionCumulusId = async (
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      log.info(error);
+      log.info(error.message);
       return undefined;
     }
     throw error;
@@ -139,12 +140,13 @@ const getMessageProviderCumulusId = async (
   try {
     const providerId = getMessageProviderId(cumulusMessage);
     if (isNil(providerId)) {
-      throw new InvalidArgument('Could not find provider ID in message');
+      log.info('Could not find provider ID in message');
+      return undefined;
     }
     return await getProviderCumulusId(providerId, knex, providerPgModel);
   } catch (error) {
     if (isFailedLookupError(error)) {
-      log.info(error);
+      log.info(error.message);
       return undefined;
     }
     throw error;
@@ -165,13 +167,17 @@ const getExecutionCumulusId = async (
   executionPgModel = new ExecutionPgModel()
 ) => {
   try {
+    if (isEmpty(executionUrl)) {
+      log.info('There is no execution URL to lookup, skipping');
+      return undefined;
+    }
     return await executionPgModel.getRecordCumulusId(
       knex,
       { url: executionUrl }
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
-      log.info(error);
+      log.info(error.message);
       return undefined;
     }
     log.error(`Encountered error trying to find ${executionUrl}`, error);
