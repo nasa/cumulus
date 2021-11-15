@@ -12,6 +12,9 @@ const {
   getKnexClient,
 } = require('@cumulus/db');
 const {
+  UnmetRequirementsError,
+} = require('@cumulus/errors');
+const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
 const {
@@ -100,13 +103,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB/Elasticsearch and not RDS');
-    return writeRecordsToDynamoDb({
-      cumulusMessage,
-      granuleModel,
-      executionModel,
-      pdrModel,
-    });
+    throw new UnmetRequirementsError('Message is not for a post-RDS deployment execution, could not write records to database');
   }
 
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
@@ -144,8 +141,6 @@ const writeRecords = async ({
     // then PDR/granules should not be written to Postgres either since they
     // reference executions, so bail out to writing execution/PDR/granule
     // records to Dynamo.
-
-    // TODO - Throw error here in phase 2 instead of writing to Dynamo
     return writeRecordsToDynamoDb({
       cumulusMessage,
       granuleModel,

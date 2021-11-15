@@ -26,6 +26,7 @@ const {
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
+  UnmetRequirementsError,
 } = require('@cumulus/errors');
 const {
   Search,
@@ -310,43 +311,21 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
 });
 
-test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
+test('writeRecords() throws error if message comes from pre-RDS deployment', async (t) => {
   const {
-    collectionCumulusId,
     cumulusMessage,
     testKnex,
-    executionModel,
-    pdrModel,
-    granuleModel,
     preRDSDeploymentVersion,
-    executionArn,
-    pdrName,
-    granuleId,
   } = t.context;
 
   cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
 
-  await writeRecords({
-    cumulusMessage,
-    knex: testKnex,
-    granuleModel,
-  });
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
-
-  t.false(
-    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
-  );
-  t.false(
-    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
-  );
-  t.false(
-    await t.context.granulePgModel.exists(
-      t.context.testKnex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )
+  await t.throwsAsync(
+    writeRecords({
+      cumulusMessage,
+      knex: testKnex,
+    }),
+    { instanceOf: UnmetRequirementsError }
   );
 });
 
