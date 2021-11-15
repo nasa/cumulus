@@ -262,9 +262,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2294**
     - Updated architecture and deployment documentation to reference RDS
   - **CUMULUS-2694**
-    - Updated database write logic in `sfEventSqsToDbRccords` to throw error if Cumulus
-    workflow message is from pre-RDS deployment or if requirements to write execution cannot
-    be met
+    - Updated database write logic in `sfEventSqsToDbRccords` to log message if Cumulus
+    workflow message is from pre-RDS deployment but still attempt parallel writing to DynamoDB
+    and PostgreSQL
+    - Updated database write logic in `sfEventSqsToDbRccords` to throw error if requirements to write execution to PostgreSQL cannot be met
 
 ## [v9.9.0] 2021-11-03
 
