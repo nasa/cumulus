@@ -15,7 +15,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
@@ -30,7 +30,6 @@ const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  filterCMRCollections,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
 
@@ -109,6 +108,35 @@ function shouldAggregateGranulesForCollections(searchParams) {
     'granuleId__in',
     'provider__in',
   ].some((e) => !!searchParams[e]);
+}
+
+/**
+ * fetch CMR collections and filter the returned UMM CMR collections by the desired collectionIds
+ *
+ * @param {Object} recReportParams - input report params
+ * @param {Array<string>} recReportParams.collectionIds - array of collectionIds to keep
+ * @returns {Array<string>} filtered list of collectionIds returned from CMR
+ */
+async function fetchCMRCollections({ collectionIds }) {
+  const cmrSettings = await getCmrSettings();
+  const cmrCollectionsIterator = new CMRSearchConceptQueue({
+    cmrSettings,
+    type: 'collections',
+    format: 'umm_json',
+  });
+
+  const allCmrCollectionIds = [];
+  let nextCmrItem = await cmrCollectionsIterator.shift();
+  while (nextCmrItem) {
+    allCmrCollectionIds
+      .push(constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version));
+    nextCmrItem = await cmrCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+  }
+
+  const cmrCollectionIds = allCmrCollectionIds.sort();
+
+  if (!collectionIds) return cmrCollectionIds;
+  return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
 /**
@@ -250,10 +278,7 @@ async function reconciliationReportForCollections(recReportParams) {
     // get all collections from CMR and sort them, since CMR query doesn't support
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
-    const cmrSettings = await getCmrSettings();
-    const cmr = new CMR(cmrSettings);
-    const cmrCollectionItems = await cmr.searchCollections({}, 'umm_json');
-    const cmrCollectionIds = filterCMRCollections(cmrCollectionItems, recReportParams);
+    const cmrCollectionIds = await fetchCMRCollections(recReportParams);
     const esCollectionIds = await fetchESCollections(recReportParams);
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${esCollectionIds.length} Elasticsearch collections`);
 
@@ -619,7 +644,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.location - location to invetory for report
+ * @param {string} recReportParams.location - location to inventory for report
  * @param {string} recReportParams.reportKey - the s3 report key
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp

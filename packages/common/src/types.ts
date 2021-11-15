@@ -13,11 +13,9 @@ export type AwsCloudWatchEvent = {
   }
 };
 
-export type BucketType = 'internal' | 'private' | 'protected' | 'public' | 'shared';
-
 export type BucketConfig = {
   name: string,
-  type: BucketType
+  type: string
 };
 
 export type BucketsConfigObject = {
