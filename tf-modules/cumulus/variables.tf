@@ -163,6 +163,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "elasticsearch_client_config" {
   description = "Configuration parameters for Elasticsearch client"
   type        = map(string)
