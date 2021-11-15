@@ -68,7 +68,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    throw new UnmetRequirementsError('Message is not for a post-RDS deployment execution. No records written to the database.');
+    log.info('Message is not for a post-RDS deployment execution.');
   }
 
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);

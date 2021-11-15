@@ -302,24 +302,6 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
 });
 
-test('writeRecords() throws error if message comes from pre-RDS deployment', async (t) => {
-  const {
-    cumulusMessage,
-    testKnex,
-    preRDSDeploymentVersion,
-  } = t.context;
-
-  cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
-
-  await t.throwsAsync(
-    writeRecords({
-      cumulusMessage,
-      knex: testKnex,
-    }),
-    { instanceOf: UnmetRequirementsError }
-  );
-});
-
 test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   const {
