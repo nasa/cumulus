@@ -518,6 +518,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
       expect(granule.createdAt).toEqual(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(granule.createdAt).not().toEqual(undefined);
       expect(granule.status).toEqual('completed');
     });
   });
