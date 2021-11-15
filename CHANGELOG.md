@@ -37,6 +37,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Notable changes
+
+- **CUMULUS-2718**
+  - The `sync-granule` task has been updated to support an optional parameter `workflowStartTime`. The output payload of `sync-granule` now includes a `createdAt` time for a granule which is set to the
+  provided `workflowStartTime` or falls back to `Date.now()` if not provided. Workflows using
+  `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}`
+
 ### Added
 
 - **CUMULUS-2439**
