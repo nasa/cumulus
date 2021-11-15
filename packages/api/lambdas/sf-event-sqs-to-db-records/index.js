@@ -2,9 +2,6 @@
 
 const get = require('lodash/get');
 
-const AggregateError = require('aggregate-error');
-
-const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -23,8 +20,7 @@ const {
 const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
-const Execution = require('../../models/executions');
-const Pdr = require('../../models/pdrs');
+
 const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
 
 const {
@@ -37,13 +33,11 @@ const {
 
 const {
   shouldWriteExecutionToPostgres,
-  writeExecutionToDynamoAndES,
   writeExecutionRecordFromMessage,
 } = require('../../lib/writeRecords/write-execution');
 
 const {
   writePdr,
-  writePdrToDynamoAndEs,
 } = require('./write-pdr');
 
 const {
@@ -51,32 +45,6 @@ const {
 } = require('../../lib/writeRecords/write-granules');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
-
-const writeRecordsToDynamoDb = async ({
-  cumulusMessage,
-  executionModel = new Execution(),
-  pdrModel = new Pdr(),
-}) => {
-  const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
-  const results = await Promise.allSettled([
-    writePdrToDynamoAndEs({
-      cumulusMessage,
-      pdrModel,
-    }),
-    writeExecutionToDynamoAndES({
-      dynamoRecord: executionApiRecord,
-      executionModel,
-    }),
-  ]);
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length > 0) {
-    const allFailures = failures.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some records to Dynamo', aggregateError);
-    throw aggregateError;
-  }
-  return results;
-};
 
 /**
  * Write records to data stores. Use conditional logic to write either to
@@ -183,8 +151,7 @@ const handler = async (event) => {
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
-      log.fatal(`Writing message failed with error: ${JSON.stringify(error)}`);
-      log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
+      log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
   }));
