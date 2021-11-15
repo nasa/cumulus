@@ -3,45 +3,12 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 
-const awsClients = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const {
-  indexGranule,
-} = require('@cumulus/es-client/indexer');
-const {
-  Search,
-} = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const {
-  getMessageExecutionArn,
-  getExecutionUrlFromArn,
-} = require('@cumulus/message/Executions');
-const {
-  getMessageGranules,
-  getGranuleQueryFields,
-  generateGranuleApiRecord,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
-  getGranuleStatus,
-} = require('@cumulus/message/Granules');
-const {
-  getMessagePdrName,
-} = require('@cumulus/message/PDRs');
-const {
-  getMessageProvider,
-} = require('@cumulus/message/Providers');
-const {
-  getMessageWorkflowStartTime,
-  getMetaStatus,
-  getWorkflowDuration,
-} = require('@cumulus/message/workflows');
-const { parseException } = require('@cumulus/message/utils');
-const { buildURL } = require('@cumulus/common/URLUtils');
+
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
@@ -55,7 +22,6 @@ const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
-  getExecutionProcessingTimeInfo,
   translateGranule,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
@@ -421,75 +387,6 @@ class Granule extends Manager {
       logger.error(`Could not describe execution ${executionArn}`, error);
     }
     return executionDescription;
-  }
-
-  /**
-   * Generate and store granule records from a Cumulus message.
-   *
-   * @param {Object} cumulusMessage - Cumulus workflow message
-   * @returns {Promise}
-   */
-  async storeGranulesFromCumulusMessage(cumulusMessage) {
-    const granules = getMessageGranules(cumulusMessage);
-    if (granules.length === 0) {
-      logger.info(`No granules to process in the payload: ${JSON.stringify(cumulusMessage.payload)}`);
-      return granules;
-    }
-
-    const executionArn = getMessageExecutionArn(cumulusMessage);
-    const executionUrl = getExecutionUrlFromArn(executionArn);
-    const executionDescription = await this.describeGranuleExecution(executionArn);
-    const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
-    const provider = getMessageProvider(cumulusMessage);
-    const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
-    const collectionId = getCollectionIdFromMessage(cumulusMessage);
-    const pdrName = getMessagePdrName(cumulusMessage);
-    const error = parseException(cumulusMessage.exception);
-    const workflowStatus = getMetaStatus(cumulusMessage);
-    const queryFields = getGranuleQueryFields(cumulusMessage);
-    const esClient = await Search.es();
-
-    return await Promise.all(granules.map(
-      async (granule) => {
-        const files = await this.fileUtils.buildDatabaseFiles({
-          s3: awsClients.s3(),
-          providerURL: buildURL(provider),
-          files: granule.files || [],
-        }).catch((filesError) => logger.error(filesError));
-        const timeToArchive = getGranuleTimeToArchive(granule);
-        const timeToPreprocess = getGranuleTimeToPreprocess(granule);
-        const productVolume = getGranuleProductVolume(files);
-        const now = Date.now();
-        const duration = getWorkflowDuration(workflowStartTime, now);
-        const status = getGranuleStatus(workflowStatus, granule);
-
-        const granuleRecord = await generateGranuleApiRecord({
-          granule,
-          executionUrl,
-          collectionId,
-          provider: provider.id,
-          workflowStartTime,
-          files,
-          error,
-          pdrName,
-          workflowStatus,
-          timeToArchive,
-          timeToPreprocess,
-          productVolume,
-          duration,
-          status,
-          processingTimeInfo,
-          queryFields,
-          cmrUtils: this.cmrUtils,
-          timestamp: now,
-          updatedAt: now,
-        }).catch((writeError) => logger.error(writeError));
-        await this.storeGranule(granuleRecord)
-          .catch((writeError) => logger.error(writeError));
-        await indexGranule(esClient, granuleRecord, process.env.ES_INDEX)
-          .catch((esError) => logger.error(esError));
-      }
-    ));
   }
 }
 
