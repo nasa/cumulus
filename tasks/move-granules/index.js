@@ -270,6 +270,8 @@ async function moveGranules(event) {
 
   const duplicateHandling = duplicateHandlingType(event);
 
+  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, moveStagedFiles: ${moveStagedFiles}, s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}`);
+
   const granulesInput = event.input.granules;
 
   const filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
