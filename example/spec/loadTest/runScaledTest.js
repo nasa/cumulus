@@ -183,7 +183,7 @@ describe('The Ingest Load Test', () => {
 
     console.log('Bulk deletion succeeded!');
 
-    await providers.deleteProvider({ prefix: stackName, provider: provider.id });
+    await providers.deleteProvider({ prefix: stackName, providerId: provider.id });
     const deleteCollectionsPromises = testCollections.map((collection) => collections.deleteCollection({
       prefix: stackName,
       collectionName: collection.name,

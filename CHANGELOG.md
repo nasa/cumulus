@@ -257,6 +257,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       messages after a successful write to Postgres, DynamoDB, and ES.
     - Updated `@cumulus/api/lib/writeRecords/write-pdr` to publish SNS
       messages after a successful write to Postgres, DynamoDB, and ES.
+  - **CUMULUS-2674**
+    - Updated `DELETE` endpoints for the following data types to check that record exists in
+      PostgreSQL or Elasticsearch before proceeding with deletion:
+      - `provider`
+      - `async operations`
+      - `collections`
+      - `granules`
+      - `executions`
+      - `PDRs`
+      - `rules`
+  - **CUMULUS-2294**
+    - Updated architecture and deployment documentation to reference RDS
 
 ## [v9.9.0] 2021-11-03
 

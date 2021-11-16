@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
+const sortBy = require('lodash/sortBy');
 const omit = require('lodash/omit');
 
 const { randomId } = require('@cumulus/common/test-utils');
@@ -585,11 +586,13 @@ test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, Postgr
   const {
     collectionCumulusId,
     cumulusMessage,
-    granuleModel,
-    knex,
+    esGranulesClient,
     executionCumulusId,
-    providerCumulusId,
     granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+    providerCumulusId,
   } = t.context;
 
   // ensure files are written
@@ -604,7 +607,7 @@ test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, Postgr
   });
 
   const dynamoRecord = await granuleModel.get({ granuleId });
-  const granulePgRecord = await t.context.granulePgModel.get(
+  const granulePgRecord = await granulePgModel.get(
     knex,
     {
       granule_id: granuleId,
@@ -617,9 +620,10 @@ test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, Postgr
     granulePgRecord,
     knexOrTransaction: knex,
   });
-  t.deepEqual(translatedPgRecord.files, dynamoRecord.files);
+  const sortByKeys = ['bucket'];
+  t.deepEqual(sortBy(translatedPgRecord.files, sortByKeys), sortBy(dynamoRecord.files, sortByKeys));
 
-  const esRecord = await t.context.esGranulesClient.get(granuleId);
+  const esRecord = await esGranulesClient.get(granuleId);
   t.deepEqual(translatedPgRecord.files, esRecord.files);
 });
 

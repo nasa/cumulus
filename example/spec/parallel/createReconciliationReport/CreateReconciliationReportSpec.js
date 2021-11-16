@@ -83,6 +83,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   ];
   await removeCollectionAndAllDependencies({ prefix: config.stackName, collection });
   // populate collections, providers and test data
+  console.log('\nXXX Completed removing collection and all dependencies');
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir),

@@ -192,24 +192,36 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { arn } = req.params;
-
-  try {
-    await executionModel.get({ arn });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
-    }
-    throw error;
-  }
+  const esExecutionsClient = new Search(
+    {},
+    'execution',
+    process.env.ES_INDEX
+  );
 
   let apiExecution;
+
   try {
-    apiExecution = await executionModel.get({ arn });
+    await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
+      if (!(await esExecutionsClient.exists(arn))) {
+        log.info('Execution does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Execution does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
     }
-    throw error;
+  }
+
+  try {
+    // Get DynamoDB execution in case of failure
+    apiExecution = await executionModel.get({ arn });
+  } catch (error) {
+    // Don't throw an error if record doesn't exist
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   try {
