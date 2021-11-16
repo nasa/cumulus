@@ -21,6 +21,7 @@ const EXECUTION_LIST_LIMIT = 50;
  * @param {string} prefix - the name of the Cumulus stack
  * @param {Function} matcher - a predicate function that takes an execution and determines if this
  * is the execution that is being searched for
+ * @param {Object} [queryParameters] - Optional query parameters
  * @param {Object} [options]
  * @param {integer} [options.timeout=0] - the number of seconds to wait for a matching execution
  * to be found

@@ -96,6 +96,7 @@ async function bulkGranuleDelete(
       try {
         pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
       } catch (error) {
+        // PG Granule being undefined will be caught by deleteGranulesAndFiles
         if (error instanceof RecordDoesNotExist) {
           log.info(error.message);
         }
