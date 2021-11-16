@@ -65,6 +65,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
 
+- [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
+  - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
+    a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`
+    element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
+    present, the granule's last update date falls back to the `"Create"` type
+    provider date, or `undefined`, if none is present.
+
 ## [v9.9.0] 2021-11-03
 
 ### Added
