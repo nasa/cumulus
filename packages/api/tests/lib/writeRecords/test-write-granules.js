@@ -1132,9 +1132,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   ));
-  t.true(await esGranulesClient.exists(
-    granuleId
-  ));
+  t.true(await esGranulesClient.exists(granuleId));
 });
 
 test.serial('writeGranuleFromApi() writes a granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
