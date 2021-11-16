@@ -2,7 +2,12 @@ import { Knex } from 'knex';
 
 import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
 import { TableNames } from '../tables';
-import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
+import {
+  PostgresGranule,
+  PostgresGranuleRecord,
+  PostgresGranuleReturnRecord,
+  PostgresGranuleUniqueColumns,
+} from '../types/granule';
 
 import { BasePgModel } from './base';
 import { GranulesExecutionsPgModel } from './granules-executions';
@@ -20,6 +25,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   constructor() {
     super({
       tableName: TableNames.granules,
+      convertRecordFunction: (record: PostgresGranuleReturnRecord) => ({
+        ...record,
+        product_volume: record.product_volume ? BigInt(record.product_volume) : undefined,
+      }) as PostgresGranuleRecord,
     });
   }
 

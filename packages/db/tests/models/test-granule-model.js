@@ -307,7 +307,7 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
     }),
     {
       ...updatedGranule,
-      product_volume: '100',
+      product_volume: BigInt('100'),
     }
   );
 });
