@@ -132,7 +132,7 @@ function syncGranule(event) {
     granuleResults.forEach((gr) => {
       if (!gr.ingestedGranule.createdAt) {
         const granule = gr;
-        granule.ingestedGranule.createdAt = new Date(createdAt);
+        granule.ingestedGranule.createdAt = createdAt;
       }
       granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {

@@ -638,7 +638,8 @@ test.serial('when workflow_start_time is provided, then createdAt is set to work
 
   t.is(output.granules.length, 1);
   output.granules.forEach((g) => {
-    t.deepEqual(g.createdAt, new Date(workflowStartTime));
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, workflowStartTime);
   });
 });
 
@@ -658,7 +659,8 @@ test.serial('when workflow_start_time is NOT provided, then createdAt is set to 
 
   t.is(output.granules.length, 1);
   output.granules.forEach((g) => {
-    t.deepEqual(g.createdAt, new Date(now));
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
   });
 });
 
@@ -681,7 +683,8 @@ test.serial('when workflow_start_time is a future time then override with Date.n
 
   t.is(output.granules.length, 1);
   output.granules.forEach((g) => {
-    t.deepEqual(g.createdAt, new Date(now));
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
   });
 });
 
