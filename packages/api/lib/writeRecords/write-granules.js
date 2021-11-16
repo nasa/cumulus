@@ -262,20 +262,20 @@ const _writeGranuleFiles = async ({
       knex,
     });
   } catch (error) {
-    const failures = [];
+    const errors = [];
     if (!isEmpty(workflowError)) {
       log.error(`Logging existing error encountered by granule ${granuleId} before overwrite`, workflowError);
-      failures.push(workflowError);
+      errors.push(workflowError);
     }
     log.error('Failed writing files to PostgreSQL, updating granule with error', error);
     const errorObject = {
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
     };
-    failures.push(errorObject);
+    errors.push(errorObject);
 
     const errorsObject = {
-      Errors: JSON.stringify(failures),
+      errors: JSON.stringify(errors),
     };
 
     await createRejectableTransaction(knex, async (trx) => {
