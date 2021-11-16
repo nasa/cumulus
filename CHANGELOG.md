@@ -261,6 +261,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated `_writeGranuleFiles` function creates an aggregate error which
       contains workflow errors, if any, as well as any error that may occur from
       writing granule files.
+  - **CUMULUS-2674**
+    - Updated `DELETE` endpoints for the following data types to check that record exists in
+      PostgreSQL or Elasticsearch before proceeding with deletion:
+      - `provider`
+      - `async operations`
+      - `collections`
+      - `granules`
+      - `executions`
+      - `PDRs`
+      - `rules`
   - **CUMULUS-2294**
     - Updated architecture and deployment documentation to reference RDS
 
