@@ -12,7 +12,7 @@ const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
 const test = require('ava');
 
-const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+const { CMR } = require('@cumulus/cmr-client');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -307,9 +307,12 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
     umm: { ShortName: collection.name, Version: collection.version },
   }));
 
-  // Stub CMR searchCollection that filters on inputParams if present.
-  CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
+  // Stub CMR searchConcept that filters on inputParams if present.
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
+  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+  cmrSearchStub.withArgs('granules').resolves([]);
 
   await storeCollectionsToElasticsearch(
     matchingCollections
@@ -368,9 +371,9 @@ test.beforeEach(async (t) => {
   await new models.Granule().createTable();
   await new models.ReconciliationReport().createTable();
 
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => undefined);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => undefined);
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').resolves([]);
+  cmrSearchStub.withArgs('granules').resolves([]);
 
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
@@ -399,9 +402,7 @@ test.afterEach.always(async (t) => {
     t.context.knex,
     { cumulus_id: t.context.executionCumulusId }
   );
-  CMR.prototype.searchCollections.restore();
-  CMRSearchConceptQueue.prototype.peek.restore();
-  CMRSearchConceptQueue.prototype.shift.restore();
+  CMR.prototype.searchConcept.restore();
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -511,8 +512,11 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
       umm: { ShortName: cmrCollection.name, Version: cmrCollection.version },
     }));
 
-  CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
+  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+  cmrSearchStub.withArgs('granules').resolves([]);
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -603,8 +607,11 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
       umm: { ShortName: cmrCollection.name, Version: cmrCollection.version },
     }));
 
-  CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => cmrCollections);
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
+  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+  cmrSearchStub.withArgs('granules').resolves([]);
 
   await storeCollectionsToElasticsearch(matchingColls);
 
@@ -1468,10 +1475,10 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     },
   }));
 
-  CMRSearchConceptQueue.prototype.peek.restore();
-  CMRSearchConceptQueue.prototype.shift.restore();
-  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => cmrGranules[0]);
-  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => cmrGranules.shift());
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('granules').onCall(0).resolves(cmrGranules);
+  cmrSearchStub.withArgs('granules').onCall(1).resolves([]);
 
   await storeGranulesToElasticsearch(matchingGrans.concat(extraDbGrans));
 
@@ -1834,10 +1841,9 @@ test.serial('When report creation fails, reconciliation report status is set to 
   );
 
   // create an error case
-  CMR.prototype.searchCollections.restore();
-  sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => {
-    throw new Error('test error');
-  });
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').throws(new Error('test error'));
 
   const event = {
     systemBucket: t.context.systemBucket,

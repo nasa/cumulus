@@ -1,9 +1,18 @@
 'use strict';
 
 const get = require('lodash/get');
+const isObject = require('lodash/isObject');
+const pick = require('lodash/pick');
+
+function replacer(key, value) {
+  if (!Array.isArray(value) && isObject(value)) {
+    return pick(value, Object.getOwnPropertyNames(value));
+  }
+  return value;
+}
 
 function errorify(err) {
-  return JSON.stringify(err, Object.getOwnPropertyNames(err));
+  return JSON.stringify(err, replacer);
 }
 
 function filenamify(fileName) {

@@ -36,6 +36,7 @@ module "archive" {
   cmr_username       = var.cmr_username
   cmr_password       = var.cmr_password
   cmr_custom_host    = var.cmr_custom_host
+  cmr_search_client_config = var.cmr_search_client_config
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate

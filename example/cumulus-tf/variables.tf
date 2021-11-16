@@ -175,6 +175,12 @@ variable "buckets" {
   default = {}
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "cumulus_distribution_url" {
   type        = string
   default     = null
