@@ -151,7 +151,7 @@
     },
     "workflowStartTime": {
       "type": "integer",
-      "description": "Specifies the start time for the current workflow and will be used as the createdAt time for granules output"
+      "description": "Specifies the start time for the current workflow (as a timestamp) and will be used as the createdAt time for granules output"
     }
   }
 }
