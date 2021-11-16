@@ -1034,6 +1034,46 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
+test.serial('writeGranulesFromMessage() stores an aggregate workflow error and file-writing error on a granule', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'failed';
+  cumulusMessage.exception = { Error: 'Unknown error', Cause: { Error: 'Workflow failed' } };
+  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
+  cumulusMessage.payload.granules[0].files[0].key = undefined;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const dynamoGranuleError = JSON.parse(dynamoGranule.error.errors);
+  t.is(dynamoGranule.status, 'failed');
+  t.deepEqual(dynamoGranuleError.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.truthy(dynamoGranuleError.map((error) => error.Cause));
+
+  const pgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(pgGranule.status, 'failed');
+  const pgGranuleError = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleError.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.truthy(pgGranuleError.map((error) => error.Cause));
+});
+
 test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
   const {
     collectionCumulusId,
