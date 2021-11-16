@@ -1124,11 +1124,9 @@ async function getGranuleTemporalInfo(granule) {
     const beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
     const endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
     const productionDateTime = get(metadata, 'DataGranule.ProductionDateTime');
-    let updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Update');
-    if (updateDate.length === 0) {
-      updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Insert');
-    }
-    const lastUpdateDateTime = updateDate[0].Date;
+    const lastUpdateDateTime = (metadata.ProviderDates.find((d) => d.Type === 'Update')
+      || metadata.ProviderDates.find((d) => d.Type === 'Insert') || {}).Date;
+
     return {
       beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime,
     };
