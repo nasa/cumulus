@@ -1063,19 +1063,19 @@ test.serial('writeGranulesFromMessage() stores an aggregate workflow error and f
   });
 
   const dynamoGranule = await granuleModel.get({ granuleId });
-  const dynamoGranuleError = JSON.parse(dynamoGranule.error.errors);
+  const dynamoGranuleErrors = JSON.parse(dynamoGranule.error.errors);
   t.is(dynamoGranule.status, 'failed');
-  t.deepEqual(dynamoGranuleError.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
-  t.truthy(dynamoGranuleError.map((error) => error.Cause));
+  t.deepEqual(dynamoGranuleErrors.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.deepEqual(dynamoGranuleErrors[0].Cause, { Error: 'Workflow failed' });
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  const pgGranuleError = JSON.parse(pgGranule.error.errors);
-  t.deepEqual(pgGranuleError.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
-  t.truthy(pgGranuleError.map((error) => error.Cause));
+  const pgGranuleErrors = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleErrors.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.deepEqual(pgGranuleErrors[0].Cause, { Error: 'Workflow failed' });
 });
 
 test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
