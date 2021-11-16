@@ -635,7 +635,7 @@ test.serial('writeGranulesFromMessage() honors granule.createdAt time if provide
     granuleModel,
   } = t.context;
 
-  const expectedCreatedAt = 1637017285469
+  const expectedCreatedAt = 1637017285469;
 
   cumulusMessage.payload.granules[0].createdAt = expectedCreatedAt;
 
@@ -668,7 +668,7 @@ test.serial('writeGranulesFromMessage() falls back to workflow_start_time if gra
     granuleModel,
   } = t.context;
 
-  const expectedCreatedAt = 1637017285469
+  const expectedCreatedAt = 1637017285469;
 
   // Ensure no createdAt time is provided on the granule
   delete cumulusMessage.payload.granules[0].createdAt;
