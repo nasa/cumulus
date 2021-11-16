@@ -412,7 +412,6 @@ test('writeRecords() discards an out of order message that is older than an exis
     collectionCumulusId,
     cumulusMessage,
     granuleModel,
-    pdrModel,
     testKnex,
     pdrName,
     granuleId,
@@ -430,7 +429,7 @@ test('writeRecords() discards an out of order message that is older than an exis
 
   cumulusMessage.payload.granules[0].createdAt = olderTimestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
-  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }))
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
 
   t.deepEqual(
     new Date(timestamp),
