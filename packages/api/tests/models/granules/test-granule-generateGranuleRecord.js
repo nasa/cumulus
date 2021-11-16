@@ -145,3 +145,43 @@ test('generateGranuleRecord() builds a failed granule record', async (t) => {
   t.is(record.error.Error, error.Error);
   t.is(record.error.Cause, error.Cause);
 });
+
+test('generateGranuleRecord() honors granule.createdAt time from cumulus message', async (t) => {
+  const {
+    collectionId,
+    provider,
+    granuleModel,
+    workflowStartTime,
+    pdrName,
+    workflowStatus,
+  } = t.context;
+  const expectedGranuleCreatedAt = 1637017285469;
+  const granule = granuleSuccess.payload.granules[0];
+  granule.createdAt = expectedGranuleCreatedAt;
+  const executionUrl = randomString();
+  const status = getGranuleStatus(workflowStatus, granule);
+
+  const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
+  const processingEndDateTime = new Date(Date.UTC(2019, 6, 28, 1)).toISOString();
+  const record = await granuleModel.generateGranuleRecord({
+    granule,
+    files: granule.files,
+    productVolume: getGranuleProductVolume(granule.files),
+    status,
+    executionUrl,
+    processingTimeInfo: {
+      processingStartDateTime,
+      processingEndDateTime,
+    },
+    duration: 4,
+    timeToArchive: getGranuleTimeToArchive(granule),
+    timeToPreprocess: getGranuleTimeToPreprocess(granule),
+    collectionId,
+    provider: provider.id,
+    workflowStartTime,
+    pdrName,
+    workflowStatus,
+  });
+
+  t.is(record.createdAt, 1637017285469);
+});
