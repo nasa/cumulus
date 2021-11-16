@@ -183,5 +183,5 @@ test('generateGranuleRecord() honors granule.createdAt time from cumulus message
     workflowStatus,
   });
 
-  t.is(record.createdAt, 1637017285469);
+  t.is(record.createdAt, expectedGranuleCreatedAt);
 });
