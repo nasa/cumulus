@@ -407,7 +407,7 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
 });
 
-test('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
+test.only('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -421,7 +421,7 @@ test('writeRecords() discards an out of order message that is older than an exis
   const pdrPgModel = new PdrPgModel();
   const granulePgModel = new GranulePgModel();
 
-  const timestamp = Date.now();
+  const timestamp = cumulusMessage.payload.granules[0].createdAt;
   const olderTimestamp = timestamp - 10000;
 
   cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
