@@ -24,6 +24,7 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
+const indexer = require('@cumulus/es-client/indexer');
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -125,6 +126,7 @@ test.beforeEach(async (t) => {
       createObject
     );
   await providerModel.create(t.context.testProvider);
+  await indexer.indexProvider(t.context.esClient, t.context.testProvider, t.context.esIndex);
 });
 
 test.after.always(async (t) => {
@@ -183,12 +185,75 @@ test('Deleting a provider removes the provider from all data stores', async (t) 
   );
 });
 
-test('Deleting a provider that does not exist succeeds', async (t) => {
+test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
+  const testProvider = fakeProviderFactory();
+  const createObject = await translateApiProviderToPostgresProvider(testProvider);
+  await t.context.providerPgModel
+    .create(
+      t.context.testKnex,
+      createObject
+    );
+
+  await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.false(
+    await providerModel.exists(testProvider.id)
+  );
+  t.false(
+    await t.context.providerPgModel.exists(
+      t.context.testKnex,
+      { name: testProvider.id }
+    )
+  );
+  t.false(
+    await t.context.esProviderClient.exists(
+      testProvider.id
+    )
+  );
+});
+
+test('Deleting a provider that exists in Elasticsearch and not PostgreSQL succeeds', async (t) => {
+  const testProvider = fakeProviderFactory();
+
+  await indexer.indexProvider(t.context.esClient, testProvider, t.context.esIndex);
+
+  t.true(
+    await t.context.esProviderClient.exists(
+      testProvider.id
+    )
+  );
+
+  await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  t.false(
+    await providerModel.exists(testProvider.id)
+  );
+  t.false(
+    await t.context.providerPgModel.exists(
+      t.context.testKnex,
+      { name: testProvider.id }
+    )
+  );
+  t.false(
+    await t.context.esProviderClient.exists(
+      testProvider.id
+    )
+  );
+});
+
+test('Deleting a provider that does not exist in PostgreSQL and Elasticsearch returns a 404', async (t) => {
   const { status } = await request(app)
     .delete(`/providers/${randomString}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
-  t.is(status, 200);
+  t.is(status, 404);
 });
 
 test('Attempting to delete a provider with an associated postgres rule returns a 409 response', async (t) => {
@@ -353,6 +418,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalProvider,
+    originalPgRecord,
   } = await createProviderTestRecords(
     t.context
   );
@@ -361,6 +427,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {

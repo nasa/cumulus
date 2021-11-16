@@ -245,9 +245,30 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { name, version } = req.params;
+  const collectionId = constructCollectionId(name, version);
+  const esCollectionsClient = new Search(
+    {},
+    'collection',
+    process.env.ES_INDEX
+  );
 
   let existingCollection;
   try {
+    await collectionPgModel.get(knex, { name, version });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esCollectionsClient.exists(collectionId))) {
+        log.info('Collection does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Collection does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
+    }
+  }
+
+  try {
+    // Save DynamoDB collection record to recreate in case delete fails
     existingCollection = await collectionsModel.get({ name, version });
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
@@ -260,7 +281,6 @@ async function del(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         await collectionPgModel.delete(trx, { name, version });
         await collectionsModel.delete({ name, version });
-        const collectionId = constructCollectionId(name, version);
         await deleteCollection({
           esClient,
           collectionId,

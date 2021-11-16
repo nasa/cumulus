@@ -169,7 +169,7 @@ describe('The DiscoverGranules workflow', () => {
       }),
       deleteProvider({
         prefix: stackName,
-        provider: provider.id,
+        providerId: provider.id,
       }),
     ]);
   });

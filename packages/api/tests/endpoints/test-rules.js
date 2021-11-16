@@ -99,6 +99,7 @@ test.before(async (t) => {
     'rule',
     t.context.esIndex
   );
+  process.env.ES_INDEX = esIndex;
 
   await S3.createBucket(process.env.system_bucket);
 
@@ -951,6 +952,87 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
   );
 });
 
+test('DELETE returns a 404 if PostgreSQL and Elasticsearch rule cannot be found', async (t) => {
+  const nonExistentRule = fakeRuleFactoryV2();
+  const response = await request(app)
+    .delete(`/rules/${nonExistentRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, 'No record found');
+});
+
+test('DELETE deletes rule that exists in PostgreSQL and DynamoDB but not Elasticsearch', async (t) => {
+  const {
+    esRulesClient,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  delete newRule.collection;
+  delete newRule.provider;
+  const apiRule = await ruleModel.create(newRule);
+  const translatedRule = await translateApiRuleToPostgresRule(apiRule, testKnex);
+  await rulePgModel.create(testKnex, translatedRule);
+
+  t.false(
+    await esRulesClient.exists(
+      translatedRule.name
+    )
+  );
+  t.true(
+    await rulePgModel.exists(testKnex, {
+      name: translatedRule.name,
+    })
+  );
+  const response = await request(app)
+    .delete(`/rules/${translatedRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { message } = response.body;
+  const dbRecords = await rulePgModel
+    .search(testKnex, { name: translatedRule.name });
+
+  t.is(dbRecords.length, 0);
+  t.is(message, 'Record deleted');
+});
+
+test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', async (t) => {
+  const {
+    esClient,
+    esIndex,
+    esRulesClient,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const newRule = fakeRuleFactoryV2();
+  await ruleModel.create(newRule);
+  await indexer.indexRule(esClient, newRule, esIndex);
+
+  t.true(
+    await esRulesClient.exists(
+      newRule.name
+    )
+  );
+  t.false(
+    await rulePgModel.exists(testKnex, {
+      name: newRule.name,
+    })
+  );
+  const response = await request(app)
+    .delete(`/rules/${newRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { message } = response.body;
+  const dbRecords = await rulePgModel
+    .search(t.context.testKnex, { name: newRule.name });
+
+  t.is(dbRecords.length, 0);
+  t.is(message, 'Record deleted');
+});
+
 test('DELETE deletes a rule', async (t) => {
   const { newRule } = t.context;
 
@@ -1037,6 +1119,7 @@ test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynam
 test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalDynamoRule,
+    originalPgRecord,
   } = await createRuleTestRecords(
     t.context,
     {
@@ -1049,6 +1132,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     delete: () => {
       throw new Error('something bad');
     },
+    get: () => Promise.resolve(originalPgRecord),
   };
 
   const expressRequest = {
