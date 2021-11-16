@@ -664,6 +664,29 @@ test.serial('when workflow_start_time is NOT provided, then createdAt is set to 
   });
 });
 
+test.serial('when workflow_start_time is a future time then override with Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+  const workflowStartTime = 9936334502146; // Thu Nov 13 2284 20:55:02 to ensure sufficiently in the future
+  t.context.event.config.workflowStartTime = workflowStartTime;
+
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
+  });
+});
+
 test.serial('attempt to download file from non-existent path - throw error', async (t) => {
   const granuleFilePath = randomString();
   //const granuleFileName = payload.input.granules[0].files[0].name;
