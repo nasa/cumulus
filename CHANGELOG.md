@@ -259,8 +259,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       messages after a successful write to Postgres, DynamoDB, and ES.
   - **CUMULUS-2733**
     - Updated `_writeGranuleFiles` function creates an aggregate error which
-      contains workflow errors, if any, as well as any error that may occur from
-      writing granule files.
+      contains the workflow error, if any, as well as any error that may occur
+      from writing granule files.
   - **CUMULUS-2674**
     - Updated `DELETE` endpoints for the following data types to check that record exists in
       PostgreSQL or Elasticsearch before proceeding with deletion:
