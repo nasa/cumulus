@@ -275,7 +275,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     const records = await knexOrTransaction(this.tableName)
       .where(whereClause)
       .update(updateParams, returning) as RecordType[];
-    if (this.convertRecordFunction) {
+    //TODO Fix - Update's typings are wrong because knex can return [1] and such.
+    if (this.convertRecordFunction && typeof records !== 'number') {
       return records.map((record) => this.convertRecordFunction(record));
     }
     return records;

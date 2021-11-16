@@ -162,7 +162,7 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
     }, {
       size: 2,
     }]),
-    3
+    '3'
   );
 
   t.is(
@@ -171,7 +171,7 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
     }, {
       size: 'not-a-number',
     }]),
-    0
+    '0'
   );
 });
 
@@ -230,7 +230,7 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   t.is(record.granuleId, granule.granuleId);
   t.is(record.cmrLink, granule.cmrLink);
   t.is(record.published, granule.published);
-  t.is(record.productVolume, 17934423);
+  t.is(record.productVolume, '17934423');
   t.is(record.beginningDateTime, t.context.fakeCmrMetadata.beginningDateTime);
   t.is(record.endingDateTime, t.context.fakeCmrMetadata.endingDateTime);
   t.is(record.productionDateTime, t.context.fakeCmrMetadata.productionDateTime);

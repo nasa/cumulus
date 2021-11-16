@@ -95,14 +95,14 @@ export const getGranuleQueryFields = (
  * sizes in bytes
  *
  * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
+ * @returns {string} - sum of granule file sizes in bytes as a string
  */
-export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): number => {
-  if (granuleFiles.length === 0) return 0;
-  return granuleFiles
+export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): string => {
+  if (granuleFiles.length === 0) return '0';
+  return String(granuleFiles
     .map((f) => f.size ?? 0)
     .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
+    .reduce((x, y) => x + y, 0));
 };
 
 export const getGranuleTimeToPreprocess = ({
@@ -234,7 +234,7 @@ export const generateGranuleApiRecord = async ({
   cmrUtils: CmrUtilsClass
   cmrTemporalInfo?: GranuleTemporalInfo,
   duration: number,
-  productVolume: number,
+  productVolume: string,
   timeToPreprocess: number,
   timeToArchive: number,
 }): Promise<ApiGranule> => {

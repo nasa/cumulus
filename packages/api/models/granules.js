@@ -448,7 +448,6 @@ class Granule extends Manager {
     const workflowStatus = getMetaStatus(cumulusMessage);
     const queryFields = getGranuleQueryFields(cumulusMessage);
     const esClient = await Search.es();
-
     return await Promise.all(granules.map(
       async (granule) => {
         const files = await this.fileUtils.buildDatabaseFiles({

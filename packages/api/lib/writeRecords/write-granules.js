@@ -347,7 +347,12 @@ const _writeGranule = async ({
 }) => {
   let pgGranule;
 
-  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
+  log.info('About to write granule record %j to PostgreSQL', {
+    ...postgresGranuleRecord,
+    product_volume: postgresGranuleRecord.product_volume
+      ? String(postgresGranuleRecord.product_volume)
+      : undefined,
+  });
   log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
 
   await createRejectableTransaction(knex, async (trx) => {
@@ -368,7 +373,12 @@ const _writeGranule = async ({
     `
     Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
     `,
-    postgresGranuleRecord
+    {
+      ...postgresGranuleRecord,
+      product_volume: postgresGranuleRecord.product_volume
+        ? String(postgresGranuleRecord.product_volume)
+        : undefined,
+    }
   );
   log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
 
@@ -411,7 +421,7 @@ const _writeGranule = async ({
  * @param {string} [params.timestamp] - timestamp
  * @param {string} [params.updatedAt = new Date().valueOf()] - time value
  * @param {number} [params.duration] - seconds
- * @param {integer} [params.productVolume] - sum of the files sizes in bytes
+ * @param {string} [params.productVolume] - sum of the files sizes in bytes
  * @param {integer} [params.timeToPreprocess] -  seconds
  * @param {integer} [params.timeToArchive] - seconds
  * @param {Array<ApiFile>} params.files - files associated with the granule.
