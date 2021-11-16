@@ -728,7 +728,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     beginningDateTime: '2016-01-09T11:40:45.032Z',
     endingDateTime: '2016-01-09T11:41:12.027Z',
     productionDateTime: '2016-01-09T11:40:45.032Z',
-    lastUpdateDateTime: '2018-12-19T17:30:31.424Z',
+    lastUpdateDateTime: '2018-12-21T17:30:31.424Z',
   };
 
   try {
@@ -746,7 +746,34 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file with only a "Create" ProviderDate', async (t) => {
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json falling back to "Insert" ProviderDate', async (t) => {
+  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_insert.cmr.json', 'utf8');
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2016-01-09T11:40:45.032Z',
+    endingDateTime: '2016-01-09T11:41:12.027Z',
+    productionDateTime: '2016-01-09T11:40:45.032Z',
+    lastUpdateDateTime: '2018-12-20T17:30:31.424Z',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.json',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertMetaObject();
+  }
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json falling back to "Create" ProviderDate', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_create.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
@@ -755,7 +782,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     beginningDateTime: '2016-01-09T11:40:45.032Z',
     endingDateTime: '2016-01-09T11:41:12.027Z',
     productionDateTime: '2016-01-09T11:40:45.032Z',
-    lastUpdateDateTime: undefined,
+    lastUpdateDateTime: '2018-12-19T17:30:31.424Z',
   };
 
   try {
