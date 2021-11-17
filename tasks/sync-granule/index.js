@@ -96,7 +96,9 @@ function syncGranule(event) {
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
-  const workflowStartTime  = config.workflowStartTime ? Math.min(config.workflowStartTime,now) : now;
+  const workflowStartTime = config.workflowStartTime ?
+                              Math.min(config.workflowStartTime, now) :
+                              now;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
