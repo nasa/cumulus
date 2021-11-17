@@ -55,6 +55,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `@cumulus/cumulus-message-adapter-js` version `2.0.2`, which includes an
     update cma-js to better expose CMA stderr stream output on lambda timeouts
     as well as minor logging enhancements.
+- **CUMULUS-2752**
+  - Add new mappings for execution records to prevent dynamic field expansion from exceeding
+  Elasticsearch field limits
+    - Nested objects under `finalPayload.*` will not dynamically add new fields to mapping
+    - Nested objects under `originalPayload.*` will not dynamically add new fields to mapping
+    - Nested keys under `tasks` will not dynamically add new fields to mapping
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
   - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
     a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`

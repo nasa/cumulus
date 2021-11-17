@@ -538,6 +538,26 @@
             "type": "date"
           }
         }
+      },
+      {
+        "nested_final_payload_fields": {
+          "path_match": "finalPayload.*",
+          "match_mapping_type": "object",
+          "mapping": {
+            "type": "object",
+            "dynamic": false
+          }
+        }
+      },
+      {
+        "nested_original_payload_fields": {
+          "path_match": "originalPayload.*",
+          "match_mapping_type": "object",
+          "mapping": {
+            "type": "object",
+            "dynamic": false
+          }
+        }
       }
     ],
     "properties": {
@@ -594,6 +614,10 @@
       },
       "timestamp": {
         "type": "date"
+      },
+      "tasks": {
+        "type": "object",
+        "dynamic": false
       }
     }
   }
