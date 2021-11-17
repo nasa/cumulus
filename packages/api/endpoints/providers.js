@@ -211,9 +211,29 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { id } = req.params;
+  const esProvidersClient = new Search(
+    {},
+    'provider',
+    process.env.ES_INDEX
+  );
 
   let existingProvider;
   try {
+    await providerPgModel.get(knex, { name: id });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esProvidersClient.exists(id))) {
+        log.info('Provider does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Provider does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
+    }
+  }
+
+  try {
+    // Save DynamoDB provider in case delete fails and need to recreate
     existingProvider = await providerModel.get({ id });
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
