@@ -50,7 +50,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
-
+- **CUMULUS-2751**
+  - Upgraded all Cumulus (node.js) workflow tasks to use
+    `@cumulus/cumulus-message-adapter-js` version `2.0.2`, which includes an
+    update cma-js to better expose CMA stderr stream output on lambda timeouts
+    as well as minor logging enhancements.
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
   - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
     a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`
