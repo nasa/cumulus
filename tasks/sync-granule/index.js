@@ -96,7 +96,7 @@ function syncGranule(event) {
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
-  const workflowStartTime = config.workflowStartTime > now ? now : config.workflowStartTime;
+  const workflowStartTime  = config.workflowStartTime ? Math.min(config.workflowStartTime,now) : now;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
@@ -128,11 +128,10 @@ function syncGranule(event) {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};
     const granules = [];
-    const createdAt = workflowStartTime || Date.now();
     granuleResults.forEach((gr) => {
       if (!gr.ingestedGranule.createdAt) {
         const granule = gr;
-        granule.ingestedGranule.createdAt = createdAt;
+        granule.ingestedGranule.createdAt = workflowStartTime;
       }
       granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {
