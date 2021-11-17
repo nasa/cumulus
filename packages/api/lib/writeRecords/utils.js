@@ -140,7 +140,7 @@ const getMessageProviderCumulusId = async (
   try {
     const providerId = getMessageProviderId(cumulusMessage);
     if (isNil(providerId)) {
-      log.info('Could not find provider ID in message');
+      log.info('Could not find provider ID in message, skipping');
       return undefined;
     }
     return await getProviderCumulusId(providerId, knex, providerPgModel);
