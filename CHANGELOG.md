@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
+- **CUMULUS-2744**
+  - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2752**
   - Add new mappings for execution records to prevent dynamic field expansion from exceeding
   Elasticsearch field limits
