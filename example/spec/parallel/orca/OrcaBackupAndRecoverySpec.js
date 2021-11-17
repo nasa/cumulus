@@ -74,7 +74,7 @@ async function stateMachineExists(stateMachineName) {
   return true;
 }
 
-xdescribe('The S3 Ingest Granules workflow', () => {
+describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
   let isOrcaIncluded = true;
