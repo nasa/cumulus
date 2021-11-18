@@ -343,6 +343,7 @@ class Granule extends Manager {
       granuleId,
       cmrLink,
       published = false,
+      createdAt,
     } = granule;
 
     const now = Date.now();
@@ -364,7 +365,7 @@ class Granule extends Manager {
       files,
       error,
       published,
-      createdAt: workflowStartTime,
+      createdAt: createdAt || workflowStartTime,
       timestamp: new Date(timestamp).valueOf() || now,
       updatedAt: new Date(updatedAt).valueOf() || now,
       duration,
