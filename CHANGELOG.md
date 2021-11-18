@@ -81,6 +81,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
+- **CUMULUS-2753**
+  - Update cumulus/example to install the latest ORCA release 3.0.x
 
 ## [v9.9.0] 2021-11-03
 
