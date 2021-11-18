@@ -86,6 +86,7 @@ async function download({
  */
 
 function syncGranule(event) {
+  const now = Date.now();
   const config = event.config;
   const input = event.input;
   const stack = config.stack;
@@ -95,6 +96,9 @@ function syncGranule(event) {
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
+  const workflowStartTime = config.workflowStartTime ?
+    Math.min(config.workflowStartTime, now) :
+    now;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
@@ -127,6 +131,10 @@ function syncGranule(event) {
     const granuleDuplicates = {};
     const granules = [];
     granuleResults.forEach((gr) => {
+      if (!gr.ingestedGranule.createdAt) {
+        const granule = gr;
+        granule.ingestedGranule.createdAt = workflowStartTime;
+      }
       granules.push(gr.ingestedGranule);
       if (gr.granuleDuplicateFiles) {
         granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {

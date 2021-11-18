@@ -377,6 +377,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
 
       const updatedPayload = {
@@ -392,6 +393,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });

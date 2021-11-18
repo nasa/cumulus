@@ -424,9 +424,11 @@ test('writeRecords() discards an out of order message that is older than an exis
   const timestamp = Date.now();
   const olderTimestamp = timestamp - 10000;
 
+  cumulusMessage.payload.granules[0].createdAt = timestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
   await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
 
+  cumulusMessage.payload.granules[0].createdAt = olderTimestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
 
