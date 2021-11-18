@@ -148,6 +148,10 @@
       "type": "boolean",
       "description": "If true, checksum files are also synced. Default: false.",
       "default": false
+    },
+    "workflowStartTime": {
+      "type": "integer",
+      "description": "Specifies the start time for the current workflow (as a timestamp) and will be used as the createdAt time for granules output"
     }
   }
 }
