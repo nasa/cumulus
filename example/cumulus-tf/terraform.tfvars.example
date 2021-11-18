@@ -8,7 +8,7 @@ prefix                   = "PREFIX"
 buckets = {
   glacier = {
     name = "PREFIX-glacier"
-    type = "glacier"
+    type = "orca"
   },
   internal = {
     name = "PREFIX-internal"
@@ -58,8 +58,9 @@ archive_api_port = 8000
 private_archive_api_gateway = true
 
 # ORCA Configuration
-database_app_user_pw = "password"
-postgres_user_pw     = "password"
+orca_database_app_user_pw = "password"
+orca_postgres_user_pw     = "password"
+orca_default_bucket       = "orca glacier bucket"
 
 # CSDAP configuration for cumulus distribution
 csdap_client_id = "csdap client id "
