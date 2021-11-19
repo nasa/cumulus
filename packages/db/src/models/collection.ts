@@ -16,7 +16,6 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresCollection
   ) {
-    // TODO -- Why?
     return super.create(knexOrTransaction, item, '*');
   }
 
