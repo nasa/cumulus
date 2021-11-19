@@ -36,7 +36,7 @@ services:
       - SFTP_MODE=true
       - CI=true
   elasticsearch:
-    image: maven.earthdata.nasa.gov/elasticsearch:5.6
+    image: maven.earthdata.nasa.gov/elasticsearch:5.3
     network_mode: "service:build_env"
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
