@@ -278,6 +278,8 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     new RulePgModel(),
     {
       workflow: workflowList[0].name,
+      collection_cumulus_id: fakeCollectionRecords[0].cumulus_id,
+      provider_cumulus_id: fakeProviderRecords[0].cumulus_id,
       ...dateObject,
     }
   );
@@ -321,7 +323,7 @@ test.serial('Lambda successfully indexes records of all types', async (t) => {
     fakeProviderRecords.map((r) => translatePostgresProviderToApiProvider(r))
   );
   const ruleResults = await Promise.all(
-    fakeRuleRecords.map((r) => translatePostgresRuleToApiRule(r))
+    fakeRuleRecords.map((r) => translatePostgresRuleToApiRule(r, knex))
   );
 
   t.deepEqual(
