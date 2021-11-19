@@ -71,14 +71,14 @@
 <li>Upload the PKI certificate <code>.pfx</code> file to S3</li>
 <li>Use <code>system_bucket</code> as bucket name and <code>&lt;prefix&gt;/crypto/launchpad.pfx</code> as key
 <ul>
-<li><code>system_bucket</code> and <code>prefix</code> are configured in <code>terraform.tfvars</code> for your <a href="/cumulus/docs/v1.23.2/deployment/deployment-readme#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a>.</li>
+<li><code>system_bucket</code> and <code>prefix</code> are configured in <code>terraform.tfvars</code> for your <a href="../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a>.</li>
 <li>If a different private key file name other than <code>launchpad.pfx</code> is used, specify it in the <code>launchpad_certificate</code> configuration in <code>terraform.tfvars</code> for your Cumulus deployment.</li>
 </ul></li>
 </ul></li>
-<li><p>Provide passphrase of PKI certificate in <code>terraform.tfvars</code> for your <a href="/cumulus/docs/v1.23.2/deployment/deployment-readme#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a></p>
+<li><p>Provide passphrase of PKI certificate in <code>terraform.tfvars</code> for your <a href="../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a></p>
 <pre><code class="hljs css language-text">  launchpad_passphrase=LAUNCHPAD_PASSPHRASE
 </code></pre></li>
-<li><p>Configure your deployment variables for Launchpad integration in <code>terraform.tfvars</code> for your <a href="/cumulus/docs/v1.23.2/deployment/deployment-readme#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a>.</p>
+<li><p>Configure your deployment variables for Launchpad integration in <code>terraform.tfvars</code> for your <a href="../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module">Cumulus deployment</a>.</p>
 <ul>
 <li><code>cmr_oauth_provider</code> in <code>terraform.tfvars</code> for your Cumulus deployment <strong>must be set to <code>launchpad</code> to use Launchpad authentication</strong>.</li>
 <li><em>Example configuration of other variables necessary for Launchpad integration can be found in Cumulus core's <a href="https://github.com/nasa/cumulus/blob/master/example/deployments/sandbox.tfvars">example</a></em></li>
