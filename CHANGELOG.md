@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [9.2.3] 2021-11-18
 
 - **CUMULUS-2751**
-  - Maintenance update to all Core node.js tasks to update cumulus-message-adpater-js dependency from 2.0.0 to 2.0.2
+  - Maintenance update to all Core node.js tasks to update cumulus-message-adapter-js dependency from 2.0.0 to 2.0.2
 
 ## [v9.2.2] 2021-08-06
 
