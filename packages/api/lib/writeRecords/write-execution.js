@@ -110,6 +110,19 @@ const writeExecutionToDynamoAndES = async (params) => {
   }
 };
 
+/**
+ * Write execution record to databases
+ *
+ * @param {Object} params
+ * @param {Object} params.dynamoRecord - Execution DynamoDB record to be written
+ * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {Object} params.knex - Knex client
+ * @param {Object} [params.executionModel] - DynamoDB execution model
+ * @param {Object} [params.executionPgModel] - PostgreSQL execution model
+ * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
+ * @param {Object} [params.esClient] - Elasticsearch client
+ * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
+ */
 const _writeExecutionRecord = ({
   dynamoRecord,
   postgresRecord,
@@ -131,7 +144,20 @@ const _writeExecutionRecord = ({
   return executionPgRecord;
 });
 
-const _writeExecutionAndPublishMessage = async ({
+/**
+ * Write execution record to databases and publish SNS message
+ *
+ * @param {Object} params
+ * @param {Object} params.dynamoRecord - Execution DynamoDB record to be written
+ * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {Object} params.knex - Knex client
+ * @param {Object} [params.executionModel] - DynamoDB execution model
+ * @param {Object} [params.executionPgModel] - PostgreSQL execution model
+ * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
+ * @param {Object} [params.esClient] - Elasticsearch client
+ * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
+ */
+const _writeExecutionAndPublishSnsMessage = async ({
   dynamoRecord,
   postgresRecord,
   knex,
@@ -177,7 +203,7 @@ const writeExecutionRecordFromMessage = async ({
     updatedAt,
   });
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
-  const writeExecutionResponse = await _writeExecutionAndPublishMessage({
+  const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     dynamoRecord: executionApiRecord,
     postgresRecord,
     knex,
@@ -193,7 +219,7 @@ const writeExecutionRecordFromApi = async ({
   executionModel = new Execution(),
 }) => {
   const postgresRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
-  return await _writeExecutionAndPublishMessage({
+  return await _writeExecutionAndPublishSnsMessage({
     dynamoRecord,
     postgresRecord,
     knex,
