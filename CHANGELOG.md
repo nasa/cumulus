@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Added
+
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2714**
     - Added `@cumulus/db/base.deleteExcluding` method to allow for deletion of a
@@ -276,6 +278,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     workflow message is from pre-RDS deployment but still attempt parallel writing to DynamoDB
     and PostgreSQL
     - Updated database write logic in `sfEventSqsToDbRccords` to throw error if requirements to write execution to PostgreSQL cannot be met
+  - **CUMULUS-2660**
+    - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
 
 ## [v9.9.0] 2021-11-03
 
