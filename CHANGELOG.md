@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [9.2.4] 2021-11-22
 
-This release is a bugfix patch release and supercedes release 9.2.3
+This release is a bugfix patch release and supersedes release 9.2.3
 
 **Please note** changes in 9.2.3 may not yet be released in future versions, as
 this is a backport and patch release on the 9.2.x series of releases. Updates that
