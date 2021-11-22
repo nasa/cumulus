@@ -131,6 +131,34 @@ const _writeExecutionRecord = ({
   return executionPgRecord;
 });
 
+const _writeExecutionAndPublishMessage = async ({
+  dynamoRecord,
+  postgresRecord,
+  knex,
+  executionModel,
+  executionPgModel,
+  updatedAt,
+  esClient,
+}) => {
+  const writeExecutionResponse = await _writeExecutionRecord(
+    {
+      dynamoRecord,
+      postgresRecord,
+      knex,
+      executionModel,
+      esClient,
+      executionPgModel,
+      updatedAt,
+    }
+  );
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    writeExecutionResponse,
+    knex
+  );
+  await publishExecutionSnsMessage(translatedExecution);
+  return writeExecutionResponse;
+};
+
 const writeExecutionRecordFromMessage = async ({
   cumulusMessage,
   knex,
@@ -149,20 +177,13 @@ const writeExecutionRecordFromMessage = async ({
     updatedAt,
   });
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
-  const writeExecutionResponse = await _writeExecutionRecord(
-    {
-      dynamoRecord: executionApiRecord,
-      postgresRecord,
-      knex,
-      executionModel,
-      esClient,
-    }
-  );
-  const translatedExecution = await translatePostgresExecutionToApiExecution(
-    writeExecutionResponse,
-    knex
-  );
-  await publishExecutionSnsMessage(translatedExecution);
+  const writeExecutionResponse = await _writeExecutionAndPublishMessage({
+    dynamoRecord: executionApiRecord,
+    postgresRecord,
+    knex,
+    executionModel,
+    esClient,
+  });
   return writeExecutionResponse.cumulus_id;
 };
 
@@ -172,7 +193,12 @@ const writeExecutionRecordFromApi = async ({
   executionModel = new Execution(),
 }) => {
   const postgresRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
-  return _writeExecutionRecord({ dynamoRecord, postgresRecord, knex, executionModel });
+  return await _writeExecutionAndPublishMessage({
+    dynamoRecord,
+    postgresRecord,
+    knex,
+    executionModel,
+  });
 };
 
 module.exports = {
