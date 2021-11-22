@@ -58,9 +58,10 @@ archive_api_port = 8000
 private_archive_api_gateway = true
 
 # ORCA Configuration
-orca_database_app_user_pw = "password"
-orca_postgres_user_pw     = "password"
-orca_default_bucket       = "orca glacier bucket"
+orca_db_admin_password = "password"
+orca_db_user_password  = "password"
+orca_db_host_endpoint  = "rds cluster endpoint"
+orca_default_bucket    = "orca glacier bucket"
 
 # CSDAP configuration for cumulus distribution
 csdap_client_id = "csdap client id "
