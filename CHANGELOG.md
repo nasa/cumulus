@@ -6,7 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [9.2.3] 2021-11-18
+## [9.2.4] 2021-11-22
+
+This release is a bugfix patch release and supersedes release 9.2.3
+
+**Please note** changes in 9.2.3 may not yet be released in future versions, as
+this is a backport and patch release on the 9.2.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+### Fixed
+
+- **CUMULUS-2751**
+  - Update all tasks to update to use `cumulus-message-adapter-js` version 2.0.3
+
+## [9.2.3] 2021-11-18 (removed)
 
 **Please note** changes in 9.2.3 may not yet be released in future versions, as
 this is a backport and patch release on the 9.2.x series of releases. Updates that

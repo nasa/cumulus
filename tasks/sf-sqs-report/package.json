@@ -32,7 +32,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "9.2.3",
-    "@cumulus/cumulus-message-adapter-js": "2.0.2",
+    "@cumulus/cumulus-message-adapter-js": "2.0.3",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
