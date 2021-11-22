@@ -1068,6 +1068,74 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
   t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
 });
 
+test.serial('writeGranulesFromMessage() honors granule.createdAt time if provided in cumulus_message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+    granuleModel,
+  } = t.context;
+
+  const expectedCreatedAt = 1637017285469;
+
+  cumulusMessage.payload.granules[0].createdAt = expectedCreatedAt;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.is(dynamoGranule.createdAt, expectedCreatedAt);
+
+  const pgGranule = await t.context.granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(pgGranule.created_at.getTime(), expectedCreatedAt);
+});
+
+test.serial('writeGranulesFromMessage() falls back to workflow_start_time if granule.createdAt is not provided in cumulus_message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+    granuleModel,
+  } = t.context;
+
+  const expectedCreatedAt = 1637017285469;
+
+  // Ensure no createdAt time is provided on the granule
+  delete cumulusMessage.payload.granules[0].createdAt;
+  cumulusMessage.cumulus_meta.workflow_start_time = expectedCreatedAt;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.is(dynamoGranule.createdAt, cumulusMessage.cumulus_meta.workflow_start_time);
+
+  const pgGranule = await t.context.granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(pgGranule.created_at.getTime(), expectedCreatedAt);
+});
+
 test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {
   const {
     knex,
