@@ -365,14 +365,19 @@ variable "include_orca" {
   default = true
 }
 
-variable "orca_postgres_user_pw" {
+variable "orca_db_admin_password" {
+  description = "Password for RDS database administrator authentication"
   type = string
-  description = "postgres database user password."
 }
 
-variable "orca_database_app_user_pw" {
+variable "orca_db_user_password" {
+  description = "Password for RDS database user authentication"
   type = string
-  description = "ORCA application database user password."
+}
+
+variable "orca_db_host_endpoint" {
+  type        = string
+  description = "Database host endpoint to connect to"
 }
 
 variable "orca_default_bucket" {
