@@ -24,6 +24,7 @@ const {
 
 const {
   isCMRFile,
+  isISOFile,
   metadataObjectFromCMRFile,
   granulesToCmrFileObjects,
 } = require('@cumulus/cmrjs');
@@ -32,6 +33,8 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const log = require('@cumulus/common/log');
+
+const MB = 1024 * 1024;
 
 function buildGranuleDuplicatesObject(movedGranulesByGranuleId) {
   const duplicatesObject = {};
@@ -177,12 +180,15 @@ async function moveFileRequest(
       duplicateHandling,
     });
   } else {
+    const chunkSize = process.env.default_s3_multipart_chunksize_mb
+      ? Number(process.env.default_s3_multipart_chunksize_mb) * MB : undefined;
     await moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
       destinationBucket: target.Bucket,
       destinationKey: target.Key,
       copyTags: true,
+      chunkSize,
     });
   }
 
@@ -197,7 +203,7 @@ async function moveFileRequest(
 }
 
 /**
- * Move all files in a collection of granules from staging location fo final location,
+ * Move all files in a collection of granules from staging location to final location,
  * and update granule files to include renamed files if any.
  *
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
@@ -259,7 +265,9 @@ async function moveGranules(event) {
   const duplicateHandling = duplicateHandlingType(event);
 
   const granulesInput = event.input.granules;
-  const cmrFiles = granulesToCmrFileObjects(granulesInput);
+
+  const filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+  const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
   let movedGranulesByGranuleId;

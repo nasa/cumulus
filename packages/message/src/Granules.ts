@@ -248,6 +248,7 @@ export const generateGranuleApiRecord = async ({
     granuleId,
     cmrLink,
     published = false,
+    createdAt,
   } = granule;
 
   // Get CMR temporalInfo
@@ -269,7 +270,7 @@ export const generateGranuleApiRecord = async ({
     files,
     error,
     published,
-    createdAt: workflowStartTime,
+    createdAt: createdAt || workflowStartTime,
     timestamp,
     updatedAt,
     duration,

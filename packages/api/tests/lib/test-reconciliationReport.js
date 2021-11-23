@@ -10,7 +10,6 @@ const {
   convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  filterCMRCollections,
   filterDBCollections,
   searchParamsForCollectionIdArray,
   compareEsGranuleAndApiGranule,
@@ -138,65 +137,6 @@ test('convertToDBCollectionSearchParams ignores collectionIds when there are mul
   }, {}];
 
   const actual = convertToDBCollectionSearchObject(testObj);
-  t.deepEqual(actual, expected);
-});
-
-test('filterCMRCollections returns all collections if no collectionIds on recReportParams', (t) => {
-  const collections = range(25).map(() => fakeCollectionFactory());
-  const expectedCollectionsIds = sortBy(collections, [
-    'name',
-    'version',
-  ]).map((c) => constructCollectionId(c.name, c.version));
-
-  const reportParams = {
-    startTimestamp: 'any',
-    endTimestamp: 'also any',
-    otherUnusedParams: 'could be anything',
-  };
-
-  const cmrCollections = sortBy(collections, ['name', 'version']).map(
-    (collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    })
-  );
-
-  const actual = filterCMRCollections(cmrCollections, reportParams);
-
-  t.deepEqual(actual, expectedCollectionsIds);
-});
-
-test("filterCMRCollections filters collections by recReportParams's collectionIds", (t) => {
-  const collections = range(25).map(() => fakeCollectionFactory());
-
-  const targetCollections = [
-    collections[3],
-    collections[5],
-    collections[7],
-    collections[9],
-  ];
-
-  const collectionIds = sortBy(targetCollections, ['name', 'version']).map((c) =>
-    constructCollectionId(c.name, c.version));
-
-  const expected = sortBy(targetCollections, 'name', 'version').map(
-    (collection) => constructCollectionId(collection.name, collection.version)
-  );
-
-  const reportParams = {
-    startTimestamp: 'any',
-    endTimestamp: 'also any',
-    otherUnusedParams: 'could be anything',
-    collectionIds,
-  };
-
-  const cmrCollections = sortBy(collections, ['name', 'version']).map(
-    (collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    })
-  );
-
-  const actual = filterCMRCollections(cmrCollections, reportParams);
-
   t.deepEqual(actual, expected);
 });
 

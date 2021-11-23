@@ -1,5 +1,6 @@
 'use strict';
 
+const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -621,6 +622,70 @@ test.serial('validate file properties', async (t) => {
     `${output.granules[0].files[0].bucket}/${output.granules[0].files[0].key}`,
     `${t.context.internalBucketName}/${keypath}/${granuleFilename}`
   );
+});
+
+test.serial('when workflow_start_time is provided, then createdAt is set to workflow_start_time', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const workflowStartTime = 1636334502146;
+  t.context.event.config.workflowStartTime = workflowStartTime;
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, workflowStartTime);
+  });
+});
+
+test.serial('when workflow_start_time is NOT provided, then createdAt is set to Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
+  });
+});
+
+test.serial('when workflow_start_time is a future time then override with Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+  // Thu Nov 13 2284 20:55:02 to ensure sufficiently in the future
+  const workflowStartTime = 9936334502146;
+  t.context.event.config.workflowStartTime = workflowStartTime;
+
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
+  });
 });
 
 test.serial('attempt to download file from non-existent path - throw error', async (t) => {
