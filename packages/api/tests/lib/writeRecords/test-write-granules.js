@@ -620,11 +620,11 @@ test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, Postgr
     granulePgRecord,
     knexOrTransaction: knex,
   });
-  const sortByKeys = ['bucket'];
+  const sortByKeys = ['bucket', 'key'];
   t.deepEqual(sortBy(translatedPgRecord.files, sortByKeys), sortBy(dynamoRecord.files, sortByKeys));
 
   const esRecord = await esGranulesClient.get(granuleId);
-  t.deepEqual(translatedPgRecord.files, esRecord.files);
+  t.deepEqual(sortBy(translatedPgRecord.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
 });
 
 test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQL if Postgres write is enabled and workflow status is "completed"', async (t) => {
