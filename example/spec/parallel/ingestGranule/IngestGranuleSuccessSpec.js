@@ -20,6 +20,7 @@ const {
   s3CopyObject,
   s3GetObjectTagging,
   s3ObjectExists,
+  waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
@@ -316,11 +317,10 @@ describe('The S3 Ingest Granules workflow', () => {
     const runningExecutionArn = workflowExecutionArn;
     const runningExecutionName = runningExecutionArn.split(':').pop();
     const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
-    const executionExists = await s3ObjectExists({
-      Bucket: config.bucket,
-      Key: runningExecutionKey,
-    });
-    expect(executionExists).toEqual(true);
+    await expectAsync(waitForObjectToExist({
+      bucket: config.bucket,
+      key: runningExecutionKey,
+    })).toBeResolved();
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
