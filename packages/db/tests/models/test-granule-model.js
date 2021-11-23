@@ -1,5 +1,8 @@
 const test = require('ava');
+const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
+
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const {
   CollectionPgModel,
@@ -207,6 +210,7 @@ test('GranulePgModel.upsert() creates a new running granule', async (t) => {
   const granule = fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
     status: 'running',
+    product_volume: BigInt(500),
   });
 
   await granulePgModel.upsert(knex, granule, executionCumulusId);
@@ -288,7 +292,7 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
 
   const granule = fakeGranuleRecordFactory({
     status: 'completed',
-    product_volume: 50,
+    product_volume: BigInt(50),
     collection_cumulus_id: collectionCumulusId,
   });
 
@@ -296,7 +300,7 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
 
   const updatedGranule = {
     ...granule,
-    product_volume: 100,
+    product_volume: BigInt(100),
   };
 
   await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
@@ -307,7 +311,7 @@ test('GranulePgModel.upsert() overwrites a completed granule', async (t) => {
     }),
     {
       ...updatedGranule,
-      product_volume: BigInt('100'),
+      product_volume: BigInt(100),
     }
   );
 });
@@ -798,5 +802,148 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
       knex,
       file
     )
+  );
+});
+
+test('GranulePgModel.get() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId, executionCumulusId } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+  const pgGranules = await upsertGranuleWithExecutionJoinRecord(
+    knex,
+    granule,
+    executionCumulusId
+  );
+  const response = await granulePgModel.get(knex, {
+    cumulus_id: pgGranules[0].cumulus_id,
+  });
+  t.deepEqual(
+    removeNilProperties({ ...response, cumulus_id: granule.cumulus_id }),
+    granule
+  );
+});
+
+test('GranulePgModel.update() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId, executionCumulusId } = t.context;
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+  const pgGranules = await upsertGranuleWithExecutionJoinRecord(
+    knex,
+    granule,
+    executionCumulusId
+  );
+  const response = await granulePgModel.update(
+    knex,
+    { cumulus_id: pgGranules[0].cumulus_id },
+    { status: 'completed' },
+    '*'
+  );
+  t.deepEqual(
+    removeNilProperties({ ...response[0], cumulus_id: granule.cumulus_id }),
+    { ...granule, status: 'completed' }
+  );
+});
+
+test('GranulePgModel.create() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId } = t.context;
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+  const response = await granulePgModel.create(
+    knex,
+    granule,
+    '*'
+  );
+  t.deepEqual(
+    removeNilProperties({ ...response[0], cumulus_id: granule.cumulus_id }),
+    granule
+  );
+});
+
+test('GranulePgModel.insert() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId } = t.context;
+  const granule1 = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+  const granule2 = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+
+  const response = await granulePgModel.create(knex, [granule1, granule2], '*');
+  t.deepEqual(
+    response.map((r) => omit(removeNilProperties(r), 'cumulus_id')),
+    [granule1, granule2]
+  );
+});
+
+test('GranulePgModel.search() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId } = t.context;
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+
+  await knex('granules').insert(granule);
+
+  const response = await granulePgModel.search(knex, granule);
+  t.deepEqual(
+    omit(removeNilProperties(response[0]), 'cumulus_id'),
+    granule
+  );
+});
+
+test('GranulePgModel.searchWithUpdatedAtRange() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId } = t.context;
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+
+  await knex('granules').insert(granule);
+
+  const response = await granulePgModel.searchWithUpdatedAtRange(knex, granule, {});
+  t.deepEqual(
+    omit(removeNilProperties(response[0]), 'cumulus_id'),
+    granule
+  );
+});
+
+test('GranulePgModel.paginateByCumulusId() returns correct record with conversion when convertRecordFunction set', async (t) => {
+  const { knex, granulePgModel, collectionCumulusId } = t.context;
+  const granule = fakeGranuleRecordFactory({
+    status: 'running',
+    product_volume: BigInt(50),
+    collection_cumulus_id: collectionCumulusId,
+    updated_at: new Date(),
+  });
+
+  const record = await knex('granules').insert(granule).returning('*');
+
+  const response = await granulePgModel.paginateByCumulusId(knex, record[0].cumulus_id, 1);
+  t.deepEqual(
+    omit(removeNilProperties(response[0]), 'cumulus_id'),
+    granule
   );
 });

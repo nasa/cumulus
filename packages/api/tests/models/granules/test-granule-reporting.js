@@ -109,7 +109,7 @@ test('_storeGranuleRecord() can be used to update a completed granule', async (t
   const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
 
   t.is(fetchedItem.status, 'completed');
-  t.is(fetchedItem.productVolume, '500'); //
+  t.is(fetchedItem.productVolume, '500');
 });
 
 test('_storeGranuleRecord() can be used to update a failed granule', async (t) => {
