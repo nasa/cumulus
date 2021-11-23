@@ -274,8 +274,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       .where(whereClause)
       .update(updateParams, returning) as RecordType[];
 
-    if (this.convertRecordFunction && typeof records !== 'number') {
-      return records.map((record) => this.convertRecordFunction(record));
+    if (typeof records !== 'number') {
+      return this._convertRecords(records);
     }
     return records;
   }

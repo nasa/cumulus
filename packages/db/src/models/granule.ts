@@ -27,7 +27,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       tableName: TableNames.granules,
       convertRecordFunction: (record: PostgresGranuleReturnRecord) => ({
         ...record,
-        product_volume: record.product_volume ? BigInt(record.product_volume) : undefined,
+        // eslint-disable-next-line unicorn/no-null
+        product_volume: record.product_volume ? BigInt(record.product_volume) : null,
       }) as PostgresGranuleRecord,
     });
   }
