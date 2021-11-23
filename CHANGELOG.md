@@ -64,6 +64,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2744**
+  - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
   - Upgraded all Cumulus (node.js) workflow tasks to use
     `@cumulus/cumulus-message-adapter-js` version `2.0.3`, which includes an
