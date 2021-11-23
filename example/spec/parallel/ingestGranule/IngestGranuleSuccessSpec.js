@@ -509,9 +509,12 @@ describe('The S3 Ingest Granules workflow', () => {
     it('sets granule.createdAt with value from SyncGranule', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
 
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: lambdaOutput.meta.input_granules[0].granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+        },
         ['completed']
       );
 
