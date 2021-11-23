@@ -8,6 +8,10 @@ const {
   getExecution,
   updateExecution,
 } = require('@cumulus/api-client/executions');
+const {
+  deleteS3Object,
+  waitForObjectToExist,
+} = require('@cumulus/aws-client/S3');
 const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -24,6 +28,7 @@ describe('The Executions API', () => {
   let prefix;
   let executionRecord;
   let updatedExecutionRecord;
+  let executionMessageKey;
 
   beforeAll(async () => {
     try {
@@ -43,6 +48,7 @@ describe('The Executions API', () => {
         status: 'completed',
       };
       executionArn = executionRecord.arn;
+      executionMessageKey = `${config.stackName}/test-output/${executionRecord.name}-${executionRecord.status}.output`;
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -56,6 +62,10 @@ describe('The Executions API', () => {
       collectionName: collection.name,
       collectionVersion: collection.version,
     });
+    await deleteS3Object(
+      config.bucket,
+      executionMessageKey
+    );
   });
 
   describe('the Execution Api', () => {
@@ -80,6 +90,13 @@ describe('The Executions API', () => {
         arn: executionArn,
       });
       expect(execution).toEqual(jasmine.objectContaining(executionRecord));
+    });
+
+    it('publishes an SNS message for the created execution', async () => {
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: executionMessageKey,
+      })).toBeResolved();
     });
 
     it('can update the execution in the API.', async () => {
