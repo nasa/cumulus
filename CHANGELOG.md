@@ -68,7 +68,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
   - Upgraded all Cumulus (node.js) workflow tasks to use
-    `@cumulus/cumulus-message-adapter-js` version `2.0.2`, which includes an
+    `@cumulus/cumulus-message-adapter-js` version `2.0.3`, which includes an
     update cma-js to better expose CMA stderr stream output on lambda timeouts
     as well as minor logging enhancements.
 - **CUMULUS-2752**
