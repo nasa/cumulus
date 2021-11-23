@@ -31,7 +31,7 @@ const {
   removeEtagsFromFileObjects,
 } = require('../../cmr-utils');
 const cmrUtil = rewire('../../cmr-utils');
-const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
+const { isCMRFile, isISOFile, getGranuleTemporalInfo } = cmrUtil;
 const { xmlParseOptions } = require('../../utils');
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
@@ -157,6 +157,32 @@ test('isCMRFile returns false if fileobject is invalid', (t) => {
   t.false(isCMRFile(fileObj));
 });
 
+test('isISOFile returns true if fileobject has valid .iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.iso.xml',
+  };
+  t.true(isISOFile(fileObj));
+});
+
+test('isISOFile returns false if fileobject does not have a valid .iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'invalidfile.xml',
+  };
+  t.false(isISOFile(fileObj));
+});
+
+test('isISOFile returns true if fileobject has a valid cmr_iso.xml filename', (t) => {
+  const fileObj = {
+    filename: 'validfile.cmr_iso.xml',
+  };
+  t.true(isISOFile(fileObj));
+});
+
+test('isISOFile returns false if fileobject is invalid', (t) => {
+  const fileObj = { bad: 'object' };
+  t.false(isISOFile(fileObj));
+});
+
 test('granuleToCmrFileObject returns correct objects for files with a bucket/key', (t) => {
   const granule = {
     granuleId: 'fake-id',
@@ -262,6 +288,106 @@ test('mapFileEtags returns map of S3 URIs to etags', (t) => {
   t.deepEqual(
     mapFileEtags(granuleFiles),
     expectation
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering out non-CMR files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }],
+  };
+  t.deepEqual(
+    granuleToCmrFileObject(granule),
+    [{
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for ISO files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }],
+  };
+  const filterFunc = isISOFile;
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for "easterbunny" files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.easterbunny.xml',
+    }],
+  };
+  const filterFunc = (fileobject) => fileobject.key.endsWith('.easterbunny.xml');
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.easterbunny.xml',
+    }]
+  );
+});
+
+test('granuleToCmrFileObject returns correct objects for files with a bucket/key, filtering for ISO and CMR files', (t) => {
+  const granule = {
+    granuleId: 'fake-id',
+    files: [{
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    },
+    {
+      bucket: 'bucket',
+      key: 'fake.other.xml',
+    }],
+  };
+  const filterFunc = (fileobject) => fileobject.key.endsWith('.iso.xml') || fileobject.key.endsWith('cmr.xml');
+  t.deepEqual(
+    granuleToCmrFileObject(granule, filterFunc),
+    [{
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.cmr.xml',
+    },
+    {
+      granuleId: 'fake-id',
+      bucket: 'bucket',
+      key: 'fake.iso.xml',
+    }]
   );
 });
 
@@ -595,6 +721,60 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
 
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2016-01-09T11:40:45.032Z',
+    endingDateTime: '2016-01-09T11:41:12.027Z',
+    productionDateTime: '2016-01-09T11:40:45.032Z',
+    lastUpdateDateTime: '2018-12-21T17:30:31.424Z',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.json',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertMetaObject();
+  }
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json falling back to "Insert" ProviderDate', async (t) => {
+  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_insert.cmr.json', 'utf8');
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2016-01-09T11:40:45.032Z',
+    endingDateTime: '2016-01-09T11:41:12.027Z',
+    productionDateTime: '2016-01-09T11:40:45.032Z',
+    lastUpdateDateTime: '2018-12-20T17:30:31.424Z',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.json',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertMetaObject();
+  }
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json falling back to "Create" ProviderDate', async (t) => {
+  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_create.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 

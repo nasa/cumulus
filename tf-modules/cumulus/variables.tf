@@ -163,6 +163,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "elasticsearch_client_config" {
   description = "Configuration parameters for Elasticsearch client"
   type        = map(string)
@@ -227,6 +233,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type        = list(object({ id = string, url = string }))
   default     = []
+}
+
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
 }
 
 variable "deploy_distribution_s3_credentials_endpoint" {
