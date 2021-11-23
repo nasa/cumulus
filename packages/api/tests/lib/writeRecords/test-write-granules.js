@@ -1301,7 +1301,6 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranule.error.Cause.includes('AggregateError'));
 });
 
-// TODO - Fix update db model, this test returns [1] by default from .update
 test.serial('updateGranuleStatusToQueued() updates granule status in the database', async (t) => {
   const {
     knex,
