@@ -66,8 +66,8 @@ upgrades to `knex` package.
     - Added `getMaxCumulusId` to `@cumulus/db` `BasePgModel` to allow all
       derived table classes to support querying the current max `cumulus_id`.
   - **CUMULUS-2673**
-    - Added `ES_HOST` environment variable to `postgres-migration-async-operation` 
-    Lambda using value of `elasticsearch_hostname` Terraform variable. 
+    - Added `ES_HOST` environment variable to `postgres-migration-async-operation`
+    Lambda using value of `elasticsearch_hostname` Terraform variable.
     - Added `elasticsearch_security_group_id` to security groups for
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
@@ -80,6 +80,13 @@ upgrades to `knex` package.
 ### Changed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS_2641**
+    - Update API granule schema to set productVolume as a string value
+    - Update PostgreSQL schema to cast/translate knex return for product_volume
+      to BigInt
+    - Update `@cumulus/db` granule translation methods to transalte updated
+      schemas
+
   - **CUMULUS-2672**
     - Updated `data-migration2` lambda to migrate Dynamo `granule.files[].type`
       instead of dropping it.
