@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Migration steps
 
 - Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
+- (Optional) Update the `task-config` for all workflows that use the `sync-granule` task to include `workflowStartTime` set to
+`{$.cumulus_meta.workflow_start_time}`. See [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/sync_granule_workflow.asl.json#L9) for an example.
 
 ### BREAKING CHANGES
 
@@ -37,6 +39,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Notable changes
+
+- **CUMULUS-2718**
+  - The `sync-granule` task has been updated to support an optional configuration parameter `workflowStartTime`. The output payload of `sync-granule` now includes a `createdAt` time for each granule which is set to the
+  provided `workflowStartTime` or falls back to `Date.now()` if not provided. Workflows using
+  `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
+
 ### Added
 
 - **CUMULUS-2439**
@@ -50,9 +59,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
+- **CUMULUS-2718**
+  - Updated config for SyncGranules to support optional `workflowStartTime`
+  - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
+  falling back to `Date.now()` if not provided.
+  - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2744**
+  - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
   - Upgraded all Cumulus (node.js) workflow tasks to use
-    `@cumulus/cumulus-message-adapter-js` version `2.0.2`, which includes an
+    `@cumulus/cumulus-message-adapter-js` version `2.0.3`, which includes an
     update cma-js to better expose CMA stderr stream output on lambda timeouts
     as well as minor logging enhancements.
 - **CUMULUS-2752**

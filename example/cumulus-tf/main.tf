@@ -156,6 +156,7 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
+    "aortega527",
     "dopeters",
     "jasmine",
     "jennyhliu",
