@@ -17,6 +17,7 @@ export interface MessageGranule {
   sync_granule_duration?: number
   post_to_cmr_duration?: number
   files?: import('./files').ApiFile[]
+  createdAt?: number
 }
 
 type OptionalGranuleTemporalInfo = GranuleTemporalInfo | {};

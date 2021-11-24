@@ -17,10 +17,10 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const {
   deleteS3Object,
-  parseS3Uri,
   s3CopyObject,
   s3GetObjectTagging,
   s3ObjectExists,
+  waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
@@ -78,8 +78,6 @@ const {
 } = require('../../helpers/testUtils');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 const {
-  addUniqueGranuleFilePathToGranuleFiles,
-  addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../../helpers/granuleUtils');
@@ -175,8 +173,6 @@ describe('The S3 Ingest Granules workflow', () => {
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
         s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
-      const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
-
       const templatedSyncGranuleFilename = templateFile({
         inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
         config: {
@@ -185,18 +181,15 @@ describe('The S3 Ingest Granules workflow', () => {
               files: [
                 {
                   bucket: config.buckets.internal.name,
-                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
-                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                  key: `file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf`,
                 },
                 {
                   bucket: config.buckets.internal.name,
-                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
-                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                  key: `file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId.hdf.met`,
                 },
                 {
                   bucket: config.buckets.internal.name,
-                  filename: `s3://${config.buckets.internal.name}/file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
-                  fileStagingDir: `file-staging/${config.stackName}/replace-me-collectionId`,
+                  key: `file-staging/${config.stackName}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg`,
                 },
               ],
             },
@@ -207,7 +200,6 @@ describe('The S3 Ingest Granules workflow', () => {
       expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
 
       expectedSyncGranulePayload.granules[0].dataType += testSuffix;
-      expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
 
       const templatedOutputPayloadFilename = templateFile({
         inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
@@ -217,19 +209,19 @@ describe('The S3 Ingest Granules workflow', () => {
               files: [
                 {
                   bucket: config.buckets.protected.name,
-                  filename: `s3://${config.buckets.protected.name}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf`,
+                  key: `MOD09GQ___006/2017/MOD/${testId}/replace-me-granuleId.hdf`,
                 },
                 {
                   bucket: config.buckets.private.name,
-                  filename: `s3://${config.buckets.private.name}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.hdf.met`,
                 },
                 {
                   bucket: config.buckets.public.name,
-                  filename: `s3://${config.buckets.public.name}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId_ndvi.jpg`,
                 },
                 {
                   bucket: config.buckets['protected-2'].name,
-                  filename: `s3://${config.buckets['protected-2'].name}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml`,
+                  key: `MOD09GQ___006/MOD/${testId}/replace-me-granuleId.cmr.xml`,
                 },
               ],
             },
@@ -239,8 +231,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
       expectedPayload.granules[0].dataType += testSuffix;
-      expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
-      expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
+
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
       setDistributionApiEnvVars();
 
@@ -282,13 +273,9 @@ describe('The S3 Ingest Granules workflow', () => {
     }
 
     // clean up stack state added by test
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
     await providersApi.deleteProvider({
       prefix: config.stackName,
-      provider: { id: provider.id },
+      providerId: provider.id,
     });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
     await Promise.all([
@@ -330,11 +317,10 @@ describe('The S3 Ingest Granules workflow', () => {
     const runningExecutionArn = workflowExecutionArn;
     const runningExecutionName = runningExecutionArn.split(':').pop();
     const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
-    const executionExists = await s3ObjectExists({
-      Bucket: config.bucket,
-      Key: runningExecutionKey,
-    });
-    expect(executionExists).toEqual(true);
+    await expectAsync(waitForObjectToExist({
+      bucket: config.bucket,
+      key: runningExecutionKey,
+    })).toBeResolved();
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
@@ -433,12 +419,10 @@ describe('The S3 Ingest Granules workflow', () => {
     await pMap(
       executionOutput.payload.granules[0].files,
       async (file) => {
-        const { Bucket, Key } = parseS3Uri(file.filename);
-
         const granuleId = await pRetry(
           async () => {
-            const id = await GranuleFilesCache.getGranuleId(Bucket, Key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${Bucket}/${Key}`);
+            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
+            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
             return id;
           },
           { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
@@ -502,6 +486,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
 
       const updatedPayload = {
@@ -516,8 +501,32 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
+    });
+
+    it('sets granule.createdAt with value from SyncGranule', async () => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+        },
+        ['completed']
+      );
+
+      const granule = await getGranule({
+        prefix: config.stackName,
+        granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+      });
+
+      expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
+      expect(granule.createdAt).toEqual(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(granule.createdAt).not.toEqual(undefined);
+      expect(granule.status).toEqual('completed');
     });
   });
 
@@ -534,15 +543,14 @@ describe('The S3 Ingest Granules workflow', () => {
 
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
         files = lambdaOutput.payload.granules[0].files;
-        movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
-          const { Bucket, Key } = parseS3Uri(file.filename);
-          return s3GetObjectTagging(Bucket, Key);
-        }));
+        movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map(
+          (file) => s3GetObjectTagging(file.bucket, file.key)
+        ));
 
         existCheck = await Promise.all([
-          s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath }),
-          s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath }),
-          s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath }),
+          s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].key }),
+          s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].key }),
+          s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].key }),
         ]);
       } catch (error) {
         subTestSetupError = error;
@@ -553,11 +561,11 @@ describe('The S3 Ingest Granules workflow', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
     });
 
-    it('has a payload with correct buckets, filenames, sizes', () => {
+    it('has a payload with correct buckets, keys, sizes', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       files.forEach((file) => {
-        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
-        expect(file.filename).toEqual(expectedFile.filename);
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.fileName === file.fileName);
+        expect(file.key).toEqual(expectedFile.key);
         expect(file.bucket).toEqual(expectedFile.bucket);
         if (file.size && expectedFile.size) {
           expect(file.size).toEqual(expectedFile.size);
@@ -621,10 +629,10 @@ describe('The S3 Ingest Granules workflow', () => {
         resourceURLs = cmrResource.map((resource) => resource.href);
         teaRequestHeaders = result[2];
 
-        scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
-        s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath, urlType: 's3' });
-        browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
-        s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath, urlType: 's3' });
+        scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key });
+        s3ScienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].key, urlType: 's3' });
+        browseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].key });
+        s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].key, urlType: 's3' });
         s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       } catch (error) {
         subTestSetupError = error;
@@ -681,7 +689,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
-      const filepath = `/${files[0].bucket}/${files[0].filepath}`;
+      const filepath = `/${files[0].bucket}/${files[0].key}`;
       const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('A-userid');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
@@ -705,9 +713,9 @@ describe('The S3 Ingest Granules workflow', () => {
               'cksum',
               fs.createReadStream(require.resolve(sourceFile))
             );
-            const file = files.find((f) => f.name.endsWith(extension));
+            const file = files.find((f) => f.fileName.endsWith(extension));
 
-            const filepath = `/${file.bucket}/${file.filepath}`;
+            const filepath = `/${file.bucket}/${file.key}`;
             const fileStream = await getTEADistributionApiFileStream(filepath, teaRequestHeaders);
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
@@ -989,7 +997,7 @@ describe('The S3 Ingest Granules workflow', () => {
             stackName: config.stackName,
             bucket: config.bucket,
             findExecutionFn: isReingestExecutionForGranuleId,
-            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
+            findExecutionFnParams: { granuleId: reingestGranuleId },
             startTask: 'SyncGranule',
           });
 
@@ -1003,9 +1011,11 @@ describe('The S3 Ingest Granules workflow', () => {
             'MoveGranule'
           );
 
-          const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
-          const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
-          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBeTrue());
+          const files = moveGranuleOutput.payload.granules[0].files;
+          const nonCmrFiles = files.filter((f) => !f.fileName.endsWith('.cmr.xml'));
+          const granuleDuplicateFiles = moveGranuleOutput.payload.granuleDuplicates[reingestGranuleId].files;
+          const duplicateNonCmrFiles = granuleDuplicateFiles.filter((f) => !f.fileName.endsWith('.cmr.xml'));
+          expect(nonCmrFiles.length).toEqual(duplicateNonCmrFiles.length);
 
           await waitForApiStatus(
             getGranule,
@@ -1026,8 +1036,8 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(updatedGranule.execution).not.toEqual(oldExecution);
 
           // the updated granule has the same files
-          const oldFileNames = granule.files.map((f) => f.filename);
-          const newFileNames = updatedGranule.files.map((f) => f.filename);
+          const oldFileNames = granule.files.map((f) => f.key);
+          const newFileNames = updatedGranule.files.map((f) => f.key);
           expect(difference(oldFileNames, newFileNames).length).toBe(0);
 
           const currentFiles = await getFilesMetadata(updatedGranule.files);

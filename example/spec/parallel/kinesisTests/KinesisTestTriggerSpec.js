@@ -174,14 +174,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
 
     const fileDataWithFilename = {
-      ...fileData,
-      filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
       bucket: testConfig.buckets.private.name,
-      fileStagingDir: filePrefix,
+      key: `${filePrefix}/${recordFile.name}`,
+      fileName: recordFile.name,
       size: fileData.size,
+      type: recordFile.type,
+      checksumType: recordFile.checksumType,
+      checksum: recordFile.checksum,
+      source: `${testDataFolder}/${recordFile.name}`,
     };
 
     expectedSyncGranulesPayload = {
+      granuleDuplicates: {},
       granules: [
         {
           granuleId: granuleId,
@@ -341,10 +345,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               ...expectedSyncGranulesPayload.granules[0],
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+              createdAt: lambdaOutput.payload.granules[0].createdAt,
             },
           ],
         };
-        updatedExpectedPayload.granules[0].files[0].url_path = lambdaOutput.payload.granules[0].files[0].url_path;
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
       });
     });

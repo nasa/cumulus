@@ -195,15 +195,36 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');
+  const esRulesClient = new Search(
+    {},
+    'rule',
+    process.env.ES_INDEX
+  );
 
   let apiRule;
+
   try {
+    await rulePgModel.get(knex, { name });
+  } catch (error) {
+    // If rule doesn't exist in PG or ES, return not found
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esRulesClient.exists(name))) {
+        log.info('Rule does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Rule does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
+    }
+  }
+
+  try {
+    // Save DynamoDB rule to recreate record in case of deletion failure
     apiRule = await ruleModel.get({ name });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
     }
-    throw error;
   }
 
   try {

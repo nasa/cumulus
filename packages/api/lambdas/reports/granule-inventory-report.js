@@ -21,7 +21,7 @@ const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationRepo
  * @returns {Promise<null>} - promise of a report written to s3.
  */
 async function createGranuleInventoryReport(recReportParams) {
-  log.debug(
+  log.info(
     `createGranuleInventoryReport parameters ${JSON.stringify(recReportParams)}`
   );
 

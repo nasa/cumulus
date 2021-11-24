@@ -3,45 +3,12 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 
-const awsClients = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const {
-  indexGranule,
-} = require('@cumulus/es-client/indexer');
-const {
-  Search,
-} = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
-const { getCollectionIdFromMessage } = require('@cumulus/message/Collections');
-const {
-  getMessageExecutionArn,
-  getExecutionUrlFromArn,
-} = require('@cumulus/message/Executions');
-const {
-  getMessageGranules,
-  getGranuleQueryFields,
-  generateGranuleApiRecord,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
-  getGranuleStatus,
-} = require('@cumulus/message/Granules');
-const {
-  getMessagePdrName,
-} = require('@cumulus/message/PDRs');
-const {
-  getMessageProvider,
-} = require('@cumulus/message/Providers');
-const {
-  getMessageWorkflowStartTime,
-  getMetaStatus,
-  getWorkflowDuration,
-} = require('@cumulus/message/workflows');
-const { parseException } = require('@cumulus/message/utils');
-const { buildURL } = require('@cumulus/common/URLUtils');
+
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
@@ -55,7 +22,6 @@ const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
-  getExecutionProcessingTimeInfo,
   translateGranule,
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');

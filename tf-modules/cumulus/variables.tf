@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:35"
+  default = "cumuluss/async-operation:36"
 }
 
 variable "cmr_client_id" {
@@ -163,6 +163,18 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
+  type        = map(string)
+  default     = {}
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type        = number
@@ -221,6 +233,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type        = list(object({ id = string, url = string }))
   default     = []
+}
+
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
 }
 
 variable "deploy_distribution_s3_credentials_endpoint" {

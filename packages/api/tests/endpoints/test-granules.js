@@ -58,6 +58,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
@@ -140,7 +141,7 @@ async function setupBucketsConfig() {
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await s3PutObject({
     Bucket: systemBucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`,
+    Key: getBucketsConfigKey(process.env.stackName),
     Body: JSON.stringify(buckets),
   });
   await createBucket(buckets.public.name);
@@ -781,6 +782,120 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
+test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
+  const {
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(newGranule, knex);
+  const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
+
+  t.true(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+});
+
+test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
+  const {
+    esClient,
+    esIndex,
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  await indexer.indexGranule(esClient, newGranule, esIndex);
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }
+  ));
+  t.true(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const {
     s3Buckets,
@@ -828,7 +943,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   ]));
 });
 
-test.serial('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule succeeds', async (t) => {
   const {
     s3Buckets,
     newDynamoGranule,
@@ -863,87 +978,6 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     newDynamoGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
-    })
-  );
-
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
-test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
-  // Create a granule in Dynamo only
-  const s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: s3Buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2(
-    {
-      granuleId: granuleId,
-      status: 'failed',
-      published: false,
-      files: files,
-    }
-  );
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
-
-  // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: `test data ${randomString()}`,
-  })));
-
-  // create a new Dynamo granule
-  await granuleModel.create(newGranule);
-
-  const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  // granule have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId }));
-
-  // Verify files were removed from S3
-  await Promise.all(
-    newGranule.files.map(async (file) => {
-      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
     })
   );
 
@@ -1744,7 +1778,7 @@ test.serial('create (POST) return bad request if a granule is submitted with a b
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test('PUT replaces an existing granule in all data stores', async (t) => {
+test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
     executionUrl,

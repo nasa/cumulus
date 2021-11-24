@@ -14,6 +14,7 @@
             "fileStagingDir": "custom-staging-dir",
             "downloadBucket": "{$.cumulus_meta.system_bucket}",
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "workflowStartTime": "{$.cumulus_meta.workflow_start_time}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [

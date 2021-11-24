@@ -387,6 +387,33 @@ test('generateGranuleApiRecord() builds granule record with correct processing a
   );
 });
 
+test('generateGranuleApiRecord() honors granule.createdAt if it exists', async (t) => {
+  const {
+    collectionId,
+    provider,
+    workflowStartTime,
+    pdrName,
+  } = t.context;
+
+  const granule = granuleSuccess.payload.granules[0];
+  const createdAt = Date.now();
+  granule.createdAt = createdAt;
+  const executionUrl = cryptoRandomString({ length: 10 });
+
+  const record = await generateGranuleApiRecord({
+    granule,
+    executionUrl,
+    collectionId,
+    provider,
+    workflowStartTime,
+    pdrName,
+    cmrUtils: t.context.fakeCmrUtils,
+    files: granule.files,
+  });
+
+  t.is(record.createdAt, createdAt);
+});
+
 test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
   const {
     collectionId,

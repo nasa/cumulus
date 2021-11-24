@@ -10,6 +10,7 @@ const js2xmlParser = require('js2xmlparser');
 const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
+const omit = require('lodash/omit');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -21,8 +22,7 @@ const {
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const launchpad = require('@cumulus/launchpad-auth');
-const log = require('@cumulus/common/log');
-const omit = require('lodash/omit');
+const Logger = require('@cumulus/logger');
 const errors = require('@cumulus/errors');
 const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
@@ -31,6 +31,8 @@ const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
 } = require('./utils');
+
+const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -63,12 +65,13 @@ function getFileDescription(file, urlType = 'distribution') {
   return filename ? `Download ${filename}` : 'File to download';
 }
 
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-const isISOFile = (filename) => filename.endsWith('cmr_iso.xml');
-const isCMRFilename = (filename) => isECHO10File(filename)
-  || isUMMGFile(filename)
-  || isISOFile(filename);
+const isECHO10Filename = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFilename = (filename) => filename.endsWith('cmr.json');
+const isISOFilename = (filename) => filename.endsWith('.iso.xml');
+const isCMRISOFilename = (filename) => filename.endsWith('cmr_iso.xml');
+const isCMRFilename = (filename) => isECHO10Filename(filename)
+  || isUMMGFilename(filename)
+  || isCMRISOFilename(filename);
 
 const constructCmrConceptLink = (conceptId, extension) => `${getSearchUrl()}concepts/${conceptId}.${extension}`;
 
@@ -84,36 +87,54 @@ function isCMRFile(fileobject) {
 }
 
 /**
+ * Returns True if this object can be determined to be an ISO file object.
+ *
+ * @param {Object} fileobject
+ * @returns {boolean} true if object references an ISO file metadata.
+ */
+function isISOFile(fileobject) {
+  const filename = fileobject.key || fileobject.name || fileobject.filename || '';
+  return isISOFilename(filename) || isCMRISOFilename(filename);
+}
+
+/**
  * Extracts CMR file objects from the specified granule object.
  *
  * @param {Object} granule - granule object containing CMR files within its
  *    `files` property
  * @param {Array<Object>} granule.files - array of files for a granule
  * @param {string} granule.granuleId - granule ID
+ * @param {Function} filterFunc - function to determine if the given file object is a
+      CMR file; defaults to `isCMRFile`
  * @returns {Array<Object>} an array of CMR file objects, each with properties
- *    `granuleId`, `filename`, and possibly `etag` (if present on input)
+ *    `granuleId`, `bucket`, `key`, and possibly `etag` (if present on input)
  */
-function granuleToCmrFileObject({ granuleId, files = [] }) {
+function granuleToCmrFileObject({ granuleId, files = [] }, filterFunc = isCMRFile) {
   return files
-    .filter(isCMRFile)
-    .map((file) => ({
-      // Include etag only if file has one
-      ...pick(file, 'etag'),
-      // handle both new-style and old-style files model
-      filename: file.key ? buildS3Uri(file.bucket, file.key) : file.filename,
-      granuleId,
-    }));
+    .filter(filterFunc)
+    .map((file) => {
+      const { Bucket, Key } = parseS3Uri(getS3UrlOfFile(file));
+      return {
+        // Include etag only if file has one
+        ...pick(file, 'etag'),
+        bucket: Bucket,
+        key: Key,
+        granuleId,
+      };
+    });
 }
 
 /**
  * Reduce granule object array to CMR files array
  *
  * @param {Array<Object>} granules - granule objects array
+ * @param {Function} filterFunc - function to determine if the given file object is a
+      CMR file; defaults to `isCMRFile`
  *
- * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ * @returns {Array<Object>} - CMR file object array: { etag, bucket, key, granuleId }
  */
-function granulesToCmrFileObjects(granules) {
-  return granules.flatMap(granuleToCmrFileObject);
+function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
+  return granules.flatMap((granule) => granuleToCmrFileObject(granule, filterFunc));
 }
 
 /**
@@ -198,12 +219,13 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  */
 async function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
   const cmrClient = new CMR(creds);
+  const cmrFileName = getFilename(cmrPublishObject);
 
   // choose xml or json and do the things.
-  if (isECHO10File(cmrPublishObject.filename)) {
+  if (isECHO10Filename(cmrFileName)) {
     return await publishECHO10XML2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
-  if (isUMMGFile(cmrPublishObject.filename)) {
+  if (isUMMGFilename(cmrFileName)) {
     return await publishUMMGJSON2CMR(cmrPublishObject, cmrClient, cmrRevisionId);
   }
 
@@ -288,14 +310,14 @@ const metadataObjectFromCMRXMLFile = (cmrFilename, etag) =>
  * @returns {Promise<Object>} metadata object from the file
  * @throws {Error} if the specified filename does not represent an ECHO-10 XML
  *    file or a UMMG file
- * @see isECHO10File
- * @see isUMMGFile
+ * @see isECHO10Filename
+ * @see isUMMGFilename
  */
 function metadataObjectFromCMRFile(cmrFilename, etag) {
-  if (isECHO10File(cmrFilename)) {
+  if (isECHO10Filename(cmrFilename) || isISOFilename(cmrFilename)) {
     return metadataObjectFromCMRXMLFile(cmrFilename, etag);
   }
-  if (isUMMGFile(cmrFilename)) {
+  if (isUMMGFilename(cmrFilename)) {
     return metadataObjectFromCMRJSONFile(cmrFilename, etag);
   }
   throw new Error(
@@ -343,6 +365,51 @@ function mapCNMTypeToCMRType(type, urlType = 'distribution', useDirectS3Type = f
     return 'GET DATA VIA DIRECT ACCESS';
   }
   return mappedType;
+}
+
+/**
+ * Add ETags to file objects as some downstream functions expect this structure.
+ *
+ * @param {Object} granule - input granule object
+ * @param {Object} etags - map of s3URIs and ETags
+ * @returns {Object} - updated granule object
+ */
+function addEtagsToFileObjects(granule, etags) {
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
+    const fileURI = getS3UrlOfFile(file);
+    if (etags[fileURI]) file.etag = etags[fileURI];
+  });
+  return granule;
+}
+
+/**
+ * Remove ETags to match output schema
+ *
+ * @param {Object} granule - output granule object
+ * @returns {undefined}
+ */
+function removeEtagsFromFileObjects(granule) {
+  granule.files.forEach((incomingFile) => {
+    const file = incomingFile;
+    delete file.etag;
+  });
+}
+
+/**
+ * Maps etag values from the specified granules' files.
+ *
+ * @param {Object[]} files - array of file objects with `bucket`, `key` and
+ *    `etag` properties
+ * @returns {Object} mapping of file S3 URIs to etags
+ */
+function mapFileEtags(files) {
+  return files.reduce((filesMap, file) => {
+    const { bucket, key, etag } = file;
+    const s3Uri = getS3UrlOfFile({ bucket, key });
+    filesMap[s3Uri] = etag; // eslint-disable-line no-param-reassign
+    return filesMap;
+  }, {});
 }
 
 /**
@@ -883,9 +950,9 @@ async function updateCMRMetadata({
   let metadataObject;
   let etag;
 
-  if (isECHO10File(filename)) {
+  if (isECHO10Filename(filename)) {
     ({ metadataObject, etag } = await updateEcho10XMLMetadata(params));
-  } else if (isUMMGFile(filename)) {
+  } else if (isUMMGFilename(filename)) {
     ({ metadataObject, etag } = await updateUMMGMetadata(params));
   } else {
     throw new errors.CMRMetaFileNotFound(`Invalid CMR filetype: ${filename}`);
@@ -1020,9 +1087,9 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
   if (cmrFile.length === 0) return {};
 
-  const cmrFilename = cmrFile[0].filename;
+  const cmrFilename = getS3UrlOfFile(cmrFile[0]);
 
-  if (isISOFile(cmrFilename)) {
+  if (isCMRISOFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
 
@@ -1042,7 +1109,7 @@ async function getGranuleTemporalInfo(granule) {
 
     return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
   }
-  if (isECHO10File(cmrFilename)) {
+  if (isECHO10Filename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
     const endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
@@ -1052,16 +1119,15 @@ async function getGranuleTemporalInfo(granule) {
       beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime,
     };
   }
-  if (isUMMGFile(cmrFilename)) {
+  if (isUMMGFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
     const beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
     const endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
     const productionDateTime = get(metadata, 'DataGranule.ProductionDateTime');
-    let updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Update');
-    if (updateDate.length === 0) {
-      updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Insert');
-    }
-    const lastUpdateDateTime = updateDate[0].Date;
+    const lastUpdateDateTime = (metadata.ProviderDates.find((d) => d.Type === 'Update')
+      || metadata.ProviderDates.find((d) => d.Type === 'Insert')
+      || metadata.ProviderDates.find((d) => d.Type === 'Create') || {}).Date;
+
     return {
       beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime,
     };
@@ -1070,6 +1136,7 @@ async function getGranuleTemporalInfo(granule) {
 }
 
 module.exports = {
+  addEtagsToFileObjects,
   constructCmrConceptLink,
   constructOnlineAccessUrl,
   constructOnlineAccessUrls,
@@ -1081,16 +1148,21 @@ module.exports = {
   getFilename,
   getGranuleTemporalInfo,
   getCollectionsByShortNameAndVersion,
+  getS3UrlOfFile,
   getUserAccessibleBuckets,
   granulesToCmrFileObjects,
   isCMRFile,
   isCMRFilename,
-  isECHO10File,
+  isCMRISOFilename,
+  isECHO10Filename,
   isISOFile,
-  isUMMGFile,
+  isISOFilename,
+  isUMMGFilename,
+  mapFileEtags,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  removeEtagsFromFileObjects,
   updateCMRMetadata,
   uploadEcho10CMRFile,
   uploadUMMGJSONCMRFile,

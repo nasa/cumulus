@@ -81,19 +81,38 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const { id } = req.params || {};
+  const esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    process.env.ES_INDEX
+  );
 
   if (!id) {
     return res.boom.badRequest('id parameter is missing');
   }
 
-  let existingAsyncOperation;
+  let existingApiAsyncOperation;
   try {
-    existingAsyncOperation = await asyncOperationModel.get({ id });
+    await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('No record found');
+      if (!(await esAsyncOperationsClient.exists(id))) {
+        logger.info('Async Operation does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      logger.info('Async Operation does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
     }
-    throw error;
+  }
+
+  try {
+    // Get DynamoDB async operation to recreate in case of deletion failure
+    existingApiAsyncOperation = await asyncOperationModel.get({ id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   try {
@@ -110,8 +129,8 @@ async function del(req, res) {
   } catch (error) {
     // Delete is idempotent, so there may not be a DynamoDB
     // record to recreate
-    if (existingAsyncOperation) {
-      await asyncOperationModel.create(existingAsyncOperation);
+    if (existingApiAsyncOperation) {
+      await asyncOperationModel.create(existingApiAsyncOperation);
     }
     throw error;
   }
