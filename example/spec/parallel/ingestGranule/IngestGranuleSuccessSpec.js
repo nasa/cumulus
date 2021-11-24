@@ -20,6 +20,7 @@ const {
   s3CopyObject,
   s3GetObjectTagging,
   s3ObjectExists,
+  waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
@@ -316,11 +317,10 @@ describe('The S3 Ingest Granules workflow', () => {
     const runningExecutionArn = workflowExecutionArn;
     const runningExecutionName = runningExecutionArn.split(':').pop();
     const runningExecutionKey = `${config.stackName}/test-output/${runningExecutionName}-running.output`;
-    const executionExists = await s3ObjectExists({
-      Bucket: config.bucket,
-      Key: runningExecutionKey,
-    });
-    expect(executionExists).toEqual(true);
+    await expectAsync(waitForObjectToExist({
+      bucket: config.bucket,
+      key: runningExecutionKey,
+    })).toBeResolved();
   });
 
   it('triggers a running PDR record being added to DynamoDB', async () => {
@@ -486,6 +486,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
 
       const updatedPayload = {
@@ -500,8 +501,32 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
+        createdAt: lambdaOutput.meta.input_granules[0].createdAt,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
+    });
+
+    it('sets granule.createdAt with value from SyncGranule', async () => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+        },
+        ['completed']
+      );
+
+      const granule = await getGranule({
+        prefix: config.stackName,
+        granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+      });
+
+      expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
+      expect(granule.createdAt).toEqual(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(granule.createdAt).not.toEqual(undefined);
+      expect(granule.status).toEqual('completed');
     });
   });
 
