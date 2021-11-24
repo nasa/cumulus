@@ -49,6 +49,7 @@ declare -a param_list=(
   "bamboo_SKIP_AUDIT"
   "bamboo_SKIP_INTEGRATION_TESTS"
   "bamboo_SKIP_NPM_PUBLISH"
+  "bamboo_SKIP_CHANGELOG"
   "bamboo_TFSTATE_BUCKET"
   "bamboo_TFSTATE_LOCK_TABLE"
   "bamboo_USE_CACHED_BOOTSTRAP"
@@ -98,6 +99,12 @@ if [[ -z $BRANCH ]]; then
 fi
 echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 
+
+## SKIP CL eval if current branch is equal to the PR branch
+if [[ $BRANCH == "$PR_BRANCH" ]]; then
+   export SKIP_CHANGELOG=true
+   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
+fi
 
 ## If tag matching the current ref is a version tag, set
 GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')

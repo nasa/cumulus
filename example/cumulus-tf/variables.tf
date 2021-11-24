@@ -175,6 +175,12 @@ variable "buckets" {
   default = {}
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "cumulus_distribution_url" {
   type        = string
   default     = null
@@ -194,6 +200,12 @@ variable "ecs_cluster_instance_subnet_ids" {
 variable "ecs_include_docker_cleanup_cronjob" {
   type    = bool
   default = false
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {
@@ -314,7 +326,7 @@ variable "rds_connection_timing_configuration" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "35"
+  default = "36"
 }
 
 variable "cumulus_process_activity_version" {
@@ -332,7 +344,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "12"
+    default = "13"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"

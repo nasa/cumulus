@@ -26,6 +26,7 @@ const {
 } = require('@cumulus/db');
 const {
   MissingRequiredEnvVarError,
+  UnmetRequirementsError,
 } = require('@cumulus/errors');
 const {
   Search,
@@ -37,15 +38,6 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
-const {
-  generateExecutionApiRecordFromMessage,
-} = require('@cumulus/message/Executions');
-const {
-  generateGranuleApiRecord,
-} = require('@cumulus/message/Granules');
-const {
-  generatePdrApiRecordFromMessage,
-} = require('@cumulus/message/PDRs');
 
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
@@ -310,46 +302,6 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
 });
 
-test('writeRecords() writes records only to Dynamo if message comes from pre-RDS deployment', async (t) => {
-  const {
-    collectionCumulusId,
-    cumulusMessage,
-    testKnex,
-    executionModel,
-    pdrModel,
-    granuleModel,
-    preRDSDeploymentVersion,
-    executionArn,
-    pdrName,
-    granuleId,
-  } = t.context;
-
-  cumulusMessage.cumulus_meta.cumulus_version = preRDSDeploymentVersion;
-
-  await writeRecords({
-    cumulusMessage,
-    knex: testKnex,
-    granuleModel,
-  });
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
-
-  t.false(
-    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
-  );
-  t.false(
-    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
-  );
-  t.false(
-    await t.context.granulePgModel.exists(
-      t.context.testKnex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )
-  );
-});
-
 test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
   delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
   const {
@@ -366,110 +318,21 @@ test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env v
   );
 });
 
-test('writeRecords() writes records to Dynamo/Elasticsearch if requirements to write execution to PostgreSQL are not met', async (t) => {
+test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {
   const {
-    collectionCumulusId,
     cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
     testKnex,
-    executionArn,
-    pdrName,
-    granuleId,
   } = t.context;
 
   // add reference in message to object that doesn't exist
   cumulusMessage.cumulus_meta.asyncOperationId = uuidv4();
 
-  await writeRecords({
-    cumulusMessage,
-    knex: testKnex,
-    granuleModel,
-  });
-
-  const dynamoExecution = await executionModel.get({ arn: executionArn });
-  const esExecution = await t.context.esExecutionsClient.get(executionArn);
-  const apiExecutionRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
-  const expectedExecutionRecord = {
-    ...apiExecutionRecord,
-    timestamp: dynamoExecution.timestamp,
-    updatedAt: dynamoExecution.updatedAt,
-  };
-  t.deepEqual(
-    dynamoExecution,
-    expectedExecutionRecord
-  );
-  t.like(
-    esExecution,
-    {
-      ...expectedExecutionRecord,
-      timestamp: esExecution.timestamp,
-    }
-  );
-
-  const dynamoPdr = await pdrModel.get({ pdrName });
-  const esPdr = await t.context.esPdrsClient.get(pdrName);
-  const apiPdrRecord = generatePdrApiRecordFromMessage(cumulusMessage);
-  const expectedPdrRecord = {
-    ...apiPdrRecord,
-    duration: dynamoPdr.duration,
-    timestamp: dynamoPdr.timestamp,
-    updatedAt: dynamoPdr.updatedAt,
-  };
-  t.deepEqual(
-    dynamoPdr,
-    expectedPdrRecord
-  );
-  t.like(
-    esPdr,
-    {
-      ...expectedPdrRecord,
-      timestamp: esPdr.timestamp,
-    }
-  );
-
-  const dynamoGranule = await granuleModel.get({ granuleId });
-  const esGranule = await t.context.esGranulesClient.get(granuleId);
-  const granuleApiRecord = await generateGranuleApiRecord({
-    collectionId: t.context.collectionId,
-    granule: t.context.granule,
-    files: t.context.files,
-    workflowStartTime: t.context.cumulusMessage.cumulus_meta.workflow_start_time,
-    workflowStatus: t.context.cumulusMessage.meta.status,
-    cmrUtils: {
-      getGranuleTemporalInfo: () => Promise.resolve({}),
-    },
-  });
-  const expectedGranuleRecord = {
-    ...granuleApiRecord,
-    duration: dynamoGranule.duration,
-    updatedAt: dynamoGranule.updatedAt,
-    timestamp: dynamoGranule.timestamp,
-  };
-  t.like(
-    dynamoGranule,
-    expectedGranuleRecord
-  );
-  t.like(
-    esGranule,
-    {
-      ...expectedGranuleRecord,
-      timestamp: esGranule.timestamp,
-    }
-  );
-
-  t.false(
-    await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
-  );
-  t.false(
-    await t.context.pdrPgModel.exists(t.context.testKnex, { name: pdrName })
-  );
-  t.false(
-    await t.context.granulePgModel.exists(
-      t.context.testKnex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )
+  await t.throwsAsync(
+    writeRecords({
+      cumulusMessage,
+      knex: testKnex,
+    }),
+    { instanceOf: UnmetRequirementsError }
   );
 });
 
@@ -512,7 +375,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
-test.serial('writeRecords() writes records to Dynamo and RDS', async (t) => {
+test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -581,9 +444,11 @@ test.serial('writeRecords() discards an out of order message that is older than 
   const timestamp = Date.now();
   const olderTimestamp = timestamp - 10000;
 
+  cumulusMessage.payload.granules[0].createdAt = timestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
   await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
 
+  cumulusMessage.payload.granules[0].createdAt = olderTimestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
 

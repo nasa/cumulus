@@ -1,7 +1,8 @@
 ---
-id: ingest-task-configuration
+id: version-v9.8.0-ingest-task-configuration
 title: Configuration of Ingest Tasks
 hide_title: false
+original_id: ingest-task-configuration
 ---
 
 The `cumulus` module exposes values for configuration of some of the provided ingest workflow tasks.   Currently the following are available as configurable variables:

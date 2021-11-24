@@ -1,5 +1,6 @@
 import got, { Headers } from 'got';
 import Logger from '@cumulus/logger';
+
 import { getSearchUrl } from './getUrl';
 import { parseXMLString } from './Utils';
 
@@ -110,7 +111,8 @@ export async function searchConcept({
     log.error(`Error executing CMR search concept.
       Searching ${getSearchUrl({ cmrEnv: cmrEnvironment })}${type}.${format.toLowerCase()}
       with search parameters ${query}
-      and headers ${headers}`);
+      and headers ${JSON.stringify(headers)}`);
+    log.error(JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw error;
   }
 

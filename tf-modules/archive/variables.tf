@@ -184,6 +184,18 @@ variable "cmr_page_size" {
   default = 50
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
 variable "es_request_concurrency" {
   type = number
   default = 10

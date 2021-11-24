@@ -196,7 +196,7 @@ export const waitForObjectToExist = async (params: {
     timeout = 30 * 1000,
   } = params;
 
-  await pWaitFor(
+  return await pWaitFor(
     () => s3ObjectExists({ Bucket: bucket, Key: key }),
     { interval, timeout }
   );
@@ -531,8 +531,7 @@ export const getObjectReadStream = (params: {
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
-    const r = await s3().headObject({ Key: key, Bucket: bucket }).promise();
-    return r;
+    return await s3().headObject({ Key: key, Bucket: bucket }).promise();
   } catch (error) {
     // if file is not return false
     if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
@@ -607,7 +606,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
     });
 
     await deleteS3Files(s3Objects);
-    await s3().deleteBucket({ Bucket: bucket }).promise();
+    return await s3().deleteBucket({ Bucket: bucket }).promise();
   }
 );
 
@@ -957,6 +956,7 @@ const uploadPartCopy = async (
  *   Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
+ * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
  *    destination object
  */
@@ -969,7 +969,7 @@ export const multipartCopyObject = async (
     sourceObject?: AWS.S3.HeadObjectOutput,
     ACL?: AWS.S3.ObjectCannedACL,
     copyTags?: boolean,
-    copyMetadata?: boolean
+    chunkSize?: number
   }
 ): Promise<{ etag: string }> => {
   const {
@@ -979,6 +979,7 @@ export const multipartCopyObject = async (
     destinationKey,
     ACL,
     copyTags = false,
+    chunkSize,
   } = params;
 
   const sourceObject = params.sourceObject ?? await headObject(sourceBucket, sourceKey);
@@ -1002,7 +1003,7 @@ export const multipartCopyObject = async (
       throw new Error(`Unable to determine size of s3://${sourceBucket}/${sourceKey}`);
     }
 
-    const chunks = S3MultipartUploads.createMultipartChunks(objectSize);
+    const chunks = S3MultipartUploads.createMultipartChunks(objectSize, chunkSize);
 
     // Submit all of the upload (copy) parts to S3
     const uploadPartCopyResponses = await Promise.all(
@@ -1055,6 +1056,7 @@ export const multipartCopyObject = async (
  * @param {string} params.destinationKey
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
+ * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  * @returns {Promise<undefined>}
  */
 export const moveObject = async (
@@ -1064,7 +1066,8 @@ export const moveObject = async (
     destinationBucket: string,
     destinationKey: string,
     ACL?: AWS.S3.ObjectCannedACL,
-    copyTags?: boolean
+    copyTags?: boolean,
+    chunkSize?: number
   }
 ) => {
   await multipartCopyObject({
@@ -1074,6 +1077,7 @@ export const moveObject = async (
     destinationKey: params.destinationKey,
     ACL: params.ACL,
     copyTags: isBoolean(params.copyTags) ? params.copyTags : true,
+    chunkSize: params.chunkSize,
   });
-  await deleteS3Object(params.sourceBucket, params.sourceKey);
+  return await deleteS3Object(params.sourceBucket, params.sourceKey);
 };

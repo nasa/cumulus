@@ -198,10 +198,10 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       expect(files.length).toBe(2);
 
       // Make sure the ingested file is present
-      expect(files.find((file) => file.name === sameChecksumFilename)).toBeDefined();
+      expect(files.find((file) => file.fileName === sameChecksumFilename)).toBeDefined();
 
       // Make sure the generated CMR file is present
-      expect(files.find((file) => file.name === `${granuleId}.cmr.xml`)).toBeDefined();
+      expect(files.find((file) => file.fileName === `${granuleId}.cmr.xml`)).toBeDefined();
     }
   });
 

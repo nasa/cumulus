@@ -1,9 +1,12 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-
 const { ValidationError } = require('@cumulus/errors');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+const {
+  translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
+} = require('../../dist/translate/granules');
 
 const {
   CollectionPgModel,
@@ -21,8 +24,6 @@ const {
   PdrPgModel,
   ProviderPgModel,
   migrationDir,
-  translateApiGranuleToPostgresGranule,
-  translatePostgresGranuleToApiGranule,
   translatePostgresGranuleResultToApiGranule,
 } = require('../../dist');
 
@@ -99,34 +100,44 @@ test.beforeEach(async (t) => {
       time_to_process: 0,
       timestamp: new Date(Date.now() - 120 * 1000),
       updated_at: new Date(Date.now()),
-    }),
-    '*'
+    })
   );
-  t.context.granuleCumulusId = Number.parseInt(t.context.postgresGranule.cumulus_id, 10);
 
   // Create executions
-  t.context.executions = await t.context.executionPgModel.insert(
+  const executionPgModel = new ExecutionPgModel();
+  const [executionA] = await executionPgModel.create(
     t.context.knex,
-    [
-      fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) }),
-      fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) }),
-    ],
-    '*'
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now()) })
+  );
+  const [executionB] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ timestamp: new Date(Date.now() - 555 * 1000) })
   );
 
-  // Create GranulesExecuions JOIN records
-  await t.context.granulesExecutionsPgModel.create(
+  const executionACumulusId = executionA.cumulus_id;
+  const executionBCumulusId = executionB.cumulus_id;
+
+  t.context.executions = [
+    await executionPgModel.get(t.context.knex, { cumulus_id: executionACumulusId }),
+    await executionPgModel.get(t.context.knex, { cumulus_id: executionBCumulusId }),
+  ];
+
+  t.context.granuleCumulusId = t.context.postgresGranule.cumulus_id;
+
+  // Create GranulesExecutions JOIN records
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  await granulesExecutionsPgModel.create(
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
-      execution_cumulus_id: t.context.executions[0].cumulus_id,
+      execution_cumulus_id: executionACumulusId,
     }
   );
-  await t.context.granulesExecutionsPgModel.create(
+  await granulesExecutionsPgModel.create(
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
-      execution_cumulus_id: t.context.executions[1].cumulus_id,
+      execution_cumulus_id: executionBCumulusId,
     }
   );
 
@@ -174,16 +185,15 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    executions,
     postgresGranule,
     fileKeys,
-    collectionId,
+    executions,
   } = t.context;
 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId,
+    collectionId: 'collectionName___collectionVersion',
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -248,9 +258,9 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    executions,
     postgresGranule,
     fileKeys,
+    executions,
   } = t.context;
 
   const expectedApiGranule = {
@@ -449,8 +459,11 @@ test('translatePostgresGranuleToApiGranule throws an error if the Collection doe
     providerPgModel,
     collectionPgModel,
     filePgModel,
-    postgresGranule,
+    granulePgModel,
+    granuleCumulusId,
   } = t.context;
+
+  const postgresGranule = await granulePgModel.get(knex, { cumulus_id: granuleCumulusId });
 
   // No cumulus_id set so this will not match the granule's collection_cumulus_id
   const collection = fakeCollectionRecordFactory({

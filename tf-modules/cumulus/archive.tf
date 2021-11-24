@@ -5,6 +5,8 @@ module "archive" {
 
   api_url = var.archive_api_url
 
+  elasticsearch_client_config = var.elasticsearch_client_config
+
   deploy_to_ngap = var.deploy_to_ngap
 
   permissions_boundary_arn = var.permissions_boundary_arn
@@ -34,6 +36,7 @@ module "archive" {
   cmr_username       = var.cmr_username
   cmr_password       = var.cmr_password
   cmr_custom_host    = var.cmr_custom_host
+  cmr_search_client_config = var.cmr_search_client_config
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate

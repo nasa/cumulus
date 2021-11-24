@@ -24,6 +24,10 @@ provider "aws" {
   alias   = "usw2"
   region  = "us-west-2"
   profile = var.aws_profile
+
+  ignore_tags {
+    key_prefixes = ["gsfc-ngap"]
+  }
 }
 
 locals {
@@ -114,6 +118,8 @@ module "cumulus" {
   cmr_provider    = var.cmr_provider
   cmr_custom_host = var.cmr_custom_host
 
+  cmr_search_client_config = var.cmr_search_client_config
+
   cmr_oauth_provider = var.cmr_oauth_provider
 
   launchpad_api         = var.launchpad_api
@@ -150,6 +156,7 @@ module "cumulus" {
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
+    "aortega527",
     "dopeters",
     "jasmine",
     "jennyhliu",
@@ -170,6 +177,8 @@ module "cumulus" {
   private_archive_api_gateway = var.private_archive_api_gateway
   api_gateway_stage           = var.api_gateway_stage
   archive_api_reserved_concurrency = var.api_reserved_concurrency
+
+  elasticsearch_client_config = var.elasticsearch_client_config
 
   # Thin Egress App settings. Uncomment to use TEA.
   # must match stage_name variable for thin-egress-app module
