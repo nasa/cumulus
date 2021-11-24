@@ -25,11 +25,12 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   constructor() {
     super({
       tableName: TableNames.granules,
-      convertRecordFunction: (record: PostgresGranuleReturnRecord) => ({
-        ...record,
-        // eslint-disable-next-line unicorn/no-null
-        product_volume: record.product_volume ? BigInt(record.product_volume) : null,
-      }) as PostgresGranuleRecord,
+      convertRecordFunction: (record: PostgresGranuleReturnRecord) => {
+        if (record.product_volume) {
+          return { ...record, product_volume: BigInt(record.product_volume) };
+        }
+        return record;
+      },
     });
   }
 
