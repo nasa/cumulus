@@ -98,14 +98,7 @@ const deleteGranuleAndFiles = async (params: {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
-    logger.debug(
-      `Initiating deletion of PG granule ${JSON.stringify({
-        ...pgGranule,
-        product_volume: pgGranule.product_volume
-          ? String(pgGranule.product_volume)
-          : undefined,
-      })} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`
-    );
+    logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
     const files = await filePgModel.search(
       knex,
       { granule_cumulus_id: pgGranule.cumulus_id }

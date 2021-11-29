@@ -375,13 +375,8 @@ const _writeGranule = async ({
 }) => {
   let pgGranule;
 
-  log.info('About to write granule record %j to PostgreSQL', {
-    ...postgresGranuleRecord,
-    product_volume: postgresGranuleRecord.product_volume
-      ? String(postgresGranuleRecord.product_volume)
-      : undefined,
-  });
-  log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
+  log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
+  log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
 
   await createRejectableTransaction(knex, async (trx) => {
     pgGranule = await _writePostgresGranuleViaTransaction({
@@ -401,12 +396,7 @@ const _writeGranule = async ({
     `
     Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
     `,
-    {
-      ...postgresGranuleRecord,
-      product_volume: postgresGranuleRecord.product_volume
-        ? String(postgresGranuleRecord.product_volume)
-        : undefined,
-    }
+    postgresGranuleRecord
   );
   log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
 
