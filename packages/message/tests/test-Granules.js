@@ -175,6 +175,17 @@ test('getGranuleProductVolume() returns correct product volume', (t) => {
   );
 });
 
+test('getGranuleProductVolume() returns correct product volume for large file sizes', (t) => {
+  t.is(
+    getGranuleProductVolume([{
+      size: Number.MAX_SAFE_INTEGER,
+    }, {
+      size: Number.MAX_SAFE_INTEGER,
+    }]),
+    String(BigInt(Number.MAX_SAFE_INTEGER) * BigInt(2))
+  );
+});
+
 test('generateGranuleApiRecord() builds successful granule record', async (t) => {
   const {
     collectionId,

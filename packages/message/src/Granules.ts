@@ -103,7 +103,7 @@ export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): string =>
   return String(granuleFiles
     .map((f) => f.size ?? 0)
     .filter(isInteger)
-    .reduce((x, y) => x + y, 0));
+    .reduce((x, y) => x + BigInt(y), BigInt(0)));
 };
 
 export const getGranuleTimeToPreprocess = ({
