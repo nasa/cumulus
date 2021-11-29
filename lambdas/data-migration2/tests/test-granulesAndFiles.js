@@ -202,7 +202,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       duration: testGranule.duration,
       time_to_archive: testGranule.timeToArchive,
       time_to_process: testGranule.timeToPreprocess,
-      product_volume: BigInt(testGranule.productVolume),
+      product_volume: testGranule.productVolume,
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
       pdr_cumulus_id: pdrCumulusId,
