@@ -1660,3 +1660,55 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
   t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
+
+test.serial('PUT /executions publishes message to SNS topic', async (t) => {
+  const {
+    executionPgModel,
+    knex,
+    QueueUrl,
+  } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedExecution = {
+    ...newExecution,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/executions/${newExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await executionPgModel.get(knex, { arn: newExecution.arn });
+
+  t.is(pgRecord.status, 'completed');
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    updatedAt: executionRecord.updatedAt,
+  });
+});
