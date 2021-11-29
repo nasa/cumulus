@@ -176,10 +176,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS_2641**
     - Update API granule schema to set productVolume as a string value
-    - Update PostgreSQL schema to cast/translate knex return for product_volume
-      to BigInt
-    - Update `@cumulus/db` granule translation methods to translate updated
-      schemas
+    - Update `@cumulus/message` package to set productVolume as string
+      (calculated with BigIn from file.size) to match api schema
+    - Update `@cumulus/db` granule translation to translate `granule` objects to
+      match the updated API schema
   - **CUMULUS-2714**
     - Updated
       - @cumulus/api/lib.writeRecords.writeGranulesFromMessage
