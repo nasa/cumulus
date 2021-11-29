@@ -101,8 +101,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     processingEndDateTime: granulePgRecord.processing_end_date_time?.toISOString(),
     processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
     productionDateTime: granulePgRecord.production_date_time?.toISOString(),
-    productVolume: granulePgRecord.product_volume
-      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
+    productVolume: granulePgRecord.product_volume,
     provider: provider ? provider.name : undefined,
     published: granulePgRecord.published,
     queryFields: granulePgRecord.query_fields,
