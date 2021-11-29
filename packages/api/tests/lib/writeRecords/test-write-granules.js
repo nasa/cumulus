@@ -934,15 +934,19 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   });
 
   const dynamoGranule = await granuleModel.get({ granuleId });
+  const dynamoGranuleError = JSON.parse(dynamoGranule.error.errors);
   t.is(dynamoGranule.status, 'failed');
-  t.deepEqual(dynamoGranule.error.Error, 'Failed writing files to PostgreSQL.');
+  t.deepEqual(dynamoGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
+  t.true(dynamoGranuleError[0].Cause.includes('AggregateError'));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
+  const pgGranuleError = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
+  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
 test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
@@ -1029,8 +1033,49 @@ test.serial('writeGranulesFromMessage() stores error on granule if any file fail
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
-  t.true(pgGranule.error.Cause.includes('AggregateError'));
+  const pgGranuleError = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
+  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+});
+
+test.serial('writeGranulesFromMessage() stores an aggregate workflow error and file-writing error on a granule', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'failed';
+  cumulusMessage.exception = { Error: 'Unknown error', Cause: { Error: 'Workflow failed' } };
+  cumulusMessage.payload.granules[0].files[0].bucket = undefined;
+  cumulusMessage.payload.granules[0].files[0].key = undefined;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const dynamoGranuleErrors = JSON.parse(dynamoGranule.error.errors);
+  t.is(dynamoGranule.status, 'failed');
+  t.deepEqual(dynamoGranuleErrors.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.deepEqual(dynamoGranuleErrors[0].Cause, { Error: 'Workflow failed' });
+
+  const pgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(pgGranule.status, 'failed');
+  const pgGranuleErrors = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleErrors.map((error) => error.Error), ['Unknown error', 'Failed writing files to PostgreSQL.']);
+  t.deepEqual(pgGranuleErrors[0].Cause, { Error: 'Workflow failed' });
 });
 
 test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
@@ -1451,8 +1496,9 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   const pgGranule = await t.context.granulePgModel.get(
     knex, { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  t.is(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
-  t.true(pgGranule.error.Cause.includes('AggregateError'));
+  const pgGranuleError = JSON.parse(pgGranule.error.errors);
+  t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
+  t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
 test.serial('updateGranuleStatusToQueued() updates granule status in the database', async (t) => {
