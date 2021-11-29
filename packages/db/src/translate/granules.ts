@@ -102,7 +102,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     processingStartDateTime: granulePgRecord.processing_start_date_time?.toISOString(),
     productionDateTime: granulePgRecord.production_date_time?.toISOString(),
     productVolume: granulePgRecord.product_volume
-      ? String(granulePgRecord.product_volume) : undefined,
+      ? Number.parseInt(granulePgRecord.product_volume, 10) : undefined,
     provider: provider ? provider.name : undefined,
     published: granulePgRecord.published,
     queryFields: granulePgRecord.query_fields,
@@ -147,7 +147,7 @@ export const translateApiGranuleToPostgresGranule = async (
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,
     time_to_process: dynamoRecord.timeToPreprocess,
-    product_volume: dynamoRecord.productVolume ? BigInt(dynamoRecord.productVolume) : undefined,
+    product_volume: dynamoRecord.productVolume,
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
     pdr_cumulus_id: dynamoRecord.pdrName

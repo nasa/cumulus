@@ -9,16 +9,13 @@ import { isRecordDefined } from '../database';
 
 class BasePgModel<ItemType, RecordType extends BaseRecord> {
   readonly tableName: TableNames;
-  readonly convertRecordFunction: (param: RecordType) => RecordType;
+
   constructor({
     tableName,
-    convertRecordFunction,
   }: {
     tableName: TableNames,
-    convertRecordFunction?: any,
   }) {
     this.tableName = tableName;
-    this.convertRecordFunction = convertRecordFunction;
   }
 
   /**
@@ -44,7 +41,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
           ]);
         }
       });
-    return this._convertRecords(records);
+    return records;
   }
 
   async count(
@@ -82,7 +79,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     if (!isRecordDefined(record)) {
       throw new RecordDoesNotExist(`Record in ${this.tableName} with identifiers ${JSON.stringify(params)} does not exist.`);
     }
-    return this._convertRecords([record])[0];
+
+    return record;
   }
 
   async getMaxCumulusId(
@@ -100,13 +98,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     startId: number = 0,
     pageSize: number = 100
   ): Promise<RecordType[]> {
-    const records = await knexOrTransaction.select()
+    return await knexOrTransaction.select()
       .from(this.tableName)
       .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
-    if (this.convertRecordFunction) {
-      return records.map((record) => this.convertRecordFunction(record));
-    }
-    return records;
   }
 
   /**
@@ -122,7 +116,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .where(params);
-    return this._convertRecords(records);
+
+    return records;
   }
 
   /**
@@ -205,13 +200,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     item: ItemType,
     returningFields: string | string[] = 'cumulus_id'
   ): Promise<unknown[] | Object[]> {
-    const records = await knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .insert(item)
       .returning(returningFields);
-    if (this.convertRecordFunction) {
-      return records.map((record: any) => this.convertRecordFunction(record));
-    }
-    return records;
   }
 
   /**
@@ -229,13 +220,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     items: ItemType[],
     returningFields: string | string[] = 'cumulus_id'
   ): Promise<unknown[] | Object[]> {
-    const records = await knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .insert(items)
       .returning(returningFields);
-    if (this.convertRecordFunction) {
-      return records.map((record: any) => this.convertRecordFunction(record));
-    }
-    return records;
   }
 
   /**
@@ -269,21 +256,9 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     updateParams: Partial<RecordType>,
     returning: Array<string> = []
   ) {
-    const records = await knexOrTransaction(this.tableName)
+    return await knexOrTransaction(this.tableName)
       .where(whereClause)
-      .update(updateParams, returning) as RecordType[];
-
-    if (typeof records !== 'number') {
-      return this._convertRecords(records);
-    }
-    return records;
-  }
-
-  _convertRecords(records: RecordType[]) {
-    if (this.convertRecordFunction) {
-      return records.map((record) => this.convertRecordFunction(record));
-    }
-    return records;
+      .update(updateParams, returning);
   }
 
   /**

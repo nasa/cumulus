@@ -26,7 +26,6 @@ test.before(async (t) => {
   await t.context.knex.schema.createTable(t.context.tableName, (table) => {
     table.increments('cumulus_id').primary();
     table.text('info');
-    table.bigint('alt_number');
     table.timestamps(false, true);
   });
   await t.context.knex.schema.createTable(t.context.emptyTableName, (table) => {
@@ -34,16 +33,6 @@ test.before(async (t) => {
   });
 
   t.context.basePgModel = new BasePgModel({ tableName: t.context.tableName });
-
-  t.context.basePgModelWithConversion = new BasePgModel({
-    tableName: t.context.tableName,
-    convertRecordFunction: ((record) => {
-      if (record.alt_number) {
-        record.alt_number = BigInt(record.alt_number);
-      }
-      return record;
-    }),
-  });
 });
 
 test.after.always(async (t) => {
@@ -59,30 +48,12 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(
-    removeNilProperties(record),
+    record,
     {
       ...defaultDates,
       cumulus_id: queryResult[0],
       info,
     }
-  );
-});
-
-test('BasePgModel.create() creates record and returns expected record with converstion function', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-  const altNumber = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
-
-  const queryResult = await basePgModelWithConversion.create(knex, {
-    ...defaultDates,
-    info,
-    alt_number: BigInt(altNumber),
-  }, '*');
-
-  const record = await knex(tableName).where({ info }).first();
-  t.deepEqual(
-    { ...record, alt_number: BigInt(record.alt_number) },
-    queryResult[0]
   );
 });
 
@@ -95,7 +66,7 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
 
   const record = await knex(tableName).where({ info }).first();
   t.deepEqual(
-    removeNilProperties(record),
+    record,
     {
       ...defaultDates,
       cumulus_id: queryResult[0],
@@ -108,12 +79,10 @@ test('BasePgModel.insert() creates records and returns cumulus_id by default', a
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   const info2 = cryptoRandomString({ length: 5 });
-  const altNumber = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
-  const altNumber2 = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
 
   const queryResult = await basePgModel.insert(knex, [
-    { ...defaultDates, info, alt_number: altNumber },
-    { ...defaultDates, info: info2, alt_number: altNumber2 },
+    { ...defaultDates, info },
+    { ...defaultDates, info: info2 },
   ]);
 
   const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
@@ -123,53 +92,33 @@ test('BasePgModel.insert() creates records and returns cumulus_id by default', a
       ...defaultDates,
       cumulus_id: queryResult[0],
       info,
-      alt_number: altNumber,
     },
     {
       ...defaultDates,
       cumulus_id: queryResult[1],
       info: info2,
-      alt_number: altNumber2,
-
     }], ['cumulus_id'])
   );
 });
 
-test('BasePgModel.insert() creates records and returns translated/specified fields', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
+test('BasePgModel.insert() creates records and returns specified fields', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   const info2 = cryptoRandomString({ length: 5 });
-  const altNumber = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
-  const altNumber2 = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
 
-  const queryResult = await basePgModelWithConversion.insert(knex, [
-    { ...defaultDates, info, alt_number: BigInt(altNumber) },
-    { ...defaultDates, info: info2, alt_number: BigInt(altNumber2) },
-  ], '*');
-
-  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
-  t.deepEqual(
-    sortBy(records.map((r) => ({ ...r, alt_number: BigInt(r.alt_number) })), ['cumulus_id']),
-    sortBy(queryResult, ['cumulus_id'])
+  const insertedRecords = await basePgModel.insert(
+    knex,
+    [
+      { ...defaultDates, info },
+      { ...defaultDates, info: info2 },
+    ],
+    '*'
   );
-});
-
-test('BasePgModel.insert() creates records and returns record if translation field not present', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
-  const info = cryptoRandomString({ length: 5 });
-  const info2 = cryptoRandomString({ length: 5 });
-  const altNumber = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
-  const altNumber2 = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
-
-  const queryResult = await basePgModelWithConversion.insert(knex, [
-    { ...defaultDates, info, alt_number: BigInt(altNumber) },
-    { ...defaultDates, info: info2, alt_number: BigInt(altNumber2) },
-  ], ['info', 'cumulus_id']);
 
   const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
   t.deepEqual(
-    sortBy(records.map((r) => ({ cumulus_id: r.cumulus_id, info: r.info })), ['cumulus_id']),
-    sortBy(queryResult, ['cumulus_id'])
+    sortBy(records, ['info']),
+    sortBy(insertedRecords, ['info'])
   );
 });
 
@@ -188,7 +137,7 @@ test('BasePgModel.insert() works with transaction', async (t) => {
 
   const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
   t.deepEqual(
-    sortBy(records, ['cumulus_id']).map((r) => removeNilProperties(r)),
+    sortBy(records, ['cumulus_id']),
     sortBy([{
       ...defaultDates,
       cumulus_id: queryResult[0],
@@ -209,18 +158,6 @@ test('BasePgModel.get() returns correct record', async (t) => {
   t.like(
     await basePgModel.get(knex, { info }),
     { ...defaultDates, info }
-  );
-});
-
-test('BasePgModel.get() returns correct record with conversion when convertRecordFunction set', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
-
-  const info = cryptoRandomString({ length: 5, type: 'numeric' });
-  const altNumber1 = `1${cryptoRandomString({ length: 10, type: 'numeric' })}`;
-  await knex(tableName).insert({ ...defaultDates, info, alt_number: altNumber1 });
-  t.like(
-    await basePgModelWithConversion.get(knex, { alt_number: BigInt(altNumber1) }),
-    { ...defaultDates, info, alt_number: BigInt(altNumber1) }
   );
 });
 
@@ -426,27 +363,6 @@ test('BasePgModel.search() returns an array of records', async (t) => {
   });
 });
 
-test('BasePgModel.search() returns a converted array of records if convertRecordFucntion is set', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
-
-  const info = cryptoRandomString({ length: 5 });
-  const recordBody = { info, alt_number: BigInt(500) };
-
-  await Promise.all([
-    knex(tableName).insert(recordBody),
-    knex(tableName).insert(recordBody),
-    knex(tableName).insert(recordBody),
-  ]);
-
-  const searchResponse = await basePgModelWithConversion.search(knex, recordBody);
-
-  t.is(searchResponse.length, 3);
-
-  searchResponse.forEach((r) => {
-    t.like(r, recordBody);
-  });
-});
-
 test('BasePgModel.search() returns an empty array if nothing found', async (t) => {
   const { knex, basePgModel } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -493,49 +409,13 @@ test('BasePgModel.update() updates provided fields on a record', async (t) => {
   const newInfo = cryptoRandomString({ length: 5 });
   await basePgModel.update(knex, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo });
 
-  const record = await knex(tableName)
-    .where({ cumulus_id: cumulusId })
-    .first();
+  const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(
-    removeNilProperties(record),
+    record,
     {
       ...defaultDates,
       cumulus_id: cumulusId,
       info: newInfo,
-    }
-  );
-});
-
-test('BasePgModel.update() updates provided fields on a record and returns converted record if convertRecordFunction is set', async (t) => {
-  const {
-    knex,
-    basePgModelWithConversion,
-  } = t.context;
-
-  // Create initial record
-  const info = cryptoRandomString({ length: 5 });
-  const altNumber1 = `1${cryptoRandomString({ length: 10, type: 'numeric' })}`;
-  const [cumulusId] = await basePgModelWithConversion.create(knex, {
-    info,
-    alt_number: altNumber1,
-  });
-
-  // Update record
-  const newInfo = cryptoRandomString({ length: 5 });
-  const records = await basePgModelWithConversion.update(
-    knex,
-    { cumulus_id: cumulusId },
-    { ...defaultDates, info: newInfo },
-    '*'
-  );
-
-  t.deepEqual(
-    records[0],
-    {
-      ...defaultDates,
-      cumulus_id: cumulusId,
-      info: newInfo,
-      alt_number: BigInt(altNumber1),
     }
   );
 });
@@ -576,18 +456,10 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
 
   // Update record
   const newInfo = cryptoRandomString({ length: 5 });
-  const altNumber = `1${cryptoRandomString({ length: 5, type: 'numeric' })}`;
 
   // Use existing transation rather than knex client
-  await createRejectableTransaction(
-    knex,
-    async (trx) =>
-      await basePgModel.update(
-        trx,
-        { cumulus_id: cumulusId },
-        { ...defaultDates, info: newInfo, alt_number: altNumber }
-      )
-  );
+  await createRejectableTransaction(knex, async (trx) =>
+    await basePgModel.update(trx, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo }));
 
   const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
   t.deepEqual(
@@ -596,7 +468,6 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
       ...defaultDates,
       cumulus_id: cumulusId,
       info: newInfo,
-      alt_number: altNumber,
     }
   );
 });
@@ -620,31 +491,6 @@ test('BasePgModel.searchWithUpdatedAtRange() returns an array of records if no d
   );
 
   t.is(searchResponse.length, 3);
-});
-
-test('BasePgModel.searchWithUpdatedAtRange() returns an converted array of records if convertRecordFunction set', async (t) => {
-  const {
-    knex, basePgModelWithConversion,
-  } = t.context;
-
-  const info = '500';
-  const altNumber = BigInt(1000);
-  const records = times(3, () => ({
-    info,
-    alt_number: altNumber,
-  }));
-
-  await Promise.all(records.map((r) => basePgModelWithConversion.create(knex, r)));
-  const searchResponse = await basePgModelWithConversion.searchWithUpdatedAtRange(
-    knex,
-    { alt_number: altNumber },
-    {}
-  );
-  t.is(searchResponse.length, 3);
-  t.deepEqual(
-    searchResponse.map((r) => r.alt_number),
-    [...new Array(3)].map(() => altNumber)
-  );
 });
 
 test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if a date range is specified', async (t) => {
@@ -782,34 +628,6 @@ test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (
   t.is(secondPageRecords.length, 1);
   t.deepEqual(firstPageRecords[0].info, info1);
   t.deepEqual(secondPageRecords[0].info, info2);
-});
-
-test.serial('BasePgModel.paginateByCumulusId() returns converted paginatedValues if convertRecordFunction is set', async (t) => {
-  const { knex, basePgModelWithConversion, tableName } = t.context;
-
-  const info1 = cryptoRandomString({ length: 5 });
-  const info2 = cryptoRandomString({ length: 5 });
-  const altNumber1 = cryptoRandomString({ length: 10, type: 'numeric' });
-  const altNumber2 = cryptoRandomString({ length: 10, type: 'numeric' });
-
-  const recordIds = await knex(tableName)
-    .insert([
-      { info: info1, alt_number: altNumber1 },
-      { info: info2, alt_number: altNumber2 },
-    ])
-    .returning('cumulus_id');
-
-  const firstPageRecords = await basePgModelWithConversion.paginateByCumulusId(
-    knex, recordIds[0], 1
-  );
-  const secondPageRecords = await basePgModelWithConversion.paginateByCumulusId(
-    knex, recordIds[1], 1
-  );
-
-  t.is(firstPageRecords.length, 1);
-  t.is(secondPageRecords.length, 1);
-  t.deepEqual(firstPageRecords[0].alt_number, BigInt(altNumber1));
-  t.deepEqual(secondPageRecords[0].alt_number, BigInt(altNumber2));
 });
 
 test.serial('BasePgModel.paginateByCumulusId() returns muliple value pages', async (t) => {
