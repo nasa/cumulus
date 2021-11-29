@@ -122,7 +122,9 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir, {
+    KNEX_DEBUG: 'true',
+  });
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   process.env = {
@@ -1212,7 +1214,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in Dynamo/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1244,7 +1246,7 @@ test.serial('POST /executions creates a new execution in Dynamo/PostgreSQL/Elast
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1468,7 +1470,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial('PUT /executions updates the record as expected', async (t) => {
+test.serial.only('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1520,7 +1522,25 @@ test.serial('PUT /executions updates the record as expected', async (t) => {
     }
   );
 
-  t.is(updatedDynamoRecord.arn, execution.arn);
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+
+  t.deepEqual(
+    updatedDynamoRecord,
+    {
+      ...updatedExecution,
+      updatedAt: updatedDynamoRecord.updatedAt,
+    }
+  );
+
+  t.deepEqual(
+    updatedEsRecord,
+    {
+      ...updatedExecution,
+      updatedAt: updatedEsRecord.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
   t.is(updatePgRecord.arn, execution.arn);
   t.is(updatePgRecord.cumulus_id, pgRecord.cumulus_id);
 
