@@ -1814,7 +1814,7 @@ test.serial('Internal Reconciliation report JSON is formatted', async (t) => {
   const unformattedReportString = JSON.stringify(JSON.parse(formattedReport), undefined, 0);
   const unformattedReportObj = JSON.parse(unformattedReportString);
 
-  t.true(!unformattedReportString.includes("\n")); // validate unformatted report is on a single line
+  t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
 
@@ -1869,13 +1869,6 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
     reportType: 'Inventory',
   };
 
-  const eventSingleLine = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Inventory',
-    prettyPrintReport: false,
-  }
-
   const reportRecordFormatted = await handler(eventFormatted);
   const formattedReport = await fetchCompletedReportString(reportRecordFormatted);
 
@@ -1883,6 +1876,6 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   const unformattedReportString = JSON.stringify(JSON.parse(formattedReport), undefined, 0);
   const unformattedReportObj = JSON.parse(unformattedReportString);
 
-  t.true(!unformattedReportString.includes("\n")); // validate unformatted report is on a single line
+  t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
