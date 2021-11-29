@@ -538,6 +538,17 @@ describe('When there are granule differences and granule reconciliation is run',
         .toBe(2);
     });
 
+    it('generates a report with formatted JSON', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+
+      const reportString = JSON.stringify(report);
+      const unformattedReportString = JSON.stringify(report, undefined, 0);
+
+      // Validate unformattedReportString contains no newline characters
+      expect(unformattedReportString).not.toContain('\n');
+      expect(reportString).toEqual(JSON.stringify(unformattedReportString, undefined, 2));
+    });
+
     it('deletes a reconciliation report through the Cumulus API', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       await reconciliationReportsApi.deleteReconciliationReport({
@@ -641,6 +652,17 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(report.granules.onlyInEs.length).toBe(0);
       expect(report.granules.onlyInDb.length).toBe(0);
+    });
+
+    it('generates a report with formatted JSON', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+
+      const reportString = JSON.stringify(report);
+      const unformattedReportString = JSON.stringify(report, undefined, 0);
+
+      // Validate unformattedReportString contains no newline characters
+      expect(unformattedReportString).not.toContain('\n');
+      expect(reportString).toEqual(JSON.stringify(unformattedReportString, undefined, 2));
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
