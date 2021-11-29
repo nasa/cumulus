@@ -178,7 +178,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Update API granule schema to set productVolume as a string value
     - Update PostgreSQL schema to cast/translate knex return for product_volume
       to BigInt
-    - Update `@cumulus/db` granule translation methods to transalte updated
+    - Update `@cumulus/db` granule translation methods to translate updated
       schemas
   - **CUMULUS-2714**
     - Updated
