@@ -32,9 +32,19 @@ s3_replicator_config = {
 }
 system_bucket="cumulus-test-sandbox-internal"
 
+cmr_search_client_config = {
+  create_reconciliation_report_cmr_limit = 1500
+  create_reconciliation_report_cmr_page_size = 250
+}
+
 csdap_client_id = "csdap client id "
 csdap_client_password = "csdap client password"
 csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
+
+elasticsearch_client_config = {
+  create_reconciliation_report_es_scroll_duration = "8m"
+  create_reconciliation_report_es_scroll_size = 1500
+}
 
 launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"

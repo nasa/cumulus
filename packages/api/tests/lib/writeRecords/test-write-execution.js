@@ -525,7 +525,7 @@ test.serial('writeExecutionRecordFromMessage() correctly sets both original_payl
   t.deepEqual(pgRecord.final_payload, finalPayload);
 });
 
-test.serial('writeExecutionRecordFromApi() saves execution to Dynamo and RDS with same timestamps', async (t) => {
+test.serial('writeExecutionRecordFromApi() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -543,8 +543,11 @@ test.serial('writeExecutionRecordFromApi() saves execution to Dynamo and RDS wit
 
   const dynamoRecord = await executionModel.get({ arn: executionArn });
   const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  const esRecord = await t.context.esExecutionsClient.get(executionArn);
   t.is(pgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
 test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message', async (t) => {
@@ -557,6 +560,40 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   } = t.context;
 
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
+
+  t.is(executionRecord.arn, executionArn);
+  t.is(executionRecord.status, cumulusMessage.meta.status);
+  t.deepEqual(executionRecord, translatedExecution);
+});
+
+test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message', async (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    executionPgModel,
+    knex,
+    QueueUrl,
+    executionModel,
+  } = t.context;
+
+  const apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({
+    record: apiRecord,
+    knex,
+    executionModel,
+  });
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
 

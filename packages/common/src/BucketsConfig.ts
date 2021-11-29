@@ -1,5 +1,5 @@
 import { createErrorType } from '@cumulus/errors';
-import { BucketsConfigObject, BucketType } from './types';
+import { BucketsConfigObject } from './types';
 
 const BucketsConfigError = createErrorType('BucketsConfigError');
 
@@ -82,7 +82,7 @@ class BucketsConfig {
    * @param {string/Array} types - types of buckets to return
    * @returns {Array<Object>} - array of buckets that are of desired types
    */
-  bucketsOfType(types: BucketType | BucketType[]) {
+  bucketsOfType(types: string | string[]) {
     const checkTypes = typeof types === 'string' ? [types] : types;
 
     return Object.values(this.buckets)
