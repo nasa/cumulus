@@ -11,6 +11,7 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -240,6 +241,31 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
+  const topicName = cryptoRandomString({ length: 10 });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.execution_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = cryptoRandomString({ length: 10 });
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+
   const {
     esClient,
     esIndex,
@@ -1186,7 +1212,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in Dynamo and PG with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in Dynamo/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1207,15 +1233,18 @@ test.serial('POST /executions creates a new execution in Dynamo and PG with corr
     }
   );
 
+  const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
+
   t.true(fetchedDynamoRecord.createdAt > newExecution.createdAt);
   t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
 
-  // PG and Dynamo records have the same timestamps
   t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  t.is(fetchedPgRecord.created_at.getTime(), fetchedEsRecord.createdAt);
+  t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record', async (t) => {
+test.serial('POST /executions creates the expected record in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1245,20 +1274,40 @@ test.serial('POST /executions creates the expected record', async (t) => {
     }
   );
 
+  const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
+
   t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
   t.truthy(fetchedPgRecord.cumulus_id);
   t.is(fetchedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   t.is(fetchedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   t.is(fetchedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[1].cumulus_id);
 
-  const omitList = ['createdAt', 'updatedAt', 'created_at', 'updated_at', 'cumulus_id'];
   t.deepEqual(
-    omit(fetchedDynamoRecord, omitList),
-    omit(newExecution, omitList)
+    fetchedDynamoRecord,
+    {
+      ...newExecution,
+      createdAt: fetchedDynamoRecord.createdAt,
+      updatedAt: fetchedDynamoRecord.updatedAt,
+    }
   );
   t.deepEqual(
-    omit(fetchedPgRecord, omitList),
-    omit(expectedPgRecord, omitList)
+    fetchedEsRecord,
+    {
+      ...newExecution,
+      _id: fetchedEsRecord._id,
+      createdAt: fetchedEsRecord.createdAt,
+      updatedAt: fetchedEsRecord.updatedAt,
+      timestamp: fetchedEsRecord.timestamp,
+    }
+  );
+  t.deepEqual(
+    fetchedPgRecord,
+    {
+      ...expectedPgRecord,
+      cumulus_id: fetchedPgRecord.cumulus_id,
+      created_at: fetchedPgRecord.created_at,
+      updated_at: fetchedPgRecord.updated_at,
+    }
   );
 });
 
@@ -1382,6 +1431,41 @@ test.serial('POST /executions creates an execution that is searchable', async (t
   t.is(meta.table, 'execution');
   t.is(meta.count, 1);
   t.is(results[0].arn, newExecution.arn);
+});
+
+test.serial('POST /executions publishes message to SNS topic', async (t) => {
+  const {
+    executionPgModel,
+    knex,
+    QueueUrl,
+  } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await executionPgModel.get(knex, { arn: newExecution.arn });
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
+
+  t.deepEqual(executionRecord, translatedExecution);
 });
 
 test.serial('PUT /executions updates the record as expected', async (t) => {

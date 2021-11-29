@@ -52,7 +52,7 @@ async function get(req, res) {
   } = req.testContext || {};
   try {
     const rule = await rulePgModel.get(knex, { name });
-    const result = await translatePostgresRuleToApiRule(rule);
+    const result = await translatePostgresRuleToApiRule(rule, knex);
     return res.send(result);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {

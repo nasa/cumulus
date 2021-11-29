@@ -7,16 +7,18 @@ const request = require('supertest');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const {
-  localStackConnectionEnv,
-  generateLocalTestDb,
-  destroyLocalTestDb,
-  RulePgModel,
   CollectionPgModel,
+  destroyLocalTestDb,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  migrationDir,
   ProviderPgModel,
+  RulePgModel,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
-  migrationDir,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
@@ -57,19 +59,6 @@ const testDbName = randomString(12);
 const { app } = require('../../app');
 
 const workflow = randomId('workflow-');
-const testRule = fakeRuleFactoryV2({
-  name: randomId('testRule'),
-  workflow: workflow,
-  rule: {
-    type: 'onetime',
-    arn: 'arn',
-    value: 'value',
-  },
-  state: 'ENABLED',
-  queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
-});
-delete testRule.collection;
-delete testRule.provider;
 
 const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
 
@@ -109,11 +98,49 @@ test.before(async (t) => {
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
+  // Create PG Provider
+  t.context.testPgProvider = fakeProviderRecordFactory();
+  [t.context.pgProvider] = await t.context.providerPgModel.create(
+    t.context.testKnex,
+    t.context.testPgProvider,
+    '*'
+  );
+
+  // Create PG Collection
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+  t.context.collectionPgModel = new CollectionPgModel();
+  [t.context.pgCollection] = await t.context.collectionPgModel.create(
+    t.context.testKnex,
+    testPgCollection
+  );
+
+  t.context.testRule = fakeRuleFactoryV2({
+    name: randomId('testRule'),
+    workflow: workflow,
+    rule: {
+      type: 'onetime',
+      arn: 'arn',
+      value: 'value',
+    },
+    state: 'ENABLED',
+    queueUrl: 'https://sqs.us-west-2.amazonaws.com/123456789012/queue_url',
+    collection: {
+      name: t.context.pgCollection.name,
+      version: t.context.pgCollection.version,
+    },
+    provider: t.context.pgProvider.name,
+  });
+
   ruleModel = new Rule();
   await ruleModel.createTable();
   t.context.ruleModel = ruleModel;
 
-  const ruleRecord = await ruleModel.create(testRule);
+  const ruleRecord = await ruleModel.create(t.context.testRule);
   await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
   t.context.testPgRule = await translateApiRuleToPostgresRule(ruleRecord, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
@@ -263,13 +290,13 @@ test.serial('default returns list of rules', async (t) => {
 
 test('GET gets a rule', async (t) => {
   const response = await request(app)
-    .get(`/rules/${testRule.name}`)
+    .get(`/rules/${t.context.testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const expectedRule = {
-    ...testRule,
+    ...t.context.testRule,
     updatedAt: response.body.updatedAt,
     createdAt: response.body.createdAt,
   };

@@ -236,10 +236,7 @@ async function indexFromDatabase(event) {
       limitEsRequests,
       postgresModel: new ExecutionPgModel(),
       translationFunction: (record) =>
-        translatePostgresExecutionToApiExecution(
-          record,
-          knex
-        ),
+        translatePostgresExecutionToApiExecution(record, knex),
       knex,
       pageSize,
     }),
@@ -301,7 +298,8 @@ async function indexFromDatabase(event) {
       indexFn: indexer.indexRule,
       limitEsRequests,
       postgresModel: new RulePgModel(),
-      translationFunction: translatePostgresRuleToApiRule,
+      translationFunction: (record) =>
+        translatePostgresRuleToApiRule(record, knex),
       knex,
       pageSize,
     }),
