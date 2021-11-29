@@ -229,7 +229,6 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     items: ItemType[],
     returningFields: string | string[] = 'cumulus_id'
   ): Promise<unknown[] | Object[]> {
-    // TODO - Does the translate pattern break down here?
     const records = await knexOrTransaction(this.tableName)
       .insert(items)
       .returning(returningFields);
