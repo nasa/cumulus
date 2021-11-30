@@ -23,7 +23,7 @@ buckets = {
   }
   glacier = {
     name = "lf-internal"
-    type = "glacier"
+    type = "orca"
   }
 }
 key_name         = "lauren"

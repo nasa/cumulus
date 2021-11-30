@@ -23,7 +23,7 @@ buckets = {
   },
   glacier = {
     name = "kk2-tf-orca-glacier"
-    type = "glacier"
+    type = "orca"
   }
 }
 cmr_oauth_provider = "launchpad"

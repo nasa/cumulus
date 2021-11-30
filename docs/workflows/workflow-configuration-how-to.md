@@ -55,7 +55,7 @@ buckets =  {
   },
   glacier = {
      name = "glacier-backup-bucket",
-     type = "glacier"
+     type = "orca"
   }
 }
 ```

@@ -7,7 +7,7 @@ system_bucket     = "jtran-int-tf-internal"
 buckets = {
   glacier = {
     name = "jtran-int-tf-orca-glacier"
-    type = "glacier"
+    type = "orca"
   },
   internal = {
     name = "jtran-int-tf-internal"
