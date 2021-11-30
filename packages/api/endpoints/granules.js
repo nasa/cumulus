@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   getKnexClient,
@@ -13,10 +12,6 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const {
-  addToLocalES,
-  indexGranule,
-} = require('@cumulus/es-client/indexer');
 const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
