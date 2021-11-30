@@ -88,9 +88,6 @@ const create = async (req, res) => {
 
   try {
     await createGranuleFromApi(granule, knex, esClient);
-    if (inTestMode()) {
-      await addToLocalES(granule, indexGranule);
-    }
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));

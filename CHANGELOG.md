@@ -146,6 +146,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       DynamoDB table.
   - **CUMULUS-2694**
     - Removed `@cumulus/api/models/granules.storeGranulesFromCumulusMessage()` method
+  - **CUMULUS-2662**
+    - Removed call to `addToLocalES` in POST `/granules` endpoint since it is redundant.
 
 ### Changed
 
