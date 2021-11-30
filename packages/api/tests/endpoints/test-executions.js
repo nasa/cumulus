@@ -122,9 +122,7 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir, {
-    KNEX_DEBUG: 'true',
-  });
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   process.env = {
@@ -1470,7 +1468,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial.only('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1521,22 +1519,22 @@ test.serial.only('PUT /executions updates the record as expected in DynamoDB/Pos
       arn: execution.arn,
     }
   );
-
   const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedApiRecord = {
+    ...updatedExecution,
+    collectionId: execution.collectionId,
+    createdAt: dynamoRecord.createdAt,
+    updatedAt: updatedDynamoRecord.updatedAt,
+  };
 
   t.deepEqual(
     updatedDynamoRecord,
-    {
-      ...updatedExecution,
-      updatedAt: updatedDynamoRecord.updatedAt,
-    }
+    expectedApiRecord
   );
-
-  t.deepEqual(
+  t.like(
     updatedEsRecord,
     {
-      ...updatedExecution,
-      updatedAt: updatedEsRecord.updatedAt,
+      ...expectedApiRecord,
       timestamp: updatedEsRecord.timestamp,
     }
   );
@@ -1549,8 +1547,8 @@ test.serial.only('PUT /executions updates the record as expected in DynamoDB/Pos
   t.is(updatePgRecord.created_at.getTime(), pgRecord.created_at.getTime());
   t.true(updatePgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
 
-  // updated record is the merge of the original record with the updated fields
-  // updated record has the original info that's not updated
+  // collectionId was omitted from body of PUT request, so values are
+  // not overridden in the database
   t.is(updatedDynamoRecord.collectionId, execution.collectionId);
   t.is(updatePgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   // updated record has added field
