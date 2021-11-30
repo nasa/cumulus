@@ -34,11 +34,11 @@ echo "terraform {
 
 if [[ $NGAP_ENV = "SIT" ]]; then
   BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=12
+  CMA_LAYER_VERSION=13
   ROLE_BOUNDARY=NGAPShRoleBoundary
 else
   BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=15
+  CMA_LAYER_VERSION=16
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
