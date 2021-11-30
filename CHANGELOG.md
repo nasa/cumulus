@@ -177,7 +177,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS_2641**
     - Update API granule schema to set productVolume as a string value
     - Update `@cumulus/message` package to set productVolume as string
-      (calculated with BigIn from file.size) to match api schema
+      (calculated with `file.size` as a `BigInt`) to match API schema
     - Update `@cumulus/db` granule translation to translate `granule` objects to
       match the updated API schema
   - **CUMULUS-2714**
