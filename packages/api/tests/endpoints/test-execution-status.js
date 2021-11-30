@@ -45,14 +45,21 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+const executionArn = 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8';
+
 const executionStatusCommon = {
-  executionArn: 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8',
+  executionArn,
   stateMachineArn: 'arn:aws:states:us-east-1:xxx:stateMachine:discoverGranulesStateMachine:3ea094d8',
   name: '3ea094d8',
   status: 'SUCCEEDED',
   startDate: 'date',
   stopDate: 'date',
 };
+
+const fakeExecution = fakeExecutionFactoryV2({
+  arn: executionArn,
+  parentArn: undefined,
+});
 
 const cumulusMetaOutput = () => ({
   cumulus_meta: {
@@ -230,6 +237,7 @@ test.before(async (t) => {
   // create fake Executions table
   executionModel = new Execution();
   await executionModel.createTable();
+  await executionModel.create(fakeExecution);
   await executionModel.create(fakeExpiredExecution);
 
   process.env = {
@@ -279,10 +287,15 @@ test.before(async (t) => {
 
   executionPgModel = new ExecutionPgModel();
   const executionPgRecord = await translateApiExecutionToPostgresExecution(
-    fakeExpiredExecution,
+    fakeExecution,
     knex
   );
   const executionPgRecordIds = await executionPgModel.create(knex, executionPgRecord);
+  const expiredExecutionPgRecord = await translateApiExecutionToPostgresExecution(
+    fakeExpiredExecution,
+    knex
+  );
+  const expiredExecutionPgRecordIds = await executionPgModel.create(knex, expiredExecutionPgRecord);
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
@@ -323,6 +336,9 @@ test.before(async (t) => {
 
   await upsertGranuleWithExecutionJoinRecord(
     knex, t.context.fakePGGranules[0], executionPgRecordIds[0]
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], expiredExecutionPgRecordIds[0]
   );
 });
 
@@ -373,6 +389,17 @@ test('returns ARNs for execution and state machine', async (t) => {
   const executionStatus = response.body;
   t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
   t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
+});
+
+test('returns granules for execution in Step Function API', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${executionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionStatus = response.body;
+  t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 
 test('returns full message when it is already included in the output', async (t) => {
