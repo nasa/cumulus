@@ -262,21 +262,29 @@ const _writeGranuleFiles = async ({
       knex,
     });
   } catch (error) {
+    const errors = [];
     if (!isEmpty(workflowError)) {
       log.error(`Logging existing error encountered by granule ${granuleId} before overwrite`, workflowError);
+      errors.push(workflowError);
     }
     log.error('Failed writing files to PostgreSQL, updating granule with error', error);
     const errorObject = {
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
     };
+    errors.push(errorObject);
+
+    const errorsObject = {
+      errors: JSON.stringify(errors),
+    };
+
     await createRejectableTransaction(knex, async (trx) => {
       await granulePgModel.update(
         trx,
         { cumulus_id: granuleCumulusId },
         {
           status: 'failed',
-          error: errorObject,
+          error: errorsObject,
         },
         ['*']
       ).catch((updateError) => {
@@ -288,7 +296,7 @@ const _writeGranuleFiles = async ({
         { granuleId },
         {
           status: 'failed',
-          error: errorObject,
+          error: errorsObject,
         }
       ).catch((updateError) => {
         log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
