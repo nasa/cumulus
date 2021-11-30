@@ -1,3 +1,15 @@
+data "aws_secretsmanager_secret" "rds_admin_credentials" {
+  arn = var.rds_admin_access_secret_arn
+}
+
+data "aws_secretsmanager_secret_version" "rds_admin_credentials" {
+  secret_id = data.aws_secretsmanager_secret.rds_admin_credentials.id
+}
+
+locals {
+  rds_admin_login = jsondecode(data.aws_secretsmanager_secret_version.rds_admin_credentials.secret_string)
+}
+
 # ORCA Module
 module "orca" {
   count  = var.include_orca ? 1 : 0
@@ -22,12 +34,12 @@ module "orca" {
   ## --------------------------
   ## REQUIRED
   orca_default_bucket  = var.orca_default_bucket
-  db_admin_password    = var.orca_db_admin_password
+  db_admin_password    = local.rds_admin_login.password
+  db_host_endpoint     = local.rds_admin_login.host
   db_user_password     = var.orca_db_user_password
-  db_host_endpoint     = var.orca_db_host_endpoint
 
   ## OPTIONAL
-  db_admin_username                                    = "postgres"
+  db_admin_username                                    = local.rds_admin_login.username
   default_multipart_chunksize_mb                       = var.default_s3_multipart_chunksize_mb
   orca_ingest_lambda_memory_size                       = 2240
   orca_ingest_lambda_timeout                           = 720

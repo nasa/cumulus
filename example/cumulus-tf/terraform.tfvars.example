@@ -57,10 +57,9 @@ cmr_oauth_provider = "earthdata"
 archive_api_port = 8000
 private_archive_api_gateway = true
 
+rds_admin_access_secret_arn = "arn:aws:secretsmanager:us-east-1:12345:secret:secret-name"
 # ORCA Configuration
-orca_db_admin_password = "password"
 orca_db_user_password  = "password"
-orca_db_host_endpoint  = "rds cluster endpoint"
 orca_default_bucket    = "orca glacier bucket"
 
 # CSDAP configuration for cumulus distribution

@@ -329,6 +329,11 @@ variable "rds_connection_timing_configuration" {
   }
 }
 
+variable "rds_admin_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+  type        = string
+}
+
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
@@ -365,19 +370,9 @@ variable "include_orca" {
   default = true
 }
 
-variable "orca_db_admin_password" {
-  description = "Password for RDS database administrator authentication"
-  type = string
-}
-
 variable "orca_db_user_password" {
   description = "Password for RDS database user authentication"
   type = string
-}
-
-variable "orca_db_host_endpoint" {
-  type        = string
-  description = "Database host endpoint to connect to"
 }
 
 variable "orca_default_bucket" {
