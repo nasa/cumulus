@@ -541,7 +541,7 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates a report with formatted JSON', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
 
-      const reportString = JSON.stringify(report);
+      const reportString = report.toString();
       const unformattedReportString = JSON.stringify(report, undefined, 0);
 
       // Validate unformattedReportString contains no newline characters
@@ -657,7 +657,7 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates a report with formatted JSON', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
 
-      const reportString = JSON.stringify(report);
+      const reportString = report.toString();
       const unformattedReportString = JSON.stringify(report, undefined, 0);
 
       // Validate unformattedReportString contains no newline characters
