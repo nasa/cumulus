@@ -49,6 +49,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2759**
+    - Updates collection/provider/rules/granules creation (post) endpoints to
+      primarily check for existance/collision in postgres database instead of DynamoDB
   - **CUMULUS-2714**
     - Added `@cumulus/db/base.deleteExcluding` method to allow for deletion of a
       record set with an exclusion list of cumulus_ids
