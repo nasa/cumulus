@@ -256,6 +256,44 @@ test.serial('upsertExecution preserves finalPayload and sets originalPayload/upd
   });
 });
 
+test.serial('upsertExecution preserves existing fields not provided in the upsert for "completed" record', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const execution = {
+    arn: randomString(),
+    status: 'running',
+    collectionId: 'collection1',
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates: execution,
+    index: esIndex,
+  });
+
+  const record = await esExecutionsClient.get(execution.arn);
+  t.like(record, {
+    ...execution,
+    timestamp: record.timestamp,
+  });
+
+  const updates = {
+    ...execution,
+    status: 'completed',
+  };
+  delete updates.collectionId;
+  await indexer.upsertExecution({
+    esClient,
+    updates,
+    index: esIndex,
+  });
+
+  const updatedRecord = await esExecutionsClient.get(execution.arn);
+  t.true(updatedRecord.timestamp > record.timestamp);
+  // Value still exists in updated record even though it wasn't sent in the
+  // body of the second upsert request
+  t.is(updatedRecord.collectionId, execution.collectionId);
+});
+
 test('upsertExecution handles version conflict on parallel updates', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 

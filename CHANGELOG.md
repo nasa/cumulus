@@ -177,6 +177,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS_2641**
+    - Update API granule schema to set productVolume as a string value
+    - Update `@cumulus/message` package to set productVolume as string
+      (calculated with `file.size` as a `BigInt`) to match API schema
+    - Update `@cumulus/db` granule translation to translate `granule` objects to
+      match the updated API schema
   - **CUMULUS-2714**
     - Updated
       - @cumulus/api/lib.writeRecords.writeGranulesFromMessage
@@ -331,6 +337,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated database write logic in `sfEventSqsToDbRccords` to throw error if requirements to write execution to PostgreSQL cannot be met
   - **CUMULUS-2660**
     - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
+  - **CUMULUS-2661**
+    - Updated PUT `/executions/<arn>` endpoint to publish SNS message of updated record to executions SNS topic
 
 ## [v9.9.0] 2021-11-03
 

@@ -29,6 +29,7 @@ describe('The Executions API', () => {
   let executionRecord;
   let updatedExecutionRecord;
   let executionMessageKey;
+  let updatedExecutionMessageKey;
 
   beforeAll(async () => {
     try {
@@ -49,6 +50,7 @@ describe('The Executions API', () => {
       };
       executionArn = executionRecord.arn;
       executionMessageKey = `${config.stackName}/test-output/${executionRecord.name}-${executionRecord.status}.output`;
+      updatedExecutionMessageKey = `${config.stackName}/test-output/${updatedExecutionRecord.name}-${updatedExecutionRecord.status}.output`;
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -108,6 +110,13 @@ describe('The Executions API', () => {
       expect(response.statusCode).toBe(200);
       const { message } = JSON.parse(response.body);
       expect(message).toBe(`Successfully updated execution with arn ${executionArn}`);
+    });
+
+    it('publishes an SNS message for the updated execution', async () => {
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: updatedExecutionMessageKey,
+      })).toBeResolved();
     });
 
     it('can search the execution in the API.', async () => {

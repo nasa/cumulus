@@ -448,7 +448,7 @@ const _writeGranule = async ({
  * @param {string} [params.timestamp] - timestamp
  * @param {string} [params.updatedAt = new Date().valueOf()] - time value
  * @param {number} [params.duration] - seconds
- * @param {integer} [params.productVolume] - sum of the files sizes in bytes
+ * @param {string} [params.productVolume] - sum of the files sizes in bytes
  * @param {integer} [params.timeToPreprocess] -  seconds
  * @param {integer} [params.timeToArchive] - seconds
  * @param {Array<ApiFile>} params.files - files associated with the granule.

@@ -97,7 +97,7 @@ const deleteGranuleAndFiles = async (params: {
   } else if (pgGranule && pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
-  // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
+    // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
     logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
     const files = await filePgModel.search(
       knex,
