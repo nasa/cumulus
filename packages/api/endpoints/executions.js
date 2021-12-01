@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
@@ -17,10 +16,6 @@ const {
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
-const {
-  addToLocalES,
-  indexExecution,
-} = require('@cumulus/es-client/indexer');
 const Execution = require('../models/executions');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
@@ -63,10 +58,6 @@ async function create(req, res) {
       knex,
       executionModel,
     });
-
-    if (inTestMode()) {
-      await addToLocalES(execution, indexExecution);
-    }
 
     return res.send({
       message: `Successfully wrote execution with arn ${arn}`,
@@ -111,16 +102,11 @@ async function update(req, res) {
     return res.boom.notFound(`Execution '${arn}' not found`);
   }
 
-  const oldApiRecord = await translatePostgresExecutionToApiExecution(oldPgRecord, knex);
   execution.updatedAt = Date.now();
-  execution.createdAt = oldApiRecord.createdAt;
+  execution.createdAt = oldPgRecord.created_at.getTime();
 
   try {
     await writeExecutionRecordFromApi({ record: execution, knex });
-
-    if (inTestMode()) {
-      await addToLocalES(execution, indexExecution);
-    }
 
     return res.send({
       message: `Successfully updated execution with arn ${arn}`,
