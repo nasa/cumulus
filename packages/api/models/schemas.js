@@ -321,7 +321,7 @@ module.exports.granule = {
       additionalProperties: true,
     },
     productVolume: {
-      type: 'number',
+      type: 'string',
       readonly: true,
     },
     timeToPreprocess: {

@@ -155,7 +155,7 @@ test('upsertGranule updates "completed" record for same execution', async (t) =>
 
   const updates = {
     ...granule,
-    productVolume: 500,
+    productVolume: '500',
   };
   await indexer.upsertGranule({
     esClient,
