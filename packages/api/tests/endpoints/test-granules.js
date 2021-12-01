@@ -2489,7 +2489,7 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} collectionId ${t.context.collectionId}`);
+  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId}`);
 });
 
 test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
