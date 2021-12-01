@@ -102,9 +102,8 @@ async function update(req, res) {
     return res.boom.notFound(`Execution '${arn}' not found`);
   }
 
-  const oldApiRecord = await translatePostgresExecutionToApiExecution(oldPgRecord, knex);
   execution.updatedAt = Date.now();
-  execution.createdAt = oldApiRecord.createdAt;
+  execution.createdAt = oldPgRecord.created_at.getTime();
 
   try {
     await writeExecutionRecordFromApi({ record: execution, knex });
