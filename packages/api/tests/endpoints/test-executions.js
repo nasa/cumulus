@@ -1212,7 +1212,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in Dynamo/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1244,7 +1244,7 @@ test.serial('POST /executions creates a new execution in Dynamo/PostgreSQL/Elast
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1468,7 +1468,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial('PUT /executions updates the record as expected', async (t) => {
+test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1519,8 +1519,26 @@ test.serial('PUT /executions updates the record as expected', async (t) => {
       arn: execution.arn,
     }
   );
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedApiRecord = {
+    ...updatedExecution,
+    collectionId: execution.collectionId,
+    createdAt: dynamoRecord.createdAt,
+    updatedAt: updatedDynamoRecord.updatedAt,
+  };
 
-  t.is(updatedDynamoRecord.arn, execution.arn);
+  t.deepEqual(
+    updatedDynamoRecord,
+    expectedApiRecord
+  );
+  t.like(
+    updatedEsRecord,
+    {
+      ...expectedApiRecord,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
   t.is(updatePgRecord.arn, execution.arn);
   t.is(updatePgRecord.cumulus_id, pgRecord.cumulus_id);
 
@@ -1529,8 +1547,8 @@ test.serial('PUT /executions updates the record as expected', async (t) => {
   t.is(updatePgRecord.created_at.getTime(), pgRecord.created_at.getTime());
   t.true(updatePgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
 
-  // updated record is the merge of the original record with the updated fields
-  // updated record has the original info that's not updated
+  // collectionId was omitted from body of PUT request, so values are
+  // not overridden in the database
   t.is(updatedDynamoRecord.collectionId, execution.collectionId);
   t.is(updatePgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   // updated record has added field
@@ -1659,4 +1677,56 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
 
   t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
+});
+
+test.serial('PUT /executions publishes message to SNS topic', async (t) => {
+  const {
+    executionPgModel,
+    knex,
+    QueueUrl,
+  } = t.context;
+
+  const newExecution = fakeExecutionFactoryV2({
+    asyncOperationId: t.context.testAsyncOperation.id,
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(newExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedExecution = {
+    ...newExecution,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/executions/${newExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await executionPgModel.get(knex, { arn: newExecution.arn });
+
+  t.is(pgRecord.status, 'completed');
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    updatedAt: executionRecord.updatedAt,
+  });
 });
