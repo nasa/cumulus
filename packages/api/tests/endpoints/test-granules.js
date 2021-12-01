@@ -2489,7 +2489,7 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId}`);
+  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} collectionId ${t.context.collectionId}`);
 });
 
 test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
@@ -2611,7 +2611,7 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
     .send(newGranule)
     .expect(200);
 
-  const collectionId = randomId('collectionId');
+  const collectionId = `fake_collection___${randomId('collectionId')}`;
   const requestPayload = {
     collectionId,
     executionArn: t.context.executionArn,
