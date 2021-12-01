@@ -1669,7 +1669,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.serial('create (POST) creates new granule without an execution in dynamoDB and postgres', async (t) => {
+test.serial('create (POST) creates new granule without an execution in DynamoDB, PostgreSQL, and Elasticsearch', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -1693,6 +1693,9 @@ test.serial('create (POST) creates new granule without an execution in dynamoDB 
       collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
+  const fetchedESRecord = await t.context.esGranulesClient.get(
+    newGranule.granuleId
+  );
 
   t.deepEqual(
     JSON.parse(response.text),
@@ -1700,9 +1703,10 @@ test.serial('create (POST) creates new granule without an execution in dynamoDB 
   );
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
 });
 
-test.serial('create (POST) creates new granule with associated execution in dynamoDB and postgres', async (t) => {
+test.serial('create (POST) creates new granule with associated execution in DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: t.context.executionUrl,
@@ -1726,13 +1730,36 @@ test.serial('create (POST) creates new granule with associated execution in dyna
       collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
-
+  const fetchedESRecord = await t.context.esGranulesClient.get(
+    newGranule.granuleId
+  );
   t.deepEqual(
     JSON.parse(response.text),
     { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
   );
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
+});
+
+test.serial('create (POST) publishes an SNS message upon successful granule creation', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages.length, 1);
 });
 
 test.serial('create (POST) rejects if a granule already exists in postgres', async (t) => {
@@ -1761,7 +1788,7 @@ test.serial('create (POST) rejects if a granule already exists in postgres', asy
   t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
 });
 
-test.serial('create (POST) return bad request if a granule is submitted with a bad collectionId', async (t) => {
+test.serial('create (POST) returns bad request if a granule is submitted with a bad collectionId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: randomId('collectionId'),
   });
