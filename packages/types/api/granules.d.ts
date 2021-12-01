@@ -37,7 +37,7 @@ export type ApiGranule = {
   timestamp?: number
   updatedAt: number
   duration?: number
-  productVolume?: number
+  productVolume?: string
   timeToPreprocess?: number
   timeToArchive?: number
   files?: Omit<import('./files').ApiFile, 'granuleId'>[]

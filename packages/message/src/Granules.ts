@@ -68,7 +68,7 @@ export const messageHasGranules = (
  * Determine the status of a granule.
  *
  * @param {string} workflowStatus - The workflow status
- * @param {MessageGranule} granule - A granule record
+ * @param {MessageGranule} granule - A granule record conforming to the 'api' schema
  * @returns {string} The granule status
  *
  * @alias module:Granules
@@ -94,15 +94,16 @@ export const getGranuleQueryFields = (
  * Calculate granule product volume, which is the sum of the file
  * sizes in bytes
  *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
+ * @param {Array<Object>} granuleFiles - array of granule file objects that conform to the
+ *                                       Cumulus 'api' schema
+ * @returns {string} - sum of granule file sizes in bytes as a string
  */
-export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): number => {
-  if (granuleFiles.length === 0) return 0;
-  return granuleFiles
+export const getGranuleProductVolume = (granuleFiles: ApiFile[] = []): string => {
+  if (granuleFiles.length === 0) return '0';
+  return String(granuleFiles
     .map((f) => f.size ?? 0)
     .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
+    .reduce((x, y) => x + BigInt(y), BigInt(0)));
 };
 
 export const getGranuleTimeToPreprocess = ({
@@ -234,7 +235,7 @@ export const generateGranuleApiRecord = async ({
   cmrUtils: CmrUtilsClass
   cmrTemporalInfo?: GranuleTemporalInfo,
   duration: number,
-  productVolume: number,
+  productVolume: string,
   timeToPreprocess: number,
   timeToArchive: number,
 }): Promise<ApiGranule> => {

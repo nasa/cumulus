@@ -56,6 +56,7 @@ module.exports = {
   env: {
     jasmine: true,
     node: true,
+    es2020: true,
   },
   rules: {
     complexity: ['error', 15],

@@ -93,7 +93,7 @@ function fakeGranuleFactory(status = 'completed') {
     updatedAt: Date.now(),
     published: true,
     cmrLink: 'example.com',
-    productVolume: 100,
+    productVolume: '100',
     duration: 0,
   };
 }
