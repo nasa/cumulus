@@ -2519,7 +2519,7 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
   t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${t.context.collectionId}`);
 });
 
-test.only('associateExecution (POST) associates an execution with a granule', async (t) => {
+test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
   const timestamp = Date.now();
   const createdAt = timestamp - 1000000;
   const newGranule = fakeGranuleFactoryV2({
@@ -2621,7 +2621,7 @@ test.serial('associateExecution (POST) returns Not Found if execution does not e
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `Execution ${executionArn} not found`);
+  t.is(response.body.message, `No execution found to associate granule with for executionArn ${executionArn}`);
 });
 
 test.serial('associateExecution (POST) returns Not Found if collectionId in payload does not match the granule record', async (t) => {
