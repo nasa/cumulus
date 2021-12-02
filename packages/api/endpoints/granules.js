@@ -366,10 +366,6 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    // TODO - we need a postgres version of this call chain.   Ugh.
-    // The original implementation in CUMULUS-2606 was somewhat flawed in that it uses workflow
-    // oriented methods with a ton of overhead
-    // await updateGranuleFromApi(updatedGranule, knex, esClient);
     await writeGranuleRecords({
       apiGranuleRecord,
       esClient,
