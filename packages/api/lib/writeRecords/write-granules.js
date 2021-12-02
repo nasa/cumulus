@@ -419,7 +419,7 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
       workflowError: error,
       knex,
       snsEventType,
-      granuleModel: new GranulePgModel(),
+      granuleModel: new Granule(),
     });
   }
 };
