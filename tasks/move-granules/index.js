@@ -7,12 +7,7 @@ const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
 const path = require('path');
 
-const {
-  moveObject,
-  s3Join,
-  s3ObjectExists,
-  waitForObjectToExist,
-} = require('@cumulus/aws-client/S3');
+const S3 = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument } = require('@cumulus/errors');
 
@@ -119,7 +114,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         cmrMetadata,
       });
       const bucketName = bucketsConfig.nameByKey(match[0].bucket);
-      const updatedKey = s3Join(urlPath, fileName);
+      const updatedKey = S3.s3Join(urlPath, fileName);
 
       updatedFiles.push({
         ...file,
@@ -164,12 +159,12 @@ async function moveFileRequest(
 
   // Due to S3's eventual consistency model, we need to make sure that the
   // source object is available in S3.
-  await waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
+  await S3.waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
   // the file moved to destination
   const fileMoved = { ...file };
   delete fileMoved.sourceKey;
 
-  const s3ObjAlreadyExists = await s3ObjectExists(target);
+  const s3ObjAlreadyExists = await S3.s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
   let versionedFiles = [];
@@ -183,7 +178,7 @@ async function moveFileRequest(
     });
   } else {
     const chunkSize = s3MultipartChunksizeMb ? Number(s3MultipartChunksizeMb) * MB : undefined;
-    await moveObject({
+    await S3.moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
       destinationBucket: target.Bucket,
@@ -262,11 +257,8 @@ async function moveGranules(event) {
   const bucketsConfig = new BucketsConfig(config.buckets);
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
-  const s3MultipartChunksizeMb = get(
-    config,
-    'collection.meta.s3MultipartChunksizeMb',
-    process.env.default_s3_multipart_chunksize_mb
-  );
+  const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
+    ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
 
   const duplicateHandling = duplicateHandlingType(event);
 
