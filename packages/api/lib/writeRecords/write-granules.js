@@ -369,31 +369,26 @@ const writeGranuleRecords = async ({
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
 
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      pgGranule = await _writePostgresGranuleViaTransaction({
-        granuleRecord: postgresGranuleRecord,
-        executionCumulusId,
-        trx,
-        granulePgModel,
-      });
-      await writeGranuleToDynamoAndEs({
-        apiGranuleRecord,
-        esClient,
-        granuleModel,
-      });
+  await createRejectableTransaction(knex, async (trx) => {
+    pgGranule = await _writePostgresGranuleViaTransaction({
+      granuleRecord: postgresGranuleRecord,
+      executionCumulusId,
+      trx,
+      granulePgModel,
     });
-    log.info(
-      `
-      Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
-      `,
-      postgresGranuleRecord
-    );
-    log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+    await writeGranuleToDynamoAndEs({
+      apiGranuleRecord,
+      esClient,
+      granuleModel,
+    });
+  });
+  log.info(
+    `
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
+    `,
+    postgresGranuleRecord
+  );
+  log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
   return pgGranule;
 };
 
