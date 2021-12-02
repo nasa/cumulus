@@ -596,14 +596,14 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
 /**
  * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
- * @param {Object} granule
- * @param {Object} granule.cumulusMessage - A workflow message
- * @param {string} granule.executionCumulusId
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage - A workflow message
+ * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
- * @param {Knex} granule.knex - Client to interact with PostgreSQL database
- * @param {Object} [granule.granuleModel]
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
+ * @param {Object} [params.granuleModel]
  *   Optional override for the granule model writing to DynamoDB
- * @param {Object} [granule.granulePgModel]
+ * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
