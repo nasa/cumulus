@@ -594,35 +594,6 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
 };
 
 /**
- * Thin wrapper to _writeGranule used by endpoints/granule to update a granule
- * directly from a postgres granule record.   Used for endpoints that do not have a
- * user supplied 'api' granule.
- *
- * @param {PostgresGranuleRecord} granule -- `@cumulus/db` PostgresGranuleRecord
- * @param {Knex} knex - knex Client
- * @param {Object} esClient - Elasticsearch client
- * @returns {Promise}
- */
-/* const updateGranuleFromPostgresRecord = async (
-  granuleRecord,
-  knex,
-  esClient
-) => {
-  const pgGranuleRecord = { ...granuleRecord };
-  pgGranuleRecord.updated_at = pgGranuleRecord.updated_at ? pgGranuleRecord.updated_at : new Date();
-  const apiGranuleRecord = await translatePostgresGranuleToApiGranule(pgGranuleRecord, knex);
-  return await _writeGranule({
-    apiGranuleRecord,
-    pgGranuleRecord,
-    esClient,
-    snsEventType: 'Update',
-    knex,
-    granulePgModel: new GranulePgModel(),
-    granuleModel: new Granule(),
-  });
-}; */
-
-/**
  * Write granules from a cumulus message to DynamoDB and PostgreSQL
  *
  * @param {Object} granule
