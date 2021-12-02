@@ -10,6 +10,7 @@ const {
   RulePgModel,
   translateApiRuleToPostgresRule,
   translatePostgresRuleToApiRule,
+  isCollisionError,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
@@ -81,10 +82,6 @@ async function post(req, res) {
   const apiRule = req.body || {};
   const name = apiRule.name;
 
-  if (await ruleModel.exists(name)) {
-    return res.boom.conflict(`A record already exists for ${name}`);
-  }
-
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
@@ -97,6 +94,9 @@ async function post(req, res) {
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
+      if (isCollisionError(innerError)) {
+        return res.boom.conflict(`A record already exists for ${name}`);
+      }
       // Clean up DynamoDB record in case of any failure
       await ruleModel.delete(apiRule);
       throw innerError;

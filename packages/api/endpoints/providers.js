@@ -3,15 +3,15 @@
 const router = require('express-promise-router')();
 
 const {
+  createRejectableTransaction,
   getKnexClient,
+  isCollisionError,
   ProviderPgModel,
   translateApiProviderToPostgresProvider,
   translatePostgresProviderToApiProvider,
   validateProviderHost,
-  createRejectableTransaction,
 } = require('@cumulus/db');
 const {
-  ApiCollisionError,
   RecordDoesNotExist,
   ValidationError,
 } = require('@cumulus/errors');
@@ -23,10 +23,6 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
-
-// Postgres error codes:
-// https://www.postgresql.org/docs/10/errcodes-appendix.html
-const isCollisionError = (error) => (error instanceof ApiCollisionError || error.code === '23505');
 
 /**
  * List all providers
@@ -69,18 +65,6 @@ async function get(req, res) {
   return res.send(removeNilProperties(result));
 }
 
-// TODO remove this Phase 3/Dynamo removal
-async function throwIfDynamoRecordExists(providerModel, id) {
-  try {
-    await providerModel.get({ id });
-    throw new ApiCollisionError(`Dynamo record id ${id} exists`);
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-}
-
 /**
  * Creates a new provider
  *
@@ -108,7 +92,7 @@ async function post(req, res) {
     if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
-    await throwIfDynamoRecordExists(providerModel, id);
+
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
@@ -123,13 +107,11 @@ async function post(req, res) {
       await providerModel.delete(apiProvider);
       throw innerError;
     }
-
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
       return res.boom.conflict(`A record already exists for ${id}`);
     }
-
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
     }

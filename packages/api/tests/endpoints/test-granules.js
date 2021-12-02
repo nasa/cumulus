@@ -2638,7 +2638,7 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
     .send(newGranule)
     .expect(200);
 
-  const collectionId = randomId('collectionId');
+  const collectionId = `fake_collection___${randomId('collectionId')}`;
   const requestPayload = {
     collectionId,
     executionArn: t.context.executionArn,

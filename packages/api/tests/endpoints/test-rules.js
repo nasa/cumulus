@@ -503,9 +503,10 @@ test('POST creates a rule that is enabled by default', async (t) => {
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {
-  const { newRule } = t.context;
+  const { newRule, rulePgModel, testKnex } = t.context;
 
-  await ruleModel.create(newRule);
+  const newPgRule = await translateApiRuleToPostgresRule(newRule);
+  await rulePgModel.create(testKnex, newPgRule);
 
   const response = await request(app)
     .post('/rules')
