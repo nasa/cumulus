@@ -27,7 +27,7 @@ const {
   createGranuleFromApi,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
-  writeGranuleRecords,
+  updateGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
@@ -366,7 +366,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await writeGranuleRecords({
+    await updateGranuleRecordAndPublishSns({
       apiGranuleRecord,
       esClient,
       executionCumulusId: pgExecution.cumulus_id,

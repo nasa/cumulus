@@ -356,7 +356,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
   }
 };
 
-const writeGranuleRecords = async ({
+const _writeGranuleRecords = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   knex,
@@ -392,6 +392,38 @@ const writeGranuleRecords = async ({
   return pgGranule;
 };
 
+const _publishPostgresGranuleUpdateToSns = async ({
+  snsEventType,
+  pgGranule,
+  knex,
+}) => {
+  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
+};
+
+const _writePostgresFilesFromApiGranuleFiles = async ({
+  apiGranuleRecord,
+  granuleCumulusId,
+  knex,
+  snsEventType,
+}) => {
+  const { files, granuleId, status, error } = apiGranuleRecord;
+  if (status !== 'running' && status !== 'queued' && files.length > 0) {
+    await _writeGranuleFiles({
+      files,
+      granuleCumulusId: granuleCumulusId,
+      granuleId,
+      workflowError: error,
+      knex,
+      snsEventType,
+      granuleModel: new GranulePgModel(),
+    });
+  }
+};
+
 /**
  * Write a granule record to DynamoDB and PostgreSQL
  *
@@ -417,7 +449,7 @@ const _writeGranule = async ({
   knex,
   snsEventType,
 }) => {
-  const pgGranule = await writeGranuleRecords({
+  const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
     apiGranuleRecord,
     knex,
@@ -426,27 +458,64 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-  const { files, granuleId, status, error } = apiGranuleRecord;
 
-  if (status !== 'running' && status !== 'queued' && files.length > 0) {
-    await _writeGranuleFiles({
-      files,
-      granuleCumulusId: pgGranule.cumulus_id,
-      granuleId,
-      workflowError: error,
-      knex,
-      snsEventType,
-      granuleModel,
-    });
-  }
-
-  // TODO - Why are we re-translating this if we already have
-  // an apiGranuleRecord that isn't modified
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
+  await _writePostgresFilesFromApiGranuleFiles({
+    apiGranuleRecord,
+    granuleCumulusId: pgGranule.cumulus_id,
+    knex,
+    snsEventType,
   });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
+
+  await _publishPostgresGranuleUpdateToSns({
+    snsEventType,
+    pgGranule,
+    knex,
+  });
+};
+
+/**
+* Method to facilitate parital granule record updates
+* @summary In cases where a full API record is not passed, but partial/tangential updates to granule
+*          records are called for, updates to files records are not required and pre-write
+*          calculation in methods like write/update GranulesFromApi result in unneded
+*          evaluation/database writes /etc. This method updates the postgres/Dynamo/ES datastore and
+*          publishes the SNS update event without incurring unneded overhead.
+* @param {Object}          params
+* @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
+* @param {number}          params.executionCumulusId - Execution ID the granule was written from
+* @param {Object}          params.esClient - Elasticsearch client
+* @param {Object}          params.granuleModel - Instance of DynamoDB granule model
+* @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
+* @param {Knex}            params.knex - Knex object
+* @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
+*                                                         to database
+* @param {string}          params.snsEventType - SNS Event Type
+* @returns {Promise}
+*/
+const updateGranuleRecordAndPublishSns = async ({
+  postgresGranuleRecord,
+  apiGranuleRecord,
+  esClient,
+  executionCumulusId,
+  granuleModel,
+  granulePgModel,
+  knex,
+  snsEventType,
+}) => {
+  const pgGranule = await _writeGranuleRecords({
+    postgresGranuleRecord,
+    apiGranuleRecord,
+    knex,
+    esClient,
+    granuleModel,
+    executionCumulusId,
+    granulePgModel,
+  });
+  await _publishPostgresGranuleUpdateToSns({
+    snsEventType,
+    pgGranule,
+    knex,
+  });
 };
 
 /**
@@ -756,5 +825,5 @@ module.exports = {
   updateGranuleStatusToQueued,
   writeGranuleFromApi,
   writeGranulesFromMessage,
-  writeGranuleRecords,
+  updateGranuleRecordAndPublishSns,
 };
