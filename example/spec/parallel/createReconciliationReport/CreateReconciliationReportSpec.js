@@ -389,7 +389,6 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
-    let reportString;
     let inventoryReportAsyncOperationId;
 
     afterAll(async () => {
@@ -444,7 +443,6 @@ describe('When there are granule differences and granule reconciliation is run',
       if (beforeAllFailed) fail(beforeAllFailed);
       const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
       report = JSON.parse(reportContent);
-      reportString = reportContent.toString();
       expect(report.reportType).toBe('Granule Not Found');
       expect(report.status).toBe('SUCCESS');
     });
@@ -540,16 +538,6 @@ describe('When there are granule differences and granule reconciliation is run',
         .toBe(2);
     });
 
-    it('generates a report with formatted JSON', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-
-      const unformattedReportString = JSON.stringify(report, undefined, 0);
-
-      // Validate unformattedReportString contains no newline characters
-      expect(unformattedReportString).not.toContain('\n');
-      expect(reportString).toEqual(JSON.stringify(unformattedReportString, undefined, 2));
-    });
-
     it('deletes a reconciliation report through the Cumulus API', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       await reconciliationReportsApi.deleteReconciliationReport({
@@ -581,7 +569,6 @@ describe('When there are granule differences and granule reconciliation is run',
     // report record in db and report in s3
     let reportRecord;
     let report;
-    let reportString;
     let internalReportAsyncOperationId;
 
     afterAll(async () => {
@@ -633,7 +620,6 @@ describe('When there are granule differences and granule reconciliation is run',
       if (beforeAllFailed) fail(beforeAllFailed);
       const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
       report = JSON.parse(reportContent);
-      reportString = reportContent.toString();
       expect(report.reportType).toBe('Internal');
       expect(report.status).toBe('SUCCESS');
     });
@@ -655,16 +641,6 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(report.granules.onlyInEs.length).toBe(0);
       expect(report.granules.onlyInDb.length).toBe(0);
-    });
-
-    it('generates a report with formatted JSON', () => {
-      if (beforeAllFailed) fail(beforeAllFailed);
-
-      const unformattedReportString = JSON.stringify(report, undefined, 0);
-
-      // Validate unformattedReportString contains no newline characters
-      expect(unformattedReportString).not.toContain('\n');
-      expect(reportString).toEqual(JSON.stringify(unformattedReportString, undefined, 2));
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
