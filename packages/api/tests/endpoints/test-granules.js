@@ -2489,10 +2489,10 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId}`);
+  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${t.context.collectionId}`);
 });
 
-test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
+test.only('associateExecution (POST) associates an execution with a granule', async (t) => {
   const timestamp = Date.now();
   const createdAt = timestamp - 1000000;
   const newGranule = fakeGranuleFactoryV2({
@@ -2560,7 +2560,6 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
   });
 
   t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
-
   t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
   t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
   t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
@@ -2626,5 +2625,5 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.true(response.body.message.includes(`No granule found to associate execution with for granuleId ${newGranule.granuleId} collectionId ${collectionId}`));
+  t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
 });

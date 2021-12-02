@@ -7,6 +7,7 @@ const asyncOperations = require('@cumulus/async-operations');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
+  ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
   GranulePgModel,
@@ -27,16 +28,23 @@ const Logger = require('@cumulus/logger');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
-const { updateGranuleStatusToQueued, createGranuleFromApi, updateGranuleFromApi } = require('../lib/writeRecords/write-granules');
+const {
+  createGranuleFromApi,
+  updateGranuleFromApi,
+  updateGranuleStatusToQueued,
+  writeGranuleRecords,
+} = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
-const Execution = require('../models/executions');
 const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
-const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
+const {
+  addOrcaRecoveryStatus,
+  getOrcaRecoveryStatusByGranuleId,
+} = require('../lib/orca');
 const { validateBulkGranulesRequest } = require('../lib/request');
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
@@ -315,39 +323,70 @@ const associateExecution = async (req, res) => {
   }
 
   const {
-    executionModel = new Execution(),
-    granuleModel = new Granule(),
+    executionPgModel = new ExecutionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
 
-  let granule;
-  let execution;
+  let pgGranule;
+  let pgExecution;
+  let pgCollection;
   try {
-    granule = await granuleModel.get({ granuleId });
-    execution = await executionModel.get({ arn: executionArn });
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(collectionId)
+    );
+    pgGranule = await granulePgModel.get(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    });
+    pgExecution = await executionPgModel.get(knex, {
+      arn: executionArn,
+    });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (granule === undefined) {
-        return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId}`);
+      if (pgCollection === undefined) {
+        return res.boom.notFound(`No collection found to associate execution with for collectionId ${collectionId}`);
+      }
+      if (pgGranule === undefined) {
+        return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${collectionId}`);
+      }
+      if (pgExecution === undefined) {
+        return res.boom.notFound(`No execution found to associate granule with for executionArn ${executionArn}`);
       }
       return res.boom.notFound(`Execution ${executionArn} not found`);
     }
     return res.boom.badRequest(errorify(error));
   }
 
-  if (granule.collectionId !== collectionId) {
-    return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId} collectionId ${collectionId}`);
-  }
-
-  const updatedGranule = {
-    ...granule,
-    execution: execution.execution,
-    updatedAt: Date.now(),
+  // Update both granule objects with new execution/updatedAt time
+  const updatedPgGranule = {
+    ...pgGranule,
+    updated_at: new Date(),
+  };
+  const apiGranuleRecord = {
+    ...(await translatePostgresGranuleToApiGranule({
+      knexOrTransaction: knex,
+      granulePgRecord: updatedPgGranule,
+    })),
+    execution: pgExecution.url,
   };
 
   try {
-    await updateGranuleFromApi(updatedGranule, knex, esClient);
+    // TODO - we need a postgres version of this call chain.   Ugh.
+    // The original implementation in CUMULUS-2606 was somewhat flawed in that it uses workflow
+    // oriented methods with a ton of overhead
+    // await updateGranuleFromApi(updatedGranule, knex, esClient);
+    await writeGranuleRecords({
+      apiGranuleRecord,
+      esClient,
+      executionCumulusId: pgExecution.cumulus_id,
+      granuleModel: new Granule(),
+      granulePgModel,
+      postgresGranuleRecord: updatedPgGranule,
+      knex,
+    });
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
     return res.boom.badRequest(errorify(error));
