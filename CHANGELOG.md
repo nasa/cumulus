@@ -51,7 +51,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2759**
     - Updates collection/provider/rules/granules creation (post) endpoints to
-      primarily check for existance/collision in postgres database instead of DynamoDB
+      primarily check for existence/collision in PostgreSQL database instead of DynamoDB
   - **CUMULUS-2714**
     - Added `@cumulus/db/base.deleteExcluding` method to allow for deletion of a
       record set with an exclusion list of cumulus_ids
@@ -149,6 +149,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       DynamoDB table.
   - **CUMULUS-2694**
     - Removed `@cumulus/api/models/granules.storeGranulesFromCumulusMessage()` method
+  - **CUMULUS-2662**
+    - Removed call to `addToLocalES` in POST `/granules` endpoint since it is
+      redundant.
+    - Removed call to `addToLocalES` in POST and PUT `/executions` endpoints
+      since it is redundant.
+    - Removed function `addToLocalES` from `es-client` package since it is no
+      longer used.
 
 ### Changed
 

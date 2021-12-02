@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -15,10 +14,6 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const {
-  addToLocalES,
-  indexGranule,
-} = require('@cumulus/es-client/indexer');
 const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
@@ -108,9 +103,6 @@ const create = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   } try {
     await createGranuleFromApi(granule, knex, esClient);
-    if (inTestMode()) {
-      await addToLocalES(granule, indexGranule);
-    }
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
