@@ -704,9 +704,9 @@ const writeGranulesFromMessage = async ({
 /**
  * Update granule status to 'queued'
  *
- * @param {Object} granule
- * @param {Object} granule.granule - dynamo granule object
- * @param {Knex} granule.knex - knex Client
+ * @param {Object} params
+ * @param {Object} params.granule - dynamo granule object
+ * @param {Knex} params.knex - knex Client
  * @returns {Promise}
  * @throws {Error}
  */
