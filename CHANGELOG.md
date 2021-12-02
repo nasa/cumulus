@@ -56,7 +56,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
-  - Updated `move-granules` task to use collection level parameter `meta.s3MultipartChunksizeMb` if specified
+  - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
 
 ### Changed
 
