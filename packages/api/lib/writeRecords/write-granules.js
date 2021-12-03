@@ -500,7 +500,7 @@ const updateGranuleRecordAndPublishSns = async ({
   granuleModel,
   granulePgModel,
   knex,
-  snsEventType,
+  snsEventType = 'Update',
 }) => {
   const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
