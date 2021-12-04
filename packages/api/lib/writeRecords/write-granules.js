@@ -492,7 +492,7 @@ const _writeGranule = async ({
 * @param {string}          params.snsEventType - SNS Event Type
 * @returns {Promise}
 */
-const updateGranuleRecordAndPublishSns = async ({
+const writeGranuleRecordAndPublishSns = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   esClient,
@@ -825,5 +825,5 @@ module.exports = {
   updateGranuleStatusToQueued,
   writeGranuleFromApi,
   writeGranulesFromMessage,
-  updateGranuleRecordAndPublishSns,
+  writeGranuleRecordAndPublishSns,
 };

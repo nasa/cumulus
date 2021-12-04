@@ -27,7 +27,7 @@ const {
   createGranuleFromApi,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
-  updateGranuleRecordAndPublishSns,
+  writeGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
@@ -366,7 +366,7 @@ const associateExecution = async (req, res) => {
   };
 
   try {
-    await updateGranuleRecordAndPublishSns({
+    await writeGranuleRecordAndPublishSns({
       apiGranuleRecord,
       esClient,
       executionCumulusId: pgExecution.cumulus_id,
@@ -374,6 +374,7 @@ const associateExecution = async (req, res) => {
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
       knex,
+      snsEventType: 'Update',
     });
   } catch (error) {
     log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
