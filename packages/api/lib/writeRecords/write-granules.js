@@ -463,7 +463,7 @@ const _writeGranule = async ({
  * @param {Object} [params.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
  * @param {Object} esClient - Elasticsearch client
- * @param {string} snsEventType - SNS Event Type
+ * @param {string} snsEventType - SNS Event Type, defaults to 'Create'
  * @returns {Promise}
  */
 const writeGranuleFromApi = async (
@@ -497,7 +497,7 @@ const writeGranuleFromApi = async (
   },
   knex,
   esClient,
-  snsEventType
+  snsEventType = 'Create'
 ) => {
   try {
     const granule = { granuleId, cmrLink, published, files };

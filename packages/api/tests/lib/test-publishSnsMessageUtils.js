@@ -263,3 +263,79 @@ test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (
   t.deepEqual(pdrRecord.pdrName, pdrName);
   t.deepEqual(pdrRecord.status, newPdr.status);
 });
+
+test.serial('constructCollectionSnsMessage throws if eventType is not provided', async (t) => {
+  process.env.collection_sns_topic_arn = t.context.TopicArn;
+  const collectionName = cryptoRandomString({ length: 10 });
+  const newCollection = fakeCollectionFactory({ name: collectionName });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newCollection, 'collection'),
+    { message: 'constructCollectionSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructCollectionSnsMessage throws if eventType is invalid', async (t) => {
+  process.env.collection_sns_topic_arn = t.context.TopicArn;
+  const collectionName = cryptoRandomString({ length: 10 });
+  const newCollection = fakeCollectionFactory({ name: collectionName });
+  const invalidEventType = 'Modify';
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newCollection, 'collection', invalidEventType),
+    { message: 'constructCollectionSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructGranuleSnsMessage throws if eventType is not provided', async (t) => {
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
+  const granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const newGranule = fakeGranuleFactoryV2({
+    files,
+    granuleId,
+    published: false,
+  });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newGranule, 'granule'),
+    { message: 'constructGranuleSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (t) => {
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
+  const granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const newGranule = fakeGranuleFactoryV2({
+    files,
+    granuleId,
+    published: false,
+  });
+  const invalidEventType = 'Modify';
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newGranule, 'granule', invalidEventType),
+    { message: 'constructGranuleSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
