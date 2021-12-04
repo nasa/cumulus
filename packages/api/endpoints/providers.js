@@ -146,18 +146,30 @@ async function put(req, res) {
   }
 
   let oldProvider;
+  let oldPgProvider;
+
+  try {
+    oldPgProvider = await providerPgModel.get(knex, { name: id });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound(
+      `Postgres provider with name/id '${id}' not found`
+    );
+  }
+
   try {
     oldProvider = await providerModel.get({ id });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
     }
-    return res.boom.notFound(
-      `Provider with ID '${id}' not found`
-    );
+    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with postgresql record alone`);
   }
+
   apiProvider.updatedAt = Date.now();
-  apiProvider.createdAt = oldProvider.createdAt;
+  apiProvider.createdAt = oldPgProvider.created_at.getTime();
 
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
@@ -170,7 +182,9 @@ async function put(req, res) {
     });
   } catch (innerError) {
     // Revert Dynamo record update if any write fails
-    await providerModel.create(oldProvider);
+    if (oldProvider) {
+      await providerModel.create(oldProvider);
+    }
     throw innerError;
   }
 
