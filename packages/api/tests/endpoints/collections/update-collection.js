@@ -17,6 +17,8 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
+  translateApiCollectionToPostgresCollection,
+  fakeCollectionRecordFactory,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -287,14 +289,14 @@ test.serial('PUT replaces an existing collection in all data stores with correct
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
-test.serial('PUT creates a new record in RDS if one does not exist  and sends an SNS message', async (t) => {
-  const knex = t.context.testKnex;
+test.serial('PUT creates a new record in Dynamo if one does not exist and sends an SNS message', async (t) => {
+  const { testKnex, collectionPgModel, collectionModel, QueueUrl } = t.context;
   const originalCollection = fakeCollectionFactory({
     duplicateHandling: 'replace',
     process: randomString(),
   });
-
-  await t.context.collectionModel.create(originalCollection);
+  const originalPgCollection = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionPgModel.create(testKnex, originalPgCollection);
 
   const updatedCollection = {
     ...originalCollection,
@@ -310,12 +312,12 @@ test.serial('PUT creates a new record in RDS if one does not exist  and sends an
     .send(updatedCollection)
     .expect(200);
 
-  const fetchedDynamoRecord = await t.context.collectionModel.get({
+  const fetchedDynamoRecord = await collectionModel.get({
     name: updatedCollection.name,
     version: updatedCollection.version,
   });
 
-  const fetchedDbRecord = await t.context.collectionPgModel.get(knex, {
+  const fetchedDbRecord = await collectionPgModel.get(testKnex, {
     name: originalCollection.name, version: originalCollection.version,
   });
 
@@ -327,7 +329,7 @@ test.serial('PUT creates a new record in RDS if one does not exist  and sends an
   t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
   t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
   const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
+    QueueUrl,
     WaitTimeSeconds: 10,
   }).promise();
 
@@ -472,6 +474,7 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
 
   const fakeCollectionPgModel = {
     upsert: () => Promise.reject(new Error('something bad')),
+    get: () => Promise.resolve(fakeCollectionRecordFactory()),
   };
 
   const updatedCollection = {

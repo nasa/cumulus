@@ -189,6 +189,7 @@ async function put(req, res) {
   const collection = req.body;
   let dynamoRecord;
   let oldCollection;
+  let oldPgCollection;
 
   if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
@@ -197,7 +198,7 @@ async function put(req, res) {
   }
 
   try {
-    oldCollection = await collectionsModel.get({ name, version });
+    oldPgCollection = await collectionPgModel.get(knex, { name, version });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
@@ -205,8 +206,17 @@ async function put(req, res) {
     return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
 
+  try {
+    oldCollection = await collectionsModel.get({ name, version });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    log.warn(`Dynamo record for Collection '${name}' version '${version}' not found, proceeding to update with postgresql record alone`);
+  }
+
   collection.updatedAt = Date.now();
-  collection.createdAt = oldCollection.createdAt;
+  collection.createdAt = oldPgCollection.created_at.getTime();
 
   const postgresCollection = translateApiCollectionToPostgresCollection(collection);
 
@@ -222,7 +232,9 @@ async function put(req, res) {
     });
   } catch (error) {
     // Revert Dynamo record update if any write fails
-    await collectionsModel.create(oldCollection);
+    if (oldCollection) {
+      await collectionsModel.create(oldCollection);
+    }
     throw error;
   }
 
