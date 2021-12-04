@@ -43,6 +43,7 @@ const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
+process.env.RulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -77,6 +78,8 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
+  const rulesModel = new models.Rule({ tableName: process.env.RulesTable });
+  await rulesModel.createTable();
   t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await t.context.collectionModel.createTable();
 
@@ -508,6 +511,77 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
     }),
     originalCollection
   );
+  t.deepEqual(
+    await t.context.collectionPgModel.get(t.context.testKnex, {
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esCollectionClient.get(
+      constructCollectionId(originalCollection.name, originalCollection.version)
+    ),
+    originalEsRecord
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.only('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails and no Dynamo record existed previously', async (t) => {
+  const { testKnex, collectionModel } = t.context;
+  const {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createCollectionTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'error',
+    }
+  );
+
+  await collectionModel.delete(originalCollection);
+
+  const fakeCollectionPgModel = {
+    upsert: () => Promise.reject(new Error('something bad')),
+    get: () => Promise.resolve(fakeCollectionRecordFactory()),
+  };
+
+  const updatedCollection = {
+    ...originalCollection,
+    duplicateHandling: 'replace',
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalCollection.name,
+      version: originalCollection.version,
+    },
+    body: updatedCollection,
+    testContext: {
+      knex: testKnex,
+      collectionPgModel: fakeCollectionPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  await t.throwsAsync(() =>
+    t.context.collectionModel.get({
+      name: updatedCollection.name,
+      version: updatedCollection.version,
+    }),
+  { name: 'RecordDoesNotExist' });
   t.deepEqual(
     await t.context.collectionPgModel.get(t.context.testKnex, {
       name: updatedCollection.name,
