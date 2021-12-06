@@ -16,6 +16,7 @@ export {
   generateLocalTestDb,
 } from './test-utils';
 
+export { isCollisionError } from './lib/errors';
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { createRejectableTransaction } from './database';

@@ -12,10 +12,11 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   CollectionPgModel,
+  createRejectableTransaction,
   getKnexClient,
+  isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
-  createRejectableTransaction,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -124,10 +125,6 @@ async function post(req, res) {
     return res.boom.badRequest('Field name and/or version is missing');
   }
 
-  if (await collectionsModel.exists(name, version)) {
-    return res.boom.conflict(`A record already exists for ${name} version: ${version}`);
-  }
-
   collection.updatedAt = Date.now();
   collection.createdAt = Date.now();
 
@@ -148,6 +145,9 @@ async function post(req, res) {
         await publishCollectionCreateSnsMessage(translatedCollection);
       });
     } catch (innerError) {
+      if (isCollisionError(innerError)) {
+        return res.boom.conflict(`A record already exists for name: ${name}, version: ${version}`);
+      }
       // Clean up DynamoDB collection record in case of any failure
       await collectionsModel.delete(collection);
       throw innerError;

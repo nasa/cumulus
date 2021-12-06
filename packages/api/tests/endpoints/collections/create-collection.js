@@ -15,6 +15,7 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
   migrationDir,
+  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const {
   sns,
@@ -289,10 +290,13 @@ test.serial('POST without a version returns a 400 error', async (t) => {
   t.is(message, 'Field name and/or version is missing');
 });
 
-test.serial('POST for an existing collection returns a 409', async (t) => {
+test('POST for an existing collection returns a 409', async (t) => {
+  const { collectionPgModel, testKnex } = t.context;
   const newCollection = fakeCollectionFactory();
-
-  await collectionModel.create(newCollection);
+  await collectionPgModel.create(
+    testKnex,
+    await translateApiCollectionToPostgresCollection(newCollection)
+  );
 
   const res = await request(app)
     .post('/collections')
@@ -301,7 +305,7 @@ test.serial('POST for an existing collection returns a 409', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
   t.is(res.status, 409);
-  t.is(res.body.message, `A record already exists for ${newCollection.name} version: ${newCollection.version}`);
+  t.is(res.body.message, `A record already exists for name: ${newCollection.name}, version: ${newCollection.version}`);
 });
 
 test.serial('POST with non-matching granuleIdExtraction regex returns 400 bad request response', async (t) => {
