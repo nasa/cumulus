@@ -4,23 +4,20 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
   GranulePgModel,
+  translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const {
-  addToLocalES,
-  indexGranule,
-} = require('@cumulus/es-client/indexer');
-const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
@@ -72,25 +69,32 @@ async function list(req, res) {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    granuleModel = new Granule(),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = req.testContext || {};
 
   const granule = req.body || {};
 
   try {
-    if (await granuleModel.exists({ granuleId: granule.granuleId })) {
-      return res.boom.conflict(`A granule already exists for granule_id: ${granule.granuleId}`);
+    const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+    if (
+      await granulePgModel.exists(knex, {
+        granule_id: pgGranule.granule_id,
+        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+          knex,
+          deconstructCollectionId(granule.collectionId)
+        ),
+      })
+    ) {
+      return res.boom.conflict(
+        `A granule already exists for granule_id: ${granule.granuleId}`
+      );
     }
   } catch (error) {
     return res.boom.badRequest(errorify(error));
-  }
-
-  try {
+  } try {
     await createGranuleFromApi(granule, knex, esClient);
-    if (inTestMode()) {
-      await addToLocalES(granule, indexGranule);
-    }
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
