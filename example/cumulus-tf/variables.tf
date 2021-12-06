@@ -198,12 +198,6 @@ variable "tea_distribution_url" {
   default = null
 }
 
-variable "default_s3_multipart_chunksize_mb" {
-  description = "default S3 multipart upload chunk size in MB"
-  type = number
-  default = 256
-}
-
 variable "ecs_cluster_instance_subnet_ids" {
   type = list(string)
   default = []
