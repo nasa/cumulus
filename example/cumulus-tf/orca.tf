@@ -6,14 +6,21 @@ data "aws_secretsmanager_secret_version" "rds_admin_credentials" {
   secret_id = data.aws_secretsmanager_secret.rds_admin_credentials.id
 }
 
+data "aws_vpc_endpoint" "vpc_endpoint_id" {
+  vpc_id       = var.vpc_id
+  service_name = "com.amazonaws.us-east-1.execute-api"
+}
+
 locals {
   rds_admin_login = jsondecode(data.aws_secretsmanager_secret_version.rds_admin_credentials.secret_string)
+  vpc_endpoint_id = data.aws_vpc_endpoint.vpc_endpoint_id.id
 }
 
 # ORCA Module
 module "orca" {
   count  = var.include_orca ? 1 : 0
-  source = "https://github.com/nasa/cumulus-orca/releases/download/v4.0.0-Beta/cumulus-orca-terraform.zip"
+#  source = "https://github.com/nasa/cumulus-orca/releases/download/v4.0.0-Beta/cumulus-orca-terraform.zip"
+  source = "../../../cumulus-orca-int"
   ## --------------------------
   ## Cumulus Variables
   ## --------------------------
@@ -41,6 +48,7 @@ module "orca" {
   ## OPTIONAL
   db_admin_username                                    = local.rds_admin_login.username
   default_multipart_chunksize_mb                       = var.default_s3_multipart_chunksize_mb
+  vpc_endpoint_id                                      = local.vpc_endpoint_id
   orca_ingest_lambda_memory_size                       = 2240
   orca_ingest_lambda_timeout                           = 720
   orca_recovery_buckets                                = []
