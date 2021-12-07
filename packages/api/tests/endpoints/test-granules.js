@@ -611,8 +611,8 @@ test.serial('reingest a granule', async (t) => {
     { granuleId: t.context.fakeGranules[0].granuleId }
   );
 
-  t.is(updatedPgGranule.status, 'running');
-  t.is(updatedDynamoGranule.status, 'running');
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -670,8 +670,8 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     { granuleId: t.context.fakeGranules[0].granuleId }
   );
 
-  t.is(updatedPgGranule.status, 'running');
-  t.is(updatedDynamoGranule.status, 'running');
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 test.serial('remove a granule from CMR', async (t) => {
