@@ -156,6 +156,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       since it is redundant.
     - Removed function `addToLocalES` from `es-client` package since it is no
       longer used.
+  - **CUMULUS-2771**
+    - Removed `_updateGranuleStatus` to update granule to "running" from `@cumulus/api/lib/ingest.reingestGranule`
+    and `@cumulus/api/lib/ingest.applyWorkflow`
 
 ### Changed
 
