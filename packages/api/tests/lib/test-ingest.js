@@ -1,6 +1,6 @@
 const test = require('ava');
 const sinon = require('sinon');
-const s3Utils = require('@cumulus/aws-client/S3');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
@@ -131,17 +131,17 @@ test.after.always(async (t) => {
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
+  const {
+    collectionId,
+  } = t.context;
   const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-  const fileExists = () => Promise.resolve(true);
-  const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
+
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
-  const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-  const updateGranuleStatusToQueuedStub = () => Promise.resolve();
 
   const granule = fakeGranuleFactoryV2({
-    collectionId: t.context.collectionId,
+    collectionId,
   });
   const dynamoGranule = await granuleModel.create(granule);
   await granulePgModel.create(
@@ -152,7 +152,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const reingestParams = {
     granuleId: granule.granuleId,
     execution: 'some/execution',
-    collectionId: 'MyCollection___006',
+    collectionId,
     provider: 'someProvider',
     queueUrl,
   };
@@ -161,7 +161,6 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
       reingestParams,
       granuleModel,
       granulePgModel,
-      updateGranuleStatusToQueuedMethod: updateGranuleStatusToQueuedStub,
     });
     // Rule.buildPayload has its own unit tests to ensure the queue name
     // is used properly, so just ensure that we pass the correct argument
@@ -172,13 +171,11 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
       t.context.knex,
       granule.granuleId
     );
-    t.is(updatedPgGranule.status, 'running');
+    t.is(updatedPgGranule.status, 'queued');
   } catch (error) {
     console.log(error);
   } finally {
-    fileExistsStub.restore();
     buildPayloadSpy.restore();
-    updateStatusStub.restore();
   }
 });
 
@@ -195,10 +192,7 @@ test.serial('applyWorkflow throws error if workflow argument is missing', async 
   );
 });
 
-test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
-  const granuleModel = new Granule();
-  const granulePgModel = new GranulePgModel();
-
+test.serial('applyWorkflow and invokes Lambda to schedule workflow', async (t) => {
   const granule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
@@ -209,27 +203,12 @@ test.serial('applyWorkflow updates granule status and invokes Lambda to schedule
     },
   };
 
-  const dynamoGranule = await granuleModel.create(granule);
-  await granulePgModel.create(
-    t.context.knex,
-    await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
-  );
-
   const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   await applyWorkflow({ granule, workflow });
 
   try {
-    const updatedDynamoGranule = await granuleModel.get({ granuleId: granule.granuleId });
-    t.is(updatedDynamoGranule.status, 'running');
-
-    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
-      t.context.knex,
-      granule.granuleId
-    );
-    t.is(updatedPgGranule.status, 'running');
-
     t.true(lambdaInvokeStub.called);
     t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
   } finally {
