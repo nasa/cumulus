@@ -222,13 +222,12 @@ async function put(req, res) {
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
-      const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
+      await collectionPgModel.upsert(trx, postgresCollection);
       dynamoRecord = await collectionsModel.create(collection);
       // process.env.ES_INDEX is only used to isolate the index for
       // each unit test suite
       await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-      await publishCollectionUpdateSnsMessage(translatedCollection);
+      await publishCollectionUpdateSnsMessage(collection);
     });
   } catch (error) {
     // Revert Dynamo record update if any write fails

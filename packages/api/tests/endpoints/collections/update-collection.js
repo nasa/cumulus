@@ -532,7 +532,7 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
   t.is(Messages, undefined);
 });
 
-test.only('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails and no Dynamo record existed previously', async (t) => {
+test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails and no Dynamo record existed previously', async (t) => {
   const { testKnex, collectionModel } = t.context;
   const {
     originalCollection,
