@@ -45,6 +45,24 @@ const { validateBulkGranulesRequest } = require('../lib/request');
 const log = new Logger({ sender: '@cumulus/api/granules' });
 
 /**
+* 200/201 helper method for .put update/create messages
+* @param {boolean} isNewRecord - Boolean variable representing if the granule is a new record
+* @param {boolean} granule   - API Granule being written
+* @param {Object} res        - express response object
+* @returns {Promise<Object>} Promise resolving to an express response object
+*/
+function _returnPutGranuleStatus(isNewRecord, granule, res) {
+  if (isNewRecord) {
+    return res.status(201).send(
+      { message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` }
+    );
+  }
+  return res.status(200).send(
+    { message: `Successfully updated granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` }
+  );
+}
+
+/**
  * List all granules for a given collection.
  *
  * @param {Object} req - express request object
@@ -107,7 +125,7 @@ const create = async (req, res) => {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
-  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}` });
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` });
 };
 
 /**
@@ -119,34 +137,54 @@ const create = async (req, res) => {
  */
 const putGranule = async (req, res) => {
   const {
-    granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
-  const body = req.body || {};
+  const apiGranule = req.body || {};
 
-  let message;
-  let status;
+  let pgCollection;
+
+  if (!apiGranule.collectionId) {
+    res.boom.badRequest('Granule update must include a valid CollectionId');
+  }
+
   try {
-    await granuleModel.get({ granuleId: body.granuleId });
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(apiGranule.collectionId)
+    );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      status = 201;
-      message = `Successfully wrote granule with Granule Id: ${body.granuleId}`;
+      log.error(`granule collectionId ${apiGranule.CollectionId} does not exist, cannot update granule`);
+      res.boom.badRequest(`granule collectionId ${apiGranule.CollectionId} invalid`);
+    } else {
+      throw error;
+    }
+  }
+
+  let isNewRecord = false;
+  try {
+    await granulePgModel.get(knex, {
+      granule_id: apiGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    });
+  } catch (error) {
+    // Set status to `201 - Created` if record did not originally exist
+    if (error instanceof RecordDoesNotExist) {
+      isNewRecord = true;
     } else {
       return res.boom.badRequest(errorify(error));
     }
   }
 
   try {
-    await updateGranuleFromApi(body, knex, esClient);
+    await updateGranuleFromApi(apiGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return res.status(status || 200).send({
-    message: message || `Successfully updated granule with Granule Id: ${body.granuleId}`,
-  });
+  return _returnPutGranuleStatus(isNewRecord, apiGranule, res);
 };
 
 /**
