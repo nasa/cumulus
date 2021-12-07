@@ -7,42 +7,11 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getKnexClient,
   GranulePgModel,
-  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 
 const { deconstructCollectionId } = require('./utils');
 const { Granule, Rule } = require('../models');
 const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
-
-/**
-   * Set the Dynamo and PG Granule "status" field to "running"
-   *
-   * @private
-   * @param {Knex} knex - DB client
-   * @param {string} granuleId - the granule's ID
-   * @param {GranulePgModel} granulePgModel - Postgres Granule model
-   * @param {Granule} granuleModel - API Granule model
-   * @returns {Promise<undefined>} - undefined
-   */
-async function _updateGranuleStatus(
-  knex,
-  granuleId,
-  granulePgModel,
-  granuleModel
-) {
-  await granuleModel.updateStatus({ granuleId: granuleId }, 'running');
-  const pgGranuleToUpdate = await getUniqueGranuleByGranuleId(
-    knex,
-    granuleId
-  );
-  await granulePgModel.upsert(
-    knex,
-    {
-      ...pgGranuleToUpdate,
-      status: 'running',
-    }
-  );
-}
 
 /**
    * start the re-ingest of a given granule object
@@ -63,7 +32,12 @@ async function reingestGranule({
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
   const knex = await getKnexClient();
-  await updateGranuleStatusToQueuedMethod({ granule: reingestParams, knex });
+  await updateGranuleStatusToQueuedMethod({
+    granule: reingestParams,
+    knex,
+    granulePgModel,
+    granuleModel,
+  });
 
   const executionArn = path.basename(reingestParams.execution);
 
@@ -91,14 +65,6 @@ async function reingestGranule({
     asyncOperationId,
   });
 
-  // FUTURE This would ideally not be necessary
-  await _updateGranuleStatus(
-    knex,
-    reingestParams.granuleId,
-    granulePgModel,
-    granuleModel
-  );
-
   return Lambda.invoke(process.env.invoke, lambdaPayload);
 }
 
@@ -124,13 +90,10 @@ async function applyWorkflow({
   meta = undefined,
   queueUrl = undefined,
   asyncOperationId = undefined,
-  granuleModel = new Granule(),
-  granulePgModel = new GranulePgModel(),
 }) {
   if (!workflow) {
     throw new TypeError('applyWorkflow requires a `workflow` parameter');
   }
-  const knex = await getKnexClient();
 
   const { name, version } = deconstructCollectionId(granule.collectionId);
 
@@ -148,14 +111,6 @@ async function applyWorkflow({
     queueUrl,
     asyncOperationId,
   });
-
-  // FUTURE This would ideally not be necessary
-  await _updateGranuleStatus(
-    knex,
-    granule.granuleId,
-    granulePgModel,
-    granuleModel
-  );
 
   await Lambda.invoke(process.env.invoke, lambdaPayload);
 }
