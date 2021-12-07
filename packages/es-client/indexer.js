@@ -686,20 +686,7 @@ async function deleteGranule({
   });
 }
 
-/**
- * Index a record to local Elasticsearch. Used when running API locally.
- *
- * @param {Object} record - Record object
- * @param {function} doIndex - Function to do indexing operation
- * @returns {Promise} - Promise of indexing operation
- */
-async function addToLocalES(record, doIndex) {
-  const esClient = await Search.es(process.env.ES_HOST);
-  return doIndex(esClient, record, process.env.ES_INDEX);
-}
-
 module.exports = {
-  addToLocalES,
   createIndex,
   indexCollection,
   indexProvider,

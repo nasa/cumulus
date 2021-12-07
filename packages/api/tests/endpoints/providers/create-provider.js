@@ -232,23 +232,7 @@ test('POST creates a new provider in Dynamo and PG with correct timestamps', asy
   t.is(providerPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
-test('POST returns a 409 error if the provider already exists', async (t) => {
-  const newProvider = fakeProviderFactory();
-
-  await providerModel.create(newProvider);
-
-  const response = await request(app)
-    .post('/providers')
-    .send(newProvider)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409);
-
-  const { message } = response.body;
-  t.is(message, (`A record already exists for ${newProvider.id}`));
-});
-
-test('POST returns a 409 error if the provider already exists in RDS', async (t) => {
+test('POST returns a 409 error if the provider already exists in postgres', async (t) => {
   const newProvider = fakeProviderFactory();
 
   await t.context.providerPgModel.create(
@@ -384,6 +368,7 @@ test('post() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fai
 
   const fakeProviderPgModel = {
     create: () => Promise.reject(new Error('something bad')),
+    exists: () => false,
   };
 
   const expressRequest = {
