@@ -103,6 +103,7 @@ export {
 
 export {
   getCollectionsByGranuleIds,
+  getCumulusCollectionIdsByCollectionIds
 } from './lib/collection';
 
 export {

@@ -136,6 +136,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     full report rather than an s3 signed url. Reports very close to the
     published limits were failing to download, so we lowered the limit to
     ensure all files are handled properly.
+  - Adds db library routine to return the cumulus\_collection\_id for a list of collectionIds
 
 ### Removed
 

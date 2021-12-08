@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   destroyLocalTestDb,
@@ -12,6 +13,7 @@ const {
   fakeGranuleRecordFactory,
   getCollectionsByGranuleIds,
   migrationDir,
+  getCumulusCollectionIdsByCollectionIds,
 } = require('../../dist');
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
@@ -88,4 +90,57 @@ test('getCollectionsByGranuleIds() only returns unique collections', async (t) =
   );
 
   t.deepEqual(collections, pgCollections);
+});
+
+test('getCumulusCollectionIdsByCollectionIds returns cumulus_collection_ids for a collectionId', async (t) => {
+  const collection0 = fakeCollectionRecordFactory();
+  const collection1 = fakeCollectionRecordFactory();
+  const collection2 = fakeCollectionRecordFactory();
+  const collection3 = fakeCollectionRecordFactory();
+
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    [collection0, collection1, collection2, collection3],
+    '*'
+  );
+  const testCollections = [
+    collection0,
+    collection2,
+  ].map((collection) => constructCollectionId(collection.name, collection.version));
+
+  const expectedIds = [
+    await t.context.collectionPgModel.getRecordCumulusId(t.context.knex, collection0),
+    await t.context.collectionPgModel.getRecordCumulusId(t.context.knex, collection2),
+  ];
+
+  const actualIds = await getCumulusCollectionIdsByCollectionIds(t.context.knex, testCollections);
+
+  t.deepEqual(actualIds, expectedIds);
+});
+
+test('getCumulusCollectionIdsByCollectionIds ignores collectionId that are not found', async (t) => {
+  const collection0 = fakeCollectionRecordFactory();
+  const collection1 = fakeCollectionRecordFactory();
+  const collection2 = fakeCollectionRecordFactory();
+  const collection3 = fakeCollectionRecordFactory();
+
+  await t.context.collectionPgModel.insert(
+    t.context.knex,
+    [collection0, collection1, collection2, collection3],
+    '*'
+  );
+  const testCollections = [
+    collection0,
+    { name: 'not', version: 'found' },
+    collection2,
+  ].map((collection) => constructCollectionId(collection.name, collection.version));
+
+  const expectedIds = [
+    await t.context.collectionPgModel.getRecordCumulusId(t.context.knex, collection0),
+    await t.context.collectionPgModel.getRecordCumulusId(t.context.knex, collection2),
+  ];
+
+  const actualIds = await getCumulusCollectionIdsByCollectionIds(t.context.knex, testCollections);
+
+  t.deepEqual(actualIds, expectedIds);
 });
