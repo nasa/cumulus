@@ -22,7 +22,7 @@ const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent')
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const logger = new Logger({ sender: '@cumulus/api' });
-const maxResponsePayloadSize = 6 * 1024 * 1024;
+const maxResponsePayloadSize = 6 * 1000 * 1000;
 
 /**
  * List all reconciliation reports

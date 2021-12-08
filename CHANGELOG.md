@@ -131,6 +131,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
+- **CUMULUS-2642**
+  - Reduces the reconcilation report's default maxResponseSize to return the
+    full report rather than an s3 signed url. Reports very close to the
+    published limits were failing to download, so we lowered the limit to
+    ensure all files are handled properly.
 
 ### Removed
 
