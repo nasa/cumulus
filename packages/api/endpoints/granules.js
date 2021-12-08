@@ -156,7 +156,7 @@ const putGranule = async (req, res) => {
     );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      log.error(`granule collectionId ${apiGranule.CollectionId} does not exist, cannot update granule`);
+      log.error(`granule collectionId ${apiGranule.collectionId} does not exist, cannot update granule`);
       res.boom.badRequest(`granule collectionId ${apiGranule.collectionId} invalid`);
     } else {
       throw error;
