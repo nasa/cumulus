@@ -227,7 +227,7 @@ async function put(req, res) {
       // process.env.ES_INDEX is only used to isolate the index for
       // each unit test suite
       await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-      await publishCollectionUpdateSnsMessage(collection);
+      await publishCollectionUpdateSnsMessage(dynamoRecord);
     });
   } catch (error) {
     // Revert Dynamo record update if any write fails
