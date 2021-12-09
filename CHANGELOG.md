@@ -349,7 +349,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2774**
     - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
       to throw error if `eventType` is invalid or undefined.
-    - Updated `writeGranuleFromApi` to make `snsEventType` default to `Create`.
 
 ## [v9.9.0] 2021-11-03
 
