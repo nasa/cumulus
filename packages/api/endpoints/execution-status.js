@@ -146,8 +146,8 @@ async function get(req, res) {
     startDate: new Date(response.createdAt),
     stopDate: new Date(response.createdAt + response.duration * 1000),
     granules: mappedGranules,
-    ...{ input: JSON.stringify(response.originalPayload) },
-    ...{ output: JSON.stringify(response.finalPayload) },
+    ...{ input: JSON.stringify(response.original_payload) },
+    ...{ output: JSON.stringify(response.final_payload) },
   };
   return res.send({ warning, execution });
 }

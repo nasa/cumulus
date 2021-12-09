@@ -74,10 +74,7 @@ const cumulusMetaOutput = () => ({
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
-const fakeExpiredExecution = fakeExecutionFactoryV2({
-  arn: expiredExecutionArn,
-  parentArn: undefined,
-});
+
 const testDbName = randomId('execution-status_test');
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -244,13 +241,11 @@ test.before(async (t) => {
     final_payload: finalPayload,
   });
   const executionPgModel = new ExecutionPgModel();
-  /*
   const [createdExpiredExecutionRecord] = await executionPgModel.create(
     t.context.knex,
     t.context.fakeExecutionRecord
   );
-  const executionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
-  */
+  const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
 
   // create fake Collections table
   collectionModel = new Collection();
@@ -264,7 +259,6 @@ test.before(async (t) => {
   executionModel = new Execution();
   await executionModel.createTable();
   await executionModel.create(fakeExecution);
-  await executionModel.create(fakeExpiredExecution);
 
   process.env = {
     ...process.env,
@@ -310,13 +304,6 @@ test.before(async (t) => {
   );
   const [pgExecution] = await executionPgModel.create(knex, executionPgRecord);
   const executionPgRecordId = pgExecution.cumulus_id;
-
-  const expiredExecutionPgRecord = await translateApiExecutionToPostgresExecution(
-    fakeExpiredExecution,
-    knex
-  );
-  const [expiredExecution] = await executionPgModel.create(knex, expiredExecutionPgRecord);
-  const expiredExecutionPgRecordId = expiredExecution.cumulus_id;
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
