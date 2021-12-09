@@ -17,7 +17,11 @@ const {
   fakePdrFactoryV2,
 } = require('../../lib/testUtils');
 
-test.before(async (t) => {
+test.before((t) => {
+  t.context.timeBeforePublish = Date.now();
+});
+
+test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
   t.context.TopicArn = TopicArn;
@@ -41,11 +45,9 @@ test.before(async (t) => {
     TopicArn,
     Token: SubscriptionArn,
   }).promise();
-
-  t.context.timeBeforePublish = Date.now();
 });
 
-test.after.always(async (t) => {
+test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
   await Promise.all([
@@ -224,28 +226,8 @@ test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if
 });
 
 test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (t) => {
-  const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn, QueueUrl } = t.context;
   process.env.pdr_sns_topic_arn = TopicArn;
-
-  const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
-  const getQueueAttributesResponse = await sqs().getQueueAttributes({
-    QueueUrl,
-    AttributeNames: ['QueueArn'],
-  }).promise();
-  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-
-  const { SubscriptionArn } = await sns().subscribe({
-    TopicArn,
-    Protocol: 'sqs',
-    Endpoint: QueueArn,
-  }).promise();
-
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
 
   const pdrName = cryptoRandomString({ length: 10 });
   const newPdr = fakePdrFactoryV2({
@@ -262,4 +244,80 @@ test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (
 
   t.deepEqual(pdrRecord.pdrName, pdrName);
   t.deepEqual(pdrRecord.status, newPdr.status);
+});
+
+test.serial('constructCollectionSnsMessage throws if eventType is not provided', async (t) => {
+  process.env.collection_sns_topic_arn = t.context.TopicArn;
+  const collectionName = cryptoRandomString({ length: 10 });
+  const newCollection = fakeCollectionFactory({ name: collectionName });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newCollection, 'collection'),
+    { message: 'Invalid eventType: undefined' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructCollectionSnsMessage throws if eventType is invalid', async (t) => {
+  process.env.collection_sns_topic_arn = t.context.TopicArn;
+  const collectionName = cryptoRandomString({ length: 10 });
+  const newCollection = fakeCollectionFactory({ name: collectionName });
+  const invalidEventType = 'Modify';
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newCollection, 'collection', invalidEventType),
+    { message: `Invalid eventType: ${invalidEventType}` }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructGranuleSnsMessage throws if eventType is not provided', async (t) => {
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
+  const granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const newGranule = fakeGranuleFactoryV2({
+    files,
+    granuleId,
+    published: false,
+  });
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newGranule, 'granule'),
+    { message: 'Invalid eventType: undefined' }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
+});
+
+test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (t) => {
+  process.env.granule_sns_topic_arn = t.context.TopicArn;
+  const granuleId = cryptoRandomString({ length: 10 });
+  const files = [fakeFileFactory()];
+  const newGranule = fakeGranuleFactoryV2({
+    files,
+    granuleId,
+    published: false,
+  });
+  const invalidEventType = 'Modify';
+  await t.throwsAsync(
+    publishSnsMessageByDataType(newGranule, 'granule', invalidEventType),
+    { message: `Invalid eventType: ${invalidEventType}` }
+  );
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+
+  t.is(Messages, undefined);
 });
