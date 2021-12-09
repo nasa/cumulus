@@ -1081,6 +1081,7 @@ test.serial('writeGranulesFromMessage() stores an aggregate workflow error and f
 test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     filePgModel,
     granule,
     granuleId,
@@ -1088,6 +1089,7 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
     knex,
   } = t.context;
 
+  const snsEventType = 'Create';
   const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
@@ -1097,7 +1099,7 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
     key: 'fake_key',
   }, '*');
 
-  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex);
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, snsEventType);
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -1185,46 +1187,50 @@ test.serial('writeGranuleFromApi() throws for a granule with no granuleId provid
   const {
     knex,
     granule,
+    esClient,
   } = t.context;
 
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, granuleId: undefined }, knex),
+    writeGranuleFromApi({ ...granule, granuleId: undefined }, knex, esClient, 'Create'),
     { message: 'Could not create granule record, invalid granuleId: undefined' }
   );
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId', async (t) => {
   const {
+    esClient,
     granule,
     knex,
   } = t.context;
 
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex),
+    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex, esClient, 'Create'),
     { message: 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.' }
   );
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with no collectionId provided', async (t) => {
   const {
+    esClient,
     knex,
     granule,
   } = t.context;
 
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: undefined }, knex),
+    writeGranuleFromApi({ ...granule, collectionId: undefined }, knex, esClient, 'Create'),
     { message: 'collectionId required to generate a granule record' }
   );
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with an invalid collectionId provided', async (t) => {
   const {
+    esClient,
     knex,
     granule,
   } = t.context;
   const badCollectionId = `collectionId${cryptoRandomString({ length: 5 })}`;
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex),
+    writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex, esClient, 'Create'),
     { message: `invalid collectionId: ${badCollectionId}` }
   );
 });
@@ -1232,6 +1238,7 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
 test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and Elasticsearch.', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     esGranulesClient,
     granule,
     granuleId,
@@ -1240,7 +1247,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
     knex,
   } = t.context;
 
-  const result = await writeGranuleFromApi({ ...granule }, knex);
+  const result = await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
 
   t.is(result, `Wrote Granule ${granuleId}`);
 
@@ -1255,6 +1262,7 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
 test.serial('writeGranuleFromApi() writes a granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     granule,
     granuleId,
     granuleModel,
@@ -1262,7 +1270,7 @@ test.serial('writeGranuleFromApi() writes a granule without an execution to Post
     knex,
   } = t.context;
 
-  await writeGranuleFromApi({ ...granule, execution: undefined }, knex);
+  await writeGranuleFromApi({ ...granule, execution: undefined }, knex, esClient, 'Create');
 
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await granulePgModel.exists(
@@ -1274,6 +1282,7 @@ test.serial('writeGranuleFromApi() writes a granule without an execution to Post
 test.serial('writeGranuleFromApi() can write a granule with no files associated with it', async (t) => {
   const {
     knex,
+    esClient,
     granule,
     granuleId,
     granuleModel,
@@ -1281,7 +1290,7 @@ test.serial('writeGranuleFromApi() can write a granule with no files associated 
     collectionCumulusId,
   } = t.context;
 
-  await writeGranuleFromApi({ ...granule, files: [] }, knex);
+  await writeGranuleFromApi({ ...granule, files: [] }, knex, esClient, 'Create');
   t.true(await granuleModel.exists({ granuleId }));
   t.true(await granulePgModel.exists(
     knex,
@@ -1291,18 +1300,20 @@ test.serial('writeGranuleFromApi() can write a granule with no files associated 
 
 test.serial('writeGranuleFromApi() throws with granule with an execution url that does not exist.', async (t) => {
   const {
+    esClient,
     knex,
     granule,
   } = t.context;
   const execution = `execution${cryptoRandomString({ length: 5 })}`;
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, execution }, knex),
+    writeGranuleFromApi({ ...granule, execution }, knex, esClient, 'Create'),
     { message: `Could not find execution in PostgreSQL database with url ${execution}` }
   );
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres with same timestamps.', async (t) => {
   const {
+    esClient,
     knex,
     collectionCumulusId,
     granule,
@@ -1311,7 +1322,7 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres 
     granulePgModel,
   } = t.context;
 
-  const result = await writeGranuleFromApi({ ...granule }, knex);
+  const result = await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
 
   t.is(result, `Wrote Granule ${granuleId}`);
 
@@ -1327,6 +1338,7 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo and Postgres 
 test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     filePgModel,
     granule,
     granuleId,
@@ -1334,7 +1346,7 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
     knex,
   } = t.context;
 
-  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex);
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, 'Create');
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -1352,6 +1364,7 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
 test.serial('writeGranuleFromApi() does not persist file records to Postgres if workflow status is "running"', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     filePgModel,
     granule,
     granuleId,
@@ -1359,7 +1372,7 @@ test.serial('writeGranuleFromApi() does not persist file records to Postgres if 
     knex,
   } = t.context;
 
-  await writeGranuleFromApi({ ...granule, status: 'running' }, knex);
+  await writeGranuleFromApi({ ...granule, status: 'running' }, knex, esClient, 'Create');
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -1377,6 +1390,7 @@ test.serial('writeGranuleFromApi() does not persist file records to Postgres if 
 test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgres if Dynamo write fails', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     granule,
     granuleId,
     granuleModel,
@@ -1391,7 +1405,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
   };
 
   const error = await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, granuleModel: fakeGranuleModel }, knex)
+    writeGranuleFromApi({ ...granule, granuleModel: fakeGranuleModel }, knex, esClient, 'Create')
   );
 
   t.true(error.message.includes('Granules dynamo error'));
@@ -1407,6 +1421,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
 test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgres if Postgres write fails', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     granule,
     granuleModel,
     knex,
@@ -1421,7 +1436,9 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
 
   const error = await t.throwsAsync(writeGranuleFromApi(
     { ...granule, granulePgModel: testGranulePgModel },
-    knex
+    knex,
+    esClient,
+    'Create'
   ));
 
   t.true(error.message.includes('Granules Postgres error'));
@@ -1436,6 +1453,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
 
 test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
   const {
+    esClient,
     filePgModel,
     granulePgModel,
     granule,
@@ -1454,7 +1472,7 @@ test.serial('writeGranuleFromApi() writes all valid files if any non-valid file 
   }
   const validFileCount = allfiles.length - invalidFiles.length;
 
-  await writeGranuleFromApi({ ...granule, files: allfiles }, knex);
+  await writeGranuleFromApi({ ...granule, files: allfiles }, knex, esClient, 'Create');
 
   t.false(await filePgModel.exists(knex, { key: invalidFiles[0].key }));
   t.false(await filePgModel.exists(knex, { key: invalidFiles[1].key }));
@@ -1470,6 +1488,7 @@ test.serial('writeGranuleFromApi() writes all valid files if any non-valid file 
 test.serial('writeGranuleFromApi() stores error on granule if any file fails', async (t) => {
   const {
     collectionCumulusId,
+    esClient,
     granule,
     knex,
     granuleId,
@@ -1490,7 +1509,9 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
 
   await writeGranuleFromApi(
     { ...granule, status: 'completed', files },
-    knex
+    knex,
+    esClient,
+    'Create'
   );
 
   const pgGranule = await t.context.granulePgModel.get(
@@ -1563,12 +1584,13 @@ test.serial('updateGranuleStatusToQueued() updates granule status in the databas
 
 test.serial('updateGranuleStatusToQueued() throws error if record does not exist in pg', async (t) => {
   const {
+    esClient,
     knex,
     granule,
     granuleId,
   } = t.context;
 
-  await writeGranuleFromApi({ ...granule }, knex);
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
 
   const name = randomId('name');
   const version = randomId('version');
