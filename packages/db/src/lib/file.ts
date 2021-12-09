@@ -1,5 +1,7 @@
 import { Knex } from 'knex';
 
+import { collectionIdSeparator } from '@cumulus/message/Collections';
+
 import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
 import { PostgresGranuleRecord } from '../types/granule';
@@ -17,30 +19,47 @@ import { PostgresGranuleRecord } from '../types/granule';
  * @param {Array<string>} [params.granuleColumns]
  *   Columns to return from granules table
  * @param {number} [params.limit] - Limit on number of results to return. Optional.
+ * @param {Array<string>} [params.collectionIds] - Array of collectionIds to include.
+ * @param {Array<string>} [params.granuleIds] - Array of granuleIds to include.
+ * @param {Array<string>} [params.providers] - Array of providers to include.
  * @returns {Promise<Object>} - A Knex query builder object
  */
 export const getFilesAndGranuleInfoQuery = ({
   knex,
   searchParams,
   sortColumns,
-  limit,
   granuleColumns = [],
+  limit,
+  collectionIds = [],
+  granuleIds = [],
+  providers = [],
 }: {
-  knex: Knex,
-  searchParams: Partial<PostgresFileRecord>,
-  sortColumns: (keyof PostgresFileRecord)[],
-  granuleColumns?: (keyof PostgresGranuleRecord)[],
-  limit?: number
+  knex: Knex;
+  searchParams: Partial<PostgresFileRecord>;
+  sortColumns: (keyof PostgresFileRecord)[];
+  granuleColumns?: (keyof PostgresGranuleRecord)[];
+  limit?: number;
+  collectionIds?: string[];
+  granuleIds?: string[];
+  providers?: string[];
 }): Knex.QueryBuilder => {
-  const query = knex(TableNames.files)
-    .select(`${TableNames.files}.*`)
+  const {
+    collections: collectionsTable,
+    files: filesTable,
+    granules: granulesTable,
+    providers: providersTable,
+  } = TableNames;
+  let query = knex(filesTable)
+    .select(`${filesTable}.*`)
     .modify((queryBuilder: Knex.QueryBuilder) => {
       if (granuleColumns.length > 0) {
-        queryBuilder.select(granuleColumns.map((column) => `${TableNames.granules}.${column}`));
+        queryBuilder.select(
+          granuleColumns.map((column) => `${granulesTable}.${column}`)
+        );
         queryBuilder.innerJoin(
-          TableNames.granules,
-          `${TableNames.files}.granule_cumulus_id`,
-          `${TableNames.granules}.cumulus_id`
+          granulesTable,
+          `${filesTable}.granule_cumulus_id`,
+          `${granulesTable}.cumulus_id`
         );
       }
     })
@@ -49,5 +68,28 @@ export const getFilesAndGranuleInfoQuery = ({
   if (limit) {
     query.limit(limit);
   }
+  if (collectionIds.length > 0) {
+    query.innerJoin(
+      collectionsTable,
+      `${granulesTable}.collection_cumulus_id`,
+      `${collectionsTable}.cumulus_id`
+    );
+    const collectionIdConcatField = `(${collectionsTable}.name || '${collectionIdSeparator}' || ${collectionsTable}.version)`;
+    const collectionIdInClause = collectionIds.map(() => '?').join(',');
+    query.whereRaw(
+      `${collectionIdConcatField} IN (${collectionIdInClause})`,
+      collectionIds
+    );
+  }
+  if (granuleIds.length > 0) {
+    query.whereIn('granule_id', granuleIds);
+  }
+  if (providers.length > 0) {
+    query.innerJoin(
+      providersTable,
+      `${granulesTable}.provider_cumulus_id`,
+      `${providersTable}.cumulus_id`)
+      .whereIn(`${providersTable}.name`, providers)
+  };
   return query;
 };

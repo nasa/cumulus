@@ -185,52 +185,17 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
   const oneWayBucketReport = isOneWayBucketReport(recReportParams);
 
-
-  let query = getFilteredFilesAndGranuleInfoQuery({
+  const query = getFilesAndGranuleInfoQuery({
     knex: recReportParams.knex,
     searchParams: { bucket: Bucket },
     sortColumns: ['key'],
-    granuleColumns: ['granule_id', 'collection_cumulus_id', 'provider_cumulus_id'],
+    granuleColumns: ['granule_id'],
+    collectionIds: recReportParams.collectionIds,
+    providers: recReportParams.providers,
+    granuleIds: recReportParams.granuleIds,
   });
 
-  let query = getFilesAndGranuleInfoQuery({
-    knex: recReportParams.knex,
-    searchParams: { bucket: Bucket },
-    sortColumns: ['key'],
-    granuleColumns: ['granule_id', 'collection_cumulus_id', 'provider_cumulus_id'],
-    filterParams: recReportParams,
-  });
-
-  if (recReportParams.collectionIds) {
-    log.debug(`collectionIds input params: ${JSON.stringify(recReportParams.collectionIds)}`);
-    const collectionCumulusIds = await getCumulusCollectionIdsByCollectionIds(
-      recReportParams.knex, recReportParams.collectionIds
-    );
-    log.debug(`Collection cumulus Ids: ${collectionCumulusIds}`);
-    query = query.whereIn('collection_cumulus_id', collectionCumulusIds);
-  }
-
-  if (recReportParams.providers) {
-    log.debug(`provider list input params: ${JSON.stringify(recReportParams.providers)}`);
-    const providerPgModel = new ProviderPgModel();
-    const providerCumulusIds = await providerPgModel.getRecordsCumulusIds(
-      recReportParams.knex,
-      ['name'],
-      recReportParams.providers
-    );
-    log.debug(`provider Ids: ${providerCumulusIds}`);
-    query = query.whereIn('provider_cumulus_id', providerCumulusIds);
-  }
-
-  if (recReportParams.granuleIds) {
-    log.debug(`granuleIds provided: ${JSON.stringify(recReportParams.granuleIds)}`);
-    query = query.whereIn('granule_id', recReportParams.granuleIds);
-  }
-
-  const pgFileSearchClient = new QuerySearchClient(
-    query,
-    300
-  );
+  const pgFileSearchClient = new QuerySearchClient(query, 100);
 
   log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
