@@ -40,6 +40,7 @@ locals {
   public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
+  subnet_ids                      = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnet_ids.subnet_ids[0].ids
 }
 
 data "aws_caller_identity" "current" {}
@@ -67,7 +68,6 @@ data "aws_ecr_repository" "async_operation" {
   name = "async_operations"
 }
 
-
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 
@@ -83,8 +83,8 @@ module "cumulus" {
     execution_limit = 30
   }]
 
-  vpc_id            = var.vpc_id
-  lambda_subnet_ids = var.lambda_subnet_ids
+  vpc_id            = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
+  lambda_subnet_ids = local.subnet_ids
 
   rds_security_group                     = local.rds_security_group
   rds_user_access_secret_arn             = local.rds_credentials_secret_arn
@@ -93,7 +93,7 @@ module "cumulus" {
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? var.lambda_subnet_ids : var.ecs_cluster_instance_subnet_ids
+  ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
   ecs_cluster_min_size            = 2
   ecs_cluster_desired_size        = 2
   ecs_cluster_max_size            = 3
