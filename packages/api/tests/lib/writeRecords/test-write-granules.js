@@ -1501,7 +1501,7 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
-test.serial.only('updateGranuleStatusToQueued() updates granule status in the database and Elasticsearch and publishes SNS message', async (t) => {
+test.serial('updateGranuleStatusToQueued() updates granule status in the database and Elasticsearch and publishes SNS message', async (t) => {
   const {
     collectionCumulusId,
     esGranulesClient,
