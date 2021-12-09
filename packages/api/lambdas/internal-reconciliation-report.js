@@ -62,12 +62,12 @@ async function internalRecReportForCollections(recReportParams) {
   const knex = await getKnexClient();
 
   // get collections from database and sort them, since the scan result is not ordered
-  const [updatedAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
+  const [createdAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
 
-  const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
+  const dbCollectionsSearched = await collectionPgModel.searchWithCreatedAtRange(
     knex,
     dbSearchParams,
-    updatedAtRangeParams
+    createdAtRangeParams
   );
 
   // TODO - improve this sort

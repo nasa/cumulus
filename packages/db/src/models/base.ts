@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 
-import { UpdatedAtRange } from '../types/record';
+import { CreatedAtRange } from '../types/record';
 import { BaseRecord } from '../types/base';
 import { TableNames } from '../tables';
 import { isRecordDefined } from '../database';
@@ -23,21 +23,21 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
-   * @param {UpdatedAtRange} updatedAtParams - An object with Date search bounds for updatedAt
+   * @param {CreatedAtRange} createdAtParams - An object with Date search bounds for createdAt
    * @returns {Promise<PostgresCollectionRecord[]>} List of returned records
    */
-  async searchWithUpdatedAtRange(
+  async searchWithCreatedAtRange(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>,
-    updatedAtParams: UpdatedAtRange
+    createdAtParams: CreatedAtRange
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .where((builder) => {
         builder.where(params);
-        if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
-          builder.whereBetween('updated_at', [
-            updatedAtParams?.updatedAtFrom ?? new Date(0),
-            updatedAtParams?.updatedAtTo ?? new Date(),
+        if (createdAtParams.createdAtFrom || createdAtParams.createdAtTo) {
+          builder.whereBetween('created_at', [
+            createdAtParams?.createdAtFrom ?? new Date(0),
+            createdAtParams?.createdAtTo ?? new Date(),
           ]);
         }
       });

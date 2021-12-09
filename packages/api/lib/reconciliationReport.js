@@ -61,8 +61,8 @@ function convertToESCollectionSearchParams(params) {
     ? searchParamsForCollectionIdArray(collectionIds)
     : undefined;
   const searchParams = {
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
+    createdAt__from: dateToValue(startTimestamp),
+    createdAt__to: dateToValue(endTimestamp),
     ...idsIn,
   };
   return removeNilProperties(searchParams);
@@ -92,8 +92,8 @@ function convertToDBCollectionSearchObject(params) {
   }
   const searchParams = [
     {
-      updatedAtFrom: dateStringToDateOrNull(startTimestamp),
-      updatedAtTo: dateStringToDateOrNull(endTimestamp),
+      createdAtFrom: dateStringToDateOrNull(startTimestamp),
+      createdAtTo: dateStringToDateOrNull(endTimestamp),
     },
     removeNilProperties(collection),
   ];
@@ -111,8 +111,8 @@ function convertToESGranuleSearchParams(params) {
   const granuleIdIn = granuleIds ? granuleIds.join(',') : undefined;
   const providerIn = providers ? providers.join(',') : undefined;
   return removeNilProperties({
-    updatedAt__from: dateToValue(startTimestamp),
-    updatedAt__to: dateToValue(endTimestamp),
+    createdAt__from: dateToValue(startTimestamp),
+    createdAt__to: dateToValue(endTimestamp),
     collectionId__in: collectionIdIn,
     granuleId__in: granuleIdIn,
     provider__in: providerIn,
@@ -141,9 +141,9 @@ function convertToDBGranuleSearchParams(params) {
     status,
   };
   if (startTimestamp || endTimestamp) {
-    searchParams.updatedAtRange = removeNilProperties({
-      updatedAtFrom: startTimestamp ? new Date(startTimestamp) : undefined,
-      updatedAtTo: endTimestamp ? new Date(endTimestamp) : undefined,
+    searchParams.createdAtRange = removeNilProperties({
+      createdAtFrom: startTimestamp ? new Date(startTimestamp) : undefined,
+      createdAtTo: endTimestamp ? new Date(endTimestamp) : undefined,
     });
   }
   return removeNilProperties(searchParams);
