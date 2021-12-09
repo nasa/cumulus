@@ -352,6 +352,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
   - **CUMULUS-2661**
     - Updated PUT `/executions/<arn>` endpoint to publish SNS message of updated record to executions SNS topic
+  - **CUMULUS-2774**
+    - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
+      to throw error if `eventType` is invalid or undefined.
 
 ## [v9.9.0] 2021-11-03
 

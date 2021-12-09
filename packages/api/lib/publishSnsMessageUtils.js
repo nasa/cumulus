@@ -19,7 +19,7 @@ const constructCollectionSnsMessage = (record, eventType) => {
     },
     deletedAt: Date.now(),
   };
-  default: return {};
+  default: throw new Error(`Invalid eventType: ${eventType}`);
   }
 };
 
@@ -33,7 +33,7 @@ const constructGranuleSnsMessage = (record, eventType) => {
     record,
     deletedAt: Date.now(),
   };
-  default: return {};
+  default: throw new Error(`Invalid eventType: ${eventType}`);
   }
 };
 
