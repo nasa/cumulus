@@ -430,6 +430,24 @@ const _writeGranule = async ({
   await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
 };
 
+/**
+ * Update granule record status to queued in DynamoDB, PostgreSQL, Elasticsearch.
+ * Publish SNS event for updated granule.
+ *
+ * @param {Object}  params
+ * @param {Object}  params.apiGranuleRecord      - API Granule object to write to
+ *                                                 the database
+ * @param {Object}  params.originalApiGranule    - API Granule object before status update
+ * @param {Object}  params.postgresGranuleRecord - PostgreSQL granule record to write
+ *                                                 to database
+ * @param {string}  params.granuleId             - Granule ID
+ * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
+ * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
+ * @param {Knex}    params.knex                  - Knex object
+ * @param {string}  params.snsEventType          - SNS Event Type, defaults to 'Update'
+ * @param {Object}  params.esClient              - Elasticsearch client
+ * returns {Promise}
+ */
 const _writeQueuedGranule = async ({
   apiGranuleRecord,
   originalApiGranule,
