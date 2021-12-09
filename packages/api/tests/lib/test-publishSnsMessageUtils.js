@@ -252,7 +252,7 @@ test.serial('constructCollectionSnsMessage throws if eventType is not provided',
   const newCollection = fakeCollectionFactory({ name: collectionName });
   await t.throwsAsync(
     publishSnsMessageByDataType(newCollection, 'collection'),
-    { message: 'constructCollectionSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+    { message: 'Invalid eventType: undefined' }
   );
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -269,7 +269,7 @@ test.serial('constructCollectionSnsMessage throws if eventType is invalid', asyn
   const invalidEventType = 'Modify';
   await t.throwsAsync(
     publishSnsMessageByDataType(newCollection, 'collection', invalidEventType),
-    { message: 'constructCollectionSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+    { message: `Invalid eventType: ${invalidEventType}` }
   );
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -290,7 +290,7 @@ test.serial('constructGranuleSnsMessage throws if eventType is not provided', as
   });
   await t.throwsAsync(
     publishSnsMessageByDataType(newGranule, 'granule'),
-    { message: 'constructGranuleSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+    { message: 'Invalid eventType: undefined' }
   );
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -312,7 +312,7 @@ test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (
   const invalidEventType = 'Modify';
   await t.throwsAsync(
     publishSnsMessageByDataType(newGranule, 'granule', invalidEventType),
-    { message: 'constructGranuleSnsMessage requires a valid eventType of \'Create\', \'Update\', or \'Delete\'' }
+    { message: `Invalid eventType: ${invalidEventType}` }
   );
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,

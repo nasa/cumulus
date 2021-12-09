@@ -497,7 +497,7 @@ const writeGranuleFromApi = async (
   },
   knex,
   esClient,
-  snsEventType = 'Create'
+  snsEventType
 ) => {
   try {
     const granule = { granuleId, cmrLink, published, files };
