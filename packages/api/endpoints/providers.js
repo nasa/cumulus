@@ -165,7 +165,7 @@ async function put(req, res) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
     }
-    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with postgresql record alone`);
+    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with PostgreSQL record alone`);
   }
 
   apiProvider.updatedAt = Date.now();
