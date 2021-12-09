@@ -114,7 +114,7 @@ describe('The Granules API', () => {
 
       expect(response.statusCode).toBe(200);
       const { message } = JSON.parse(response.body);
-      expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}`);
+      expect(message).toBe(`Successfully wrote granule with Granule Id: ${granuleId}, Collection Id: ${collectionId}`);
     });
 
     it('can discover the granule directly via the API.', async () => {
