@@ -51,8 +51,6 @@ const s3data = [
 ];
 
 const providersDir = './data/providers/s3/';
-// TODO use ./data/collections/s3_MOD09GQ_006_full_ingest
-// after ORCA tickets are fixed ORCA-140, ORCA-144
 const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
 let collection;
 
@@ -167,10 +165,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('copies files configured to glacier', async () => {
       if (!isOrcaIncluded) pending();
 
-      // TODO after ORCA fixes their iam to support multiple 'protected' buckets,
-      // update collection configure to place '.cmr.xml' in protected-2 bucket,
-      // and verify .cmr.xml file is copied from protected-2 bucket to glacier
-      // ORCA ticket https://bugs.earthdata.nasa.gov/browse/ORCA-140
       const excludeFileTypes = get(lambdaOutput, 'meta.collection.meta.excludeFileTypes', []);
       expect(excludeFileTypes.length).toBe(1);
       filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
@@ -252,18 +246,13 @@ describe('The S3 Ingest Granules workflow', () => {
         query: { asyncOperationId, granuleId },
       });
       const request = JSON.parse(response.body);
-      const status = ['pending', 'success'];
-      console.log(request);
+      const status = ['pending', 'staged', 'success'];
 
-      // RecoveryWorkflow currently works only when all granule files are copied to galacier,
-      // TODO update the collection configuration to exclude files after ORCA-144
       expect(request.granule_id).toEqual(granuleId);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
-      expect(request.files.length).toBe(3);
+      expect(get(request, 'files', []).length).toBe(3);
 
-      // TODO check asyncOperationId in request status after it's part of the request status
-      // CUMULUS-2414/ORCA ticket
-      const checkRequests = request.files.map((file) => status.includes(file.status));
+      const checkRequests = get(request, 'files', []).map((file) => status.includes(file.status));
       checkRequests.forEach((check) => expect(check).toEqual(true));
     });
   });

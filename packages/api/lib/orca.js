@@ -34,8 +34,8 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
   }
 
   const request = JSON.parse(response.body);
-  const jobStatuses = request.files.map((file) => file.status);
-
+  const jobStatuses = (request.files || []).map((file) => file.status);
+  // file status may be 'pending', 'staged', 'success', or 'failed'
   let recoveryStatus = 'failed';
   if (jobStatuses.length === 0) {
     recoveryStatus = undefined;
