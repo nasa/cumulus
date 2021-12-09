@@ -211,7 +211,7 @@ module "cumulus" {
 
 resource "aws_security_group" "no_ingress_all_egress" {
   name   = "${var.prefix}-cumulus-tf-no-ingress-all-egress"
-  vpc_id = var.vpc_id
+  vpc_id = local.vpc_id
 
   egress {
     from_port   = 0
