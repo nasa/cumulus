@@ -432,14 +432,15 @@ const _writeGranule = async ({
 
 const _writeQueuedGranule = async ({
   apiGranuleRecord,
+  originalApiGranule,
   postgresGranuleRecord,
   granuleId,
   granuleModel,
   granulePgModel,
   knex,
   snsEventType = 'Update',
+  esClient,
 }) => {
-  const esClient = await Search.es();
   const apiGranule = apiGranuleRecord;
   delete apiGranule.execution;
 
@@ -451,21 +452,24 @@ const _writeQueuedGranule = async ({
       { cumulus_id: postgresGranuleRecord.cumulus_id },
       { status }
     );
-    // delete execution field
-    await granuleModel.update({ granuleId }, { status }, ['execution']);
+    log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
+      // delete execution field
+      await granuleModel.update({ granuleId }, { status }, ['execution']);
+      log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
         updates: apiGranule,
         index: process.env.ES_INDEX,
       });
+      log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
       log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${apiGranuleRecord.granuleId}`);
-      // On error, delete the Dynamo record to ensure that all systems
+      // On error, change the Dynamo record back to original status to ensure that all systems
       // stay in sync
-      await granuleModel.delete({
-        granuleId: apiGranule.granuleId,
-        collectionId: apiGranule.collectionId,
+      await granuleModel.update({ granuleId }, {
+        status: originalApiGranule.status,
+        execution: originalApiGranule.execution,
       });
       throw writeError;
     }
@@ -747,13 +751,15 @@ const writeGranulesFromMessage = async ({
  * @returns {Promise}
  * @throws {Error}
  */
-async function updateGranuleStatusToQueued({
-  granule,
-  knex,
-  collectionPgModel = new CollectionPgModel(),
-  granuleModel = new Granule(),
-  granulePgModel = new GranulePgModel(),
-}) {
+const updateGranuleStatusToQueued = async (params) => {
+  const {
+    granule,
+    knex,
+    collectionPgModel = new CollectionPgModel(),
+    granuleModel = new Granule(),
+    granulePgModel = new GranulePgModel(),
+    esClient = await Search.es(),
+  } = params;
   const { granuleId, collectionId } = granule;
   const status = 'queued';
   log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
@@ -782,11 +788,13 @@ async function updateGranuleStatusToQueued({
     await _writeQueuedGranule({
       apiGranuleRecord: updatedApiGranule,
       postgresGranuleRecord: updatedPgGranule,
+      originalApiGranule: granule,
       granuleId,
       granuleModel,
       granulePgModel,
       knex,
       snsEventType: 'Update',
+      esClient,
     });
 
     log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${granuleCumulusId}`);
@@ -794,7 +802,7 @@ async function updateGranuleStatusToQueued({
     log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError);
     throw thrownError;
   }
-}
+};
 
 module.exports = {
   _writeGranule,
