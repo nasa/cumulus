@@ -87,7 +87,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
 - **CUMULUS-2735**
-  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for large reports
+  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
+    large reports
+  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
+    a policy role being exceeded
 
 ## [v9.9.0] 2021-11-03
 
