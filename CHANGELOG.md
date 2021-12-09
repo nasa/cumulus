@@ -52,6 +52,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2769**
     - Update collection PUT endpoint to require existance of postgresql record
       and to ignore lack of dynamoDbRecord on update
+  - **CUMULUS-2767**
+    - Update provider PUT endpoint to require existence of PostgreSQL record
+      and to ignore lack of DynamoDB record on update
   - **CUMULUS-2759**
     - Updates collection/provider/rules/granules creation (post) endpoints to
       primarily check for existence/collision in PostgreSQL database instead of DynamoDB
