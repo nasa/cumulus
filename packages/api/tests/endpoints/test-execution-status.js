@@ -24,6 +24,7 @@ const {
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
   fakeExecutionRecordFactory,
+  translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { AccessToken, Collection, Execution, Granule } = require('../../models');
@@ -33,6 +34,7 @@ const {
   fakeCollectionFactory,
   setAuthorizedOAuthUsers,
   fakeGranuleFactoryV2,
+  fakeExecutionFactoryV2,
 } = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
@@ -44,14 +46,21 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+const executionArn = 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8';
+
 const executionStatusCommon = {
-  executionArn: 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8',
+  executionArn,
   stateMachineArn: 'arn:aws:states:us-east-1:xxx:stateMachine:discoverGranulesStateMachine:3ea094d8',
   name: '3ea094d8',
   status: 'SUCCEEDED',
   startDate: 'date',
   stopDate: 'date',
 };
+
+const fakeExecution = fakeExecutionFactoryV2({
+  arn: executionArn,
+  parentArn: undefined,
+});
 
 const cumulusMetaOutput = () => ({
   cumulus_meta: {
@@ -65,6 +74,10 @@ const cumulusMetaOutput = () => ({
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
 const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
+const fakeExpiredExecution = fakeExecutionFactoryV2({
+  arn: expiredExecutionArn,
+  parentArn: undefined,
+});
 const testDbName = randomId('execution-status_test');
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -231,11 +244,13 @@ test.before(async (t) => {
     final_payload: finalPayload,
   });
   const executionPgModel = new ExecutionPgModel();
+  /*
   const [createdExpiredExecutionRecord] = await executionPgModel.create(
     t.context.knex,
     t.context.fakeExecutionRecord
   );
   const executionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
+  */
 
   // create fake Collections table
   collectionModel = new Collection();
@@ -248,6 +263,8 @@ test.before(async (t) => {
   // create fake Executions table
   executionModel = new Execution();
   await executionModel.createTable();
+  await executionModel.create(fakeExecution);
+  await executionModel.create(fakeExpiredExecution);
 
   process.env = {
     ...process.env,
@@ -286,6 +303,20 @@ test.before(async (t) => {
     fakePgCollection
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
+
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    fakeExecution,
+    knex
+  );
+  const [pgExecution] = await executionPgModel.create(knex, executionPgRecord);
+  const executionPgRecordId = pgExecution.cumulus_id;
+
+  const expiredExecutionPgRecord = await translateApiExecutionToPostgresExecution(
+    fakeExpiredExecution,
+    knex
+  );
+  const [expiredExecution] = await executionPgModel.create(knex, expiredExecutionPgRecord);
+  const expiredExecutionPgRecordId = expiredExecution.cumulus_id;
 
   const granuleId1 = randomId('granuleId1');
   const granuleId2 = randomId('granuleId2');
@@ -326,6 +357,9 @@ test.before(async (t) => {
 
   await upsertGranuleWithExecutionJoinRecord(
     knex, t.context.fakePGGranules[0], executionPgRecordId
+  );
+  await upsertGranuleWithExecutionJoinRecord(
+    knex, t.context.fakePGGranules[0], expiredExecutionPgRecordId
   );
 });
 
@@ -376,6 +410,17 @@ test('returns ARNs for execution and state machine', async (t) => {
   const executionStatus = response.body;
   t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
   t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
+});
+
+test('returns granules for execution in Step Function API', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${executionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionStatus = response.body;
+  t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 
 test('returns full message when it is already included in the output', async (t) => {
