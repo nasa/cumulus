@@ -41,11 +41,11 @@ module "thin_egress_app" {
   domain_name                   = var.tea_distribution_url == null ? null : replace(replace(var.tea_distribution_url, "/^https?:///", ""), "//$/", "")
   jwt_secret_name               = var.thin_egress_jwt_secret_name
   permissions_boundary_name     = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
-  private_vpc                   = var.vpc_id
+  private_vpc                   = local.vpc_id
   stack_name                    = local.tea_stack_name
   stage_name                    = local.tea_stage_name
   urs_auth_creds_secret_name    = aws_secretsmanager_secret.thin_egress_urs_creds.name
-  vpc_subnet_ids                = var.lambda_subnet_ids
+  vpc_subnet_ids                = local.subnet_ids
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   tags                          = local.tags
 }
