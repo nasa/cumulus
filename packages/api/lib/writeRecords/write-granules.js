@@ -431,16 +431,16 @@ const _writeGranule = async ({
 };
 
 /**
- * Update granule record status to queued in DynamoDB, PostgreSQL, Elasticsearch.
+ * Update granule record status in DynamoDB, PostgreSQL, Elasticsearch.
  * Publish SNS event for updated granule.
  *
  * @param {Object}  params
  * @param {Object}  params.apiGranuleRecord      - API Granule object to write to
  *                                                 the database
- * @param {Object}  params.originalApiGranule    - API Granule object before status update
- * @param {Object}  params.postgresGranuleRecord - PostgreSQL granule record to write
+ * @param {Object}  params.postgresGranule       - PostgreSQL granule record to write
  *                                                 to database
- * @param {string}  params.granuleId             - Granule ID
+ * @param {Object}  params.fieldUpdates                 - DynamoDB fields to update
+ * @param {Object}  params.dynamoFieldsToDelete         - DynamoDB fields to delete
  * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
  * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
  * @param {Knex}    params.knex                  - Knex object
@@ -448,11 +448,11 @@ const _writeGranule = async ({
  * @param {Object}  params.esClient              - Elasticsearch client
  * returns {Promise}
  */
-const _writeQueuedGranule = async ({
+const _updateGranule = async ({
   apiGranuleRecord,
-  originalApiGranule,
-  postgresGranuleRecord,
-  granuleId,
+  postgresGranule,
+  fieldUpdates,
+  dynamoFieldsToDelete,
   granuleModel,
   granulePgModel,
   knex,
@@ -460,24 +460,31 @@ const _writeQueuedGranule = async ({
   esClient,
 }) => {
   const apiGranule = apiGranuleRecord;
+  const granuleId = apiGranule.granuleId;
+  // Save execution in case write fails
+  const savedExecution = apiGranule.execution;
   delete apiGranule.execution;
 
-  let granuleCumulusId;
+  let updatedPgGranule;
   const status = 'queued';
   await createRejectableTransaction(knex, async (trx) => {
-    granuleCumulusId = await granulePgModel.update(
+    [updatedPgGranule] = await granulePgModel.update(
       trx,
-      { cumulus_id: postgresGranuleRecord.cumulus_id },
-      { status }
+      { cumulus_id: postgresGranule.cumulus_id },
+      { status },
+      ['*']
     );
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
       // delete execution field
-      await granuleModel.update({ granuleId }, { status }, ['execution']);
+      await granuleModel.update({ granuleId }, { status: 'queued' }, dynamoFieldsToDelete);
       log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
-        updates: apiGranule,
+        updates: {
+          ...apiGranule,
+          ...fieldUpdates,
+        },
         index: process.env.ES_INDEX,
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
@@ -486,8 +493,8 @@ const _writeQueuedGranule = async ({
       // On error, change the Dynamo record back to original status to ensure that all systems
       // stay in sync
       await granuleModel.update({ granuleId }, {
-        status: originalApiGranule.status,
-        execution: originalApiGranule.execution,
+        status: apiGranule.status,
+        execution: savedExecution,
       });
       throw writeError;
     }
@@ -495,14 +502,14 @@ const _writeQueuedGranule = async ({
 
   log.info(
     `
-    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${granuleCumulusId}.
+    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${updatedPgGranule.cumulus_id}.
     `,
-    postgresGranuleRecord
+    postgresGranule
   );
   log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
 
   const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: postgresGranuleRecord,
+    granulePgRecord: updatedPgGranule,
     knexOrTransaction: knex,
   });
   await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
@@ -779,7 +786,6 @@ const updateGranuleStatusToQueued = async (params) => {
     esClient = await Search.es(),
   } = params;
   const { granuleId, collectionId } = granule;
-  const status = 'queued';
   log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
   try {
@@ -794,20 +800,13 @@ const updateGranuleStatusToQueued = async (params) => {
         collection_cumulus_id: collectionCumulusId,
       }
     );
-    const updatedApiGranule = {
-      ...granule,
-      status,
-    };
-    const updatedPgGranule = {
-      ...pgGranule,
-      status,
-    };
+
     const granuleCumulusId = pgGranule.cumulus_id;
-    await _writeQueuedGranule({
-      apiGranuleRecord: updatedApiGranule,
-      postgresGranuleRecord: updatedPgGranule,
-      originalApiGranule: granule,
-      granuleId,
+    await _updateGranule({
+      apiGranuleRecord: granule,
+      postgresGranule: pgGranule,
+      fieldUpdates: { status: 'queued' },
+      dynamoFieldsToDelete: ['execution'],
       granuleModel,
       granulePgModel,
       knex,
