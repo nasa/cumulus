@@ -182,6 +182,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
   const oneWayBucketReport = isOneWayBucketReport(recReportParams);
+  log.debug(`Creating one way report: ${oneWayBucketReport}`);
 
   const query = getFilesAndGranuleInfoQuery({
     knex: recReportParams.knex,
