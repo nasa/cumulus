@@ -8,15 +8,30 @@ The LZARDS backup task takes an array of granules and initiates backup requests 
 
 ## Deployment
 
-The LZARDS backup task is not automatically deployed with Cumulus. Rather, in order to deploy the task through the Cumulus module, you must specify a `lzards_launchpad_passphrase` in your terraform variables. Additionally, ensure that you are passing that variable by ensuring that the Cumulus module has the following input value configuration:
+The LZARDS backup task is not automatically deployed with Cumulus. To deploy the task through the Cumulus module, first you must specify a `lzards_launchpad_passphrase` in your terraform variables (e.g. `variables.tf`) like so:
 
 ```
-lzards_launchpad_passphrase  = var.<launchpad_passphrase_variable_name>
+variable "lzards_launchpad_passphrase" {
+  type    = string
+  default = ""
+}
 ```
 
-In short, deploying the LZARDS task requires configuring a passphrase and ensuring that your TF configuration passes that variable into the Cumulus module.
+Then you can specify a value for your `lzards_launchpad_passphrase` in `terraform.tfvars` like so:
 
-Additional terraform configuration for the LZARDS task can be found in the Cumulus `ingest` module's `variables.tf`, where the the relevant variables are prefixed with `lzards_`.
+```
+lzards_launchpad_passphrase = your-passphrase
+```
+
+Lastly, you need to make sure that the `lzards_launchpad_passphrase` is passed into the Cumulus module (in `main.tf`) like so:
+
+```
+lzards_launchpad_passphrase  = var.lzards_launchpad_passphrase
+```
+
+In short, deploying the LZARDS task requires configuring a passphrase variable and ensuring that your TF configuration passes that variable into the Cumulus module.
+
+Additional terraform configuration for the LZARDS task can be found in the [`cumulus` module's `variables.tf` file,](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) where the the relevant variables are prefixed with `lzards_`. You can add these variables to your deployment using the same process outlined above for `lzards_launchpad_passphrase`.
 
 ## Task Inputs
 
