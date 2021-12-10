@@ -192,7 +192,7 @@ test.serial('applyWorkflow throws error if workflow argument is missing', async 
   );
 });
 
-test.serial('applyWorkflow and invokes Lambda to schedule workflow', async (t) => {
+test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
   const granule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
