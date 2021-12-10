@@ -2,7 +2,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const sinon = require('sinon');
 const test = require('ava');
+const range = require('lodash/range');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   buildS3Uri,
@@ -18,6 +20,7 @@ const { isCMRFile } = require('@cumulus/cmrjs');
 const cloneDeep = require('lodash/cloneDeep');
 const set = require('lodash/set');
 const errors = require('@cumulus/errors');
+const S3 = require('@cumulus/aws-client/S3');
 const {
   randomString, randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
@@ -650,4 +653,46 @@ test.serial('url_path is evaluated correctly when the metadata file is ISO', asy
     Key: expectedKey,
   });
   t.true(check);
+});
+
+test.serial('task config s3MultipartChunksizeMb is used for moving s3 files if specified', async (t) => {
+  process.env.default_s3_multipart_chunksize_mb = 256;
+  const collectionChunkSizeMb = 16;
+  const moveObjectStub = sinon.stub(S3, 'moveObject').resolves();
+
+  const newPayload = buildPayload(t);
+  set(newPayload, 'config.s3MultipartChunksizeMb', collectionChunkSizeMb);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await moveGranules(newPayload);
+  range(4).map((i) => {
+    const args = moveObjectStub.getCall(i).firstArg;
+    const expectedChunkSize = isCMRFile({ key: args.sourceKey })
+      ? undefined : collectionChunkSizeMb * 1024 * 1024;
+    t.is(args.chunkSize, expectedChunkSize);
+    return args;
+  });
+
+  moveObjectStub.restore();
+});
+
+test.serial('default_s3_multipart_chunksize_mb is used for moving s3 files if task config s3MultipartChunksizeMb is not specified', async (t) => {
+  process.env.default_s3_multipart_chunksize_mb = 256;
+  const moveObjectStub = sinon.stub(S3, 'moveObject').resolves();
+
+  const newPayload = buildPayload(t);
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+  await moveGranules(newPayload);
+  range(4).map((i) => {
+    const args = moveObjectStub.getCall(i).firstArg;
+    const expectedChunkSize = isCMRFile({ key: args.sourceKey })
+      ? undefined : process.env.default_s3_multipart_chunksize_mb * 1024 * 1024;
+    t.is(args.chunkSize, expectedChunkSize);
+    return args;
+  });
+
+  moveObjectStub.restore();
 });
