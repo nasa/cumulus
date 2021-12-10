@@ -28,3 +28,4 @@ buckets = {
 }
 cmr_oauth_provider = "launchpad"
 oauth_provider   = "earthdata"
+orca_default_bucket = "kk2-tf-orca-glacier"

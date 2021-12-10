@@ -2,6 +2,7 @@
 
 const fs = require('fs-extra');
 const get = require('lodash/get');
+const pRetry = require('p-retry');
 
 const { Granule } = require('@cumulus/api/models');
 const {
@@ -238,22 +239,62 @@ describe('The S3 Ingest Granules workflow', () => {
       await waitForGranuleRecordsInList(config.stackName, [granuleId]);
     });
 
-    it('retrieves recovery request status through the Cumulus API', async () => {
+    it('retrieves recovery request granule status through the Cumulus API', async () => {
       if (!isOrcaIncluded) pending();
 
-      const response = await listRequests({
-        prefix: config.stackName,
-        query: { asyncOperationId, granuleId },
-      });
-      const request = JSON.parse(response.body);
-      const status = ['pending', 'staged', 'success'];
+      const request = await pRetry(
+        async () => {
+          const list = await listRequests({
+            prefix: config.stackName,
+            query: { asyncOperationId, granuleId },
+          });
+          const body = JSON.parse(list.body);
+          if (body.httpStatus === 404) {
+            throw new Error(`Waiting for recovery status become available, get message ${body.message}`);
+          }
+          return body;
+        },
+        {
+          minTimeout: 60 * 1000,
+        }
+      );
 
+      const status = ['pending', 'staged', 'success'];
+    console.log(request);
       expect(request.granule_id).toEqual(granuleId);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(get(request, 'files', []).length).toBe(3);
 
       const checkRequests = get(request, 'files', []).map((file) => status.includes(file.status));
       checkRequests.forEach((check) => expect(check).toEqual(true));
+    });
+
+    it('retrieves recovery request job status through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+
+      const request = await pRetry(
+        async () => {
+          const list = await listRequests({
+            prefix: config.stackName,
+            query: { asyncOperationId },
+          });
+          const body = JSON.parse(list.body);
+          if (body.httpStatus === 404) {
+            throw new Error(`Waiting for recovery status become available, get message ${body.message}`);
+          }
+          return body;
+        },
+        {
+          minTimeout: 60 * 1000,
+        }
+      );
+
+      const status = ['pending', 'staged', 'success'];
+    console.log(request);
+      expect(request.asyncOperationId).toEqual(asyncOperationId);
+      expect(request.granules.length).toBe(1);
+      expect(request.granules[0].granule_id).toEqual(granuleId);
+      expect(status.includes(request.granules[0].status)).toEqual(true);
     });
   });
 
@@ -267,6 +308,7 @@ describe('The S3 Ingest Granules workflow', () => {
           getRecoveryStatus: true,
         },
       });
+    console.log(response);
 
       const granules = JSON.parse(response.body).results;
       expect(granules.length).toBe(1);
@@ -281,7 +323,7 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId,
         query: { getRecoveryStatus: true },
       });
-
+console.log(granule);
       expect(granule.granuleId).toEqual(granuleId);
       expect((granule.recoveryStatus === 'running') || (granule.recoveryStatus === 'completed')).toBeTrue();
     });

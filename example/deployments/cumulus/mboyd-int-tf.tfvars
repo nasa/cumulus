@@ -31,3 +31,4 @@ buckets = {
     type = "public"
   }
 }
+orca_default_bucket = "cumulus-test-sandbox-orca-glacier"

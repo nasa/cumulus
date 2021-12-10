@@ -30,3 +30,4 @@ buckets = {
     type = "public"
   }
 }
+orca_default_bucket = "jtran-int-tf-orca-glacier"
