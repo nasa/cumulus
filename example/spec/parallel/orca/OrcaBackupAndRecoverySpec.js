@@ -260,7 +260,6 @@ describe('The S3 Ingest Granules workflow', () => {
       );
 
       const status = ['pending', 'staged', 'success'];
-    console.log(request);
       expect(request.granule_id).toEqual(granuleId);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(get(request, 'files', []).length).toBe(3);
@@ -290,7 +289,6 @@ describe('The S3 Ingest Granules workflow', () => {
       );
 
       const status = ['pending', 'staged', 'success'];
-    console.log(request);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(request.granules.length).toBe(1);
       expect(request.granules[0].granule_id).toEqual(granuleId);
@@ -308,7 +306,6 @@ describe('The S3 Ingest Granules workflow', () => {
           getRecoveryStatus: true,
         },
       });
-    console.log(response);
 
       const granules = JSON.parse(response.body).results;
       expect(granules.length).toBe(1);
@@ -323,7 +320,6 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId,
         query: { getRecoveryStatus: true },
       });
-console.log(granule);
       expect(granule.granuleId).toEqual(granuleId);
       expect((granule.recoveryStatus === 'running') || (granule.recoveryStatus === 'completed')).toBeTrue();
     });
