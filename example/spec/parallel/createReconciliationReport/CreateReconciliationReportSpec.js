@@ -100,7 +100,6 @@ const ingestAndPublishGranuleExecutionArns = [];
  *
  * @param {string} prefix - stack Prefix
  * @param {string} sourceBucket - testing source bucket
- * @param {string} stackName - stack used for testing
  * @returns {Promise<Object>}  The collection created
  */
 const createActiveCollection = async (prefix, sourceBucket) => {
@@ -485,6 +484,7 @@ describe('When there are granule differences and granule reconciliation is run',
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
       expect(report.filesInCumulus.onlyInS3).not.toContain(extraS3ObjectUri);
+      expect(report.filesInCumulus.onlyInS3.length).toBe(0);
     });
 
     it('generates a report showing cumulus files that are in the Cumulus files table but not in S3', () => {
@@ -500,7 +500,7 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.collectionsInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a report showing requested collections that are in Cumulus but not in CMR', () => {
+    it('generates a filtered report showing requested collections that are in Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
