@@ -57,6 +57,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
   - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
+- **CUMULUS-2773**
+  - Added a document to the workflow-tasks docs describing deployment, configuration and usage of the LZARDS backup task.
 
 ### Changed
 
