@@ -801,7 +801,6 @@ const updateGranuleStatusToQueued = async (params) => {
       }
     );
 
-    const granuleCumulusId = pgGranule.cumulus_id;
     await _updateGranule({
       apiGranuleRecord: granule,
       postgresGranule: pgGranule,
@@ -814,7 +813,7 @@ const updateGranuleStatusToQueued = async (params) => {
       esClient,
     });
 
-    log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${granuleCumulusId}`);
+    log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
   } catch (thrownError) {
     log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError);
     throw thrownError;
