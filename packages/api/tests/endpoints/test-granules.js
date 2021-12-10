@@ -1699,7 +1699,7 @@ test.serial('create (POST) creates new granule without an execution in DynamoDB,
 
   t.deepEqual(
     JSON.parse(response.text),
-    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${t.context.collectionId}` }
   );
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
@@ -1735,7 +1735,7 @@ test.serial('create (POST) creates new granule with associated execution in Dyna
   );
   t.deepEqual(
     JSON.parse(response.text),
-    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}` }
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}` }
   );
   t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
   t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
@@ -2104,6 +2104,7 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
     search: () => [{
       created_at: new Date(),
     }],
+    get: () => ({}),
   };
 
   const updatedGranule = {
@@ -2239,7 +2240,7 @@ test.serial('PUT adds granule if it does not exist', async (t) => {
     .expect(201);
 
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}`,
+    message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
   });
 });
 
@@ -2289,7 +2290,7 @@ test.serial('PUT returns an updated granule with an undefined execution', async 
   );
 
   t.deepEqual(JSON.parse(modifiedResponse.text), {
-    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
   });
 
   t.is(fetchedDynamoRecord.status, 'failed');
@@ -2370,7 +2371,7 @@ test.serial('PUT returns an updated granule with associated execution', async (t
   );
 
   t.deepEqual(JSON.parse(modifiedResponse.text), {
-    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
   });
 
   t.is(fetchedDynamoRecord.status, 'failed');
@@ -2404,12 +2405,19 @@ test.serial('PUT returns bad request when the path param granuleName does not ma
 
 test.serial('update (PUT) can set running granule status to queued', async (t) => {
   const granuleId = cryptoRandomString({ length: 6 });
-  const runningGranule = fakeGranuleFactoryV2({
-    granuleId: granuleId,
+  const runningGranule = fakeGranuleRecordFactory({
+    granule_id: granuleId,
     status: 'running',
-    execution: t.context.executionUrl,
+    collection_cumulus_id: t.context.collectionCumulusId,
   });
-  await granuleModel.create(runningGranule);
+
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+
+  const pgGranule = (await t.context.granulePgModel.create(t.context.knex, runningGranule))[0];
+  await granulesExecutionsPgModel.create(t.context.knex, {
+    granule_cumulus_id: pgGranule.cumulus_id,
+    execution_cumulus_id: t.context.testExecutionCumulusId,
+  });
 
   const response = await request(app)
     .put(`/granules/${granuleId}`)
@@ -2423,7 +2431,7 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
 });
 
@@ -2442,7 +2450,7 @@ test.serial('PUT will not set completed status to queued', async (t) => {
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id: ${granuleId}`,
+    message: `Successfully updated granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
   const fetchedDynamoRecord = await granuleModel.get({
     granuleId,
@@ -2465,7 +2473,7 @@ test.serial('PUT can create a new granule with status queued', async (t) => {
 
   t.is(response.status, 201);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully wrote granule with Granule Id: ${granuleId}`,
+    message: `Successfully wrote granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
 });
 
@@ -2516,7 +2524,7 @@ test.serial('associateExecution (POST) returns Not Found if granule does not exi
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId}`);
+  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${t.context.collectionId}`);
 });
 
 test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
@@ -2587,7 +2595,6 @@ test.serial('associateExecution (POST) associates an execution with a granule', 
   });
 
   t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
-
   t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
   t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
   t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
@@ -2622,7 +2629,7 @@ test.serial('associateExecution (POST) returns Not Found if execution does not e
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, `Execution ${executionArn} not found`);
+  t.is(response.body.message, `No execution found to associate granule with for executionArn ${executionArn}`);
 });
 
 test.serial('associateExecution (POST) returns Not Found if collectionId in payload does not match the granule record', async (t) => {
@@ -2653,5 +2660,5 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.true(response.body.message.includes(`No granule found to associate execution with for granuleId ${newGranule.granuleId} collectionId ${collectionId}`));
+  t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
 });

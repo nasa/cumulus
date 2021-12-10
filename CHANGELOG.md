@@ -49,6 +49,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2769**
+    - Update collection PUT endpoint to require existance of postgresql record
+      and to ignore lack of dynamoDbRecord on update
+  - **CUMULUS-2767**
+    - Update provider PUT endpoint to require existence of PostgreSQL record
+      and to ignore lack of DynamoDB record on update
   - **CUMULUS-2759**
     - Updates collection/provider/rules/granules creation (post) endpoints to
       primarily check for existence/collision in PostgreSQL database instead of DynamoDB
@@ -349,6 +355,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
   - **CUMULUS-2661**
     - Updated PUT `/executions/<arn>` endpoint to publish SNS message of updated record to executions SNS topic
+  - **CUMULUS-2774**
+    - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
+      to throw error if `eventType` is invalid or undefined.
 
 ## [v9.9.0] 2021-11-03
 
