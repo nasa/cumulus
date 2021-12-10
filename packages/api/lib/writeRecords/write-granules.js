@@ -459,11 +459,11 @@ const _updateGranule = async ({
   snsEventType = 'Update',
   esClient,
 }) => {
-  const apiGranule = apiGranuleRecord;
-  const granuleId = apiGranule.granuleId;
-  // Save execution in case write fails
-  const savedExecution = apiGranule.execution;
-  delete apiGranule.execution;
+  const esGranule = {
+    ...apiGranuleRecord,
+  };
+  const granuleId = apiGranuleRecord.granuleId;
+  delete esGranule.execution;
 
   let updatedPgGranule;
   const status = 'queued';
@@ -482,7 +482,7 @@ const _updateGranule = async ({
       await upsertGranule({
         esClient,
         updates: {
-          ...apiGranule,
+          ...esGranule,
           ...fieldUpdates,
         },
         index: process.env.ES_INDEX,
@@ -493,8 +493,8 @@ const _updateGranule = async ({
       // On error, change the Dynamo record back to original status to ensure that all systems
       // stay in sync
       await granuleModel.update({ granuleId }, {
-        status: apiGranule.status,
-        execution: savedExecution,
+        status: apiGranuleRecord.status,
+        execution: apiGranuleRecord.execution,
       });
       throw writeError;
     }
