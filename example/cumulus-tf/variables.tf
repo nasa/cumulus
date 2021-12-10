@@ -187,6 +187,12 @@ variable "cumulus_distribution_url" {
   description = "The url of cumulus distribution API Gateway endpoint"
 }
 
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
+}
+
 variable "tea_distribution_url" {
   type    = string
   default = null

@@ -212,6 +212,10 @@ module.exports.collection = {
       title: 'Optional MetaData for the Collection',
       type: 'object',
       additionalProperties: true,
+      s3MultipartChunksizeMb: {
+        description: 'chunk size of the S3 multipart uploads for the collection',
+        type: 'number',
+      },
     },
     tags: {
       title: 'Optional tags for search',
