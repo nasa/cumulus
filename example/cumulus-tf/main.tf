@@ -122,6 +122,8 @@ module "cumulus" {
 
   cmr_oauth_provider = var.cmr_oauth_provider
 
+  default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
