@@ -17,8 +17,6 @@ const {
   getFilesAndGranuleInfoQuery,
   getKnexClient,
   QuerySearchClient,
-  getCumulusCollectionIdsByCollectionIds,
-  ProviderPgModel,
 } = require('@cumulus/db');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');

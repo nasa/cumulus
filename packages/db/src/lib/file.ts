@@ -7,8 +7,9 @@ import { PostgresFileRecord } from '../types/file';
 import { PostgresGranuleRecord } from '../types/granule';
 
 /**
- * Helper to build a query that returns records from the files table
- * with data joined in from the granules table.
+ * Helper to build a query that returns records from the files table with data
+ * joined in from the granules table optionally filtered by collectionIds,
+ * granulesIds and providers.
  *
  * @param {Object} params
  * @param {Knex} params.knex - Knex client object
@@ -49,7 +50,7 @@ export const getFilesAndGranuleInfoQuery = ({
     granules: granulesTable,
     providers: providersTable,
   } = TableNames;
-  let query = knex(filesTable)
+  const query = knex(filesTable)
     .select(`${filesTable}.*`)
     .modify((queryBuilder: Knex.QueryBuilder) => {
       if (granuleColumns.length > 0) {
@@ -85,11 +86,13 @@ export const getFilesAndGranuleInfoQuery = ({
     query.whereIn('granule_id', granuleIds);
   }
   if (providers.length > 0) {
-    query.innerJoin(
-      providersTable,
-      `${granulesTable}.provider_cumulus_id`,
-      `${providersTable}.cumulus_id`)
-      .whereIn(`${providersTable}.name`, providers)
-  };
+    query
+      .innerJoin(
+        providersTable,
+        `${granulesTable}.provider_cumulus_id`,
+        `${providersTable}.cumulus_id`
+      )
+      .whereIn(`${providersTable}.name`, providers);
+  }
   return query;
 };
