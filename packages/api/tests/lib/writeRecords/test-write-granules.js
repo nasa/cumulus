@@ -1541,6 +1541,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in DynamoDB/Po
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
 
   await updateGranuleStatusToQueued({
     granule: dynamoRecord,
@@ -1554,7 +1555,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in DynamoDB/Po
   );
   const omitList = ['_id', 'execution', 'status', 'updatedAt', 'updated_at', 'files'];
   const sortByKeys = ['bucket', 'key'];
-  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
     knexOrTransaction: knex,
@@ -1562,12 +1563,13 @@ test.serial('updateGranuleStatusToQueued() updates granule status in DynamoDB/Po
 
   t.is(updatedDynamoRecord.status, 'queued');
   t.is(updatedPostgresRecord.status, 'queued');
-  t.is(esRecord.status, 'queued');
+  t.is(updatedEsRecord.status, 'queued');
   t.is(updatedDynamoRecord.execution, undefined);
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
-  t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
+  t.deepEqual(omit(translatedPgGranule, omitList), omit(updatedEsRecord, omitList));
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
