@@ -1641,11 +1641,14 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticse
   t.is(esRecord.status, 'completed');
   t.truthy(dynamoRecord.execution);
 
-  await t.throwsAsync(updateGranuleStatusToQueued({
-    granule: dynamoRecord,
-    knex,
-    granulePgModel: testGranulePgModel,
-  }));
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      granulePgModel: testGranulePgModel,
+    }),
+    { message: 'Granules Postgres error' }
+  );
 
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
@@ -1686,7 +1689,7 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or PostgreSQ
 
   const fakeEsClient = {
     update: () => {
-      throw new Error('something bad');
+      throw new Error('Elasticsearch failure');
     },
     delete: () => Promise.resolve(),
   };
@@ -1704,11 +1707,14 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or PostgreSQ
   t.is(esRecord.status, 'completed');
   t.truthy(dynamoRecord.execution);
 
-  await t.throwsAsync(updateGranuleStatusToQueued({
-    granule: dynamoRecord,
-    knex,
-    esClient: fakeEsClient,
-  }));
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      esClient: fakeEsClient,
+    }),
+    { message: 'Elasticsearch failure' }
+  );
 
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
@@ -1748,9 +1754,10 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
   } = t.context;
 
   const fakeGranuleModel = {
+    create: () => Promise.resolve(granule),
     get: () => Promise.resolve(granule),
     update: () => {
-      throw new Error('something bad');
+      throw new Error('DynamoDB failure');
     },
   };
 
@@ -1767,11 +1774,14 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
   t.is(esRecord.status, 'completed');
   t.truthy(dynamoRecord.execution);
 
-  await t.throwsAsync(updateGranuleStatusToQueued({
-    granule: dynamoRecord,
-    knex,
-    granuleModel: fakeGranuleModel,
-  }));
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      granuleModel: fakeGranuleModel,
+    }),
+    { message: 'DynamoDB failure' }
+  );
 
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
