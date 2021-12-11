@@ -356,23 +356,7 @@ const writeGranuleToDynamoAndEs = async (params) => {
   }
 };
 
-/**
- * Write a granule record to DynamoDB, PostgreSQL, Elasticsearch. Publish SNS event for granule.
- *
- * @param {Object}  params
- * @param {Object}  params.postgresGranuleRecord - PostgreSQL granule record to write
- *                                                 to database
- * @param {Object}  params.apiGranuleRecord      - Api Granule object to write to
- *                                                 the database
- * @param {Object}  params.esClient              - Elasticsearch client
- * @param {number}  params.executionCumulusId    - Execution ID the granule was written from
- * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
- * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
- * @param {Knex}    params.knex                  - Knex object
- * @param {string}  params.snsEventType          - SNS Event Type
- * returns {Promise}
- */
-const _writeGranule = async ({
+const _writeGranuleRecords = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   knex,
@@ -408,18 +392,6 @@ const _writeGranule = async ({
   return pgGranule;
 };
 
-const _publishPostgresGranuleUpdateToSns = async ({
-  snsEventType,
-  pgGranule,
-  knex,
-}) => {
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-  });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-};
-
 const _writePostgresFilesFromApiGranuleFiles = async ({
   apiGranuleRecord,
   granuleCumulusId,
@@ -438,6 +410,18 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
       granuleModel: new Granule(),
     });
   }
+};
+
+const _publishPostgresGranuleUpdateToSns = async ({
+  snsEventType,
+  pgGranule,
+  knex,
+}) => {
+  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
 };
 
 /**
@@ -581,7 +565,7 @@ const _updateGranule = async ({
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
       // delete execution field
-      await granuleModel.update({ granuleId }, { status: 'queued' }, dynamoFieldsToDelete);
+      await granuleModel.update({ granuleId }, fieldUpdates, dynamoFieldsToDelete);
       log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
