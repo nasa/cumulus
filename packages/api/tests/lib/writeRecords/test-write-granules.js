@@ -1652,11 +1652,12 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticse
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
     knexOrTransaction: knex,
   });
-  const omitList = ['_id', 'execution', 'status', 'updatedAt', 'updated_at', 'files'];
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
   const sortByKeys = ['bucket', 'key'];
 
   t.not(updatedDynamoRecord.status, 'queued');
@@ -1667,6 +1668,7 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticse
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
   t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
 });
 
@@ -1713,11 +1715,12 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or PostgreSQ
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
     knexOrTransaction: knex,
   });
-  const omitList = ['_id', 'execution', 'status', 'updatedAt', 'updated_at', 'files'];
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
   const sortByKeys = ['bucket', 'key'];
 
   t.not(updatedDynamoRecord.status, 'queued');
@@ -1728,6 +1731,7 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or PostgreSQ
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
   t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
 });
 
@@ -1774,11 +1778,12 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
     knexOrTransaction: knex,
   });
-  const omitList = ['_id', 'execution', 'status', 'updatedAt', 'updated_at', 'files'];
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
   const sortByKeys = ['bucket', 'key'];
 
   t.not(updatedDynamoRecord.status, 'queued');
@@ -1789,6 +1794,7 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
   t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
 });
 
