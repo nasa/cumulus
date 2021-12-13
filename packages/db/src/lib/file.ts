@@ -70,13 +70,18 @@ export const getFilesAndGranuleInfoQuery = ({
     query.limit(limit);
   }
   if (collectionIds.length > 0) {
-    query.innerJoin(collectionsTable,
-                    `${granulesTable}.collection_cumulus_id`,
-                    `${collectionsTable}.cumulus_id`);
+    query.innerJoin(
+      collectionsTable,
+      `${granulesTable}.collection_cumulus_id`,
+      `${collectionsTable}.cumulus_id`
+    );
     const nameVersionPairs = collectionIds.map(deconstructCollectionId);
     query.andWhere(function () {
       const innerQuery = this;
-      const firstPair = nameVersionPairs.pop() as { name: string, version: string };
+      const firstPair = nameVersionPairs.pop() as {
+        name: string;
+        version: string;
+      };
       innerQuery.where(firstPair);
       nameVersionPairs.forEach((pair) => innerQuery.orWhere(pair));
     });
