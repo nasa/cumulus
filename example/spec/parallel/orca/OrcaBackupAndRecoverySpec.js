@@ -239,35 +239,6 @@ describe('The S3 Ingest Granules workflow', () => {
       await waitForGranuleRecordsInList(config.stackName, [granuleId]);
     });
 
-    it('retrieves recovery request granule status through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
-
-      const request = await pRetry(
-        async () => {
-          const list = await listRequests({
-            prefix: config.stackName,
-            query: { asyncOperationId, granuleId },
-          });
-          const body = JSON.parse(list.body);
-          if (body.httpStatus === 404) {
-            throw new Error(`Waiting for recovery status become available, get message ${body.message}`);
-          }
-          return body;
-        },
-        {
-          minTimeout: 60 * 1000,
-        }
-      );
-
-      const status = ['pending', 'staged', 'success'];
-      expect(request.granule_id).toEqual(granuleId);
-      expect(request.asyncOperationId).toEqual(asyncOperationId);
-      expect(get(request, 'files', []).length).toBe(3);
-
-      const checkRequests = get(request, 'files', []).map((file) => status.includes(file.status));
-      checkRequests.forEach((check) => expect(check).toEqual(true));
-    });
-
     it('retrieves recovery request job status through the Cumulus API', async () => {
       if (!isOrcaIncluded) pending();
 
@@ -288,11 +259,30 @@ describe('The S3 Ingest Granules workflow', () => {
         }
       );
 
+      if (request.httpStatus) console.log(request);
       const status = ['pending', 'staged', 'success'];
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(request.granules.length).toBe(1);
       expect(request.granules[0].granule_id).toEqual(granuleId);
       expect(status.includes(request.granules[0].status)).toEqual(true);
+    });
+
+    it('retrieves recovery request granule status through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+
+      const list = await listRequests({
+        prefix: config.stackName,
+        query: { asyncOperationId, granuleId },
+      });
+      const request = JSON.parse(list.body);
+      if (request.httpStatus) console.log(request);
+      const status = ['pending', 'staged', 'success'];
+      expect(request.granule_id).toEqual(granuleId);
+      expect(request.asyncOperationId).toEqual(asyncOperationId);
+      expect(get(request, 'files', []).length).toBe(3);
+
+      const checkRequests = get(request, 'files', []).map((file) => status.includes(file.status));
+      checkRequests.forEach((check) => expect(check).toEqual(true));
     });
   });
 
