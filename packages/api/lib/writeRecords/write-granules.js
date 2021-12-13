@@ -527,7 +527,6 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {Object}  params.apiGranule            - API Granule object to write to
  *                                                 the database
  * @param {Object}  params.postgresGranule       - PostgreSQL granule
- *                                                 to database
  * @param {Object}  params.apiFieldUpdates       - API fields to update
  * @param {Object}  params.pgFieldUpdates        - PostgreSQL fields to update
  * @param {Object}  params.apiFieldsToDelete     - API fields to delete
