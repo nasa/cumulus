@@ -357,6 +357,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
   - **CUMULUS-2661**
     - Updated PUT `/executions/<arn>` endpoint to publish SNS message of updated record to executions SNS topic
+  - **CUMULUS-2765**
+    - Updated `updateGranuleStatusToQueued` in `write-granules` to write to
+      Elasticsearch and publish SNS message to granules topic.
   - **CUMULUS-2774**
     - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
       to throw error if `eventType` is invalid or undefined.
