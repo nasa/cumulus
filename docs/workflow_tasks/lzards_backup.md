@@ -10,7 +10,7 @@ The LZARDS backup task takes an array of granules and initiates backup requests 
 
 The LZARDS backup task is not automatically deployed with Cumulus. To deploy the task through the Cumulus module, first you must specify a `lzards_launchpad_passphrase` in your terraform variables (e.g. `variables.tf`) like so:
 
-```
+```hcl
 variable "lzards_launchpad_passphrase" {
   type    = string
   default = ""
@@ -19,13 +19,13 @@ variable "lzards_launchpad_passphrase" {
 
 Then you can specify a value for your `lzards_launchpad_passphrase` in `terraform.tfvars` like so:
 
-```
+```hcl
 lzards_launchpad_passphrase = your-passphrase
 ```
 
 Lastly, you need to make sure that the `lzards_launchpad_passphrase` is passed into the Cumulus module (in `main.tf`) like so:
 
-```
+```hcl
 lzards_launchpad_passphrase  = var.lzards_launchpad_passphrase
 ```
 
@@ -52,6 +52,7 @@ For the most recent config.json schema, please see the [Cumulus Tasks page](../t
 ### Output
 
 The LZARDS task outputs a composite object containing:
+
 - the input `granules` array, and
 - a `backupResults` object that describes the results of LZARDS backup attempts.
 
