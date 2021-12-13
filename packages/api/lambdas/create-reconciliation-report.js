@@ -66,15 +66,11 @@ function isOneWayCollectionReport(reportParams) {
 }
 
 /**
- * Decides whether we compare all found S3 objects with the database or not. If
- * any user parameters filter the database results, then we do not want to
- * compare all found s3 objects back against the database. There is no way to
- * tell what granule/collection/provider/etc a given object belongs to, so we
- * only compare DB files against what we find on S3.
+ * Decide whether we compare all found S3 objects with the database or not.
 
  * @param {Object} reportParams
- * @returns {boolean} True if the bucket comparison should only be done from
- * the database to objects found on s3.
+ * @returns {boolean} True, when the bucket comparison should only be done from
+ *                    the database to objects found on s3.
  */
 const isOneWayBucketReport = (reportParams) => [
   'providers',

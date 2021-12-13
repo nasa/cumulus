@@ -71,8 +71,8 @@ export const getFilesAndGranuleInfoQuery = ({
   }
   if (collectionIds.length > 0) {
     query.innerJoin(collectionsTable,
-		     `${granulesTable}.collection_cumulus_id`,
-		    `${collectionsTable}.cumulus_id`)
+                    `${granulesTable}.collection_cumulus_id`,
+                    `${collectionsTable}.cumulus_id`);
     const nameVersionPairs = collectionIds.map(deconstructCollectionId);
     query.andWhere(function () {
       const innerQuery = this;
