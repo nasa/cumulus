@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 
-import { collectionIdSeparator } from '@cumulus/message/Collections';
+import { deconstructCollectionId } from '@cumulus/message/Collections';
 
 import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
@@ -70,17 +70,16 @@ export const getFilesAndGranuleInfoQuery = ({
     query.limit(limit);
   }
   if (collectionIds.length > 0) {
-    query.innerJoin(
-      collectionsTable,
-      `${granulesTable}.collection_cumulus_id`,
-      `${collectionsTable}.cumulus_id`
-    );
-    const collectionIdConcatField = `(${collectionsTable}.name || '${collectionIdSeparator}' || ${collectionsTable}.version)`;
-    const collectionIdInClause = collectionIds.map(() => '?').join(',');
-    query.whereRaw(
-      `${collectionIdConcatField} IN (${collectionIdInClause})`,
-      collectionIds
-    );
+    query.innerJoin(collectionsTable,
+		     `${granulesTable}.collection_cumulus_id`,
+		    `${collectionsTable}.cumulus_id`)
+    const nameVersionPairs = collectionIds.map(deconstructCollectionId);
+    query.andWhere(function () {
+      const innerQuery = this;
+      const firstPair = nameVersionPairs.pop() as { name: string, version: string };
+      innerQuery.where(firstPair);
+      nameVersionPairs.forEach((pair) => innerQuery.orWhere(pair));
+    });
   }
   if (granuleIds.length > 0) {
     query.whereIn('granule_id', granuleIds);
