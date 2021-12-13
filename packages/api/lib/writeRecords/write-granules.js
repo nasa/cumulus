@@ -528,7 +528,8 @@ const writeGranuleRecordAndPublishSns = async ({
  *                                                 the database
  * @param {Object}  params.postgresGranule       - PostgreSQL granule record to write
  *                                                 to database
- * @param {Object}  params.fieldUpdates          - DynamoDB fields to update
+ * @param {Object}  params.apiFieldUpdates       - API fields to update
+ * @param {Object}  params.pgFieldUpdates        - PostgreSQL fields to update
  * @param {Object}  params.apiFieldsToDelete     - API fields to delete
  * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
  * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
@@ -540,7 +541,8 @@ const writeGranuleRecordAndPublishSns = async ({
 const _updateGranule = async ({
   apiGranule,
   postgresGranule,
-  fieldUpdates,
+  apiFieldUpdates,
+  pgFieldUpdates,
   apiFieldsToDelete,
   granuleModel,
   granulePgModel,
@@ -552,24 +554,23 @@ const _updateGranule = async ({
   const esGranule = omit(apiGranule, apiFieldsToDelete);
 
   let updatedPgGranule;
-  const status = 'queued';
   await createRejectableTransaction(knex, async (trx) => {
     [updatedPgGranule] = await granulePgModel.update(
       trx,
       { cumulus_id: postgresGranule.cumulus_id },
-      { status },
+      pgFieldUpdates,
       ['*']
     );
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
       // delete execution field
-      await granuleModel.update({ granuleId }, fieldUpdates, apiFieldsToDelete);
+      await granuleModel.update({ granuleId }, apiFieldUpdates, apiFieldsToDelete);
       log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
         updates: {
           ...esGranule,
-          ...fieldUpdates,
+          ...apiFieldUpdates,
         },
         index: process.env.ES_INDEX,
       });
@@ -888,7 +889,8 @@ const updateGranuleStatusToQueued = async (params) => {
     await _updateGranule({
       apiGranule: granule,
       postgresGranule: pgGranule,
-      fieldUpdates: { status: 'queued' },
+      apiFieldUpdates: { status: 'queued' },
+      pgFieldUpdates: { status: 'queued' },
       apiFieldsToDelete: ['execution'],
       granuleModel,
       granulePgModel,
