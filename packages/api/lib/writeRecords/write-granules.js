@@ -2,6 +2,7 @@
 
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -523,12 +524,12 @@ const writeGranuleRecordAndPublishSns = async ({
  * Publish SNS event for updated granule.
  *
  * @param {Object}  params
- * @param {Object}  params.apiGranuleRecord      - API Granule object to write to
+ * @param {Object}  params.apiGranule            - API Granule object to write to
  *                                                 the database
  * @param {Object}  params.postgresGranule       - PostgreSQL granule record to write
  *                                                 to database
- * @param {Object}  params.fieldUpdates                 - DynamoDB fields to update
- * @param {Object}  params.dynamoFieldsToDelete         - DynamoDB fields to delete
+ * @param {Object}  params.fieldUpdates          - DynamoDB fields to update
+ * @param {Object}  params.apiFieldsToDelete     - API fields to delete
  * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
  * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
  * @param {Knex}    params.knex                  - Knex object
@@ -537,21 +538,18 @@ const writeGranuleRecordAndPublishSns = async ({
  * returns {Promise}
  */
 const _updateGranule = async ({
-  apiGranuleRecord,
+  apiGranule,
   postgresGranule,
   fieldUpdates,
-  dynamoFieldsToDelete,
+  apiFieldsToDelete,
   granuleModel,
   granulePgModel,
   knex,
   snsEventType = 'Update',
   esClient,
 }) => {
-  const esGranule = {
-    ...apiGranuleRecord,
-  };
-  const granuleId = apiGranuleRecord.granuleId;
-  delete esGranule.execution;
+  const granuleId = apiGranule.granuleId;
+  const esGranule = omit(apiGranule, apiFieldsToDelete);
 
   let updatedPgGranule;
   const status = 'queued';
@@ -565,7 +563,7 @@ const _updateGranule = async ({
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
       // delete execution field
-      await granuleModel.update({ granuleId }, fieldUpdates, dynamoFieldsToDelete);
+      await granuleModel.update({ granuleId }, fieldUpdates, apiFieldsToDelete);
       log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
@@ -577,10 +575,10 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${apiGranuleRecord.granuleId}`);
+      log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`);
       // On error, recreate the DynamoDB record to revert it back to original
       // status to ensure that all systems stay in sync
-      await granuleModel.create(apiGranuleRecord);
+      await granuleModel.create(apiGranule);
       throw writeError;
     }
   });
@@ -591,7 +589,7 @@ const _updateGranule = async ({
     `,
     postgresGranule
   );
-  log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
+  log.info('Successfully wrote granule %j to DynamoDB', apiGranule);
 
   const granuletoPublish = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPgGranule,
@@ -888,10 +886,10 @@ const updateGranuleStatusToQueued = async (params) => {
     );
 
     await _updateGranule({
-      apiGranuleRecord: granule,
+      apiGranule: granule,
       postgresGranule: pgGranule,
       fieldUpdates: { status: 'queued' },
-      dynamoFieldsToDelete: ['execution'],
+      apiFieldsToDelete: ['execution'],
       granuleModel,
       granulePgModel,
       knex,
