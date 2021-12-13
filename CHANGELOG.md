@@ -139,6 +139,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
      the full report rather than an s3 signed url. Reports very close to the
      previous limits were failing to download, so the limit has been lowered to
      ensure all files are handled properly.
+- **CUMULUS-2684**
+  - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
+  - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
 
 ### Removed
 
@@ -177,6 +180,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2744**
+  - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
   - Upgraded all Cumulus (node.js) workflow tasks to use
     `@cumulus/cumulus-message-adapter-js` version `2.0.3`, which includes an
@@ -368,6 +373,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated POST `/executions` endpoint to publish SNS message of created record to executions SNS topic
   - **CUMULUS-2661**
     - Updated PUT `/executions/<arn>` endpoint to publish SNS message of updated record to executions SNS topic
+  - **CUMULUS-2765**
+    - Updated `updateGranuleStatusToQueued` in `write-granules` to write to
+      Elasticsearch and publish SNS message to granules topic.
   - **CUMULUS-2774**
     - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
       to throw error if `eventType` is invalid or undefined.
@@ -397,7 +405,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
   - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
 - **CUMULUS-2683**
-  - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
+  - Added `default_s3_multipart_chunksize_mb` setting to the `move-granules` lambda function.
   - Added `default_s3_multipart_chunksize_mb` tfvars to the cumulus and ingest terraform modules.
   - Added optional parameter `chunkSize` to `@cumulus/aws-client/S3.moveObject` and
     `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.

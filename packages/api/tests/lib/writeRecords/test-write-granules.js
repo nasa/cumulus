@@ -1522,15 +1522,17 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
-test.serial('updateGranuleStatusToQueued() updates granule status in the database', async (t) => {
+test.serial('updateGranuleStatusToQueued() updates granule status in DynamoDB/PostgreSQL/Elasticsearch and publishes SNS message', async (t) => {
   const {
-    knex,
     collectionCumulusId,
+    esGranulesClient,
     esClient,
     granule,
     granuleId,
     granuleModel,
     granulePgModel,
+    knex,
+    QueueUrl,
   } = t.context;
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
@@ -1539,19 +1541,47 @@ test.serial('updateGranuleStatusToQueued() updates granule status in the databas
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
 
-  await updateGranuleStatusToQueued({ granule: dynamoRecord, knex });
+  await updateGranuleStatusToQueued({
+    granule: dynamoRecord,
+    knex,
+  });
+
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
-  t.falsy(updatedDynamoRecord.execution);
+  const omitList = ['_id', 'execution', 'status', 'updatedAt', 'updated_at', 'files'];
+  const sortByKeys = ['bucket', 'key'];
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+  const translatedPgGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: updatedPostgresRecord,
+    knexOrTransaction: knex,
+  });
+
   t.is(updatedDynamoRecord.status, 'queued');
   t.is(updatedPostgresRecord.status, 'queued');
+  t.is(updatedEsRecord.status, 'queued');
+  t.is(updatedDynamoRecord.execution, undefined);
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+  t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
+  t.deepEqual(omit(translatedPgGranule, omitList), omit(updatedEsRecord, omitList));
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl,
+    MaxNumberOfMessages: 2,
+    WaitTimeSeconds: 10,
+  }).promise();
+  const snsMessageBody = JSON.parse(Messages[1].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.is(Messages.length, 2);
+  t.deepEqual(publishedMessage.record, translatedPgGranule);
+  t.is(publishedMessage.event, 'Update');
 });
 
 test.serial('updateGranuleStatusToQueued() throws error if record does not exist in pg', async (t) => {
@@ -1577,6 +1607,205 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
     }
   );
+});
+
+test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticsearch granule if writing to PostgreSQL fails', async (t) => {
+  const {
+    collectionCumulusId,
+    esGranulesClient,
+    esClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const testGranulePgModel = {
+    get: () => Promise.resolve(granule),
+    update: () => {
+      throw new Error('Granules Postgres error');
+    },
+  };
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+
+  t.is(dynamoRecord.status, 'completed');
+  t.is(postgresRecord.status, 'completed');
+  t.is(esRecord.status, 'completed');
+  t.truthy(dynamoRecord.execution);
+
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      granulePgModel: testGranulePgModel,
+    }),
+    { message: 'Granules Postgres error' }
+  );
+
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+  const translatedPgGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: updatedPostgresRecord,
+    knexOrTransaction: knex,
+  });
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
+  const sortByKeys = ['bucket', 'key'];
+
+  t.not(updatedDynamoRecord.status, 'queued');
+  t.not(updatedPostgresRecord.status, 'queued');
+  t.not(esRecord.status, 'queued');
+  t.not(updatedDynamoRecord.execution, undefined);
+  // Check that granules are equal in all data stores
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+  t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
+  t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
+});
+
+test.serial('updateGranuleStatusToQueued() does not update DynamoDB or PostgreSQL granule if writing to Elasticsearch fails', async (t) => {
+  const {
+    collectionCumulusId,
+    esGranulesClient,
+    esClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const fakeEsClient = {
+    update: () => {
+      throw new Error('Elasticsearch failure');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+
+  t.is(dynamoRecord.status, 'completed');
+  t.is(postgresRecord.status, 'completed');
+  t.is(esRecord.status, 'completed');
+  t.truthy(dynamoRecord.execution);
+
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      esClient: fakeEsClient,
+    }),
+    { message: 'Elasticsearch failure' }
+  );
+
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+  const translatedPgGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: updatedPostgresRecord,
+    knexOrTransaction: knex,
+  });
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
+  const sortByKeys = ['bucket', 'key'];
+
+  t.not(updatedDynamoRecord.status, 'queued');
+  t.not(updatedPostgresRecord.status, 'queued');
+  t.not(esRecord.status, 'queued');
+  t.not(updatedDynamoRecord.execution, undefined);
+  // Check that granules are equal in all data stores
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+  t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
+  t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
+});
+
+test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elasticsearch granule if writing to DynamoDB fails', async (t) => {
+  const {
+    collectionCumulusId,
+    esGranulesClient,
+    esClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const fakeGranuleModel = {
+    create: () => Promise.resolve(granule),
+    get: () => Promise.resolve(granule),
+    update: () => {
+      throw new Error('DynamoDB failure');
+    },
+  };
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+
+  t.is(dynamoRecord.status, 'completed');
+  t.is(postgresRecord.status, 'completed');
+  t.is(esRecord.status, 'completed');
+  t.truthy(dynamoRecord.execution);
+
+  await t.throwsAsync(
+    updateGranuleStatusToQueued({
+      granule: dynamoRecord,
+      knex,
+      granuleModel: fakeGranuleModel,
+    }),
+    { message: 'DynamoDB failure' }
+  );
+
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
+  const translatedPgGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: updatedPostgresRecord,
+    knexOrTransaction: knex,
+  });
+  const omitList = ['_id', 'execution', 'updatedAt', 'updated_at', 'files'];
+  const sortByKeys = ['bucket', 'key'];
+
+  t.not(updatedDynamoRecord.status, 'queued');
+  t.not(updatedPostgresRecord.status, 'queued');
+  t.not(esRecord.status, 'queued');
+  t.not(updatedDynamoRecord.execution, undefined);
+  // Check that granules are equal in all data stores
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+  t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
+  t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
+  t.deepEqual(omit(translatedPgGranule, omitList), omit(esRecord, omitList));
 });
 
 test.serial('_writeGranule() successfully publishes an SNS message', async (t) => {
