@@ -15,7 +15,7 @@ const {
   ProviderPgModel,
 } = require('../../dist');
 
-const randomBucket = () => `bucket-${cryptoRandomString({ length: 10 })}`;
+const randomBucketName = () => `bucket-${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
   t.context.testDbName = `file_${cryptoRandomString({ length: 10 })}`;
@@ -80,7 +80,7 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   );
   const granuleCumulusId2 = pgGranule2.cumulus_id;
 
-  const bucket = randomBucket();
+  const bucket = randomBucketName();
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
@@ -127,7 +127,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
   );
   const granuleCumulusId1 = pgGranule1.cumulus_id;
 
-  const bucket = randomBucket();
+  const bucket = randomBucketName();
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
@@ -169,7 +169,7 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
   );
   const granuleCumulusId2 = pgGranule2.cumulus_id;
 
-  const bucket = randomBucket();
+  const bucket = randomBucketName();
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
@@ -222,7 +222,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
     collections[1].version
   );
 
-  const bucket = randomBucket();
+  const bucket = randomBucketName();
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
@@ -274,7 +274,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
     testGranule2
   );
 
-  const bucket = randomBucket();
+  const bucket = randomBucketName();
   const firstKey = `a_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
