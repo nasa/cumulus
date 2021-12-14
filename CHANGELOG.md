@@ -134,6 +134,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
+- **CUMULUS-2642**
+   - Reduces the reconcilation report's default maxResponseSize that returns
+     the full report rather than an s3 signed url. Reports very close to the
+     previous limits were failing to download, so the limit has been lowered to
+     ensure all files are handled properly.
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
   - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
@@ -350,6 +355,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - `rules`
   - **CUMULUS-2294**
     - Updated architecture and deployment documentation to reference RDS
+  - **CUMULUS-2642**
+    - Inventory and Granule Not Found Reconciliation Reports now compare
+      Databse against S3 in on direction only, from Database to S3
+      Objects. This means that only files in the database are compared against
+      objects found on S3 and the filesInCumulus.onlyInS3 report key will
+      always be empty. This significantly decreases the report output size and
+      aligns with a users expectations.
+    - Updates getFilesAndGranuleInfoQuery to take additional optional
+      parameters `collectionIds`, `granuleIds`, and `providers` to allow
+      targeting/filtering of the results.
+
   - **CUMULUS-2694**
     - Updated database write logic in `sfEventSqsToDbRccords` to log message if Cumulus
     workflow message is from pre-RDS deployment but still attempt parallel writing to DynamoDB
