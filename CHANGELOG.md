@@ -141,6 +141,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2770**
+    - Removed `waitForModelStatus` from `example/spec/helpers/apiUtils` integration test helpers
   - **CUMULUS-2510**
     - Removed `stream_enabled` and `stream_view_type` from `executions_table` TF
       definition.
