@@ -52,7 +52,7 @@ const getTableIndexDetails = (tableName) => {
     },
     [process.env.ReconciliationReportsTable]: {
       indexFnName: 'indexReconciliationReport',
-      deleteFnName: 'deleteRecord',
+      deleteFnName: 'deleteReconciliationReport',
       indexType: 'reconciliationReport',
     },
     [process.env.RulesTable]: {
@@ -157,11 +157,12 @@ function performIndex(indexFnName, esClient, data) {
 /**
  * Perform the delete operation for the given record
  *
- * @param {Object} esClient - ElasticSearch connection client
- * @param {string} type - type of record to index
- * @param {string} id - record ID
- * @param {string} parentId - ID of parent record
- * @returns {Promise<Object>} elasticsearch response
+ * @param {string} deleteFnName - Delete function name
+ * @param {Object} esClient     - Elasticsearch connection client
+ * @param {string} type         - Type of record to index
+ * @param {string} id           - Record ID
+ * @param {string} parentId     - ID of parent record
+ * @returns {Promise<Object>}   - Elasticsearch response
  */
 function performDelete(deleteFnName, esClient, type, id, parentId) {
   logger.debug(`deleting type: ${type} id: ${id}`);
