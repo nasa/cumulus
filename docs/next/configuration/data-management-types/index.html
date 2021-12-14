@@ -133,6 +133,8 @@
 <tr><td style="text-align:center">username</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a <code>Basic</code> auth header if needed for authentication</td></tr>
 <tr><td style="text-align:center">password</td><td style="text-align:left">string</td><td style="text-align:center"><em>Only if username is specified</em></td><td>Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a <code>Basic</code> auth header if needed for authentication</td></tr>
 <tr><td style="text-align:center">port</td><td style="text-align:left">integer</td><td style="text-align:center">No</td><td>Port to connect to the provider on.   Defaults to <code>80</code></td></tr>
+<tr><td style="text-align:center">allowedRedirects</td><td style="text-align:left">string[]</td><td style="text-align:center">No</td><td>Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.</td></tr>
+<tr><td style="text-align:center">certificateUri</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate</td></tr>
 </tbody>
 </table>
 <h5><a class="anchor" aria-hidden="true" id="https"></a><a href="#https" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>https</h5>
@@ -148,6 +150,8 @@
 <tr><td style="text-align:center">username</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a <code>Basic</code> auth header if needed for authentication</td></tr>
 <tr><td style="text-align:center">password</td><td style="text-align:left">string</td><td style="text-align:center"><em>Only if username is specified</em></td><td>Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a <code>Basic</code> auth header if needed for authentication</td></tr>
 <tr><td style="text-align:center">port</td><td style="text-align:left">integer</td><td style="text-align:center">No</td><td>Port to connect to the provider on.   Defaults to <code>443</code></td></tr>
+<tr><td style="text-align:center">allowedRedirects</td><td style="text-align:left">string[]</td><td style="text-align:center">No</td><td>Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.</td></tr>
+<tr><td style="text-align:center">certiciateUri</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate</td></tr>
 </tbody>
 </table>
 <h5><a class="anchor" aria-hidden="true" id="ftp"></a><a href="#ftp" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ftp</h5>
@@ -178,6 +182,8 @@
 <tr><td style="text-align:center">username</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>Username to use to connect to the sftp server.</td></tr>
 <tr><td style="text-align:center">password</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>Password to use to connect to the sftp server.</td></tr>
 <tr><td style="text-align:center">port</td><td style="text-align:left">integer</td><td style="text-align:center">No</td><td>Port to connect to the provider on.  Defaults to <code>22</code></td></tr>
+<tr><td style="text-align:center">privateKey</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>filename assumed to be in <a href="s3://bucketInternal/stackName/crypto">s3://bucketInternal/stackName/crypto</a></td></tr>
+<tr><td style="text-align:center">cmKeyId</td><td style="text-align:left">string</td><td style="text-align:center">No</td><td>AWS KMS Customer Master Key arn or alias</td></tr>
 </tbody>
 </table>
 <p></details></p>
