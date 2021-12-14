@@ -76,12 +76,12 @@ export const getFilesAndGranuleInfoQuery = ({
       `${collectionsTable}.cumulus_id`
     );
     const nameVersionPairs = collectionIds.map(deconstructCollectionId);
+    const firstPair = nameVersionPairs.pop() as {
+      name: string;
+      version: string;
+    };
     query.andWhere(function () {
       const innerQuery = this;
-      const firstPair = nameVersionPairs.pop() as {
-        name: string;
-        version: string;
-      };
       innerQuery.where(firstPair);
       nameVersionPairs.forEach((pair) => innerQuery.orWhere(pair));
     });
