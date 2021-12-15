@@ -381,6 +381,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2774**
     - Updated `constructGranuleSnsMessage` and `constructCollectionSnsMessage`
       to throw error if `eventType` is invalid or undefined.
+  - **CUMULUS-2776**
+    - Updated `getTableIndexDetails` in `db-indexer` to use correct
+      `deleteFnName` for reconciliation reports.
 
 ## [v9.9.0] 2021-11-03
 
