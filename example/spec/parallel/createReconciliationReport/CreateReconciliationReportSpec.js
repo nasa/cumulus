@@ -100,7 +100,6 @@ const ingestAndPublishGranuleExecutionArns = [];
  *
  * @param {string} prefix - stack Prefix
  * @param {string} sourceBucket - testing source bucket
- * @param {string} stackName - stack used for testing
  * @returns {Promise<Object>}  The collection created
  */
 const createActiveCollection = async (prefix, sourceBucket) => {
@@ -481,10 +480,11 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.status).toBe('SUCCESS');
     });
 
-    it('generates a report showing cumulus files that are in S3 but not in the Cumulus files table', () => {
+    it('generates a filtered report, omitting files that are in S3 but not in the Cumulus files table', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
-      expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
+      expect(report.filesInCumulus.onlyInS3).not.toContain(extraS3ObjectUri);
+      expect(report.filesInCumulus.onlyInS3.length).toBe(0);
     });
 
     it('generates a report showing cumulus files that are in the Cumulus files table but not in S3', () => {
@@ -494,17 +494,18 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(extraDbUris).toContain(extraFileUri);
     });
 
-    it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
+    it('generates a filtered report showing requested collections that are in both Cumulus and CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // MYD13Q1___006 is in both Cumulus and CMR
-      expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+      expect(report.collectionsInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a report showing collections that are in Cumulus but not in CMR', () => {
+    it('generates a filtered report showing requested collections that are in Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
+      expect(report.collectionsInCumulusCmr.onlyInCumulus.length).toBe(1);
     });
 
     it('generates a report showing the amount of files that match broken down by Granule', () => {
@@ -523,18 +524,19 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
     });
 
-    it('generates a report showing number of granules that are in both Cumulus and CMR', () => {
+    it('generates a filtered report showing number of granules that are in both Cumulus and CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // published granule should in both Cumulus and CMR
-      expect(report.granulesInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+      expect(report.granulesInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
+    it('generates a filtered report showing granules that are in the Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // ingested (not published) granule should only in Cumulus
       const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
       expect(cumulusGranuleIds).toContain(dbGranuleId);
       expect(cumulusGranuleIds).not.toContain(publishedGranuleId);
+      expect(report.granulesInCumulusCmr.onlyInCumulus.length).toBe(2);
     });
 
     it('generates a report showing granules that are in the CMR but not in Cumulus', () => {

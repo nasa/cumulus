@@ -7,12 +7,7 @@ const flatten = require('lodash/flatten');
 const keyBy = require('lodash/keyBy');
 const path = require('path');
 
-const {
-  moveObject,
-  s3Join,
-  s3ObjectExists,
-  waitForObjectToExist,
-} = require('@cumulus/aws-client/S3');
+const S3 = require('@cumulus/aws-client/S3');
 
 const { InvalidArgument } = require('@cumulus/errors');
 
@@ -119,7 +114,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         cmrMetadata,
       });
       const bucketName = bucketsConfig.nameByKey(match[0].bucket);
-      const updatedKey = s3Join(urlPath, fileName);
+      const updatedKey = S3.s3Join(urlPath, fileName);
 
       updatedFiles.push({
         ...file,
@@ -143,13 +138,15 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {boolean} markDuplicates - Override to handle cmr metadata files that
  *                                   shouldn't be marked as duplicates
+ * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
 async function moveFileRequest(
   file,
   sourceBucket,
   duplicateHandling,
-  markDuplicates = true
+  markDuplicates = true,
+  s3MultipartChunksizeMb
 ) {
   const source = {
     Bucket: sourceBucket,
@@ -162,12 +159,12 @@ async function moveFileRequest(
 
   // Due to S3's eventual consistency model, we need to make sure that the
   // source object is available in S3.
-  await waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
+  await S3.waitForObjectToExist({ bucket: source.Bucket, key: source.Key });
   // the file moved to destination
   const fileMoved = { ...file };
   delete fileMoved.sourceKey;
 
-  const s3ObjAlreadyExists = await s3ObjectExists(target);
+  const s3ObjAlreadyExists = await S3.s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
   let versionedFiles = [];
@@ -180,9 +177,8 @@ async function moveFileRequest(
       duplicateHandling,
     });
   } else {
-    const chunkSize = process.env.default_s3_multipart_chunksize_mb
-      ? Number(process.env.default_s3_multipart_chunksize_mb) * MB : undefined;
-    await moveObject({
+    const chunkSize = s3MultipartChunksizeMb ? Number(s3MultipartChunksizeMb) * MB : undefined;
+    await S3.moveObject({
       sourceBucket: source.Bucket,
       sourceKey: source.Key,
       destinationBucket: target.Bucket,
@@ -209,26 +205,26 @@ async function moveFileRequest(
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
+ * @param {number} s3MultipartChunksizeMb - S3 multipart upload chunk size in MB
  * @returns {Object} the object with updated granules
  */
 async function moveFilesForAllGranules(
   granulesObject,
   sourceBucket,
-  duplicateHandling
+  duplicateHandling,
+  s3MultipartChunksizeMb
 ) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const filesToMove = granule.files.filter((file) => !isCMRFile(file));
     const cmrFiles = granule.files.filter((file) => isCMRFile(file));
     const filesMoved = await Promise.all(
-      filesToMove.map(
-        (file) => moveFileRequest(file, sourceBucket, duplicateHandling)
-      )
+      filesToMove.map((file) =>
+        moveFileRequest(file, sourceBucket, duplicateHandling, true, s3MultipartChunksizeMb))
     );
-    const markDuplicates = false;
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveFileRequest(file, sourceBucket, 'replace', markDuplicates)
+        (file) => moveFileRequest(file, sourceBucket, 'replace', false)
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
@@ -261,8 +257,12 @@ async function moveGranules(event) {
   const bucketsConfig = new BucketsConfig(config.buckets);
 
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
+  const s3MultipartChunksizeMb = config.s3MultipartChunksizeMb
+    ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
 
   const duplicateHandling = duplicateHandlingType(event);
+
+  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, moveStagedFiles: ${moveStagedFiles}, s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}`);
 
   const granulesInput = event.input.granules;
 
@@ -282,7 +282,7 @@ async function moveGranules(event) {
 
     // Move files from staging location to final location
     movedGranulesByGranuleId = await moveFilesForAllGranules(
-      granulesToMove, config.bucket, duplicateHandling
+      granulesToMove, config.bucket, duplicateHandling, s3MultipartChunksizeMb
     );
   } else {
     movedGranulesByGranuleId = granulesByGranuleId;

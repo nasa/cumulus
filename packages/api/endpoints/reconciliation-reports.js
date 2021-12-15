@@ -22,7 +22,7 @@ const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent')
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const logger = new Logger({ sender: '@cumulus/api' });
-const maxResponsePayloadSize = 6 * 1024 * 1024;
+const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
 
 /**
  * List all reconciliation reports
@@ -70,7 +70,10 @@ async function getReport(req, res) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
-      if (estimatedPayloadSize > (process.env.maxResponsePayloadSize || maxResponsePayloadSize)) {
+      if (
+        estimatedPayloadSize >
+        (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+      ) {
         res.json({
           presignedS3Url,
           data: `Error: Report ${name} exceeded maximum allowed payload size`,

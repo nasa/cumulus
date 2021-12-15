@@ -16,6 +16,7 @@ const {
   translateApiProviderToPostgresProvider,
   ProviderPgModel,
   migrationDir,
+  fakeProviderRecordFactory,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -38,6 +39,7 @@ const { buildFakeExpressResponse } = require('../utils');
 const testDbName = randomString(12);
 
 process.env.ProvidersTable = randomString();
+process.env.RulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -71,6 +73,8 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
+  const rulesModel = new models.Rule({ tableName: process.env.RulesTable });
+  await rulesModel.createTable();
   providerModel = new models.Provider();
   t.context.providerModel = providerModel;
   await providerModel.createTable();
@@ -364,6 +368,7 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
 
   const fakeproviderPgModel = {
     upsert: () => Promise.reject(new Error('something bad')),
+    get: () => fakeProviderRecordFactory({ created_at: new Date() }),
   };
 
   const updatedProvider = {
@@ -395,6 +400,67 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
     }),
     originalProvider
   );
+  t.deepEqual(
+    await t.context.providerPgModel.get(t.context.testKnex, {
+      name: updatedProvider.id,
+    }),
+    originalPgRecord
+  );
+  t.deepEqual(
+    await t.context.esProviderClient.get(
+      originalProvider.id
+    ),
+    originalEsRecord
+  );
+});
+
+test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails and no dynamoDB record existed', async (t) => {
+  const { testKnex } = t.context;
+  const {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createProviderTestRecords(
+    t.context,
+    {
+      host: 'first-host',
+    }
+  );
+
+  await t.context.providerModel.delete(originalProvider);
+  const fakeproviderPgModel = {
+    upsert: () => Promise.reject(new Error('something bad')),
+    get: () => fakeProviderRecordFactory({ created_at: new Date() }),
+  };
+
+  const updatedProvider = {
+    ...originalProvider,
+    host: 'second-host',
+  };
+
+  const expressRequest = {
+    params: {
+      id: updatedProvider.id,
+    },
+    body: updatedProvider,
+    testContext: {
+      knex: testKnex,
+      providerPgModel: fakeproviderPgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'something bad' }
+  );
+
+  await t.throwsAsync(() =>
+    providerModel.get({
+      id: updatedProvider.id,
+    }),
+  { name: 'RecordDoesNotExist' });
   t.deepEqual(
     await t.context.providerPgModel.get(t.context.testKnex, {
       name: updatedProvider.id,

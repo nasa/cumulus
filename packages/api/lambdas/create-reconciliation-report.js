@@ -66,6 +66,19 @@ function isOneWayCollectionReport(reportParams) {
 }
 
 /**
+ * Decide whether we compare all found S3 objects with the database or not.
+
+ * @param {Object} reportParams
+ * @returns {boolean} True, when the bucket comparison should only be done from
+ *                    the database to objects found on s3.
+ */
+const isOneWayBucketReport = (reportParams) => [
+  'providers',
+  'granuleIds',
+  'collectionIds',
+].some((testParam) => !!reportParams[testParam]);
+
+/**
  * Checks to see if any of the included reportParams contains a value that
  * would turn a Cumulus Vs CMR granule comparison into a one way report.
  *
@@ -164,19 +177,22 @@ async function fetchESCollections(recReportParams) {
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
+  const oneWayBucketReport = isOneWayBucketReport(recReportParams);
+  if (oneWayBucketReport) log.debug('Creating one way report, reconciliation report will not report objects only in S3');
 
   const query = getFilesAndGranuleInfoQuery({
     knex: recReportParams.knex,
     searchParams: { bucket: Bucket },
     sortColumns: ['key'],
     granuleColumns: ['granule_id'],
+    collectionIds: recReportParams.collectionIds,
+    providers: recReportParams.providers,
+    granuleIds: recReportParams.granuleIds,
   });
-  const pgFileSearchClient = new QuerySearchClient(
-    query,
-    100
-  );
 
-  log.info(`createReconciliationReportForBucket(S3 vs. Dynamo): ${Bucket}: ${JSON.stringify(recReportParams)}`);
+  const pgFileSearchClient = new QuerySearchClient(query, 100);
+
+  log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDb = [];
@@ -196,18 +212,18 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       }
 
       if (nextS3Uri < nextPgFileUri) {
-      // Found an item that is only in S3 and not in PostgreSQL
-        onlyInS3.push(nextS3Uri);
+        // Found an item that is only in S3 and not in PostgreSQL
+        if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
         s3ObjectsQueue.shift();
       } else if (nextS3Uri > nextPgFileUri) {
-      // Found an item that is only in PostgreSQL and not in S3
+        // Found an item that is only in PostgreSQL and not in S3
         const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
         onlyInDb.push({
           uri: buildS3Uri(Bucket, pgItem.key),
           granuleId: pgItem.granule_id,
         });
       } else {
-      // Found an item that is in both S3 and PostgreSQL
+        // Found an item that is in both S3 and PostgreSQL
         okCount += 1;
         if (linkFilesAndGranules) {
           okCountByGranule[nextPgItem.granule_id] += 1;
@@ -224,9 +240,11 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     }
 
     // Add any remaining S3 items to the report
-    while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-      const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-      onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+    if (!oneWayBucketReport) {
+      while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+        const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+        onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+      }
     }
 
     // Add any remaining PostgreSQL items to the report
@@ -244,9 +262,9 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     throw error;
   }
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
-            + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
-            + `onlyInDb: ${onlyInDb.length}, `
-            + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
+           + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+           + `onlyInDb: ${onlyInDb.length}, `
+           + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
   return {
     okCount,
     onlyInS3,
@@ -542,7 +560,7 @@ async function reconciliationReportForGranules(params) {
       [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
-    // Add any remaining DynamoDB items to the report
+    // Add any remaining ES/PostgreSQL items to the report
     while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInCumulus.push({
