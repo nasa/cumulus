@@ -87,7 +87,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
 - **CUMULUS-2753**
-  - Update cumulus/example to install the latest ORCA release 3.0.x
+  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0 which is compatible with granule.files file schema
+  - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
+  - Updated orca integration test
 
 ## [v9.9.0] 2021-11-03
 
