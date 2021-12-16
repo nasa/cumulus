@@ -57,6 +57,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
   - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
+- **CUMULUS-2747**
+  - Updated data management type doc to include additional fields for provider configurations
+- **CUMULUS-2773**
+  - Added a document to the workflow-tasks docs describing deployment, configuration and usage of the LZARDS backup task.
 
 ### Changed
 
@@ -67,6 +71,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2735**
+  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
+    large reports
+  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
+    a policy role being exceeded
 - **CUMULUS-2744**
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
@@ -80,16 +89,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Nested objects under `finalPayload.*` will not dynamically add new fields to mapping
     - Nested objects under `originalPayload.*` will not dynamically add new fields to mapping
     - Nested keys under `tasks` will not dynamically add new fields to mapping
+- **CUMULUS-2753**
+  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0 which is compatible with granule.files file schema
+  - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
+  - Updated orca integration test
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
   - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
     a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
-- **CUMULUS-2753**
-  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0 which is compatible with granule.files file schema
-  - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
-  - Updated orca integration test
 
 ## [v9.9.0] 2021-11-03
 
