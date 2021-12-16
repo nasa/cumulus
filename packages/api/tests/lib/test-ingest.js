@@ -56,7 +56,8 @@ test.before(async (t) => {
   await new Granule().createTable();
 
   const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
-  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.granules_sns_topic_arn = TopicArn;
+  process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 
   testCumulusMessage = {
     cumulus_meta: {
@@ -132,6 +133,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn }).promise();
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
