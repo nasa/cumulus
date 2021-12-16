@@ -132,7 +132,7 @@ test.serial('invokeApi respects expected non-200 status code', async (t) => {
       minTimeout: 1,
       maxTimeout: 1,
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   }));
 
   t.is(1, lambdaInvocations);

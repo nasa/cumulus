@@ -388,6 +388,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
+    expectedStatusCodes: [200, 201],
   };
 
   const callback = (configObject) => {
