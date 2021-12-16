@@ -180,7 +180,6 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     t.is(updatedPgGranule.status, 'queued');
   } catch (error) {
     console.log(error);
-    t.fail();
   } finally {
     buildPayloadSpy.restore();
   }
