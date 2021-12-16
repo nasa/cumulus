@@ -3,6 +3,7 @@ const sinon = require('sinon');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
+const { sns } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -14,8 +15,8 @@ const {
   translateApiGranuleToPostgresGranule,
   CollectionPgModel,
   fakeCollectionRecordFactory,
+  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
-const granuleLib = require('@cumulus/db/dist/lib/granule');
 const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
@@ -53,6 +54,9 @@ test.before(async (t) => {
 
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
+
+  const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
 
   testCumulusMessage = {
     cumulus_meta: {
@@ -167,13 +171,14 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     // to that function.
     t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
 
-    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
+    const updatedPgGranule = await getUniqueGranuleByGranuleId(
       t.context.knex,
       granule.granuleId
     );
     t.is(updatedPgGranule.status, 'queued');
   } catch (error) {
     console.log(error);
+    t.fail();
   } finally {
     buildPayloadSpy.restore();
   }

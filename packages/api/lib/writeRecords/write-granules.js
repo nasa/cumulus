@@ -423,6 +423,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
     knexOrTransaction: knex,
   });
   await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
+  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
 };
 
 /**
@@ -591,12 +592,11 @@ const _updateGranule = async ({
   );
   log.info('Successfully wrote granule %j to DynamoDB', apiGranule);
 
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: updatedPgGranule,
-    knexOrTransaction: knex,
+  await _publishPostgresGranuleUpdateToSns({
+    snsEventType,
+    pgGranule: updatedPgGranule,
+    knex,
   });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
 };
 
 /**
