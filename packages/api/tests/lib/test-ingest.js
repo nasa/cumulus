@@ -18,6 +18,9 @@ const {
   getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 const {
+  createTestIndex,
+} = require('@cumulus/es-client/testUtils');
+const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
@@ -51,6 +54,10 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
   t.context.granuleId = randomString();
+
+  // const { esIndex, esClient } = await createTestIndex();
+  // t.context.esIndex = esIndex;
+  // t.context.esClient = esClient;
 
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
@@ -136,7 +143,7 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn }).promise();
 });
 
-test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
+test.serial.only('reingestGranule pushes a message with the correct queueUrl', async (t) => {
   const {
     collectionId,
   } = t.context;
@@ -155,17 +162,10 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
   );
 
-  const granuleToReingest = {
-    granuleId: granule.granuleId,
-    execution: 'some/execution',
-    collectionId,
-    provider: 'someProvider',
-  };
-
   t.teardown(() => buildPayloadSpy.restore());
 
   await reingestGranule({
-    granule: granuleToReingest,
+    granule,
     queueUrl,
     granuleModel,
     granulePgModel,
