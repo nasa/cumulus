@@ -576,7 +576,7 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`);
+      log.error(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`, writeError);
       // On error, recreate the DynamoDB record to revert it back to original
       // status to ensure that all systems stay in sync
       await granuleModel.create(apiGranule);
