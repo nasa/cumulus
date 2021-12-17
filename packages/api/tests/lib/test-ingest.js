@@ -162,27 +162,24 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     provider: 'someProvider',
     queueUrl,
   };
-  try {
-    await reingestGranule({
-      reingestParams,
-      granuleModel,
-      granulePgModel,
-    });
-    // Rule.buildPayload has its own unit tests to ensure the queue name
-    // is used properly, so just ensure that we pass the correct argument
-    // to that function.
-    t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
 
-    const updatedPgGranule = await getUniqueGranuleByGranuleId(
-      t.context.knex,
-      granule.granuleId
-    );
-    t.is(updatedPgGranule.status, 'queued');
-  } catch (error) {
-    console.log(error);
-  } finally {
-    buildPayloadSpy.restore();
-  }
+  t.teardown(() => buildPayloadSpy.restore());
+
+  await reingestGranule({
+    reingestParams,
+    granuleModel,
+    granulePgModel,
+  });
+  // Rule.buildPayload has its own unit tests to ensure the queue name
+  // is used properly, so just ensure that we pass the correct argument
+  // to that function.
+  t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
+
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    granule.granuleId
+  );
+  t.is(updatedPgGranule.status, 'queued');
 });
 
 test.serial('applyWorkflow throws error if workflow argument is missing', async (t) => {
