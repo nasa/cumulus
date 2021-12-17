@@ -55,9 +55,9 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.granuleId = randomString();
 
-  // const { esIndex, esClient } = await createTestIndex();
-  // t.context.esIndex = esIndex;
-  // t.context.esClient = esClient;
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
 
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
