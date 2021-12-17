@@ -2,7 +2,11 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const {
+  createAsyncOperation,
+  deleteAsyncOperation,
+  listAsyncOperations,
+} = require('@cumulus/api-client/asyncOperations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -17,7 +21,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   let asyncOperationId;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
-  let beforeAllFailed = false;
+  let beforeAllError;
   let cluster;
   let config;
   let payloadKey;
@@ -97,20 +101,37 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         stackName: config.stackName,
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = true;
       throw error;
     }
   });
 
   it('updates the status field to "SUCCEEDED"', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
-  it('updates the output field in DynamoDB', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+  it('updates the output field', () => {
+    if (beforeAllError) fail(beforeAllError);
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
+      expect(parsedOutput).toEqual([1, 2, 3]);
+    }
+  });
+
+  it('returns the updated record from GET /asyncOperations', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const response = await listAsyncOperations({
+        prefix: config.stackName,
+        query: {
+          id: asyncOperationId,
+        },
+      });
+      expect(response.results.length).toEqual(1);
+      const [record] = response.results;
+      expect(record.status).toEqual('SUCCEEDED');
+      const parsedOutput = JSON.parse(record.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });
