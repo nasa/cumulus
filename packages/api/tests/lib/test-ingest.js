@@ -1,8 +1,9 @@
 const test = require('ava');
 const sinon = require('sinon');
-const s3Utils = require('@cumulus/aws-client/S3');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
+const { sns } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -14,8 +15,11 @@ const {
   translateApiGranuleToPostgresGranule,
   CollectionPgModel,
   fakeCollectionRecordFactory,
+  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
-const granuleLib = require('@cumulus/db/dist/lib/granule');
+const {
+  createTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
@@ -51,8 +55,16 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.granuleId = randomString();
 
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
+
+  const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
+  t.context.granules_sns_topic_arn = TopicArn;
+  process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 
   testCumulusMessage = {
     cumulus_meta: {
@@ -128,20 +140,21 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn }).promise();
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
+  const {
+    collectionId,
+  } = t.context;
   const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-  const fileExists = () => Promise.resolve(true);
-  const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
+
   const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
-  const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-  const updateGranuleStatusToQueuedStub = () => Promise.resolve();
 
   const granule = fakeGranuleFactoryV2({
-    collectionId: t.context.collectionId,
+    collectionId,
   });
   const dynamoGranule = await granuleModel.create(granule);
   await granulePgModel.create(
@@ -149,37 +162,24 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
   );
 
-  const reingestParams = {
-    granuleId: granule.granuleId,
-    execution: 'some/execution',
-    collectionId: 'MyCollection___006',
-    provider: 'someProvider',
-    queueUrl,
-  };
-  try {
-    await reingestGranule({
-      reingestParams,
-      granuleModel,
-      granulePgModel,
-      updateGranuleStatusToQueuedMethod: updateGranuleStatusToQueuedStub,
-    });
-    // Rule.buildPayload has its own unit tests to ensure the queue name
-    // is used properly, so just ensure that we pass the correct argument
-    // to that function.
-    t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
+  t.teardown(() => buildPayloadSpy.restore());
 
-    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
-      t.context.knex,
-      granule.granuleId
-    );
-    t.is(updatedPgGranule.status, 'running');
-  } catch (error) {
-    console.log(error);
-  } finally {
-    fileExistsStub.restore();
-    buildPayloadSpy.restore();
-    updateStatusStub.restore();
-  }
+  await reingestGranule({
+    granule,
+    queueUrl,
+    granuleModel,
+    granulePgModel,
+  });
+  // Rule.buildPayload has its own unit tests to ensure the queue name
+  // is used properly, so just ensure that we pass the correct argument
+  // to that function.
+  t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
+
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    granule.granuleId
+  );
+  t.is(updatedPgGranule.status, 'queued');
 });
 
 test.serial('applyWorkflow throws error if workflow argument is missing', async (t) => {
@@ -195,10 +195,7 @@ test.serial('applyWorkflow throws error if workflow argument is missing', async 
   );
 });
 
-test.serial('applyWorkflow updates granule status and invokes Lambda to schedule workflow', async (t) => {
-  const granuleModel = new Granule();
-  const granulePgModel = new GranulePgModel();
-
+test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
   const granule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
@@ -209,27 +206,12 @@ test.serial('applyWorkflow updates granule status and invokes Lambda to schedule
     },
   };
 
-  const dynamoGranule = await granuleModel.create(granule);
-  await granulePgModel.create(
-    t.context.knex,
-    await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
-  );
-
   const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   await applyWorkflow({ granule, workflow });
 
   try {
-    const updatedDynamoGranule = await granuleModel.get({ granuleId: granule.granuleId });
-    t.is(updatedDynamoGranule.status, 'running');
-
-    const updatedPgGranule = await granuleLib.getUniqueGranuleByGranuleId(
-      t.context.knex,
-      granule.granuleId
-    );
-    t.is(updatedPgGranule.status, 'running');
-
     t.true(lambdaInvokeStub.called);
     t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
   } finally {
