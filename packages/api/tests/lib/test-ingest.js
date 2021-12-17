@@ -155,18 +155,18 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
     await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
   );
 
-  const reingestParams = {
+  const granuleToReingest = {
     granuleId: granule.granuleId,
     execution: 'some/execution',
     collectionId,
     provider: 'someProvider',
-    queueUrl,
   };
 
   t.teardown(() => buildPayloadSpy.restore());
 
   await reingestGranule({
-    reingestParams,
+    granule: granuleToReingest,
+    queueUrl,
     granuleModel,
     granulePgModel,
   });

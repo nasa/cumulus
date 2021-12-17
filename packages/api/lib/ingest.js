@@ -17,7 +17,8 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
    * start the re-ingest of a given granule object
    *
    * @param {Object} params
-   * @param {Object} params.reingestParams - the granule object with additional params
+   * @param {Object} params.granule - the granule object
+   * @param {Object} params.queueUrl - the granule object
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
    * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
    * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
@@ -25,7 +26,8 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
    * @returns {Promise<undefined>} - undefined
    */
 async function reingestGranule({
-  reingestParams,
+  granule,
+  queueUrl,
   asyncOperationId = undefined,
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
@@ -33,18 +35,18 @@ async function reingestGranule({
 }) {
   const knex = await getKnexClient();
   await updateGranuleStatusToQueuedMethod({
-    granule: reingestParams,
+    granule,
     knex,
     granulePgModel,
     granuleModel,
   });
 
-  const executionArn = path.basename(reingestParams.execution);
+  const executionArn = path.basename(granule.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
   const originalMessage = JSON.parse(executionDescription.input);
 
-  const { name, version } = deconstructCollectionId(reingestParams.collectionId);
+  const { name, version } = deconstructCollectionId(granule.collectionId);
 
   const lambdaPayload = await Rule.buildPayload({
     workflow: originalMessage.meta.workflow_name,
@@ -56,12 +58,12 @@ async function reingestGranule({
       },
     },
     payload: originalMessage.payload,
-    provider: reingestParams.provider,
+    provider: granule.provider,
     collection: {
       name,
       version,
     },
-    queueUrl: reingestParams.queueUrl,
+    queueUrl,
     asyncOperationId,
   });
 
@@ -78,10 +80,6 @@ async function reingestGranule({
    * @param {string} [params.queueUrl] - URL for SQS queue to use for scheduling workflows
    *   e.g. https://sqs.us-east-1.amazonaws.com/12345/queue-name
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
-   * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
-   * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
-   * @param {Function} [getPgGranuleHandler] - Optional stub for testing
-   * (optional, for testing)
    * @returns {Promise<undefined>} undefined
    */
 async function applyWorkflow({

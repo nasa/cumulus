@@ -253,8 +253,10 @@ async function put(req, res) {
     await updateGranuleStatusToQueuedMethod({ granule: apiGranule, knex });
 
     const reingestParams = {
-      ...apiGranule,
-      ...(targetExecution && { execution: targetExecution }),
+      granule: {
+        ...apiGranule,
+        ...(targetExecution && { execution: targetExecution }),
+      },
       queueUrl: process.env.backgroundQueueUrl,
     };
 
