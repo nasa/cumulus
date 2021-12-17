@@ -693,7 +693,7 @@ async function createReconciliationReport(recReportParams) {
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 
   // Internal consistency check S3 vs Cumulus DBs
@@ -747,7 +747,7 @@ async function createReconciliationReport(recReportParams) {
   return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 }
 
