@@ -143,7 +143,7 @@ test.after.always(async (t) => {
   await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn }).promise();
 });
 
-test.serial.only('reingestGranule pushes a message with the correct queueUrl', async (t) => {
+test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
   const {
     collectionId,
   } = t.context;
