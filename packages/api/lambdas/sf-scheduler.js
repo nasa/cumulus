@@ -8,7 +8,9 @@ const SQS = require('@cumulus/aws-client/SQS');
 const { getProvider } = require('@cumulus/api-client/providers');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const Logger = require('@cumulus/logger');
+const { getKnexClient } = require('@cumulus/db');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
+const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
 
 const getApiProvider = (providerId) => {
   if (isNil(providerId)) return undefined;
@@ -26,6 +28,14 @@ const getApiCollection = (collection) => {
     collectionName: collection.name,
     collectionVersion: collection.version,
   });
+};
+
+const _updateGranuleStatus = async (payload) => {
+  const knex = await getKnexClient();
+  if (payload && payload.granules) {
+    const granules = payload.granules;
+    await Promise.all(granules.map((granule) => updateGranuleStatusToQueued({ granule, knex })));
+  }
 };
 
 /**
@@ -52,18 +62,24 @@ async function handleScheduleEvent(event) {
     arn: workflowDefinition.arn,
   };
 
+  const payload = get(event, 'payload', {});
+  const asyncOperationId = get(event, 'asyncOperationId');
+  const customCumulusMeta = get(event, 'cumulus_meta', {});
   const eventCustomMeta = get(event, 'meta', {});
+
+  await _updateGranuleStatus(payload);
+  // Should the payload we use to construct message contain the newly updated granules?
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
-    asyncOperationId: get(event, 'asyncOperationId'),
-    customCumulusMeta: get(event, 'cumulus_meta', {}),
+    asyncOperationId,
+    customCumulusMeta,
     customMeta: {
       ...eventCustomMeta,
       collection,
       provider,
     },
-    payload: get(event, 'payload', {}),
+    payload,
     workflow,
     executionNamePrefix: event.executionNamePrefix,
   });
