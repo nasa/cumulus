@@ -110,6 +110,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2775**
   - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
   of accepted status codes via `expectedStatusCodes`
+- [**PR #2611**](https://github.com/nasa/cumulus/pull/2611)
+  - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
+    to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
+    for providing the certificate.
 
 ### Fixed
 
