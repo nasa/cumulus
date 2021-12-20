@@ -220,7 +220,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
-<<<<<<< HEAD
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS_2641**
     - Update API granule schema to set productVolume as a string value
@@ -404,7 +403,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2776**
     - Updated `getTableIndexDetails` in `db-indexer` to use correct
       `deleteFnName` for reconciliation reports.
-=======
 - **CUMULUS-2735**
   - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
     large reports
@@ -418,7 +416,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
->>>>>>> master
 
 ## [v9.9.0] 2021-11-03
 
