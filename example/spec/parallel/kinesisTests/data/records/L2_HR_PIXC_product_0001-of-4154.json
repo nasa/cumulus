@@ -10,7 +10,7 @@
     "files": [
       {
         "type": "data",
-        "uri": "s3://ignored-bucket/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5",
+        "uri": "s3://<replace-bucket>/cumulus-test-data/pdrs/L2_HR_PIXC_product_0001-of-4154.h5",
         "name": "L2_HR_PIXC_product_0001-of-4154.h5",
         "checksumType": "md5",
         "checksum": "cd043418380acdf69b2fb80649357cda",
