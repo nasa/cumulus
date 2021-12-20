@@ -134,8 +134,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     record.product.files[0].uri = replace(
       record.product.files[0].uri,
-      /cumulus-test-data\/pdrs/g,
-      testDataFolder
+      /<replace-bucket>\/cumulus-test-data\/pdrs/g,
+      `${testConfig.bucket}/${testDataFolder}`
     );
     record.provider += testSuffix;
     record.collection += testSuffix;
