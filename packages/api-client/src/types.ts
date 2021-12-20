@@ -29,7 +29,7 @@ export interface InvokeApiFunctionParams {
   prefix: string,
   payload: ApiGatewayLambdaProxyPayload,
   pRetryOptions?: pRetry.Options,
-  expectedStatusCode?: number
+  expectedStatusCodes?: number | number[]
 }
 
 export type InvokeApiFunction = (
