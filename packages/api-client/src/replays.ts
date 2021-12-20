@@ -33,7 +33,7 @@ export const postKinesisReplays = async (params: {
       path: '/replays',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
 
@@ -67,6 +67,6 @@ export const replaySqsMessages = async (params: {
       path: '/replays/sqs',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
