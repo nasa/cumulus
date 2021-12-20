@@ -107,6 +107,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     large reports
   - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
     a policy role being exceeded
+- **CUMULUS-2775**
+  - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
+  of accepted status codes via `expectedStatusCodes`
+
+### Fixed
+
+- **CUMULUS-2775**
+  - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
 
 ## [v9.9.0] 2021-11-03
 
