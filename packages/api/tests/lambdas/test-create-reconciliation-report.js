@@ -44,12 +44,16 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeGranuleFactoryV2,
+} = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
