@@ -5,6 +5,7 @@ const test = require('ava');
 const { getCmrHost, getSearchUrl, getBucketAccessUrl } = require('../getUrl');
 
 test('getCmrHost uses provided logical CMR environment', (t) => {
+  t.is(getCmrHost({ cmrEnvironment: 'PROD' }), 'https://cmr.earthdata.nasa.gov');
   t.is(getCmrHost({ cmrEnvironment: 'OPS' }), 'https://cmr.earthdata.nasa.gov');
   t.is(getCmrHost({ cmrEnvironment: 'UAT' }), 'https://cmr.uat.earthdata.nasa.gov');
   t.is(getCmrHost({ cmrEnvironment: 'SIT' }), 'https://cmr.sit.earthdata.nasa.gov');
@@ -32,6 +33,7 @@ test.serial('getCmrHost uses process.env.CMR_HOST custom host, if provided', (t)
 });
 
 test.serial('getSearchUrl returns value according to cmrEnvironment param', (t) => {
+  t.is(getSearchUrl({ cmrEnv: 'PROD' }), 'https://cmr.earthdata.nasa.gov/search/');
   t.is(getSearchUrl({ cmrEnv: 'OPS' }), 'https://cmr.earthdata.nasa.gov/search/');
   t.is(getSearchUrl({ cmrEnv: 'SIT' }), 'https://cmr.sit.earthdata.nasa.gov/search/');
   t.is(getSearchUrl({ cmrEnv: 'UAT' }), 'https://cmr.uat.earthdata.nasa.gov/search/');
@@ -47,6 +49,9 @@ test.serial('getSearchUrl pulls cmrEnvironment from environment variables', (t) 
   process.env.CMR_ENVIRONMENT = 'OPS';
   t.is(getSearchUrl(), 'https://cmr.earthdata.nasa.gov/search/');
 
+  process.env.CMR_ENVIRONMENT = 'PROD';
+  t.is(getSearchUrl(), 'https://cmr.earthdata.nasa.gov/search/');
+
   t.teardown(() => delete process.env.CMR_ENVIRONMENT);
 });
 
@@ -57,6 +62,7 @@ test.serial('getSearchUrl uses cmrEnv from parameter over env variable', (t) => 
 });
 
 test('getBucketAccessUrl returns correct url for UAT invornment.', (t) => {
+  t.is(getBucketAccessUrl({ cmrEnv: 'PROD' }), 'https://cmr.earthdata.nasa.gov/access-control/s3-buckets/');
   t.is(getBucketAccessUrl({ cmrEnv: 'OPS' }), 'https://cmr.earthdata.nasa.gov/access-control/s3-buckets/');
   t.is(getBucketAccessUrl({ cmrEnv: 'SIT' }), 'https://cmr.sit.earthdata.nasa.gov/access-control/s3-buckets/');
   t.is(getBucketAccessUrl({ cmrEnv: 'UAT' }), 'https://cmr.uat.earthdata.nasa.gov/access-control/s3-buckets/');
