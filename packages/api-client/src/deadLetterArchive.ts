@@ -32,6 +32,6 @@ export const postRecoverCumulusMessages = async (params: {
       path: '/deadLetterArchive/recoverCumulusMessages',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
