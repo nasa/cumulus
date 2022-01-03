@@ -128,6 +128,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2670**
   - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
   `update_granules_cmr_metadata_file_links_task_timeout` property
+- Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
+- Added Terraform data sources to `example/data-persistence-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
+- Added Terraform data sources to `example/rds-cluster-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to tag names used in subnets in for NGAP accounts
 - **CUMULUS-2439**
   - Added CMR search client setting to the CreateReconciliationReport lambda function.
   - Added `cmr_search_client_config` tfvars to the archive and cumulus terraform modules.
@@ -142,6 +151,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
   - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
+- **CUMULUS-2747**
+  - Updated data management type doc to include additional fields for provider configurations
+- **CUMULUS-2773**
+  - Added a document to the workflow-tasks docs describing deployment, configuration and usage of the LZARDS backup task.
 
 ### Removed
 
@@ -178,6 +191,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Made `vpc_id` variable optional for `example/cumulus-tf` module
+- Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
+- Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
 - **CUMULUS-2718**
@@ -387,6 +403,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2776**
     - Updated `getTableIndexDetails` in `db-indexer` to use correct
       `deleteFnName` for reconciliation reports.
+- **CUMULUS-2735**
+  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
+    large reports
+  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
+    a policy role being exceeded
+- **CUMULUS-2775**
+  - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
+  of accepted status codes via `expectedStatusCodes`
+
+### Fixed
+
+- **CUMULUS-2775**
+  - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
 
 ## [v9.9.0] 2021-11-03
 

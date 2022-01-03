@@ -152,11 +152,12 @@ variable "urs_client_password" {
   type = string
 }
 
+# Optional
+
 variable "vpc_id" {
   type = string
+  default = null
 }
-
-# Optional
 
 variable "api_gateway_stage" {
   type        = string
@@ -458,4 +459,16 @@ variable "deploy_cumulus_distribution" {
   description = "If true, does not deploy the TEA distribution API"
   type        = bool
   default     = true
+}
+
+variable "vpc_tag_name" {
+  description = "Tag name to use for looking up VPC"
+  type = string
+  default = "Application VPC"
+}
+
+variable "subnets_tag_name" {
+  description = "Tag name to use for looking up VPC subnets"
+  type = string
+  default = "Private application us-east-1a *"
 }
