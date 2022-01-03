@@ -53,7 +53,6 @@ const {
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
-const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
@@ -2038,10 +2037,9 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
     granuleId: randomId('granuleId'),
   }));
 
-  // Store the files to S3 and DynamoDB
+  // Store the files to S3
   await Promise.all([
     storeFilesToS3(files),
-    GranuleFilesCache.batchUpdate({ puts: files }),
   ]);
 
   // Create collections that are in sync
