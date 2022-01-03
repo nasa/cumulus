@@ -61,7 +61,7 @@ test.serial('getSearchUrl uses cmrEnv from parameter over env variable', (t) => 
   t.teardown(() => delete process.env.CMR_ENVIRONMENT);
 });
 
-test('getBucketAccessUrl returns correct url for UAT invornment.', (t) => {
+test('getBucketAccessUrl returns correct url for specified environment.', (t) => {
   t.is(getBucketAccessUrl({ cmrEnv: 'PROD' }), 'https://cmr.earthdata.nasa.gov/access-control/s3-buckets/');
   t.is(getBucketAccessUrl({ cmrEnv: 'OPS' }), 'https://cmr.earthdata.nasa.gov/access-control/s3-buckets/');
   t.is(getBucketAccessUrl({ cmrEnv: 'SIT' }), 'https://cmr.sit.earthdata.nasa.gov/access-control/s3-buckets/');
