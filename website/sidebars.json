@@ -52,6 +52,7 @@
       "tasks",
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
+      "workflow_tasks/lzards_backup",
       "workflow_tasks/move_granules",
       "workflow_tasks/parse_pdr",
       "workflow_tasks/queue_granules"

@@ -14,12 +14,12 @@ provider "aws" {
 
 module "rds_cluster" {
   source              = "../../tf-modules/cumulus-rds-tf"
+  prefix              = var.prefix
   db_admin_username   = var.db_admin_username
   db_admin_password   = var.db_admin_password
   region              = var.region
-  prefix              = var.prefix
-  vpc_id              = var.vpc_id
-  subnets             = var.subnets
+  vpc_id              = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
+  subnets             = var.subnets != null ? var.subnets : data.aws_subnet_ids.subnet_ids[0].ids
   engine_version      = var.engine_version
   deletion_protection = true
   cluster_identifier  = var.cluster_identifier
