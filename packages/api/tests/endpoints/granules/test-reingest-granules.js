@@ -109,7 +109,7 @@ test('put request with reingest action queues granule and calls the reingestGran
 
   t.is(granuleReingestStub.calledOnce, true);
 
-  const { queueUrl } = granuleReingestStub.lastCall.args[0].reingestParams;
+  const { queueUrl } = granuleReingestStub.lastCall.args[0];
   const { granule } = updateGranuleStatusToQueuedMethod.lastCall.args[0];
   t.is(granule.granuleId, granuleId);
   t.is(queueUrl, process.env.backgroundQueueUrl);
