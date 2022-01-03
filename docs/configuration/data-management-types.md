@@ -81,6 +81,8 @@ The Provider configuration is defined by a JSON object that takes different conf
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `80`|
+|allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
+|certificateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
 
 ##### https
 
@@ -93,6 +95,8 @@ The Provider configuration is defined by a JSON object that takes different conf
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `443` |
+|allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
+|certiciateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
 
 ##### ftp
 
@@ -117,6 +121,8 @@ The Provider configuration is defined by a JSON object that takes different conf
 |username|string|No|Username to use to connect to the sftp server.|
 |password|string|No|Password to use to connect to the sftp server. |
 |port|integer|No|Port to connect to the provider on.  Defaults to `22`
+|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto
+|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias
 
 </details>
 

@@ -44,7 +44,10 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeGranuleFactoryV2,
+} = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
@@ -1976,4 +1979,101 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
+});
+
+test.serial('Internal Reconciliation report JSON is formatted', async (t) => {
+  const matchingColls = range(5).map(() => fakeCollectionFactory());
+  const collectionId = constructCollectionId(matchingColls[0].name, matchingColls[0].version);
+  const matchingGrans = range(10).map(() => fakeGranuleFactoryV2({ collectionId }));
+  await Promise.all(
+    matchingColls.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
+  );
+  await new models.Collection().create(matchingColls);
+  await Promise.all(
+    matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
+  );
+
+  await new models.Granule().create(matchingGrans);
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Internal',
+    reportName: randomId('reportName'),
+    collectionId,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  const reportRecord = await handler(event);
+
+  const formattedReport = await fetchCompletedReportString(reportRecord);
+
+  // Force report to unformatted (single line)
+  const unformattedReportString = JSON.stringify(JSON.parse(formattedReport), undefined, 0);
+  const unformattedReportObj = JSON.parse(unformattedReportString);
+
+  t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
+  t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
+});
+
+test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
+  const dataBuckets = range(2).map(() => randomId('bucket'));
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  // Create random files
+  const files = range(10).map((i) => ({
+    bucket: dataBuckets[i % dataBuckets.length],
+    key: randomId('key'),
+    granuleId: randomId('granuleId'),
+  }));
+
+  // Store the files to S3
+  await Promise.all([
+    storeFilesToS3(files),
+  ]);
+
+  // Create collections that are in sync
+  const matchingColls = range(10).map(() => ({
+    name: randomId('name'),
+    version: randomId('vers'),
+  }));
+
+  const cmrCollections = sortBy(matchingColls, ['name', 'version'])
+    .map((collection) => ({
+      umm: { ShortName: collection.name, Version: collection.version },
+    }));
+
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
+  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+  cmrSearchStub.withArgs('granules').resolves([]);
+
+  await storeCollectionsToElasticsearch(matchingColls);
+
+  const eventFormatted = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Inventory',
+  };
+
+  const reportRecordFormatted = await handler(eventFormatted);
+  const formattedReport = await fetchCompletedReportString(reportRecordFormatted);
+
+  // Force report to unformatted (single line)
+  const unformattedReportString = JSON.stringify(JSON.parse(formattedReport), undefined, 0);
+  const unformattedReportObj = JSON.parse(unformattedReportString);
+
+  t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
+  t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
