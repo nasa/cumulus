@@ -19,12 +19,12 @@ module "orca" {
   ## --------------------------
   ## REQUIRED
   buckets                  = var.buckets
-  lambda_subnet_ids        = var.lambda_subnet_ids
+  lambda_subnet_ids        = local.subnet_ids
   permissions_boundary_arn = var.permissions_boundary_arn
   prefix                   = var.prefix
   rds_security_group_id    = local.rds_security_group
   system_bucket            = var.system_bucket
-  vpc_id                   = var.vpc_id
+  vpc_id                   = local.vpc_id
   workflow_config          = module.cumulus.workflow_config
 
   ## OPTIONAL
