@@ -60,6 +60,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       };
 
       await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
+      console.log('Async Operation ID: %s', asyncOperationId);
 
       const runTaskResponse = await ecs().runTask({
         cluster,
@@ -128,8 +129,9 @@ describe('The AsyncOperation task runner executing a successful lambda function'
           id: asyncOperationId,
         },
       });
-      expect(response.results.length).toEqual(1);
-      const [record] = response.results;
+      const { results } = JSON.parse(response.body);
+      expect(results.length).toEqual(1);
+      const [record] = results;
       expect(record.status).toEqual('SUCCEEDED');
       const parsedOutput = JSON.parse(record.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
