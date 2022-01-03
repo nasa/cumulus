@@ -155,7 +155,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       DynamoDB table.
     - Removed `stream_enabled` and `stream_view_type` from `collections_table`
       TF definition.
-    - Removed `aws_lambda_event_source_mapping` TF definition on collections
+     - Removed `aws_lambda_event_source_mapping` TF definition on collections
       DynamoDB table.
     - Removed lambda `publish_collections` TF resource.
     - Removed `aws_lambda_event_source_mapping` TF definition on granules
