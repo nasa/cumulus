@@ -423,6 +423,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
     knexOrTransaction: knex,
   });
   await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
+  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
 };
 
 /**
@@ -575,7 +576,7 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`);
+      log.error(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`, writeError);
       // On error, recreate the DynamoDB record to revert it back to original
       // status to ensure that all systems stay in sync
       await granuleModel.create(apiGranule);
@@ -591,12 +592,11 @@ const _updateGranule = async ({
   );
   log.info('Successfully wrote granule %j to DynamoDB', apiGranule);
 
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: updatedPgGranule,
-    knexOrTransaction: knex,
+  await _publishPostgresGranuleUpdateToSns({
+    snsEventType,
+    pgGranule: updatedPgGranule,
+    knex,
   });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
 };
 
 /**

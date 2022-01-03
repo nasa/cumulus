@@ -173,13 +173,13 @@ async function bulkGranuleReingest(
       try {
         const granule = await granuleModel.getRecord({ granuleId });
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
-        const reingestParams = {
+        const granuleToReingest = {
           ...granule,
           ...(targetExecution && { execution: targetExecution }),
         };
-        await updateGranuleStatusToQueued({ granule: reingestParams, knex });
+        await updateGranuleStatusToQueued({ granule: granuleToReingest, knex });
         await reingestHandler({
-          reingestParams,
+          granule: granuleToReingest,
           asyncOperationId: process.env.asyncOperationId,
         });
 
