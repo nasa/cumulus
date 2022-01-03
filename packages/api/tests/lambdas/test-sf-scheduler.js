@@ -103,6 +103,7 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 });
+
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
