@@ -102,7 +102,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Nested objects under `originalPayload.*` will not dynamically add new fields to mapping
     - Nested keys under `tasks` will not dynamically add new fields to mapping
 - **CUMULUS-2753**
-  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0 which is compatible with granule.files file schema
+  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0-Beta2 which is compatible with granule.files file schema
   - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
   - Updated orca integration test
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
