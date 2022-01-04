@@ -153,6 +153,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-1823**
+  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2743**
   - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
