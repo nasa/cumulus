@@ -16,7 +16,7 @@ To run code coverage on an individual package during development, run
 
 This project uses [eslint](https://eslint.org/) to check code style and quality.
 The configured eslint rules can be found in the project's
-[.eslintrc.json](https://github.com/nasa/cumulus/blob/master/.eslintrc.js)
+[.eslintrc.js](https://github.com/nasa/cumulus/blob/master/.eslintrc.js)
 file.
 
 To check the configured linting, run `npm run lint`.
