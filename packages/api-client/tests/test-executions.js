@@ -193,7 +193,7 @@ test('searchExecutionsByGranules calls the callback with the expected object and
       path: '/executions/search-by-granules',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   };
 
   const callback = (configObject) => {
@@ -226,7 +226,7 @@ test('workflowsByGranules calls the callback with the expected object and return
       path: '/executions/workflows-by-granules',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   };
 
   const callback = (configObject) => {

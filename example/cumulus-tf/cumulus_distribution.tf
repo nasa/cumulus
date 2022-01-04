@@ -28,7 +28,7 @@ module "cumulus_distribution" {
   cmr_acl_based_credentials = true
   cmr_environment           = var.cmr_environment
   cmr_provider              = var.cmr_provider
-  lambda_subnet_ids        = var.lambda_subnet_ids
+  lambda_subnet_ids        = local.subnet_ids
   oauth_client_id          = var.csdap_client_id
   oauth_client_password    = var.csdap_client_password
   oauth_host_url           = var.csdap_host_url
@@ -39,5 +39,5 @@ module "cumulus_distribution" {
   sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
   system_bucket            = var.system_bucket
   tags                     = local.tags
-  vpc_id                   = var.vpc_id
+  vpc_id                   = local.vpc_id
 }

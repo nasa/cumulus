@@ -444,6 +444,7 @@ export const updateGranule = async (params: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
+    expectedStatusCodes: [200, 201],
   });
 };
 
@@ -506,7 +507,7 @@ export const bulkGranules = async (params: {
       path: '/granules/bulk',
       body: JSON.stringify(body),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
 
@@ -539,7 +540,7 @@ export const bulkDeleteGranules = async (params: {
       path: '/granules/bulkDelete',
       body: JSON.stringify(body),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
 
@@ -561,7 +562,7 @@ export const bulkReingestGranules = async (params: {
       path: '/granules/bulkReingest',
       body: JSON.stringify(body),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
 
@@ -597,6 +598,6 @@ export const bulkOperation = async (params: {
       },
       body: JSON.stringify({ ids, workflowName }),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };

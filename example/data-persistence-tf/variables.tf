@@ -19,10 +19,12 @@ variable "rds_security_group" {
 
 variable "subnet_ids" {
   type = list(string)
+  default = null
 }
 
 variable "vpc_id" {
   type = string
+  default = null
 }
 
 # Optional
@@ -77,4 +79,16 @@ variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
+}
+
+variable "vpc_tag_name" {
+  description = "Tag name to use for looking up VPC"
+  type = string
+  default = "Application VPC"
+}
+
+variable "subnets_tag_name" {
+  description = "Tag name to use for looking up VPC subnets"
+  type = string
+  default = "Private application us-east-1a *"
 }

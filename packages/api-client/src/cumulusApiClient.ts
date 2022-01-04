@@ -26,9 +26,11 @@ export async function invokeApi(
   const {
     prefix,
     payload,
-    expectedStatusCode = 200,
+    expectedStatusCodes = 200,
     pRetryOptions = {},
   } = params;
+
+  const expectedStatusCodesFlat = [expectedStatusCodes].flat();
 
   return await pRetry(
     async () => {
@@ -51,7 +53,7 @@ export async function invokeApi(
         );
       }
 
-      if (parsedPayload?.statusCode !== expectedStatusCode) {
+      if (!expectedStatusCodesFlat.includes(parsedPayload?.statusCode)) {
         throw new CumulusApiClientError(
           `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`,
           parsedPayload?.statusCode,
