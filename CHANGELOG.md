@@ -85,6 +85,11 @@ all Cumulus workflow tasks
   - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2735**
+  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
+    large reports
+  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
+    a policy role being exceeded
 - **CUMULUS-2744**
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
@@ -98,20 +103,23 @@ all Cumulus workflow tasks
     - Nested objects under `finalPayload.*` will not dynamically add new fields to mapping
     - Nested objects under `originalPayload.*` will not dynamically add new fields to mapping
     - Nested keys under `tasks` will not dynamically add new fields to mapping
+- **CUMULUS-2753**
+  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0-Beta2 which is compatible with granule.files file schema
+  - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
+  - Updated orca integration test
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
   - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
     a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
-- **CUMULUS-2735**
-  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
-    large reports
-  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
-    a policy role being exceeded
 - **CUMULUS-2775**
   - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
   of accepted status codes via `expectedStatusCodes`
+- [**PR #2611**](https://github.com/nasa/cumulus/pull/2611)
+  - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
+    to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
+    for providing the certificate.
 
 ### Fixed
 
