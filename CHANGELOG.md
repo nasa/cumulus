@@ -45,6 +45,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `sync-granule` task has been updated to support an optional configuration parameter `workflowStartTime`. The output payload of `sync-granule` now includes a `createdAt` time for each granule which is set to the
   provided `workflowStartTime` or falls back to `Date.now()` if not provided. Workflows using
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
+- Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
+all Cumulus workflow tasks
 
 ### Added
 
@@ -151,6 +153,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
+- **CUMULUS-1823**
+  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2743**
   - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
