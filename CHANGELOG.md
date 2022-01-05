@@ -403,6 +403,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2776**
     - Updated `getTableIndexDetails` in `db-indexer` to use correct
       `deleteFnName` for reconciliation reports.
+  - **CUMULUS-2778**
+    - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
 - **CUMULUS-2735**
   - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
     large reports
@@ -416,6 +418,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2778**
+    - Fixed async operation docker image to correctly update record status in
+    Elasticsearch
 
 ## [v9.9.0] 2021-11-03
 
