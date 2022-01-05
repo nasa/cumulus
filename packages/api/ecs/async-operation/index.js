@@ -267,7 +267,7 @@ const updateAsyncOperation = async (params) => {
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
-  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+  logger.info(`Updating AsyncOperation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
 
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
