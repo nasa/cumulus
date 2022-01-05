@@ -61,6 +61,11 @@ resource "aws_lambda_function" "api" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
+
+  layers = [
+    "arn:aws:lambda:us-east-1:140000014669:layer:gsfc-ngap-sh-otel-collector-layer:3",
+    "arn:aws:lambda:us-east-1:140000014669:layer:gsfc-ngap-sh-otel-nodejs-layer:3"
+  ]
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {
