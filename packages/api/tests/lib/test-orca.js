@@ -114,7 +114,7 @@ test.serial(
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns running status when file restore has error',
+  'getOrcaRecoveryStatusByGranuleId returns failed status when file restore has error',
   async (t) => {
     const granuleId = randomId('granId');
     const files = [
