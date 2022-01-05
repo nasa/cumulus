@@ -45,6 +45,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `sync-granule` task has been updated to support an optional configuration parameter `workflowStartTime`. The output payload of `sync-granule` now includes a `createdAt` time for each granule which is set to the
   provided `workflowStartTime` or falls back to `Date.now()` if not provided. Workflows using
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
+- Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
+all Cumulus workflow tasks
 
 ### Added
 
