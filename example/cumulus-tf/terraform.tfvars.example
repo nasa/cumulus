@@ -7,7 +7,7 @@ permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
 prefix                   = "PREFIX"
 buckets = {
   glacier = {
-    name = "PREFIX-glacier"
+    name = "PREFIX-orca"
     type = "orca"
   },
   internal = {
@@ -60,7 +60,7 @@ private_archive_api_gateway = true
 rds_admin_access_secret_arn = "arn:aws:secretsmanager:us-east-1:12345:secret:secret-name"
 # ORCA Configuration
 orca_db_user_password  = "password"
-orca_default_bucket    = "PREFIX-glacier"
+orca_default_bucket    = "PREFIX-orca"
 
 # CSDAP configuration for cumulus distribution
 csdap_client_id = "csdap client id "
