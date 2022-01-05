@@ -224,7 +224,7 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
 
-test.serial('_updateGranuleStatus updates payload granules status to queued', async (t) => {
+test.serial('_updateGranuleStatusToQueued updates payload granules status to queued', async (t) => {
   const {
     collectionPgModel,
     granulePgModel,

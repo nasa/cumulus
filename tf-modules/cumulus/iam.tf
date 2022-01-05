@@ -30,10 +30,9 @@ resource "aws_iam_role" "lambda_processing" {
 data "aws_iam_policy_document" "lambda_processing_policy" {
   statement {
     actions = [
-      "ec2:CreateNetworkInterface",
-      "sns:publish",
       "cloudformation:DescribeStacks",
       "dynamodb:ListTables",
+      "ec2:CreateNetworkInterface",
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "events:DeleteRule",
@@ -55,6 +54,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "logs:PutLogEvents",
       "s3:ListAllMyBuckets",
       "sns:List*",
+      "sns:publish",
       "states:DescribeActivity",
       "states:DescribeExecution",
       "states:GetActivityTask",
@@ -147,6 +147,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
     resources = [
       module.archive.cmr_password_secret_arn,
       module.archive.launchpad_passphrase_secret_arn,
+      var.rds_user_access_secret_arn
     ]
   }
 }

@@ -177,19 +177,25 @@ resource "aws_lambda_function" "schedule_sf" {
   handler          = "index.handleScheduleEvent"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs12.x"
-  timeout          = 100
-  memory_size      = 192
+  timeout          = 300
+  memory_size      = 512
   dead_letter_config {
     target_arn = aws_sqs_queue.schedule_sf_dead_letter_queue.arn
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT          = var.cmr_environment
-      CMR_HOST                 = var.cmr_custom_host
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
-      stackName                = var.prefix
-      defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      CMR_ENVIRONMENT              = var.cmr_environment
+      CMR_HOST                     = var.cmr_custom_host
+      CollectionsTable             = var.dynamo_tables.collections.name
+      createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn  = var.rds_user_access_secret_arn
+      defaultSchedulerQueueUrl     = local.defaultSchedulerQueueUrl
+      ES_HOST                      = var.elasticsearch_hostname
+      GranulesTable                = var.dynamo_tables.granules.name
+      idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
+      ProvidersTable               = var.dynamo_tables.providers.name
+      stackName                    = var.prefix
     }
   }
   tags = var.tags
@@ -198,9 +204,11 @@ resource "aws_lambda_function" "schedule_sf" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = [
-        aws_security_group.no_ingress_all_egress[0].id
-      ]
+      security_group_ids = compact([
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group_id,
+        var.elasticsearch_security_group_id
+      ])
     }
   }
 }

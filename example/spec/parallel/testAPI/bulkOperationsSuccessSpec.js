@@ -19,6 +19,7 @@ const {
   getClusterArn,
   getExecutionInputObject,
 } = require('@cumulus/integration-tests');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
@@ -88,6 +89,7 @@ describe('POST /granules/bulk', () => {
             process: 'modis',
           }
         );
+        const collectionId = constructCollectionId(collection.name, collection.version);
 
         // Create the S3 provider
         provider = await createProvider(prefix, { host: sourceBucket });
@@ -121,6 +123,7 @@ describe('POST /granules/bulk', () => {
               granules: [
                 {
                   granuleId,
+                  collectionId,
                   dataType: collection.name,
                   version: collection.version,
                   files: [

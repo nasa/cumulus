@@ -72,6 +72,15 @@ variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }
 
+variable "elasticsearch_hostname" {
+  type = string
+}
+
+variable "elasticsearch_security_group_id" {
+  description = "Security Group ID For Elasticsearch (OpenSearch)"
+  type = string
+}
+
 variable "lambda_processing_role_arn" {
   type = string
 }
@@ -126,6 +135,27 @@ variable "permissions_boundary_arn" {
 }
 
 variable "prefix" {
+  type = string
+}
+
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus RDS connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 60000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
+}
+
+variable "rds_user_access_secret_arn" {
+  description = "RDS User Database Login Credential Secret ID"
+  type        = string
+}
+
+variable "rds_security_group_id" {
   type = string
 }
 

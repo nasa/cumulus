@@ -54,5 +54,13 @@ module "ingest" {
 
   sf_event_sqs_to_db_records_sqs_queue_url = module.archive.sf_event_sqs_to_db_records_sqs_queue_url
 
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+  rds_security_group_id                  = var.rds_security_group
+  rds_user_access_secret_arn             = var.rds_user_access_secret_arn
+
   tags = var.tags
+
+  # ES config
+  elasticsearch_hostname              = var.elasticsearch_hostname
+  elasticsearch_security_group_id     = var.elasticsearch_security_group_id
 }
