@@ -28,13 +28,14 @@ async function listRequests(req, res) {
   }
 
   const params = mapKeys(query, (value, key) => mapKeysToOrca[key] || key);
-  const inputPayload = { function: 'query', ...params };
-  const functionName = `${process.env.stackName}_request_status`;
+  const functionName = granuleId
+    ? `${process.env.stackName}_request_status_for_granule`
+    : `${process.env.stackName}_request_status_for_job`;
 
   try {
     const result = await lambda().invoke({
       FunctionName: functionName,
-      Payload: JSON.stringify(inputPayload),
+      Payload: JSON.stringify(params),
       InvocationType: 'RequestResponse',
     }).promise();
 
