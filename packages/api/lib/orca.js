@@ -33,15 +33,15 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
     return undefined;
   }
 
-  const requests = JSON.parse(response.body);
-  const jobStatuses = requests.map((request) => request.job_status);
-
+  const request = JSON.parse(response.body);
+  const jobStatuses = (request.files || []).map((file) => file.status);
+  // file status may be 'pending', 'staged', 'success', or 'failed'
   let recoveryStatus = 'failed';
   if (jobStatuses.length === 0) {
     recoveryStatus = undefined;
-  } else if (jobStatuses.filter((jobStatus) => jobStatus !== 'complete').length === 0) {
+  } else if (jobStatuses.filter((jobStatus) => jobStatus !== 'success').length === 0) {
     recoveryStatus = 'completed';
-  } else if (jobStatuses.filter((jobStatus) => !['complete', 'error'].includes(jobStatus)).length > 0) {
+  } else if (jobStatuses.filter((jobStatus) => !['success', 'failed'].includes(jobStatus)).length > 0) {
     recoveryStatus = 'running';
   }
   return recoveryStatus;

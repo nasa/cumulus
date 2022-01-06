@@ -335,11 +335,12 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "buckets": "{$.meta.buckets}",
-            "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}",
-            "granules": "{$.meta.processed_granules}",
-            "files_config": "{$.meta.collection.files}"
+            "multipart_chunksize_mb": "{$.meta.collection.meta.s3MultipartChunksizeMb}",
+            "excludeFileTypes": "{$.meta.collection.meta.excludeFileTypes}",
+            "providerId": "{$.meta.provider.id}",
+            "executionId": "{$.cumulus_meta.execution_name}",
+            "collectionShortname": "{$.meta.collection.name}",
+            "collectionVersion": "{$.meta.collection.version}"
           }
         }
       },
