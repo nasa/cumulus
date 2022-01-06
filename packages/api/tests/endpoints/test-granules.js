@@ -6,6 +6,7 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
+const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
@@ -611,8 +612,8 @@ test.serial('reingest a granule', async (t) => {
     { granuleId: t.context.fakeGranules[0].granuleId }
   );
 
-  t.is(updatedPgGranule.status, 'running');
-  t.is(updatedDynamoGranule.status, 'running');
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -670,8 +671,8 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     { granuleId: t.context.fakeGranules[0].granuleId }
   );
 
-  t.is(updatedPgGranule.status, 'running');
-  t.is(updatedDynamoGranule.status, 'running');
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 test.serial('remove a granule from CMR', async (t) => {
@@ -1258,12 +1259,8 @@ test.serial('When a move granule request fails to move a file correctly, it reco
 
       const message = JSON.parse(response.body.message);
 
-      message.granule.files = message.granule.files.sort(
-        (a, b) => (a.key < b.key ? -1 : 1)
-      );
-      newGranule.files = newGranule.files.sort(
-        (a, b) => (a.key < b.key ? -1 : 1)
-      );
+      message.granule.files = sortBy(message.granule.files, (file) => getFileNameFromKey(file.key));
+      newGranule.files = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
 
       const fileWithInvalidDestination = newGranule.files[0];
 
@@ -1272,9 +1269,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       t.is(message.errors.length, 1);
       t.is(message.errors[0].code, 'NoSuchBucket');
 
-      const actualGranuleFileRecord = message.granuleFilesRecords.sort(
-        (a, b) => (a.key < b.key ? -1 : 1)
-      );
+      const actualGranuleFileRecord = sortBy(message.granuleFilesRecords, ['key']);
       const expectedGranuleFileRecord = [
         {
           bucket: thirdBucket,
@@ -1320,13 +1315,16 @@ test.serial('When a move granule request fails to move a file correctly, it reco
 
       // check the granule in dynamoDb is updated and files are replaced
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-      const updatedFiles = updatedGranule.files.sort((a, b) => (a.key < b.key ? -1 : 1));
 
-      t.true(updatedFiles[0].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
-      t.like(newGranule.files[0], omit(updatedFiles[0], ['fileName', 'key', 'bucket']));
-      t.is(updatedFiles[0].bucket, destinations.find(
-        (dest) => updatedFiles[0].fileName.match(dest.regex)
-      ).bucket);
+      const updatedFiles = sortBy(updatedGranule.files, (file) => getFileNameFromKey(file.key));
+      const granuleFiles = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
+
+      t.deepEqual({
+        bucket: fileWithInvalidDestination.bucket,
+        key: fileWithInvalidDestination.key,
+        size: fileWithInvalidDestination.size,
+        fileName: `${granuleFileName}.jpg`,
+      }, updatedFiles[0]);
 
       t.true(
         updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
@@ -1337,12 +1335,14 @@ test.serial('When a move granule request fails to move a file correctly, it reco
         (dest) => updatedFiles[1].fileName.match(dest.regex)
       ).bucket);
 
-      t.deepEqual({
-        bucket: fileWithInvalidDestination.bucket,
-        key: fileWithInvalidDestination.key,
-        size: fileWithInvalidDestination.size,
-        fileName: `${granuleFileName}.jpg`,
-      }, updatedFiles[2]);
+      t.true(
+        updatedFiles[2].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
+        `updatedFile[2] ${updatedFiles[2].key}, did not start with ${destinationFilepath}/${granuleFileName}`
+      );
+      t.like(granuleFiles[2], omit(updatedFiles[2], ['fileName', 'key', 'bucket']));
+      t.is(updatedFiles[2].bucket, destinations.find(
+        (dest) => updatedFiles[2].fileName.match(dest.regex)
+      ).bucket);
 
       // Check that the postgres granules are in the correct state
       const pgFiles = await getPgFilesFromGranuleCumulusId(
@@ -1352,9 +1352,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       );
 
       // Sort by only the filename because the paths will have changed
-      const sortedPgFiles = pgFiles.sort(
-        (a, b) => (getFileNameFromKey(a.key) < getFileNameFromKey(b.key) ? -1 : 1)
-      );
+      const sortedPgFiles = sortBy(pgFiles, (file) => getFileNameFromKey(file.key));
 
       // The .jpg at index 0 should fail and have the original object values as
       // it's assigned `fakeBucket`
