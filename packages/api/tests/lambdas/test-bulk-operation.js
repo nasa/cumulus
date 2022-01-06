@@ -2,6 +2,8 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
+
 const {
   sns,
   sqs,
@@ -17,10 +19,12 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   generateLocalTestDb,
+  getUniqueGranuleByGranuleId,
   destroyLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
   translatePostgresGranuleToApiGranule,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -29,6 +33,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const Granule = require('../../models/granules');
@@ -112,15 +117,15 @@ const setUpExistingDatabaseRecords = async (t) => {
     collection
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
-  const collectionCumulusId = t.context.collectionCumulusId;
+
+  const translatedGranules = await Promise.all(t.context.granules.map(async (granule) =>
+    await translateApiGranuleToPostgresGranule(granule, t.context.knex)));
 
   const pgGranules = await granulePgModel.create(
     t.context.knex,
-    t.context.granules.map((granule) =>
+    translatedGranules.map((granule) =>
       fakeGranuleRecordFactory({
-        collection_cumulus_id: collectionCumulusId,
-        granule_id: granule.granuleId,
-        created_at: new Date(granule.createdAt),
+        ...granule,
       }))
   );
   const pgExecutions = await executionPgModel.create(
@@ -386,7 +391,10 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       granulePgRecord,
       knexOrTransaction: t.context.knex,
     });
-    t.deepEqual(matchingGranule, callArgs[0].granule);
+
+    const omitList = ['dataType', 'version'];
+
+    t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].workflow, workflowName);
   }));
 });
@@ -689,33 +697,44 @@ test.serial('bulk operation BULK_GRANULE_DELETE does not throw error for granule
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs', async (t) => {
   await setUpExistingDatabaseRecords(t);
-  const granules = t.context.granules;
+  const { granules, knex } = t.context;
+  const payload = {
+    ids: [
+      granules[0].granuleId,
+      granules[1].granuleId,
+    ],
+  };
 
   await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
-    payload: {
-      ids: [
-        granules[0].granuleId,
-        granules[1].granuleId,
-      ],
-    },
+    payload,
     reingestHandler: reingestStub,
   });
 
   t.is(reingestStub.callCount, 2);
-  reingestStub.args.forEach((callArgs) => {
+  reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = granules.find((granule) =>
       granule.granuleId === callArgs[0].granule.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].granule);
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+    const omitList = ['dataType', 'version'];
+
+    t.deepEqual(omit(translatedGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => {
   await setUpExistingDatabaseRecords(t);
-  const { granules, workflowName } = t.context;
+  const {
+    granules,
+    workflowName,
+  } = t.context;
 
   await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
@@ -739,18 +758,19 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
       granule.granuleId === callArgs[0].granule.granuleId);
 
     t.true(t.context.executionArns.includes(callArgs[0].granule.execution));
-
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
 
-    t.deepEqual(matchingGranule, callArgs[0].granule);
+    const omitList = ['dataType', 'version'];
+
+    t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => {
   await setUpExistingDatabaseRecords(t);
-  const granules = t.context.granules;
+  const { granules, knex } = t.context;
 
   esSearchStub.resolves({
     body: {
@@ -784,11 +804,18 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   t.true(esSearchStub.called);
   t.is(reingestStub.callCount, 2);
 
-  reingestStub.args.forEach((callArgs) => {
+  reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = granules.find((granule) =>
       granule.granuleId === callArgs[0].granule.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].granule);
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+    const omitList = ['dataType', 'version'];
+
+    t.deepEqual(omit(translatedGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
@@ -807,4 +834,24 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
   t.is(reingestStub.callCount, 2);
 
   await verifyGranulesQueuedStatus(t);
+});
+
+test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
+  const result = await bulkOperation.handler({
+    type: 'BULK_GRANULE_REINGEST',
+    envVars,
+    payload: {
+      ids: [
+        randomGranuleId(),
+        randomGranuleId(),
+      ],
+    },
+    reingestHandler: reingestStub,
+  });
+
+  Array.from(result).map(
+    (error) => t.true(error.err instanceof RecordDoesNotExist)
+  );
+
+  t.is(reingestStub.callCount, 0);
 });
