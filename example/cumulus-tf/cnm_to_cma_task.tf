@@ -1,5 +1,5 @@
 locals {
-  cnm_to_cma_version  = "1.5.2"
+  cnm_to_cma_version  = "1.5.3"
   cnm_to_cma_filename = "cnmToGranule-${local.cnm_to_cma_version}.zip"
 }
 
