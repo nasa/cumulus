@@ -120,6 +120,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `postgres-migration-async-operation` lambda.
     - Added permission for `DynamoDb:DeleteItem` to
       `postgres-migration-async-operation` lambda.
+  - **CUMULUS-2778**
+    - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
+    - Added `ES_HOST` environment variable to async operation ECS task definition to ensure that async operation tasks
+    write to the correct Elasticsearch domain
 - Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex
   transaction that **will throw an error** if the transaction rolls back. [As
   of Knex 0.95+, promise rejection on transaction rollback is no longer the
