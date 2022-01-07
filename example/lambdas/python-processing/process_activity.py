@@ -65,11 +65,11 @@ class PythonProcess(Process):
         return md5_key
 
     def _write_md5sum_file(self, md5_file, md5_sum):
-        with open(md5_file, 'w',) as write_file:
+        with open(md5_file, 'w', encoding='utf8') as write_file:
             write_file.write(md5_sum)
 
     def _get_md5_sum(self, local_file):
-        with open(local_file, 'rb') as file:
+        with open(local_file, 'rb', encoding='utf8') as file:
             md5sum = md5(file.read()).hexdigest()
         return md5sum
 
