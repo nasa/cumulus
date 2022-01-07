@@ -1,29 +1,19 @@
 'use strict';
 
+const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
-const sortBy = require('lodash/sortBy');
+const moment = require('moment');
 const path = require('path');
-const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
+
 const { s3 } = require('@cumulus/aws-client/services');
-const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const {
-  getFilesAndGranuleInfoQuery,
-  getKnexClient,
-  QuerySearchClient,
-} = require('@cumulus/db');
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
-const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
-const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
-const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { errorify } = require('../lib/utils');
 const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
@@ -67,16 +57,18 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     ...pick(cumulusGranule, ['granuleId', 'collectionId', 'providerId']),
     mismatchedFiles: [],
   };
-  //TODO cumulus/orca files keyed by fileName
-  // allFileNames
-  // for each file in allFileNames
-  // file in both cumulus, excludedFromOrca -> add to conflict file and reason shoud not in orca
-  //           not excludedFromOrca -> okFilesCount
-  // file only in cumulus, excludedFromOrca ->okFilesCount
-  //           not excludedFromOrca -> add to conflict file and reason
-  // file only in orca, add to conflict file and reason, extra file only in orca
 
-  // reducer, key fileName, value: file object
+  // get allFileNames(all file names) from cumulus and orca granules
+  // for each file in allFileNames:
+  //   file in both cumulus and orca,
+  //     file type is excludedFromOrca -> add file to mismatchedFiles with conflict reason
+  //     file type is not excludedFromOrca -> increase okFilesCount
+  //   file only in cumulus,
+  //     file type is excludedFromOrca -> increase okFilesCount
+  //     file type is not excludedFromOrca -> add file to mismatchedFiles with conflict reason
+  //   file only in orca, add file to conflict file with conflict reason
+
+  // reducer, key: fileName, value: file object
   const reducer = (accumulator, currentValue) => {
     const fileName = currentValue.fileName || path.basename(currentValue.key);
     return ({
@@ -97,7 +89,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
           ...cumulusFiles[fileName],
           orcaBucket: orcaFiles[fileName].bucket,
           orcaKey: orcaFiles[fileName].key,
-          reason: 'fileShouldExcludedFromOrca',
+          reason: 'shouldExcludedFromOrca',
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
@@ -107,7 +99,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
       } else {
         const conflictFile = {
           ...cumulusFiles[fileName],
-          reason: 'fileOnlyInCumulus',
+          reason: 'onlyInCumulus',
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
@@ -115,7 +107,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
       const conflictFile = {
         orcaBucket: orcaFiles[fileName].bucket,
         orcaKey: orcaFiles[fileName].key,
-        reason: 'fileOnlyInOrca',
+        reason: 'onlyInOrca',
       };
       oneGranuleReport.mismatchedFiles.push(conflictFile);
     }
@@ -126,16 +118,35 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   return oneGranuleReport;
 }
 
-function addGranuleToReport(report, granReport) {
-  const granulesReport = report;
+function constructOrcaOnlyGranuleForReport(orcaGranule) {
+  const mismatchedFiles = orcaGranule.files.map((file) =>
+    ({ ...pick(file, ['bucket', 'key']), reason: 'onlyInOrca' }));
+  const mismatchedGranule = {
+    ...pick(orcaGranule, ['granuleId', 'collectionId', 'providerId']),
+    mismatchedFiles,
+  };
+  return mismatchedGranule;
+}
+
+function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule, orcaGranule }) {
+  /* eslint-disable no-param-reassign */
+  if (cumulusGranule === undefined && orcaGranule) {
+    granulesReport.mismatchedGranules.push(constructOrcaOnlyGranuleForReport(orcaGranule));
+    granulesReport.mismatchedFilesCount += orcaGranule.files.length;
+  }
+  const granReport = getReportForOneGranule({
+    collectionsConfig, cumulusGranule, orcaGranule,
+  });
+
   if (granReport.ok) {
     granulesReport.okCount += 1;
   } else {
     granulesReport.mismatchedGranules.push(omit(granReport, ['ok']));
+    granulesReport.mismatchedFilesCount += granReport.mismatchedFiles.length;
   }
 
   granulesReport.okFilesCount += granReport.okFilesCount;
-
+  /* eslint-enable no-param-reassign */
   return granulesReport;
 }
 
@@ -152,8 +163,8 @@ async function reconciliationReportForGranules(params) {
   // compare granule holdings:
   //   Get ORCA granules list sort by granuleId, collectionId
   //   Get CUMULUS granules list sort by granuleId, collectionId
-  //   Report granules only in ORCA
-  //   Report granules only in CUMULUS
+  //   Report okCount
+  //   Report mismatchedGranules with mismatchedFiles
   log.info(`reconciliationReportForGranules ${params}`);
   const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInOrca: [] };
 
@@ -177,7 +188,6 @@ async function reconciliationReportForGranules(params) {
     process.env.ES_INDEX
   );
 
-  // TODO granuleId + collectionId is unique
   const collectionsConfig = await fetchESCollections(params);
 
   try {
@@ -191,19 +201,11 @@ async function reconciliationReportForGranules(params) {
 
       if (nextCumulusId < nextOrcaId) {
         // Found an item that is only in Cumulus database and not in ORA.
-        // Check if the granule (files) should be in orca, and act accordingly.
-        const granReport = getReportForOneGranule({
-          collectionsConfig, cumulusGranule: nextCumulusItem,
+        addGranuleToReport({
+          granulesReport,
+          collectionsConfig,
+          cumulusGranule: nextCumulusItem,
         });
-        if (granReport.ok) {
-          granulesReport.okCount += 1;
-          granulesReport.okFilesCount += granReport.okFilesCount;
-        } else {
-          // TODO report granule file discrepency, not use onlyInCumulus
-          granulesReport.onlyInCumulus.push(
-            pick(nextCumulusItem, ['granuleId', 'collectionId', 'providerId'])
-          );
-        }
         await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextCumulusId > nextOrcaId) {
         // Found an item that is only in ORA and not in Cumulus database
@@ -214,62 +216,49 @@ async function reconciliationReportForGranules(params) {
       } else {
         // Found an item that is in both ORA and Cumulus database
         // Check if the granule (files) should be in orca, and act accordingly
-        const granReport = getReportForOneGranule({
-          collectionsConfig, cumulusGranule: nextCumulusItem,
+        addGranuleToReport({
+          granulesReport,
+          collectionsConfig,
+          cumulusGranule: nextCumulusItem,
+          orcaGranule: nextOrcaItem,
         });
-        if (granReport.ok) {
-          granulesReport.okCount += 1;
-          granulesReport.okFilesCount += granReport.okFilesCount;
-        } else {
-          granulesReport.mismatchedFilesCount += granReport.mismatchedFiles.length;
-          granulesReport.onlyInCumulus.push({
-            granuleId: nextCumulusId,
-            collectionId: nextCumulusItem.collectionId,
-          });
-        }
-
         await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-
-        // compare the files now to avoid keeping the granules' information in memory
-        // eslint-disable-next-line no-await-in-loop
-        // const fileReport = await reconciliationReportForGranuleFiles({
-        //   granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
-        // });
-        // filesReport.okCount += fileReport.okCount;
-        // filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);
-        // filesReport.onlyInCmr = filesReport.onlyInCmr.concat(fileReport.onlyInCmr);
       }
 
       [nextCumulusItem, nextOrcaItem] = await Promise.all([esGranulesIterator.peek(), orcaGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
-    // Add any remaining DynamoDB items to the report
+    // Add any remaining cumulus items to the report
     while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const cumulusItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       // Found an item that is only in Cumulus database and not in ORA.
-      // Check if the granule (files) should be in orca, and act accordingly.
-      const granReport = getReportForOneGranule({
-        collectionsConfig, cumulusGranule: cumulusItem,
+      addGranuleToReport({
+        granulesReport,
+        collectionsConfig,
+        cumulusGranule: cumulusItem,
       });
-      if (granReport.okCount === 1) {
-        granulesReport.okCount += 1;
-      } else {
-        granulesReport.onlyInCumulus.push(
-          pick(cumulusItem, ['granuleId', 'collectionId', 'providerId'])
-        );
-      }
     }
 
-    // Add any remaining ORA items to the report
+    // Add any remaining ORCA items to the report
+    while (await orcaGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+      const orcaItem = await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      // Found an item that is only in Cumulus database and not in ORA.
+      addGranuleToReport({
+        granulesReport,
+        collectionsConfig,
+        orcaGranule: orcaItem,
+      });
+    }
   } catch (error) {
     log.error('Error caught in reconciliationReportForGranules');
     log.error(errorify(error));
     throw error;
   }
   log.info('returning reconciliationReportForGranulesgranulesReport: '
-           + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
-           + `onlyInOrca: ${granulesReport.onlyInOrca.length}`);
+           + `okCount: ${granulesReport.okCount}, `
+           + `mismatchedGranules: ${granulesReport.mismatchedGranules.length}, `
+           + `mismatchedFilesCount: ${granulesReport.mismatchedFilesCount}`);
   return {
     granulesReport,
   };
@@ -278,70 +267,51 @@ async function reconciliationReportForGranules(params) {
 exports.reconciliationReportForGranules = reconciliationReportForGranules;
 
 /**
- * Create a Reconciliation report and save it to S3
+ * Create a Backup Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
+ * @param {Object} recReportParams.collectionIds - array of collectionIds
  * @param {Object} recReportParams.reportType - the report type
  * @param {moment} recReportParams.createStartTime - when the report creation was begun
  * @param {moment} recReportParams.endTimestamp - ending report datetime ISO Timestamp
- * @param {string} recReportParams.location - location to inventory for report
  * @param {string} recReportParams.reportKey - the s3 report key
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
- * @param {Knex} recReportParams.knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
-async function createReconciliationReport(recReportParams) {
+async function createBackupReconciliationReport(recReportParams) {
+  log.info(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
     reportKey,
-    stackName,
     systemBucket,
-    location,
-    knex,
   } = recReportParams;
-  log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
-  // Fetch the bucket names to reconcile
-  const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
-  const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
-
-  const dataBuckets = Object.values(bucketsConfigJson)
-    .filter(isDataBucket).map((config) => config.name);
-
-  const bucketsConfig = new BucketsConfig(bucketsConfigJson);
 
   // Write an initial report to S3
-  const filesInCumulus = {
+  const initialReportFormat = {
     okCount: 0,
-    okCountByGranule: {},
-    onlyInS3: [],
+    withConflicts: [],
+    onlyInEs: [],
     onlyInDb: [],
   };
 
-  const reportFormatCumulusCmr = {
-    okCount: 0,
-    onlyInCumulus: [],
-    onlyInCmr: [],
-  };
-  let report = {
+  const report = {
     ...initialReportHeader(recReportParams),
-    filesInCumulus,
-    collectionsInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-    granulesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
-    filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
+    collections: cloneDeep(initialReportFormat),
+    granules: cloneDeep(initialReportFormat),
   };
 
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 
-  // TODO use JSONStream
+  const granulesReport = await reconciliationReportForGranules(recReportParams);
 
-  log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
   // Create the full report
+  report.granules = granulesReport;
   report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
@@ -349,6 +319,10 @@ async function createReconciliationReport(recReportParams) {
   return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 }
+
+module.exports = {
+  createBackupReconciliationReport,
+};
