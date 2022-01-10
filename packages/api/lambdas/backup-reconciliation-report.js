@@ -151,7 +151,7 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
 }
 
 /**
- * Compare the granule holdings in ORA with Cumulus
+ * Compare the granule holdings in ORCA with Cumulus
  *
  * @param {Object} params                        - parameters
  * @param {string} params.collectionId           - the collection which has the granules to be
@@ -166,7 +166,12 @@ async function reconciliationReportForGranules(params) {
   //   Report okCount
   //   Report mismatchedGranules with mismatchedFiles
   log.info(`reconciliationReportForGranules ${params}`);
-  const granulesReport = { okCount: 0, onlyInCumulus: [], onlyInOrca: [] };
+  const granulesReport = {
+    okCount: 0,
+    okFilesCount: 0,
+    mismatchedFilesCount: 0,
+    mismatchedGranules: [],
+  };
 
   const esSearchParams = convertToESGranuleSearchParams(params);
   log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
@@ -179,6 +184,7 @@ async function reconciliationReportForGranules(params) {
     process.env.ES_INDEX
   );
 
+  // TODO query orca api
   const orcaGranulesIterator = new ESSearchQueue(
     {
       ...esSearchParams,
@@ -291,9 +297,9 @@ async function createBackupReconciliationReport(recReportParams) {
   // Write an initial report to S3
   const initialReportFormat = {
     okCount: 0,
-    withConflicts: [],
-    onlyInEs: [],
-    onlyInDb: [],
+    okFilesCount: 10,
+    mismatchedFilesCount: 8,
+    mismatchedGranules: [],
   };
 
   const report = {
