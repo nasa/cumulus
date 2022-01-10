@@ -9,8 +9,6 @@ resource "aws_lambda_function" "sqs_message_remover" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      CMR_HOST         = var.cmr_custom_host
       stackName        = var.prefix
       system_bucket    = var.system_bucket
     }
