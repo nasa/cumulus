@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import { Readable, TransformOptions } from 'stream';
 
 export function normalizeHashAlgorithm(algorithm: string): string {
-  switch(algorithm) {
+  switch (algorithm) {
     case 'SHA-1':
       return 'SHA1';
     case 'SHA-2':
