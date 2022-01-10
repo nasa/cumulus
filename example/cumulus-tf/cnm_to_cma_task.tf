@@ -35,7 +35,6 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }

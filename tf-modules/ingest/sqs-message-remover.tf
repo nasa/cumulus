@@ -3,9 +3,6 @@ module "sqs_message_remover_lambda" {
 
   prefix = var.prefix
 
-  cmr_environment = var.cmr_environment
-  cmr_custom_host = var.cmr_custom_host
-
   system_bucket = var.system_bucket
 
   lambda_subnet_ids = var.lambda_subnet_ids
