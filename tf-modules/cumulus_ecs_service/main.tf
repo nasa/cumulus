@@ -66,11 +66,11 @@ resource "aws_cloudwatch_log_subscription_filter" "default" {
 
 resource "aws_ecs_service" "default" {
   name                               = local.full_name
-  cluster                            = var.cluster_arn
   desired_count                      = var.desired_count
   task_definition                    = aws_ecs_task_definition.default.arn
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+  launch_type                        = "FARGATE"
   # TODO Re-enable tags once this warning is addressed:
   #   The new ARN and resource ID format must be enabled to add tags to the
   #   service. Opt in to the new format and try again.
