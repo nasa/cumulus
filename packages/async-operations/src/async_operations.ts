@@ -85,7 +85,7 @@ export const startECSTask = async ({
   return ecs().runTask({
     cluster,
     taskDefinition: asyncOperationTaskDefinition,
-    launchType: 'FARGATE',
+    launchType: 'EC2',
     overrides: {
       containerOverrides: [
         {
