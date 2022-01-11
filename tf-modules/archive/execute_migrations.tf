@@ -139,8 +139,6 @@ resource "aws_lambda_function" "execute_migrations" {
   memory_size      = 1024
   environment {
     variables = {
-      CMR_ENVIRONMENT            = var.cmr_environment
-      CMR_HOST                   = var.cmr_custom_host
       ES_HOST                    = var.elasticsearch_hostname
       ExecutionsTable            = var.dynamo_tables.executions.name
       FilesTable                 = var.dynamo_tables.files.name
