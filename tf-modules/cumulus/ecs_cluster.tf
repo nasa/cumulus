@@ -326,9 +326,10 @@ resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_out" {
   adjustment_type         = "PercentChangeInCapacity"
   metric_aggregation_type = "Average"
   policy_type             = "StepScaling"
+  min_adjustment_magnitude = 1
 
   step_adjustment {
-    metric_interval_upper_bound = 0
+    metric_interval_lower_bound = 0
     scaling_adjustment          = var.ecs_cluster_scale_out_adjustment_percent
   }
 }
