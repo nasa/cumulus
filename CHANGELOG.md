@@ -50,6 +50,7 @@ all Cumulus workflow tasks
 
 ### Added
 
+- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.12`
 - Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
   - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
   - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
