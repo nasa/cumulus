@@ -15,6 +15,7 @@ module "python_processing_service" {
   name   = "PythonProcess"
   tags   = local.tags
 
+  cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
 

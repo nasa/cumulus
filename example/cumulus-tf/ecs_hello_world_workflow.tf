@@ -16,6 +16,7 @@ module "hello_world_service" {
   name   = "HelloWorld"
   tags   = local.tags
 
+  cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
 
