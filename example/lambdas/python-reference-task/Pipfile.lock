@@ -34,10 +34,10 @@
         },
         "cumulus-message-adapter": {
             "hashes": [
-                "sha256:07a4ea5f1e06b0f62c4bb4372375d9d022f3fbd39e16b272e35a78921d9654ad"
+                "sha256:9e50939b482d7f0373ff84ac360146476537cdba2efb20bf43f3b628f6653e7e"
             ],
             "markers": "python_version ~= '3.6'",
-            "version": "==2.0.1"
+            "version": "==2.0.2"
         },
         "cumulus-message-adapter-python": {
             "hashes": [
@@ -164,11 +164,11 @@
     "develop": {
         "astroid": {
             "hashes": [
-                "sha256:72ace9c3333e274e9248168fc4f3e300da8545af1c303bd69197027f49e2bfff",
-                "sha256:aa296702f1a5c3102c860de49473aaa90a7f6d221555d5cf2678940a9be32a4e"
+                "sha256:1efdf4e867d4d8ba4a9f6cf9ce07cd182c4c41de77f23814feb27ca93ca9d877",
+                "sha256:506daabe5edffb7e696ad82483ad0228245a9742ed7d2d8c9cdb31537decf9f6"
             ],
             "markers": "python_full_version >= '3.6.2'",
-            "version": "==2.9.2"
+            "version": "==2.9.3"
         },
         "isort": {
             "hashes": [
@@ -246,11 +246,11 @@
         },
         "setuptools": {
             "hashes": [
-                "sha256:2932bfeb248c648dc411ea9714d5a6de7a33ef1a0db2f0fce644d8172b0479e8",
-                "sha256:2b62b3dbec1fe95585dadf3bd9a014c8c578624918190428c3a7994bb52ae2b8"
+                "sha256:2404879cda71495fc4d5cbc445ed52fdaddf352b36e40be8dcc63147cb4edabe",
+                "sha256:68eb94073fc486091447fcb0501efd6560a0e5a1839ba249e5ff3c4c93f05f90"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==60.3.1"
+            "version": "==60.5.0"
         },
         "toml": {
             "hashes": [
