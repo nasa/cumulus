@@ -497,6 +497,19 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
   t.is(response.status, 400);
 });
 
+test('POST returns a 400 response if rule name does not exist', async (t) => {
+  const { newRule } = t.context;
+  delete newRule.name;
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(400);
+  t.is(response.status, 400);
+});
+
 test('POST returns a 400 response if rule type is invalid', async (t) => {
   const { newRule } = t.context;
   newRule.type = 'invalid';

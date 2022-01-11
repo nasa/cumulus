@@ -19,8 +19,6 @@ resource "aws_lambda_function" "fallback_consumer" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT  = var.cmr_environment
-      CMR_HOST         = var.cmr_custom_host
       CollectionsTable = var.dynamo_tables.collections.name
       ProvidersTable   = var.dynamo_tables.providers.name
       RulesTable       = var.dynamo_tables.rules.name
@@ -52,8 +50,6 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   memory_size      = 128
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
     }
   }
@@ -81,8 +77,6 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   memory_size      = 512
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
     }
   }
@@ -110,8 +104,6 @@ resource "aws_lambda_function" "manual_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT          = var.cmr_environment
-      CMR_HOST                 = var.cmr_custom_host
       stackName                = var.prefix
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
@@ -145,8 +137,6 @@ resource "aws_lambda_function" "message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT          = var.cmr_environment
-      CMR_HOST                 = var.cmr_custom_host
       stackName                = var.prefix
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
@@ -184,8 +174,6 @@ resource "aws_lambda_function" "schedule_sf" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT          = var.cmr_environment
-      CMR_HOST                 = var.cmr_custom_host
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
       stackName                = var.prefix
@@ -216,8 +204,6 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   memory_size      = 512
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
       SemaphoresTable = var.dynamo_tables.semaphores.name
     }
@@ -250,8 +236,6 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   environment {
     variables = {
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-      CMR_ENVIRONMENT             = var.cmr_environment
-      CMR_HOST                    = var.cmr_custom_host
       stackName                   = var.prefix
       ExecutionsTable             = var.dynamo_tables.executions.name
       reporting_queue_url         = var.sf_event_sqs_to_db_records_sqs_queue_url
@@ -281,8 +265,6 @@ resource "aws_lambda_function" "sqs2sf" {
   memory_size      = 128
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
     }
   }
@@ -310,8 +292,6 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   memory_size      = 128
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
       SemaphoresTable = var.dynamo_tables.semaphores.name
     }
@@ -341,8 +321,6 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   memory_size      = 256
   environment {
     variables = {
-      CMR_ENVIRONMENT          = var.cmr_environment
-      CMR_HOST                 = var.cmr_custom_host
       stackName                = var.prefix
       CollectionsTable         = var.dynamo_tables.collections.name
       ProvidersTable           = var.dynamo_tables.providers.name
