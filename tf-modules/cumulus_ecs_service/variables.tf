@@ -1,10 +1,5 @@
 # Required
 
-variable "cluster_arn" {
-  description = "ARN of an ECS cluster"
-  type = string
-}
-
 variable "image" {
   description = "Image used to start the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
@@ -26,6 +21,12 @@ variable "alarms" {
   description = "Configuration for Cloudwatch alarms to monitor ECS, keyed by alarm name"
   type    = map(object({ comparison_operator = string, metric_name = string, threshold = number }))
   default = {}
+}
+
+variable "cluster_arn" {
+  description = "ARN of an ECS cluster"
+  type = string
+  default = null
 }
 
 variable "command" {
