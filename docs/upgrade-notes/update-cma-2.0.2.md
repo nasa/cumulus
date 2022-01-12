@@ -8,7 +8,7 @@ hide_title: false
 
 ### Background
 
-The Cumulus Message Adapter has been updated in [release 2.0.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.0) to no longer utilize the AWS step function API to look up the defined name of a step function task for population in meta.workflow_tasks, but instead use an incrementing integer field.
+The Cumulus Message Adapter has been updated in [release 2.0.2](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.2) to no longer utilize the AWS step function API to look up the defined name of a step function task for population in meta.workflow_tasks, but instead use an incrementing integer field.
 
 Additionally a bugfix was released in the form of v2.0.1/v2.0.2 following the initial 2.0.0 release, so all users should update to [release 2.0.2](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.2)
 
