@@ -202,7 +202,7 @@ export const waitForObjectToExist = async (params: {
       () => s3ObjectExists({ Bucket: bucket, Key: key }),
       { interval, timeout }
     );
-  } catch(error) {
+  } catch (error) {
     if (error instanceof TimeoutError) {
       log.error(`Timed out after ${timeout}ms waiting for existence of s3://${bucket}/${key}`);
     } else {
