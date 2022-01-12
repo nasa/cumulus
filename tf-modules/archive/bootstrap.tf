@@ -9,8 +9,6 @@ resource "aws_lambda_function" "custom_bootstrap" {
   memory_size      = 320
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      CMR_HOST        = var.cmr_custom_host
       stackName       = var.prefix
       system_bucket   = var.system_bucket
       ES_INDEX_SHARDS = var.es_index_shards
