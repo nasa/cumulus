@@ -1,10 +1,12 @@
 'use strict';
 
+const got = require('got');
 const mapKeys = require('lodash/mapKeys');
 const router = require('express-promise-router')();
 
 const { lambda } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
+const { errorify } = require('../lib/utils');
 const logger = new Logger({ sender: '@cumulus/api/orca' });
 
 const mapKeysToOrca = {
@@ -50,6 +52,33 @@ async function listRequests(req, res) {
   }
 }
 
+async function postToOrca(req, res) {
+  const orcaApiUri = process.env.orca_api_uri;
+  if (!orcaApiUri) {
+    const errMsg = 'The orca_api_uri environment variable is not set';
+    logger.error(errMsg);
+    return res.boom.badRequest(errMsg);
+  }
+
+  const requestBody = mapKeys(req.body || {}, (value, key) => mapKeysToOrca[key] || key);
+
+  const { statusCode, body } = await got.post(
+    `${orcaApiUri}/${req.path}`,
+    {
+      json: requestBody,
+      responseType: 'json',
+      throwHttpErrors: false,
+    }
+  );
+
+  if (statusCode === 200) return res.send(body);
+
+  logger.error(`postToOrca failed: ${JSON.stringify(body)}`);
+  if (statusCode === 404) return res.boom.notFound(JSON.stringify(body));
+  return res.boom.badRequest(JSON.stringify(body));
+}
+
 router.get('/recovery', listRequests);
+router.post('/*', postToOrca);
 
 module.exports = router;
