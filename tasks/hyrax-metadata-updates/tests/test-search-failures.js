@@ -55,7 +55,7 @@ test.after.always(async () => {
   }).promise();
 });
 
-test.serial('Test retrieving collection entry with invalid result', async (t) => {
+test.serial('Test retrieving collection entry with invalid result (no "id" key)', async (t) => {
   // Mock out retrieval of entryTitle from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
@@ -73,7 +73,7 @@ test.serial('Test retrieving collection entry with invalid result', async (t) =>
 
   await t.throwsAsync(getCollectionEntry(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection using short name GLDAS_CLSM025_D and version 2.0',
+    message: 'Unable to query parent collection using: {"short_name":"GLDAS_CLSM025_D","version":"2.0"}',
   });
 });
 
@@ -95,6 +95,6 @@ test.serial('Test retrieving entry title with no results', async (t) => {
 
   await t.throwsAsync(getCollectionEntry(event.config, metadataObject, true), {
     instanceOf: RecordDoesNotExist,
-    message: 'Unable to query parent collection using short name undefined and version undefined',
+    message: 'Unable to query parent collection using: {"short_name":"GLDAS_CLSM025_D","version":"2.0"}',
   });
 });
