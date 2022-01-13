@@ -9,9 +9,10 @@ const log = new Logger({ sender: 'api/lib/orca' });
 /**
  * post request to ORCA
  *
- * @param {string} orcaApiUri - orca endpoint url
- * @param {string} path - path of the request
- * @param {Object} body - body of the request
+ * @param {Object} params
+ * @param {string} params.orcaApiUri - orca endpoint url
+ * @param {string} params.path - path of the request
+ * @param {Object} params.body - body of the request
  * @returns {Promise<Object>} - resolves to the ORCA return
  */
 async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, body }) {
