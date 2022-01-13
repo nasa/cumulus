@@ -286,22 +286,6 @@ resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_in" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_scale_in_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-memory-scale-in"
-  comparison_operator = "LessThanThreshold"
-  alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_in.arn]
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
-  metric_name         = "MemoryReservation"
-  namespace           = "AWS/ECS"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.ecs_cluster_scale_in_threshold_percent
-  unit                = "Percent"
-  dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = var.tags
-}
-
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_in_alarm" {
   alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-cpu-scale-in"
   comparison_operator = "LessThanThreshold"
@@ -332,22 +316,6 @@ resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_out" {
     metric_interval_lower_bound = 0
     scaling_adjustment          = var.ecs_cluster_scale_out_adjustment_percent
   }
-}
-
-resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_scale_out_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-memory-scale-out"
-  comparison_operator = "GreaterThanThreshold"
-  alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_out.arn]
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
-  metric_name         = "MemoryReservation"
-  namespace           = "AWS/ECS"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.ecs_cluster_scale_out_threshold_percent
-  unit                = "Percent"
-  dimensions          = { ClusterName = aws_ecs_cluster.default.name }
-  tags                = var.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_out_alarm" {
