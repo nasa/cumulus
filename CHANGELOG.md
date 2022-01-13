@@ -144,7 +144,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2642**
-   - Reduces the reconcilation report's default maxResponseSize that returns
+  - Reduces the reconcilation report's default maxResponseSize that returns
      the full report rather than an s3 signed url. Reports very close to the
      previous limits were failing to download, so the limit has been lowered to
      ensure all files are handled properly.
