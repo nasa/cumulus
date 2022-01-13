@@ -47,6 +47,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
 - Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
 all Cumulus workflow tasks
+- **CUMULUS-2783** - A bug in the ECS cluster autoscaling configuration has been
+resolved. ECS clusters should now correctly autoscale by adding new cluster
+instances according to the [policy configuration](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/ecs_cluster.tf).
 
 ### Added
 
@@ -130,6 +133,9 @@ all Cumulus workflow tasks
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2783**
+  - Added missing lower bound on scale out policy for ECS cluster to ensure that
+  the cluster will autoscale correctly.
 
 ## [v9.9.0] 2021-11-03
 
