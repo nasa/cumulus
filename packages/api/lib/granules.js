@@ -58,12 +58,6 @@ const getExecutionProcessingTimeInfo = ({
   return processingTimeInfo;
 };
 
-/* const renameProperty = (from, to, obj) => {
-  const newObj = { ...obj, [to]: obj[from] };
-  delete newObj[from];
-  return newObj;
-}; */
-
 /**
 * Move granule 'file' S3 Objects and update Postgres/Dynamo/CMR metadata with new locations
 *
@@ -104,7 +98,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     const { file } = moveFileParam;
     try {
       await dbClient.transaction(async (trx) => {
-        // TODO: Parameterize
         const updatedFile = await moveGranuleFile(
           moveFileParam,
           filesPgModel,
