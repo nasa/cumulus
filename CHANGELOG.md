@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **TODO**
+    - Changelog stub for lint purposes
   - **CUMULUS-2769**
     - Update collection PUT endpoint to require existance of postgresql record
       and to ignore lack of dynamoDbRecord on update
