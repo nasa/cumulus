@@ -267,7 +267,7 @@ const updateAsyncOperation = async (params) => {
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
-  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+  logger.info(`About to update async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
 
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
@@ -294,6 +294,7 @@ const updateAsyncOperation = async (params) => {
         dynamoDbClient,
       });
       await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
+      logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
       return result;
     });
   } catch (error) {
