@@ -12,6 +12,7 @@ async function post(req, res) {
   const { cutoffSeconds, dbConcurrency, dbMaxPool, reportBucket, reportPath } = req.body;
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.MigrationCountToolLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Migration Count Tool ECS Run',

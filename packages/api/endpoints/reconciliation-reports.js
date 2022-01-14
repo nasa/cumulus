@@ -148,6 +148,7 @@ async function createReport(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',

@@ -14,6 +14,7 @@ async function postRecoverCumulusMessages(req, res) {
   const { bucket, path } = (req.body === undefined ? {} : req.body);
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.DeadLetterProcessingLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Dead-Letter Processor ECS Run',

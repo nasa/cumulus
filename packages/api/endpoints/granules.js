@@ -446,6 +446,7 @@ async function bulkOperations(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granules',
@@ -493,6 +494,7 @@ async function bulkDelete(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change

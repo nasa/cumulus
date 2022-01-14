@@ -223,6 +223,7 @@ async function indexFromDatabase(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.IndexFromDatabaseLambda,
     description: 'Elasticsearch index from database',
     operationType: 'ES Index',
