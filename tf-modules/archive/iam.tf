@@ -186,6 +186,16 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
     ]
     resources = [aws_ssm_parameter.dynamo_table_names.arn]
   }
+
+  statement {
+    actions = [
+      "iam:PassRole"
+    ]
+    resources = [
+      aws_iam_role.ecs_execution_role.arn,
+      aws_iam_role.ecs_task_role.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_api_gateway" {

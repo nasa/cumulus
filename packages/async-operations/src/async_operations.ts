@@ -1,4 +1,4 @@
-import { ECS } from 'aws-sdk';
+import { ECS, Lambda } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
@@ -19,18 +19,20 @@ const { EcsStartTaskError } = require('@cumulus/errors');
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
-export const getLambdaEnvironmentVariables = async (
+export const getLambdaConfiguration = async (
   functionName: string
-): Promise<EnvironmentVariables[]> => {
-  const lambdaConfig = await lambda().getFunctionConfiguration({
-    FunctionName: functionName,
-  }).promise();
+): Promise<Lambda.FunctionConfiguration> => lambda().getFunctionConfiguration({
+  FunctionName: functionName,
+}).promise();
 
-  return Object.entries(lambdaConfig?.Environment?.Variables ?? {}).map((obj) => ({
+export const getLambdaEnvironmentVariables = (
+  configuration: Lambda.FunctionConfiguration
+): EnvironmentVariables[] => Object.entries(configuration?.Environment?.Variables ?? {}).map(
+  (obj) => ({
     name: obj[0],
     value: obj[1],
-  }));
-};
+  })
+);
 
 /**
  * Start an ECS task for the async operation.
@@ -77,15 +79,26 @@ export const startECSTask = async ({
   ] as EnvironmentVariables[];
   let taskVars = envVars;
 
+  const lambdaConfig = await getLambdaConfiguration(lambdaName);
+
   if (useLambdaEnvironmentVariables) {
-    const lambdaVars = await getLambdaEnvironmentVariables(lambdaName);
+    const lambdaVars = getLambdaEnvironmentVariables(lambdaConfig);
     taskVars = envVars.concat(lambdaVars);
   }
+
+  console.log(lambdaConfig?.VpcConfig);
 
   return ecs().runTask({
     cluster,
     taskDefinition: asyncOperationTaskDefinition,
-    launchType: 'EC2',
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: lambdaConfig?.VpcConfig?.SubnetIds ?? [],
+        assignPublicIp: 'DISABLED',
+        securityGroups: lambdaConfig?.VpcConfig?.SecurityGroupIds ?? [],
+      },
+    },
     overrides: {
       containerOverrides: [
         {
