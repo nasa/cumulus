@@ -123,10 +123,7 @@ const setUpExistingDatabaseRecords = async (t) => {
 
   const pgGranules = await granulePgModel.create(
     t.context.knex,
-    translatedGranules.map((granule) =>
-      fakeGranuleRecordFactory({
-        ...granule,
-      }))
+    translatedGranules
   );
   const pgExecutions = await executionPgModel.create(
     t.context.knex,
@@ -392,9 +389,7 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granule IDs
       knexOrTransaction: t.context.knex,
     });
 
-    const omitList = ['dataType', 'version'];
-
-    t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
+    t.deepEqual(matchingGranule, callArgs[0].granule);
     t.is(callArgs[0].workflow, workflowName);
   }));
 });
@@ -722,9 +717,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
     });
-    const omitList = ['dataType', 'version'];
 
-    t.deepEqual(omit(translatedGranule, omitList), callArgs[0].granule);
+    t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
@@ -813,9 +807,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
     });
-    const omitList = ['dataType', 'version'];
 
-    t.deepEqual(omit(translatedGranule, omitList), callArgs[0].granule);
+    t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
@@ -849,8 +842,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
     reingestHandler: reingestStub,
   });
 
-  Array.from(result).map(
-    (error) => t.true(error.err instanceof RecordDoesNotExist)
+  t.deepEqual(
+    Array.from(result).map(((error) => error.err instanceof RecordDoesNotExist)),
+    [true, true]
   );
 
   t.is(reingestStub.callCount, 0);
