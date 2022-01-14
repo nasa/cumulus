@@ -20,6 +20,7 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
+const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
@@ -57,11 +58,11 @@ const getExecutionProcessingTimeInfo = ({
   return processingTimeInfo;
 };
 
-const renameProperty = (from, to, obj) => {
+/* const renameProperty = (from, to, obj) => {
   const newObj = { ...obj, [to]: obj[from] };
   delete newObj[from];
   return newObj;
-};
+}; */
 
 /**
 * Move granule 'file' S3 Objects and update Postgres/Dynamo/CMR metadata with new locations
@@ -86,48 +87,36 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
+    esClient = await Search.es(),
   } = params;
-  let postgresCumulusGranuleId;
-  let writeToPostgres = true;
 
-  try {
-    const { name, version } = deconstructCollectionId(apiGranule.collectionId);
-    postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
-      granule_id: apiGranule.granuleId,
-      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-        dbClient,
-        { name, version }
-      ),
-    });
-  } catch (error) {
-    // If the granule or associated record hasn't been migrated yet
-    // run the 'original' dynamo update
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
-    log.info(`Granule ${JSON.stringify(apiGranule)} has not been migrated yet, updating DynamoDb records only`);
-    writeToPostgres = false;
-  }
-
+  const { name, version } = deconstructCollectionId(apiGranule.collectionId);
+  const postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
+    granule_id: apiGranule.granuleId,
+    collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+      dbClient,
+      { name, version }
+    ),
+  });
   const updatedFiles = [];
   const moveFileParams = generateMoveFileParams(apiGranule.files, destinations);
   const moveFilePromises = moveFileParams.map(async (moveFileParam) => {
     const { file } = moveFileParam;
     try {
-      // Update the datastores, then move files
       await dbClient.transaction(async (trx) => {
+        // TODO: Parameterize
         const updatedFile = await moveGranuleFile(
           moveFileParam,
           filesPgModel,
           trx,
           postgresCumulusGranuleId,
-          writeToPostgres
+          apiGranule.granuleId
         );
-        updatedFiles.push(renameProperty('name', 'fileName', updatedFile));
+        updatedFiles.push(updatedFile);
       });
-      // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push({ bucket: file.bucket, key: file.key, fileName: getNameOfFile(file) });
+      // TODO update this to use OG file object.   Yuck.    This sucks
+      updatedFiles.push({ ...file, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
@@ -141,6 +130,16 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       files: updatedFiles,
     }
   );
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: {
+      ...apiGranule,
+      files: updatedFiles,
+    },
+    index: process.env.ES_INDEX,
+  });
+
   const filteredResults = moveResults.filter((r) => r.status === 'rejected');
   const moveGranuleErrors = filteredResults.map((error) => error.reason);
 

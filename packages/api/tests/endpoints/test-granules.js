@@ -16,17 +16,18 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   FilePgModel,
+  generateLocalTestDb,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
+  translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
-  translateApiExecutionToPostgresExecution,
+  translatePostgresFileToApiFile,
   translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
-  migrationDir,
-  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 
 const {
@@ -1100,6 +1101,10 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
 
+  const {
+    esGranulesClient,
+  } = t.context;
+
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
     async () => {
@@ -1199,6 +1204,18 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           bucket: destination.bucket,
         });
       }
+
+      // check the ES index is updated
+      const esRecord = await esGranulesClient.get(newGranule.granuleId);
+      t.is(esRecord.files.length, 3);
+      esRecord.files.forEach((esFileRecord) => {
+        const pgMatchingFileRecord = pgFiles.find(
+          (pgFile) =>
+            pgFile.key.match(esFileRecord.key)
+            && pgFile.bucket.match(esFileRecord.bucket)
+        );
+        t.deepEqual(translatePostgresFileToApiFile(pgMatchingFileRecord), esFileRecord);
+      });
     }
   );
 });
@@ -1275,16 +1292,22 @@ test.serial('When a move granule request fails to move a file correctly, it reco
           bucket: thirdBucket,
           key: `${destinationFilepath}/${granuleFileName}.md`,
           fileName: `${granuleFileName}.md`,
+          size: 9,
+          source: 'fakeSource',
         },
         {
           bucket,
           key: `${destinationFilepath}/${granuleFileName}.txt`,
           fileName: `${granuleFileName}.txt`,
+          size: 9,
+          source: 'fakeSource',
         },
         {
           bucket: fileWithInvalidDestination.bucket,
           key: fileWithInvalidDestination.key,
           fileName: `${granuleFileName}.jpg`,
+          size: 9,
+          source: 'fakeSource',
         },
       ];
 
@@ -1320,9 +1343,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       const granuleFiles = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
 
       t.deepEqual({
-        bucket: fileWithInvalidDestination.bucket,
-        key: fileWithInvalidDestination.key,
-        size: fileWithInvalidDestination.size,
+        ...fileWithInvalidDestination,
         fileName: `${granuleFileName}.jpg`,
       }, updatedFiles[0]);
 

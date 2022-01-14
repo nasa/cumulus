@@ -315,6 +315,8 @@ async function put(req, res) {
       return res.boom.conflict(message);
     }
 
+    // TODO - This doesn't have to be a complete granule currently.
+    //
     await moveGranule(
       apiGranule,
       body.destinations,
