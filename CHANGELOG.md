@@ -49,8 +49,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
-  - **TODO**
-    - Changelog stub for lint purposes
+  - **CUMULUS-2782**
+    - Update API granules endpoint `move` action to update granules in the index
+      and utilize postgres as the authoritative datastore
   - **CUMULUS-2769**
     - Update collection PUT endpoint to require existance of postgresql record
       and to ignore lack of dynamoDbRecord on update
@@ -150,7 +151,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2642**
-   - Reduces the reconcilation report's default maxResponseSize that returns
+  - Reduces the reconcilation report's default maxResponseSize that returns
      the full report rather than an s3 signed url. Reports very close to the
      previous limits were failing to download, so the limit has been lowered to
      ensure all files are handled properly.
@@ -165,6 +166,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2782**
+    - Remove deprecated `@ingest/granule.moveGranuleFiles`
   - **CUMULUS-2770**
     - Removed `waitForModelStatus` from `example/spec/helpers/apiUtils` integration test helpers
   - **CUMULUS-2510**
