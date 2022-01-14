@@ -536,11 +536,10 @@ async function bulkReingest(req, res) {
     || (payload.ids && payload.ids.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
-  console.log(req.apiGateway.context);
-
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: req.apiGateway.context.functionName,
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granule Reingest',

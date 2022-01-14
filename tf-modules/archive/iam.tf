@@ -203,3 +203,88 @@ resource "aws_iam_role_policy" "lambda_api_gateway" {
   role   = aws_iam_role.lambda_api_gateway.id
   policy = data.aws_iam_policy_document.lambda_api_gateway_policy.json
 }
+
+# ECS task execution role
+data "aws_iam_policy_document" "ecs_execution_assume_role_policy" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com", "ec2.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "ecs_execution_role" {
+  name                 = "${var.prefix}-ecs-execution_role"
+  assume_role_policy   = data.aws_iam_policy_document.ecs_execution_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+}
+
+resource "aws_iam_role_policy_attachment" "ecr-task-policy-attach" {
+  role       = aws_iam_role.ecs_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch-task-policy-attach" {
+  role       = aws_iam_role.ecs_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+}
+
+# ECS task role
+
+data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "ecs_task_role_policy" {
+  statement {
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "lambda:GetFunction",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem"
+    ]
+    resources = [for k, v in var.dynamo_tables : v.arn]
+  }
+
+  statement {
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      var.rds_user_access_secret_arn
+    ]
+  }
+}
+resource "aws_iam_role" "ecs_task_role" {
+  name                 = "${var.prefix}-ecs-task_role"
+  assume_role_policy   = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+}
+
+resource "aws_iam_role_policy" "ecs_task_role_policy" {
+  name   = "${var.prefix}-ecs-task-role-policy"
+  role   = aws_iam_role.ecs_task_role.id
+  policy = data.aws_iam_policy_document.ecs_task_role_policy.json
+}
