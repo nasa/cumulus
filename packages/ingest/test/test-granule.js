@@ -28,7 +28,6 @@ const {
   generateMoveFileParams,
   handleDuplicateFile,
   listVersionedObjects,
-  moveGranuleFiles,
   renameS3FileWithTimestamp,
   unversionFilename,
   moveGranuleFile,
