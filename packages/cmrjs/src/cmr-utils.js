@@ -1092,26 +1092,27 @@ async function getGranuleTemporalInfo(granule) {
 
   if (isCMRISOFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
-    const metadataMI = metadata['gmd:DS_Series']['gmd:composedOf']['gmd:DS_DataSet']['gmd:has']['gmi:MI_Metadata'];
+    const metadataMI = get(metadata, 'gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata');
 
     // Get beginning and ending date time from beginPosition and endPosition
     const identificationInfo = metadataMI['gmd:identificationInfo'];
     const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
-    const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
+    const temporalInfo = get(dataIdentification, 'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimePeriod');
     let beginningDateTime = get(temporalInfo, 'gml:beginPosition');
     let endingDateTime = get(temporalInfo, 'gml:endPosition');
+
     if (!beginningDateTime && !endingDateTime) {
-      const singleDateTime = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimeInstant']['gml:timePosition'];
+      const singleDateTime = get(dataIdentification, 'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimeInstant.gml:timePosition');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
     }
 
     // Get production date time from LE_ProcessStep
-    const productionDateTime = metadataMI['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
+    const productionDateTime = get(metadataMI, 'gmd:dataQualityInfo.gmd:DQ_DataQuality.gmd:lineage.gmd:LI_Lineage.gmd:processStep.gmi:LE_ProcessStep.gmd:dateTime.gco:DateTime');
 
     // Get last update date time from CI_Citation with UpdateTime
-    const citation = identificationInfo.find((dataIdObject) => dataIdObject['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:title']['gco:CharacterString'] === 'UpdateTime');
-    const lastUpdateDateTime = citation['gmd:MD_DataIdentification']['gmd:citation']['gmd:CI_Citation']['gmd:date']['gmd:CI_Date']['gmd:date']['gco:DateTime'];
+    const citation = identificationInfo.find((dataIdObject) => get(dataIdObject, 'gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:title.gco:CharacterString') === 'UpdateTime');
+    const lastUpdateDateTime = get(citation, 'gmd:MD_DataIdentification.gmd:citation.gmd:CI_Citation.gmd:date.gmd:CI_Date.gmd:date.gco:DateTime');
 
     return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
   }
