@@ -827,7 +827,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file with DateTimeRange', async (t) => {
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file with RangeDateTime', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
@@ -881,7 +881,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-test.serial('getGranuleTemporalInfo returns temporal information from granule CMR ISO XML file with RangeDateTime', async (t) => {
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR ISO XML file with TimePeriod', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/ATL03_fixture.cmr_iso.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
