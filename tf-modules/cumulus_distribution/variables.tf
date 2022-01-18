@@ -118,3 +118,39 @@ variable "vpc_id" {
   description = "VPC used by Lambda functions"
   default     = null
 }
+
+variable "otel_collector_config_file" {
+  description = "location of the collector configuration yaml"
+  type        = string
+  default     = "/var/task/var/otel-config/collector.yaml"
+}
+
+variable "otel_log_level" {
+  description = "verbosity of Open Telemetry logging"
+  type        = string
+  default     = "debug"
+}
+
+variable "otel_resource_attributes" {
+  description = "additional attributes for Open Telemetry"
+  type        = string
+  default     = "traceGroup=CUMULUS_DISTRIBUTION"
+}
+
+variable "otel_service_name" {
+  description = "name of the open telemetry monitored application"
+  type        = string
+  default     = "cumulus_distribution"
+}
+
+variable "otel_traces_sampler" {
+  description = "determines when to sample spans"
+  type        = string
+  default     = "always_on"
+}
+
+variable "aws_lambda_exec_wrapper" {
+  description = "specifies the OTEL instrumentation wrapper"
+  type        = string
+  default     = "/opt/otel-handler"
+}

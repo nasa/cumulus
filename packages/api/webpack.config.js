@@ -14,7 +14,7 @@ const ignoredPackages = [
   'pg-native',
   'pg-query-stream',
   'sqlite3',
-  'tedious'
+  'tedious',
 ];
 
 const root = path.resolve(__dirname);
@@ -54,8 +54,8 @@ module.exports = {
       'saml2-js': 'saml2-js/lib-js/saml2.js',
       ejs: 'ejs/ejs.min.js',
       underscore: 'underscore/underscore.js',
-      handlebars: 'handlebars/dist/handlebars.js'
-    }
+      handlebars: 'handlebars/dist/handlebars.js',
+    },
   },
   plugins: [
     // templates to use saml2.js, dependency problem with xml-encryption package
@@ -63,16 +63,20 @@ module.exports = {
       patterns: [
         {
           from: 'node_modules/xml-encryption/lib/templates',
-          to: 'app/templates'
+          to: 'app/templates',
         },
         {
           from: 'app/data/distribution/templates',
-          to: 'distribution/templates'
-        }
-      ]
+          to: 'distribution/templates',
+        },
+        {
+          from: 'app/data/distribution/otel-config',
+          to: 'distribution/var/otel-config',
+        },
+      ],
     }),
     new IgnorePlugin({
-      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`),
     }),
   ],
   output: {
@@ -81,13 +85,13 @@ module.exports = {
     devtoolModuleFilenameTemplate: (info) => {
       const relativePath = path.relative(root, info.absoluteResourcePath);
       return `webpack://${relativePath}`;
-    }
+    },
   },
   externals: [
     'aws-sdk',
     'electron',
     { formidable: 'url' },
-    { fsevents: "require('fsevents')" }
+    { fsevents: "require('fsevents')" },
   ],
   module: {
     rules: [
@@ -98,7 +102,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              cacheDirectory: true
+              cacheDirectory: true,
             },
           },
         ],
@@ -107,7 +111,7 @@ module.exports = {
         test: /\.html$/i,
         loader: 'html-loader',
         options: {
-          esModule: false
+          esModule: false,
         },
       },
     ],
@@ -115,9 +119,9 @@ module.exports = {
   target: 'node',
   node: {
     __dirname: false,
-    __filename: false
+    __filename: false,
   },
   optimization: {
-    nodeEnv: false
-  }
+    nodeEnv: false,
+  },
 };

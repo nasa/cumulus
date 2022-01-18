@@ -3,22 +3,28 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}login"
   api_env_variables = {
-      AccessTokensTable              = aws_dynamodb_table.access_tokens.id
-      BUCKETNAME_PREFIX              = var.bucketname_prefix
-      BUCKET_MAP_FILE                = var.bucket_map_file
-      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
-      CMR_ENVIRONMENT                = var.cmr_environment
-      DISTRIBUTION_ENDPOINT          = local.api_uri
-      DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
-      OAUTH_CLIENT_ID                = var.oauth_client_id
-      OAUTH_CLIENT_PASSWORD_SECRET_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
-      OAUTH_HOST_URL                 = var.oauth_host_url
-      OAUTH_PROVIDER                 = var.oauth_provider
-      STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
-      STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
-      cmr_provider                   = var.cmr_provider
-      stackName                      = var.prefix
-      system_bucket                  = var.system_bucket
+      AccessTokensTable                   = aws_dynamodb_table.access_tokens.id
+      BUCKETNAME_PREFIX                   = var.bucketname_prefix
+      BUCKET_MAP_FILE                     = var.bucket_map_file
+      CMR_ACL_BASED_CREDENTIALS           = var.cmr_acl_based_credentials
+      CMR_ENVIRONMENT                     = var.cmr_environment
+      DISTRIBUTION_ENDPOINT               = local.api_uri
+      DISTRIBUTION_REDIRECT_ENDPOINT      = local.api_redirect_uri
+      OAUTH_CLIENT_ID                     = var.oauth_client_id
+      OAUTH_CLIENT_PASSWORD_SECRET_NAME   = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+      OAUTH_HOST_URL                      = var.oauth_host_url
+      OAUTH_PROVIDER                      = var.oauth_provider
+      STS_CREDENTIALS_LAMBDA              = var.sts_credentials_lambda_function_arn
+      STS_POLICY_HELPER_LAMBDA            = var.sts_policy_helper_lambda_function_arn
+      cmr_provider                        = var.cmr_provider
+      stackName                           = var.prefix
+      system_bucket                       = var.system_bucket
+      AWS_LAMBDA_EXEC_WRAPPER             = var.aws_lambda_exec_wrapper
+      OPENTELEMETRY_COLLECTOR_CONFIG_FILE = var.otel_collector_config_file
+      OTEL_LOG_LEVEL                      = var.otel_log_level
+      OTEL_RESOURCE_ATTRIBUTES            = var.otel_resource_attributes
+      OTEL_SERVICE_NAME                   = var.otel_service_name
+      OTEL_TRACES_SAMPLER                 = var.otel_traces_sampler
   }
 }
 
@@ -40,6 +46,7 @@ resource "aws_cloudwatch_log_group" "api" {
   tags              = var.tags
 }
 
+# TODO need to enable X-Ray
 resource "aws_lambda_function" "api" {
   function_name    = "${var.prefix}-DistributionApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/distribution/lambda.zip"

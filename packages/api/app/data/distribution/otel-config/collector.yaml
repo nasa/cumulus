@@ -1,0 +1,18 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  logging:
+    loglevel: debug
+
+  otlphttp/otelcollector:
+    endpoint: "https://metrics-otel.ngap.sit.earthdata.nasa.gov"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp/otelcollector,logging]
