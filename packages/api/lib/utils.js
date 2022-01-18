@@ -2,7 +2,6 @@
 
 const get = require('lodash/get');
 const isObject = require('lodash/isObject');
-const isNil = require('lodash/isNil');
 const pick = require('lodash/pick');
 
 function replacer(key, value) {
@@ -18,22 +17,6 @@ function errorify(err) {
 
 function filenamify(fileName) {
   return fileName.replace(/["%*/:<>?\\|]/g, '_');
-}
-
-/**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {Object} an objectified exception
- */
-function parseException(exception) {
-  if (isNil(exception)) return {};
-  if (isObject(exception)) return exception;
-  if (exception === 'None') return {};
-  return {
-    Error: 'Unknown Error',
-    Cause: exception,
-  };
 }
 
 /**
@@ -101,5 +84,4 @@ module.exports = {
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  parseException,
 };

@@ -16,6 +16,7 @@ export {
   generateLocalTestDb,
 } from './test-utils';
 
+export { isCollisionError } from './lib/errors';
 export { getKnexClient } from './connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { createRejectableTransaction } from './database';
@@ -26,6 +27,10 @@ export {
   validateProviderHost,
   nullifyUndefinedProviderValues,
 } from './provider';
+
+export {
+  BaseRecord,
+} from './types/base';
 
 export {
   PostgresAsyncOperation,
@@ -60,16 +65,28 @@ export {
   PostgresFileRecord,
 } from './types/file';
 
-export { translateApiAsyncOperationToPostgresAsyncOperation } from './translate/async_operations';
+export {
+  translateApiAsyncOperationToPostgresAsyncOperation,
+  translatePostgresAsyncOperationToApiAsyncOperation,
+} from './translate/async_operations';
 export {
   translateApiFiletoPostgresFile,
   translatePostgresFileToApiFile,
 } from './translate/file';
-export { translateApiCollectionToPostgresCollection } from './translate/collections';
+
+export {
+  translateApiCollectionToPostgresCollection,
+  translatePostgresCollectionToApiCollection,
+} from './translate/collections';
+
 export {
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
 } from './translate/providers';
-export { translateApiRuleToPostgresRule } from './translate/rules';
+export {
+  translateApiRuleToPostgresRule,
+  translatePostgresRuleToApiRule,
+} from './translate/rules';
 export {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
@@ -77,8 +94,16 @@ export {
 export {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
+  translatePostgresGranuleResultToApiGranule,
 } from './translate/granules';
-export { translateApiPdrToPostgresPdr } from './translate/pdrs';
+export {
+  translateApiPdrToPostgresPdr,
+  translatePostgresPdrToApiPdr,
+} from './translate/pdr';
+
+export {
+  getCollectionsByGranuleIds,
+} from './lib/collection';
 
 export {
   executionArnsFromGranuleIdsAndWorkflowNames,
@@ -86,14 +111,25 @@ export {
   getWorkflowNameIntersectFromGranuleIds,
   getApiExecutionCumulusIds,
   getApiGranuleExecutionCumulusIdsByExecution,
-  getExecutionArnsByGranuleCumulusId,
+  getExecutionInfoByGranuleCumulusId,
 } from './lib/execution';
+
+export {
+  getFilesAndGranuleInfoQuery,
+} from './lib/file';
 
 export {
   getApiGranuleCumulusIds,
   getApiGranuleExecutionCumulusIds,
+  getGranuleCollectionId,
+  getUniqueGranuleByGranuleId,
   upsertGranuleWithExecutionJoinRecord,
+  getGranulesByApiPropertiesQuery,
 } from './lib/granule';
+
+export {
+  QuerySearchClient,
+} from './lib/QuerySearchClient';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';

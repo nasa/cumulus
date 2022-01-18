@@ -6,11 +6,15 @@ const {
   cleanupProviders,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Execution, Granule } = require('@cumulus/api/models');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
+const { getGranule } = require('@cumulus/api-client/granules');
+
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
@@ -25,8 +29,6 @@ const {
   setupTestGranuleForIngest,
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
-
 const workflowName = 'QueueGranules';
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
@@ -34,8 +36,6 @@ const collectionsDir = './data/collections/s3_MOD09GQ_006';
 describe('The Queue Granules workflow', () => {
   let collection;
   let config;
-  let executionModel;
-  let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
@@ -50,7 +50,6 @@ describe('The Queue Granules workflow', () => {
     lambdaStep = new LambdaStep();
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -70,7 +69,6 @@ describe('The Queue Granules workflow', () => {
     provider = { id: `s3_provider${testSuffix}` };
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
     process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
@@ -172,9 +170,12 @@ describe('The Queue Granules workflow', () => {
     it('sets granule status to queued', async () => {
       await Promise.all(
         inputPayload.granules.map(async (granule) => {
-          const record = await waitForModelStatus(
-            granuleModel,
-            { granuleId: granule.granuleId },
+          const record = await waitForApiStatus(
+            getGranule,
+            {
+              prefix: config.stackName,
+              granuleId: granule.granuleId,
+            },
             'queued'
           );
           expect(record.status).toEqual('queued');
@@ -193,9 +194,9 @@ describe('The Queue Granules workflow', () => {
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        { prefix: config.stackName, arn: workflowExecution.executionArn },
         'completed'
       );
       expect(record.status).toEqual('completed');

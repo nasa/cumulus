@@ -24,6 +24,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresGranule
+  ) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   /**
    * Deletes the item from Postgres
    *
@@ -38,6 +45,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return await knexOrTransaction(this.tableName)
       .where(params)
       .del();
+  }
+
+  async deleteExcluding(): Promise<never> {
+    throw new Error('deleteExcluding not implemented on granule class');
   }
 
   /**
@@ -119,7 +130,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         );
       }
 
-      upsertQuery.returning('cumulus_id');
+      upsertQuery.returning('*');
       return await upsertQuery;
     }
     return await knexOrTrx(this.tableName)
@@ -127,7 +138,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
       .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
-      .returning('cumulus_id');
+      .returning('*');
   }
 
   /**
