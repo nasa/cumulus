@@ -1080,8 +1080,9 @@ async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_p
  * Extract temporal information from granule object
  *
  * @param {Object} granule - granule object
- * @returns {Object} - temporal information (beginningDateTime, endingDateTime, productionDateTime,
- * lastUpdateDateTime) of the granule if available
+ * @returns {Promise<Object>} - temporal information (beginningDateTime,
+ *    endingDateTime, productionDateTime, lastUpdateDateTime) of the granule if
+ *    available.
  */
 async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
@@ -1097,8 +1098,13 @@ async function getGranuleTemporalInfo(granule) {
     const identificationInfo = metadataMI['gmd:identificationInfo'];
     const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
     const temporalInfo = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimePeriod'];
-    const beginningDateTime = temporalInfo['gml:beginPosition'];
-    const endingDateTime = temporalInfo['gml:endPosition'];
+    let beginningDateTime = temporalInfo['gml:beginPosition'];
+    let endingDateTime = temporalInfo['gml:endPosition'];
+    if (!beginningDateTime && !endingDateTime) {
+      const singleDateTime = dataIdentification['gmd:MD_DataIdentification']['gmd:extent']['gmd:EX_Extent']['gmd:temporalElement']['gmd:EX_TemporalExtent']['gmd:extent']['gml:TimeInstant']['gmd:timePosition'];
+      beginningDateTime = singleDateTime;
+      endingDateTime = singleDateTime;
+    }
 
     // Get production date time from LE_ProcessStep
     const productionDateTime = metadataMI['gmd:dataQualityInfo']['gmd:DQ_DataQuality']['gmd:lineage']['gmd:LI_Lineage']['gmd:processStep']['gmi:LE_ProcessStep']['gmd:dateTime']['gco:DateTime'];
@@ -1111,8 +1117,13 @@ async function getGranuleTemporalInfo(granule) {
   }
   if (isECHO10Filename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
-    const beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
-    const endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
+    let beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
+    let endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
+    if (!beginningDateTime && !endingDateTime) {
+      const singleDateTime = get(metadata.Granule, 'Temporal.SingleDateTime');
+      beginningDateTime = singleDateTime;
+      endingDateTime = singleDateTime;
+    }
     const productionDateTime = get(metadata.Granule, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
     return {
@@ -1121,8 +1132,13 @@ async function getGranuleTemporalInfo(granule) {
   }
   if (isUMMGFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
-    const beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
-    const endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
+    let beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
+    let endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
+    if (!beginningDateTime && !endingDateTime) {
+      const singleDateTime = get(metadata, 'TemporalExtent.SingleDateTime');
+      beginningDateTime = singleDateTime;
+      endingDateTime = singleDateTime;
+    }
     const productionDateTime = get(metadata, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = (metadata.ProviderDates.find((d) => d.Type === 'Update')
       || metadata.ProviderDates.find((d) => d.Type === 'Insert')
