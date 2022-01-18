@@ -265,7 +265,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const status = ['pending', 'staged', 'success'];
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(request.granules.length).toBe(1);
-      expect(request.granules[0].granule_id).toEqual(granuleId);
+      expect(request.granules[0].granuleId).toEqual(granuleId);
       expect(status.includes(request.granules[0].status)).toEqual(true);
     });
 
@@ -276,12 +276,12 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         httpMethod: 'POST',
         path: '/orca/recovery/granules',
-        body: { asyncOperationId, granule_id: granuleId },
+        body: { asyncOperationId, granuleId },
       });
       const request = JSON.parse(list.body);
       if (request.httpStatus) console.log(request);
       const status = ['pending', 'staged', 'success'];
-      expect(request.granule_id).toEqual(granuleId);
+      expect(request.granuleId).toEqual(granuleId);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(get(request, 'files', []).length).toBe(3);
 

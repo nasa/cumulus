@@ -51,7 +51,7 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
   try {
     response = await postRequestToOrca({
       path: 'recovery/granules',
-      body: { granule_id: granuleId },
+      body: { granuleId },
     });
   } catch (error) {
     log.error('Unable to get orca recovery status');

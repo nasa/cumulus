@@ -70,6 +70,7 @@ all Cumulus workflow tasks
   - Added support for 'PROD' CMR environment.
 - **CUMULUS-2456**
   - Updated api lambdas to query ORCA Private API
+  - Updated example/cumulus-tf/orca.tf to the ORCA release v4.0.0-Beta3
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2684**
