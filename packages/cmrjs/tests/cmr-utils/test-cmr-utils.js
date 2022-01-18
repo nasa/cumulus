@@ -773,7 +773,6 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json falling back to "Insert" ProviderDate', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_insert.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
@@ -828,7 +827,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
-test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file with DateTimeRange', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
@@ -836,6 +835,33 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   const expectedTemporalInfo = {
     beginningDateTime: '2017-10-24T00:00:00Z',
     endingDateTime: '2017-11-08T23:59:59Z',
+    productionDateTime: '2018-07-19T12:01:01Z',
+    lastUpdateDateTime: '2018-04-25T21:45:45.524053',
+  };
+
+  try {
+    const temporalInfo = await getGranuleTemporalInfo({
+      granuleId: 'testGranuleId',
+      files: [{
+        bucket: 'bucket',
+        key: 'test.cmr.xml',
+      }],
+    });
+
+    t.deepEqual(temporalInfo, expectedTemporalInfo);
+  } finally {
+    revertMetaObject();
+  }
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file with SingleDateTime', async (t) => {
+  const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.SingleDateTime.cmr.xml', 'utf8');
+  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2022-01-24T00:00:00Z',
+    endingDateTime: '2022-01-24T00:00:00Z',
     productionDateTime: '2018-07-19T12:01:01Z',
     lastUpdateDateTime: '2018-04-25T21:45:45.524053',
   };
