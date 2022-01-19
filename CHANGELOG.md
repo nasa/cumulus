@@ -125,6 +125,8 @@ all Cumulus workflow tasks
   - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
     to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
     for providing the certificate.
+- **CUMULUS-2756**
+  - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
 
 ### Fixed
 
