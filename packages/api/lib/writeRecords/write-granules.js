@@ -321,7 +321,7 @@ const _writeGranule = async ({
         knex,
         {
           granule_id: postgresGranuleRecord.granule_id,
-          collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id
+          collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id,
         }
       );
 
