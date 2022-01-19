@@ -442,6 +442,7 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
       throw new Error('Granules dynamo error');
     },
     describeGranuleExecution: () => Promise.resolve({}),
+    exists: () => Promise.resolve(false),
   };
 
   const [error] = await t.throwsAsync(
@@ -479,6 +480,7 @@ test.serial('writeGranulesFromMessage() does not persist records to Dynamo or Po
     upsert: () => {
       throw new Error('Granules Postgres error');
     },
+    exists: () => Promise.resolve(false),
   };
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
@@ -534,6 +536,59 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   });
   t.is(pgGranule.status, 'failed');
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
+});
+
+test.serial('writeGranulesFromMessage() attempts to mark granule as failed if it already exists even if the failure is the granule write', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'queued';
+
+  // iniital write
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  // second write
+  // Invalid granule schema to prevent granule write to dynamo from succeeding
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0].files = [
+    {
+      path: 'MYD13Q1.006', size: 170459659, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'data', checksumType: 'CKSUM', checksum: 3129208208,
+    },
+    { path: 'MYD13Q1.006', size: 46399, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf.met', type: 'metadata' },
+
+    { path: 'MYD13Q1.006', size: 32795, name: 'BROWSE.MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'browse' },
+  ];
+
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  }));
+
+  t.true(error.message.includes('The record has validation errors:'));
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.is(dynamoGranule.status, 'failed');
+
+  const pgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(pgGranule.status, 'failed');
 });
 
 test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
@@ -898,6 +953,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
       throw new Error('Granules dynamo error');
     },
     describeGranuleExecution: () => Promise.resolve({}),
+    exists: () => Promise.resolve(false),
   };
 
   const error = await t.throwsAsync(
@@ -927,6 +983,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     upsert: () => {
       throw new Error('Granules Postgres error');
     },
+    exists: () => Promise.resolve(false),
   };
 
   const error = await t.throwsAsync(writeGranuleFromApi(

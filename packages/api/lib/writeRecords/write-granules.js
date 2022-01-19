@@ -299,15 +299,61 @@ const _writeGranule = async ({
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', dynamoGranuleRecord);
 
-  await createRejectableTransaction(knex, async (trx) => {
-    granuleCumulusId = await _writePostgresGranuleViaTransaction({
-      granuleRecord: postgresGranuleRecord,
-      executionCumulusId,
-      trx,
-      granulePgModel,
+  try {
+    await createRejectableTransaction(knex, async (trx) => {
+      granuleCumulusId = await _writePostgresGranuleViaTransaction({
+        granuleRecord: postgresGranuleRecord,
+        executionCumulusId,
+        trx,
+        granulePgModel,
+      });
+      return granuleModel.storeGranule(dynamoGranuleRecord);
     });
-    return granuleModel.storeGranule(dynamoGranuleRecord);
-  });
+  } catch (thrownError) {
+    log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
+
+    // Set status to failed if granule exists to prevent previous status
+    // from giving the wrong impression
+    const dynamoGranuleExists
+      = await granuleModel.exists({ granuleId: dynamoGranuleRecord.granuleId });
+    const postgresGranuleExists
+      = await granulePgModel.exists(
+        knex,
+        {
+          granule_id: postgresGranuleRecord.granule_id,
+          collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id
+        }
+      );
+
+    if (dynamoGranuleExists && postgresGranuleExists) {
+      await createRejectableTransaction(knex, async (trx) => {
+        await granulePgModel.update(
+          trx,
+          { granule_id: postgresGranuleRecord.granule_id,
+            collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id },
+          {
+            status: 'failed',
+            error: thrownError,
+          }
+        ).catch((updateError) => {
+          log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
+        });
+
+        await granuleModel.update(
+          {
+            granuleId: dynamoGranuleRecord.granuleId,
+          },
+          {
+            status: 'failed',
+            error: thrownError,
+          }
+        ).catch((updateError) => {
+          log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
+        });
+      });
+    }
+    throw thrownError;
+  }
 
   log.info(
     `
