@@ -42,6 +42,8 @@ module "archive" {
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
 
+  orca_api_uri       = var.orca_api_uri
+
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
   saml_idp_login                  = var.saml_idp_login
