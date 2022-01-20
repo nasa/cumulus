@@ -5,8 +5,8 @@ const Logger = require('@cumulus/logger');
 const {
   GranulePgModel,
   getKnexClient,
-  translatePostgresGranuleToApiGranule,
   getUniqueGranuleByGranuleId,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
@@ -165,13 +165,18 @@ async function bulkGranuleReingest(
   const granuleIds = await getGranuleIdsForPayload(payload);
   log.info(`Starting bulkGranuleReingest for ${JSON.stringify(granuleIds)}`);
   const knex = await getKnexClient();
-  const granuleModel = new GranuleModel();
+
   const workflowName = payload.workflowName;
   return await pMap(
     granuleIds,
     async (granuleId) => {
       try {
-        const granule = await granuleModel.getRecord({ granuleId });
+        const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
+        const granule = await translatePostgresGranuleToApiGranule({
+          granulePgRecord: pgGranule,
+          knexOrTransaction: knex,
+        });
+
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
         const granuleToReingest = {
           ...granule,
@@ -182,7 +187,6 @@ async function bulkGranuleReingest(
           granule: granuleToReingest,
           asyncOperationId: process.env.asyncOperationId,
         });
-
         return granuleId;
       } catch (error) {
         log.error(`Granule ${granuleId} encountered an error`, error);

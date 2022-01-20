@@ -427,6 +427,8 @@ all Cumulus workflow tasks
   - **CUMULUS-2776**
     - Updated `getTableIndexDetails` in `db-indexer` to use correct
       `deleteFnName` for reconciliation reports.
+  - **CUMULUS-2780**
+    - Updated bulk granule reingest operation to read granules from PostgreSQL instead of DynamoDB.
   - **CUMULUS-2778**
     - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
 - **CUMULUS-2735**
