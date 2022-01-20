@@ -1,5 +1,5 @@
 locals {
-  cnm_response_version  = "2.0.1"
+  cnm_response_version  = "2.0.2"
   cnm_response_filename = "cnmResponse-${local.cnm_response_version}.zip"
 }
 
@@ -35,7 +35,6 @@ resource "aws_lambda_function" "cnm_response_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }

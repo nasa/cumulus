@@ -18,7 +18,7 @@ const launchpadTokenBucketKey = launchpad.__get__('launchpadTokenBucketKey');
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
-const certificate = 'pki_contificate';
+const certificate = 'pki_certificate';
 const bucket = randomString();
 const stackName = randomString();
 const api = 'https://www.example.com:12345/api/';
