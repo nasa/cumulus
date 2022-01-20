@@ -134,7 +134,7 @@ all Cumulus workflow tasks
     for providing the certificate.
 - **CUMULUS-2836**
   - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
-    element, when both beginningDateTime and endingDateTime values are not
+    element, when beginningDateTime value is not
     found in the metadata file.  The granule's temporal information is
     returned so that both beginningDateTime and endingDateTime are set to the
     discovered singleDateTimeValue.
