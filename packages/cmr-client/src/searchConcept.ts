@@ -31,7 +31,7 @@ export interface UmmJsonResponse {
  * @param {Object} params
  * @param {string} params.type - Concept type to search, choices: ['collections', 'granules']
  * @param {string} params.cmrEnvironment - optional, CMR environment to
- *              use valid arguments are ['OPS', 'SIT', 'UAT']
+ *              use valid arguments are ['PROD', 'OPS', 'SIT', 'UAT']
  * @param {Object} params.searchParams - CMR search parameters
  * Note initial searchParams.page_num should only be set if recursive is false
  * @param {Array} [params.previousResults=[]] - array of results returned in previous recursive
