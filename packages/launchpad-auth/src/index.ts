@@ -5,8 +5,9 @@
  */
 
 import pick from 'lodash/pick';
+import { s3 } from '@cumulus/aws-client/services';
 import {
-  getS3Object,
+  getObject,
   s3Join,
   s3ObjectExists,
   s3PutObject,
@@ -58,7 +59,7 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
 
   let token;
   if (keyExists) {
-    const s3object = await getS3Object(s3location.Bucket, s3location.Key);
+    const s3object = await getObject(s3(), s3location);
     if (s3object?.Body) {
       const launchpadToken = <TokenObject>JSON.parse(s3object.Body.toString());
       const now = Date.now();

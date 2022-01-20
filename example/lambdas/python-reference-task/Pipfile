@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-boto3 = "~=1.12.47"
-cumulus-process = "==0.9.0"
-cumulus-message-adapter-python = "==1.2.1"
+boto3 = "~=1.18.40"
+cumulus-process = "==1.0.0"
+cumulus-message-adapter-python = "==2.0.0"
 six = "==1.12.0"
 
 [dev-packages]
