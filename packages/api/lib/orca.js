@@ -32,7 +32,7 @@ async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, 
       }
     );
   } catch (error) {
-    log.error('got encountered error:', error);
+    log.error('postRequestToOrca encountered error:', error);
     throw error;
   }
 }
@@ -61,7 +61,7 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
 
   const { statusCode, body } = response;
   if (statusCode !== 200) {
-    log.error(`Unable to get orca recovery status for ${granuleId}, submitRequestToOrca failed ${statusCode}: ${JSON.stringify(body)}`);
+    log.error(`Unable to get orca recovery status for ${granuleId}, ORCA api returned ${statusCode}: ${JSON.stringify(body)}`);
     return undefined;
   }
 
