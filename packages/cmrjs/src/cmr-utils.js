@@ -1098,14 +1098,8 @@ async function getGranuleTemporalInfo(granule) {
     const identificationInfo = metadataMI['gmd:identificationInfo'];
     const dataIdentification = identificationInfo.find((dataIdObject) => Object.keys(dataIdObject).filter((key) => Object.keys(dataIdObject[key]).includes('gmd:extent')));
     const temporalInfo = get(dataIdentification, 'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimePeriod');
-    let beginningDateTime = get(
-      temporalInfo, 'gml:beginPosition',
-      get(temporalInfo, 'begin.gml:TimeInstant.gml:TimePosition')
-    );
-    let endingDateTime = get(
-      temporalInfo, 'gml:endPosition',
-      get(temporalInfo, 'end.gml:TimeInstant.gml:TimePosition')
-    );
+    let beginningDateTime = get(temporalInfo, 'gml:beginPosition');
+    let endingDateTime = get(temporalInfo, 'gml:endPosition');
 
     if (!beginningDateTime) {
       const singleDateTime = get(dataIdentification, 'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimeInstant.gml:timePosition');
