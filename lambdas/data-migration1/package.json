@@ -32,7 +32,7 @@
     "@cumulus/errors": "9.9.0",
     "@cumulus/logger": "9.9.0",
     "@cumulus/types": "9.9.0",
-    "knex": "0.95.12",
+    "knex": "0.95.15",
     "lodash": "^4.17.20",
     "pg": "^8.3.0"
   },
