@@ -2,7 +2,8 @@ import { URL } from 'url';
 import got from 'got';
 
 import Logger from '@cumulus/logger';
-import { getS3Object, s3ObjectExists } from '@cumulus/aws-client/S3';
+import { s3 } from '@cumulus/aws-client/services';
+import { getObject, s3ObjectExists } from '@cumulus/aws-client/S3';
 
 import {
   LaunchpadTokenParams,
@@ -68,12 +69,15 @@ class LaunchpadToken {
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
 
-    const pfxObject = await getS3Object(bucket, `${stackName}/crypto/${this.certificate}`);
+    const pfxObject = await getObject(s3(), {
+      Bucket: bucket,
+      Key: `${stackName}/crypto/${this.certificate}`,
+    });
     // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
     // request header
     const pfx = pfxObject?.Body;
 
-    return pfx;
+    return <Buffer>pfx;
   }
 
   /**
@@ -89,8 +93,8 @@ class LaunchpadToken {
     const options = {
       port: launchpadUrl.port || 443,
       prefixUrl: this.api,
-      pfx,
       https: {
+        pfx,
         passphrase: this.passphrase,
       },
     };
@@ -115,8 +119,8 @@ class LaunchpadToken {
       port: launchpadUrl.port || 443,
       prefixUrl: this.api,
       body: data,
-      pfx,
       https: {
+        pfx,
         passphrase: this.passphrase,
       },
       headers: {

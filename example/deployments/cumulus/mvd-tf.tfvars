@@ -3,7 +3,7 @@ system_bucket = "mvd-internal"
 buckets = {
   glacier = {
     name = "cumulus-test-sandbox-orca-glacier"
-    type = "glacier"
+    type = "orca"
   }
   internal = {
     name = "mvd-internal"
@@ -26,5 +26,4 @@ buckets = {
     type = "public"
   }
 }
-
-ems_submit_report = true
+orca_default_bucket = "cumulus-test-sandbox-orca-glacier"
