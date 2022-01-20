@@ -1101,7 +1101,7 @@ async function getGranuleTemporalInfo(granule) {
     let beginningDateTime = get(temporalInfo, 'gml:beginPosition');
     let endingDateTime = get(temporalInfo, 'gml:endPosition');
 
-    if (!beginningDateTime && !endingDateTime) {
+    if (!beginningDateTime) {
       const singleDateTime = get(dataIdentification, 'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimeInstant.gml:timePosition');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
@@ -1120,7 +1120,8 @@ async function getGranuleTemporalInfo(granule) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
     let beginningDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
     let endingDateTime = get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
-    if (!beginningDateTime && !endingDateTime) {
+
+    if (!beginningDateTime) {
       const singleDateTime = get(metadata.Granule, 'Temporal.SingleDateTime');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
@@ -1135,7 +1136,8 @@ async function getGranuleTemporalInfo(granule) {
     const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
     let beginningDateTime = get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
     let endingDateTime = get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
-    if (!beginningDateTime && !endingDateTime) {
+
+    if (!beginningDateTime) {
       const singleDateTime = get(metadata, 'TemporalExtent.SingleDateTime');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
