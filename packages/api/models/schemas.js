@@ -413,7 +413,7 @@ module.exports.rule = {
   type: 'object',
   properties: {
     name: {
-      title: 'name',
+      title: 'Name',
       type: 'string',
     },
     workflow: {
@@ -440,8 +440,9 @@ module.exports.rule = {
       required: ['name', 'version'],
     },
     meta: {
-      title: 'Optional MetaData for the Rule',
+      title: 'Metadata',
       type: 'object',
+      description: 'Optional Metadata for the rule, passed through to $.meta on the message',
       properties: {
         retries: {
           description: 'Number of retries on errors, for sqs-type rule only. Default to 3.',
@@ -455,10 +456,12 @@ module.exports.rule = {
       additionalProperties: true,
     },
     payload: {
-      title: 'Optional input payload to be used in onetime and scheduled rules',
+      title: 'Input Payload',
+      description: 'Optional input payload to be used in onetime and scheduled rules',
     },
     queueUrl: {
-      title: 'Optional queue URL used to schedule executions for this rule',
+      title: 'Queue URL for Scheduled Executions',
+      description: 'Optional queue URL used to schedule executions for this rule',
       type: 'string',
     },
     rule: {
@@ -466,21 +469,25 @@ module.exports.rule = {
       type: 'object',
       properties: {
         type: {
+          title: 'Rule Type',
           type: 'string',
           enum: ['onetime', 'scheduled', 'sns', 'kinesis', 'sqs'],
         },
         // Value is multi-use.   For a kinesis rule this is the target stream arn, for
         // a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
         value: {
+          title: 'Value for Rule Type',
           type: 'string',
         },
         // Kinesis scheduled event arn
         arn: {
+          title: 'Kinesis Scheduled Event ARN',
           type: 'string',
           readonly: true,
         },
         // Kinesis scheduled log event arn
         logEventArn: {
+          title: 'Kinesis Scheduled Log Event ARN',
           type: 'string',
           readonly: true,
         },
@@ -488,7 +495,8 @@ module.exports.rule = {
       required: ['type'],
     },
     state: {
-      title: 'Rule state',
+      title: 'Rule State',
+      description: 'State describing whether rule is enabled or disabled',
       type: 'string',
       enum: ['ENABLED', 'DISABLED'],
     },
@@ -500,14 +508,15 @@ module.exports.rule = {
       type: 'integer',
     },
     tags: {
-      title: 'Optional tags for search',
+      title: 'Search Tags',
+      description: 'Optional tags for search',
       type: 'array',
       items: {
         type: 'string',
       },
     },
     executionNamePrefix: {
-      title: 'Execution name prefix',
+      title: 'Execution Name Prefix',
       type: 'string',
     },
   },
@@ -659,10 +668,12 @@ module.exports.provider = {
       description: 'filename assumed to be in s3://bucketInternal/stackName/crypto',
     },
     cmKeyId: {
+      title: 'AWS KMS Customer Master Key ARN or Alias',
       type: 'string',
       description: 'AWS KMS Customer Master Key arn or alias',
     },
     certificateUri: {
+      title: 'S3 URI for custom SSL certificate',
       type: 'string',
       description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate',
     },

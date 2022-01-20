@@ -22,6 +22,7 @@ export function getCmrHost({
     return cmrHost;
   }
   switch (cmrEnvironment) {
+    case 'PROD':
     case 'OPS':
       return 'https://cmr.earthdata.nasa.gov';
     case 'UAT':

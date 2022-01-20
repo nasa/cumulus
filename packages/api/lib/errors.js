@@ -13,6 +13,7 @@ const isPostgresValidationError = (error) => ['22', '23'].includes((error.code |
 
 const isBadRequestError = (error) =>
   error.name === 'SchemaValidationError'
+  || error.name === 'ValidationException'
   || error instanceof ValidationError
   || isPostgresValidationError(error);
 

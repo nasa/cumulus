@@ -399,7 +399,6 @@ export const s3PutObjectTagging = improveStackTrace(
  *   as a Promise
  */
 export const getObject = (
-  // eslint-disable-next-line no-shadow
   s3Client: { getObject: GetObjectPromiseMethod },
   params: AWS.S3.GetObjectRequest
 ): Promise<AWS.S3.GetObjectOutput> => s3Client.getObject(params).promise();
