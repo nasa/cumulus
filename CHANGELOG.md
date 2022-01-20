@@ -155,7 +155,7 @@ all Cumulus workflow tasks
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2642**
-   - Reduces the reconcilation report's default maxResponseSize that returns
+  - Reduces the reconcilation report's default maxResponseSize that returns
      the full report rather than an s3 signed url. Reports very close to the
      previous limits were failing to download, so the limit has been lowered to
      ensure all files are handled properly.
@@ -427,6 +427,8 @@ all Cumulus workflow tasks
   - **CUMULUS-2776**
     - Updated `getTableIndexDetails` in `db-indexer` to use correct
       `deleteFnName` for reconciliation reports.
+  - **CUMULUS-2780**
+    - Updated bulk granule reingest operation to read granules from PostgreSQL instead of DynamoDB.
   - **CUMULUS-2778**
     - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
 - **CUMULUS-2735**
