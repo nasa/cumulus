@@ -161,6 +161,28 @@ test('ExecutionPgModel.upsert() will not allow a running execution to replace a 
   );
 });
 
+test('ExecutionPgModel.create() will not allow an execution with an original_payload that is an array to be written', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.original_payload = ['test1', 'test2'];
+  await t.throwsAsync(executionPgModel.create(knex, executionRecord));
+});
+
+test('ExecutionPgModel.create() will not allow an execution with an final_payload that is an array to be written', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.final_payload = ['test1', 'test2'];
+  await t.throwsAsync(executionPgModel.create(knex, executionRecord));
+});
+
 test('ExecutionPgModel.delete() deletes execution and granule/execution join records', async (t) => {
   const {
     knex,
