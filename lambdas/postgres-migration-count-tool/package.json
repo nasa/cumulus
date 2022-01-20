@@ -27,7 +27,7 @@
     "@cumulus/db": "9.9.0",
     "@cumulus/message": "9.9.0",
     "@cumulus/types": "9.9.0",
-    "knex": "0.95.12",
+    "knex": "0.95.15",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"
   }

@@ -1,55 +1,31 @@
 'use strict';
 
-const mapKeys = require('lodash/mapKeys');
 const router = require('express-promise-router')();
 
-const { lambda } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/orca' });
-
-const mapKeysToOrca = {
-  granuleId: 'granule_id',
-};
+const { postRequestToOrca } = require('../lib/orca');
 
 /**
- * List recovery request status
+ * post request to ORCA
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function listRequests(req, res) {
-  const query = req.query || {};
-  const { granuleId, asyncOperationId, ...rest } = query;
-  if (Object.keys(rest).length !== 0 || !(granuleId || asyncOperationId)) {
-    const errorMsg = 'Please specify granuleId and/or asyncOperationId';
-    logger.error(errorMsg);
-    return res.boom.badRequest(errorMsg);
-  }
+async function post(req, res) {
+  const { statusCode, body } = await postRequestToOrca({
+    path: req.path,
+    body: req.body || {},
+  });
 
-  const params = mapKeys(query, (value, key) => mapKeysToOrca[key] || key);
-  const functionName = granuleId
-    ? `${process.env.stackName}_request_status_for_granule`
-    : `${process.env.stackName}_request_status_for_job`;
+  if (statusCode === 200) return res.send(body);
 
-  try {
-    const result = await lambda().invoke({
-      FunctionName: functionName,
-      Payload: JSON.stringify(params),
-      InvocationType: 'RequestResponse',
-    }).promise();
-
-    return res.send(JSON.parse(result.Payload));
-  } catch (error) {
-    if (error.code === 'ResourceNotFoundException' && error.message.includes(functionName)) {
-      const errMsg = `${error.message}, please check if orca is deployed`;
-      logger.error(errMsg, error);
-      return res.boom.badRequest(errMsg);
-    }
-    throw error;
-  }
+  logger.error(`${req.path} Request failed - ORCA api returned ${statusCode}: ${JSON.stringify(body)}`);
+  if (statusCode === 404) return res.boom.notFound(JSON.stringify(body));
+  return res.boom.badRequest(JSON.stringify(body));
 }
 
-router.get('/recovery', listRequests);
+router.post('/*', post);
 
 module.exports = router;
