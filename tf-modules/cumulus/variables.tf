@@ -419,6 +419,12 @@ variable "oauth_user_group" {
   default     = "N/A"
 }
 
+variable "orca_api_uri" {
+  description = "ORCA API gateway URL. Excludes the resource path"
+  type        = string
+  default     = null
+}
+
 variable "permissions_boundary_arn" {
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
   type        = string
