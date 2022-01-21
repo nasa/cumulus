@@ -194,6 +194,7 @@ async function updateGranuleStatus({
   status,
   error = '',
   errorCause = '',
+  apiGranuleDeleteFields = [],
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
   collectionPgModel = new CollectionPgModel(),
@@ -234,7 +235,7 @@ async function updateGranuleStatus({
           status,
           error: errorObject,
         },
-        ['execution']
+        apiGranuleDeleteFields
       );
     });
 
@@ -676,6 +677,7 @@ async function updateGranuleStatusToQueued({
     granule,
     knex,
     status,
+    apiGranuleDeleteFields: ['execution'],
   });
 }
 

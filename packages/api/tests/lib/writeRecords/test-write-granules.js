@@ -1149,7 +1149,6 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
-  t.falsy(updatedDynamoRecord.execution);
   t.is(updatedDynamoRecord.status, 'failed');
   t.is(updatedPostgresRecord.status, 'failed');
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
@@ -1203,7 +1202,6 @@ test.serial('updateGranuleStatus() updates granule status in the database', asyn
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
-  t.falsy(updatedDynamoRecord.execution);
   t.is(updatedDynamoRecord.status, 'completed');
   t.is(updatedPostgresRecord.status, 'completed');
   t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
@@ -1235,7 +1233,6 @@ test.serial('updateGranuleStatus() updates granule error in the database if prov
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  t.falsy(updatedDynamoRecord.execution);
   t.is(updatedDynamoRecord.status, 'completed');
   t.is(updatedPostgresRecord.status, 'completed');
   t.deepEqual(updatedPostgresRecord.error, error);
