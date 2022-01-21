@@ -2,7 +2,6 @@
 
 const uuidv4 = require('uuid/v4');
 const test = require('ava');
-const fs = require('fs');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
