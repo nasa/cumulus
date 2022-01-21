@@ -51,7 +51,6 @@ async function processDeadLetterArchive({
           return deadLetterObject.Key;
         } catch (error) {
           log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
-          log.error(`cumulusMessage was ${JSON.parse(cumulusMessage)}`);
           allFailedKeys.push(deadLetterObject.Key);
           throw error;
         }
