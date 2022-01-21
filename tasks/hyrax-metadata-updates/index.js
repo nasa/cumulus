@@ -4,8 +4,14 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { InvalidArgument } = require('@cumulus/errors');
 const { promisify } = require('util');
 
-const get = require('lodash/get');
 const cloneDeep = require('lodash/cloneDeep');
+const curry = require('lodash/curry');
+const get = require('lodash/get');
+const isEqual = require('lodash/isEqual');
+const isUndefined = require('lodash/isUndefined');
+const keys = require('lodash/keys');
+const omitBy = require('lodash/omitBy');
+const some = require('lodash/some');
 
 const {
   CMR,
@@ -74,6 +80,33 @@ function getGranuleUr(metadata, isUmmG) {
 }
 
 /**
+ * getCmrSearchParams
+ *
+ * @param {Object} options - Options
+ * @param {string} options.datasetId - collection dataset ID
+ * @param {string} options.shortName - collection short name (requires versionId)
+ * @param {string} options.versionId - collection version (requires shortName)
+ * @returns {Object} searchParams, keys are either ['dataset_id'] or ['short_name', 'version']
+ * @returns {string} searchParams.dataset_id - collection dataset ID
+ * @returns {string} searchParams.short_name - collection short name
+ * @returns {string} searchParams.version - collection version
+ */
+function getCmrSearchParams({ datasetId, shortName, versionId }) {
+  const searchParams = omitBy({
+    dataset_id: datasetId,
+    short_name: shortName,
+    version: versionId,
+  }, isUndefined);
+
+  const validKeys = [['short_name', 'version'], ['dataset_id']];
+  if (!some(validKeys, curry(isEqual)(keys(searchParams)))) {
+    throw new Error(`Invalid list of keys for searchParams: ${keys(searchParams)}`);
+  }
+
+  return searchParams;
+}
+
+/**
  * getCollectionEntry
  *
  * @param {Object} config - configuration
@@ -83,12 +116,15 @@ function getGranuleUr(metadata, isUmmG) {
  *    belongs to
  */
 async function getCollectionEntry(config, metadata, isUmmG) {
+  let datasetId;
   let shortName;
   let versionId;
   if (isUmmG === true) {
+    datasetId = metadata.CollectionReference.EntryTitle;
     shortName = metadata.CollectionReference.ShortName;
     versionId = metadata.CollectionReference.Version;
   } else {
+    datasetId = metadata.Granule.Collection.DataSetId;
     shortName = metadata.Granule.Collection.ShortName;
     versionId = metadata.Granule.Collection.VersionId;
   }
@@ -101,24 +137,28 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   // Query CMR for collection and retrieve entry title
   const cmrInstance = new CMR(cmrSettings);
 
-  const searchParams = {
-    short_name: shortName,
-    version: versionId,
-  };
+  const searchParams = getCmrSearchParams({
+    datasetId,
+    shortName,
+    versionId,
+  });
 
   const result = await cmrInstance.searchCollections(searchParams);
+
   // Verify that we have a valid result. If we don't then something is badly wrong and we
   // should halt. Either the code is faulty or the provider is trying to ingest granules
   // into a collection that doesn't exist
   const conceptId = get(result, '[0].id');
-  shortName = get(result, '[0].short_name');
-  versionId = get(result, '[0].version_id');
   if (conceptId === undefined) {
-    throw new RecordDoesNotExist(`Unable to query parent collection using short name ${shortName} and version ${versionId}`);
+    throw new RecordDoesNotExist(`Unable to query parent collection using: ${JSON.stringify(searchParams)}`);
   }
 
-  return (config.addShortnameAndVersionIdToConceptId === true)
-    ? `${conceptId}/${shortName}.${versionId}` : conceptId;
+  if (searchParams.version !== undefined && config.addShortnameAndVersionIdToConceptId === true) {
+    shortName = get(result, '[0].short_name');
+    versionId = get(result, '[0].version_id');
+    return `${conceptId}/${shortName}.${versionId}`;
+  }
+  return conceptId;
 }
 
 /**

@@ -18,6 +18,7 @@ const HyraxMetadataUpdate = rewire('../index');
 const generateAddress = HyraxMetadataUpdate.__get__('generateAddress');
 const getGranuleUr = HyraxMetadataUpdate.__get__('getGranuleUr');
 const addHyraxUrl = HyraxMetadataUpdate.__get__('addHyraxUrl');
+const getCmrSearchParams = HyraxMetadataUpdate.__get__('getCmrSearchParams');
 
 test.afterEach.always(() => {
   delete process.env.CMR_ENVIRONMENT;
@@ -127,4 +128,59 @@ test('Test adding OPeNDAP URL to ECHO10 file with two OnlineResources', async (t
   const expected = fs.readFileSync('tests/data/echo10out-2-online-resource-urls.xml', 'utf8');
   const actual = addHyraxUrl(metadata, false, 'https://opendap.earthdata.nasa.gov/collections/C1453188197-GES_DISC/granules/GLDAS_CLSM025_D.2.0%3AGLDAS_CLSM025_D.A20141230.020.nc4');
   t.is(actual, expected.trim('\n'));
+});
+
+test('Test building CMR Search Params with short name and version', (t) => {
+  const inputSearchParams = {
+    shortName: 'GLDAS_CLSM025_D',
+    versionId: '2.0',
+  };
+  const expected = {
+    short_name: 'GLDAS_CLSM025_D',
+    version: '2.0',
+  };
+  const actual = getCmrSearchParams(inputSearchParams);
+  t.deepEqual(actual, expected);
+});
+
+test('Test building CMR Search Params with dataset ID', (t) => {
+  const inputSearchParams = {
+    datasetId: 'GLDAS_CLSM025_D.2.0',
+  };
+  const expected = {
+    dataset_id: 'GLDAS_CLSM025_D.2.0',
+  };
+  const actual = getCmrSearchParams(inputSearchParams);
+  t.deepEqual(actual, expected);
+});
+
+test('Test building invalid CMR Search Params with short name, version, and dataset ID', (t) => {
+  const inputSearchParams = {
+    datasetId: 'GLDAS_CLSM025_D.2.0',
+    shortName: 'GLDAS_CLSM025_D',
+    versionId: '2.0',
+  };
+
+  t.throws(
+    () => getCmrSearchParams(inputSearchParams),
+    {
+      message: 'Invalid list of keys for searchParams: dataset_id,short_name,version',
+      instanceOf: Error,
+    }
+  );
+});
+
+test('Test building invalid CMR Search Params with invalid params', (t) => {
+  const inputSearchParams = {
+    datasetId: 'GLDAS_CLSM025_D.2.0',
+    versionId: '2.0',
+  };
+
+  t.throws(
+    () => getCmrSearchParams(inputSearchParams),
+    {
+      message: 'Invalid list of keys for searchParams: dataset_id,version',
+      instanceOf: Error,
+    }
+  );
 });
