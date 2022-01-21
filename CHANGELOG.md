@@ -132,6 +132,12 @@ all Cumulus workflow tasks
   - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
     to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
     for providing the certificate.
+- **CUMULUS-2836**
+  - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
+    element, when beginningDateTime value is not
+    found in the metadata file.  The granule's temporal information is
+    returned so that both beginningDateTime and endingDateTime are set to the
+    discovered singleDateTimeValue.
 
 ### Fixed
 
