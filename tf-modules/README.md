@@ -55,6 +55,6 @@ If the module has been integrated into the Cumulus module or the example Cumulus
 If the module is a standalone module that should not be integrated as a submodule (e.g. [`data-persistence`](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/outputs.tf)), then you will need to follow these steps to include it in the CI/CD pipeline:
 
 1. Add a reference implementation for using your module in the `example` directory. See the [reference implementation for the `data-persistence` module](https://github.com/nasa/cumulus/blob/master/example/data-persistence-tf).
-    - Make sure to include a [`provider` configuration](https://www.terraform.io/docs/configuration/providers.html) in your `.tf` files, which defines what provider will be interpret the Terraform reosources
+    - Make sure to include a [`provider` configuration](https://www.terraform.io/docs/configuration/providers.html) in your `.tf` files, which defines what provider will be interpret the Terraform resources
 2. Update the [CI Terraform deployment script](https://github.com/nasa/cumulus/blob/master/bamboo/bootstrap-tf-deployment.sh) to deploy your module.
     - Make sure to add remote state handling for deploying your module so that each CI build only update the existing deployment as necessary, because local Terraform state in the CI will not persist between builds.

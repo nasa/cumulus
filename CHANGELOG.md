@@ -699,7 +699,7 @@ releases.
 
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
-    timeout for Knex library to acquire dataase connections
+    timeout for Knex library to acquire database connections
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
 - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
@@ -722,7 +722,7 @@ releases.
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic
-    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
+    `@cumulus/oauth-client` as a parent  class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
@@ -1659,7 +1659,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    serverless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
     requirements for future releases.
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
@@ -1934,7 +1934,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   result in a "Client not connected" exception being thrown.
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly
   disconnect from the SFTP server when `list` is called.
-- Instances of `@cumulus/sftp-client/SftpClient` must now be expclicitly closed
+- Instances of `@cumulus/sftp-client/SftpClient` must now be explicitly closed
   by calling `.end()`
 - Instances of `@cumulus/sftp-client/SftpClient` no longer implicitly connect to
   the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are
