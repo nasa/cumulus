@@ -36,4 +36,7 @@ async function post(req, res) {
 
 router.post('/', post, asyncOperationEndpointErrorHandler);
 
-module.exports = router;
+module.exports = {
+  post,
+  router,
+};

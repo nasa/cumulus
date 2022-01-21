@@ -88,4 +88,8 @@ async function startSqsMessagesReplay(req, res) {
 router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
 router.post('/sqs', startSqsMessagesReplay, asyncOperationEndpointErrorHandler);
 
-module.exports = router;
+module.exports = {
+  startKinesisReplayAsyncOperation,
+  startSqsMessagesReplay,
+  router,
+};
