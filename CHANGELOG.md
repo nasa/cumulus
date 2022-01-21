@@ -1177,7 +1177,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Deploy ORCA with Cumulus, see `example/cumulus-tf/orca.tf` and `example/cumulus-tf/terraform.tfvars.example`
   - Add `CopyToGlacier` step to [example IngestAndPublishGranule workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json)
 - **CUMULUS-2424**
-  - Added `childWorkflowMeta` to `queue-pdrs` config. An object passed to this config value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_and_queue_pdrs_with_child_workflow_meta_wworkflow.asl.json`.
+  - Added `childWorkflowMeta` to `queue-pdrs` config. An object passed to this config value will be merged into a child workflow message's `meta` object. For an example of how this can be used, see `example/cumulus-tf/discover_and_queue_pdrs_with_child_workflow_meta_workflow.asl.json`.
 - **CUMULUS-2427**
   - Added support for using a custom queue with SQS and Kinesis rules. Whatever queue URL is set on the `rule.queueUrl` property will be used to schedule workflows for that rule. This change allows SQS/Kinesis rules to use [any throttled queues defined for a deployment](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions).
 
