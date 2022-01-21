@@ -15,7 +15,7 @@ import type { PromiseResult } from 'aws-sdk/lib/request';
 
 import type { AsyncOperationModelClass } from './types';
 
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
@@ -164,9 +164,14 @@ export const startAsyncOperation = async (
     systemBucket,
     stackName,
     dynamoTableName,
+    callerLambdaName,
     knexConfig = process.env,
     startEcsTaskFunc = startECSTask,
   } = params;
+
+  if (!callerLambdaName) {
+    throw new MissingRequiredArgument(`callerLambdaName must be specified to start new async operation, received: ${callerLambdaName}`);
+  }
 
   const id = uuidv4();
   // Store the payload to S3
