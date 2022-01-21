@@ -250,7 +250,7 @@ test('getExecutionCumulusId returns undefined if url cannot be found.', async (t
   t.is(await getExecutionCumulusId('https://example.com/still/not/in/db', knex), undefined);
 });
 
-test.only('isStatusFinalState returns true if status only if status is "completed" or "failed"', (t) => {
+test('isStatusFinalState returns true if status only if status is "completed" or "failed"', (t) => {
   t.is(isStatusFinalState('queued'), false);
   t.is(isStatusFinalState('running'), false);
   t.is(isStatusFinalState('completed'), true);
