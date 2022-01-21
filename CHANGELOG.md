@@ -132,6 +132,12 @@ all Cumulus workflow tasks
   - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
     to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
     for providing the certificate.
+- **CUMULUS-2836**
+  - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
+    element, when beginningDateTime value is not
+    found in the metadata file.  The granule's temporal information is
+    returned so that both beginningDateTime and endingDateTime are set to the
+    discovered singleDateTimeValue.
 - **CUMULUS-2756**
   - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
 
