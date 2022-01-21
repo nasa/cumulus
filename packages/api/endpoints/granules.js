@@ -1,6 +1,5 @@
 'use strict';
 
-const lodashGet = require('lodash/get');
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
@@ -34,7 +33,7 @@ const { deconstructCollectionId, errorify } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
-const { validateBulkGranulesRequest } = require('../lib/request');
+const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
 
 const log = new Logger({ sender: '@cumulus/api' });
 
@@ -447,7 +446,7 @@ async function bulkOperations(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granules',
@@ -495,7 +494,7 @@ async function bulkDelete(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
@@ -542,7 +541,7 @@ async function bulkReingest(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granule Reingest',

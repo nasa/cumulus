@@ -1,7 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
-
 const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
@@ -9,6 +7,7 @@ const { getQueueUrlByName } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 const logger = new Logger({ sender: '@cumulus/api/replays' });
 /**
@@ -39,7 +38,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     description: 'Kinesis Replay',
     dynamoTableName: asyncOperationModel.tableName,
     knexConfig: process.env,
-    callerLambdaName: get(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ManualConsumerLambda,
     operationType: 'Kinesis Replay',
     payload,
@@ -74,7 +73,7 @@ async function startSqsMessagesReplay(req, res) {
     description: 'SQS Replay',
     dynamoTableName: tableName,
     knexConfig: process.env,
-    callerLambdaName: get(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ReplaySqsMessagesLambda,
     operationType: 'SQS Replay',
     payload,

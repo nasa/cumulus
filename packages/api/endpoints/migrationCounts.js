@@ -1,9 +1,9 @@
-const get = require('lodash/get');
 const asyncOperations = require('@cumulus/async-operations');
 const router = require('express-promise-router')();
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const models = require('../models');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 async function post(req, res) {
   const stackName = process.env.stackName;
@@ -13,7 +13,7 @@ async function post(req, res) {
   const { cutoffSeconds, dbConcurrency, dbMaxPool, reportBucket, reportPath } = req.body;
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
-    callerLambdaName: get(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.MigrationCountToolLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Migration Count Tool ECS Run',

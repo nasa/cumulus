@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
@@ -12,6 +11,7 @@ const { createIndex } = require('@cumulus/es-client/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const models = require('../models');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -224,7 +224,7 @@ async function indexFromDatabase(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: get(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.IndexFromDatabaseLambda,
     description: 'Elasticsearch index from database',
     operationType: 'ES Index',

@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
 const router = require('express-promise-router')();
 const {
   deleteS3Object,
@@ -21,6 +20,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 const logger = new Logger({ sender: '@cumulus/api' });
 const maxResponsePayloadSize = 6 * 1024 * 1024;
@@ -149,7 +149,7 @@ async function createReport(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: get(req, 'apiGateway.context.functionName'),
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
