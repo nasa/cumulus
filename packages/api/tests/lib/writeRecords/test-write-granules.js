@@ -1135,6 +1135,7 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     granuleModel,
     granulePgModel,
   } = t.context;
+  granule.status = 'running';
   await writeGranuleFromApi({ ...granule }, knex);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
