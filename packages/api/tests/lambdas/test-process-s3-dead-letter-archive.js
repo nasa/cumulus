@@ -23,10 +23,23 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.stackName = randomString();
   t.context.path = `${t.context.stackName}/dead-letter-archive/sqs/`;
+  t.context.sqsPath = `${t.context.stackName}/dead-letter-archive/sqsTest/`;
   const cumulusMessages = [
     fakeCumulusMessageFactory(),
     fakeCumulusMessageFactory(),
   ];
+
+  t.context.SQSCumulusMessage = fakeCumulusMessageFactory();
+
+  const SQSMessage = {
+    body: JSON.stringify(
+      {
+        detail: {
+          input: JSON.stringify(t.context.SQSCumulusMessage),
+        },
+      }
+    ),
+  };
   t.context.cumulusMessages = cumulusMessages;
   t.context.messageKeys = [
     `${t.context.path}${getMessageExecutionName(cumulusMessages[0])}.json`,
@@ -40,6 +53,11 @@ test.beforeEach(async (t) => {
       cumulusMessage
     );
   }));
+  await S3.putJsonS3Object(
+    t.context.bucket,
+    `${t.context.sqsPath}/${getMessageExecutionName(t.context.SQSCumulusMessage)}`,
+    SQSMessage
+  );
 });
 
 test.after(async (t) => {
@@ -133,6 +151,20 @@ test('processDeadLetterArchive only deletes dead letters that process successful
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
   t.is(remainingDeadLetters.length, 1);
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
+});
+
+test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
+  const { bucket, sqsPath, SQSCumulusMessage } = t.context;
+  const writeRecordsFunctionSpy = sinon.spy();
+
+  await processDeadLetterArchive({
+    bucket,
+    path: sqsPath,
+    writeRecordsFunction: writeRecordsFunctionSpy,
+  });
+
+  const messageArgs = writeRecordsFunctionSpy.getCalls().map((call) => call.args[0].cumulusMessage);
+  t.deepEqual(messageArgs[0], SQSCumulusMessage);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {

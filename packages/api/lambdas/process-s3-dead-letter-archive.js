@@ -5,6 +5,7 @@ const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
+const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
 
@@ -43,12 +44,14 @@ async function processDeadLetterArchive({
     const deadLetterObjects = listObjectsResponse.Contents;
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
-        const cumulusMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+        const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+        const cumulusMessage = unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
         } catch (error) {
           log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
+          log.error(`cumulusMessage was ${JSON.parse(cumulusMessage)}`);
           allFailedKeys.push(deadLetterObject.Key);
           throw error;
         }
