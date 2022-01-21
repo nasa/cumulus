@@ -15,6 +15,9 @@ const models = require('../../models');
 
 const { app } = require('../../app');
 
+const { postRecoverCumulusMessages } = require('../../endpoints/dead-letter-archive');
+const { buildFakeExpressResponse } = require('./utils');
+
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
@@ -107,6 +110,39 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.MigrationCountToolLambda);
+  t.is(cluster, process.env.EcsCluster);
+  t.is(description, 'Dead-Letter Processor ECS Run');
+  t.deepEqual(payload, {
+    bucket: undefined,
+    path: undefined,
+  });
+});
+
+test.serial('postRecoverCumulusMessages() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const functionName = randomId('lambda');
+  await postRecoverCumulusMessages(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+    },
+    buildFakeExpressResponse()
+  );
+
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload,
+    callerLambdaName,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(callerLambdaName, functionName);
   t.is(lambdaName, process.env.MigrationCountToolLambda);
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');

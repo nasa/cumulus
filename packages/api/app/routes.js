@@ -37,7 +37,7 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // dead letters endpoint
-router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive);
+router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive.router);
 
 //migrationCounts endpoint
 router.use('/migrationCounts', ensureAuthorized, migrationCounts);
