@@ -280,26 +280,20 @@ async function updateGranuleStatusToFailed({
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Object} params.files - File objects
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
- * @param {Object} params.workflowError - Error from the workflow
- * @param {string} params.workflowStatus - Workflow status
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granuleModel] - Optional Granule DDB model override
  * @param {Object} [params.granulePgModel] - Optional Granule PG model override
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
-  files,
   granuleCumulusId,
   granule,
-  workflowError,
-  status,
   knex,
 }) => {
   let fileRecords = [];
-  const { granuleId } = granule;
+  const { files, granuleId, status, error: workflowError } = granule;
   if (isStatusFinalState(status)) {
     fileRecords = _generateFilePgRecords({
       files: files,
@@ -409,14 +403,9 @@ const _writeGranule = async ({
   );
   log.info('Successfully wrote granule %j to DynamoDB', dynamoGranuleRecord);
 
-  const { files, status, error } = dynamoGranuleRecord;
-
   await _writeGranuleFiles({
-    files,
     granuleCumulusId,
     granule: dynamoGranuleRecord,
-    workflowError: error,
-    status,
     knex,
     granuleModel,
   });
