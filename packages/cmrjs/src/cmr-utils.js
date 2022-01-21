@@ -1101,9 +1101,7 @@ async function getGranuleTemporalInfo(granule) {
     const identificationInfo = metadataMI['gmd:identificationInfo'];
     const dataIdentification = identificationInfo.find((dataIdObject) =>
       Object.keys(dataIdObject).filter((key) =>
-        Object.keys(dataIdObject[key]).includes('gmd:extent')
-      )
-    );
+        Object.keys(dataIdObject[key]).includes('gmd:extent')));
     const temporalInfo = get(
       dataIdentification,
       'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimePeriod'
@@ -1166,8 +1164,8 @@ async function getGranuleTemporalInfo(granule) {
       metadata.Granule,
       'DataGranule.ProductionDateTime'
     );
-    const lastUpdateDateTime =
-      metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
+    const lastUpdateDateTime
+      = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
     return {
       beginningDateTime,
       endingDateTime,
@@ -1193,10 +1191,10 @@ async function getGranuleTemporalInfo(granule) {
     }
     const productionDateTime = get(metadata, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = (
-      metadata.ProviderDates.find((d) => d.Type === 'Update') ||
-      metadata.ProviderDates.find((d) => d.Type === 'Insert') ||
-      metadata.ProviderDates.find((d) => d.Type === 'Create') ||
-      {}
+      metadata.ProviderDates.find((d) => d.Type === 'Update')
+      || metadata.ProviderDates.find((d) => d.Type === 'Insert')
+      || metadata.ProviderDates.find((d) => d.Type === 'Create')
+      || {}
     ).Date;
 
     return {
