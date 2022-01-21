@@ -1141,6 +1141,8 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  t.not(dynamoRecord.status, 'failed');
+  t.not(postgresRecord.status, 'failed');
 
   await updateGranuleStatusToFailed({ granule: dynamoRecord, knex });
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
