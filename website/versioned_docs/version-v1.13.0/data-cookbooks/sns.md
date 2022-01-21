@@ -110,7 +110,7 @@ SfSnsReport:
 
 ### Subscribing Additional Listeners
 
-Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requires the function's Arn. In the configuration it is populated by finding the lambda's Arn attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the Arn correctly found.
+Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requires the function's ARN. In the configuration it is populated by finding the lambda's ARN attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the ARN correctly found.
 
 ```yaml
 sns:
