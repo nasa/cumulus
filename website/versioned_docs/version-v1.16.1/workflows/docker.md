@@ -86,7 +86,7 @@ ENTRYPOINT ["/work/process.py"]
 CMD ["input", "output"]
 ```
 
-When this Dockerfile is built, docker will first use the latest cumulus-base image. It will then copy the entire GitHub repository (the processing required for a single data collection is a repository) to the `/work` directory which will now contain all the code necessary to process this data. In thie case, a C file is compiled to convert the supplied hdf5 files to NetCDF files. Note that this also requires installing the system libraries `nco` and `libhdf5-dev` via `apt-get`. Lastly, the Dockerfile sets the entrypoint to the processing handler, so that this command is run when the image is run. It expects two arguments to be handed to it: 'input' and 'output' meaning the input and output directories.
+When this Dockerfile is built, docker will first use the latest cumulus-base image. It will then copy the entire GitHub repository (the processing required for a single data collection is a repository) to the `/work` directory which will now contain all the code necessary to process this data. In this case, a C file is compiled to convert the supplied hdf5 files to NetCDF files. Note that this also requires installing the system libraries `nco` and `libhdf5-dev` via `apt-get`. Lastly, the Dockerfile sets the entrypoint to the processing handler, so that this command is run when the image is run. It expects two arguments to be handed to it: 'input' and 'output' meaning the input and output directories.
 
 ## Process Handler
 

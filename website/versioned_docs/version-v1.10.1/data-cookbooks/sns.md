@@ -108,7 +108,7 @@ SfSnsReport:
 
 ### Subscribing Additional Listeners
 
-Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requres the function's Arn. In the configuration it is populated by finding the lambda's Arn attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the Arn correctly found.
+Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requires the function's Arn. In the configuration it is populated by finding the lambda's Arn attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the Arn correctly found.
 
 ```yaml
 sns:
@@ -127,7 +127,7 @@ Make sure that the receiver lambda is configured in `lambdas.yml`.
 
 ### SNS message format
 
-The configured `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determiniation about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
+The configured `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determination about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
 
 First it determines whether the workflow has finished by looking for the `sfnEnd` key in the `config` object.  If the workflow has finished, it checks to see if it has failed by searching the input message for a non-empty `exception` object. The lambda updates the `message.meta.status` with `failed` or `completed` based on that result.  If the workflow is not finished the lambda sets `message.meta.status` to `running`.
 
