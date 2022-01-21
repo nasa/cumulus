@@ -1187,12 +1187,15 @@ test.serial('updateGranuleStatus() updates granule status in the database', asyn
     granuleModel,
     granulePgModel,
   } = t.context;
+  granule.status = 'running';
   await writeGranuleFromApi({ ...granule }, knex);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  t.not(dynamoRecord.status, 'completed');
+  t.not(postgresRecord.status, 'completed');
 
   await updateGranuleStatus({ granule: dynamoRecord, knex, status: 'completed' });
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
