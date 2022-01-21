@@ -34,11 +34,11 @@ echo "terraform {
 
 if [[ $NGAP_ENV = "SIT" ]]; then
   BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=13
+  CMA_LAYER_VERSION=17
   ROLE_BOUNDARY=NGAPShRoleBoundary
 else
   BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=16
+  CMA_LAYER_VERSION=20
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
@@ -96,5 +96,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
-  -var "postgres_user_pw=$ORCA_POSTGRES_USER_PASSWORD" \
-  -var "database_app_user_pw=$ORCA_DATABASE_APP_USER_PASSWORD" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
