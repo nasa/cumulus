@@ -157,7 +157,9 @@ export const receiveSQSMessages = async (
   return <SQSMessage[]>(messages.Messages ?? []);
 };
 
-export const parseSQSMessageBody = (message: (SQSRecord | SQSMessage)): { [key: string]: any } =>
+export const parseSQSMessageBody = (
+  message: SQSRecord | AWS.SQS.Message
+): { [key: string]: any } =>
   JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
 
 /**
