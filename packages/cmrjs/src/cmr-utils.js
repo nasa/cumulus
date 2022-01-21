@@ -1111,7 +1111,7 @@ async function getGranuleTemporalInfo(granule) {
     let beginningDateTime = get(temporalInfo, 'gml:beginPosition');
     let endingDateTime = get(temporalInfo, 'gml:endPosition');
 
-    if (!beginningDateTime && !endingDateTime) {
+    if (!beginningDateTime) {
       const singleDateTime = get(
         dataIdentification,
         'gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimeInstant.gml:timePosition'
@@ -1156,7 +1156,7 @@ async function getGranuleTemporalInfo(granule) {
       metadata.Granule,
       'Temporal.RangeDateTime.EndingDateTime'
     );
-    if (!beginningDateTime && !endingDateTime) {
+    if (!beginningDateTime) {
       const singleDateTime = get(metadata.Granule, 'Temporal.SingleDateTime');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
@@ -1184,7 +1184,7 @@ async function getGranuleTemporalInfo(granule) {
       metadata,
       'TemporalExtent.RangeDateTime.EndingDateTime'
     );
-    if (!beginningDateTime && !endingDateTime) {
+    if (!beginningDateTime) {
       const singleDateTime = get(metadata, 'TemporalExtent.SingleDateTime');
       beginningDateTime = singleDateTime;
       endingDateTime = singleDateTime;
