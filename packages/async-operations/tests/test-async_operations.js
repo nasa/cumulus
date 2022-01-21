@@ -20,7 +20,11 @@ const {
 } = require('@cumulus/db');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
-const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
+const {
+  getLambdaConfiguration,
+  getLambdaEnvironmentVariables,
+  startAsyncOperation,
+} = require('../dist/async_operations');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
@@ -56,15 +60,17 @@ test.before(async (t) => {
     };
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
-    promise: () => Promise.resolve({
-      Environment: {
-        Variables: {
-          ES_HOST: 'es-host',
-          AsyncOperationsTable: 'async-operations-table',
-        },
+  t.context.functionConfig = {
+    Environment: {
+      Variables: {
+        ES_HOST: 'es-host',
+        AsyncOperationsTable: 'async-operations-table',
       },
-    }),
+    },
+  };
+
+  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
+    promise: () => Promise.resolve(t.context.functionConfig),
   });
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
@@ -148,7 +154,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
-  t.is(stubbedEcsRunTaskParams.launchType, 'EC2');
+  t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
@@ -345,8 +351,13 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   t.is(results.taskArn, taskArn);
 });
 
-test('getLambdaEnvironmentVariables returns expected environment variables', async (t) => {
-  const vars = await getLambdaEnvironmentVariables('name');
+test('getLambdaConfiguration returns expected configuration', async (t) => {
+  const config = await getLambdaConfiguration('name');
+  t.deepEqual(config, t.context.functionConfig);
+});
+
+test('getLambdaEnvironmentVariables returns expected environment variables', (t) => {
+  const vars = getLambdaEnvironmentVariables(t.context.functionConfig);
 
   t.deepEqual(new Set(vars), new Set([
     { name: 'ES_HOST', value: 'es-host' },
