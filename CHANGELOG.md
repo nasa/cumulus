@@ -68,6 +68,9 @@ all Cumulus workflow tasks
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
 - **CUMULUS-2441**
   - Added support for 'PROD' CMR environment.
+- **CUMULUS-2456**
+  - Updated api lambdas to query ORCA Private API
+  - Updated example/cumulus-tf/orca.tf to the ORCA release v4.0.0-Beta3
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2684**
@@ -83,6 +86,8 @@ all Cumulus workflow tasks
 - Made `vpc_id` variable optional for `example/cumulus-tf` module
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
+- **CUMULUS-1823**
+  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
 - **CUMULUS-2718**
@@ -95,6 +100,8 @@ all Cumulus workflow tasks
     large reports
   - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
     a policy role being exceeded
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2744**
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
@@ -166,10 +173,6 @@ all Cumulus workflow tasks
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
-- **CUMULUS-1823**
-  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
-- **CUMULUS-2743**
-  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
