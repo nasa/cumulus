@@ -32,6 +32,8 @@ const {
   writeGranuleFromApi,
   writeGranulesFromMessage,
   updateGranuleStatusToQueued,
+  updateGranuleStatusToFailed,
+  updateGranuleStatus,
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -538,7 +540,7 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.deepEqual(pgGranule.error.Error, 'Failed writing files to PostgreSQL.');
 });
 
-test.serial('writeGranulesFromMessage() attempts to mark granule as failed if it already exists even if the failure is the granule write', async (t) => {
+test.serial('_writeGranules attempts to mark granule as failed if a SchemaValidationException occurs when a granule is in a final state', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -560,15 +562,16 @@ test.serial('writeGranulesFromMessage() attempts to mark granule as failed if it
     granuleModel,
   });
 
+  const originalError = { Error: 'Original Error', Cause: 'Original Error Cause' };
   // second write
   // Invalid granule schema to prevent granule write to dynamo from succeeding
   cumulusMessage.meta.status = 'completed';
+  cumulusMessage.exception = originalError;
   cumulusMessage.payload.granules[0].files = [
     {
       path: 'MYD13Q1.006', size: 170459659, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'data', checksumType: 'CKSUM', checksum: 3129208208,
     },
     { path: 'MYD13Q1.006', size: 46399, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf.met', type: 'metadata' },
-
     { path: 'MYD13Q1.006', size: 32795, name: 'BROWSE.MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'browse' },
   ];
 
@@ -583,6 +586,7 @@ test.serial('writeGranulesFromMessage() attempts to mark granule as failed if it
   t.true(error.message.includes('The record has validation errors:'));
   const dynamoGranule = await granuleModel.get({ granuleId });
   t.is(dynamoGranule.status, 'failed');
+  t.true(dynamoGranule.error.Cause.includes(originalError.Cause));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
@@ -1120,4 +1124,120 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
     }
   );
+});
+
+test.serial('updateGranuleStatusToFailed() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  await updateGranuleStatusToFailed({ granule: dynamoRecord, knex });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
+  t.falsy(updatedDynamoRecord.execution);
+  t.is(updatedDynamoRecord.status, 'failed');
+  t.is(updatedPostgresRecord.status, 'failed');
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+});
+
+test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
+  const {
+    knex,
+    granule,
+    granuleId,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex);
+
+  const name = randomId('name');
+  const version = randomId('version');
+  const badGranule = fakeGranuleFactoryV2({
+    granuleId,
+    collectionId: constructCollectionId(name, version),
+  });
+  await t.throwsAsync(
+    updateGranuleStatusToFailed({ granule: badGranule, knex }),
+    {
+      name: 'RecordDoesNotExist',
+      message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
+    }
+  );
+});
+
+test.serial('updateGranuleStatus() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  await updateGranuleStatus({ granule: dynamoRecord, knex, status: 'completed' });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
+  t.falsy(updatedDynamoRecord.execution);
+  t.is(updatedDynamoRecord.status, 'completed');
+  t.is(updatedPostgresRecord.status, 'completed');
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+});
+
+test.serial('updateGranuleStatus() updates granule error in the database if provided', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const error = { Error: 'ErrorTitle', Cause: 'ErrorMessage' };
+
+  await updateGranuleStatus({
+    granule: dynamoRecord,
+    knex,
+    status: 'completed',
+    error: error.Error,
+    errorCause: error.Cause,
+  });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.falsy(updatedDynamoRecord.execution);
+  t.is(updatedDynamoRecord.status, 'completed');
+  t.is(updatedPostgresRecord.status, 'completed');
+  t.deepEqual(updatedPostgresRecord.error, error);
+  t.deepEqual(updatedDynamoRecord.error, error);
 });
