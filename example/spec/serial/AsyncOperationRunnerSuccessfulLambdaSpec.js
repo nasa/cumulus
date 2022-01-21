@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -19,7 +20,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   let asyncOperationModel;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
-  let beforeAllFailed = false;
+  let beforeAllError = false;
   let cluster;
   let config;
   let payloadKey;
@@ -56,31 +57,41 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       }).promise();
 
       await asyncOperationModel.create({
-        id: asyncOperationId,
-        taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
+        id: asyncOperationId,
+        taskArn: randomString(),
         status: 'RUNNING',
       });
 
-      const runTaskResponse = await ecs().runTask({
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: successFunctionName,
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+      });
+
+      // const runTaskResponse = await ecs().runTask({
+      //   cluster,
+      //   taskDefinition: asyncOperationTaskDefinition,
+      //   launchType: 'EC2',
+      //   overrides: {
+      //     containerOverrides: [
+      //       {
+      //         name: 'AsyncOperation',
+      //         environment: [
+      //           { name: 'asyncOperationId', value: asyncOperationId },
+      //           { name: 'asyncOperationsTable', value: asyncOperationsTableName },
+      //           { name: 'lambdaName', value: successFunctionName },
+      //           { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
+      //         ],
+      //       },
+      //     ],
+      //   },
+      // }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {
@@ -103,18 +114,18 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         stackName: config.stackName,
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = true;
       throw error;
     }
   });
 
   it('updates the status field to "SUCCEEDED"', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
   it('updates the output field in DynamoDB', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
