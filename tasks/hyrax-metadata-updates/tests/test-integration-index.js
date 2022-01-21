@@ -8,7 +8,6 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const fs = require('fs');
 const xml2js = require('xml2js');
-const merge = require('lodash/merge');
 const pickAll = require('lodash/fp/pickAll');
 
 const xmlParseOptions = {
@@ -82,11 +81,12 @@ test.before(async () => {
 });
 
 const setupNock = (params) => {
-  const cmrParams = merge({
+  const cmrParams = {
+    ...params,
     page_size: '50',
     page_num: '1',
     provider_short_name: 'GES_DISC',
-  }, params);
+  };
 
   // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
