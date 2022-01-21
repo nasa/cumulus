@@ -192,8 +192,8 @@ async function updateGranuleStatus({
   granule,
   knex,
   status,
-  error = '',
-  errorCause = '',
+  error,
+  errorCause,
   apiGranuleDeleteFields = [],
   granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
@@ -389,7 +389,7 @@ const _writeGranule = async ({
 
     if (isStatusFinalState(dynamoGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
-      const originalError = dynamoGranuleRecord.error || undefined;
+      const originalError = dynamoGranuleRecord.error;
       const errorMsgWithOriginalError = `${thrownError.toString()} ${originalError.Error ? ` -  ${JSON.stringify(originalError)}` : ''}`;
       await updateGranuleStatusToFailed({
         granule: dynamoGranuleRecord,
