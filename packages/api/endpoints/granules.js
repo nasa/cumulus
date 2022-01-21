@@ -1,5 +1,6 @@
 'use strict';
 
+const lodashGet = require('lodash/get');
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
@@ -446,7 +447,7 @@ async function bulkOperations(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granules',
@@ -494,7 +495,7 @@ async function bulkDelete(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
@@ -541,7 +542,7 @@ async function bulkReingest(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: lodashGet(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granule Reingest',

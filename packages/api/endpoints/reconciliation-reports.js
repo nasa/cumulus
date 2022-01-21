@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash/get');
 const router = require('express-promise-router')();
 const {
   deleteS3Object,
@@ -148,7 +149,7 @@ async function createReport(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: get(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
@@ -168,4 +169,7 @@ router.delete('/:name', deleteReport);
 router.get('/', listReports);
 router.post('/', createReport, asyncOperationEndpointErrorHandler);
 
-module.exports = router;
+module.exports = {
+  createReport,
+  router,
+};

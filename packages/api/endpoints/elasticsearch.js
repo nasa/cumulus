@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash/get');
 const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
@@ -223,7 +224,7 @@ async function indexFromDatabase(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: get(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.IndexFromDatabaseLambda,
     description: 'Elasticsearch index from database',
     operationType: 'ES Index',

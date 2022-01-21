@@ -77,7 +77,7 @@ router.use('/logs', ensureAuthorized, logs);
 router.use('/orca', ensureAuthorized, orca);
 
 // reconciliationReports endpoint
-router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
+router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports.router);
 
 // replays endpoint
 router.use('/replays', ensureAuthorized, replays);

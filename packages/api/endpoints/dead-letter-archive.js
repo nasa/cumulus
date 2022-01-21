@@ -1,7 +1,9 @@
 'use strict';
 
-const asyncOperations = require('@cumulus/async-operations');
+const get = require('lodash/get');
 const router = require('express-promise-router')();
+const asyncOperations = require('@cumulus/async-operations');
+
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const models = require('../models');
@@ -14,7 +16,7 @@ async function postRecoverCumulusMessages(req, res) {
   const { bucket, path } = (req.body === undefined ? {} : req.body);
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
-    callerLambdaName: req.apiGateway.context.functionName,
+    callerLambdaName: get(req, 'apiGateway.context.functionName'),
     lambdaName: process.env.DeadLetterProcessingLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Dead-Letter Processor ECS Run',

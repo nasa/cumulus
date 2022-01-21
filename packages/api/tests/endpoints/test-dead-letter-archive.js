@@ -38,6 +38,7 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   const asyncOperationId = randomId('asyncOperationId');
+  t.context.asyncOperationId = asyncOperationId;
   t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
@@ -71,7 +72,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     .send(body)
     .expect(202);
   // expect a returned async operation ID
-  t.truthy(response.body.id);
+  t.is(response.body.id, t.context.asyncOperationId);
   const {
     lambdaName,
     cluster,
@@ -98,7 +99,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     .send({})
     .expect(202);
   // expect a returned async operation ID
-  t.truthy(response.body.id);
+  t.is(response.body.id, t.context.asyncOperationId);
   const {
     lambdaName,
     cluster,
