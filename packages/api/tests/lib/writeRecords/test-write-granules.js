@@ -1160,11 +1160,8 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
 test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
   const {
     knex,
-    granule,
     granuleId,
   } = t.context;
-
-  await writeGranuleFromApi({ ...granule }, knex);
 
   const name = randomId('name');
   const version = randomId('version');
