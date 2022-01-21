@@ -690,3 +690,28 @@ test.serial('indexFromDatabase request completes successfully', async (t) => {
   await t.notThrowsAsync(indexFromDatabase(fakeRequest, fakeResponse));
   t.true(fakeResponse.send.called);
 });
+
+test.serial('indexFromDatabase uses correct caller lambda function name', async (t) => {
+  const functionName = randomId('lambda');
+  const startEcsTaskStub = sinon.stub();
+  const fakeRequest = {
+    apiGateway: {
+      context: {
+        functionName,
+      },
+    },
+    body: {
+      indexName: randomId('index'),
+    },
+    testContext: {
+      // mock starting the ECS task
+      startEcsTaskFunc: startEcsTaskStub,
+    },
+  };
+  const fakeResponse = {
+    send: sinon.stub(),
+  };
+
+  await indexFromDatabase(fakeRequest, fakeResponse);
+  t.is(startEcsTaskStub.getCall(0).firstArg.callerLambdaName, functionName);
+});
