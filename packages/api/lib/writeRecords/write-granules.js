@@ -390,7 +390,7 @@ const _writeGranule = async ({
     if (isStatusFinalState(postgresGranuleRecord.status)
       && isStatusFinalState(dynamoGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
-      const originalError = dynamoGranuleRecord.error || undefined;
+      const originalError = dynamoGranuleRecord.error;
       const errorMsgWithOriginalError = `${thrownError.toString()} ${originalError.Error ? ` -  ${JSON.stringify(originalError)}` : ''}`;
       await updateGranuleStatusToFailed({
         granule: dynamoGranuleRecord,
