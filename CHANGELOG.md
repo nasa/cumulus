@@ -138,6 +138,8 @@ all Cumulus workflow tasks
     found in the metadata file.  The granule's temporal information is
     returned so that both beginningDateTime and endingDateTime are set to the
     discovered singleDateTimeValue.
+- **CUMULUS-2756**
+  - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes due to schema validation, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
 
 ### Fixed
 
