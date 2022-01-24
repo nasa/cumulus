@@ -145,6 +145,9 @@ all Cumulus workflow tasks
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2835**
+  - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
+
 
 ## [v9.9.0] 2021-11-03
 
