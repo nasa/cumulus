@@ -68,24 +68,6 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         payloadKey,
         dynamoTableName: asyncOperationsTableName,
       });
-      // const runTaskResponse = await ecs().runTask({
-      //   cluster,
-      //   taskDefinition: asyncOperationTaskDefinition,
-      //   launchType: 'EC2',
-      //   overrides: {
-      //     containerOverrides: [
-      //       {
-      //         name: 'AsyncOperation',
-      //         environment: [
-      //           { name: 'asyncOperationId', value: asyncOperationId },
-      //           { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-      //           { name: 'lambdaName', value: successFunctionName },
-      //           { name: 'payloadUrl', value: payloadUrl },
-      //         ],
-      //       },
-      //     ],
-      //   },
-      // }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {
