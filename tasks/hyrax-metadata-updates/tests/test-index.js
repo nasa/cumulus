@@ -170,7 +170,7 @@ test('Test building invalid CMR Search Params with short name, version, and data
   );
 });
 
-test('Test building invalid CMR Search Params with invalid params', (t) => {
+test('Test building invalid CMR Search Params with invalid params (datasetId and Version Id)', (t) => {
   const inputSearchParams = {
     datasetId: 'GLDAS_CLSM025_D.2.0',
     versionId: '2.0',
@@ -180,6 +180,21 @@ test('Test building invalid CMR Search Params with invalid params', (t) => {
     () => getCmrSearchParams(inputSearchParams),
     {
       message: 'Invalid list of keys for searchParams: dataset_id,version',
+      instanceOf: Error,
+    }
+  );
+});
+
+test('Test building invalid CMR Search Params with invalid params (datasetId and shortName)', (t) => {
+  const inputSearchParams = {
+    datasetId: 'GLDAS_CLSM025_D.2.0',
+    shortName: 'GLDAS_CLSM025_D',
+  };
+
+  t.throws(
+    () => getCmrSearchParams(inputSearchParams),
+    {
+      message: 'Invalid list of keys for searchParams: dataset_id,short_name',
       instanceOf: Error,
     }
   );
