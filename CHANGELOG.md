@@ -163,6 +163,8 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - **CUMULUS-2783**
   - Added missing lower bound on scale out policy for ECS cluster to ensure that
   the cluster will autoscale correctly.
+- **CUMULUS-2835**
+  - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
 
 ## [v9.9.0] 2021-11-03
 
