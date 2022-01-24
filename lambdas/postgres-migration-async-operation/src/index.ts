@@ -14,6 +14,7 @@ exports.handler = async (event: DataMigration2HandlerEvent) => {
   logger.info('About to start async operation for Data Migration 2');
   const asyncOperation = await asyncOperations.startAsyncOperation({
     cluster: process.env.EcsCluster,
+    callerLambdaName: process.env.currentLambdaName,
     lambdaName: process.env.MigrationLambda,
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     description: 'Data Migration 2 Lambda ECS Run',

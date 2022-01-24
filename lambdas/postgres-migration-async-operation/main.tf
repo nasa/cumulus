@@ -1,9 +1,10 @@
 locals {
   lambda_path      = "${path.module}/dist/webpack/lambda.zip"
   all_bucket_names = [for k, v in var.buckets : v.name]
+  function_name = "${var.prefix}-postgres-migration-async-operation"
 }
 resource "aws_lambda_function" "postgres-migration-async-operation" {
-  function_name    = "${var.prefix}-postgres-migration-async-operation"
+  function_name    = local.function_name
   role             = aws_iam_role.postgres_migration_async_operation_role.arn
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
@@ -26,6 +27,7 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                    = var.prefix
       system_bucket                = var.system_bucket
+      currentLambdaName            = local.function_name
     }
   }
 
