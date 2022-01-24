@@ -246,33 +246,79 @@ data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
 data "aws_iam_policy_document" "ecs_task_role_policy" {
   statement {
     actions = [
-      "s3:DeleteObject",
-      "s3:GetObject"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
       "lambda:GetFunction",
+      "lambda:invokeFunction"
     ]
     resources = ["*"]
   }
 
+    statement {
+    actions = [
+      "s3:GetAccelerateConfiguration",
+      "s3:GetBucket*",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket*",
+      "s3:PutAccelerateConfiguration",
+      "s3:PutBucket*",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutReplicationConfiguration"
+    ]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
+  }
+
   statement {
     actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObject*",
+      "s3:ListMultipartUploadParts",
+      "s3:PutObject*"
+    ]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
+  }
+
+  statement {
+    actions   = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
       "dynamodb:Scan",
-      "dynamodb:UpdateItem"
+      "dynamodb:Query"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {
+    actions   = ["dynamodb:Query"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/index/*"]
+  }
+
+  statement {
+    actions = [
+      "kinesis:describeStream",
+      "kinesis:ListShards",
+      "kinesis:getShardIterator",
+      "kinesis:GetRecords"
+    ]
+    resources = ["arn:aws:kinesis:*:*:*"]
+  }
+
+  statement {
+    actions = [
+      "sqs:Send*",
+      "sqs:GetQueueUrl",
+    ]
+    resources = ["arn:aws:sqs:*:*:*"]
+  }
+
+  statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
+      aws_secretsmanager_secret.api_cmr_password.arn,
+      aws_secretsmanager_secret.api_launchpad_passphrase.arn,
       var.rds_user_access_secret_arn
     ]
   }
