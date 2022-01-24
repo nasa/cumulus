@@ -298,6 +298,18 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
 
   statement {
     actions = [
+      "states:DescribeActivity",
+      "states:DescribeExecution",
+      "states:GetActivityTask",
+      "states:GetExecutionHistory",
+      "states:SendTaskFailure",
+      "states:SendTaskSuccess"
+    ]
+    resources = ["arn:aws:states:*:*:*"]
+  }
+
+  statement {
+    actions = [
       "kinesis:describeStream",
       "kinesis:ListShards",
       "kinesis:getShardIterator",
