@@ -674,7 +674,13 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 503 
 });
 
 test.serial('indexFromDatabase request completes successfully', async (t) => {
+  const functionName = randomId('lambda');
   const fakeRequest = {
+    apiGateway: {
+      context: {
+        functionName,
+      },
+    },
     body: {
       indexName: randomId('index'),
     },
