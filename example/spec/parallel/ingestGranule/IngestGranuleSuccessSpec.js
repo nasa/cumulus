@@ -1267,7 +1267,7 @@ describe('The S3 Ingest Granules workflow', () => {
         if (subTestSetupError) fail(subTestSetupError);
       });
 
-      it('returns a list of exeuctions', () => {
+      it('returns a list of executions', () => {
         failOnSetupError([beforeAllError, subTestSetupError]);
         expect(executions.results.length).toBeGreaterThan(0);
       });

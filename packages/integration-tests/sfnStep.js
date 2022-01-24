@@ -68,7 +68,7 @@ class SfnStep {
    * If there are multiple executions of a step, we currently assume a retry and return
    * either the first passed execution or the last execution if no passing executions exist
    *
-   * @param {string} executionArn - Arn of the workflow execution
+   * @param {string} executionArn - ARN of the workflow execution
    * @param {string} stepName - name of the step
    * @returns {List<Object>} objects containing a schedule event, start event, and complete
    * event if exists for each execution of the step, null if cannot find the step
@@ -164,7 +164,7 @@ class SfnStep {
   /**
    * Get the output payload from the step, if the step succeeds
    *
-   * @param {string} workflowExecutionArn - Arn of the workflow execution
+   * @param {string} workflowExecutionArn - ARN of the workflow execution
    * @param {string} stepName - name of the step
    * @param {string} eventType - expected type of event, should be 'success' or 'failure'
    * @returns {Object} object containing the payload, null if error
