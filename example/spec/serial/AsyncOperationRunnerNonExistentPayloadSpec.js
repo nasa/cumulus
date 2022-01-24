@@ -2,6 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const { startECSTask } = require('@cumulus/async-operations');
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -55,25 +56,36 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         status: 'RUNNING',
       });
 
-      payloadUrl = `s3://${config.bucket}/${randomString()}`;
-      const runTaskResponse = await ecs().runTask({
+      const payloadKey = randomString();
+      payloadUrl = `s3://${config.bucket}/${payloadKey}`;
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: payloadUrl },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: successFunctionName,
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+        dynamoTableName: asyncOperationsTableName,
+      });
+      // const runTaskResponse = await ecs().runTask({
+      //   cluster,
+      //   taskDefinition: asyncOperationTaskDefinition,
+      //   launchType: 'EC2',
+      //   overrides: {
+      //     containerOverrides: [
+      //       {
+      //         name: 'AsyncOperation',
+      //         environment: [
+      //           { name: 'asyncOperationId', value: asyncOperationId },
+      //           { name: 'asyncOperationsTable', value: asyncOperationsTableName },
+      //           { name: 'lambdaName', value: successFunctionName },
+      //           { name: 'payloadUrl', value: payloadUrl },
+      //         ],
+      //       },
+      //     ],
+      //   },
+      // }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {

@@ -72,26 +72,8 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         id: asyncOperationId,
         payloadBucket: config.bucket,
         payloadKey,
+        dynamoTableName: asyncOperationsTableName,
       });
-
-      // const runTaskResponse = await ecs().runTask({
-      //   cluster,
-      //   taskDefinition: asyncOperationTaskDefinition,
-      //   launchType: 'EC2',
-      //   overrides: {
-      //     containerOverrides: [
-      //       {
-      //         name: 'AsyncOperation',
-      //         environment: [
-      //           { name: 'asyncOperationId', value: asyncOperationId },
-      //           { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-      //           { name: 'lambdaName', value: successFunctionName },
-      //           { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-      //         ],
-      //       },
-      //     ],
-      //   },
-      // }).promise();
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {
