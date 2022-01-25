@@ -1,8 +1,10 @@
+import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
+
+import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
 import Logger from '@cumulus/logger';
 
-import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
-import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
+import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
 
@@ -21,29 +23,32 @@ type UnwrapDeadLetterCumulusMessageReturnType = (
  * @param {Object} messageBody - received SQS message
  * @returns {Object} the cumulus message or nearest available object
  */
-export const unwrapDeadLetterCumulusMessage = (
+export const unwrapDeadLetterCumulusMessage = async (
   messageBody: UnwrapDeadLetterCumulusMessageReturnType
-): UnwrapDeadLetterCumulusMessageReturnType => {
+): Promise<UnwrapDeadLetterCumulusMessageReturnType> => {
   try {
-    if ('cumulus_meta' in messageBody) return messageBody;
+    if ('cumulus_meta' in messageBody) {
+      return messageBody;
+    }
     if ('Body' in messageBody) {
       // AWS.SQS.Message case
-      const unwrappedMessageBody = parseSQSMessageBody(messageBody as AWS.SQS.Message) as SQSRecord;
-      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+      const unwrappedMessageBody = parseSQSMessageBody(
+        messageBody as AWS.SQS.Message
+      ) as CumulusMessage;
+      return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
     }
     if ('body' in messageBody) {
-      // SQS message case
+      // SQS record case
       const unwrappedMessageBody = parseSQSMessageBody(messageBody) as CumulusMessage;
-      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+      return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
     }
     if (!('detail' in messageBody)) {
       // Non-typed catchall
       return messageBody;
     }
     // StepFunctionEventBridgeEvent case
-    const { input, output } = messageBody.detail;
-    const unwrappedMessageBody = JSON.parse(output || input);
-    return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
+    const unwrappedMessageBody = await getCumulusMessageFromExecutionEvent(messageBody);
+    return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
   } catch (error) {
     log.error(
       'Falling back to storing wrapped message after encountering unwrap error',

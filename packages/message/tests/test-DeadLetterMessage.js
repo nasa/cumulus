@@ -6,7 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const { unwrapDeadLetterCumulusMessage } = require('../DeadLetterMessage');
 
-test('unwrapDeadLetterCumulusMessage unwraps an SQS message', (t) => {
+test('unwrapDeadLetterCumulusMessage unwraps an SQS message', async (t) => {
   const cumulusMessage = {
     cumulus_meta: {
       execution_name: randomString(),
@@ -16,10 +16,10 @@ test('unwrapDeadLetterCumulusMessage unwraps an SQS message', (t) => {
     eventSource: 'aws:sqs',
     body: JSON.stringify(cumulusMessage),
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(testMessage), cumulusMessage);
+  t.deepEqual(await unwrapDeadLetterCumulusMessage(testMessage), cumulusMessage);
 });
 
-test('unwrapDeadLetterCumulusMessage unwraps an AWS States message', (t) => {
+test('unwrapDeadLetterCumulusMessage unwraps an AWS States message', async (t) => {
   const cumulusMessage = {
     cumulus_meta: {
       execution_name: randomString(),
@@ -28,13 +28,21 @@ test('unwrapDeadLetterCumulusMessage unwraps an AWS States message', (t) => {
   const testMessage = {
     source: 'aws.states',
     detail: {
+      stopDate: Date.now(),
       output: JSON.stringify(cumulusMessage),
+      status: 'SUCCEEDED',
     },
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(testMessage), cumulusMessage);
+  const actual = await unwrapDeadLetterCumulusMessage(testMessage);
+  const expected = {
+    ...cumulusMessage,
+    meta: { status: 'completed' },
+  };
+  expected.cumulus_meta.workflow_stop_time = testMessage.detail.stopDate;
+  t.deepEqual(actual, expected);
 });
 
-test('unwrapDeadLetterCumulusMessage unwraps an AWS States message with only input', (t) => {
+test('unwrapDeadLetterCumulusMessage unwraps an AWS States message with only input', async (t) => {
   const cumulusMessage = {
     cumulus_meta: {
       execution_name: randomString(),
@@ -43,45 +51,64 @@ test('unwrapDeadLetterCumulusMessage unwraps an AWS States message with only inp
   const testMessage = {
     source: 'aws.states',
     detail: {
+      stopDate: Date.now(),
       input: JSON.stringify(cumulusMessage),
+      status: 'RUNNING',
     },
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(testMessage), cumulusMessage);
+
+  const actual = await unwrapDeadLetterCumulusMessage(testMessage);
+  const expected = {
+    ...cumulusMessage,
+    meta: { status: 'running' },
+  };
+  expected.cumulus_meta.workflow_stop_time = testMessage.detail.stopDate;
+  t.deepEqual(actual, expected);
 });
 
-test('unwrapDeadLetterCumulusMessage unwraps an AWS states message within an SQS message', (t) => {
+test('unwrapDeadLetterCumulusMessage unwraps an AWS states message within an SQS record', async (t) => {
+  const stopDate = Date.now();
   const cumulusMessage = {
     cumulus_meta: {
       execution_name: randomString(),
     },
   };
+
   const testStatesMessage = {
     source: 'aws.states',
     detail: {
+      stopDate,
       output: JSON.stringify(cumulusMessage),
+      status: 'SUCCEEDED',
     },
   };
   const testSqsMessage = {
     sourceEvent: 'aws:sqs',
     body: JSON.stringify(testStatesMessage),
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(testSqsMessage), cumulusMessage);
-});
 
-test('unwrapDeadLetterCumulusMessage returns wrapped message on error', (t) => {
-  const invalidMessage = {
-    eventSource: 'aws:sqs',
-    detail: {},
+  const actual = await unwrapDeadLetterCumulusMessage(testSqsMessage);
+  const expected = {
+    ...cumulusMessage,
+    meta: { status: 'completed' },
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(invalidMessage), invalidMessage);
+  expected.cumulus_meta.workflow_stop_time = stopDate;
+  t.deepEqual(actual, expected);
 });
 
-test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', (t) => {
+test('unwrapDeadLetterCumulusMessage returns wrapped message on error', async (t) => {
+  const invalidMessage = {
+    Body: 'Not a json object',
+  };
+  t.deepEqual(await unwrapDeadLetterCumulusMessage(invalidMessage), invalidMessage);
+});
+
+test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', async (t) => {
   const testMessage = {
     eventSource: 'aws:something-strange',
     contents: JSON.stringify({
       key: 'value',
     }),
   };
-  t.deepEqual(unwrapDeadLetterCumulusMessage(testMessage), testMessage);
+  t.deepEqual(await unwrapDeadLetterCumulusMessage(testMessage), testMessage);
 });
