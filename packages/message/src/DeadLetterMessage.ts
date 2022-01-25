@@ -30,16 +30,11 @@ export const unwrapDeadLetterCumulusMessage = async (
     if ('cumulus_meta' in messageBody) {
       return messageBody;
     }
-    if ('Body' in messageBody) {
-      // AWS.SQS.Message case
+    if ('Body' in messageBody || 'body' in messageBody) {
+      // AWS.SQS.Message/SQS.Record case
       const unwrappedMessageBody = parseSQSMessageBody(
-        messageBody as AWS.SQS.Message
+        messageBody
       ) as CumulusMessage;
-      return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
-    }
-    if ('body' in messageBody) {
-      // SQS record case
-      const unwrappedMessageBody = parseSQSMessageBody(messageBody) as CumulusMessage;
       return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
     }
     if (!('detail' in messageBody)) {
