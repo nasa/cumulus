@@ -110,7 +110,7 @@ _Example configuration for this workflow can be found in the `DiscoverAndQueuePd
 
 ## ParsePdr Workflow
 
-The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.
+The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr workflow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.
 
 1. ParsePdr - [npm package](https://www.npmjs.com/package/@cumulus/parse-pdr), [source](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
 2. QueueGranules - [npm package](https://www.npmjs.com/package/@cumulus/queue-granules), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)

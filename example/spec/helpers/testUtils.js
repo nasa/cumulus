@@ -149,7 +149,7 @@ async function deleteFolder(bucket, folder) {
 }
 
 /**
- * Returns execution ARN from a statement machine Arn and executionName
+ * Returns execution ARN from a statement machine ARN and executionName
  *
  * @param {string} executionArn - execution ARN
  * @returns {string} return aws console url for the execution

@@ -28,7 +28,7 @@ LOCALSTACK_HOST=localhost npm test
 
 All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME>')` or import: `import <MODULE_NAME> from '@cumulus/ingest/<MODULE_NAME>'`.
 
-- [`consumer`](./consumer.js) - comsumer for SQS messages
+- [`consumer`](./consumer.js) - consumer for SQS messages
 - [`crypto`](./crypto.js) - provides encryption and decryption methods with a consistent API but differing mechanisms for dealing with encryption keys
 - [`ftp`](./ftp.js) - for accessing FTP servers
 - [`granule`](./granule.js) - discovers and ingests granules
