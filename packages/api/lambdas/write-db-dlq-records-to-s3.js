@@ -24,7 +24,7 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const messageBody = parseSQSMessageBody(sqsMessage);
-    const cumulusMessageObject = unwrapDeadLetterCumulusMessage(messageBody);
+    const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;

@@ -30,12 +30,16 @@ test.beforeEach(async (t) => {
   ];
 
   t.context.SQSCumulusMessage = fakeCumulusMessageFactory();
+  t.context.SQSCumulusMessage.stopDate = 150;
 
   const SQSMessage = {
     body: JSON.stringify(
       {
         detail: {
-          input: JSON.stringify(t.context.SQSCumulusMessage),
+          status: 'SUCCEEDED',
+          output: JSON.stringify(t.context.SQSCumulusMessage),
+          startDate: t.context.SQSCumulusMessage.cumulus_meta.workflow_start_time,
+          stopDate: t.context.SQSCumulusMessage.stopDate,
         },
       }
     ),
@@ -156,6 +160,9 @@ test('processDeadLetterArchive only deletes dead letters that process successful
 test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
   const { bucket, sqsPath, SQSCumulusMessage } = t.context;
   const writeRecordsFunctionSpy = sinon.spy();
+
+  const expected = { ...SQSCumulusMessage };
+  expected.cumulus_meta.workflow_stop_time = SQSCumulusMessage.stopDate;
 
   await processDeadLetterArchive({
     bucket,

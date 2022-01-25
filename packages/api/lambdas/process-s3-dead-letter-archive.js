@@ -45,7 +45,7 @@ async function processDeadLetterArchive({
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
-        const cumulusMessage = unwrapDeadLetterCumulusMessage(deadLetterMessage);
+        const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
