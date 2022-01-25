@@ -186,23 +186,20 @@ async function put(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+ async function del(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
-
+​
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const esRulesClient = new Search(
     {},
     'rule',
     process.env.ES_INDEX
   );
-
-  let apiRule;
-
+​
   try {
     await rulePgModel.get(knex, { name });
   } catch (error) {
@@ -217,36 +214,17 @@ async function del(req, res) {
       throw error;
     }
   }
-
-  try {
-    // Save DynamoDB rule to recreate record in case of deletion failure
-    apiRule = await ruleModel.get({ name });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await rulePgModel.delete(trx, { name });
-      await ruleModel.delete(apiRule);
-      await deleteRule({
-        esClient,
-        name,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+​
+  await createRejectableTransaction(knex, async (trx) => {
+    await rulePgModel.delete(trx, { name });
+    await deleteRule({
+      esClient,
+      name,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (apiRule) {
-      await ruleModel.create(apiRule);
-    }
-    throw error;
-  }
-
+  });
+​
   return res.send({ message: 'Record deleted' });
 }
 
