@@ -1,4 +1,4 @@
-import { ECS } from 'aws-sdk';
+import { ECS, Lambda } from 'aws-sdk';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
@@ -15,22 +15,24 @@ import type { PromiseResult } from 'aws-sdk/lib/request';
 
 import type { AsyncOperationModelClass } from './types';
 
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
-export const getLambdaEnvironmentVariables = async (
+export const getLambdaConfiguration = async (
   functionName: string
-): Promise<EnvironmentVariables[]> => {
-  const lambdaConfig = await lambda().getFunctionConfiguration({
-    FunctionName: functionName,
-  }).promise();
+): Promise<Lambda.FunctionConfiguration> => lambda().getFunctionConfiguration({
+  FunctionName: functionName,
+}).promise();
 
-  return Object.entries(lambdaConfig?.Environment?.Variables ?? {}).map((obj) => ({
+export const getLambdaEnvironmentVariables = (
+  configuration: Lambda.FunctionConfiguration
+): EnvironmentVariables[] => Object.entries(configuration?.Environment?.Variables ?? {}).map(
+  (obj) => ({
     name: obj[0],
     value: obj[1],
-  }));
-};
+  })
+);
 
 /**
  * Start an ECS task for the async operation.
@@ -38,6 +40,8 @@ export const getLambdaEnvironmentVariables = async (
  * @param {Object} params
  * @param {string} params.asyncOperationTaskDefinition - ARN for the task definition
  * @param {string} params.cluster - ARN for the ECS cluster to use for the task
+ * @param {string} params.callerlambdaName
+ *   Environment variable for Lambda name that is initiating the ECS task
  * @param {string} params.lambdaName
  *   Environment variable for Lambda name that will be run by the ECS task
  * @param {string} params.id - the Async operation ID
@@ -53,6 +57,7 @@ export const getLambdaEnvironmentVariables = async (
 export const startECSTask = async ({
   asyncOperationTaskDefinition,
   cluster,
+  callerLambdaName,
   lambdaName,
   id,
   payloadBucket,
@@ -62,6 +67,7 @@ export const startECSTask = async ({
 }: {
   asyncOperationTaskDefinition: string,
   cluster: string,
+  callerLambdaName: string,
   lambdaName: string,
   id: string,
   payloadBucket: string,
@@ -77,15 +83,25 @@ export const startECSTask = async ({
   ] as EnvironmentVariables[];
   let taskVars = envVars;
 
+  const callerLambdaConfig = await getLambdaConfiguration(callerLambdaName);
+
   if (useLambdaEnvironmentVariables) {
-    const lambdaVars = await getLambdaEnvironmentVariables(lambdaName);
+    const lambdaConfig = await getLambdaConfiguration(lambdaName);
+    const lambdaVars = getLambdaEnvironmentVariables(lambdaConfig);
     taskVars = envVars.concat(lambdaVars);
   }
 
   return ecs().runTask({
     cluster,
     taskDefinition: asyncOperationTaskDefinition,
-    launchType: 'EC2',
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: callerLambdaConfig?.VpcConfig?.SubnetIds ?? [],
+        assignPublicIp: 'DISABLED',
+        securityGroups: callerLambdaConfig?.VpcConfig?.SecurityGroupIds ?? [],
+      },
+    },
     overrides: {
       containerOverrides: [
         {
@@ -108,6 +124,7 @@ export const startECSTask = async ({
  * @param {string} params.dynamoTableName - the dynamo async operations table to
  * write records to
  * @param {Object} params.knexConfig - Object with Knex configuration keys
+ * @param {string} params.callerLambdaName - the name of the Lambda initiating the ECS task
  * @param {string} params.lambdaName - the name of the Lambda task to be run
  * @param {string} params.operationType - the type of async operation to run
  * @param {Object|Array} params.payload - the event to be passed to the lambda task.
@@ -129,6 +146,7 @@ export const startAsyncOperation = async (
     description: string,
     dynamoTableName: string,
     knexConfig?: NodeJS.ProcessEnv,
+    callerLambdaName: string,
     lambdaName: string,
     operationType: AsyncOperationType,
     payload: unknown,
@@ -146,9 +164,14 @@ export const startAsyncOperation = async (
     systemBucket,
     stackName,
     dynamoTableName,
+    callerLambdaName,
     knexConfig = process.env,
     startEcsTaskFunc = startECSTask,
   } = params;
+
+  if (!callerLambdaName) {
+    throw new MissingRequiredArgument(`callerLambdaName must be specified to start new async operation, received: ${callerLambdaName}`);
+  }
 
   const id = uuidv4();
   // Store the payload to S3
