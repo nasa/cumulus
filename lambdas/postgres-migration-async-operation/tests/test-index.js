@@ -10,7 +10,6 @@ test.before((t) => {
   t.context.lambdaName = `lambda${cryptoRandomString({ length: 5 })}`;
   process.env.MigrationLambda = t.context.lambdaName;
   t.context.callerLambdaName = `caller${cryptoRandomString({ length: 5 })}`;
-  process.env.currentLambdaName = t.context.callerLambdaName;
   t.context.cluster = `cluster${cryptoRandomString({ length: 5 })}`;
   process.env.EcsCluster = t.context.cluster;
   t.context.asyncOperationTaskDefinition = `async${cryptoRandomString({ length: 5 })}`;
@@ -42,7 +41,7 @@ test('handler calls startAsyncOperation with the expected parameters', async (t)
       foo: 'bar',
     },
   };
-  t.is(await handler(event), 1);
+  t.is(await handler(event, { functionName: callerLambdaName }), 1);
   t.deepEqual(stub.getCall(0).firstArg, {
     cluster,
     callerLambdaName,
