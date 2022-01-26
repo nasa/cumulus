@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { createAsyncOperation, deleteAsyncOperation, listAsyncOperations } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -49,8 +49,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
       }).promise();
 
       const asyncOperationObject = {
-        id: asyncOperationId,
-        taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
         id: asyncOperationId,

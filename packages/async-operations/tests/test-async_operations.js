@@ -20,17 +20,17 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 const {
   getLambdaConfiguration,
   getLambdaEnvironmentVariables,
   createAsyncOperation,
   startAsyncOperation,
 } = require('../dist/async_operations');
-const { Search } = require('@cumulus/es-client/search');
-const {
-  createTestIndex,
-  cleanupTestIndex,
-} = require('@cumulus/es-client/testUtils');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
