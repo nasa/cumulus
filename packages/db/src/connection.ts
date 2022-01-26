@@ -62,15 +62,15 @@ export const getKnexClient = async ({
   });
   //@ts-ignore
   knexClient.context.client.pool.on('createSuccess', (_, resource) => {
-    knexLogger.info(`added connection to pool: ${resource}`);
+    knexLogger.info(`added connection to pool: ${JSON.stringify(resource)}`);
   });
   //@ts-ignore
   knexClient.context.client.pool.on('acquireSuccess', (_, resource) => {
-    knexLogger.info(`acquired connection from pool: ${resource}`);
+    knexLogger.info(`acquired connection from pool: ${JSON.stringify(resource)}`);
   });
   //@ts-ignore
   knexClient.context.client.pool.on('release', (resource) => {
-    knexLogger.info(`released connection from pool: ${resource}`);
+    knexLogger.info(`released connection from pool: ${JSON.stringify(resource)}`);
   });
   //@ts-ignore
   knexClient.context.client.pool.on('poolDestroySuccess', () => {
