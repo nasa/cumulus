@@ -1,5 +1,4 @@
 import { ECS, Lambda } from 'aws-sdk';
-import { Knex } from 'knex';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
@@ -154,7 +153,7 @@ export const createAsyncOperation = async (
   let createdAsyncOperation: ApiAsyncOperation | undefined;
 
   try {
-    return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
+    return await createRejectableTransaction(knex, async (trx) => {
       const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
       await asyncOperationPgModel.create(trx, pgCreateObject);
       createdAsyncOperation = await asyncOperationModel.create(createObject);
