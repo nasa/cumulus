@@ -46,17 +46,13 @@ const {
 const {
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
-  updateGranuleStatusToQueued,
   writeFilesViaTransaction,
   writeGranuleFromApi,
   writeGranulesFromMessage,
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
+  _writeGranule,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
   updateGranuleStatus,
-//=======
-  _writeGranule,
-//>>>>>>> feature/rds-phase-2
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -797,11 +793,8 @@ test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/El
       throw new Error('Granules dynamo error');
     },
     describeGranuleExecution: () => Promise.resolve({}),
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-    exists: () => Promise.resolve(false),
-//=======
     delete: () => Promise.resolve(),
-//>>>>>>> feature/rds-phase-2
+    exists: () => Promise.resolve(false),
   };
 
   const [error] = await t.throwsAsync(
@@ -1467,12 +1460,9 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     storeGranule: () => {
       throw new Error('Granules dynamo error');
     },
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
+    delete: () => Promise.resolve({}),
     describeGranuleExecution: () => Promise.resolve({}),
     exists: () => Promise.resolve(false),
-//=======
-    delete: () => Promise.resolve({}),
-//>>>>>>> feature/rds-phase-2
   };
 
   const error = await t.throwsAsync(
@@ -1681,27 +1671,15 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
   );
 });
 
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-test.serial('updateGranuleStatusToFailed() updates granule status in the database', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-//=======
 test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticsearch granule if writing to PostgreSQL fails', async (t) => {
   const {
     collectionCumulusId,
     esGranulesClient,
     esClient,
-//>>>>>>> feature/rds-phase-2
     granule,
     granuleId,
     granuleModel,
     granulePgModel,
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  } = t.context;
-  granule.status = 'running';
-  await writeGranuleFromApi({ ...granule }, knex);
-//=======
     knex,
   } = t.context;
 
@@ -1713,18 +1691,11 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticse
   };
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
-//>>>>>>> feature/rds-phase-2
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  t.not(dynamoRecord.status, 'failed');
-  t.not(postgresRecord.status, 'failed');
-
-  await updateGranuleStatusToFailed({ granule: dynamoRecord, knex });
-//=======
   const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
 
   t.is(dynamoRecord.status, 'completed');
@@ -1741,46 +1712,11 @@ test.serial('updateGranuleStatusToQueued() does not update DynamoDB or Elasticse
     { message: 'Granules Postgres error' }
   );
 
-//>>>>>>> feature/rds-phase-2
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
-  t.is(updatedDynamoRecord.status, 'failed');
-  t.is(updatedPostgresRecord.status, 'failed');
-  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
-  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
-});
-
-test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
-  const {
-    knex,
-    granuleId,
-  } = t.context;
-
-  const name = randomId('name');
-  const version = randomId('version');
-  const badGranule = fakeGranuleFactoryV2({
-    granuleId,
-    collectionId: constructCollectionId(name, version),
-  });
-  await t.throwsAsync(
-    updateGranuleStatusToFailed({ granule: badGranule, knex }),
-    {
-      name: 'RecordDoesNotExist',
-      message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
-    }
-  );
-});
-
-test.serial('updateGranuleStatus() updates granule status in the database', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-//=======
   const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
@@ -1872,16 +1808,10 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
     collectionCumulusId,
     esGranulesClient,
     esClient,
-//>>>>>>> feature/rds-phase-2
     granule,
     granuleId,
     granuleModel,
     granulePgModel,
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  } = t.context;
-  granule.status = 'running';
-  await writeGranuleFromApi({ ...granule }, knex);
-//=======
     knex,
   } = t.context;
 
@@ -1894,18 +1824,11 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
   };
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
-//>>>>>>> feature/rds-phase-2
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  t.not(dynamoRecord.status, 'completed');
-  t.not(postgresRecord.status, 'completed');
-
-  await updateGranuleStatus({ granule: dynamoRecord, knex, status: 'completed' });
-//=======
   const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
 
   t.is(dynamoRecord.status, 'completed');
@@ -1922,50 +1845,11 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
     { message: 'DynamoDB failure' }
   );
 
-//>>>>>>> feature/rds-phase-2
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
-  t.is(updatedDynamoRecord.status, 'completed');
-  t.is(updatedPostgresRecord.status, 'completed');
-  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
-  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
-});
-
-test.serial('updateGranuleStatus() updates granule error in the database if provided', async (t) => {
-  const {
-    knex,
-    collectionCumulusId,
-    granule,
-    granuleId,
-    granuleModel,
-    granulePgModel,
-  } = t.context;
-  await writeGranuleFromApi({ ...granule }, knex);
-  const dynamoRecord = await granuleModel.get({ granuleId });
-  const error = { Error: 'ErrorTitle', Cause: 'ErrorMessage' };
-
-  await updateGranuleStatus({
-    granule: dynamoRecord,
-    knex,
-    status: 'completed',
-    error: error.Error,
-    errorCause: error.Cause,
-  });
-  const updatedDynamoRecord = await granuleModel.get({ granuleId });
-  const updatedPostgresRecord = await granulePgModel.get(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  );
-  t.is(updatedDynamoRecord.status, 'completed');
-  t.is(updatedPostgresRecord.status, 'completed');
-  t.deepEqual(updatedPostgresRecord.error, error);
-  t.deepEqual(updatedDynamoRecord.error, error);
-//=======
   const updatedEsRecord = await esGranulesClient.get(granuleId, granule.collectionId);
   const translatedPgGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: updatedPostgresRecord,
@@ -2036,5 +1920,120 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
 
   t.deepEqual(publishedMessage.record, translatedGranule);
   t.is(publishedMessage.event, 'Update');
-//>>>>>>> feature/rds-phase-2
+});
+
+test.serial('updateGranuleStatusToFailed() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  granule.status = 'running';
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.not(dynamoRecord.status, 'failed');
+  t.not(postgresRecord.status, 'failed');
+
+  await updateGranuleStatusToFailed({ granule: dynamoRecord, knex });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
+  t.is(updatedDynamoRecord.status, 'failed');
+  t.is(updatedPostgresRecord.status, 'failed');
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+});
+
+test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
+  const {
+    knex,
+    granuleId,
+  } = t.context;
+
+  const name = randomId('name');
+  const version = randomId('version');
+  const badGranule = fakeGranuleFactoryV2({
+    granuleId,
+    collectionId: constructCollectionId(name, version),
+  });
+  await t.throwsAsync(
+    updateGranuleStatusToFailed({ granule: badGranule, knex }),
+    {
+      name: 'RecordDoesNotExist',
+      message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
+    }
+  );
+});
+
+test.serial('updateGranuleStatus() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  granule.status = 'running';
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.not(dynamoRecord.status, 'completed');
+  t.not(postgresRecord.status, 'completed');
+
+  await updateGranuleStatus({ granule: dynamoRecord, knex, status: 'completed' });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
+  t.is(updatedDynamoRecord.status, 'completed');
+  t.is(updatedPostgresRecord.status, 'completed');
+  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
+  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
+});
+
+test.serial('updateGranuleStatus() updates granule error in the database if provided', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  await writeGranuleFromApi({ ...granule }, knex);
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const error = { Error: 'ErrorTitle', Cause: 'ErrorMessage' };
+
+  await updateGranuleStatus({
+    granule: dynamoRecord,
+    knex,
+    status: 'completed',
+    error: error.Error,
+    errorCause: error.Cause,
+  });
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(updatedDynamoRecord.status, 'completed');
+  t.is(updatedPostgresRecord.status, 'completed');
+  t.deepEqual(updatedPostgresRecord.error, error);
+  t.deepEqual(updatedDynamoRecord.error, error);
 });

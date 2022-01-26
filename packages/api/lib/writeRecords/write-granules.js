@@ -328,15 +328,10 @@ async function updateGranuleStatusToFailed({
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
- * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
- * @param {string} params.granule - Granule from the payload
-//=======
  * @param {Object} [params.files] - File objects
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
  * @param {Object} params.workflowError - Error from the workflow
-//>>>>>>> feature/rds-phase-2
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {string} params.snsEventType - SNS Event Type
  * @param {Object} [params.granuleModel] - Optional Granule DDB model override
@@ -345,30 +340,17 @@ async function updateGranuleStatusToFailed({
  */
 const _writeGranuleFiles = async ({
   granuleCumulusId,
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
   granule,
-//=======
-  granuleId,
-  workflowError,
-//>>>>>>> feature/rds-phase-2
   knex,
 }) => {
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
   let fileRecords = [];
   const { files, granuleId, status, error: workflowError } = granule;
   if (isStatusFinalState(status)) {
     fileRecords = _generateFilePgRecords({
-      files: files,
+      files,
       granuleCumulusId,
     });
   }
-
-//=======
-  const fileRecords = _generateFilePgRecords({
-    files,
-    granuleCumulusId,
-  });
-//>>>>>>> feature/rds-phase-2
   try {
     const writtenFiles = await _writeFiles({
       fileRecords,
@@ -386,48 +368,17 @@ const _writeGranuleFiles = async ({
       errors.push(workflowError);
     }
     log.error('Failed writing files to PostgreSQL, updating granule with error', error);
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-    await updateGranuleStatusToFailed({
-      granule,
-      knex,
-      error: 'Failed writing files to PostgreSQL.',
-      errorCause: error.toString(),
-//=======
     const errorObject = {
       Error: 'Failed writing files to PostgreSQL.',
       Cause: error.toString(),
     };
     errors.push(errorObject);
 
-    const errorsObject = {
-      errors: JSON.stringify(errors),
-    };
-
-    await createRejectableTransaction(knex, async (trx) => {
-      await granulePgModel.update(
-        trx,
-        { cumulus_id: granuleCumulusId },
-        {
-          status: 'failed',
-          error: errorsObject,
-        },
-        ['*']
-      ).catch((updateError) => {
-        log.fatal('Failed to update PostgreSQL granule status on file write failure!', updateError);
-        throw updateError;
-      });
-
-      await granuleModel.update(
-        { granuleId },
-        {
-          status: 'failed',
-          error: errorsObject,
-        }
-      ).catch((updateError) => {
-        log.fatal('Failed to update DynamoDb granule status on file write failure!', updateError);
-        throw updateError;
-      });
-//>>>>>>> feature/rds-phase-2
+    await updateGranuleStatusToFailed({
+      granule,
+      knex,
+      error: 'Failed writing files to PostgreSQL.',
+      errorCause: error.toString(),
     });
   }
 };
@@ -495,26 +446,37 @@ const _writeGranuleRecords = async ({
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
 
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      granuleCumulusId = await _writePostgresGranuleViaTransaction({
+      pgGranule = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
         trx,
         granulePgModel,
       });
-      return granuleModel.storeGranule(dynamoGranuleRecord);
+      await writeGranuleToDynamoAndEs({
+        apiGranuleRecord,
+        esClient,
+        granuleModel,
+      });
     });
+    log.info(
+      `
+      Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
+      `,
+      postgresGranuleRecord
+    );
+    log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
+    return pgGranule;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
-    if (isStatusFinalState(dynamoGranuleRecord.status)
+    if (isStatusFinalState(apiGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
-      const originalError = dynamoGranuleRecord.error;
+      const originalError = apiGranuleRecord.error;
       const errorMsgWithOriginalError = `${thrownError.toString()} ${originalError.Error ? ` -  ${JSON.stringify(originalError)}` : ''}`;
       await updateGranuleStatusToFailed({
-        granule: dynamoGranuleRecord,
+        granule: apiGranuleRecord,
         knex,
         error: 'Write Granule Failed',
         errorCause: errorMsgWithOriginalError,
@@ -522,37 +484,8 @@ const _writeGranuleRecords = async ({
     }
     throw thrownError;
   }
-
-//=======
-  await createRejectableTransaction(knex, async (trx) => {
-    pgGranule = await _writePostgresGranuleViaTransaction({
-      granuleRecord: postgresGranuleRecord,
-      executionCumulusId,
-      trx,
-      granulePgModel,
-    });
-    await writeGranuleToDynamoAndEs({
-      apiGranuleRecord,
-      esClient,
-      granuleModel,
-    });
-  });
-//>>>>>>> feature/rds-phase-2
-  log.info(
-    `
-    Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
-    `,
-    postgresGranuleRecord
-  );
-  log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
-  return pgGranule;
 };
 
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  await _writeGranuleFiles({
-    granuleCumulusId,
-    granule: dynamoGranuleRecord,
-//=======
 const _writePostgresFilesFromApiGranuleFiles = async ({
   apiGranuleRecord,
   granuleCumulusId,
@@ -560,7 +493,7 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   snsEventType,
 }) => {
   const { files, granuleId, status, error } = apiGranuleRecord;
-  if (status !== 'running' && status !== 'queued' && files.length > 0) {
+  if (isStatusFinalState(status) && files.length > 0) {
     await _writeGranuleFiles({
       files,
       granuleCumulusId: granuleCumulusId,
@@ -624,7 +557,6 @@ const _writeGranule = async ({
   await _writePostgresFilesFromApiGranuleFiles({
     apiGranuleRecord,
     granuleCumulusId: pgGranule.cumulus_id,
-//>>>>>>> feature/rds-phase-2
     knex,
     snsEventType,
   });
@@ -1021,12 +953,6 @@ const writeGranulesFromMessage = async ({
  * @returns {Promise}
  * @throws {Error}
  */
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-async function updateGranuleStatusToQueued({
-  granule,
-  knex,
-}) {
-//=======
 const updateGranuleStatusToQueued = async (params) => {
   const {
     granule,
@@ -1036,19 +962,9 @@ const updateGranuleStatusToQueued = async (params) => {
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = params;
-//>>>>>>> feature/rds-phase-2
   const { granuleId, collectionId } = granule;
   log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  await updateGranuleStatus({
-    granule,
-    knex,
-    status,
-    apiGranuleDeleteFields: ['execution'],
-  });
-}
-//=======
   try {
     const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
       knex,
@@ -1081,19 +997,14 @@ const updateGranuleStatusToQueued = async (params) => {
     throw thrownError;
   }
 };
-//>>>>>>> feature/rds-phase-2
 
 module.exports = {
   _writeGranule,
   createGranuleFromApi,
   generateFilePgRecord,
-//<<<<<<< merge-master-to-rds-phase-2-01-24-2022
-  getGranuleCumulusIdFromQueryResultOrLookup,
-  updateGranuleStatus,
-//=======
   getGranuleFromQueryResultOrLookup,
   updateGranuleFromApi,
-//>>>>>>> feature/rds-phase-2
+  updateGranuleStatus,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
   writeGranuleFromApi,
