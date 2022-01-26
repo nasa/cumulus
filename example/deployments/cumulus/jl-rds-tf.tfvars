@@ -27,7 +27,6 @@ buckets = {
   }
 }
 cmr_oauth_provider = "launchpad"
-oauth_provider   = "launchpad"
 oauth_provider   = "earthdata"
 
 archive_api_port = 8000
