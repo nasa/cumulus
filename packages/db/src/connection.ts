@@ -49,6 +49,7 @@ export const getKnexClient = async ({
   secretsManager?: AWS.SecretsManager,
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
+  knexLogger.info('Initializing connection pool...');
   const knexConfig = await getKnexConfig({ env, secretsManager });
   const knexClient = knex(knexConfig);
   //@ts-ignore
@@ -58,6 +59,22 @@ export const getKnexClient = async ({
   knexClient.context.client.pool.on('createFail', (_, error) => {
     knexLogger.warn('knex failed on attempted connection', error);
     throw error;
+  });
+  //@ts-ignore
+  knexClient.context.client.pool.on('createSuccess', (_, resource) => {
+    knexLogger.info(`added connection to pool: ${resource}`);
+  });
+  //@ts-ignore
+  knexClient.context.client.pool.on('acquireSuccess', (_, resource) => {
+    knexLogger.info(`acquired connection from pool: ${resource}`);
+  });
+  //@ts-ignore
+  knexClient.context.client.pool.on('release', (resource) => {
+    knexLogger.info(`released connection from pool: ${resource}`);
+  });
+  //@ts-ignore
+  knexClient.context.client.pool.on('poolDestroySuccess', () => {
+    knexLogger.info('pool is destroyed');
   });
   return knexClient;
 };
