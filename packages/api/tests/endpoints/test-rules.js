@@ -1074,7 +1074,7 @@ test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', asyn
 
 test('DELETE deletes a rule', async (t) => {
   const {
-    originalPgRecord
+    originalPgRecord,
   } = await createRuleTestRecords(
     t.context,
     {

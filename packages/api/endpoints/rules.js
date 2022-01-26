@@ -186,20 +186,20 @@ async function put(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
- async function del(req, res) {
+async function del(req, res) {
   const {
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
   } = req.testContext || {};
-​
+
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const esRulesClient = new Search(
     {},
     'rule',
     process.env.ES_INDEX
   );
-​
+
   try {
     await rulePgModel.get(knex, { name });
   } catch (error) {
@@ -214,7 +214,7 @@ async function put(req, res) {
       throw error;
     }
   }
-​
+
   await createRejectableTransaction(knex, async (trx) => {
     await rulePgModel.delete(trx, { name });
     await deleteRule({
@@ -224,7 +224,7 @@ async function put(req, res) {
       ignore: [404],
     });
   });
-​
+
   return res.send({ message: 'Record deleted' });
 }
 
