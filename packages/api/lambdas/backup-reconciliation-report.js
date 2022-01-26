@@ -19,6 +19,7 @@ const {
   convertToESGranuleSearchParams,
   initialReportHeader,
 } = require('../lib/reconciliationReport');
+const ORCASearchCatalogQueue = require('../lib/ORCASearchCatalogQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
@@ -184,16 +185,7 @@ async function reconciliationReportForGranules(params) {
     process.env.ES_INDEX
   );
 
-  // TODO query orca api
-  const orcaGranulesIterator = new ESSearchQueue(
-    {
-      ...esSearchParams,
-      sort_key: ['granuleId', 'collectionId'],
-    },
-    'granule',
-    process.env.ES_INDEX
-  );
-
+  const orcaGranulesIterator = new ORCASearchCatalogQueue(esSearchParams);
   const collectionsConfig = await fetchESCollections(params);
 
   try {
@@ -297,8 +289,8 @@ async function createBackupReconciliationReport(recReportParams) {
   // Write an initial report to S3
   const initialReportFormat = {
     okCount: 0,
-    okFilesCount: 10,
-    mismatchedFilesCount: 8,
+    okFilesCount: 0,
+    mismatchedFilesCount: 0,
     mismatchedGranules: [],
   };
 
