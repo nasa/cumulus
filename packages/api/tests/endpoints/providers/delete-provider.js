@@ -9,7 +9,7 @@ const {
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const {
-  fakeGranuleRecordFactory,
+  fakeGranuleRecordFactory, fakeRuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 const {
   destroyLocalTestDb,
@@ -59,7 +59,6 @@ process.env = {
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-let providerModel;
 let accessTokenModel;
 let granuleModel;
 let jwtAuthToken;
@@ -88,10 +87,6 @@ test.before(async (t) => {
     'provider',
     t.context.esIndex
   );
-
-  providerModel = new models.Provider();
-  t.context.providerModel = providerModel;
-  await providerModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -125,12 +120,10 @@ test.beforeEach(async (t) => {
       t.context.testKnex,
       createObject
     );
-  await providerModel.create(t.context.testProvider);
   await indexer.indexProvider(t.context.esClient, t.context.testProvider, t.context.esIndex);
 });
 
 test.after.always(async (t) => {
-  await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
   await cleanupTestIndex(t.context);
   await ruleModel.deleteTable();
@@ -144,7 +137,7 @@ test.after.always(async (t) => {
 });
 
 test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', async (t) => {
-  const { testProvider } = t.context;
+  const { testProvider, providerPgModel } = t.context;
 
   const response = await request(app)
     .delete(`/providers/${testProvider.id}`)
@@ -152,7 +145,7 @@ test('Attempting to delete a provider without an Authorization header returns an
     .expect(401);
 
   t.is(response.status, 401);
-  t.true(await providerModel.exists(testProvider.id));
+  t.true(await providerPgModel.exists(t.context.testKnex, { name: testProvider.id }));
 });
 
 test('Attempting to delete a provider with an invalid access token returns an unauthorized response', async (t) => {
@@ -168,7 +161,7 @@ test('Attempting to delete a provider with an invalid access token returns an un
 test.todo('Attempting to delete a provider with an unauthorized user returns an unauthorized response');
 
 test('Deleting a provider removes the provider from all data stores', async (t) => {
-  const { testProvider } = t.context;
+  const { testProvider, providerPgModel } = t.context;
   const id = testProvider.id;
   await request(app)
     .delete(`/providers/${id}`)
@@ -176,8 +169,7 @@ test('Deleting a provider removes the provider from all data stores', async (t) 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(await providerModel.exists(testProvider.id));
-  t.false(await t.context.providerPgModel.exists(t.context.testKnex, { name: id }));
+  t.false(await providerPgModel.exists(t.context.testKnex, { name: id }));
   t.false(
     await t.context.esProviderClient.exists(
       testProvider.id
@@ -200,9 +192,6 @@ test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succee
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(
-    await providerModel.exists(testProvider.id)
-  );
   t.false(
     await t.context.providerPgModel.exists(
       t.context.testKnex,
@@ -232,9 +221,6 @@ test('Deleting a provider that exists in Elasticsearch and not PostgreSQL succee
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-  t.false(
-    await providerModel.exists(testProvider.id)
-  );
   t.false(
     await t.context.providerPgModel.exists(
       t.context.testKnex,
@@ -307,117 +293,8 @@ test('Attempting to delete a provider with an associated postgres rule returns a
   t.true(response.body.message.includes('Cannot delete provider with associated rules'));
 });
 
-test('Attempting to delete a provider with an associated rule returns a 409 response', async (t) => {
-  const { testProvider } = t.context;
-
-  const rule = fakeRuleFactoryV2({
-    provider: testProvider.id,
-    rule: {
-      type: 'onetime',
-    },
-  });
-
-  // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({}),
-  }).promise();
-
-  await ruleModel.create(rule);
-
-  const response = await request(app)
-    .delete(`/providers/${testProvider.id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409);
-
-  t.is(response.status, 409);
-  t.is(response.body.message, `Cannot delete provider with associated rules: ${rule.name}`);
-});
-
-test('Attempting to delete a provider with an associated rule does not delete the provider', async (t) => {
-  const { testProvider } = t.context;
-
-  const rule = fakeRuleFactoryV2({
-    provider: testProvider.id,
-    rule: {
-      type: 'onetime',
-    },
-  });
-
-  // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({}),
-  }).promise();
-
-  await ruleModel.create(rule);
-
-  await request(app)
-    .delete(`/providers/${testProvider.id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409);
-
-  t.true(await providerModel.exists(testProvider.id));
-});
-
-test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
-    originalProvider,
-  } = await createProviderTestRecords(
-    t.context
-  );
-
-  const fakeProvidersModel = {
-    get: () => Promise.resolve(originalProvider),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      id: originalProvider.id,
-    },
-    body: originalProvider,
-    testContext: {
-      knex: t.context.testKnex,
-      providerModel: fakeProvidersModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.providerModel.get({
-      id: originalProvider.id,
-    }),
-    originalProvider
-  );
-  t.true(
-    await t.context.providerPgModel.exists(t.context.testKnex, {
-      name: originalProvider.id,
-    })
-  );
-  t.true(
-    await t.context.esProviderClient.exists(
-      originalProvider.id
-    )
-  );
-});
-
-test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalProvider,
     originalPgRecord,
   } = await createProviderTestRecords(
     t.context
@@ -432,9 +309,8 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
 
   const expressRequest = {
     params: {
-      id: originalProvider.id,
+      id: originalPgRecord.id,
     },
-    body: originalProvider,
     testContext: {
       knex: t.context.testKnex,
       providerPgModel: fakeproviderPgModel,
@@ -448,25 +324,19 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.providerModel.get({
-      id: originalProvider.id,
-    }),
-    originalProvider
-  );
   t.true(
     await t.context.providerPgModel.exists(t.context.testKnex, {
-      name: originalProvider.id,
+      name: originalPgRecord.name,
     })
   );
   t.true(
     await t.context.esProviderClient.exists(
-      originalProvider.id
+      originalPgRecord.name
     )
   );
 });
 
-test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
     originalProvider,
   } = await createProviderTestRecords(
@@ -497,12 +367,6 @@ test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearc
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.providerModel.get({
-      id: originalProvider.id,
-    }),
-    originalProvider
-  );
   t.true(
     await t.context.providerPgModel.exists(t.context.testKnex, {
       name: originalProvider.id,
@@ -571,7 +435,7 @@ test('Attempting to delete a provider with an associated granule does not delete
 
   t.is(response.status, 409);
   t.is(response.body.message, `Cannot delete provider ${testProvider.id} with associated granules.`);
-  t.true(await providerModel.exists(testProvider.id));
+  t.true(await t.context.providerPgModel.exists(t.context.testKnex, { name: testProvider.id }));
 
   t.teardown(async () => {
     await granulePgModel.delete(testKnex, { granule_id: pgGranule.granule_id });
