@@ -56,10 +56,12 @@ test.before(async (t) => {
   });
 
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -620,7 +622,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const filePgModel = new FilePgModel();
   const granuleId = cryptoRandomString({ length: 6 });
 
-  const [granuleCumulusId] = await granulePgModel.create(
+  const [pgGranule] = await granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory(
       {
@@ -630,6 +632,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
       }
     )
   );
+  const granuleCumulusId = pgGranule.cumulus_id;
   const moveFileParam = {
     source: {
       Bucket: bucket,

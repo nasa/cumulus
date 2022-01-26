@@ -25,8 +25,9 @@ export const translatePostgresFileToApiFile = (
   checksumType: filePgRecord.checksum_type,
   fileName: filePgRecord.file_name,
   key: filePgRecord.key,
-  size: filePgRecord.file_size ? filePgRecord.file_size : undefined,
+  size: filePgRecord.file_size ? Number.parseInt(filePgRecord.file_size, 10) : undefined,
   source: filePgRecord.source,
+  type: filePgRecord.type,
 });
 
 export const translateApiFiletoPostgresFile = (
@@ -34,7 +35,6 @@ export const translateApiFiletoPostgresFile = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => {
   const bucket = getBucket(file);
   const key = getKey(file);
-
   return {
     bucket,
     key,
@@ -44,5 +44,6 @@ export const translateApiFiletoPostgresFile = (
     file_size: file.size,
     path: file.path,
     source: file.source,
+    type: file.type,
   };
 };

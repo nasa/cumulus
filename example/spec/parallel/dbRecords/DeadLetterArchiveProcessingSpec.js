@@ -204,8 +204,8 @@ describe('A dead letter record archive processing operation', () => {
   it('returns the correct output for the async operation', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     expect(deadLetterRecoveryAsyncOperation.output).toEqual(JSON.stringify({
-      processingSucceededKeys: [messageKey],
       processingFailedKeys: [],
+      processingSucceededKeys: [messageKey],
     }));
   });
 

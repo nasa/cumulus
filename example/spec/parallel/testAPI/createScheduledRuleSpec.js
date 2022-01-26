@@ -37,7 +37,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       config = await loadConfig();
       process.env.stackName = config.stackName;
 
-      const testId = createTimestampedTestId(config.stackName, 'Rule');
+      const testId = createTimestampedTestId(config.stackName, 'SchedRule');
       testSuffix = createTestSuffix(testId);
       scheduledRuleName = timestampedName('SchedHelloWorldTest');
       scheduledHelloWorldRule = {

@@ -1,4 +1,5 @@
 import { ECS, Lambda } from 'aws-sdk';
+import { Knex } from 'knex';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
@@ -6,16 +7,24 @@ import {
   translateApiAsyncOperationToPostgresAsyncOperation,
   AsyncOperationPgModel,
   createRejectableTransaction,
-  Knex,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
 
-import type { AsyncOperationModelClass } from './types';
+import type {
+  AsyncOperationModelClass,
+  AsyncOperationPgModelObject,
+} from './types';
 
 const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
+const {
+  indexAsyncOperation,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
@@ -113,6 +122,53 @@ export const startECSTask = async ({
   }).promise();
 };
 
+export const createAsyncOperation = async (
+  params: {
+    createObject: ApiAsyncOperation,
+    stackName: string,
+    systemBucket: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    esClient?: object,
+    asyncOperationPgModel?: AsyncOperationPgModelObject
+  },
+  AsyncOperation: AsyncOperationModelClass
+): Promise<Partial<ApiAsyncOperation>> => {
+  const {
+    createObject,
+    stackName,
+    systemBucket,
+    dynamoTableName,
+    knexConfig = process.env,
+    esClient = await Search.es(),
+    asyncOperationPgModel = new AsyncOperationPgModel(),
+  } = params;
+
+  const asyncOperationModel = new AsyncOperation({
+    stackName,
+    systemBucket,
+    tableName: dynamoTableName,
+  });
+
+  const knex = await getKnexClient({ env: knexConfig });
+  let createdAsyncOperation: ApiAsyncOperation | undefined;
+
+  try {
+    return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
+      const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
+      await asyncOperationPgModel.create(trx, pgCreateObject);
+      createdAsyncOperation = await asyncOperationModel.create(createObject);
+      await indexAsyncOperation(esClient, createObject, process.env.ES_INDEX);
+      return createdAsyncOperation;
+    });
+  } catch (error) {
+    if (createdAsyncOperation) {
+      await asyncOperationModel.delete({ id: createdAsyncOperation.id });
+    }
+    throw error;
+  }
+};
+
 /**
  * Start an AsyncOperation in ECS and store its associate record to DynamoDB
  *
@@ -198,28 +254,22 @@ export const startAsyncOperation = async (
     );
   }
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName,
-    systemBucket,
-    tableName: dynamoTableName,
-  });
-  const asyncOperationPgModel = new AsyncOperationPgModel();
-
-  const knex = await getKnexClient({ env: knexConfig });
-  return createRejectableTransaction<ApiAsyncOperation>(knex, async (trx: Knex.Transaction) => {
-    const createObject: ApiAsyncOperation = {
-      id,
-      status: 'RUNNING',
-      taskArn: runTaskResponse?.tasks?.[0].taskArn,
-      description,
-      operationType,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
-
-    await asyncOperationPgModel.create(trx, pgCreateObject);
-    return asyncOperationModel.create(createObject);
-  });
+  return createAsyncOperation(
+    {
+      createObject: {
+        id,
+        status: 'RUNNING',
+        taskArn: runTaskResponse?.tasks?.[0].taskArn,
+        description,
+        operationType,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+      stackName,
+      systemBucket,
+      dynamoTableName,
+      knexConfig,
+    },
+    AsyncOperation
+  );
 };

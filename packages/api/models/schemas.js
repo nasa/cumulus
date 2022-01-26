@@ -308,13 +308,15 @@ module.exports.granule = {
         type: 'object',
         properties: {
           bucket: { type: 'string' },
-          checksumType: { type: 'string' },
           checksum: { type: 'string' },
+          checksumType: { type: 'string' },
+          createdAt: { type: 'integer' },
+          fileName: { type: 'string' },
           key: { type: 'string' },
           size: { type: 'integer' },
-          fileName: { type: 'string' },
           source: { type: 'string' },
           type: { type: 'string' },
+          updatedAt: { type: 'integer' },
         },
       },
     },
@@ -323,7 +325,7 @@ module.exports.granule = {
       additionalProperties: true,
     },
     productVolume: {
-      type: 'number',
+      type: 'string',
       readonly: true,
     },
     timeToPreprocess: {
