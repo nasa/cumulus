@@ -30,15 +30,6 @@ module "python_test_ingest_processing_service" {
     "/usr/local/bin/python",
     "process_activity.py"
   ]
-  alarms = {
-    TaskCountHigh = {
-      comparison_operator = "GreaterThanThreshold"
-      evaluation_periods  = 1
-      metric_name         = "MemoryUtilization"
-      statistic           = "SampleCount"
-      threshold           = 1
-    }
-  }
 }
 
 module "python_test_python_processing_workflow" {

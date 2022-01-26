@@ -42,7 +42,7 @@ hide_title: false
 
 #### Versioning Docs
 
-We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/tree/master/docs/development/release.md).
+We lean heavily on Docusaurus for versioning. Their suggestions and walk-through can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/tree/master/docs/development/release.md).
 
 #### Search
 

@@ -1,3 +1,5 @@
+const get = require('lodash/get');
+
 const log = require('@cumulus/common/log');
 
 const {
@@ -106,8 +108,13 @@ function validateGranuleExecutionRequest(req, res, next) {
   return next();
 }
 
+function getFunctionNameFromRequestContext(req) {
+  return get(req, 'apiGateway.context.functionName');
+}
+
 module.exports = {
   validateBulkGranulesRequest,
   validateGranuleExecutionRequest,
   verifyJwtAuthorization,
+  getFunctionNameFromRequestContext,
 };

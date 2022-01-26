@@ -59,7 +59,7 @@ The generation of the released tagged images are created and deployed automatica
 
 ### docker-base
 
-Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF liraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.
+Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF libraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.
 
 The docker-base image can be interacted with by running it in interactive mode (ie, `docker run -it docker-base`, since the default "entrypoint" to the image is a bash shell.
 
@@ -86,7 +86,7 @@ ENTRYPOINT ["/work/process.py"]
 CMD ["input", "output"]
 ```
 
-When this Dockerfile is built, docker will first use the latest cumulus-base image. It will then copy the entire GitHub repository (the processing required for a single data collection is a repository) to the `/work` directory which will now contain all the code necessary to process this data. In thie case, a C file is compiled to convert the supplied hdf5 files to NetCDF files. Note that this also requires installing the system libraries `nco` and `libhdf5-dev` via `apt-get`. Lastly, the Dockerfile sets the entrypoint to the processing handler, so that this command is run when the image is run. It expects two arguments to be handed to it: 'input' and 'output' meaning the input and output directories.
+When this Dockerfile is built, docker will first use the latest cumulus-base image. It will then copy the entire GitHub repository (the processing required for a single data collection is a repository) to the `/work` directory which will now contain all the code necessary to process this data. In this case, a C file is compiled to convert the supplied hdf5 files to NetCDF files. Note that this also requires installing the system libraries `nco` and `libhdf5-dev` via `apt-get`. Lastly, the Dockerfile sets the entrypoint to the processing handler, so that this command is run when the image is run. It expects two arguments to be handed to it: 'input' and 'output' meaning the input and output directories.
 
 ## Process Handler
 

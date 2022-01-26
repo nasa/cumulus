@@ -12,6 +12,7 @@ locals {
     aws_security_group.no_ingress_all_egress[0].id,
     var.elasticsearch_security_group_id
   ])
+  all_bucket_names = [for k, v in var.buckets : v.name]
   all_non_internal_buckets = [for k, v in var.buckets : v.name if v.type != "internal"]
   public_buckets = [for k, v in var.buckets : v.name if v.type == "public"]
   protected_buckets = [for k, v in var.buckets : v.name if v.type == "protected"]

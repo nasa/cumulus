@@ -21,7 +21,7 @@ dynamos:
 
 ### config.yml Requirements
 
-This table describes the fields that must be present in `config.yml` to successfully deploy our cloudformation template, and under what conditions. For descriptions, see the complete table below or each item's entry in the invidivual listings on the rest of this page.
+This table describes the fields that must be present in `config.yml` to successfully deploy our cloudformation template, and under what conditions. For descriptions, see the complete table below or each item's entry in the individual listings on the rest of this page.
 
 | field | condition
 | ----- | -----------
