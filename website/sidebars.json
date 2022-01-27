@@ -84,7 +84,8 @@
       "integrator-guide/about-int-guide",
       "integrator-guide/int-common-use-cases",
       "integrator-guide/workflow-add-new-lambda",
-      "integrator-guide/workflow-ts-failed-step"
+      "integrator-guide/workflow-ts-failed-step",
+      "integrator-guide/workflow-using-ecs"
     ],
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone",
