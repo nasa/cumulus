@@ -77,7 +77,7 @@ null_resource.restart_queue_granules_ecs_task[0]: Still creating... [13h35m41s e
 
 The fix for this is to increase the memory settings for each of these tasks. These are the `memory_reservation` setting in the `discover_granules_service` module in `cumulus-tf/addtions.tf` and the `queue_granules_service` in `cumulus-tf/lambda_queue_granules.tf`.
 
-When making a change to an existing stack (usually to the task count), either of these task may simply fail to start with no error. It is important to check that they are both running after every change update.
+When making a change to an existing stack (usually to the task count), either of these tasks may simply fail to start with no error. It is important to check that they are both running after every change update.
 
 This happens when the SyncGranule tasks are allocated in a way to don't leave enough memory resources on a single node to run the DiscoverGranules or QueueGranules task. This can be fixed either by (1) in the AWS Console, update the SyncGranule Service definition to have a value of `1` for `Number of tasks` or (2) change `sync_granule_service.desired_count` to 1 and deploy. This creates a configuration with enough available resources to run DiscoverGranules and QueueGranules. Then, set `sync_granule_service.desired_count` back to its production value (e.g., 48), and re-deploy. Deploying will increase the number of tasks for SyncGranule back to its desired value, but these won't block DiscoverGranules and QueueGranules since they'll already be running.
 
