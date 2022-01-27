@@ -1,4 +1,4 @@
-## Performance Tuning, Cost Management, and Ingest Monitoring using ECS
+## Ingest Performance Tuning When Using ECS
 
 ## Performance Tuning and Throttling
 
