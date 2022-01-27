@@ -98,6 +98,13 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 
 ### Changed
 
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
 - Made `vpc_id` variable optional for `example/cumulus-tf` module
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
