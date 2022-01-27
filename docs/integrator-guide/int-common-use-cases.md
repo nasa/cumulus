@@ -9,3 +9,4 @@ Listed below are some example use cases that you may encounter during your onboa
 * [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
 * [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
 * [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+* [Workflow: Using ECS](../integrator-guide/workflow-using-ecs)
