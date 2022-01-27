@@ -492,13 +492,11 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   knex,
   snsEventType,
 }) => {
-  const { files, granuleId, status, error } = apiGranuleRecord;
+  const { files, status } = apiGranuleRecord;
   if (isStatusFinalState(status) && files.length > 0) {
     await _writeGranuleFiles({
-      files,
       granuleCumulusId: granuleCumulusId,
-      granuleId,
-      workflowError: error,
+      granule: apiGranuleRecord,
       knex,
       snsEventType,
       granuleModel: new Granule(),

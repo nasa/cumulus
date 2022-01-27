@@ -1932,7 +1932,8 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     granulePgModel,
   } = t.context;
   granule.status = 'running';
-  await writeGranuleFromApi({ ...granule }, knex);
+  const snsEventType = 'Update';
+  await writeGranuleFromApi({ ...granule }, knex, snsEventType);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
@@ -1985,7 +1986,8 @@ test.serial('updateGranuleStatus() updates granule status in the database', asyn
     granulePgModel,
   } = t.context;
   granule.status = 'running';
-  await writeGranuleFromApi({ ...granule }, knex);
+  const snsEventType = 'Update';
+  await writeGranuleFromApi({ ...granule }, knex, snsEventType);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
@@ -2016,7 +2018,8 @@ test.serial('updateGranuleStatus() updates granule error in the database if prov
     granuleModel,
     granulePgModel,
   } = t.context;
-  await writeGranuleFromApi({ ...granule }, knex);
+  const snsEventType = 'Update';
+  await writeGranuleFromApi({ ...granule }, knex, snsEventType);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const error = { Error: 'ErrorTitle', Cause: 'ErrorMessage' };
 
