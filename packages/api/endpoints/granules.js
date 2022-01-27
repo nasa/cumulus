@@ -688,6 +688,9 @@ router.post(
 router.delete('/:granuleName', del);
 
 module.exports = {
+  bulkOperations,
+  bulkReingest,
+  bulkDelete,
   put,
   router,
 };
