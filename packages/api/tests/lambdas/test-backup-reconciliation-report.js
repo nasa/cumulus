@@ -32,7 +32,7 @@ test(
 );
 
 test(
-  'isFileExcludedFromOrca returns true for configured file types',
+  'getReportForOneGranule returns correctly report for one granule',
   (t) => {
     const collectionsConfig = {
       MOD09GQ___006: {
@@ -54,7 +54,7 @@ test(
       timeToArchive: 0,
       productionDateTime: '2018-07-19T12:01:01Z',
       cmrLink: 'https://cmr.uat.earthdata.nasa.gov/search/concepts/G1243108159-CUMULUS.echo10',
-      execution: 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:596205514787:execution:jl-tf-OrcaRecoveryWorkflow:b09a63ed-299e-46a3-bcfa-5d08d2745259',
+      execution: 'fakeExeuctionLink',
       files: [
         {
           bucket: 'cumulus-protected-bucket',
@@ -67,7 +67,7 @@ test(
           key: 'MOD09GQ___006/2017/MOD/123/MOD09GQ.A6234296.y7NKhU.006.6485037861919.hdf',
         },
         {
-          bucket: 'jl-test-integration-private',
+          bucket: 'cumulus-private-bucket',
           fileName: 'MOD09GQ.A6234296.y7NKhU.006.6485037861919.hdf.met',
           size: 21708,
           checksumType: 'md5',
@@ -77,7 +77,7 @@ test(
           key: 'MOD09GQ___006/MOD/123/MOD09GQ.A6234296.y7NKhU.006.6485037861919.hdf.met',
         },
         {
-          bucket: 'jl-test-integration-public',
+          bucket: 'cumulus-public-bucket',
           fileName: 'MOD09GQ.A6234296.y7NKhU.006.6485037861919_ndvi.jpg',
           size: 9728,
           checksumType: 'md5',
@@ -87,7 +87,7 @@ test(
           key: 'MOD09GQ___006/MOD/123/MOD09GQ.A6234296.y7NKhU.006.6485037861919_ndvi.jpg',
         },
         {
-          bucket: 'jl-test-integration-protected-2',
+          bucket: 'cumulus-protected-2-bucket',
           fileName: 'MOD09GQ.A6234296.y7NKhU.006.6485037861919.cmr.xml',
           size: 2320,
           type: 'metadata',
@@ -111,7 +111,7 @@ test(
       executionId: 'fakeExecutionId',
       ingestDate: 1642544689906,
       lastUpdate: 1642544689906,
-      file: [
+      files: [
         {
           name: 'MOD09GQ.A6234296.y7NKhU.006.6485037861919.hdf',
           cumulusArchiveLocation: 'cumulus-protected-bucket',

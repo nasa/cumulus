@@ -69,27 +69,30 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   //     file type is not excludedFromOrca -> add file to mismatchedFiles with conflict reason
   //   file only in orca, add file to conflict file with conflict reason
 
-  // reducer, key: fileName, value: file object
-  const reducer = (accumulator, currentValue) => {
-    const fileName = currentValue.fileName || path.basename(currentValue.key);
+  // reducer, key: fileName, value: file object with selected fields
+  const fileFields = ['bucket', 'key', 'cumulusArchiveLocation', 'orcaArchiveLocation', 'keyPath'];
+  const fileReducer = (accumulator, currentValue) => {
+    const fileName = currentValue.fileName
+      || path.basename(currentValue.key || currentValue.keyPath);
     return ({
       ...accumulator,
-      [fileName]: pick(currentValue, ['bucket', 'key']),
+      [fileName]: pick(currentValue, fileFields),
     });
   };
 
-  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(reducer, {});
-  const orcaFiles = get(orcaGranule, 'files', []).reduce(reducer, {});
+  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(fileReducer, {});
+  const orcaFiles = get(orcaGranule, 'files', []).reduce(fileReducer, {});
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
+    console.log(cumulusFiles[fileName], orcaFiles[fileName]);
     if (cumulusFiles[fileName] && orcaFiles[fileName]) {
       if (!isFileExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         oneGranuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
           ...cumulusFiles[fileName],
-          orcaBucket: orcaFiles[fileName].bucket,
-          orcaKey: orcaFiles[fileName].key,
+          orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
+          orcaKey: orcaFiles[fileName].keyPath,
           reason: 'shouldExcludedFromOrca',
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
