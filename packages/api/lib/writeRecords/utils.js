@@ -179,6 +179,8 @@ const getExecutionCumulusId = async (
   }
 };
 
+const isStatusFinalState = (status) => status === 'completed' || status === 'failed';
+
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
@@ -187,4 +189,5 @@ module.exports = {
   getProviderCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
+  isStatusFinalState,
 };

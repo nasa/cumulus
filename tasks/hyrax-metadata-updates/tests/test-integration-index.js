@@ -80,17 +80,18 @@ test.before(async () => {
   }).promise();
 });
 
-test.beforeEach(() => {
+const setupNock = (params) => {
+  const cmrParams = {
+    ...params,
+    page_size: '50',
+    page_num: '1',
+    provider_short_name: 'GES_DISC',
+  };
+
   // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
-    .query({
-      short_name: 'GLDAS_CLSM025_D',
-      version: '2.0',
-      page_size: '50',
-      page_num: '1',
-      provider_short_name: 'GES_DISC',
-    })
+    .query(cmrParams)
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
 
   nock('https://cmr.earthdata.nasa.gov')
@@ -98,7 +99,13 @@ test.beforeEach(() => {
     .reply(200, { token: 'ABCDE' });
 
   process.env.CMR_ENVIRONMENT = 'OPS';
-});
+};
+
+test.beforeEach(() =>
+  setupNock({
+    short_name: 'GLDAS_CLSM025_D',
+    version: '2.0',
+  }));
 
 test.afterEach.always(() => {
   nock.cleanAll();
@@ -662,7 +669,7 @@ test.serial('Test retrieving optional entry collection from CMR using UMM-G', as
   t.is(actual, 'C1453188197-GES_DISC/GLDAS_CLSM025_D.2.0');
 });
 
-test.serial('Test retrieving default entry collection from CMR using UMM-G', async (t) => {
+test.serial('Test retrieving default entry collection from CMR using UMM-G with ShortName and Version', async (t) => {
   const data = fs.readFileSync('tests/data/umm-gin.json', 'utf8');
   const metadataObject = JSON.parse(data);
 
@@ -670,8 +677,25 @@ test.serial('Test retrieving default entry collection from CMR using UMM-G', asy
   t.is(actual, 'C1453188197-GES_DISC');
 });
 
-test.serial('Test retrieving entry collection from CMR using ECHO10', async (t) => {
+test.serial('Test retrieving default entry collection from CMR using UMM-G with EntryTitle', async (t) => {
+  setupNock({ dataset_id: 'GLDAS_CLSM025_D_2.0' });
+  const data = fs.readFileSync('tests/data/umm-g-entry-title-in.json', 'utf8');
+  const metadataObject = JSON.parse(data);
+
+  const actual = await getCollectionEntry(event.config, metadataObject, true);
+  t.is(actual, 'C1453188197-GES_DISC');
+});
+
+test.serial('Test retrieving entry collection from CMR using ECHO10 with ShortName and VersionId', async (t) => {
   const data = fs.readFileSync('tests/data/echo10in.xml', 'utf8');
+  const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
+  const actual = await getCollectionEntry(event.config, metadata, false);
+  t.is(actual, 'C1453188197-GES_DISC');
+});
+
+test.serial('Test retrieving entry collection from CMR using ECHO10 with DataSetId', async (t) => {
+  setupNock({ dataset_id: 'GLDAS_CLSM025_D_2.0' });
+  const data = fs.readFileSync('tests/data/echo10-dataset_id-in.xml', 'utf8');
   const metadata = await (promisify(xml2js.parseString))(data, xmlParseOptions);
   const actual = await getCollectionEntry(event.config, metadata, false);
   t.is(actual, 'C1453188197-GES_DISC');

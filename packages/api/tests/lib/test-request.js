@@ -10,13 +10,16 @@ const moment = require('moment');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const noop = require('lodash/noop');
 
 const {
   TokenUnauthorizedUserError,
 } = require('../../lib/errors');
-const { verifyJwtAuthorization } = require('../../lib/request');
+const {
+  verifyJwtAuthorization,
+  getFunctionNameFromRequestContext,
+} = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
   setAuthorizedOAuthUsers,
@@ -101,4 +104,25 @@ test('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorize
   } catch (error) {
     t.true(error instanceof TokenUnauthorizedUserError);
   }
+});
+
+test('getFunctionNameFromRequestContext returns correct value', (t) => {
+  const functionName = randomId('lambda');
+  t.is(
+    getFunctionNameFromRequestContext({
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+    }),
+    functionName
+  );
+});
+
+test('getFunctionNameFromRequestContext returns undefined if no value exists', (t) => {
+  t.is(
+    getFunctionNameFromRequestContext({}),
+    undefined
+  );
 });
