@@ -9,7 +9,7 @@ const {
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const {
-  fakeGranuleRecordFactory, fakeRuleRecordFactory,
+  fakeGranuleRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 const {
   destroyLocalTestDb,
@@ -30,11 +30,10 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-const models = require('../../../models');
+const { AccessToken } = require('../../../models');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,
-  fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
   createProviderTestRecords,
 } = require('../../../lib/testUtils');
@@ -60,9 +59,7 @@ process.env = {
 const { app } = require('../../../app');
 
 let accessTokenModel;
-let granuleModel;
 let jwtAuthToken;
-let ruleModel;
 
 test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
@@ -91,19 +88,15 @@ test.before(async (t) => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  process.env.AccessTokensTable = randomString();
-  accessTokenModel = new models.AccessToken();
+  process.env.AccessTokensTable = randomId('AccessTokens');
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   process.env.RulesTable = randomString();
-  ruleModel = new models.Rule();
-  await ruleModel.createTable();
 
   process.env.GranulesTable = randomId('granules');
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
 
   await s3().putObject({
     Bucket: process.env.system_bucket,
@@ -114,11 +107,11 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  const createObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
+  const pgProvider = await translateApiProviderToPostgresProvider(t.context.testProvider);
   [t.context.providerCumulusId] = await t.context.providerPgModel
     .create(
       t.context.testKnex,
-      createObject
+      pgProvider
     );
   await indexer.indexProvider(t.context.esClient, t.context.testProvider, t.context.esIndex);
 });
@@ -126,8 +119,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await cleanupTestIndex(t.context);
-  await ruleModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -388,18 +379,6 @@ test('Attempting to delete a provider with an associated granule does not delete
     testProvider,
   } = t.context;
 
-  const granuleId = randomString();
-  const dynamoGranule = fakeGranuleFactoryV2(
-    {
-      granuleId: granuleId,
-      status: 'completed',
-      published: false,
-      provider: testProvider.id,
-    }
-  );
-
-  await granuleModel.create(dynamoGranule);
-
   const collection = {
     name: randomString(),
     version: '001',
@@ -417,7 +396,7 @@ test('Attempting to delete a provider with an associated granule does not delete
 
   const pgGranule = fakeGranuleRecordFactory(
     {
-      granule_id: granuleId,
+      granule_id: randomId('granuleId'),
       status: 'completed',
       provider_cumulus_id: providerCumulusId,
       collection_cumulus_id: collectionCumulusId,
