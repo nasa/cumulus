@@ -368,7 +368,7 @@ export function generateMoveFileParams(
 * @param {FilePgModel} filesPgModel - FilePgModel instance
 * @param {Knex.Transaction | Knex} trx - Knex transaction or (optionally) Knex object
 * @param {number | undefined } postgresCumulusGranuleId - postgres internal granule id
-* @returns {MovedGranuleFile}
+* @returns {Promise<Object>} - Returns object of type Omit<ApiFile, 'granuleId>>
 */
 export async function moveGranuleFile(
   moveFileParam: MoveFileParams,
