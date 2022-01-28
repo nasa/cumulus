@@ -104,8 +104,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
           moveFileParam,
           filesPgModel,
           trx,
-          postgresCumulusGranuleId,
-          apiGranule.granuleId
+          postgresCumulusGranuleId
         );
         updatedFiles.push(updatedFile);
       });
