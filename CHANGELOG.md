@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased Phase 3
+
+### Changed
+
+- **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2811**
+    - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
+
 ## Unreleased
 
 ### Migration steps
