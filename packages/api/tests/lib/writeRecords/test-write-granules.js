@@ -52,7 +52,6 @@ const {
   _writeGranule,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
-  updateGranuleStatus,
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -999,7 +998,8 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
   t.true(error.message.includes('The record has validation errors:'));
   const dynamoGranule = await granuleModel.get({ granuleId });
   t.is(dynamoGranule.status, 'failed');
-  t.true(dynamoGranule.error.Cause.includes(originalError.Cause));
+  const dynamoErrors = JSON.parse(dynamoGranule.error.errors);
+  t.true(dynamoErrors[0].Cause.includes(originalError.Cause));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
@@ -1943,23 +1943,24 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
   t.not(dynamoRecord.status, 'failed');
   t.not(postgresRecord.status, 'failed');
 
-  await updateGranuleStatusToFailed({ granule: dynamoRecord, knex });
+  const fakeErrorObject = { Error: 'This is a fake error', Cause: 'caused by some fake issue' };
+  await updateGranuleStatusToFailed(
+    { granule: dynamoRecord, knex, error: fakeErrorObject, esClient }
+  );
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
-  const omitList = ['execution', 'status', 'updatedAt', 'updated_at'];
   t.is(updatedDynamoRecord.status, 'failed');
   t.is(updatedPostgresRecord.status, 'failed');
-  t.deepEqual(omit(dynamoRecord, omitList), omit(updatedDynamoRecord, omitList));
-  t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
 });
 
 test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
   const {
     knex,
     granuleId,
+    esClient,
   } = t.context;
 
   const name = randomId('name');
@@ -1968,8 +1969,11 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
     granuleId,
     collectionId: constructCollectionId(name, version),
   });
+  const fakeErrorObject = { Error: 'This is a fake error', Cause: 'caused by some fake issue' };
   await t.throwsAsync(
-    updateGranuleStatusToFailed({ granule: badGranule, knex }),
+    updateGranuleStatusToFailed(
+      { granule: badGranule, knex, error: fakeErrorObject, esClient }
+    ),
     {
       name: 'RecordDoesNotExist',
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
