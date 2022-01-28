@@ -61,7 +61,7 @@
     "@cumulus/db": "9.9.0",
     "@cumulus/distribution-utils": "9.9.0",
     "@cumulus/errors": "9.9.0",
-    "@cumulus/es-client": "9.9.0",
+    "@cumulus/es-client": "9.10.0-alpha.1",
     "@cumulus/ingest": "9.9.0",
     "@cumulus/launchpad-auth": "9.9.0",
     "@cumulus/logger": "9.9.0",
