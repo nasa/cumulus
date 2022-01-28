@@ -109,7 +109,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
         updatedFiles.push(updatedFile);
       });
     } catch (error) {
-      // TODO update this to use OG file object.   Yuck.    This sucks
       updatedFiles.push({ ...file, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
