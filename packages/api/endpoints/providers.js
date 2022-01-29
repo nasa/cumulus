@@ -21,7 +21,7 @@ const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
 const Provider = require('../models/providers');
-const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
 /**
@@ -200,7 +200,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -213,7 +212,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let existingProvider;
   try {
     await providerPgModel.get(knex, { name: id });
   } catch (error) {
@@ -229,39 +227,20 @@ async function del(req, res) {
   }
 
   try {
-    // Save DynamoDB provider in case delete fails and need to recreate
-    existingProvider = await providerModel.get({ id });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await providerPgModel.delete(trx, { name: id });
-        await providerModel.delete({ id });
-        await deleteProvider({
-          esClient,
-          id,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
+    await createRejectableTransaction(knex, async (trx) => {
+      await providerPgModel.delete(trx, { name: id });
+      await deleteProvider({
+        esClient,
+        id,
+        index: process.env.ES_INDEX,
+        ignore: [404],
       });
-    } catch (innerError) {
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (existingProvider) {
-        await providerModel.create(existingProvider);
-      }
-      throw innerError;
-    }
+    });
+    log.debug(`deleted provider ${id}`);
     return res.send({ message: 'Record deleted' });
   } catch (error) {
-    if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
-      const messageDetail = error.rules || [error.detail];
-      const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
+    if (error.constraint === 'rules_provider_cumulus_id_foreign') {
+      const message = `Cannot delete provider with associated rules: ${error.detail}`;
       return res.boom.conflict(message);
     }
     if (error.constraint === 'granules_provider_cumulus_id_foreign') {

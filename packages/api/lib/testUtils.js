@@ -464,7 +464,10 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalProvider = fakeProviderFactory(providerParams);
 
   const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
-  await providerModel.create(originalProvider);
+
+  if (providerModel) {
+    await providerModel.create(originalProvider);
+  }
   const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: providerCumulusId }
