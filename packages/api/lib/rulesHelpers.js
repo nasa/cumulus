@@ -126,16 +126,16 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 /**
 * Check if a rule's event source mapping is shared with other rules
 *
-* @param {Object} item      - the rule item
+* @param {Object} rule      - the rule item
 * @param {Object} eventType - the rule's event type
 * @returns {Promise<boolean>} return true if other rules share the same event source mapping
 */
-async function isEventSourceMappingShared(item, eventType) {
+async function isEventSourceMappingShared(rule, eventType) {
   const knex = await getKnexClient();
   const rulePgModel = new RulePgModel();
   // Query for count of any other rule that has the same type and arn
   const params = {
-    type: item.type,
+    type: rule.type,
     ...eventType,
   };
   const [result] = await rulePgModel.count(knex, [[params]]);
@@ -146,13 +146,13 @@ async function isEventSourceMappingShared(item, eventType) {
 /**
  * Deletes an event source from an event lambda function
  *
- * @param {Object} item      - the rule item
+ * @param {Object} rule      - the rule item
  * @param {string} eventType - kinesisSourceEvent type
  * @param {string} id        - event source id
  * @returns {Promise} the response from event source delete
  */
-async function deleteKinesisEventSource(item, eventType, id) {
-  if (await isEventSourceMappingShared(item, id)) {
+async function deleteKinesisEventSource(rule, eventType, id) {
+  if (await isEventSourceMappingShared(rule, id)) {
     return undefined;
   }
   const params = {
@@ -163,32 +163,32 @@ async function deleteKinesisEventSource(item, eventType, id) {
 
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
- * @param {Object} item - the rule item
+ * @param {Object} rule - the rule item
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
-async function deleteKinesisEventSources(item) {
+async function deleteKinesisEventSources(rule) {
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
       eventType: 'arn',
       type: {
-        arn: item.arn,
+        arn: rule.arn,
       },
     },
     {
       name: process.env.KinesisInboundEventLogger,
       eventType: 'log_event_arn',
       type: {
-        log_event_arn: item.log_event_arn,
+        log_event_arn: rule.log_event_arn,
       },
     },
   ];
   const deleteEventPromises = kinesisSourceEvents.map(
     async (lambda) => {
       try {
-        await deleteKinesisEventSource(item, lambda.eventType, lambda.type);
+        await deleteKinesisEventSource(rule, lambda.eventType, lambda.type);
       } catch (error) {
-        log.error(`Error deleting eventSourceMapping for ${item.name}: ${error}`);
+        log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
       }
     }
@@ -198,19 +198,19 @@ async function deleteKinesisEventSources(item) {
 
 /**
  * Delete a rule's SNS trigger
- * @param {Object} item - the rule item
+ * @param {Object} rule - the rule item
  * @returns {Promise} the response from SNS unsubscribe
  */
-async function deleteSnsTrigger(item) {
+async function deleteSnsTrigger(rule) {
   // If event source mapping is shared by other rules, don't delete it
-  if (await isEventSourceMappingShared(item, { arn: item.rule.arn })) {
-    log.info(`Event source mapping ${item} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
+  if (await isEventSourceMappingShared(rule, { arn: rule.arn })) {
+    log.info(`Event source mapping ${rule} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
     return Promise.resolve();
   }
   // delete permission statement
   const permissionParams = {
     FunctionName: process.env.messageConsumer,
-    StatementId: `${item.name}Permission`,
+    StatementId: `${rule.name}Permission`,
   };
   try {
     await awsServices.lambda().removePermission(permissionParams).promise();
@@ -222,32 +222,32 @@ async function deleteSnsTrigger(item) {
   }
   // delete sns subscription
   const subscriptionParams = {
-    SubscriptionArn: item.rule.arn,
+    SubscriptionArn: rule.arn,
   };
   return awsServices.sns().unsubscribe(subscriptionParams).promise();
 }
 
 /**
  * Delete rule resources by rule type
- * @param {Object} item - Item
+ * @param {Object} rule - Rule
  */
-async function deleteRuleResources(item) {
-  const type = item.type;
+async function deleteRuleResources(rule) {
+  const type = rule.type;
   switch (type) {
   case 'scheduled': {
     const targetId = 'lambdaTarget';
-    const name = `${process.env.stackName}-custom-${item.name}`;
+    const name = `${process.env.stackName}-custom-${rule.name}`;
     await CloudwatchEvents.deleteTarget(targetId, name);
     await CloudwatchEvents.deleteEvent(name);
     break;
   }
   case 'kinesis': {
-    await deleteKinesisEventSources(item);
+    await deleteKinesisEventSources(rule);
     break;
   }
   case 'sns': {
-    if (item.state === 'ENABLED') {
-      await deleteSnsTrigger(item);
+    if (rule.state === 'ENABLED') {
+      await deleteSnsTrigger(rule);
     }
     break;
   }
