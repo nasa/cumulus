@@ -23,6 +23,12 @@ const ORCASearchCatalogQueue = require('../lib/ORCASearchCatalogQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
+const fileConflictTypes = {
+  shouldExcludedFromOrca: 'shouldExcludedFromOrca',
+  onlyInCumulus: 'onlyInCumulus',
+  onlyInOrca: 'onlyInOrca',
+};
+
 /**
  * Fetch collections in Elasticsearch.
  * @param {Object} recReportParams - input report params.
@@ -52,10 +58,11 @@ function isFileExcludedFromOrca(collectionsConfig, collectionId, fileName) {
 }
 
 function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule }) {
+  const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt', 'status'];
   const oneGranuleReport = {
     ok: false,
     okFilesCount: 0,
-    ...pick(cumulusGranule, ['granuleId', 'collectionId', 'providerId']),
+    ...pick(cumulusGranule, granuleFields),
     mismatchedFiles: [],
   };
 
@@ -84,16 +91,16 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   const orcaFiles = get(orcaGranule, 'files', []).reduce(fileReducer, {});
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
-    console.log(cumulusFiles[fileName], orcaFiles[fileName]);
     if (cumulusFiles[fileName] && orcaFiles[fileName]) {
       if (!isFileExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         oneGranuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
+          fileName,
           ...cumulusFiles[fileName],
           orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
           orcaKey: orcaFiles[fileName].keyPath,
-          reason: 'shouldExcludedFromOrca',
+          reason: fileConflictTypes.shouldExcludedFromOrca,
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
@@ -102,16 +109,18 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         oneGranuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
+          fileName,
           ...cumulusFiles[fileName],
-          reason: 'onlyInCumulus',
+          reason: fileConflictTypes.onlyInCumulus,
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
     } else if (cumulusFiles[fileName] === undefined && orcaFiles[fileName]) {
       const conflictFile = {
-        orcaBucket: orcaFiles[fileName].bucket,
-        orcaKey: orcaFiles[fileName].key,
-        reason: 'onlyInOrca',
+        fileName,
+        orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
+        orcaKey: orcaFiles[fileName].keyPath,
+        reason: fileConflictTypes.onlyInOrca,
       };
       oneGranuleReport.mismatchedFiles.push(conflictFile);
     }
@@ -264,8 +273,6 @@ async function reconciliationReportForGranules(params) {
     granulesReport,
   };
 }
-// export for testing
-exports.reconciliationReportForGranules = reconciliationReportForGranules;
 
 /**
  * Create a Backup Reconciliation report and save it to S3
@@ -325,5 +332,7 @@ async function createBackupReconciliationReport(recReportParams) {
 }
 
 module.exports = {
+  fileConflictTypes,
+  reconciliationReportForGranules,
   createBackupReconciliationReport,
 };
