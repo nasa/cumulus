@@ -1930,11 +1930,14 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     granuleId,
     granuleModel,
     granulePgModel,
-    esClient,
   } = t.context;
+  const fakeEsClient = {
+    update: () => Promise.resolve(),
+    delete: () => Promise.resolve(),
+  };
   granule.status = 'running';
   const snsEventType = 'Update';
-  await writeGranuleFromApi({ ...granule }, knex, esClient, snsEventType);
+  await writeGranuleFromApi({ ...granule }, knex, fakeEsClient, snsEventType);
   const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
@@ -1945,7 +1948,7 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
 
   const fakeErrorObject = { Error: 'This is a fake error', Cause: 'caused by some fake issue' };
   await updateGranuleStatusToFailed(
-    { granule: dynamoRecord, knex, error: fakeErrorObject, esClient }
+    { granule: dynamoRecord, knex, error: fakeErrorObject, fakeEsClient }
   );
   const updatedDynamoRecord = await granuleModel.get({ granuleId });
   const updatedPostgresRecord = await granulePgModel.get(

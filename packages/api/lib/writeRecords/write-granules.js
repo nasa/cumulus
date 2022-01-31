@@ -56,6 +56,9 @@ const {
 const { parseException } = require('@cumulus/message/utils');
 const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
 
+const {
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
 const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
@@ -459,40 +462,16 @@ const _generateFilesFromGranule = async ({
   });
 };
 
-const writeGranuleToDynamoAndEs = async (params) => {
+const _writeGranuleRecords = async (params) => {
   const {
+    postgresGranuleRecord,
     apiGranuleRecord,
-    granuleModel,
+    knex,
     esClient = await Search.es(),
+    granuleModel,
+    executionCumulusId,
+    granulePgModel,
   } = params;
-  try {
-    await granuleModel.storeGranule(apiGranuleRecord);
-    await upsertGranule({
-      esClient,
-      updates: apiGranuleRecord,
-      index: process.env.ES_INDEX,
-    });
-  } catch (writeError) {
-    log.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${apiGranuleRecord.granuleId}`);
-    // On error, delete the Dynamo record to ensure that all systems
-    // stay in sync
-    await granuleModel.delete({
-      granuleId: apiGranuleRecord.granuleId,
-      collectionId: apiGranuleRecord.collectionId,
-    });
-    throw writeError;
-  }
-};
-
-const _writeGranuleRecords = async ({
-  postgresGranuleRecord,
-  apiGranuleRecord,
-  knex,
-  esClient,
-  granuleModel,
-  executionCumulusId,
-  granulePgModel,
-}) => {
   let pgGranule;
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
@@ -505,10 +484,11 @@ const _writeGranuleRecords = async ({
         trx,
         granulePgModel,
       });
-      await writeGranuleToDynamoAndEs({
-        apiGranuleRecord,
+      await granuleModel.storeGranule(apiGranuleRecord);
+      await upsertGranule({
         esClient,
-        granuleModel,
+        updates: apiGranuleRecord,
+        index: process.env.ES_INDEX,
       });
     });
     log.info(
@@ -522,7 +502,25 @@ const _writeGranuleRecords = async ({
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
-    if (isStatusFinalState(apiGranuleRecord.status)
+    let granuleExists = true;
+    try {
+      await granulePgModel.get(knex, {
+        granule_id: pgGranule.granule_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
+      });
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        granuleExists = false;
+      }
+    }
+    if (!granuleExists) {
+      // On error, delete the Dynamo record to ensure that all systems
+      // stay in sync
+      await granuleModel.delete({
+        granuleId: apiGranuleRecord.granuleId,
+        collectionId: apiGranuleRecord.collectionId,
+      });
+    } else if (isStatusFinalState(apiGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
       const originalError = apiGranuleRecord.error;
 
