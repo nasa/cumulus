@@ -117,21 +117,23 @@ npm run update
 Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.
 
 #### 2B. Verify Lerna
+
 **Note:** Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
 Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
 It's useful to use the search feature of your code editor or `grep` to see if there any references to the ***old*** package versions.
 In bash shell you can run
+
 ```bash
 find . -name package.json -exec grep -nH "@cumulus/.*MAJOR\.MINOR\.PATCH.*" {} \;
 ```
+
 Verify that each of those is updated to the ***new*** `MAJOR.MINOR.PATCH` verion you are trying to release.
 
 A similar search for alpha and beta versions should be run on the release version and any problems should be fixed.
+
 ```bash
 find . -name package.json -exec grep -nHE "MAJOR\.MINOR\.PATCH.*(alpha|beta)" {} \;
 ```
-
-
 
 ### 3. Check Cumulus Dashboard PRs for Version Bump
 
