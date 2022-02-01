@@ -858,6 +858,7 @@ Copy an S3 object to another location in S3 using a multipart copy
 | [params.sourceObject] | <code>AWS.S3.HeadObjectOutput</code> |  | Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+| [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
 <a name="module_S3..moveObject"></a>
 
@@ -875,6 +876,7 @@ Move an S3 object to another location in S3
 | params.destinationKey | <code>string</code> |  |  |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+| [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
 <a name="module_SNS"></a>
 
