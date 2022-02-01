@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hyrax-metadata-updates",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Update granule metadata with hooks to OPeNDAP URL",
   "main": "index.js",
   "directories": {

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Download and Parse a given PDR",
   "license": "Apache-2.0",
   "main": "index.js",
@@ -40,6 +40,6 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@cumulus/test-data": "10.0.0-beta.0"
+    "@cumulus/test-data": "10.0.0"
   }
 }

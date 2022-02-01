@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {

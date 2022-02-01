@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -48,7 +48,7 @@
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "10.0.0-beta.0",
-    "@cumulus/test-data": "10.0.0-beta.0"
+    "@cumulus/schemas": "10.0.0",
+    "@cumulus/test-data": "10.0.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-granules",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Add discovered granules to the queue",
   "main": "index.js",
   "directories": {

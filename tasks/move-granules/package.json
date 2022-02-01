@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/move-granules",
-  "version": "10.0.0-beta.0",
+  "version": "10.0.0",
   "description": "Move granule files from staging to final location",
   "main": "index.js",
   "directories": {
@@ -47,6 +47,6 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@cumulus/schemas": "10.0.0-beta.0"
+    "@cumulus/schemas": "10.0.0"
   }
 }
