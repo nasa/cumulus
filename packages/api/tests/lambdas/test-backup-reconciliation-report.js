@@ -2,15 +2,26 @@
 
 const test = require('ava');
 const rewire = require('rewire');
+const sinon = require('sinon');
+const sortBy = require('lodash/sortBy');
 const { randomId } = require('@cumulus/common/test-utils');
+const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
-const { fileConflictTypes } = require('../../lambdas/backup-reconciliation-report');
+const { fileConflictTypes, reconciliationReportForGranules } = require('../../lambdas/backup-reconciliation-report');
 const BRP = rewire('../../lambdas/backup-reconciliation-report');
+const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 const isFileExcludedFromOrca = BRP.__get__('isFileExcludedFromOrca');
 const getReportForOneGranule = BRP.__get__('getReportForOneGranule');
+
+let esAlias;
+let esIndex;
+let esClient;
 
 function fakeOrcaGranuleFactory(options = {}) {
   return {
@@ -46,6 +57,7 @@ function fakeCollectionsAndGranules() {
   });
   const mismatchedCumulusGranule = {
     ...fakeGranuleFactoryV2(),
+    granuleId: randomId('mismatchedGranuleId'),
     collectionId: 'fakeCollection___v1',
     provider: 'fakeProvider',
     files: [
@@ -101,6 +113,7 @@ function fakeCollectionsAndGranules() {
   const orcaOnlyGranule = fakeOrcaGranuleFactory();
   const matchedCumulusGranule = {
     ...fakeGranuleFactoryV2(),
+    granuleId: randomId('matchedGranuleId'),
     collectionId: 'fakeCollection___v2',
     provider: 'fakeProvider2',
     files: [
@@ -138,7 +151,23 @@ function fakeCollectionsAndGranules() {
   };
 }
 
-test('isFileExcludedFromOrca returns true for configured file types', (t) => {
+test.beforeEach(async (t) => {
+  t.context.stackName = randomId('stack');
+  t.context.systemBucket = randomId('systembucket');
+  process.env.system_bucket = t.context.systemBucket;
+
+  esAlias = randomId('esalias');
+  esIndex = randomId('esindex');
+  process.env.ES_INDEX = esAlias;
+  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  esClient = await Search.es();
+});
+
+test.afterEach.always(async () => {
+  await esClient.indices.delete({ index: esIndex });
+});
+
+test.serial('isFileExcludedFromOrca returns true for configured file types', (t) => {
   const collectionsConfig = {
     collectionId1: {
       orca: {
@@ -156,7 +185,20 @@ test('isFileExcludedFromOrca returns true for configured file types', (t) => {
   t.false(isFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
 });
 
-test('getReportForOneGranule returns correctly report for one granule', (t) => {
+test.serial('getReportForOneGranule reports one granule with no file discrepancy', (t) => {
+  const collectionsConfig = {};
+  const {
+    matchedCumulusGranule: cumulusGranule,
+    matchedOrcaGranule: orcaGranule,
+  } = fakeCollectionsAndGranules();
+  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
+  console.log(report);
+  t.true(report.ok);
+  t.is(report.okFilesCount, 1);
+  t.is(report.mismatchedFiles.length, 0);
+});
+
+test.serial('getReportForOneGranule reports one granule with file discrepancy', (t) => {
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
@@ -188,4 +230,43 @@ test('getReportForOneGranule returns correctly report for one granule', (t) => {
       file.fileName.endsWith('onlyInOrca.jpg') && file.reason === fileConflictTypes.onlyInOrca).length,
     1
   );
+});
+
+test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
+  const {
+    fakeCollectionV1,
+    fakeCollectionV2,
+    mismatchedCumulusGranule,
+    mismatchedOrcaGranule,
+    cumulusOnlyGranule,
+    orcaOnlyGranule,
+    matchedCumulusGranule,
+    matchedOrcaGranule,
+  } = fakeCollectionsAndGranules();
+
+  const esGranules = [mismatchedCumulusGranule, cumulusOnlyGranule, matchedCumulusGranule];
+  const esCollections = [fakeCollectionV1, fakeCollectionV2];
+
+  // add granules and related collections to es and db
+  await Promise.all(
+    esCollections.map(async (collection) => {
+      await indexer.indexCollection(esClient, collection, esAlias);
+    })
+  );
+  await Promise.all(
+    esGranules.map(async (granule) => {
+      await indexer.indexGranule(esClient, granule, esAlias);
+    })
+  );
+
+  const orcaGranules = sortBy([mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule], ['id']);
+  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
+  searchOrcaStub.resolves({ anotherPage: false, granules: orcaGranules });
+
+  const { granulesReport } = await reconciliationReportForGranules({});
+  console.log(granulesReport);
+  ORCASearchCatalogQueue.prototype.searchOrca.restore();
+  t.is(granulesReport.okCount, 1);
+  t.is(granulesReport.okFilesCount, 3);
+  t.is(granulesReport.mismatchedFilesCount, 3);
 });

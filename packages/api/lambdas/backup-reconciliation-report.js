@@ -23,7 +23,7 @@ const ORCASearchCatalogQueue = require('../lib/ORCASearchCatalogQueue');
 
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
-const fileConflictTypes = {
+const fileDiscrepancyTypes = {
   shouldExcludedFromOrca: 'shouldExcludedFromOrca',
   onlyInCumulus: 'onlyInCumulus',
   onlyInOrca: 'onlyInOrca',
@@ -100,7 +100,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
           ...cumulusFiles[fileName],
           orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
           orcaKey: orcaFiles[fileName].keyPath,
-          reason: fileConflictTypes.shouldExcludedFromOrca,
+          reason: fileDiscrepancyTypes.shouldExcludedFromOrca,
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
@@ -111,7 +111,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         const conflictFile = {
           fileName,
           ...cumulusFiles[fileName],
-          reason: fileConflictTypes.onlyInCumulus,
+          reason: fileDiscrepancyTypes.onlyInCumulus,
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
       }
@@ -120,13 +120,14 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         fileName,
         orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
         orcaKey: orcaFiles[fileName].keyPath,
-        reason: fileConflictTypes.onlyInOrca,
+        reason: fileDiscrepancyTypes.onlyInOrca,
       };
       oneGranuleReport.mismatchedFiles.push(conflictFile);
     }
   });
 
-  if (oneGranuleReport.okFilesCount === allFileNames.length) oneGranuleReport.ok = true;
+  oneGranuleReport.ok = allFileNames.length > 0
+    && oneGranuleReport.okFilesCount === allFileNames.length;
 
   return oneGranuleReport;
 }
@@ -150,6 +151,7 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
   const granReport = getReportForOneGranule({
     collectionsConfig, cumulusGranule, orcaGranule,
   });
+  console.log(granReport);
 
   if (granReport.ok) {
     granulesReport.okCount += 1;
@@ -184,7 +186,11 @@ async function reconciliationReportForGranules(params) {
     okFilesCount: 0,
     mismatchedFilesCount: 0,
     mismatchedGranules: [],
+    onlyInCumulus: [],
+    onlyInOrca: [],
   };
+
+  const collectionsConfig = await fetchESCollections(params);
 
   const esSearchParams = convertToESGranuleSearchParams(params);
   log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
@@ -198,7 +204,6 @@ async function reconciliationReportForGranules(params) {
   );
 
   const orcaGranulesIterator = new ORCASearchCatalogQueue(esSearchParams);
-  const collectionsConfig = await fetchESCollections(params);
 
   try {
     let [nextCumulusItem, nextOrcaItem] = await Promise.all(
@@ -207,8 +212,7 @@ async function reconciliationReportForGranules(params) {
 
     while (nextCumulusItem && nextOrcaItem) {
       const nextCumulusId = `${nextCumulusItem.granuleId}:${nextCumulusItem.collectionId}`;
-      const nextOrcaId = `${nextOrcaItem.granuleId}:${nextOrcaItem.collectionId}`;
-
+      const nextOrcaId = `${nextOrcaItem.id}:${nextOrcaItem.collectionId}`;
       if (nextCumulusId < nextOrcaId) {
         // Found an item that is only in Cumulus database and not in ORA.
         addGranuleToReport({
@@ -332,7 +336,7 @@ async function createBackupReconciliationReport(recReportParams) {
 }
 
 module.exports = {
-  fileConflictTypes,
+  fileConflictTypes: fileDiscrepancyTypes,
   reconciliationReportForGranules,
   createBackupReconciliationReport,
 };

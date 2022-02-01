@@ -53,13 +53,7 @@ class ORCASearchCatalogQueue {
     return this.items.shift();
   }
 
-  /**
-   * Query the CMR API to get the next batch of items
-   *
-   * @returns {Promise<undefined>} resolves when the queue has been updated
-   * @private
-   */
-  async fetchItems() {
+  async searchOrca() {
     let response;
     try {
       response = await postRequestToOrca({
@@ -78,10 +72,20 @@ class ORCASearchCatalogQueue {
       log.error(errMsg);
       throw new Error(errMsg);
     }
+    return body;
+  }
 
-    this.items = body.granules;
+  /**
+   * Query the CMR API to get the next batch of items
+   *
+   * @returns {Promise<undefined>} resolves when the queue has been updated
+   * @private
+   */
+  async fetchItems() {
+    const result = await this.searchOrca();
+    this.items = result.granules;
     // eslint-disable-next-line unicorn/no-null
-    if (body.granules.length === 0 || !body.anotherPage) this.items.push(null);
+    if (result.granules.length === 0 || !result.anotherPage) this.items.push(null);
 
     this.params.pageIndex += 1;
   }
