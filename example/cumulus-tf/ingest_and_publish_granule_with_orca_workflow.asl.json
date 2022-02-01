@@ -209,7 +209,8 @@
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "s3MultipartChunksizeMb": "{$.meta.collection.meta.s3MultipartChunksizeMb}"
           }
         }
       },
@@ -334,11 +335,12 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "buckets": "{$.meta.buckets}",
-            "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}",
-            "granules": "{$.meta.processed_granules}",
-            "files_config": "{$.meta.collection.files}"
+            "multipart_chunksize_mb": "{$.meta.collection.meta.s3MultipartChunksizeMb}",
+            "excludeFileTypes": "{$.meta.collection.meta.excludeFileTypes}",
+            "providerId": "{$.meta.provider.id}",
+            "executionId": "{$.cumulus_meta.execution_name}",
+            "collectionShortname": "{$.meta.collection.name}",
+            "collectionVersion": "{$.meta.collection.version}"
           }
         }
       },

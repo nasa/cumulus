@@ -590,7 +590,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {number} [params.recReportParams.StartTimestamp]
  * @param {number} [params.recReportParams.EndTimestamp]
  * @param {string} [params.recReportparams.collectionIds]
- * @returns {Promise<Object>}                    - a reconcilation report
+ * @returns {Promise<Object>}                    - a reconciliation report
  */
 async function reconciliationReportForCumulusCMR(params) {
   log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);
@@ -693,7 +693,7 @@ async function createReconciliationReport(recReportParams) {
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 
   // Internal consistency check S3 vs Cumulus DBs
@@ -747,7 +747,7 @@ async function createReconciliationReport(recReportParams) {
   return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
-    Body: JSON.stringify(report),
+    Body: JSON.stringify(report, undefined, 2),
   }).promise();
 }
 

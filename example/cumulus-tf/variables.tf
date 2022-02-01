@@ -152,11 +152,12 @@ variable "urs_client_password" {
   type = string
 }
 
+# Optional
+
 variable "vpc_id" {
   type = string
+  default = null
 }
-
-# Optional
 
 variable "api_gateway_stage" {
   type        = string
@@ -185,6 +186,12 @@ variable "cumulus_distribution_url" {
   type        = string
   default     = null
   description = "The url of cumulus distribution API Gateway endpoint"
+}
+
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
 }
 
 variable "tea_distribution_url" {
@@ -323,6 +330,11 @@ variable "rds_connection_timing_configuration" {
   }
 }
 
+variable "rds_admin_access_secret_arn" {
+  description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
+  type        = string
+}
+
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
@@ -332,7 +344,7 @@ variable "async_operation_image_version" {
 variable "cumulus_process_activity_version" {
     description = "docker image version to use for python processing service"
     type = string
-    default = "1"
+    default = "4"
 }
 
 variable "ecs_task_image_version" {
@@ -344,7 +356,7 @@ variable "ecs_task_image_version" {
 variable "cumulus_test_ingest_image_version" {
     description = "docker image version to use for python test ingest processing service"
     type = string
-    default = "13"
+    default = "17"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
@@ -359,81 +371,19 @@ variable "include_orca" {
   default = true
 }
 
-variable "platform" {
-  default = "AWS"
+variable "orca_db_user_password" {
+  description = "Password for RDS database user authentication"
   type = string
-  description = "Indicates if running locally (onprem) or in AWS (AWS)."
 }
 
-variable "database_name" {
-  default = "disaster_recovery"
-  type = string
-  description = "Name of the ORCA database that contains state information."
-}
-
-variable "database_port" {
-  default = "5432"
-  type = string
-  description = "Port the database listens on."
-}
-
-variable "postgres_user_pw" {
-  type = string
-  description = "postgres database user password."
-}
-
-variable "database_app_user" {
-  default = "druser"
-  type = string
-  description = "ORCA application database user name."
-}
-
-variable "database_app_user_pw" {
-  type = string
-  description = "ORCA application database user password."
-}
-
-variable "orca_drop_database" {
-  default = "False"
-  type = string
-  description = "Tells ORCA to drop the database on deployments."
-}
-
-variable "ddl_dir" {
-  default = "ddl/"
-  type = string
-  description = "The location of the ddl dir that contains the sql to create the application database."
+variable "orca_default_bucket" {
+  type        = string
+  description = "Default ORCA S3 Glacier bucket to use."
 }
 
 variable "lambda_timeouts" {
   type = map(string)
   default = {}
-}
-
-variable "lambda_timeout" {
-  default = 300
-  type = number
-  description = "Lambda max time before a timeout error is thrown."
-}
-
-variable "restore_complete_filter_prefix" {
-  default = ""
-  type = string
-  description = ""
-}
-
-variable "copy_retry_sleep_secs" {
-  default = 0
-  type = number
-  description = "How many seconds to wait between retry calls to `copy_object`."
-}
-
-variable "default_tags" {
-  type = object({ team = string, application = string })
-  default = {
-    team : "DR",
-    application : "disaster-recovery"
-  }
 }
 
 variable "optional_dynamo_tables" {
@@ -452,4 +402,16 @@ variable "deploy_cumulus_distribution" {
   description = "If true, does not deploy the TEA distribution API"
   type        = bool
   default     = true
+}
+
+variable "vpc_tag_name" {
+  description = "Tag name to use for looking up VPC"
+  type = string
+  default = "Application VPC"
+}
+
+variable "subnets_tag_name" {
+  description = "Tag name to use for looking up VPC subnets"
+  type = string
+  default = "Private application us-east-1a *"
 }

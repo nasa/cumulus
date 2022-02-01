@@ -22,7 +22,7 @@ test('postKinesisReplays calls the callback with the expected object', async (t)
       path: '/replays',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   };
 
   const callback = (configObject) => {
@@ -53,7 +53,7 @@ test('replaySqsMessages calls the callback with the expected object and returns 
       path: '/replays/sqs',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   };
   const callback = (configObject) => {
     t.deepEqual(expected, configObject);

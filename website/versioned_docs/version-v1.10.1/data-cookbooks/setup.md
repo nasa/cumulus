@@ -7,7 +7,7 @@ original_id: setup
 
 # Setup
 
-### Getting setup to work with data-cookboooks
+### Getting setup to work with data-cookbooks
 
 In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.
 

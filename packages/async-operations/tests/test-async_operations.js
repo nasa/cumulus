@@ -18,9 +18,13 @@ const {
   AsyncOperationPgModel,
   migrationDir,
 } = require('@cumulus/db');
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
 
-const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
+const {
+  getLambdaConfiguration,
+  getLambdaEnvironmentVariables,
+  startAsyncOperation,
+} = require('../dist/async_operations');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
@@ -56,15 +60,17 @@ test.before(async (t) => {
     };
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
-    promise: () => Promise.resolve({
-      Environment: {
-        Variables: {
-          ES_HOST: 'es-host',
-          AsyncOperationsTable: 'async-operations-table',
-        },
+  t.context.functionConfig = {
+    Environment: {
+      Variables: {
+        ES_HOST: 'es-host',
+        AsyncOperationsTable: 'async-operations-table',
       },
-    }),
+    },
+  };
+
+  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
+    promise: () => Promise.resolve(t.context.functionConfig),
   });
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
@@ -96,6 +102,7 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -128,6 +135,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 
   const asyncOperationTaskDefinition = randomString();
   const cluster = randomString();
+  const callerLambdaName = randomString();
   const lambdaName = randomString();
   const payload = { x: randomString() };
   const stackName = randomString();
@@ -136,6 +144,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
+    callerLambdaName,
     description: randomString(),
     operationType: 'ES Index',
     payload,
@@ -148,7 +157,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
-  t.is(stubbedEcsRunTaskParams.launchType, 'EC2');
+  t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
@@ -176,6 +185,7 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
   await t.throwsAsync(startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -206,6 +216,7 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
   const result = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType: 'ES Index',
@@ -248,6 +259,7 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType,
@@ -296,6 +308,7 @@ test.serial('The startAsyncOperation writes records to the databases with correc
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType,
@@ -332,6 +345,7 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   const results = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -345,8 +359,42 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   t.is(results.taskArn, taskArn);
 });
 
-test('getLambdaEnvironmentVariables returns expected environment variables', async (t) => {
-  const vars = await getLambdaEnvironmentVariables('name');
+test.serial.only('The startAsyncOperation method throws error if callerLambdaName parameter is missing', async (t) => {
+  const stubbedAsyncOperationsModel = class {
+    create = sinon.stub();
+  };
+
+  stubbedEcsRunTaskParams = {};
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: [],
+  };
+
+  await t.throwsAsync(
+    startAsyncOperation({
+      asyncOperationTaskDefinition: randomString(),
+      cluster: randomString,
+      lambdaName: randomString,
+      description: randomString(),
+      operationType: 'ES Index',
+      payload: { x: randomString() },
+      stackName: randomString,
+      dynamoTableName: dynamoTableName,
+      knexConfig: knexConfig,
+      systemBucket,
+      useLambdaEnvironmentVariables: true,
+    }, stubbedAsyncOperationsModel),
+    { instanceOf: MissingRequiredArgument }
+  );
+});
+
+test('getLambdaConfiguration returns expected configuration', async (t) => {
+  const config = await getLambdaConfiguration('name');
+  t.deepEqual(config, t.context.functionConfig);
+});
+
+test('getLambdaEnvironmentVariables returns expected environment variables', (t) => {
+  const vars = getLambdaEnvironmentVariables(t.context.functionConfig);
 
   t.deepEqual(new Set(vars), new Set([
     { name: 'ES_HOST', value: 'es-host' },
@@ -370,6 +418,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
   await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',

@@ -20,8 +20,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "10.0.0-beta.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.3",
-    "@cumulus/integration-tests": "10.0.0-beta.0"
+    "@cumulus/aws-client": "9.9.0",
+    "@cumulus/cumulus-message-adapter-js": "2.0.4",
+    "@cumulus/integration-tests": "9.9.0"
   }
 }

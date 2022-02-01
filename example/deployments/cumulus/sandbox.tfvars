@@ -1,7 +1,7 @@
 buckets = {
   glacier = {
     name = "cumulus-test-sandbox-orca-glacier"
-    type = "glacier"
+    type = "orca"
   },
   internal = {
     name = "cumulus-test-sandbox-internal"
@@ -41,6 +41,8 @@ csdap_client_id = "csdap client id "
 csdap_client_password = "csdap client password"
 csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 
+default_s3_multipart_chunksize_mb = 128
+
 elasticsearch_client_config = {
   create_reconciliation_report_es_scroll_duration = "8m"
   create_reconciliation_report_es_scroll_size = 1500
@@ -57,4 +59,4 @@ saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/me
 thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
 
 include_orca = false
-orca_drop_database = "True"
+orca_default_bucket = "cumulus-test-sandbox-orca-glacier"

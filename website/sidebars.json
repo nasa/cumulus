@@ -52,6 +52,7 @@
       "tasks",
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
+      "workflow_tasks/lzards_backup",
       "workflow_tasks/move_granules",
       "workflow_tasks/parse_pdr",
       "workflow_tasks/queue_granules"
@@ -91,7 +92,8 @@
       "upgrade-notes/upgrade_tf_version_0.13.6",
       "upgrade-notes/upgrade-rds",
       "upgrade-notes/cumulus_distribution_migration",
-      "upgrade-notes/update-task-file-schemas"
+      "upgrade-notes/update-task-file-schemas",
+      "upgrade-notes/update-cma-2.0.2"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"

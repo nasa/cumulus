@@ -1,5 +1,5 @@
 locals {
-  cnm_to_cma_version  = "1.4.2"
+  cnm_to_cma_version  = "1.5.3"
   cnm_to_cma_filename = "cnmToGranule-${local.cnm_to_cma_version}.zip"
 }
 
@@ -35,7 +35,6 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT             = var.cmr_environment
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }

@@ -47,18 +47,65 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `sync-granule` task has been updated to support an optional configuration parameter `workflowStartTime`. The output payload of `sync-granule` now includes a `createdAt` time for each granule which is set to the
   provided `workflowStartTime` or falls back to `Date.now()` if not provided. Workflows using
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
+- Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
+all Cumulus workflow tasks
+- **CUMULUS-2783**
+  - A bug in the ECS cluster autoscaling configuration has been
+resolved. ECS clusters should now correctly autoscale by adding new cluster
+instances according to the [policy configuration](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/ecs_cluster.tf).
+  - Async operations that are started by these endpoints will be run as ECS tasks
+  with a launch type of Fargate, not EC2:
+    - `POST /deadLetterArchive/recoverCumulusMessages`
+    - `POST /elasticsearch/index-from-database`
+    - `POST /granules/bulk`
+    - `POST /granules/bulkDelete`
+    - `POST /granules/bulkReingest`
+    - `POST /migrationCounts`
+    - `POST /reconciliationReports`
+    - `POST /replays`
+    - `POST /replays/sqs`
 
 ### Added
 
+- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.15`
+- Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
+- Added Terraform data sources to `example/data-persistence-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
+- Added Terraform data sources to `example/rds-cluster-tf` module to retrieve default VPC and subnets in NGAP accounts
+  - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
+  - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to tag names used in subnets in for NGAP accounts
+- **CUMULUS-2299**
+  - Added support for SHA checksum types with hyphens (e.g. `SHA-256` vs `SHA256`) to tasks that calculate checksums.
 - **CUMULUS-2439**
   - Added CMR search client setting to the CreateReconciliationReport lambda function.
   - Added `cmr_search_client_config` tfvars to the archive and cumulus terraform modules.
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
+- **CUMULUS-2441**
+  - Added support for 'PROD' CMR environment.
+- **CUMULUS-2456**
+  - Updated api lambdas to query ORCA Private API
+  - Updated example/cumulus-tf/orca.tf to the ORCA release v4.0.0-Beta3
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
+- **CUMULUS-2684**
+  - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
+  - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
+- **CUMULUS-2747**
+  - Updated data management type doc to include additional fields for provider configurations
+- **CUMULUS-2773**
+  - Added a document to the workflow-tasks docs describing deployment, configuration and usage of the LZARDS backup task.
 
 ### Changed
 
+- Made `vpc_id` variable optional for `example/cumulus-tf` module
+- Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
+- Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
+- Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
+- **CUMULUS-1823**
+  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
 - **CUMULUS-2718**
@@ -66,6 +113,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated SyncGranules to provide `createdAt` on output based on `workflowStartTime` if provided,
   falling back to `Date.now()` if not provided.
   - Updated `task_config` of SyncGranule in example workflows
+- **CUMULUS-2735**
+  - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
+    large reports
+  - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
+    a policy role being exceeded
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2744**
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
@@ -79,12 +133,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Nested objects under `finalPayload.*` will not dynamically add new fields to mapping
     - Nested objects under `originalPayload.*` will not dynamically add new fields to mapping
     - Nested keys under `tasks` will not dynamically add new fields to mapping
+- **CUMULUS-2753**
+  - Updated example/cumulus-tf/orca.tf to the latest ORCA release v4.0.0-Beta2 which is compatible with granule.files file schema
+  - Updated /orca/recovery to call new lambdas request_status_for_granule and request_status_for_job.
+  - Updated orca integration test
 - [**PR #2569**](https://github.com/nasa/cumulus/pull/2569)
   - Fixed `TypeError` thrown by `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` when
     a granule's associated UMM-G JSON metadata file does not contain a `ProviderDates`
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
+- **CUMULUS-2775**
+  - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
+  of accepted status codes via `expectedStatusCodes`
+- [**PR #2611**](https://github.com/nasa/cumulus/pull/2611)
+  - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
+    to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
+    for providing the certificate.
+- **CUMULUS-2836**
+  - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
+    element, when beginningDateTime value is not
+    found in the metadata file.  The granule's temporal information is
+    returned so that both beginningDateTime and endingDateTime are set to the
+    discovered singleDateTimeValue.
+- **CUMULUS-2756**
+  - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes due to schema validation, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
+
+### Fixed
+
+- **CUMULUS-2775**
+  - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2783**
+  - Added missing lower bound on scale out policy for ECS cluster to ensure that
+  the cluster will autoscale correctly.
+- **CUMULUS-2835**
+  - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
 
 ## [v9.9.0] 2021-11-03
 
@@ -111,7 +194,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added Elasticsearch client scroll setting to the CreateReconciliationReport lambda function.
   - Added `elasticsearch_client_config` tfvars to the archive and cumulus terraform modules.
 - **CUMULUS-2683**
-  - Added `default_s3_multipart_chunksize_mb` setting to the `MoveGranules` lambda function.
+  - Added `default_s3_multipart_chunksize_mb` setting to the `move-granules` lambda function.
   - Added `default_s3_multipart_chunksize_mb` tfvars to the cumulus and ingest terraform modules.
   - Added optional parameter `chunkSize` to `@cumulus/aws-client/S3.moveObject` and
     `@cumulus/aws-client/S3.multipartCopyObject` to set the chunk size of the S3 multipart uploads.
@@ -121,8 +204,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
-- **CUMULUS-2743**
-  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
@@ -643,7 +724,7 @@ releases.
 
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
-    timeout for Knex library to acquire dataase connections
+    timeout for Knex library to acquire database connections
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
 - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
@@ -666,7 +747,7 @@ releases.
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic
-    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
+    `@cumulus/oauth-client` as a parent  class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
@@ -1603,7 +1684,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    serverless RDS Aurora/PostgreSQL database cluster to meet the PostgreSQL
     requirements for future releases.
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
@@ -1878,7 +1959,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   result in a "Client not connected" exception being thrown.
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly
   disconnect from the SFTP server when `list` is called.
-- Instances of `@cumulus/sftp-client/SftpClient` must now be expclicitly closed
+- Instances of `@cumulus/sftp-client/SftpClient` must now be explicitly closed
   by calling `.end()`
 - Instances of `@cumulus/sftp-client/SftpClient` no longer implicitly connect to
   the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are
