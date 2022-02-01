@@ -116,8 +116,22 @@ npm run update
 
 Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.
 
-**Note:** Lerna will struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`).
-Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct. It's useful to use the search feature of your code editor or `grep` to see if there any references to outdated package versions.
+#### 2B. Verify Lerna
+**Note:** Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
+Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
+It's useful to use the search feature of your code editor or `grep` to see if there any references to the ***old*** package versions.
+In bash shell you can run
+```bash
+find . -name package.json -exec grep -nH "@cumulus/.*MAJOR\.MINOR\.PATCH.*" {} \;
+```
+Verify that each of those is updated to the ***new*** `MAJOR.MINOR.PATCH` verion you are trying to release.
+
+A similar search for alpha and beta versions should be run on the release version and any problems should be fixed.
+```bash
+find . -name package.json -exec grep -nHE "MAJOR\.MINOR\.PATCH.*(alpha|beta)" {} \;
+```
+
+
 
 ### 3. Check Cumulus Dashboard PRs for Version Bump
 
@@ -134,9 +148,9 @@ Update the `CHANGELOG.md`. Put a header under the `Unreleased` section with the 
 
 Add a link reference for the github "compare" view at the bottom of the `CHANGELOG.md`, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-### 5. Update DATA_MODEL_CHANGELOG.md
+### 5. Update DATA\_MODEL\_CHANGELOG.md
 
-Similar to #4, make sure the DATA_MODEL_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
+Similar to #4, make sure the DATA\_MODEL\_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
 
 ### 6. Update CONTRIBUTORS.md
 
@@ -190,7 +204,7 @@ Commit and push these changes.
 
 ### 10. Create a git tag for the release
 
-Check out the minor version base branch now that your changes are merged in and do a `git pull`.
+Check out the minor version base branch (`release-1.2.x`) now that your changes are merged in and do a `git pull`.
 
 Ensure you are on the latest commit.
 
@@ -246,7 +260,7 @@ You should have been redirected to the `Branch Details` tab after creating the p
 
 - Run the branch using the `Run` button in the top right.
 
-Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
+Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
 ### 12. Create a new Cumulus release on github
 
