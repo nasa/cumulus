@@ -219,13 +219,13 @@ async function del(req, res) {
 
   await createRejectableTransaction(knex, async (trx) => {
     await rulePgModel.delete(trx, { name });
-    await deleteRuleResources(rule);
     await deleteRule({
       esClient,
       name,
       index: process.env.ES_INDEX,
       ignore: [404],
     });
+    if (rule) await deleteRuleResources(rule);
   });
 
   return res.send({ message: 'Record deleted' });

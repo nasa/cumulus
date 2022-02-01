@@ -1004,7 +1004,7 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch rule cannot be found'
   t.is(response.body.message, 'No record found');
 });
 
-test('DELETE deletes rule that exists in PostgreSQL and DynamoDB but not Elasticsearch', async (t) => {
+test('DELETE deletes rule that exists in PostgreSQL but not Elasticsearch', async (t) => {
   const {
     esRulesClient,
     rulePgModel,
