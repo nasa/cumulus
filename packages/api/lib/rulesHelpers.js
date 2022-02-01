@@ -246,7 +246,7 @@ async function deleteRuleResources(rule) {
     break;
   }
   case 'sns': {
-    if (rule.state === 'ENABLED') {
+    if (rule.enabled === true) {
       await deleteSnsTrigger(rule);
     }
     break;
@@ -261,6 +261,7 @@ module.exports = {
   deleteKinesisEventSource,
   deleteKinesisEventSources,
   deleteRuleResources,
+  deleteSnsTrigger,
   fetchAllRules,
   fetchEnabledRules,
   fetchRules,

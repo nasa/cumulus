@@ -16,6 +16,7 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
+const { deleteRuleResources } = require('../lib/rulesHelpers');
 const models = require('../models');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
@@ -199,9 +200,10 @@ async function del(req, res) {
     'rule',
     process.env.ES_INDEX
   );
+  let rule;
 
   try {
-    await rulePgModel.get(knex, { name });
+    rule = await rulePgModel.get(knex, { name });
   } catch (error) {
     // If rule doesn't exist in PG or ES, return not found
     if (error instanceof RecordDoesNotExist) {
@@ -217,6 +219,7 @@ async function del(req, res) {
 
   await createRejectableTransaction(knex, async (trx) => {
     await rulePgModel.delete(trx, { name });
+    await deleteRuleResources(rule);
     await deleteRule({
       esClient,
       name,

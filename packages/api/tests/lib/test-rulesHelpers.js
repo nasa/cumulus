@@ -37,11 +37,11 @@ process.env.messageConsumer = randomString();
 process.env.KinesisInboundEventLogger = randomString();
 const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 
-const createEventSourceMapping = async (item) => {
+const createEventSourceMapping = async (rule) => {
   // create event source mapping
   const eventSourceMapping = eventLambdas.map((lambda) => {
     const params = {
-      EventSourceArn: item.value,
+      EventSourceArn: rule.value,
       FunctionName: lambda,
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
@@ -501,17 +501,173 @@ test.serial('isEventSourceMappingShared returns false if a rule does not share a
   t.false(await rulesHelpers.isEventSourceMappingShared(newRule, eventType));
 });
 
-test.serial.skip('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
+test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
+  const sandbox = sinon.createSandbox();
+  sandbox.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const snsTopicArn = randomString();
+  const params = {
+    arn: randomString(),
+    type: 'sns',
+    enabled: true,
+    value: snsTopicArn,
+  };
+  const snsRule = fakeRuleRecordFactory(params);
+
+  await rulesHelpers.deleteSnsTrigger(snsRule);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: snsRule.arn,
+  }));
+
+  t.teardown(() => {
+    sandbox.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+  });
 });
 
-test.serial.skip('deleteRuleResources correctly deletes resources for scheduled rule', async (t) => {
+test.serial('deleteRuleResources correctly deletes resources for scheduled rule', async (t) => {
+  const params = {
+    type: 'scheduled',
+    enabled: true,
+    value: 'rate(1 minute)',
+  };
+  const sandbox = sinon.createSandbox();
+  sandbox.stub(awsServices, 'cloudwatchevents')
+    .returns({
+      removeTargets: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      deleteRule: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const scheduledRule = fakeRuleRecordFactory(params);
+  const name = `${process.env.stackName}-custom-${scheduledRule.name}`;
+  const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
+  const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
+
+  await rulesHelpers.deleteRuleResources(scheduledRule);
+
+  t.true(deleteRuleSpy.called);
+  t.true(deleteRuleSpy.calledWith({
+    Name: name,
+  }));
+
+  t.true(removeTargetsSpy.called);
+  t.true(removeTargetsSpy.calledWith({
+    Ids: ['lambdaTarget'],
+    Rule: name,
+  }));
+  t.teardown(() => {
+    deleteRuleSpy.restore();
+    removeTargetsSpy.restore();
+    sandbox.restore();
+  });
 });
 
-test.serial.skip('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+test.serial('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+  await rulePgModel.create(testKnex, kinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings(kinesisRule);
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+
+  await rulesHelpers.deleteRuleResources(kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
+  const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
+  const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
+
+  t.is(deletedConsumerEventMappings.length, 0);
+  t.is(deletedLogEventMappings.length, 0);
 });
 
-test.serial.skip('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
-});
+test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const snsTopicArn = randomString();
+  const params = {
+    arn: randomString(),
+    type: 'sns',
+    enabled: true,
+    value: snsTopicArn,
+  };
+  const snsRule = fakeRuleRecordFactory(params);
 
-test.serial.skip('deleteRuleResources correctly deletes resources for sqs rule', async (t) => {
+  await rulesHelpers.deleteRuleResources(snsRule);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: snsRule.arn,
+  }));
+
+  t.teardown(() => {
+    lambdaStub.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+  });
 });
