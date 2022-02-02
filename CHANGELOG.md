@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added 
+
+* Added
+  ```
+        "events:PutTargets",
+        "events:PutRule",
+        "events:DescribeRule",
+  ```
+  to tf-modules/ingest/iam.tf to address this error:
+  ```
+  Error: error creating Step Function State Machine (xxx): AccessDeniedException: 'arn:aws:iam::XXX:role/xxx-steprole' is not authorized to create managed-rule.
+  ```
+
 ## [v10.0.0] 2022-02-01
 
 ### Migration steps
