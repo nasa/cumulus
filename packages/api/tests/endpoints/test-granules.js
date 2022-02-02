@@ -2174,7 +2174,7 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
   t.is(Messages, undefined);
 });
 
-test.serial('put() rolls back DynamoDB/PostgreSQL/SNS records if writing to Elasticsearch fails', async (t) => {
+test.serial('put() rolls back DynamoDB/PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
   const {
     esClient,
     executionUrl,
