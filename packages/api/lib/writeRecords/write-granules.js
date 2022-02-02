@@ -502,46 +502,64 @@ const _writeGranuleRecords = async (params) => {
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
-    let granuleExists = true;
-    try {
-      await granulePgModel.get(knex, {
-        granule_id: pgGranule.granule_id,
-        collection_cumulus_id: pgGranule.collection_cumulus_id,
-      });
-    } catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        granuleExists = false;
+    // Align dynamo granule record with postgres dynamo record
+    let pgGranuleExists;
+    let latestPgGranule;
+    if (pgGranule) {
+      try {
+        latestPgGranule = await granulePgModel.get(knex, {
+          granule_id: pgGranule.granule_id,
+          collection_cumulus_id: pgGranule.collection_cumulus_id,
+        });
+        pgGranuleExists = true;
+      } catch (getPgGranuleError) {
+        log.error(`Could not retrieve latest postgres record for granule_id ${pgGranule.granule_id} because ${JSON.stringify(getPgGranuleError)}`);
+        if (getPgGranuleError instanceof RecordDoesNotExist) {
+          pgGranuleExists = false;
+        }
       }
-    }
-    if (!granuleExists) {
-      // On error, delete the Dynamo record to ensure that all systems
-      // stay in sync
+
       await granuleModel.delete({
         granuleId: apiGranuleRecord.granuleId,
         collectionId: apiGranuleRecord.collectionId,
       });
-    } else if (isStatusFinalState(apiGranuleRecord.status)
-      && thrownError.name === 'SchemaValidationError') {
-      const originalError = apiGranuleRecord.error;
-
-      const errors = [];
-      if (originalError) {
-        errors.push(originalError);
+      if (pgGranuleExists && latestPgGranule) {
+        log.info(`Recreating dynamo record aligned to existing postgres record: ${JSON.stringify(latestPgGranule)}`);
+        const alignedDynamoRecord = await translatePostgresGranuleToApiGranule(
+          {
+            granulePgRecord: latestPgGranule,
+            knexOrTransaction: knex,
+          }
+        );
+        await granuleModel.storeGranule(alignedDynamoRecord);
       }
-      const errorObject = {
-        Error: 'Failed writing files to PostgreSQL.',
-        Cause: thrownError.toString(),
-      };
-      errors.push(errorObject);
-      const errorsObject = {
-        errors: JSON.stringify(errors),
-      };
 
-      await updateGranuleStatusToFailed({
-        granule: apiGranuleRecord,
-        knex,
-        error: errorsObject,
-      });
+      // If granule is in a final state and the error thrown
+      // is a SchemaValidationError then update the granule
+      // status to failed
+      if (isStatusFinalState(apiGranuleRecord.status)
+        && thrownError.name === 'SchemaValidationError') {
+        const originalError = apiGranuleRecord.error;
+
+        const errors = [];
+        if (originalError) {
+          errors.push(originalError);
+        }
+        const errorObject = {
+          Error: 'Failed writing dynamoGranule due to SchemaValdationError.',
+          Cause: thrownError,
+        };
+        errors.push(errorObject);
+        const errorsObject = {
+          errors: JSON.stringify(errors),
+        };
+
+        await updateGranuleStatusToFailed({
+          granule: apiGranuleRecord,
+          knex,
+          error: errorsObject,
+        });
+      }
     }
     throw thrownError;
   }

@@ -2048,6 +2048,7 @@ test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to 
       throw new Error('something bad');
     },
     delete: () => Promise.resolve(),
+    create: () => Promise.resolve(),
   };
 
   const updatedGranule = {
@@ -2173,7 +2174,7 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
   t.is(Messages, undefined);
 });
 
-test.serial('put() does not write to DynamoDB/PostgreSQL/SNS if writing to Elasticsearch fails', async (t) => {
+test.serial('put() rolls back DynamoDB/PostgreSQL/SNS records if writing to Elasticsearch fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2217,18 +2218,28 @@ test.serial('put() does not write to DynamoDB/PostgreSQL/SNS if writing to Elast
   await put(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
-  // DynamoDB granule record should not exist due to rollbacks from
-  // ES failure which deletes the DynamoDB record to maintain consistency with PG
-  await t.throwsAsync(
-    t.context.granuleModel.get({
-      granuleId: newDynamoGranule.granuleId,
-    }),
-    { name: 'RecordDoesNotExist' }
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const expectedDynamoGranule = await translatePostgresGranuleToApiGranule(
+    {
+      granulePgRecord: actualPgGranule,
+      knexOrTransaction: knex,
+    }
+  );
+  const actualDynamoGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  // Remove size from each file object in the files array the file sizes are not being updated
+  // on the postgres side
+  actualDynamoGranule.files = actualDynamoGranule.files.map(({ size, ...file }) => file);
+  t.deepEqual(
+    actualDynamoGranule,
+    expectedDynamoGranule
   );
   t.deepEqual(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: newPgGranule.cumulus_id,
-    }),
+    actualPgGranule,
     newPgGranule
   );
   t.deepEqual(
