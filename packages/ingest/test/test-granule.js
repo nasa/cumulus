@@ -28,7 +28,6 @@ const {
   generateMoveFileParams,
   handleDuplicateFile,
   listVersionedObjects,
-  moveGranuleFiles,
   renameS3FileWithTimestamp,
   unversionFilename,
   moveGranuleFile,
@@ -55,9 +54,11 @@ test.before(async (t) => {
     version: collectionVersion,
   });
 
-  const collectionPgModel = new CollectionPgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
+  t.context.filePgModel = new FilePgModel();
 
-  const [pgCollection] = await collectionPgModel.create(
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
@@ -75,11 +76,38 @@ test.after.always(async (t) => {
 test.beforeEach(async (t) => {
   t.context.internalBucket = randomId('internal-bucket');
   t.context.destBucket = randomId('dest-bucket');
+  t.context.testPrefix = cryptoRandomString({ length: 10 });
+  t.context.flieName = cryptoRandomString({ length: 10 });
+  t.context.key = `${t.context.testPrefix}/${t.context.fileName}`;
 
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
     s3().createBucket({ Bucket: t.context.destBucket }).promise(),
   ]);
+
+  const { granulePgModel, filePgModel, internalBucket, key } = t.context;
+  const granuleId = cryptoRandomString({ length: 6 });
+
+  const [pgGranule] = await granulePgModel.create(
+    t.context.knex,
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId,
+        status: 'completed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+      }
+    )
+  );
+  t.context.pgGranule = pgGranule;
+  const granuleCumulusId = pgGranule.cumulus_id;
+
+  const params = { Bucket: internalBucket, Key: key, Body: randomString() };
+  await S3.s3PutObject(params);
+  await filePgModel.create(t.context.knex, {
+    granule_cumulus_id: granuleCumulusId,
+    bucket: internalBucket,
+    key,
+  });
 });
 
 test.afterEach(async (t) => {
@@ -87,200 +115,6 @@ test.afterEach(async (t) => {
     S3.recursivelyDeleteS3Bucket(t.context.internalBucket),
     S3.recursivelyDeleteS3Bucket(t.context.destBucket),
   ]);
-});
-
-test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
-  const bucket = t.context.internalBucket;
-  const secondBucket = t.context.destBucket;
-
-  const filenames = [
-    'test-one.txt',
-    'test-two.md',
-    'test-three.jpg',
-  ];
-
-  const sourceFilePromises = filenames.map(async (name) => {
-    const sourcefilePath = `origin/${name}`;
-    const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await S3.s3PutObject(params);
-    return {
-      name,
-      bucket,
-      key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath),
-    };
-  });
-
-  const destinationFilepath = 'destination';
-
-  const destinations = [
-    {
-      regex: '.*.txt$',
-      bucket,
-      filepath: destinationFilepath,
-    },
-    {
-      regex: '.*.md$',
-      bucket,
-      filepath: destinationFilepath,
-    },
-    {
-      regex: '.*.jpg$',
-      bucket: secondBucket,
-      filepath: destinationFilepath,
-    },
-  ];
-
-  const sourceFiles = await Promise.all(sourceFilePromises);
-
-  // ACT
-  await moveGranuleFiles(sourceFiles, destinations);
-
-  // ASSERT
-  const listObjectsResponse = await s3().listObjects({
-    Bucket: bucket,
-  }).promise();
-
-  t.is(listObjectsResponse.Contents.length, 2);
-
-  t.true(listObjectsResponse.Contents[0].Key.startsWith(destinationFilepath));
-  t.true(listObjectsResponse.Contents[1].Key.startsWith(destinationFilepath));
-
-  const secondListObjectsResponse = await s3().listObjects({
-    Bucket: secondBucket,
-  }).promise();
-
-  t.is((secondListObjectsResponse).Contents.length, 1);
-
-  t.true(
-    secondListObjectsResponse.Contents[0].Key.startsWith(destinationFilepath)
-  );
-});
-
-test('moveGranuleFiles only moves granule files specified with regex', async (t) => {
-  const bucket = t.context.internalBucket;
-  const secondBucket = t.context.destBucket;
-
-  const filenames = [
-    'included-in-move.txt',
-    'excluded-from-move',
-  ];
-
-  const sourceFilePromises = filenames.map(async (name) => {
-    const sourcefilePath = `origin/${name}`;
-    const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await S3.s3PutObject(params);
-    return {
-      name,
-      bucket,
-      key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath),
-    };
-  });
-
-  const destinationFilepath = 'destination';
-
-  const destinations = [
-    {
-      regex: '.*.txt$',
-      bucket: secondBucket,
-      filepath: destinationFilepath,
-    },
-  ];
-
-  const sourceFiles = await Promise.all(sourceFilePromises);
-  await moveGranuleFiles(sourceFiles, destinations);
-
-  const bucketListResponse = await s3().listObjects({
-    Bucket: bucket,
-  }).promise();
-
-  t.is(bucketListResponse.Contents.length, 1);
-
-  t.is(bucketListResponse.Contents[0].Key, 'origin/excluded-from-move');
-
-  const secondBucketListResponse = await s3().listObjects({
-    Bucket: secondBucket,
-  }).promise();
-
-  t.is(secondBucketListResponse.Contents.length, 1);
-
-  t.is(secondBucketListResponse.Contents[0].Key, 'destination/included-in-move.txt');
-});
-
-test('moveGranuleFiles returns an updated list of files in their new locations.', async (t) => {
-  const bucket = t.context.internalBucket;
-  const secondBucket = t.context.destBucket;
-
-  const filenames = [
-    'test-one.txt',
-    'test-two.md',
-    'test-three.jpg',
-  ];
-
-  const sourceFilePromises = filenames.map(async (name) => {
-    const sourcefilePath = `origin/${name}`;
-    const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await S3.s3PutObject(params);
-    return {
-      name,
-      bucket,
-      key: sourcefilePath,
-      filename: S3.buildS3Uri(bucket, sourcefilePath),
-    };
-  });
-
-  const destinationFilepath = 'destination';
-
-  const destinations = [
-    {
-      regex: '.*.txt$',
-      bucket,
-      filepath: destinationFilepath,
-    },
-    {
-      regex: '.*.md$',
-      bucket,
-      filepath: destinationFilepath,
-    },
-    {
-      regex: '.*.jpg$',
-      bucket: secondBucket,
-      filepath: destinationFilepath,
-    },
-  ];
-
-  const expectedUpdatedFiles = [
-    {
-      name: 'test-one.txt',
-      bucket: bucket,
-      key: 'destination/test-one.txt',
-    },
-    {
-      name: 'test-two.md',
-      bucket: bucket,
-      key: 'destination/test-two.md',
-    },
-    {
-      name: 'test-three.jpg',
-      bucket: secondBucket,
-      key: 'destination/test-three.jpg',
-    },
-  ];
-
-  const sourceFiles = await Promise.all(sourceFilePromises);
-
-  // ACT
-  const updatedFiles = await moveGranuleFiles(sourceFiles, destinations);
-
-  expectedUpdatedFiles.forEach((expected) => {
-    const updatedFile = updatedFiles.find(
-      (file) =>
-        file.bucket === expected.bucket
-        && file.key === expected.key
-    );
-    t.deepEqual(updatedFile, expected);
-  });
 });
 
 test('generateMoveFileParams generates correct parameters', (t) => {
@@ -661,15 +495,17 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
     moveFileParam,
     filePgModel,
     t.context.knex,
-    granuleCumulusId,
-    true
+    granuleCumulusId
   );
 
-  t.deepEqual({
-    bucket: secondBucket,
-    key,
-    name: key,
-  }, result);
+  t.deepEqual(
+    {
+      bucket: secondBucket,
+      key,
+      fileName,
+    },
+    result
+  );
 
   const listObjectsResponse = await s3().listObjects({
     Bucket: secondBucket,
@@ -688,62 +524,6 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
     bucket: secondBucket,
     key,
   });
-});
-
-test('moveGranuleFile moves a granule file and does not update postgres when writeToPostgres is false', async (t) => {
-  const bucket = t.context.internalBucket;
-  const secondBucket = t.context.destBucket;
-  const testPrefix = cryptoRandomString({ length: 10 });
-  const fileName = cryptoRandomString({ length: 10 });
-  const key = `${testPrefix}/${fileName}`;
-
-  const filePgModel = new FilePgModel();
-
-  const moveFileParam = {
-    source: {
-      Bucket: bucket,
-      Key: key,
-    },
-    target: {
-      Bucket: secondBucket,
-      Key: key,
-    },
-    file: {
-      bucket,
-      key,
-      name: key,
-    },
-  };
-
-  const params = { Bucket: bucket, Key: key, Body: randomString() };
-  await S3.s3PutObject(params);
-
-  const result = await moveGranuleFile(
-    moveFileParam,
-    filePgModel,
-    t.context.knex,
-    undefined,
-    false
-  );
-
-  t.deepEqual({
-    bucket: secondBucket,
-    key,
-    name: key,
-  }, result);
-
-  const listObjectsResponse = await s3().listObjects({
-    Bucket: secondBucket,
-    Prefix: testPrefix,
-  }).promise();
-  t.is(listObjectsResponse.Contents.length, 1);
-  t.is(listObjectsResponse.Contents[0].Key, key);
-
-  const pgFile = await filePgModel.search(t.context.knex, {
-    file_name: key,
-  });
-
-  t.is(pgFile.length, 0);
 });
 
 test('moveGranuleFile throws when writeToPostgres is true but postgresCumulusGranuleId is defined', async (t) => {
@@ -782,9 +562,7 @@ test('moveGranuleFile throws when writeToPostgres is true but postgresCumulusGra
 
 test('moveGranuleFile returns the expected MovedGranuleFile object if a source and target is missing from the moveFileParams', async (t) => {
   const bucket = t.context.internalBucket;
-  const testPrefix = cryptoRandomString({ length: 10 });
-  const fileName = cryptoRandomString({ length: 10 });
-  const key = `${testPrefix}/${fileName}`;
+  const { filePgModel, knex, pgGranule, key } = t.context;
 
   const moveFileParam = {
     file: {
@@ -796,42 +574,42 @@ test('moveGranuleFile returns the expected MovedGranuleFile object if a source a
 
   const actual = await moveGranuleFile(
     moveFileParam,
-    undefined,
-    undefined,
-    undefined,
-    false
+    filePgModel,
+    knex,
+    pgGranule.cumulus_id
   );
 
   t.deepEqual(actual, {
     bucket,
     key,
-    name: key,
   });
 });
 
 test('moveGranuleFile returns the expected MovedGranuleFile object the file only has a filename', async (t) => {
+  const { filePgModel, knex, pgGranule, key, internalBucket } = t.context;
+
   const moveFileParam = {
     file: {
-      filename: 's3://some/objectPath',
+      filename: `s3://${internalBucket}/${key}`,
     },
   };
 
   const actual = await moveGranuleFile(
     moveFileParam,
-    undefined,
-    undefined,
-    undefined,
-    false
+    filePgModel,
+    knex,
+    pgGranule.cumulus_id
   );
 
   t.deepEqual(actual, {
-    bucket: 'some',
-    key: 'objectPath',
-    name: undefined,
+    bucket: internalBucket,
+    key,
   });
 });
 
 test('moveGranuleFile throws if the file does not have expected keys and no source or target', async (t) => {
+  const { filePgModel, knex, pgGranule } = t.context;
+
   const moveFileParam = {
     file: {
       foobar: 's3://some/objectPath',
@@ -840,9 +618,8 @@ test('moveGranuleFile throws if the file does not have expected keys and no sour
 
   await t.throwsAsync(moveGranuleFile(
     moveFileParam,
-    undefined,
-    undefined,
-    undefined,
-    false
+    filePgModel,
+    knex,
+    pgGranule.cumulus_id
   ));
 });

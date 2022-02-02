@@ -66,6 +66,9 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2782**
+    - Update API granules endpoint `move` action to update granules in the index
+      and utilize postgres as the authoritative datastore
   - **CUMULUS-2769**
     - Update collection PUT endpoint to require existance of postgresql record
       and to ignore lack of dynamoDbRecord on update
@@ -188,6 +191,8 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 ### Removed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2782**
+    - Remove deprecated `@ingest/granule.moveGranuleFiles`
   - **CUMULUS-2770**
     - Removed `waitForModelStatus` from `example/spec/helpers/apiUtils` integration test helpers
   - **CUMULUS-2510**
