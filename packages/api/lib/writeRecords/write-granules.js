@@ -502,10 +502,13 @@ const _writeGranuleRecords = async (params) => {
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
-    // Align dynamo granule record with postgres dynamo record
-    let pgGranuleExists;
-    let latestPgGranule;
+    // If a postgres record was provided
+    // attempt to ensure alignment between postgress/dynamo/es
     if (pgGranule) {
+      // Align dynamo granule record with postgres record
+      // Retrieve the granule from postgres
+      let pgGranuleExists;
+      let latestPgGranule;
       try {
         latestPgGranule = await granulePgModel.get(knex, {
           granule_id: pgGranule.granule_id,
@@ -519,12 +522,13 @@ const _writeGranuleRecords = async (params) => {
         }
       }
 
+      // Delete the dynamo record (stays deleted if postgres record does not exist)
       await granuleModel.delete({
         granuleId: apiGranuleRecord.granuleId,
         collectionId: apiGranuleRecord.collectionId,
       });
-      if (pgGranuleExists && latestPgGranule) {
-        log.info(`Recreating dynamo record aligned to existing postgres record: ${JSON.stringify(latestPgGranule)}`);
+      // Recreate the dynamo record in alignment with postgres if the postgres record exists
+      if (pgGranuleExists) {
         const alignedDynamoRecord = await translatePostgresGranuleToApiGranule(
           {
             granulePgRecord: latestPgGranule,
