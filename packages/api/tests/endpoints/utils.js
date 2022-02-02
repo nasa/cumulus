@@ -9,6 +9,9 @@ const buildFakeExpressResponse = () => ({
     conflict: sinon.fake(),
   },
   send: sinon.fake(),
+  status: sinon.stub().returns({
+    send: sinon.fake(),
+  }),
 });
 
 module.exports = {

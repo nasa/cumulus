@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v10.0.0] 2022-02-01
+
 ### Migration steps
 
 - Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
@@ -47,10 +49,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
 - Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
 all Cumulus workflow tasks
+- **CUMULUS-2783**
+  - A bug in the ECS cluster autoscaling configuration has been
+resolved. ECS clusters should now correctly autoscale by adding new cluster
+instances according to the [policy configuration](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/ecs_cluster.tf).
+  - Async operations that are started by these endpoints will be run as ECS tasks
+  with a launch type of Fargate, not EC2:
+    - `POST /deadLetterArchive/recoverCumulusMessages`
+    - `POST /elasticsearch/index-from-database`
+    - `POST /granules/bulk`
+    - `POST /granules/bulkDelete`
+    - `POST /granules/bulkReingest`
+    - `POST /migrationCounts`
+    - `POST /reconciliationReports`
+    - `POST /replays`
+    - `POST /replays/sqs`
 
 ### Added
 
-- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.12`
+- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.15`
 - Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
   - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
   - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
@@ -68,6 +85,9 @@ all Cumulus workflow tasks
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
 - **CUMULUS-2441**
   - Added support for 'PROD' CMR environment.
+- **CUMULUS-2456**
+  - Updated api lambdas to query ORCA Private API
+  - Updated example/cumulus-tf/orca.tf to the ORCA release v4.0.0-Beta3
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2684**
@@ -83,6 +103,9 @@ all Cumulus workflow tasks
 - Made `vpc_id` variable optional for `example/cumulus-tf` module
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
+- Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
+- **CUMULUS-1823**
+  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
   - Transparent to users, remove typescript type `BucketType`.
 - **CUMULUS-2718**
@@ -95,6 +118,8 @@ all Cumulus workflow tasks
     large reports
   - Updated TEA version from 102 to 121 to address TEA deployment issue with the max size of
     a policy role being exceeded
+- **CUMULUS-2743**
+  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2744**
   - GET executions/status returns associated granules for executions retrieved from the Step Function API
 - **CUMULUS-2751**
@@ -125,11 +150,24 @@ all Cumulus workflow tasks
   - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
     to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
     for providing the certificate.
+- **CUMULUS-2836**
+  - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
+    element, when beginningDateTime value is not
+    found in the metadata file.  The granule's temporal information is
+    returned so that both beginningDateTime and endingDateTime are set to the
+    discovered singleDateTimeValue.
+- **CUMULUS-2756**
+  - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes due to schema validation, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
 
 ### Fixed
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2783**
+  - Added missing lower bound on scale out policy for ECS cluster to ensure that
+  the cluster will autoscale correctly.
+- **CUMULUS-2835**
+  - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
 
 ## [v9.9.0] 2021-11-03
 
@@ -166,10 +204,6 @@ all Cumulus workflow tasks
 ### Changed
 
 - Upgraded all Cumulus workflow tasks to use `@cumulus/cumulus-message-adapter-js` version `2.0.1`
-- **CUMULUS-1823**
-  - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
-- **CUMULUS-2743**
-  - Updated bamboo Dockerfile to upgrade pip as part of the image creation process
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
   - Updated providers model to try decrypting credentials before encryption to allow for better handling of updating providers
@@ -690,7 +724,7 @@ releases.
 
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
   - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
-    timeout for Knex library to acquire dataase connections
+    timeout for Knex library to acquire database connections
 - **CUMULUS-2208**
   - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
 - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
@@ -713,7 +747,7 @@ releases.
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic
-    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
+    `@cumulus/oauth-client` as a parent  class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
@@ -1650,7 +1684,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    serverless RDS Aurora/PostgreSQL database cluster to meet the PostgreSQL
     requirements for future releases.
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
@@ -1925,7 +1959,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   result in a "Client not connected" exception being thrown.
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly
   disconnect from the SFTP server when `list` is called.
-- Instances of `@cumulus/sftp-client/SftpClient` must now be expclicitly closed
+- Instances of `@cumulus/sftp-client/SftpClient` must now be explicitly closed
   by calling `.end()`
 - Instances of `@cumulus/sftp-client/SftpClient` no longer implicitly connect to
   the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are
@@ -5109,7 +5143,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.0...HEAD
+[v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0

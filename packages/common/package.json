@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "9.9.0",
+  "version": "10.0.0",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md --template templates/docs-API.hbs URLUtils.js util.js > docs/API.md",
-    "clean": "rm -f *.d.ts *.map",
+    "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
@@ -41,8 +41,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "9.9.0",
-    "@cumulus/logger": "9.9.0",
+    "@cumulus/errors": "10.0.0",
+    "@cumulus/logger": "10.0.0",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",

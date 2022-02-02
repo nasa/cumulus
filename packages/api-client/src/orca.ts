@@ -1,5 +1,5 @@
 import { invokeApi } from './cumulusApiClient';
-import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
+import { ApiGatewayLambdaHttpProxyResponse, HttpMethod, InvokeApiFunction } from './types';
 
 /**
  * Query orca recovery requests
@@ -12,20 +12,22 @@ import { ApiGatewayLambdaHttpProxyResponse, InvokeApiFunction } from './types';
  *                                      api lambda
  * @returns {Promise<Object>}         - the response from the callback
  */
-export const listRequests = async (params: {
+export const submitRequestToOrca = async (params: {
   prefix: string,
-  query?: { [key: string]: string },
+  httpMethod: HttpMethod,
+  path: string,
+  body: object,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, query, callback = invokeApi } = params;
-
+  const { prefix, httpMethod, path, body, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'GET',
+      httpMethod,
       resource: '/{proxy+}',
-      path: '/orca/recovery',
-      queryStringParameters: query,
+      headers: { 'Content-Type': 'application/json' },
+      path,
+      body: JSON.stringify(body),
     },
   });
 };

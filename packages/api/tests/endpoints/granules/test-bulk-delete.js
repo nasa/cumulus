@@ -9,7 +9,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const {
@@ -23,6 +23,9 @@ let jwtAuthToken;
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
+
+const { bulkDelete } = require('../../../endpoints/granules');
+const { buildFakeExpressResponse } = require('../utils');
 
 test.before(async () => {
   process.env.AsyncOperationsTable = randomString();
@@ -127,6 +130,32 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
+});
+
+test.serial('bulkDelete() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
+
+  const body = {
+    ids: expectedIds,
+    forceRemoveFromCmr: true,
+  };
+
+  const functionName = randomId('lambda');
+
+  await bulkDelete(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body,
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });
 
 test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and ES query', async (t) => {
