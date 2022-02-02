@@ -18,6 +18,8 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
+  fakeRuleRecordFactory,
+  RulePgModel,
 } = require('@cumulus/db');
 const {
   constructCollectionId,
@@ -31,13 +33,11 @@ const {
 
 const models = require('../../../models');
 const {
-  fakeCollectionFactory,
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
-const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const { del } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
@@ -53,7 +53,6 @@ const { buildFakeExpressResponse } = require('../utils');
 
 let jwtAuthToken;
 let accessTokenModel;
-let ruleModel;
 
 const testDbName = randomString(12);
 
@@ -83,7 +82,6 @@ test.before(async (t) => {
 
   t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await t.context.collectionModel.createTable();
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -92,9 +90,7 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  process.env.RulesTable = randomString();
-  ruleModel = new models.Rule();
-  await ruleModel.createTable();
+  t.context.rulePgModel = new RulePgModel();
 
   await s3().putObject({
     Bucket: process.env.system_bucket,
@@ -104,8 +100,8 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.testCollection = fakeCollectionFactory();
-  await t.context.collectionModel.create(t.context.testCollection);
+  t.context.testCollection = fakeCollectionRecordFactory();
+  await t.context.collectionPgModel.create(t.context.testKnex, t.context.testCollection);
 
   const topicName = randomString();
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
@@ -144,7 +140,6 @@ test.after.always(async (t) => {
   await t.context.collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
-  await ruleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -153,7 +148,10 @@ test.after.always(async (t) => {
 });
 
 test('Attempting to delete a collection without an Authorization header returns an Authorization Missing response', async (t) => {
-  const { testCollection } = t.context;
+  const {
+    testCollection,
+    testKnex,
+  } = t.context;
   const response = await request(app)
     .delete(`/collections/${testCollection.name}/${testCollection.version}`)
     .set('Accept', 'application/json')
@@ -161,9 +159,9 @@ test('Attempting to delete a collection without an Authorization header returns 
 
   t.is(response.status, 401);
   t.true(
-    await t.context.collectionModel.exists(
-      testCollection.name,
-      testCollection.version
+    await t.context.collectionPgModel.exists(
+      testKnex,
+      { name: testCollection.name, version: testCollection.version }
     )
   );
 });
@@ -181,7 +179,7 @@ test('Attempting to delete a collection with an invalid access token returns an 
 test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('DELETE returns a 404 if PostgreSQL collection cannot be found', async (t) => {
-  const nonExistentCollection = fakeCollectionFactory();
+  const nonExistentCollection = fakeCollectionRecordFactory();
   const response = await request(app)
     .delete(`/collections/${nonExistentCollection.name}/${nonExistentCollection.version}`)
     .set('Accept', 'application/json')
@@ -198,10 +196,13 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL but 
   } = t.context;
   const testCollection = fakeCollectionRecordFactory();
   await collectionPgModel.create(testKnex, testCollection);
-  t.true(await collectionPgModel.exists(testKnex, {
-    name: testCollection.name,
-    version: testCollection.version,
-  }));
+  t.true(await collectionPgModel.exists(
+    testKnex,
+    {
+      name: testCollection.name,
+      version: testCollection.version,
+    }
+  ));
   t.false(
     await esCollectionClient.exists(
       constructCollectionId(testCollection.name, testCollection.version)
@@ -215,10 +216,13 @@ test.serial('DELETE successfully deletes if collection exists in PostgreSQL but 
     .expect(200);
 
   t.false(
-    await collectionPgModel.exists(t.context.testKnex, {
-      name: testCollection.name,
-      version: testCollection.version,
-    })
+    await collectionPgModel.exists(
+      t.context.testKnex,
+      {
+        name: testCollection.name,
+        version: testCollection.version,
+      }
+    )
   );
   t.false(
     await esCollectionClient.exists(
@@ -234,12 +238,15 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
     esCollectionClient,
     testKnex,
   } = t.context;
-  const testCollection = fakeCollectionFactory();
+  const testCollection = fakeCollectionRecordFactory();
   await indexCollection(esClient, testCollection, process.env.ES_INDEX);
-  t.false(await collectionPgModel.exists(testKnex, {
-    name: testCollection.name,
-    version: testCollection.version,
-  }));
+  t.false(await collectionPgModel.exists(
+    testKnex,
+    {
+      name: testCollection.name,
+      version: testCollection.version,
+    }
+  ));
   t.true(
     await esCollectionClient.exists(
       constructCollectionId(testCollection.name, testCollection.version)
@@ -253,10 +260,13 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
     .expect(200);
 
   t.false(
-    await collectionPgModel.exists(t.context.testKnex, {
-      name: testCollection.name,
-      version: testCollection.version,
-    })
+    await collectionPgModel.exists(
+      t.context.testKnex,
+      {
+        name: testCollection.name,
+        version: testCollection.version,
+      }
+    )
   );
   t.false(
     await esCollectionClient.exists(
@@ -266,43 +276,31 @@ test.serial('DELETE successfully deletes if collection exists in Elasticsearch b
 });
 
 test.serial('Deleting a collection removes it from all data stores and publishes an SNS message', async (t) => {
-  const { originalCollection } = await createCollectionTestRecords(t.context);
+  const { originalPgRecord } = await createCollectionTestRecords(t.context);
 
-  t.true(
-    await t.context.collectionModel.exists(
-      originalCollection.name,
-      originalCollection.version
-    )
-  );
   t.true(await t.context.collectionPgModel.exists(t.context.testKnex, {
-    name: originalCollection.name,
-    version: originalCollection.version,
+    name: originalPgRecord.name,
+    version: originalPgRecord.version,
   }));
   t.true(
     await t.context.esCollectionClient.exists(
-      constructCollectionId(originalCollection.name, originalCollection.version)
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
     )
   );
 
   await request(app)
-    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.false(
-    await t.context.collectionModel.exists(
-      originalCollection.name,
-      originalCollection.version
-    )
-  );
   t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
-    name: originalCollection.name,
-    version: originalCollection.version,
+    name: originalPgRecord.name,
+    version: originalPgRecord.version,
   }));
   t.false(
     await t.context.esCollectionClient.exists(
-      constructCollectionId(originalCollection.name, originalCollection.version)
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
     )
   );
 
@@ -318,21 +316,23 @@ test.serial('Deleting a collection removes it from all data stores and publishes
   t.true(Date.now() > message.deletedAt);
   t.deepEqual(
     message.record,
-    { name: originalCollection.name, version: originalCollection.version }
+    { name: originalPgRecord.name, version: originalPgRecord.version }
   );
 });
 
 test.serial('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
-  const { originalCollection } = await createCollectionTestRecords(t.context);
+  const {
+    testKnex,
+    rulePgModel,
+  } = t.context;
 
-  const rule = fakeRuleFactoryV2({
-    collection: {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    },
-    rule: {
-      type: 'onetime',
-    },
+  const {
+    originalPgRecord,
+  } = await createCollectionTestRecords(t.context);
+
+  const rule = fakeRuleRecordFactory({
+    collection_cumulus_id: originalPgRecord.cumulus_id,
+    type: 'onetime',
   });
 
   // The workflow message template must exist in S3 before the rule can be created
@@ -342,30 +342,29 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  await rulePgModel.create(testKnex, rule);
 
   const response = await request(app)
-    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
 
   t.is(response.status, 409);
-  t.is(response.body.message, `Cannot delete collection with associated rules: ${rule.name}`);
+  t.true(response.body.message.includes('Cannot delete collection with associated rules'));
 });
 
 test.serial('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
-  const { collectionModel } = t.context;
-  const { originalCollection } = await createCollectionTestRecords(t.context);
+  const {
+    collectionPgModel,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const { originalPgRecord } = await createCollectionTestRecords(t.context);
 
-  const rule = fakeRuleFactoryV2({
-    collection: {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    },
-    rule: {
-      type: 'onetime',
-    },
+  const rule = fakeRuleRecordFactory({
+    collection_cumulus_id: originalPgRecord.cumulus_id,
+    type: 'onetime',
   });
 
   // The workflow message template must exist in S3 before the rule can be created
@@ -375,81 +374,25 @@ test.serial('Attempting to delete a collection with an associated rule does not 
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  await rulePgModel.create(testKnex, rule);
 
   await request(app)
-    .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(409);
 
-  t.true(await collectionModel.exists(originalCollection.name, originalCollection.version));
+  t.true(await collectionPgModel.exists(
+    testKnex,
+    {
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
+    }
+  ));
 });
 
-test.serial('del() does not remove from PostgreSQL/Elasticsearch or publish SNS message if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from Elasticsearch or publish SNS message if removing from PostgreSQL fails', async (t) => {
   const {
-    originalCollection,
-  } = await createCollectionTestRecords(
-    t.context
-  );
-
-  const fakeCollectionsModel = {
-    get: () => Promise.resolve(originalCollection),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    },
-    body: originalCollection,
-    testContext: {
-      knex: t.context.testKnex,
-      collectionsModel: fakeCollectionsModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: originalCollection.name,
-      version: originalCollection.version,
-    }),
-    originalCollection
-  );
-  t.true(
-    await t.context.collectionPgModel.exists(t.context.testKnex, {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    })
-  );
-  t.true(
-    await t.context.esCollectionClient.exists(
-      constructCollectionId(originalCollection.name, originalCollection.version)
-    )
-  );
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages, undefined);
-});
-
-test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS message if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalCollection,
     originalPgRecord,
   } = await createCollectionTestRecords(
     t.context
@@ -464,10 +407,10 @@ test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS mess
 
   const expressRequest = {
     params: {
-      name: originalCollection.name,
-      version: originalCollection.version,
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
     },
-    body: originalCollection,
+    body: originalPgRecord,
     testContext: {
       knex: t.context.testKnex,
       collectionPgModel: fakeCollectionPgModel,
@@ -481,22 +424,15 @@ test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS mess
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: originalCollection.name,
-      version: originalCollection.version,
-    }),
-    originalCollection
-  );
   t.true(
     await t.context.collectionPgModel.exists(t.context.testKnex, {
-      name: originalCollection.name,
-      version: originalCollection.version,
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
     })
   );
   t.true(
     await t.context.esCollectionClient.exists(
-      constructCollectionId(originalCollection.name, originalCollection.version)
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
     )
   );
   const { Messages } = await sqs().receiveMessage({
@@ -507,9 +443,9 @@ test.serial('del() does not remove from Dynamo/Elasticsearch or publish SNS mess
   t.is(Messages, undefined);
 });
 
-test.serial('del() does not remove from Dynamo/PostgreSQL or publish SNS message if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL or publish SNS message if removing from Elasticsearch fails', async (t) => {
   const {
-    originalCollection,
+    originalPgRecord,
   } = await createCollectionTestRecords(
     t.context
   );
@@ -522,10 +458,10 @@ test.serial('del() does not remove from Dynamo/PostgreSQL or publish SNS message
 
   const expressRequest = {
     params: {
-      name: originalCollection.name,
-      version: originalCollection.version,
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
     },
-    body: originalCollection,
+    body: originalPgRecord,
     testContext: {
       knex: t.context.testKnex,
       esClient: fakeEsClient,
@@ -539,22 +475,15 @@ test.serial('del() does not remove from Dynamo/PostgreSQL or publish SNS message
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: originalCollection.name,
-      version: originalCollection.version,
-    }),
-    originalCollection
-  );
   t.true(
     await t.context.collectionPgModel.exists(t.context.testKnex, {
-      name: originalCollection.name,
-      version: originalCollection.version,
+      name: originalPgRecord.name,
+      version: originalPgRecord.version,
     })
   );
   t.true(
     await t.context.esCollectionClient.exists(
-      constructCollectionId(originalCollection.name, originalCollection.version)
+      constructCollectionId(originalPgRecord.name, originalPgRecord.version)
     )
   );
   const { Messages } = await sqs().receiveMessage({

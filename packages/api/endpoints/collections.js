@@ -249,7 +249,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -263,7 +262,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let existingCollection;
   try {
     await collectionPgModel.get(knex, { name, version });
   } catch (error) {
@@ -279,19 +277,9 @@ async function del(req, res) {
   }
 
   try {
-    // Save DynamoDB collection record to recreate in case delete fails
-    existingCollection = await collectionsModel.get({ name, version });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await collectionPgModel.delete(trx, { name, version });
-        await collectionsModel.delete({ name, version });
         await deleteCollection({
           esClient,
           collectionId,
@@ -300,13 +288,13 @@ async function del(req, res) {
         });
         await publishCollectionDeleteSnsMessage({ name, version });
       });
-    } catch (innerError) {
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (existingCollection) {
-        await collectionsModel.create(existingCollection);
+    } catch (error) {
+      if (error.constraint === 'rules_collection_cumulus_id_foreign') {
+        log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
+        const message = `Cannot delete collection with associated rules: ${error.detail}`;
+        return res.boom.conflict(message);
       }
-      throw innerError;
+      throw error;
     }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
