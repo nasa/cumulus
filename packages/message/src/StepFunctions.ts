@@ -236,7 +236,7 @@ export const getCumulusMessageFromExecutionEvent = async (executionEvent: EventB
   )) as Message.CumulusMessage;
 
   const workflowStatus = executionStatusToWorkflowStatus(
-    executionEvent.detail.status as ExecutionStatusToWorkflowStatus
+    executionEvent.detail.status as ExecutionStatus
   );
   set(fullCumulusMessage, 'meta.status', workflowStatus);
 
