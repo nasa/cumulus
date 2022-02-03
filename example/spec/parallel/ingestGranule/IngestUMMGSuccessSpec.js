@@ -94,7 +94,7 @@ const getOnlineResourcesWithRetries = async (granule) =>
 
       return onlineResources;
     },
-    { retries: 60, maxTimeout: 1000 }
+    { retries: 60, maxTimeout: 5000, factor: 1.05 }
   );
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
