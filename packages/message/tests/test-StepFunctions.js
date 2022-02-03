@@ -284,9 +284,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
 
   const expectedMessage = {
     cumulus_meta: {
-      state_machine: 'arn:aws:states:us-east-1:111122223333:stateMachine:HelloWorld-StateMachine',
-      execution_name: 'my-execution-name',
-      workflow_start_time: 122,
+      ...input.cumulus_meta,
       workflow_stop_time: event.detail.stopDate,
     },
     meta: {
