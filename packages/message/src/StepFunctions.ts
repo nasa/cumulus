@@ -131,9 +131,9 @@ export const getFailedStepName = (
     const startEvents = previousEvents.filter(
       (e) => e.type === 'TaskStateEntered'
     );
-    return (
-      startEvents.pop()?.stateEnteredEventDetails?.name || 'UnknownFailedStepName'
-    );
+    const stateName = startEvents.pop()?.stateEnteredEventDetails?.name;
+    if (!stateName) throw new Error('TaskStateEntered Event Object did not have `stateEnteredEventDetails.name`');
+    return stateName;
   } catch (error) {
     log.info('Failed to determine a failed stepName from execution events.');
     log.error(error);
@@ -183,7 +183,7 @@ export const getFailedExecutionMessage = async (
 
     const lastFailedEvent = lastFailedEventStep(events);
     if (!lastFailedEvent) {
-      //log.warn(`No failed step events found in execution ${executionArn}`);
+      log.warn(`No failed step events found in execution ${executionArn}`);
       return amendedCumulusMessage;
     }
     const failedExecutionStepName = getFailedStepName(events, lastFailedEvent);
