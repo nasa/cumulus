@@ -24,10 +24,16 @@ import { getMessageExecutionArn } from './Executions';
 const log = new Logger({
   sender: '@cumulus/message/StepFunctions',
 });
-type ExecutionStatusToWorkflowStatus = ('ABORTED' | 'FAILED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED');
+type ExecutionStatus = ('ABORTED' | 'RUNNING' | 'TIMED_OUT' | 'SUCCEEDED' | 'FAILED');
 
-const executionStatusToWorkflowStatus = (executionStatus: ExecutionStatusToWorkflowStatus) => {
-  const statusMap = {
+type ExecutionStatusToWorkflowStatusMap = {
+  [K in ExecutionStatus]: Message.WorkflowStatus;
+};
+
+const executionStatusToWorkflowStatus = (
+  executionStatus: ExecutionStatus
+): Message.WorkflowStatus => {
+  const statusMap: ExecutionStatusToWorkflowStatusMap = {
     ABORTED: 'failed',
     FAILED: 'failed',
     RUNNING: 'running',
