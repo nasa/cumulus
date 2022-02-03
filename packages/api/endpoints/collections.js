@@ -277,34 +277,25 @@ async function del(req, res) {
   }
 
   try {
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await collectionPgModel.delete(trx, { name, version });
-        await deleteCollection({
-          esClient,
-          collectionId,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
-        await publishCollectionDeleteSnsMessage({ name, version });
+    await createRejectableTransaction(knex, async (trx) => {
+      await collectionPgModel.delete(trx, { name, version });
+      await deleteCollection({
+        esClient,
+        collectionId,
+        index: process.env.ES_INDEX,
+        ignore: [404],
       });
-    } catch (error) {
-      if (error.constraint === 'rules_collection_cumulus_id_foreign') {
-        log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
-        const message = `Cannot delete collection with associated rules: ${error.detail}`;
-        return res.boom.conflict(message);
-      }
-      throw error;
-    }
-    return res.send({ message: 'Record deleted' });
+      await publishCollectionDeleteSnsMessage({ name, version });
+    });
   } catch (error) {
-    log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
-    if (error instanceof AssociatedRulesError) {
-      const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
+    if (error.constraint === 'rules_collection_cumulus_id_foreign') {
+      log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
+      const message = `Cannot delete collection with associated rules: ${error.detail}`;
       return res.boom.conflict(message);
     }
     throw error;
   }
+  return res.send({ message: 'Record deleted' });
 }
 
 // express routes
