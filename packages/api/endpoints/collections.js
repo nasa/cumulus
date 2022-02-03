@@ -288,8 +288,8 @@ async function del(req, res) {
       await publishCollectionDeleteSnsMessage({ name, version });
     });
   } catch (error) {
+    log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
     if (error.constraint === 'rules_collection_cumulus_id_foreign') {
-      log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
       const message = `Cannot delete collection with associated rules: ${error.detail}`;
       return res.boom.conflict(message);
     }
