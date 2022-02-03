@@ -170,8 +170,7 @@ test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
     writeRecordsFunction: writeRecordsFunctionSpy,
   });
 
-  const messageArgs = writeRecordsFunctionSpy.getCalls().map((call) => call.args[0].cumulusMessage);
-  t.deepEqual(messageArgs[0], SQSCumulusMessage);
+  t.deepEqual(writeRecordsFunctionSpy.getCall(0).firstArg.cumulusMessage, SQSCumulusMessage);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {
