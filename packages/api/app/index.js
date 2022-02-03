@@ -13,10 +13,35 @@ const awsServerlessExpressMiddleware = require('aws-serverless-express/middlewar
 
 const { services } = require('@cumulus/aws-client');
 const { MissingRequiredEnvVar } = require('@cumulus/errors');
+const { secretsManager } = require('@cumulus/aws-client/services');
+const Logger = require('@cumulus/logger');
 
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
 
+const log = new Logger({ sender: '@api/index' });
+
+// Load Environment Variables
+// This should be done outside of the handler to minimize Secrets Manager calls.
+const initEnvVarsFunction = async () => {
+  if (!process.env.api_config_secret_id) {
+    log.warn('No process.env.api_config_secret_id set, *not* attempting to provide environment variable defaults');
+    return;
+  }
+  const response = await secretsManager().getSecretValue(
+    { SecretId: process.env.api_config_secret_id }
+  ).promise();
+  if (response.SecretString === undefined) {
+    throw new Error(`AWS Secret did not contain a stored value: ${process.env.api_config_secret_id}`);
+  }
+  const envSecret = JSON.parse(response.SecretString);
+  log.warn('Setting env vars');
+  log.warn(envSecret);
+  process.env = { ...envSecret, ...process.env };
+};
+const initEnvVars = initEnvVarsFunction();
+
+// Setup express app
 const app = express();
 app.use(awsServerlessExpressMiddleware.eventContext());
 
@@ -62,6 +87,7 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
+  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
   const { dynamoTableNamesParameterName } = process.env;
   if (!dynamoTableNamesParameterName) {
     throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
