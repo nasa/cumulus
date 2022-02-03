@@ -116,6 +116,7 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
 - Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
+- Increases wait time for CMR to return online resources in integration tests
 - **CUMULUS-1823**
   - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
