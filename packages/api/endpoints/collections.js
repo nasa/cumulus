@@ -30,7 +30,7 @@ const {
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
-const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
