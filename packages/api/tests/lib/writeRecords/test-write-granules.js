@@ -1502,7 +1502,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     esClient,
     'Create'
   ));
-  // t.true(error.message.includes('Granules Postgres error'));
+  t.true(error.message.includes('Granules Postgres error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await t.context.granulePgModel.exists(
@@ -1976,7 +1976,7 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
     granuleId,
     collectionId: constructCollectionId(name, version),
   });
-  const fakeErrorObject = { Error: 'This is a fake error', Cause: { Error: 'caused by some fake issue'}  };
+  const fakeErrorObject = { Error: 'This is a fake error', Cause: { Error: 'caused by some fake issue' } };
   await t.throwsAsync(
     updateGranuleStatusToFailed(
       { granule: badGranule, knex, error: fakeErrorObject, esClient }

@@ -2233,7 +2233,7 @@ test.serial('put() rolls back DynamoDB/PostgreSQL records and does not write to 
 
   // Remove size from each file object in the files array the file sizes are not being updated
   // on the postgres side
-  actualDynamoGranule.files = actualDynamoGranule.files.map(({ size, ...file }) => file);
+  actualDynamoGranule.files = actualDynamoGranule.files.map((file) => omit(file, ['size']));
   t.deepEqual(
     actualDynamoGranule,
     expectedDynamoGranule
