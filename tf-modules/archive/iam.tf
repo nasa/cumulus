@@ -334,6 +334,16 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
       var.rds_user_access_secret_arn
     ]
   }
+
+  statement {
+    actions = [
+      "sns:publish",
+      "sns:Subscribe",
+      "sns:Unsubscribe",
+      "sns:List*",
+    ]
+    resources = ["*"]
+  }
 }
 resource "aws_iam_role" "ecs_task_role" {
   name                 = "${var.prefix}-ecs-task_role"
