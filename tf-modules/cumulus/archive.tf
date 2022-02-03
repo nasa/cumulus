@@ -28,11 +28,11 @@ module "archive" {
 
   ecs_task_role      = {
     name = aws_iam_role.ecs_task_role.name,
-    arn  = aws_iam_role.ecs_task_role.name,
+    arn  = aws_iam_role.ecs_task_role.arn,
   }
   ecs_execution_role = {
     name = aws_iam_role.ecs_execution_role.name,
-    arn  = aws_iam_role.ecs_execution_role.name,
+    arn  = aws_iam_role.ecs_execution_role.arn,
   }
 
   vpc_id            = var.vpc_id
