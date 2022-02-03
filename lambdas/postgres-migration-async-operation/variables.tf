@@ -19,6 +19,16 @@ variable "ecs_cluster_name" {
   type = string
 }
 
+variable "ecs_execution_role_arn" {
+  description = "ARN of IAM role for initializing ECS tasks"
+  type = string
+}
+
+variable "ecs_task_role_arn" {
+  description = "ARN of IAM role for running ECS tasks"
+  type = string
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []
