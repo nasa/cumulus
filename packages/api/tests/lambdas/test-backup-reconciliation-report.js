@@ -139,6 +139,42 @@ function fakeCollectionsAndGranules() {
       },
     ],
   };
+
+  const matchedCumulusOnlyGranule = {
+    ...fakeGranuleFactoryV2(),
+    granuleId: randomId('matchedCumulusOnlyGranuleId'),
+    collectionId: 'fakeCollection___v1',
+    files: [
+      {
+        bucket: 'cumulus-protected-bucket',
+        fileName: 'fakeFileName.xml',
+        key: 'fakePath/fakeFileName.xml',
+      },
+      {
+        bucket: 'cumulus-protected-bucket',
+        fileName: 'fakeFileName.hdf.met',
+        key: 'fakePath/fakeFileName.hdf.met',
+      },
+    ],
+  };
+
+  const mismatchedCumulusOnlyGranule = {
+    ...fakeGranuleFactoryV2(),
+    granuleId: randomId('mismatchedCumulusOnlyGranuleId'),
+    collectionId: 'fakeCollection___v1',
+    files: [
+      {
+        bucket: 'cumulus-protected-bucket',
+        fileName: 'fakeFileName.xml',
+        key: 'fakePath/fakeFileName.xml',
+      },
+      {
+        bucket: 'cumulus-protected-bucket',
+        fileName: 'fakeFileName.hdf',
+        key: 'fakePath/fakeFileName.hdf',
+      },
+    ],
+  };
   return {
     fakeCollectionV1,
     fakeCollectionV2,
@@ -148,6 +184,8 @@ function fakeCollectionsAndGranules() {
     orcaOnlyGranule,
     matchedCumulusGranule,
     matchedOrcaGranule,
+    matchedCumulusOnlyGranule,
+    mismatchedCumulusOnlyGranule,
   };
 }
 
@@ -185,7 +223,7 @@ test.serial('isFileExcludedFromOrca returns true for configured file types', (t)
   t.false(isFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
 });
 
-test.serial('getReportForOneGranule reports one granule with no file discrepancy', (t) => {
+test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', (t) => {
   const collectionsConfig = {};
   const {
     matchedCumulusGranule: cumulusGranule,
@@ -198,7 +236,7 @@ test.serial('getReportForOneGranule reports one granule with no file discrepancy
   t.is(report.mismatchedFiles.length, 0);
 });
 
-test.serial('getReportForOneGranule reports one granule with file discrepancy', (t) => {
+test.serial('getReportForOneGranule reports no ok for one granule in both cumulus and orca with file discrepancy', (t) => {
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
@@ -232,6 +270,42 @@ test.serial('getReportForOneGranule reports one granule with file discrepancy', 
   );
 });
 
+test.serial('getReportForOneGranule reports ok for one granule in cumulus only with all files excluded from orca', (t) => {
+  const collectionsConfig = {
+    fakeCollection___v1: {
+      orca: {
+        excludeFileTypes: ['.xml', '.met'],
+      },
+    },
+  };
+  const {
+    matchedCumulusOnlyGranule: cumulusGranule,
+  } = fakeCollectionsAndGranules();
+  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  console.log(report);
+  t.true(report.ok);
+  t.is(report.okFilesCount, 2);
+  t.is(report.mismatchedFiles.length, 0);
+});
+
+test.serial('getReportForOneGranule reports not ok for one granule in cumulus only with files should be in orca', (t) => {
+  const collectionsConfig = {
+    fakeCollection___v1: {
+      orca: {
+        excludeFileTypes: ['.xml', '.met'],
+      },
+    },
+  };
+  const {
+    mismatchedCumulusOnlyGranule: cumulusGranule,
+  } = fakeCollectionsAndGranules();
+  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  console.log(report);
+  t.false(report.ok);
+  t.is(report.okFilesCount, 1);
+  t.is(report.mismatchedFiles.length, 1);
+});
+
 test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
   const {
     fakeCollectionV1,
@@ -242,9 +316,17 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     orcaOnlyGranule,
     matchedCumulusGranule,
     matchedOrcaGranule,
+    matchedCumulusOnlyGranule,
+    mismatchedCumulusOnlyGranule,
   } = fakeCollectionsAndGranules();
 
-  const esGranules = [mismatchedCumulusGranule, cumulusOnlyGranule, matchedCumulusGranule];
+  const esGranules = [
+    cumulusOnlyGranule,
+    mismatchedCumulusGranule,
+    matchedCumulusGranule,
+    matchedCumulusOnlyGranule,
+    mismatchedCumulusOnlyGranule,
+  ];
   const esCollections = [fakeCollectionV1, fakeCollectionV2];
 
   // add granules and related collections to es and db
@@ -259,14 +341,24 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     })
   );
 
-  const orcaGranules = sortBy([mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule], ['id']);
+  const orcaGranules = sortBy([mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule], ['id', 'collectionId']);
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: orcaGranules });
 
   const { granulesReport } = await reconciliationReportForGranules({});
   console.log(granulesReport);
   ORCASearchCatalogQueue.prototype.searchOrca.restore();
-  t.is(granulesReport.okCount, 1);
-  t.is(granulesReport.okFilesCount, 3);
-  t.is(granulesReport.mismatchedFilesCount, 3);
+  // matchedCumulusGranule and matchedCumulusOnlyGranule
+  t.is(granulesReport.okCount, 2);
+  // matchedCumulusGranule has 1, matchedCumulusOnlyGranule 2,
+  // mismatchedCumulusGranule 2, mismatchedCumulusOnlyGranule 1
+  t.is(granulesReport.okFilesCount, 6);
+  // mismatchedCumulusGranule 3 , mismatchedCumulusOnlyGranule 1
+  t.is(granulesReport.mismatchedFilesCount, 4);
+  // cumulusOnlyGranule, mismatchedCumulusOnlyGranule
+  t.is(granulesReport.onlyInCumulus.length, 2);
+  // orcaOnlyGranule
+  t.is(granulesReport.onlyInOrca.length, 1);
+  // mismatchedCumulusGranule
+  t.is(granulesReport.mismatchedGranules.length, 1);
 });

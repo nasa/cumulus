@@ -29,6 +29,8 @@ const fileDiscrepancyTypes = {
   onlyInOrca: 'onlyInOrca',
 };
 
+const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt', 'status'];
+
 /**
  * Fetch collections in Elasticsearch.
  * @param {Object} recReportParams - input report params.
@@ -58,7 +60,6 @@ function isFileExcludedFromOrca(collectionsConfig, collectionId, fileName) {
 }
 
 function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule }) {
-  const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt', 'status'];
   const oneGranuleReport = {
     ok: false,
     okFilesCount: 0,
@@ -133,21 +134,22 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
 }
 
 function constructOrcaOnlyGranuleForReport(orcaGranule) {
-  const mismatchedFiles = orcaGranule.files.map((file) =>
-    ({ ...pick(file, ['bucket', 'key']), reason: 'onlyInOrca' }));
-  const mismatchedGranule = {
-    ...pick(orcaGranule, ['granuleId', 'collectionId', 'providerId']),
-    mismatchedFiles,
+  const files = orcaGranule.files.map((file) => ({
+    orcaBucket: file.orcaArchiveLocation,
+    orcaKey: file.keyPath,
+    reason: 'onlyInOrca',
+  }));
+  const granule = {
+    granuleId: orcaGranule.id,
+    provider: orcaGranule.providerId,
+    ...pick(orcaGranule, ['collectionId', 'createdAt', 'updatedAt']),
+    files,
   };
-  return mismatchedGranule;
+  return granule;
 }
 
 function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule, orcaGranule }) {
   /* eslint-disable no-param-reassign */
-  if (cumulusGranule === undefined && orcaGranule) {
-    granulesReport.mismatchedGranules.push(constructOrcaOnlyGranuleForReport(orcaGranule));
-    granulesReport.mismatchedFilesCount += orcaGranule.files.length;
-  }
   const granReport = getReportForOneGranule({
     collectionsConfig, cumulusGranule, orcaGranule,
   });
@@ -155,11 +157,12 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
 
   if (granReport.ok) {
     granulesReport.okCount += 1;
+  } else if (orcaGranule === undefined) {
+    granulesReport.onlyInCumulus.push(omit(granReport, ['ok']));
   } else {
     granulesReport.mismatchedGranules.push(omit(granReport, ['ok']));
-    granulesReport.mismatchedFilesCount += granReport.mismatchedFiles.length;
   }
-
+  granulesReport.mismatchedFilesCount += granReport.mismatchedFiles.length;
   granulesReport.okFilesCount += granReport.okFilesCount;
   /* eslint-enable no-param-reassign */
   return granulesReport;
@@ -214,7 +217,7 @@ async function reconciliationReportForGranules(params) {
       const nextCumulusId = `${nextCumulusItem.granuleId}:${nextCumulusItem.collectionId}`;
       const nextOrcaId = `${nextOrcaItem.id}:${nextOrcaItem.collectionId}`;
       if (nextCumulusId < nextOrcaId) {
-        // Found an item that is only in Cumulus database and not in ORA.
+        // Found an item that is only in Cumulus and not in ORCA.
         addGranuleToReport({
           granulesReport,
           collectionsConfig,
@@ -222,13 +225,11 @@ async function reconciliationReportForGranules(params) {
         });
         await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextCumulusId > nextOrcaId) {
-        // Found an item that is only in ORA and not in Cumulus database
-        granulesReport.onlyInOrca.push(
-          pick(nextOrcaItem, ['granuleId', 'collectionId', 'providerId'])
-        );
+        // Found an item that is only in ORCA and not in Cumulus
+        granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(nextOrcaItem));
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else {
-        // Found an item that is in both ORA and Cumulus database
+        // Found an item that is in both ORCA and Cumulus database
         // Check if the granule (files) should be in orca, and act accordingly
         addGranuleToReport({
           granulesReport,
@@ -246,7 +247,7 @@ async function reconciliationReportForGranules(params) {
     // Add any remaining cumulus items to the report
     while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const cumulusItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-      // Found an item that is only in Cumulus database and not in ORA.
+      // Found an item that is only in Cumulus database and not in ORCA.
       addGranuleToReport({
         granulesReport,
         collectionsConfig,
@@ -257,12 +258,7 @@ async function reconciliationReportForGranules(params) {
     // Add any remaining ORCA items to the report
     while (await orcaGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const orcaItem = await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-      // Found an item that is only in Cumulus database and not in ORA.
-      addGranuleToReport({
-        granulesReport,
-        collectionsConfig,
-        orcaGranule: orcaItem,
-      });
+      granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(orcaItem));
     }
   } catch (error) {
     log.error('Error caught in reconciliationReportForGranules');
