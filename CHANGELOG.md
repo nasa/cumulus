@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v10.0.1] 2022-02-03
+
 ### Fixed
 
 - Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
@@ -108,7 +110,6 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - Made `vpc_id` variable optional for `example/cumulus-tf` module
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
-- Increases wait time for CMR to return online resources in integration tests
 - Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
 - **CUMULUS-1823**
   - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
@@ -5149,7 +5150,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
+[v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
