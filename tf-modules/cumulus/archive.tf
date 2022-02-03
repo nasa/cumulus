@@ -26,6 +26,15 @@ module "archive" {
   system_bucket     = var.system_bucket
   buckets           = var.buckets
 
+  ecs_task_role      = {
+    name = aws_iam_role.ecs_task_role.name,
+    arn  = aws_iam_role.ecs_task_role.name,
+  }
+  ecs_execution_role = {
+    name = aws_iam_role.ecs_execution_role.name,
+    arn  = aws_iam_role.ecs_execution_role.name,
+  }
+
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
