@@ -336,13 +336,12 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
   }
 
   statement {
-    actions = [
-      "sns:publish",
-      "sns:Subscribe",
-      "sns:Unsubscribe",
-      "sns:List*",
+    actions = ["sns:Publish"]
+    resources = [
+      aws_sns_topic.report_executions_topic.arn,
+      aws_sns_topic.report_granules_topic.arn,
+      aws_sns_topic.report_pdrs_topic.arn
     ]
-    resources = ["*"]
   }
 }
 resource "aws_iam_role" "ecs_task_role" {
