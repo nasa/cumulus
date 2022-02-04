@@ -56,7 +56,7 @@ aws iam create-role \
 --assume-role-policy-document file://apigateway-policy.json
 ```
 
-Note the Arn of the returned role for the last step.
+Note the ARN of the returned role for the last step.
 
 ### Attach correct permissions to role
 

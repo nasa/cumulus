@@ -37,10 +37,10 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // dead letters endpoint
-router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive);
+router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive.router);
 
 //migrationCounts endpoint
-router.use('/migrationCounts', ensureAuthorized, migrationCounts);
+router.use('/migrationCounts', ensureAuthorized, migrationCounts.router);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
@@ -77,10 +77,10 @@ router.use('/logs', ensureAuthorized, logs);
 router.use('/orca', ensureAuthorized, orca);
 
 // reconciliationReports endpoint
-router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
+router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports.router);
 
 // replays endpoint
-router.use('/replays', ensureAuthorized, replays);
+router.use('/replays', ensureAuthorized, replays.router);
 
 // schemas endpoint
 router.use('/schemas', ensureAuthorized, schemas);

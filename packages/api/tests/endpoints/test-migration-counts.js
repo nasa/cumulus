@@ -15,6 +15,9 @@ const models = require('../../models');
 
 const { app } = require('../../app');
 
+const { post } = require('../../endpoints/migrationCounts');
+const { buildFakeExpressResponse } = require('./utils');
+
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
@@ -41,6 +44,10 @@ test.before(async (t) => {
   t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
+});
+
+test.afterEach.always((t) => {
+  t.context.asyncOperationStartStub.resetHistory();
 });
 
 test.after.always(async (t) => {
@@ -91,4 +98,37 @@ test.serial('POST /migrationCounts starts an async-operation with the correct pa
     dbConcurrency: 20,
     dbMaxPool: 20,
   });
+});
+
+test.serial('post() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const reportBucket = 'reportBucket';
+  const reportPath = 'reportPath';
+  const cutoffSeconds = 500;
+  const dbConcurrency = 20;
+  const dbMaxPool = 20;
+
+  const body = {
+    cutoffSeconds,
+    dbConcurrency,
+    dbMaxPool,
+    reportBucket,
+    reportPath,
+  };
+
+  const functionName = randomId('lambda');
+
+  await post(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body,
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });

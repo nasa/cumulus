@@ -7,6 +7,7 @@ const { getQueueUrlByName } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 const logger = new Logger({ sender: '@cumulus/api/replays' });
 /**
@@ -37,6 +38,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     description: 'Kinesis Replay',
     dynamoTableName: asyncOperationModel.tableName,
     knexConfig: process.env,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ManualConsumerLambda,
     operationType: 'Kinesis Replay',
     payload,
@@ -71,6 +73,7 @@ async function startSqsMessagesReplay(req, res) {
     description: 'SQS Replay',
     dynamoTableName: tableName,
     knexConfig: process.env,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ReplaySqsMessagesLambda,
     operationType: 'SQS Replay',
     payload,
@@ -84,4 +87,8 @@ async function startSqsMessagesReplay(req, res) {
 router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
 router.post('/sqs', startSqsMessagesReplay, asyncOperationEndpointErrorHandler);
 
-module.exports = router;
+module.exports = {
+  startKinesisReplayAsyncOperation,
+  startSqsMessagesReplay,
+  router,
+};

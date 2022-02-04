@@ -47,10 +47,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   `sync-granule` may be updated to include this parameter with the value of `{$.cumulus_meta.workflow_start_time}` in the `task_config`.
 - Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
 all Cumulus workflow tasks
+- **CUMULUS-2783**
+  - A bug in the ECS cluster autoscaling configuration has been
+resolved. ECS clusters should now correctly autoscale by adding new cluster
+instances according to the [policy configuration](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/ecs_cluster.tf).
+  - Async operations that are started by these endpoints will be run as ECS tasks
+  with a launch type of Fargate, not EC2:
+    - `POST /deadLetterArchive/recoverCumulusMessages`
+    - `POST /elasticsearch/index-from-database`
+    - `POST /granules/bulk`
+    - `POST /granules/bulkDelete`
+    - `POST /granules/bulkReingest`
+    - `POST /migrationCounts`
+    - `POST /reconciliationReports`
+    - `POST /replays`
+    - `POST /replays/sqs`
 
 ### Added
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2782**
+    - Update API granules endpoint `move` action to update granules in the index
+      and utilize postgres as the authoritative datastore
   - **CUMULUS-2769**
     - Update collection PUT endpoint to require existance of postgresql record
       and to ignore lack of dynamoDbRecord on update
@@ -134,7 +152,7 @@ all Cumulus workflow tasks
 - **CUMULUS-2670**
   - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
   `update_granules_cmr_metadata_file_links_task_timeout` property
-- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.12`
+- Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.15`
 - Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
   - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
   - Added `subnets_tag_name` variable which defines the tags used to look up VPC subnets. Defaults to a subnet tag name used in NGAP accounts
@@ -152,6 +170,9 @@ all Cumulus workflow tasks
   - Updated CreateReconciliationReport lambda to search CMR collections with CMRSearchConceptQueue.
 - **CUMULUS-2441**
   - Added support for 'PROD' CMR environment.
+- **CUMULUS-2456**
+  - Updated api lambdas to query ORCA Private API
+  - Updated example/cumulus-tf/orca.tf to the ORCA release v4.0.0-Beta3
 - **CUMULUS-2638**
   - Adds documentation to clarify bucket config object use.
 - **CUMULUS-2642**
@@ -170,6 +191,8 @@ all Cumulus workflow tasks
 ### Removed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2782**
+    - Remove deprecated `@ingest/granule.moveGranuleFiles`
   - **CUMULUS-2770**
     - Removed `waitForModelStatus` from `example/spec/helpers/apiUtils` integration test helpers
   - **CUMULUS-2510**
@@ -443,11 +466,25 @@ all Cumulus workflow tasks
   - Changed `@cumulus/launchpad-auth/LaunchpadToken.requestToken` and `validateToken`
     to use the HTTPS request option `https.pfx` instead of the deprecated `pfx` option
     for providing the certificate.
+- **CUMULUS-2836**
+  - Updates `cmr-utils/getGranuleTemporalInfo` to search for a SingleDateTime
+    element, when beginningDateTime value is not
+    found in the metadata file.  The granule's temporal information is
+    returned so that both beginningDateTime and endingDateTime are set to the
+    discovered singleDateTimeValue.
+- **CUMULUS-2756**
+  - Updated `_writeGranule()` in `write-granules.js` to catch failed granule writes due to schema validation, log the failure and then attempt to set the status of the granule to `failed` if it already exists to prevent a failure from allowing the granule to get "stuck" in a non-failed status.
 
 ### Fixed
 
 - **CUMULUS-2775**
   - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+- **CUMULUS-2783**
+  - Added missing lower bound on scale out policy for ECS cluster to ensure that
+  the cluster will autoscale correctly.
+- **CUMULUS-2835**
+  - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
+
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
@@ -1051,8 +1088,10 @@ releases.
 ### Changed
 
 - **[PR2224](https://github.com/nasa/cumulus/pull/2244)**
-  - Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
-    timeout for Knex library to acquire dataase connections
+- **CUMULUS-2208**
+  - Moved all `@cumulus/api/es/*` code to new `@cumulus/es-client` package
+- Changed timeout on `sfEventSqsToDbRecords` Lambda to 60 seconds to match
+  timeout for Knex library to acquire database connections
 - **CUMULUS-2517**
   - Updated postgres-migration-count-tool default concurrency to '1'
 - **CUMULUS-2489**
@@ -1069,7 +1108,7 @@ releases.
     [1.6.2](https://cdn.earthdata.nasa.gov/umm/granule/v1.6.2/umm-g-json-schema.json)
 - **CUMULUS-2472**
   - Renamed `@cumulus/earthdata-login-client` to more generic
-    `@cumulus/oauth-client` as a parnt  class for new OAuth clients.
+    `@cumulus/oauth-client` as a parent  class for new OAuth clients.
   - Added `@cumulus/oauth-client/CognitoClient` to interface with AWS cognito login service.
 - **CUMULUS-2497**
   - Changed the `@cumulus/cmrjs` package:
@@ -2008,7 +2047,7 @@ new `update-granules-cmr-metadata-file-links` task.
   - Update reports to return breakdown by Granule of files both in DynamoDB and S3
 - **CUMULUS-2123**
   - Added `cumulus-rds-tf` DB cluster module to `tf-modules` that adds a
-    severless RDS Aurora/ PostgreSQL  database cluster to meet the PostgreSQL
+    serverless RDS Aurora/PostgreSQL database cluster to meet the PostgreSQL
     requirements for future releases.
   - Updated the default Cumulus module to take the following new required variables:
     - rds_user_access_secret_arn:
@@ -2283,7 +2322,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   result in a "Client not connected" exception being thrown.
 - Instances of `@cumulus/ingest/SftpProviderClient` no longer implicitly
   disconnect from the SFTP server when `list` is called.
-- Instances of `@cumulus/sftp-client/SftpClient` must now be expclicitly closed
+- Instances of `@cumulus/sftp-client/SftpClient` must now be explicitly closed
   by calling `.end()`
 - Instances of `@cumulus/sftp-client/SftpClient` no longer implicitly connect to
   the server when `download`, `unlink`, `syncToS3`, `syncFromS3`, and `list` are

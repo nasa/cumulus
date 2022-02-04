@@ -22,6 +22,9 @@ jl-tf:
 jl-rds:
   bucket: jl-test-integration-internal
 
+jl-rds-tf:
+  bucket: jl-test-integration-internal
+
 kk2-tf:
   bucket: kk2-tf-internal
 
