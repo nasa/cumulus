@@ -31,7 +31,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-const models = require('../../../models');
+const { AccessToken } = require('../../../models');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
@@ -40,11 +40,11 @@ const {
 const assertions = require('../../../lib/assertions');
 const { del } = require('../../../endpoints/collections');
 
-process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomString('AccessTokens');
+process.env.CollectionsTable = randomString('Collections');
+process.env.stackName = randomString('stackName');
+process.env.system_bucket = randomString('systemBucket');
+process.env.TOKEN_SECRET = randomString('token');
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
@@ -80,12 +80,10 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await t.context.collectionModel.createTable();
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -137,7 +135,6 @@ test.afterEach(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await t.context.collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
