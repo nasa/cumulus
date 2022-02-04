@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2840**
+  - Added an index on `granule_cumulus_id` to the RDS files table.
+
 ### Changed
 
 - **CUMULUS-2837**
