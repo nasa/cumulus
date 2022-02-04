@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
+    
 ## [v10.0.1] 2022-02-03
 
 **Please note** changes in 10.0.1 may not yet be released in future versions, as
