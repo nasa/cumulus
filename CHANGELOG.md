@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed 
+
+- Added Cloudwatch permissions to `<prefix>-steprole` in `tf-modules/ingest/iam.tf` to address the 
+`Error: error creating Step Function State Machine (xxx): AccessDeniedException: 'arn:aws:iam::XXX:role/xxx-steprole' is not authorized to create managed-rule`
+error in non-NGAP accounts:
+  - `events:PutTargets`
+  - `events:PutRule`
+  - `events:DescribeRule`
+
 ## [v10.0.1] 2022-02-03
 
 **Please note** changes in 10.0.1 may not yet be released in future versions, as
