@@ -3,15 +3,19 @@ resource "aws_cloudwatch_log_group" "async_operation" {
   retention_in_days = 30
   tags = var.tags
 }
-
 resource "aws_ecs_task_definition" "async_operation" {
-  family                = "${var.prefix}-AsyncOperationTaskDefinition"
-  tags                  = var.tags
-  container_definitions = <<EOS
+  family                   = "${var.prefix}-AsyncOperationTaskDefinition"
+  tags                     = var.tags
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  cpu                      = 256
+  memory                   = 1024
+  container_definitions    = <<EOS
 [
   {
     "name": "AsyncOperation",
-    "cpu": 400,
     "essential": true,
     "environment": [
       {
@@ -28,12 +32,12 @@ resource "aws_ecs_task_definition" "async_operation" {
       }
     ],
     "image": "${var.async_operation_image}",
-    "memoryReservation": 700,
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
         "awslogs-group": "${aws_cloudwatch_log_group.async_operation.name}",
-        "awslogs-region": "${data.aws_region.current.name}"
+        "awslogs-region": "${data.aws_region.current.name}",
+        "awslogs-stream-prefix": "async-operation"
       }
     }
   }

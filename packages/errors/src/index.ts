@@ -139,6 +139,8 @@ export const InvalidRegexError = createErrorType('InvalidRegexError');
 
 export const MismatchPdrCollection = createErrorType('MismatchPdrCollection');
 
+export const MissingRequiredArgument = createErrorType('MissingRequiredArgument');
+
 export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
 export const PDRParsingError = createErrorType('PDRParsingError');

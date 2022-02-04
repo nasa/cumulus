@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 
+const { startECSTask } = require('@cumulus/async-operations');
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -58,24 +59,16 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
 
       await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
 
-      const runTaskResponse = await ecs().runTask({
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: successFunctionName,
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+        dynamoTableName: asyncOperationsTableName,
+      });
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {

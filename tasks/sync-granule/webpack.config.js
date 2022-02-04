@@ -28,7 +28,21 @@ module.exports = {
   externals: [
     'aws-sdk',
     'electron',
-    {'formidable': 'url'}
+    {'formidable': 'url'},
+    // See https://github.com/knex/knex/issues/1128 re: webpack configuration
+    {
+      sqlite3: 'sqlite3',
+      mysql2: 'mysql2',
+      mariasql: 'mariasql',
+      mysql: 'mysql',
+      mssql: 'mssql',
+      oracle: 'oracle',
+      'strong-oracle': 'strong-oracle',
+      oracledb: 'oracledb',
+      pg: 'pg',
+      'pg-query-stream': 'pg-query-stream',
+      tedious: 'tedious'
+    }
   ],
   module: {
     rules: [
