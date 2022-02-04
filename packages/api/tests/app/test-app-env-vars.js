@@ -9,13 +9,12 @@ test.beforeEach(() => {
 
 test('handler sets environment variables based on configured secretsManager secret', async (t) => {
   const secretId = randomString(10);
-  const returnVal = await secretsManager().createSecret({
+  await secretsManager().createSecret({
     Name: secretId,
     SecretString: JSON.stringify({
       randomTestVal: 'randomTestVal',
     }),
   }).promise();
-  console.log(returnVal);
   process.env.api_config_secret_id = secretId;
 
   const dynamoTableNames = {
