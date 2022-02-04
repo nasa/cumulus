@@ -47,9 +47,6 @@ async function processDeadLetterArchive({
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
         const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
-          if (!cumulusMessage.cumulus_meta || !cumulusMessage.payload || !cumulusMessage.meta) {
-            throw new Error(`Cumulus message was not parseable from s3 object ${JSON.stringify(cumulusMessage)}`);
-          }
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
         } catch (error) {

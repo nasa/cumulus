@@ -112,11 +112,7 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
     await S3.putJsonS3Object(
       bucket,
       key,
-      {
-        cumulus_meta: {},
-        meta: {},
-        payload: {},
-      }
+      {}
     );
   }
 
@@ -139,36 +135,6 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
   t.is(writeRecordsFunctionSpy.callCount, numberOfDeadLetters);
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
   t.is(remainingDeadLetters.length, 0);
-});
-
-test('processDeadLetterArchive fails to process dead letter without `cumulus_meta` or `payload` keys', async (t) => {
-  const { bucket } = t.context;
-  const path = `${randomString()}/bad-dead-letter-archive/`;
-  const writeRecordsFunctionSpy = sinon.spy();
-
-  const key = `${path}${uuidv4()}.json`;
-  await S3.putJsonS3Object(
-    bucket,
-    key,
-    {}
-  );
-
-  const output = await processDeadLetterArchive({
-    bucket,
-    path,
-    writeRecordsFunction: writeRecordsFunctionSpy,
-  });
-
-  t.deepEqual(
-    {
-      processingSucceededKeys: output.processingSucceededKeys.sort(),
-      processingFailedKeys: output.processingFailedKeys.sort(),
-    },
-    {
-      processingSucceededKeys: [],
-      processingFailedKeys: [key],
-    }
-  );
 });
 
 test('processDeadLetterArchive only deletes dead letters that process successfully', async (t) => {
