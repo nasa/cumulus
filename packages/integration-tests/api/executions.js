@@ -14,7 +14,7 @@ const executionsApi = require('@cumulus/api-client/executions');
  * @returns {Promise<Object>} - the execution fetched by the API
  */
 const getExecution = async (params) => {
-  deprecate('@cumulus/integration-tests/exeuctions.getExecution', '1.21.0', '@cumulus/api-client/ems.getExecution');
+  deprecate('@cumulus/integration-tests/executions.getExecution', '1.21.0', '@cumulus/api-client/ems.getExecution');
   return await executionsApi.getExecution(params);
 };
 
@@ -43,7 +43,7 @@ const getExecutions = async (params) => {
  * @returns {Promise<Object>} - the execution status fetched by the API
  */
 async function getExecutionStatus(params) {
-  deprecate('@cumulus/integration-tests/exeuctions.getExecutionStatus', '1.21.0', '@cumulus/api-client/executions.getExecutionStatus');
+  deprecate('@cumulus/integration-tests/executions.getExecutionStatus', '1.21.0', '@cumulus/api-client/executions.getExecutionStatus');
   return await executionsApi.getExecutionStatus(params);
 }
 
