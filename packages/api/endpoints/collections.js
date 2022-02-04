@@ -30,7 +30,7 @@ const {
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
-const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { isBadRequestError } = require('../lib/errors');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
@@ -249,7 +249,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -263,7 +262,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let existingCollection;
   try {
     await collectionPgModel.get(knex, { name, version });
   } catch (error) {
@@ -279,44 +277,25 @@ async function del(req, res) {
   }
 
   try {
-    // Save DynamoDB collection record to recreate in case delete fails
-    existingCollection = await collectionsModel.get({ name, version });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await collectionPgModel.delete(trx, { name, version });
-        await collectionsModel.delete({ name, version });
-        await deleteCollection({
-          esClient,
-          collectionId,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
-        await publishCollectionDeleteSnsMessage({ name, version });
+    await createRejectableTransaction(knex, async (trx) => {
+      await collectionPgModel.delete(trx, { name, version });
+      await deleteCollection({
+        esClient,
+        collectionId,
+        index: process.env.ES_INDEX,
+        ignore: [404],
       });
-    } catch (innerError) {
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (existingCollection) {
-        await collectionsModel.create(existingCollection);
-      }
-      throw innerError;
-    }
-    return res.send({ message: 'Record deleted' });
+      await publishCollectionDeleteSnsMessage({ name, version });
+    });
   } catch (error) {
     log.debug(`Failed to delete collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
-    if (error instanceof AssociatedRulesError) {
-      const message = `Cannot delete collection with associated rules: ${error.rules.join(', ')}`;
+    if (error.constraint === 'rules_collection_cumulus_id_foreign') {
+      const message = `Cannot delete collection with associated rules: ${error.detail}`;
       return res.boom.conflict(message);
     }
     throw error;
   }
+  return res.send({ message: 'Record deleted' });
 }
 
 // express routes

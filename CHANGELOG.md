@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2811**
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
+  - **CUMULUS-2817**
+    - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
 
 ## Unreleased
 

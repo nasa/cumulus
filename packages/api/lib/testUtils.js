@@ -435,9 +435,11 @@ const createCollectionTestRecords = async (context, collectionParams) => {
     esCollectionClient,
   } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
+  if (collectionModel) {
+    await collectionModel.create(originalCollection);
+  }
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
-  await collectionModel.create(originalCollection);
   const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: pgCollection.cumulus_id }
