@@ -139,7 +139,7 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
-  orca_api_uri     = var.include_orca ? module.orca[0].orca_api_deployment_invoke_url: null
+  orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
