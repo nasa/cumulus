@@ -27,16 +27,20 @@ const initEnvVarsFunction = async () => {
   if (!process.env.api_config_secret_id) {
     throw new Error('A configuration secret must be defined in process.env.api_config_secret_id for API to function');
   }
-  const response = await secretsManager().getSecretValue(
-    { SecretId: process.env.api_config_secret_id }
-  ).promise();
-  if (response.SecretString === undefined) {
-    throw new Error(`AWS Secret did not contain a stored value: ${process.env.api_config_secret_id}`);
+  try {
+    const response = await secretsManager().getSecretValue(
+      { SecretId: process.env.api_config_secret_id }
+    ).promise();
+    if (response.SecretString === undefined) {
+      throw new Error(`AWS Secret did not contain a stored value: ${process.env.api_config_secret_id}`);
+    }
+    const envSecret = JSON.parse(response.SecretString);
+    log.warn('Setting env vars');
+    log.warn(envSecret);
+    process.env = { ...envSecret, ...process.env };
+  } catch (error) {
+    log.error(`Encountered error trying to set environment variables from secret ${process.env.api_config_secret_id}`, error);
   }
-  const envSecret = JSON.parse(response.SecretString);
-  log.warn('Setting env vars');
-  log.warn(envSecret);
-  process.env = { ...envSecret, ...process.env };
 };
 const initEnvVars = initEnvVarsFunction();
 
