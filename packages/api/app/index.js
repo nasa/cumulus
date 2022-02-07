@@ -25,8 +25,7 @@ const log = new Logger({ sender: '@api/index' });
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
   if (!process.env.api_config_secret_id) {
-    log.warn('No process.env.api_config_secret_id set, *not* attempting to provide environment variable defaults');
-    return;
+    throw new Error('A configuration secret must be defined in process.env.api_config_secret_id for API to function');
   }
   const response = await secretsManager().getSecretValue(
     { SecretId: process.env.api_config_secret_id }
