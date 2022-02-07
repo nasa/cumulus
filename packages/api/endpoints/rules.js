@@ -225,7 +225,7 @@ async function del(req, res) {
       index: process.env.ES_INDEX,
       ignore: [404],
     });
-    if (rule) await deleteRuleResources(rule);
+    if (rule) await deleteRuleResources(knex, rule);
   });
 
   return res.send({ message: 'Record deleted' });

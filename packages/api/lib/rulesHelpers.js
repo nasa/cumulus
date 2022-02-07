@@ -6,7 +6,6 @@ const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Logger = require('@cumulus/logger');
 const {
-  getKnexClient,
   RulePgModel,
 } = require('@cumulus/db');
 
@@ -124,14 +123,14 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 /**
-* Check if a rule's event source mapping is shared with other rules
-*
-* @param {Object} rule      - the rule item
-* @param {Object} eventType - the rule's event type
-* @returns {Promise<boolean>} return true if other rules share the same event source mapping
-*/
-async function isEventSourceMappingShared(rule, eventType) {
-  const knex = await getKnexClient();
+ * Check if a rule's event source mapping is shared with other rules
+ *
+ * @param {Knex} knex - DB client
+ * @param {Object} rule      - the rule item
+ * @param {Object} eventType - the rule's event type
+ * @returns {Promise<boolean>} return true if other rules share the same event source mapping
+ */
+async function isEventSourceMappingShared(knex, rule, eventType) {
   const rulePgModel = new RulePgModel();
   // Query for count of any other rule that has the same type and arn
   const params = {
@@ -146,27 +145,30 @@ async function isEventSourceMappingShared(rule, eventType) {
 /**
  * Deletes an event source from an event lambda function
  *
+ * @param {Knex} knex - DB client
  * @param {Object} rule      - the rule item
  * @param {string} eventType - kinesisSourceEvent type
  * @param {string} id        - event source id
  * @returns {Promise} the response from event source delete
  */
-async function deleteKinesisEventSource(rule, eventType, id) {
-  if (await isEventSourceMappingShared(rule, id)) {
+async function deleteKinesisEventSource(knex, rule, eventType, id) {
+  if (await isEventSourceMappingShared(knex, rule, id)) {
     return undefined;
   }
   const params = {
     UUID: id[eventType],
   };
+  log.info(`Deleting event source with UUID ${id[eventType]}`);
   return awsServices.lambda().deleteEventSourceMapping(params).promise();
 }
 
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
+ * @param {Knex} knex - DB client
  * @param {Object} rule - the rule item
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
-async function deleteKinesisEventSources(rule) {
+async function deleteKinesisEventSources(knex, rule) {
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
@@ -186,7 +188,8 @@ async function deleteKinesisEventSources(rule) {
   const deleteEventPromises = kinesisSourceEvents.map(
     async (lambda) => {
       try {
-        await deleteKinesisEventSource(rule, lambda.eventType, lambda.type);
+        log.info(`Deleting event source for rule ${rule.name} for eventType ${lambda.eventType} and type ${JSON.stringify(lambda.type)}`);
+        await deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type);
       } catch (error) {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
@@ -198,12 +201,13 @@ async function deleteKinesisEventSources(rule) {
 
 /**
  * Delete a rule's SNS trigger
+ * @param {Knex} knex - DB client
  * @param {Object} rule - the rule item
  * @returns {Promise} the response from SNS unsubscribe
  */
-async function deleteSnsTrigger(rule) {
+async function deleteSnsTrigger(knex, rule) {
   // If event source mapping is shared by other rules, don't delete it
-  if (await isEventSourceMappingShared(rule, { arn: rule.arn })) {
+  if (await isEventSourceMappingShared(knex, rule, { arn: rule.arn })) {
     log.info(`Event source mapping ${rule} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
     return Promise.resolve();
   }
@@ -229,11 +233,12 @@ async function deleteSnsTrigger(rule) {
 
 /**
  * Delete rule resources by rule type
+ * @param {Knex} knex - DB client
  * @param {Object} rule - Rule
  */
-async function deleteRuleResources(rule) {
+async function deleteRuleResources(knex, rule) {
   const type = rule.type;
-  log.info(`Initiating deletion of rule ${rule}`);
+  log.info(`Initiating deletion of rule ${JSON.stringify(rule)}`);
   switch (type) {
   case 'scheduled': {
     const targetId = 'lambdaTarget';
@@ -243,12 +248,12 @@ async function deleteRuleResources(rule) {
     break;
   }
   case 'kinesis': {
-    await deleteKinesisEventSources(rule);
+    await deleteKinesisEventSources(knex, rule);
     break;
   }
   case 'sns': {
     if (rule.enabled === true) {
-      await deleteSnsTrigger(rule);
+      await deleteSnsTrigger(knex, rule);
     }
     break;
   }

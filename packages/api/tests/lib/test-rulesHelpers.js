@@ -429,7 +429,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
 
-  await rulesHelpers.deleteKinesisEventSource(kinesisRule, 'arn', { arn: kinesisRule.arn });
+  await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'arn', { arn: kinesisRule.arn });
   const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
@@ -437,7 +437,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   t.is(deletedConsumerEventMappings.length, 0);
   t.is(deletedLogEventMappings.length, 1);
   t.teardown(async () => {
-    await rulesHelpers.deleteKinesisEventSource(kinesisRule, 'log_event_arn', { log_event_arn: kinesisRule.log_event_arn });
+    await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'log_event_arn', { log_event_arn: kinesisRule.log_event_arn });
   });
 });
 
@@ -468,7 +468,7 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
 
-  await rulesHelpers.deleteKinesisEventSources(kinesisRule);
+  await rulesHelpers.deleteKinesisEventSources(testKnex, kinesisRule);
   const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
@@ -487,7 +487,7 @@ test.serial('isEventSourceMappingShared returns true if a rule shares an event s
   const secondRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
   await rulePgModel.create(testKnex, firstRule);
   await rulePgModel.create(testKnex, secondRule);
-  t.true(await rulesHelpers.isEventSourceMappingShared(firstRule, eventType));
+  t.true(await rulesHelpers.isEventSourceMappingShared(testKnex, firstRule, eventType));
 });
 
 test.serial('isEventSourceMappingShared returns false if a rule does not share an event source with another rule', async (t) => {
@@ -498,10 +498,11 @@ test.serial('isEventSourceMappingShared returns false if a rule does not share a
   const eventType = { arn: 'fakeArn' };
   const newRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
   await rulePgModel.create(testKnex, newRule);
-  t.false(await rulesHelpers.isEventSourceMappingShared(newRule, eventType));
+  t.false(await rulesHelpers.isEventSourceMappingShared(testKnex, newRule, eventType));
 });
 
 test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
+  const { testKnex } = t.context;
   const sandbox = sinon.createSandbox();
   sandbox.stub(awsServices, 'lambda')
     .returns({
@@ -536,7 +537,7 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   };
   const snsRule = fakeRuleRecordFactory(params);
 
-  await rulesHelpers.deleteSnsTrigger(snsRule);
+  await rulesHelpers.deleteSnsTrigger(testKnex, snsRule);
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
     SubscriptionArn: snsRule.arn,
@@ -550,6 +551,7 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
 });
 
 test.serial('deleteRuleResources correctly deletes resources for scheduled rule', async (t) => {
+  const { testKnex } = t.context;
   const params = {
     type: 'scheduled',
     enabled: true,
@@ -570,7 +572,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
   const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
   const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
 
-  await rulesHelpers.deleteRuleResources(scheduledRule);
+  await rulesHelpers.deleteRuleResources(testKnex, scheduledRule);
 
   t.true(deleteRuleSpy.called);
   t.true(deleteRuleSpy.calledWith({
@@ -616,7 +618,7 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
 
-  await rulesHelpers.deleteRuleResources(kinesisRule);
+  await rulesHelpers.deleteRuleResources(testKnex, kinesisRule);
   const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
@@ -626,6 +628,7 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
 });
 
 test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
+  const { testKnex } = t.context;
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
@@ -659,7 +662,7 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
   };
   const snsRule = fakeRuleRecordFactory(params);
 
-  await rulesHelpers.deleteRuleResources(snsRule);
+  await rulesHelpers.deleteRuleResources(testKnex, snsRule);
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
     SubscriptionArn: snsRule.arn,
