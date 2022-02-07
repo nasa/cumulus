@@ -40,6 +40,7 @@ const initEnvVarsFunction = async () => {
     process.env = { ...envSecret, ...process.env };
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${process.env.api_config_secret_id}`, error);
+    throw error;
   }
 };
 const initEnvVars = initEnvVarsFunction();
