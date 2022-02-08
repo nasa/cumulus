@@ -3,7 +3,7 @@ resource "null_resource" "get_cnmResponse" {
     always_run = timestamp()
   }
   provisioner "local-exec" {
-    command = "curl -s -L -o cnmResponse.zip https://github.com/podaac/cumulus-cnm-response-task/releases/download/v2.0.2/cnmResponse-1.2.0.zip"
+    command = "curl -s -L -o cnmResponse.zip https://github.com/podaac/cumulus-cnm-response-task/releases/download/v2.0.2/cnmResponse-2.0.2.zip"
   }
 }
 

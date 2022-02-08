@@ -3,7 +3,7 @@ resource "null_resource" "get_cnmToGranule" {
     always_run = timestamp()
   }
   provisioner "local-exec" {
-    command = "curl -s -L -o cnmToGranule.zip https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v1.5.3/cnmToGranule-1.4.2.zip"
+    command = "curl -s -L -o cnmToGranule.zip https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v1.5.3/cnmToGranule-1.5.3.zip"
   }
 }
 
