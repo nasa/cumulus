@@ -13,6 +13,7 @@ const awsServerlessExpressMiddleware = require('aws-serverless-express/middlewar
 
 const { services } = require('@cumulus/aws-client');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { MissingRequiredEnvVar } = require('@cumulus/errors');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
@@ -25,7 +26,7 @@ const log = new Logger({ sender: '@api/index' });
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
-  if (process.env.NODE_ENV === 'test' && !process.env.INIT_ENV_VARS_FUNCTION_TEST === true) {
+  if (inTestMode() && !process.env.INIT_ENV_VARS_FUNCTION_TEST === true) {
     return undefined;
   }
   log.info('Initializing environment variables');
