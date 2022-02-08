@@ -10,7 +10,7 @@ test.beforeEach(() => {
 test.serial('handler throws error if environment variable for Dynamo tables parameter name is missing', async (t) => {
   delete process.env.dynamoTableNamesParameterName;
   await t.throwsAsync(
-    t.context.handler(),
+    handler(),
     { instanceOf: MissingRequiredEnvVarError }
   );
 });
@@ -29,7 +29,7 @@ test.serial('handler adds Dynamo table names from parameter to environment varia
     }),
   };
   t.falsy(process.env.DynamoTableName);
-  await t.context.handler(
+  await handler(
     {},
     {
       ssmClient,
