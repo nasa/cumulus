@@ -84,7 +84,6 @@ resource "aws_rds_cluster" "cumulus" {
     min_capacity = var.min_capacity
     timeout_action = var.rds_scaling_timeout_action
   }
-  enabled_cloudwatch_logs_exports = [ "postgresql" ]
   vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
   deletion_protection             = var.deletion_protection
   enable_http_endpoint            = true
