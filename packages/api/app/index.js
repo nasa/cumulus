@@ -30,15 +30,18 @@ const initEnvVarsFunction = async () => {
     const response = await secretsManager().getSecretValue(
       { SecretId: apiConfigSecretId }
     ).promise();
-    if (response.SecretString === undefined) {
-      throw new Error(`AWS Secret did not contain a stored value: ${apiConfigSecretId}`);
+    let envSecret;
+    try {
+      envSecret = JSON.parse(response.SecretString);
+    } catch (error) {
+      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    const envSecret = JSON.parse(response.SecretString);
     log.warn('Setting env vars');
     log.warn(envSecret);
     process.env = { ...envSecret, ...process.env };
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
+    throw error;
   }
 };
 const initEnvVars = initEnvVarsFunction();
@@ -90,7 +93,7 @@ const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
   await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
-  const { dynamoTableNamesParameterName } = process.env;
+  const dynamoTableNamesParameterName = getRequiredEnvVar('dynamoTableNamesParameterName');
   if (!dynamoTableNamesParameterName) {
     throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
   }
