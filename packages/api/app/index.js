@@ -65,16 +65,15 @@ const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
   log.info('Starting API handler');
-  const { dynamoTableNamesParameterName } = process.env;
-  if (!dynamoTableNamesParameterName) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
+  const { dynamoTableNamesParameterKey } = process.env;
+  if (!dynamoTableNamesParameterKey) {
+    throw new MissingRequiredEnvVar('dynamoTableNamesParameterKey environment variable is required for API Lambda');
   }
   log.info('Getting dynamo table names from S3');
-  const dynamoTableNamesParameter = await getJsonS3Object(
+  const dynamoTableNames = await getJsonS3Object(
     process.env.system_bucket,
-    `${process.env.stackName}/api/dynamo_table_names.json`
+    process.env.dynamoTableNamesParameterKey
   );
-  const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];

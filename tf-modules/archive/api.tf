@@ -1,7 +1,7 @@
 resource "aws_s3_bucket_object" "dynamo_table_list" {
   bucket = var.system_bucket
   key = "${var.prefix}/api/dynamo_table_names.json"
-  source = jsonencode({
+  content = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
