@@ -193,8 +193,8 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "iam:PassRole"
     ]
     resources = [
-      aws_iam_role.ecs_execution_role.arn,
-      aws_iam_role.ecs_task_role.arn
+      var.ecs_execution_role.arn,
+      var.ecs_task_role.arn
     ]
   }
 }
@@ -206,43 +206,19 @@ resource "aws_iam_role_policy" "lambda_api_gateway" {
 }
 
 # ECS task execution role
-data "aws_iam_policy_document" "ecs_execution_assume_role_policy" {
-  statement {
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com", "ec2.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
 
-resource "aws_iam_role" "ecs_execution_role" {
-  name                 = "${var.prefix}-ecs-execution_role"
-  assume_role_policy   = data.aws_iam_policy_document.ecs_execution_assume_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
-}
 
 resource "aws_iam_role_policy_attachment" "ecr-task-policy-attach" {
-  role       = aws_iam_role.ecs_execution_role.name
+  role       = var.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch-task-policy-attach" {
-  role       = aws_iam_role.ecs_execution_role.name
+  role       = var.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 }
 
 # ECS task role
-
-data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
-  statement {
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
 
 data "aws_iam_policy_document" "ecs_task_role_policy" {
   statement {
@@ -336,14 +312,9 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
     ]
   }
 }
-resource "aws_iam_role" "ecs_task_role" {
-  name                 = "${var.prefix}-ecs-task_role"
-  assume_role_policy   = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
-}
 
 resource "aws_iam_role_policy" "ecs_task_role_policy" {
   name   = "${var.prefix}-ecs-task-role-policy"
-  role   = aws_iam_role.ecs_task_role.id
+  role   = var.ecs_task_role.name
   policy = data.aws_iam_policy_document.ecs_task_role_policy.json
 }
