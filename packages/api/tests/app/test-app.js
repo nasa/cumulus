@@ -5,7 +5,6 @@ const { handler } = require('../../app');
 
 test.beforeEach(() => {
   process.env.dynamoTableNamesParameterName = 'fake-param-name';
-  delete require.cache[require.resolve('../../app')];
 });
 
 test.serial('handler throws error if environment variable for Dynamo tables parameter name is missing', async (t) => {

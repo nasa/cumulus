@@ -12,6 +12,7 @@ const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
 const { services } = require('@cumulus/aws-client');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { MissingRequiredEnvVar } = require('@cumulus/errors');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
@@ -24,22 +25,20 @@ const log = new Logger({ sender: '@api/index' });
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
-  if (!process.env.api_config_secret_id) {
-    throw new Error('A configuration secret must be defined in process.env.api_config_secret_id for API to function');
-  }
+  const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
   try {
     const response = await secretsManager().getSecretValue(
-      { SecretId: process.env.api_config_secret_id }
+      { SecretId: apiConfigSecretId }
     ).promise();
     if (response.SecretString === undefined) {
-      throw new Error(`AWS Secret did not contain a stored value: ${process.env.api_config_secret_id}`);
+      throw new Error(`AWS Secret did not contain a stored value: ${apiConfigSecretId}`);
     }
     const envSecret = JSON.parse(response.SecretString);
     log.warn('Setting env vars');
     log.warn(envSecret);
     process.env = { ...envSecret, ...process.env };
   } catch (error) {
-    log.error(`Encountered error trying to set environment variables from secret ${process.env.api_config_secret_id}`, error);
+    log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
   }
 };
 const initEnvVars = initEnvVarsFunction();
@@ -124,5 +123,6 @@ const handler = async (event, context) => {
 
 module.exports = {
   app,
+  initEnvVarsFunction,
   handler,
 };
