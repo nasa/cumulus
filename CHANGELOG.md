@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-2847**
+  - Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
+    upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
+    issue in previous version.
+  - Fixed hyrax task dev dependency
+
 ## [v9.4.0] 2021-08-13
 
 ### Notable changes
