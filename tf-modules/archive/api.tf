@@ -1,7 +1,7 @@
-resource "aws_ssm_parameter" "dynamo_table_names" {
-  name = "${var.prefix}-dynamo-table-names"
-  type = "String"
-  value = jsonencode({
+resource "aws_s3_bucket_object" "dynamo_table_list" {
+  bucket = var.system_bucket
+  key = "${var.prefix}/api/dynamo_table_names.json"
+  source = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
@@ -21,7 +21,7 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
       acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      API_BASE_URL                     = local.api_uri
+      API_BASE_URL                     = local.api_uri 
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       auth_mode                        = "public"
@@ -40,7 +40,7 @@ locals {
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
-      dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
+      dynamoTableNamesParameterKey     = "${var.prefix}/api/dynamo_table_names.json"
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
