@@ -35,6 +35,21 @@ morgan.format(
   + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
 
+let dynamoTableNames;
+const setupDynamoTablesConfig = async () => {
+  const { dynamoTableNamesParameterKey } = process.env;
+  if (!dynamoTableNamesParameterKey) {
+    throw new MissingRequiredEnvVar('dynamoTableNamesParameterKey environment variable is required for API Lambda');
+  }
+  log.info('Getting dynamo table names from S3');
+  dynamoTableNames = await getJsonS3Object(
+    process.env.system_bucket,
+    process.env.dynamoTableNamesParameterKey
+  );
+};
+
+const setupDynamoTablesConfigPromise = setupDynamoTablesConfig();
+
 // Config
 app.use(boom());
 app.use(morgan('combined'));
@@ -64,16 +79,8 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
+  await setupDynamoTablesConfigPromise;
   log.info('Starting API handler');
-  const { dynamoTableNamesParameterKey } = process.env;
-  if (!dynamoTableNamesParameterKey) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterKey environment variable is required for API Lambda');
-  }
-  log.info('Getting dynamo table names from S3');
-  const dynamoTableNames = await getJsonS3Object(
-    process.env.system_bucket,
-    process.env.dynamoTableNamesParameterKey
-  );
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
