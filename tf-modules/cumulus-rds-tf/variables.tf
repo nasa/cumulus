@@ -159,12 +159,12 @@ variable "db_parameters" {
     },
     {
       name  = "log_min_duration_statement"
-      value = "250",
+      value = "150",
       apply_method = "immediate"
     },
     {
       name  = "auto_explain.log_min_duration"
-      value = "250"
+      value = "150"
       apply_method = "immediate"
     }
   ]
