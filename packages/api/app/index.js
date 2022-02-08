@@ -26,7 +26,7 @@ const log = new Logger({ sender: '@api/index' });
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
-  if (inTestMode() && !process.env.INIT_ENV_VARS_FUNCTION_TEST === true) {
+  if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== true) {
     return undefined;
   }
   log.info('Initializing environment variables');
