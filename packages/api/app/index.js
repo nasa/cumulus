@@ -25,6 +25,10 @@ const log = new Logger({ sender: '@api/index' });
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
+  if (process.env.NODE_ENV === 'test' && !process.env.INIT_ENV_VARS_FUNCTION_TEST === true) {
+    return undefined;
+  }
+  log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
   try {
     const response = await secretsManager().getSecretValue(
@@ -36,13 +40,12 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    log.warn('Setting env vars');
-    log.warn(envSecret);
     process.env = { ...envSecret, ...process.env };
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
     throw error;
   }
+  return undefined;
 };
 const initEnvVars = initEnvVarsFunction();
 

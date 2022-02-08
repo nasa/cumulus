@@ -4,6 +4,7 @@ const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 process.env.dynamoTableNamesParameterName = 'fake-param-name';
 
 test('handler sets environment variables based on configured secretsManager secret', async (t) => {
+  process.env.INIT_ENV_VARS_FUNCTION_TEST = true;
   const dynamoTableNames = {
     DynamoTableName: 'prefix-dynamoTableName',
   };

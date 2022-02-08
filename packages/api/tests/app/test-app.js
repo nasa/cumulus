@@ -1,22 +1,7 @@
 const test = require('ava');
 
 const { MissingRequiredEnvVarError } = require('@cumulus/errors');
-const { secretsManager } = require('@cumulus/aws-client/services');
-const { randomString } = require('@cumulus/common/test-utils');
-
-test.before(async (t) => {
-  const secretId = randomString(10);
-  await secretsManager().createSecret({
-    Name: secretId,
-    SecretString: JSON.stringify({
-      randomTestVal: 'randomTestVal',
-    }),
-  }).promise();
-  process.env.api_config_secret_id = secretId;
-  // eslint-disable-next-line global-require
-  const { handler } = require('../../app');
-  t.context.handler = handler;
-});
+const { handler } = require('../../app');
 
 test.beforeEach(() => {
   process.env.dynamoTableNamesParameterName = 'fake-param-name';
