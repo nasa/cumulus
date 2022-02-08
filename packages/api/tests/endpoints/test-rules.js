@@ -50,6 +50,8 @@ const assertions = require('../../lib/assertions');
   'stackName',
   'system_bucket',
   'TOKEN_SECRET',
+  'messageConsumer',
+  'KinesisInboundEventLogger',
   // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
