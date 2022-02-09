@@ -12,6 +12,8 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
   git fetch --all
   git checkout "$GIT_SHA"
   rm -f package-lock.json
+else
+  git fetch --all
 fi
 
 # Extract cache of compiled TS files
