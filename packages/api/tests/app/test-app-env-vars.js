@@ -8,7 +8,7 @@ test.beforeEach(() => {
 });
 
 test('handler sets environment variables based on configured secretsManager secret', async (t) => {
-  process.env.INIT_ENV_VARS_FUNCTION_TEST = true;
+  process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
   const secretId = randomString(10);
   await secretsManager().createSecret({
     Name: secretId,

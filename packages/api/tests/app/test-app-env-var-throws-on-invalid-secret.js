@@ -6,7 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 process.env.dynamoTableNamesParameterName = 'fake-param-name';
 
 test('handler throws error if secret containing environment variables cannot be parsed', async (t) => {
-  process.env.INIT_ENV_VARS_FUNCTION_TEST = true;
+  process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
   const secretId = randomString(10);
   await secretsManager().createSecret({
     Name: secretId,
