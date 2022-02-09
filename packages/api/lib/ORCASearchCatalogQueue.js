@@ -61,14 +61,15 @@ class ORCASearchCatalogQueue {
         body: this.params,
       });
     } catch (error) {
-      log.error(`Error searching ORCA catalog/reconcile with search params ${this.params}`);
+      log.error(`Error posting ORCA catalog/reconcile with search params ${JSON.stringify(this.params)}`);
       log.error(errorify(error));
       throw error;
     }
 
     const { statusCode, body } = response;
     if (statusCode !== 200) {
-      const errMsg = `Error searching ORCA catalog/reconcile with search params ${this.params}, postRequestToOrca failed ${statusCode}: ${JSON.stringify(body)}`;
+      const errMsg = `Error searching ORCA catalog/reconcile with search params ${JSON.stringify(this.params)}, `
+        + `postRequestToOrca failed ${statusCode}: ${JSON.stringify(body)}`;
       log.error(errMsg);
       throw new Error(errMsg);
     }

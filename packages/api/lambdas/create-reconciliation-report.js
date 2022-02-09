@@ -27,6 +27,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
+const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { ReconciliationReport } = require('../models');
 const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
 const {
@@ -819,6 +820,8 @@ async function processRequest(params) {
       await createInternalReconciliationReport(recReportParams);
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
+    } else if (reportType === 'ORCA Backup') {
+      await createOrcaBackupReconciliationReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);

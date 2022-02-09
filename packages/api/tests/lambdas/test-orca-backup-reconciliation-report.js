@@ -13,8 +13,11 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
-const { fileConflictTypes, reconciliationReportForGranules } = require('../../lambdas/backup-reconciliation-report');
-const BRP = rewire('../../lambdas/backup-reconciliation-report');
+const {
+  fileConflictTypes,
+  reconciliationReportForGranules,
+} = require('../../lambdas/reports/orca-backup-reconciliation-report');
+const BRP = rewire('../../lambdas/reports/orca-backup-reconciliation-report');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 const isFileExcludedFromOrca = BRP.__get__('isFileExcludedFromOrca');
 const getReportForOneGranule = BRP.__get__('getReportForOneGranule');
@@ -230,7 +233,6 @@ test.serial('getReportForOneGranule reports ok for one granule in both cumulus a
     matchedOrcaGranule: orcaGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
-  console.log(report);
   t.true(report.ok);
   t.is(report.okFilesCount, 1);
   t.is(report.mismatchedFiles.length, 0);
@@ -249,7 +251,6 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
     mismatchedOrcaGranule: orcaGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
-  console.log(report);
   t.false(report.ok);
   t.is(report.okFilesCount, 2);
   t.is(report.mismatchedFiles.length, 3);
@@ -282,7 +283,6 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
     matchedCumulusOnlyGranule: cumulusGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
-  console.log(report);
   t.true(report.ok);
   t.is(report.okFilesCount, 2);
   t.is(report.mismatchedFiles.length, 0);
@@ -300,7 +300,6 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
     mismatchedCumulusOnlyGranule: cumulusGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
-  console.log(report);
   t.false(report.ok);
   t.is(report.okFilesCount, 1);
   t.is(report.mismatchedFiles.length, 1);
@@ -345,20 +344,22 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: orcaGranules });
 
-  const { granulesReport } = await reconciliationReportForGranules({});
-  console.log(granulesReport);
+  const granulesReport = await reconciliationReportForGranules({});
   ORCASearchCatalogQueue.prototype.searchOrca.restore();
   // matchedCumulusGranule and matchedCumulusOnlyGranule
   t.is(granulesReport.okCount, 2);
+  t.is(granulesReport.cumulusCount, 5);
+  // mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule,
+  t.is(granulesReport.orcaCount, 3);
   // matchedCumulusGranule has 1, matchedCumulusOnlyGranule 2,
   // mismatchedCumulusGranule 2, mismatchedCumulusOnlyGranule 1
   t.is(granulesReport.okFilesCount, 6);
   // mismatchedCumulusGranule 3 , mismatchedCumulusOnlyGranule 1
   t.is(granulesReport.mismatchedFilesCount, 4);
+  // mismatchedCumulusGranule
+  t.is(granulesReport.mismatchedGranules.length, 1);
   // cumulusOnlyGranule, mismatchedCumulusOnlyGranule
   t.is(granulesReport.onlyInCumulus.length, 2);
   // orcaOnlyGranule
   t.is(granulesReport.onlyInOrca.length, 1);
-  // mismatchedCumulusGranule
-  t.is(granulesReport.mismatchedGranules.length, 1);
 });

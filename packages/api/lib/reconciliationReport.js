@@ -150,6 +150,22 @@ function convertToDBGranuleSearchParams(params) {
 }
 
 /**
+ *
+ * @param {Object} params - request params to convert to orca params
+ * @returns {Object} object of desired parameters formated for orca
+ */
+function convertToOrcaGranuleSearchParams(params) {
+  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
+  return removeNilProperties({
+    startTimestamp: dateToValue(startTimestamp),
+    endTimestamp: dateToValue(endTimestamp) || Date.now(),
+    collectionId: collectionIds,
+    granuleId: granuleIds,
+    providerId: providers,
+  });
+}
+
+/**
  * create initial report header
  *
  * @param {Object} recReportParams - params
@@ -259,6 +275,7 @@ module.exports = {
   convertToDBGranuleSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
+  convertToOrcaGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,

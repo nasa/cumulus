@@ -1,6 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const omit = require('lodash/omit');
 const pick = require('lodash/pick');
@@ -13,15 +12,16 @@ const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { errorify } = require('../lib/utils');
+const { errorify } = require('../../lib/utils');
 const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
+  convertToOrcaGranuleSearchParams,
   initialReportHeader,
-} = require('../lib/reconciliationReport');
-const ORCASearchCatalogQueue = require('../lib/ORCASearchCatalogQueue');
+} = require('../../lib/reconciliationReport');
+const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
-const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
+const log = new Logger({ sender: '@api/lambdas/orca-backup-reconciliation-report' });
 
 const fileDiscrepancyTypes = {
   shouldExcludedFromOrca: 'shouldExcludedFromOrca',
@@ -29,16 +29,16 @@ const fileDiscrepancyTypes = {
   onlyInOrca: 'onlyInOrca',
 };
 
-const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt', 'status'];
+const granuleFields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'updatedAt'];
 
 /**
  * Fetch collections in Elasticsearch.
  * @param {Object} recReportParams - input report params.
- * @returns {Promise<Array>} - list of collectionIds that match input paramaters
+ * @returns {Promise<Array>} - list of { collectionId, config } that match input paramaters
  */
 async function fetchESCollections(recReportParams) {
   const collectionsConfig = {};
-  const searchParams = convertToESCollectionSearchParams(recReportParams);
+  const searchParams = convertToESCollectionSearchParams(pick(recReportParams, ['collectionIds']));
   const esCollectionsIterator = new ESSearchQueue(
     { ...searchParams, sort_key: ['name', 'version'] }, 'collection', process.env.ES_INDEX
   );
@@ -100,7 +100,6 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
           fileName,
           ...cumulusFiles[fileName],
           orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
-          orcaKey: orcaFiles[fileName].keyPath,
           reason: fileDiscrepancyTypes.shouldExcludedFromOrca,
         };
         oneGranuleReport.mismatchedFiles.push(conflictFile);
@@ -119,8 +118,9 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
     } else if (cumulusFiles[fileName] === undefined && orcaFiles[fileName]) {
       const conflictFile = {
         fileName,
+        bucket: orcaFiles[fileName].cumulusArchiveLocation,
+        key: orcaFiles[fileName].keyPath,
         orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
-        orcaKey: orcaFiles[fileName].keyPath,
         reason: fileDiscrepancyTypes.onlyInOrca,
       };
       oneGranuleReport.mismatchedFiles.push(conflictFile);
@@ -134,16 +134,18 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
 }
 
 function constructOrcaOnlyGranuleForReport(orcaGranule) {
-  const files = orcaGranule.files.map((file) => ({
+  const mismatchedFiles = orcaGranule.files.map((file) => ({
+    bucket: file.cumulusArchiveLocation,
+    key: file.keyPath,
+    fileName: path.basename(file.keyPath),
     orcaBucket: file.orcaArchiveLocation,
-    orcaKey: file.keyPath,
     reason: 'onlyInOrca',
   }));
   const granule = {
     granuleId: orcaGranule.id,
     provider: orcaGranule.providerId,
     ...pick(orcaGranule, ['collectionId', 'createdAt', 'updatedAt']),
-    files,
+    mismatchedFiles,
   };
   return granule;
 }
@@ -153,7 +155,6 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
   const granReport = getReportForOneGranule({
     collectionsConfig, cumulusGranule, orcaGranule,
   });
-  console.log(granReport);
 
   if (granReport.ok) {
     granulesReport.okCount += 1;
@@ -186,6 +187,8 @@ async function reconciliationReportForGranules(params) {
   log.info(`reconciliationReportForGranules ${params}`);
   const granulesReport = {
     okCount: 0,
+    cumulusCount: 0,
+    orcaCount: 0,
     okFilesCount: 0,
     mismatchedFilesCount: 0,
     mismatchedGranules: [],
@@ -194,6 +197,7 @@ async function reconciliationReportForGranules(params) {
   };
 
   const collectionsConfig = await fetchESCollections(params);
+  log.debug(`fetchESCollections returned ${JSON.stringify(collectionsConfig)}`);
 
   const esSearchParams = convertToESGranuleSearchParams(params);
   log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
@@ -206,7 +210,8 @@ async function reconciliationReportForGranules(params) {
     process.env.ES_INDEX
   );
 
-  const orcaGranulesIterator = new ORCASearchCatalogQueue(esSearchParams);
+  const orcaSearchParams = convertToOrcaGranuleSearchParams(params);
+  const orcaGranulesIterator = new ORCASearchCatalogQueue(orcaSearchParams);
 
   try {
     let [nextCumulusItem, nextOrcaItem] = await Promise.all(
@@ -223,10 +228,12 @@ async function reconciliationReportForGranules(params) {
           collectionsConfig,
           cumulusGranule: nextCumulusItem,
         });
+        granulesReport.cumulusCount += 1;
         await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextCumulusId > nextOrcaId) {
         // Found an item that is only in ORCA and not in Cumulus
         granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(nextOrcaItem));
+        granulesReport.orcaCount += 1;
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       } else {
         // Found an item that is in both ORCA and Cumulus database
@@ -237,6 +244,8 @@ async function reconciliationReportForGranules(params) {
           cumulusGranule: nextCumulusItem,
           orcaGranule: nextOrcaItem,
         });
+        granulesReport.cumulusCount += 1;
+        granulesReport.orcaCount += 1;
         await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
         await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       }
@@ -253,25 +262,27 @@ async function reconciliationReportForGranules(params) {
         collectionsConfig,
         cumulusGranule: cumulusItem,
       });
+      granulesReport.cumulusCount += 1;
     }
 
     // Add any remaining ORCA items to the report
     while (await orcaGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const orcaItem = await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(orcaItem));
+      granulesReport.mismatchedFilesCount += get(orcaItem, 'files', []).length;
+      granulesReport.orcaCount += 1;
     }
   } catch (error) {
     log.error('Error caught in reconciliationReportForGranules');
     log.error(errorify(error));
     throw error;
   }
-  log.info('returning reconciliationReportForGranulesgranulesReport: '
-           + `okCount: ${granulesReport.okCount}, `
-           + `mismatchedGranules: ${granulesReport.mismatchedGranules.length}, `
-           + `mismatchedFilesCount: ${granulesReport.mismatchedFilesCount}`);
-  return {
-    granulesReport,
-  };
+
+  const reportSummery = Object.entries(granulesReport)
+    .map(([key, value]) => `${key} ${Array.isArray(value) ? value.length : value}`);
+
+  log.info(`returning reconciliationReportForGranulesgranulesReport: ${reportSummery.join(', ')}`);
+  return granulesReport;
 }
 
 /**
@@ -289,8 +300,8 @@ async function reconciliationReportForGranules(params) {
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
-async function createBackupReconciliationReport(recReportParams) {
-  log.info(`createInternalReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
+async function createOrcaBackupReconciliationReport(recReportParams) {
+  log.info(`createOrcaBackupReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
   const {
     reportKey,
     systemBucket,
@@ -299,15 +310,18 @@ async function createBackupReconciliationReport(recReportParams) {
   // Write an initial report to S3
   const initialReportFormat = {
     okCount: 0,
+    cumulusCount: 0,
+    orcaCount: 0,
     okFilesCount: 0,
     mismatchedFilesCount: 0,
     mismatchedGranules: [],
+    onlyInCumulus: [],
+    onlyInOrca: [],
   };
 
   const report = {
     ...initialReportHeader(recReportParams),
-    collections: cloneDeep(initialReportFormat),
-    granules: cloneDeep(initialReportFormat),
+    ...initialReportFormat,
   };
 
   await s3().putObject({
@@ -319,7 +333,7 @@ async function createBackupReconciliationReport(recReportParams) {
   const granulesReport = await reconciliationReportForGranules(recReportParams);
 
   // Create the full report
-  report.granules = granulesReport;
+  Object.assign(report, granulesReport);
   report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
@@ -334,5 +348,5 @@ async function createBackupReconciliationReport(recReportParams) {
 module.exports = {
   fileConflictTypes: fileDiscrepancyTypes,
   reconciliationReportForGranules,
-  createBackupReconciliationReport,
+  createOrcaBackupReconciliationReport,
 };

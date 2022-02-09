@@ -391,7 +391,7 @@ module.exports.reconciliationReport = {
     name: { type: 'string' },
     type: {
       type: 'string',
-      enum: ['Granule Inventory', 'Granule Not Found', 'Internal', 'Inventory'],
+      enum: ['Granule Inventory', 'Granule Not Found', 'Internal', 'Inventory', 'ORCA Backup'],
     },
     status: {
       type: 'string',
