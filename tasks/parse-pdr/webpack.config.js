@@ -1,8 +1,19 @@
 const path = require('path');
+const { IgnorePlugin } = require('webpack');
 // path to module root
 const root = path.resolve(__dirname);
 
+const ignoredPackages = [
+  'cpu-features',
+  'sshcrypto.node'
+];
+
 module.exports = {
+  plugins: [
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`(${ignoredPackages.join('|')})$`)
+    }),
+  ],
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
