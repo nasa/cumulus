@@ -10,7 +10,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
     upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
     issue in previous version.
-  - Fixed hyrax task dev dependency
+  - Fixed hyrax task package.json dev dependency
+  - Update CNM lambda dependencies for Core tasks
+    - cumulus-cnm-response-task: 1.4.4
+    - cumulus-cnm-to-granule: 1.5.4
+  - Whitelist ssh2 re: https://github.com/advisories/GHSA-652h-xwhf-q4h6
 
 ## [v9.4.0] 2021-08-13
 
@@ -22,7 +26,6 @@ required and involves a redirect to a different host (e.g.
 downloading files protected by Earthdata Login)
 
 ### Added
-
 - **CUMULUS-2591**
   - Adds `failedExecutionStepName` to failed execution's jsonb error records.
     This is the name of the Step Function step for the last failed event in the
