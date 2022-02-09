@@ -8,8 +8,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v9.9.1]
 
+### Fixed
+
+- **CUMULUS-2775**
+  - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+
 ### Changed
 
+- **CUMULUS-2775**
+  - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
+  of accepted status codes via `expectedStatusCodes`
 - **CUMULUS-2837**
   - Update process-s3-dead-letter-archive to unpack SQS events in addition to
     Cumulus Messages
