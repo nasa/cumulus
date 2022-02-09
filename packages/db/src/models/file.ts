@@ -21,6 +21,13 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
       .onConflict(['bucket', 'key'])
       .merge();
   }
+
+  async search(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<PostgresFileRecord>
+  ): Promise<PostgresFileRecord[]> {
+    return super.search(knexOrTransaction, params, ['bucket', 'key']);
+  }
 }
 
 export { FilePgModel };

@@ -156,7 +156,7 @@ test.before(async (t) => {
       updated_at: updatedAt,
     }),
   ];
-  files.map(async (file) => await t.context.filePgModel.create(knex, file));
+  await Promise.all(files.map((file) => t.context.filePgModel.create(knex, file)));
 });
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
@@ -398,7 +398,6 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         key: 'firstKey',
         size: '2098711627776',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-
       },
       {
         bucket: 'cumulus-test-sandbox-private',
