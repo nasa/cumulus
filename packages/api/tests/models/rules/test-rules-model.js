@@ -117,7 +117,7 @@ test('Create rule trigger defaults rule state to ENABLED', async (t) => {
   // remove state from rule to be created
   delete onetimeRule.state;
 
-  // create rule
+  // create rule trigger
   const rule = await rulesModel.createRuleTrigger(onetimeRule);
 
   t.is(rule.state, 'ENABLED');
@@ -129,8 +129,9 @@ test('Create rule trigger defaults rule state to ENABLED', async (t) => {
 test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
-  // create rule
-  const rule = await rulesModel.create(onetimeRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.name, onetimeRule.name);
 
@@ -183,17 +184,10 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
 
   ruleItem.rule.type = 'invalid';
 
-  const createTriggerStub = sinon.stub(models.Rule.prototype, 'createRuleTrigger').resolves(ruleItem);
-
-  try {
-    await t.throwsAsync(
-      () => rulesModel.create(ruleItem),
-      { name: 'SchemaValidationError' }
-    );
-    t.true(createTriggerStub.notCalled);
-  } finally {
-    createTriggerStub.restore();
-  }
+  await t.throwsAsync(
+    () => rulesModel.createRuleTrigger(ruleItem),
+    { name: 'SchemaValidationError' }
+  );
 });
 
 test('Enabling a disabled rule updates the state', async (t) => {
@@ -202,7 +196,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.state = 'DISABLED';
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.state, 'DISABLED');
 
@@ -219,7 +214,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
 test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
   const { onetimeRule } = t.context;
 
-  const rule = await rulesModel.create(onetimeRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   const updates = { name: rule.name, rule: null };
 
@@ -500,7 +496,8 @@ test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.queueUrl = 'testQueue';
 
-  const response = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const response = await rulesModel.create(ruleWithTrigger);
 
   const payload = await models.Rule.buildPayload(ruleItem);
 
@@ -518,7 +515,8 @@ test('Updates rule meta object', async (t) => {
     triggerRule,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.meta.triggerRule, triggerRule);
 
@@ -540,7 +538,8 @@ test('Updates a deeply nested key', async (t) => {
     testObject,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.deepEqual(rule.meta.testObject, testObject);
 
@@ -568,7 +567,8 @@ test('Update preserves nested keys', async (t) => {
     testObject,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.meta.foo, 'bar');
   t.deepEqual(rule.meta.testObject, testObject);
@@ -677,7 +677,8 @@ test('Creating a rule trigger for an SQS rule fails if there is no redrive polic
 test.serial('Rule.exists() returns true when a record exists', async (t) => {
   const { onetimeRule } = t.context;
 
-  await rulesModel.create(onetimeRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  await rulesModel.create(ruleWithTrigger);
 
   t.true(await rulesModel.exists(onetimeRule.name));
 });

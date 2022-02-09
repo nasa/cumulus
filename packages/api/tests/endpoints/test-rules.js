@@ -831,6 +831,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
       throw new Error('something bad');
     },
     create: () => Promise.resolve(originalDynamoRule),
+    createRuleTrigger: () => Promise.resolve(originalDynamoRule),
   };
 
   const updatedRule = {

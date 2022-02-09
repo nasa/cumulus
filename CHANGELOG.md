@@ -457,6 +457,7 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
   - **CUMULUS-2854**
     - Updated rules model to decouple `createRuleTrigger` from `create`.
     - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
+    - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
 - **CUMULUS-2735**
   - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
     large reports

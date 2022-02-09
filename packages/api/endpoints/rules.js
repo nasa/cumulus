@@ -167,6 +167,7 @@ async function put(req, res) {
       });
     } catch (innerError) {
       // Revert Dynamo record update if any write fails
+      await ruleModel.createRuleTrigger(oldRule);
       await ruleModel.create(oldRule);
       throw innerError;
     }
