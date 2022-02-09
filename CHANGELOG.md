@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
+
 ### Changed
 
 - **CUMULUS-2833**
@@ -17,6 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
   - Move methods in api/lib/cwSfExecutionEventUtils to
     @cumulus/message/StepFunctions
+- **CUMULUS-2781**
+  - Update API lambda to utilize api_config secret for initial environment variables
+  - 
 
 ### Fixed
 
@@ -49,12 +57,12 @@ which prevented it from running a Fargate task for data migration.
 
 ### BREAKING CHANGES
 
-- **NDCUM-624**:
+- **NDCUM-624**
   - Functions in @cumulus/cmrjs renamed for consistency with `isCMRFilename` and `isCMRFile`
     - `isECHO10File` -> `isECHO10Filename`
     - `isUMMGFile` -> `isUMMGFilename`
     - `isISOFile` -> `isCMRISOFilename`
-- **CUMULUS-2388**:
+- **CUMULUS-2388**
   - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
     - add-missing-file-checksums
     - files-to-granules
