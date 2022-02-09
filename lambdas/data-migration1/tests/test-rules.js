@@ -291,7 +291,8 @@ test.serial('migrateRules skips already migrated record', async (t) => {
   fakeRule.queueUrl = queueUrls.queueUrl;
 
   // This always sets updatedAt to Date.now()
-  await rulesModel.create(fakeRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
+  await rulesModel.create(ruleWithTrigger);
 
   // We need to make the updateAt of the record we're about to migrate later
   // than the record in the dynamo table.
@@ -355,9 +356,11 @@ test.serial('migrateRules processes multiple rules', async (t) => {
   fakeRule1.queueUrl = queueUrls1.queueUrl;
   fakeRule2.queueUrl = queueUrls2.queueUrl;
 
+  const ruleWithTrigger1 = await rulesModel.createRuleTrigger(fakeRule1);
+  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(fakeRule2);
   await Promise.all([
-    rulesModel.create(fakeRule1),
-    rulesModel.create(fakeRule2),
+    rulesModel.create(ruleWithTrigger1),
+    rulesModel.create(ruleWithTrigger2),
   ]);
   t.teardown(() => Promise.all([
     rulesModel.delete(fakeRule1),

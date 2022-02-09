@@ -182,7 +182,10 @@ test.serial('queryRules returns correct rules for given state and type', async (
       state: 'DISABLED',
     }),
   ];
-  await Promise.all(onetimeRules.map((rule) => rulesModel.create(rule)));
+  const rulesWithTriggers = await Promise.all(
+    onetimeRules.map((rule) => rulesModel.createRuleTrigger(rule))
+  );
+  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
@@ -213,7 +216,12 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
       state: 'DISABLED',
     }),
   ];
-  await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+
+  const rulesWithTriggers = await Promise.all(
+    rules.map((rule) => rulesModel.createRuleTrigger(rule))
+  );
+  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
+
   const results = await rulesModel.queryRules({
     type: 'onetime',
   });
