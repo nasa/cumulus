@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2833**
+  - Updates provider model schema titles to display on the dashboard.
 - **CUMULUS-2837**
   - Update process-s3-dead-letter-archive to unpack SQS events in addition to
     Cumulus Messages
