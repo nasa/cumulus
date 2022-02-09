@@ -36,7 +36,6 @@ test('handler sets environment variables based on configured secretsManager secr
     {},
     {
       ssmClient,
-      succeed: () => true,
     }
   );
   t.is(process.env.randomTestVal, 'randomTestVal');
