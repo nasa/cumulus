@@ -13,7 +13,7 @@ const awsServerlessExpressMiddleware = require('aws-serverless-express/middlewar
 
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const Logger = require('@cumulus/logger');
-const log = new Logger('@cumulus/api/handler');
+const log = new Logger('@cumulus/api/index');
 const { MissingRequiredEnvVar } = require('@cumulus/errors');
 
 const router = require('./routes');
