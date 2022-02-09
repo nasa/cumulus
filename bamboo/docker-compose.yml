@@ -36,12 +36,12 @@ services:
       - SFTP_MODE=true
       - CI=true
   elasticsearch:
-    image: maven.earthdata.nasa.gov/elasticsearch:5.6
+    image: elasticsearch:5.6
     network_mode: "service:build_env"
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: maven.earthdata.nasa.gov/localstack/localstack:0.10.7
+    image: localstack/localstack:0.10.7
     network_mode: "service:build_env"
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm"
