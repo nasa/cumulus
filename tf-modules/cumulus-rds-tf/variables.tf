@@ -156,16 +156,6 @@ variable "db_parameters" {
       name  = "shared_preload_libraries"
       value = "pg_stat_statements,auto_explain"
       apply_method = "pending-reboot"
-    },
-    {
-      name  = "log_min_duration_statement"
-      value = "150",
-      apply_method = "immediate"
-    },
-    {
-      name  = "auto_explain.log_min_duration"
-      value = "150"
-      apply_method = "immediate"
     }
   ]
 }
