@@ -55,7 +55,7 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { buildAndExecuteWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -63,6 +63,8 @@ const collection = { name: 'MYD13Q1', version: '006' };
 const onlyCMRCollection = { name: 'L2_HR_PIXC', version: '1' };
 
 const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+
+const ingestWithOrcaWorkflowName = 'IngestAndPublishGranuleWithOrca';
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(
@@ -172,8 +174,9 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 };
 
 // ingest a granule and publish if requested
-async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
-  const workflowName = publish ? 'IngestAndPublishGranule' : 'IngestGranule';
+async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true, isOrcaIncluded = true) {
+  const ingestAndPublishWorkflow = isOrcaIncluded ? ingestWithOrcaWorkflowName : 'IngestAndPublishGranule';
+  const workflowName = publish ? ingestAndPublishWorkflow : 'IngestGranule';
   const provider = { id: `s3_provider${testSuffix}` };
 
   const inputPayloadJson = fs.readFileSync(
@@ -307,6 +310,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraGranuleInDb;
   let extraS3Object;
   let granuleBeforeUpdate;
+  let isOrcaIncluded = true;
   let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
@@ -320,6 +324,14 @@ describe('When there are granule differences and granule reconciliation is run',
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
+
+      // check if orca is deployed
+      const stateMachineName = `${config.stackName}-${ingestWithOrcaWorkflowName}`;
+      isOrcaIncluded = await stateMachineExists(stateMachineName);
+      if (!isOrcaIncluded) {
+        console.log(`${stateMachineName} doesn't exist, will skip the orca reconciliation report tests...`);
+      }
+
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
@@ -366,7 +378,7 @@ describe('When there are granule differences and granule reconciliation is run',
         dbGranuleId,
         cmrGranule,
       ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, true, isOrcaIncluded),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
         ingestGranuleToCMR(cmrClient),
       ]);
@@ -816,6 +828,127 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(responseError.statusCode).toBe(404);
       expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
     });
+  });
+
+  describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
+    // report record in db and report in s3
+    let reportRecord;
+    let report;
+    let orcaReportAsyncOperationId;
+
+    afterAll(async () => {
+      if (!isOrcaIncluded) return;
+      if (orcaReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: orcaReportAsyncOperationId });
+      }
+    });
+
+    it('generates an async operation through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const request = {
+        reportType: 'ORCA Backup',
+        reportName: randomId('OrcaBackupReport'),
+        endTimestamp: moment.utc().format(),
+        collectionId,
+        granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
+        provider: [randomId('provider'), `s3_provider${testSuffix}`],
+      };
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+        request,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      orcaReportAsyncOperationId = responseBody.id;
+      console.log('orcaReportAsyncOperationId', orcaReportAsyncOperationId);
+      expect(responseBody.operationType).toBe('Reconciliation Report');
+    });
+
+    it('generates reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: orcaReportAsyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retryOptions: {
+            retries: 60,
+            factor: 1.08,
+          },
+        });
+      } catch (error) {
+        fail(error);
+      }
+      reportRecord = JSON.parse(asyncOperation.output);
+    });
+
+    it('fetches a reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
+      console.log(`ORCS Backup report ${reportContent}`);
+      expect(report.reportType).toBe('ORCA Backup');
+      expect(report.status).toBe('SUCCESS');
+    });
+
+    it('generates a report showing number of granules that are in Cumulus and ORCA', () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(report.okCount).toBe(0);
+      // publishedGranule, dbGranule
+      expect(report.cumulusCount).toBe(2);
+      // publishedGranule
+      expect(report.orcaCount).toBe(1);
+      // 4 from publishedGranule (all except .jpg, .jpg2), 1 from dbGranule (.met)
+      expect(report.okFilesCount).toBe(5);
+      expect(report.mismatchedFilesCount).toBe(6);
+      expect(report.onlyInCumulus.length).toBe(1);
+      expect(report.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
+      expect(report.onlyInCumulus[0].okFilesCount).toBe(1);
+      expect(report.onlyInCumulus[0].mismatchedFiles.length).toBe(4);
+      expect(report.onlyInCumulus[0].mismatchedFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
+      expect(report.onlyInOrca.length).toBe(0);
+      if (report.mismatchedGranules.length !== 0) {
+        console.log(`XXXX mismatchedGranules ${JSON.stringify(report.mismatchedGranules)}`);
+      }
+      expect(report.mismatchedGranules.length).toBe(1);
+      expect(report.mismatchedGranules[0].granuleId).toBe(publishedGranuleId);
+      expect(report.mismatchedGranules[0].mismatchedFiles.length).toBe(2);
+      expect(report.mismatchedGranules[0].mismatchedFiles.filter(
+        (file) => file.fileName.endsWith('.jpg') || file.fileName.endsWith('.jpg2')
+      ).length).toBe(2);
+    });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
+
+      expect(responseError.statusCode).toBe(404);
+      expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
+    });
+    // TODO delete granule from ORCA when the API is available
   });
 
   afterAll(async () => {

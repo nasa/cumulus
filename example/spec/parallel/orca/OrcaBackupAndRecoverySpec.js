@@ -9,8 +9,6 @@ const {
   parseS3Uri,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
-const { sfn } = require('@cumulus/aws-client/services');
-const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getCollection } = require('@cumulus/api-client/collections');
 const { bulkOperation, getGranule, listGranules } = require('@cumulus/api-client/granules');
 const { submitRequestToOrca } = require('@cumulus/api-client/orca');
@@ -24,7 +22,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
-const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
+const { buildAndStartWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -53,23 +51,6 @@ const s3data = [
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
 let collection;
-
-async function stateMachineExists(stateMachineName) {
-  const sfnList = await sfn().listStateMachines({ maxResults: 1 }).promise();
-  const stateMachines = get(sfnList, 'stateMachines', []);
-  if (stateMachines.length !== 1) {
-    console.log('No state machine found');
-    return false;
-  }
-  const stateMachineArn = stateMachines[0].stateMachineArn.replace(stateMachines[0].name, stateMachineName);
-  try {
-    await StepFunctions.describeStateMachine({ stateMachineArn });
-  } catch (error) {
-    if (error.code === 'StateMachineDoesNotExist') return false;
-    throw error;
-  }
-  return true;
-}
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
