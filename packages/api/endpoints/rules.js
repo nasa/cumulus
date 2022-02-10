@@ -85,12 +85,14 @@ async function post(req, res) {
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
+    // Create rule trigger
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await rulePgModel.create(trx, postgresRule);
-        record = await ruleModel.create(apiRule);
+        record = await ruleModel.create(ruleWithTrigger);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
@@ -165,6 +167,7 @@ async function put(req, res) {
       });
     } catch (innerError) {
       // Revert Dynamo record update if any write fails
+      await ruleModel.createRuleTrigger(oldRule);
       await ruleModel.create(oldRule);
       throw innerError;
     }

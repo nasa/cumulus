@@ -50,6 +50,8 @@ const assertions = require('../../lib/assertions');
   'stackName',
   'system_bucket',
   'TOKEN_SECRET',
+  'messageConsumer',
+  'KinesisInboundEventLogger',
   // eslint-disable-next-line no-return-assign
 ].forEach((varName) => process.env[varName] = randomString());
 
@@ -378,6 +380,10 @@ test('POST creates a rule in all data stores', async (t) => {
     name: fakeCollection.name,
     version: fakeCollection.version,
   };
+  newRule.rule = {
+    type: 'kinesis',
+    value: 'my-kinesis-arn',
+  };
 
   const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.testKnex,
@@ -415,11 +421,11 @@ test('POST creates a rule in all data stores', async (t) => {
         ...fetchedDynamoRecord,
         collection_cumulus_id: collectionCumulusId,
         provider_cumulus_id: providerCumulusId,
-        arn: null,
-        value: null,
-        type: newRule.rule.type,
+        arn: fetchedDynamoRecord.rule.arn,
+        value: fetchedDynamoRecord.rule.value,
+        type: fetchedDynamoRecord.rule.type,
         enabled: false,
-        log_event_arn: null,
+        log_event_arn: fetchedDynamoRecord.rule.logEventArn,
         execution_name_prefix: null,
         payload: null,
         queue_url: null,
@@ -646,6 +652,7 @@ test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to Dyn
   const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
+    createRuleTrigger: () => Promise.resolve(newRule),
     exists: () => Promise.resolve(false),
     create: () => {
       throw new Error('Rule error');
@@ -824,6 +831,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
       throw new Error('something bad');
     },
     create: () => Promise.resolve(originalDynamoRule),
+    createRuleTrigger: () => Promise.resolve(originalDynamoRule),
   };
 
   const updatedRule = {
@@ -1012,7 +1020,8 @@ test('DELETE deletes rule that exists in PostgreSQL and DynamoDB but not Elastic
   const newRule = fakeRuleFactoryV2();
   delete newRule.collection;
   delete newRule.provider;
-  const apiRule = await ruleModel.create(newRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  const apiRule = await ruleModel.create(ruleWithTrigger);
   const translatedRule = await translateApiRuleToPostgresRule(apiRule, testKnex);
   await rulePgModel.create(testKnex, translatedRule);
 
@@ -1048,7 +1057,8 @@ test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', asyn
     testKnex,
   } = t.context;
   const newRule = fakeRuleFactoryV2();
-  await ruleModel.create(newRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  await ruleModel.create(ruleWithTrigger);
   await indexer.indexRule(esClient, newRule, esIndex);
 
   t.true(
