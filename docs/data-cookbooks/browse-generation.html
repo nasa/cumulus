@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Ingest Browse Generation · Cumulus Documentation</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="This entry documents how to setup a workflow that utilizes Cumulus&#x27;s built-in granule file type configuration such that on ingest the browse data is exported to CMR."/><meta name="docsearch:version" content="v10.0.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Ingest Browse Generation · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="This entry documents how to setup a workflow that utilizes Cumulus&#x27;s built-in granule file type configuration such that on ingest the browse data is exported to CMR."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Ingest Browse Generation · Cumulus Documentation</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="This entry documents how to setup a workflow that utilizes Cumulus&#x27;s built-in granule file type configuration such that on ingest the browse data is exported to CMR."/><meta name="docsearch:version" content="v9.9.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Ingest Browse Generation · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="This entry documents how to setup a workflow that utilizes Cumulus&#x27;s built-in granule file type configuration such that on ingest the browse data is exported to CMR."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"backgroundColor":"#2276AC"}
           )
         });
-        </script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v10.0.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="https://nasa.github.io/cumulus-distribution-api" target="_self">Distribution API Docs</a></li><li class=""><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/about-cookbooks">About Cookbooks</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/ingest-notifications">Ingest Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in AWS Lambda or Docker</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/queue-post-to-cmr">Queue PostToCmr</a></li></ul></div></div></section></div><script>
+        </script><script src="/cumulus/js/scrollSpy.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v9.9.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="https://nasa.github.io/cumulus-distribution-api" target="_self">Distribution API Docs</a></li><li class=""><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">About Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/about-cookbooks">About Cookbooks</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Cookbooks<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/ingest-notifications">Ingest Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/data-cookbooks/browse-generation">Ingest Browse Generation</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/tracking-files">Tracking Ancillary Files</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/run-tasks-in-lambda-or-docker">Run Step Function Tasks in AWS Lambda or Docker</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/throttling-queued-executions">Throttling queued executions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/data-cookbooks/queue-post-to-cmr">Queue PostToCmr</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -286,7 +286,7 @@ s3_credentials_redirect_uri = {URL}
   <span class="hljs-attr">"name"</span>: <span class="hljs-string">"MOD09GQ"</span>,
   <span class="hljs-attr">"version"</span>: <span class="hljs-string">"006"</span>,
   <span class="hljs-attr">"process"</span>: <span class="hljs-string">"modis"</span>,
-  <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"</span>,
+  <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"</span>,
   <span class="hljs-attr">"duplicateHandling"</span>: <span class="hljs-string">"replace"</span>,
   <span class="hljs-attr">"granuleId"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"</span>,
   <span class="hljs-attr">"granuleIdExtraction"</span>: <span class="hljs-string">"(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg|\\.jpg)"</span>,
@@ -297,7 +297,7 @@ s3_credentials_redirect_uri = {URL}
       <span class="hljs-attr">"regex"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"</span>,
       <span class="hljs-attr">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
       <span class="hljs-attr">"type"</span>: <span class="hljs-string">"data"</span>,
-      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}"</span>
+      <span class="hljs-attr">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"</span>
     },
     {
       <span class="hljs-attr">"bucket"</span>: <span class="hljs-string">"private"</span>,
@@ -370,38 +370,48 @@ your mock/test data.:</p>
     {
       "files": [
         {
-          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "key": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "type": "data",
           "bucket": "cumulus-test-sandbox-protected",
+          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "time": 1553027415000,
           "path": "data",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
           "size": 1908635
         },
         {
-          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "key": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
           "type": "metadata",
           "bucket": "cumulus-test-sandbox-private",
+          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "time": 1553027412000,
           "path": "data",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
           "size": 21708
         },
         {
-          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-          "key": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
           "type": "browse",
           "bucket": "cumulus-test-sandbox-protected",
+          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "time": 1553027415000,
           "path": "data",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
           "size": 1908635
         },
         {
-          "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-          "key": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "type": "metadata",
           "bucket": "cumulus-test-sandbox-protected-2",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}"
+          "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }
       ],
       "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
@@ -442,15 +452,25 @@ your mock/test data.:</p>
         "version": "006",
         "files": [
           {
-            "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "type": "data",
             "bucket": "cumulus-test-sandbox-internal",
-            "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+            "time": 1553027415000,
+            "path": "data",
+            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
             "size": 1908635
           },
           {
-            "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "type": "metadata",
             "bucket": "cumulus-test-sandbox-internal",
-            "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+            "time": 1553027412000,
+            "path": "data",
+            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
             "size": 21708
           }
         ]
@@ -499,21 +519,39 @@ your mock/test data.:</p>
     "version": "006",
     "files": [
       {
-        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "type": "data",
         "bucket": "cumulus-test-sandbox-internal",
-        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027415000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
         "size": 1908635
       },
       {
-        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "type": "metadata",
         "bucket": "cumulus-test-sandbox-internal",
-        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027412000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
         "size": 21708
       },
       {
-        "fileName": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+        "type": "browse",
         "bucket": "cumulus-test-sandbox-internal",
-        "key": "file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg"
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027415000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
       }
     ]
   }
@@ -536,6 +574,6 @@ your mock/test data.:</p>
                 apiKey: 'f7e0be879553661f9043322d119069c8',
                 indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react',
-                algoliaOptions: {"facetFilters":["version:v10.0.0"]}
+                algoliaOptions: {"facetFilters":["version:v9.9.0"]}
               });
             </script></body></html>

@@ -90,17 +90,8 @@ git push
 </code></pre>
 <p><img src="https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png" alt="Screenshot of terminal showing interactive prompt from Lerna for selecting the new release version"></p>
 <p>Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.</p>
-<h4><a class="anchor" aria-hidden="true" id="2b-verify-lerna"></a><a href="#2b-verify-lerna" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>2B. Verify Lerna</h4>
-<p><strong>Note:</strong> Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. <code>1.17.0-alpha0</code>). Additionally some packages may have been left at the previous version.
-Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
-It's useful to use the search feature of your code editor or <code>grep</code> to see if there any references to the <strong><em>old</em></strong> package versions.
-In bash shell you can run</p>
-<pre><code class="hljs css language-bash">find . -name package.json -<span class="hljs-built_in">exec</span> grep -nH <span class="hljs-string">"@cumulus/.*MAJOR\.MINOR\.PATCH.*"</span> {} \;
-</code></pre>
-<p>Verify that each of those is updated to the <strong><em>new</em></strong> <code>MAJOR.MINOR.PATCH</code> verion you are trying to release.</p>
-<p>A similar search for alpha and beta versions should be run on the release version and any problems should be fixed.</p>
-<pre><code class="hljs css language-bash">find . -name package.json -<span class="hljs-built_in">exec</span> grep -nHE <span class="hljs-string">"MAJOR\.MINOR\.PATCH.*(alpha|beta)"</span> {} \;
-</code></pre>
+<p><strong>Note:</strong> Lerna will struggle to correctly update the versions on any non-standard/alpha versions (e.g. <code>1.17.0-alpha0</code>).
+Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct. It's useful to use the search feature of your code editor or <code>grep</code> to see if there any references to outdated package versions.</p>
 <h3><a class="anchor" aria-hidden="true" id="3-check-cumulus-dashboard-prs-for-version-bump"></a><a href="#3-check-cumulus-dashboard-prs-for-version-bump" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>3. Check Cumulus Dashboard PRs for Version Bump</h3>
 <p>There may be unreleased changes in the Cumulus Dashboard <a href="https://github.com/nasa/cumulus-dashboard">project</a> that rely on this unreleased Cumulus Core version.</p>
 <p>If there is exists a PR in the cumulus-dashboard repo with a name containing: &quot;Version Bump for Next Cumulus API Release&quot;:</p>
@@ -149,7 +140,7 @@ git add .
 <li><p>You may delete your release branch (<code>release-1.2.3</code>) after merging to the base branch.</p></li>
 </ol>
 <h3><a class="anchor" aria-hidden="true" id="10-create-a-git-tag-for-the-release"></a><a href="#10-create-a-git-tag-for-the-release" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>10. Create a git tag for the release</h3>
-<p>Check out the minor version base branch (<code>release-1.2.x</code>) now that your changes are merged in and do a <code>git pull</code>.</p>
+<p>Check out the minor version base branch now that your changes are merged in and do a <code>git pull</code>.</p>
 <p>Ensure you are on the latest commit.</p>
 <p>Create and push a new git tag:</p>
 <pre><code class="hljs css language-bash">    git tag -a vMAJOR.MINOR.PATCH -m <span class="hljs-string">"Release MAJOR.MINOR.PATCH"</span>
@@ -194,7 +185,7 @@ You should have been redirected to the <code>Branch Details</code> tab after cre
 <li><p>Enable the branch from the <code>Branch Details</code> page.</p></li>
 <li><p>Run the branch using the <code>Run</code> button in the top right.</p></li>
 </ul>
-<p>Bamboo will build and run lint and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.</p>
+<p>Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.</p>
 <h3><a class="anchor" aria-hidden="true" id="12-create-a-new-cumulus-release-on-github"></a><a href="#12-create-a-new-cumulus-release-on-github" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>12. Create a new Cumulus release on github</h3>
 <p>The CI release scripts will automatically create a GitHub release based on the release version tag, as well as upload artifacts to the Github release for the Terraform modules provided by Cumulus. The Terraform release artifacts include:</p>
 <ul>
