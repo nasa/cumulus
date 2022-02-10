@@ -88,13 +88,11 @@ async function activeList(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  log.info('starting get endpoint for single collection');
   const name = req.params.name;
   const version = req.params.version;
   try {
     const c = new models.Collection();
     const result = await c.get({ name, version });
-    log.info('collection retrieved, returning result');
     // const stats = await collection.getStats([res], [res.name]);
     return res.send(result);
   } catch (error) {
