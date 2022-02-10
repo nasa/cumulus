@@ -89,6 +89,7 @@ async function activeList(req, res) {
 async function get(req, res) {
   const name = req.params.name;
   const version = req.params.version;
+
   try {
     const c = new models.Collection();
     const result = await c.get({ name, version });
