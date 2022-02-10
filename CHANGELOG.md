@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v9.9.1]
+## [v9.9.1] 2021-02-09 [BACKPORT]
 
 ### Fixed
 
@@ -4982,8 +4982,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.0...HEAD
-[v9.9.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.1...HEAD
+[v9.9.1]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.1
+[v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
