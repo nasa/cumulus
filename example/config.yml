@@ -19,8 +19,6 @@ mvd-dev-tf:
 
 jl-tf:
   bucket: jl-test-integration-internal
-jl-rds:
-  bucket: jl-test-integration-internal
 
 jl-rds-tf:
   bucket: jl-test-integration-internal

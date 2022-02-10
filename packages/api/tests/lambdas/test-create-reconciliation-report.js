@@ -47,12 +47,14 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
+  fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
@@ -123,15 +125,15 @@ async function storeFilesToS3(files) {
 
 /**
  * Index a single collection to elasticsearch. If the collection object has an
- * updatedAt value, use a sinon stub to set the time of the granule to that
+ * createdAt value, use a sinon stub to set the time of the granule to that
  * input time.
  * @param {Object} collection  - a collection object
 *  @returns {Promise} - promise of indexed collection with active granule
 */
 async function storeCollection(collection) {
   let stub;
-  if (collection.updatedAt) {
-    stub = sinon.stub(Date, 'now').returns(collection.updatedAt);
+  if (collection.createdAt) {
+    stub = sinon.stub(Date, 'now').returns(collection.createdAt);
   }
   try {
     await indexer.indexCollection(esClient, collection, esAlias);
@@ -139,13 +141,13 @@ async function storeCollection(collection) {
       esClient,
       fakeGranuleFactoryV2({
         collectionId: constructCollectionId(collection.name, collection.version),
-        updatedAt: collection.updatedAt,
+        createdAt: collection.createdAt,
         provider: randomString(),
       }),
       esAlias
     );
   } finally {
-    if (collection.updatedAt) stub.restore();
+    if (collection.createdAt) stub.restore();
   }
 }
 
@@ -274,31 +276,31 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
   const matchingCollections = range(numMatchingCollections).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
-    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
+    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in sync ES/CMR outside of the timestamps range
   const matchingCollectionsOutsideRange = range(numMatchingCollectionsOutOfRange).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
-    updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
+    createdAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
   // Create collections in ES only within the timestamp range
   const extraESCollections = range(numExtraESCollections).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
-    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
+    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in ES only outside of the timestamp range
   const extraESCollectionsOutOfRange = range(numExtraESCollectionsOutOfRange).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
-    updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
+    createdAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
   // create extra cmr collections that fall inside of the range.
   const extraCmrCollections = range(numExtraCmrCollections).map((r) => ({
     name: randomId(`extraCmr${r}-`),
     version: randomId('vers'),
-    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
+    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
 
   const cmrCollections = sortBy(
@@ -1979,6 +1981,79 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
+});
+
+test.serial('A valid ORCA reconciliation report is generated when Cumulus and ORCA are in sync', async (t) => {
+  const collection = fakeCollectionFactory({
+    name: 'fakeCollection',
+    version: 'v2',
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
+  const matchedCumulusGranule = {
+    ...fakeGranuleFactoryV2(),
+    granuleId: randomId('matchedGranuleId'),
+    collectionId,
+    provider: 'fakeProvider2',
+    files: [
+      {
+        bucket: 'cumulus-protected-bucket2',
+        fileName: 'fakeFileName2.hdf',
+        key: 'fakePath2/fakeFileName2.hdf',
+      },
+    ],
+  };
+
+  const matchedOrcaGranule = {
+    ...fakeOrcaGranuleFactory(),
+    providerId: matchedCumulusGranule.provider,
+    collectionId: matchedCumulusGranule.collectionId,
+    id: matchedCumulusGranule.granuleId,
+    files: [
+      {
+        name: 'fakeFileName2.hdf',
+        cumulusArchiveLocation: 'cumulus-protected-bucket2',
+        orcaArchiveLocation: 'orca-bucket2',
+        keyPath: 'fakePath2/fakeFileName2.hdf',
+      },
+    ],
+  };
+
+  await indexer.indexGranule(esClient, matchedCumulusGranule, esAlias);
+
+  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
+  searchOrcaStub.resolves({ anotherPage: false, granules: [matchedOrcaGranule] });
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'ORCA Backup',
+    reportName: randomId('reportName'),
+    collectionId,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  const reportRecord = await handler(event);
+  ORCASearchCatalogQueue.prototype.searchOrca.restore();
+  t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.name, event.reportName);
+  t.is(reportRecord.type, event.reportType);
+
+  const report = await fetchCompletedReport(reportRecord);
+  t.is(report.status, 'SUCCESS');
+  t.is(report.error, undefined);
+  t.is(report.reportType, 'ORCA Backup');
+  t.is(report.okCount, 1);
+  t.is(report.cumulusCount, 1);
+  t.is(report.orcaCount, 1);
+  t.is(report.okFilesCount, 1);
+  t.is(report.mismatchedFilesCount, 0);
+  t.is(report.onlyInCumulus.length, 0);
+  t.is(report.onlyInOrca.length, 0);
+  t.is(report.mismatchedGranules.length, 0);
 });
 
 test.serial('Internal Reconciliation report JSON is formatted', async (t) => {

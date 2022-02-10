@@ -46,8 +46,8 @@ test('convertToESCollectionSearchParams returns correct search object.', (t) => 
   };
 
   const expected = {
-    updatedAt__from: 973004400000,
-    updatedAt__to: 1004540400000,
+    createdAt__from: 973004400000,
+    createdAt__to: 1004540400000,
   };
 
   const actual = convertToESCollectionSearchParams(testObj);
@@ -65,8 +65,8 @@ test('convertToESGranuleSearchParams returns correct search object.', (t) => {
   };
 
   const expected = {
-    updatedAt__from: 1262304000000,
-    updatedAt__to: 1317470400000,
+    createdAt__from: 1262304000000,
+    createdAt__to: 1317470400000,
   };
 
   const actual = convertToESGranuleSearchParams(testObj);
@@ -86,8 +86,8 @@ test('convertToESCollectionSearchParams returns correct search object with colle
   };
 
   const expected = {
-    updatedAt__from: 973004400000,
-    updatedAt__to: 1004540400000,
+    createdAt__from: 973004400000,
+    createdAt__to: 1004540400000,
     _id__in: 'name___version,name2___version',
   };
 
@@ -108,8 +108,8 @@ test('convertToDBCollectionSearchParams returns correct search object with colle
   };
 
   const expected = [{
-    updatedAtFrom: new Date(startTimestamp),
-    updatedAtTo: new Date(endTimestamp),
+    createdAtFrom: new Date(startTimestamp),
+    createdAtTo: new Date(endTimestamp),
   }, {
     name: 'name',
     version: 'version',
@@ -132,8 +132,8 @@ test('convertToDBCollectionSearchParams ignores collectionIds when there are mul
   };
 
   const expected = [{
-    updatedAtFrom: new Date(startTimestamp),
-    updatedAtTo: new Date(endTimestamp),
+    createdAtFrom: new Date(startTimestamp),
+    createdAtTo: new Date(endTimestamp),
   }, {}];
 
   const actual = convertToDBCollectionSearchObject(testObj);

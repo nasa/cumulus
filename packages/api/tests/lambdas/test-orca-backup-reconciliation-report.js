@@ -12,6 +12,7 @@ const { Search } = require('@cumulus/es-client/search');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
+  fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
   fileConflictTypes,
@@ -25,26 +26,6 @@ const getReportForOneGranule = BRP.__get__('getReportForOneGranule');
 let esAlias;
 let esIndex;
 let esClient;
-
-function fakeOrcaGranuleFactory(options = {}) {
-  return {
-    providerId: randomId('providerId'),
-    collectionId: 'fakeCollection___v1',
-    id: randomId('id'),
-    createdAt: Date.now(),
-    ingestDate: Date.now(),
-    lastUpdate: Date.now(),
-    files: [
-      {
-        name: randomId('name'),
-        cumulusArchiveLocation: randomId('cumulusArchiveLocation'),
-        orcaArchiveLocation: randomId('orcaArchiveLocation'),
-        keyPath: randomId('keyPath'),
-      },
-    ],
-    ...options,
-  };
-}
 
 function fakeCollectionsAndGranules() {
   const fakeCollectionV1 = fakeCollectionFactory({
