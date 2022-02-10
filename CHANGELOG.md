@@ -454,6 +454,10 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
     - Updated bulk granule reingest operation to read granules from PostgreSQL instead of DynamoDB.
   - **CUMULUS-2778**
     - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
+  - **CUMULUS-2854**
+    - Updated rules model to decouple `createRuleTrigger` from `create`.
+    - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
+    - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
 - **CUMULUS-2735**
   - Updated reconciliation reports to write formatted JSON to S3 to improve readability for
     large reports

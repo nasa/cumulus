@@ -129,7 +129,8 @@ async function addRules(rules) {
   const rulePgModel = new RulePgModel();
   return await Promise.all(
     rules.map(async (r) => {
-      const dynamoRecord = await ruleModel.create(r);
+      const ruleWithTrigger = await ruleModel.createRuleTrigger(r);
+      const dynamoRecord = await ruleModel.create(ruleWithTrigger);
       await indexer.indexRule(es.client, dynamoRecord, es.index);
       const dbRecord = await translateApiRuleToPostgresRule(dynamoRecord, knex);
       await rulePgModel.create(knex, dbRecord);

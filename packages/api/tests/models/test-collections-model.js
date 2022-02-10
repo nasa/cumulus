@@ -239,7 +239,8 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
     }).promise(),
   ]);
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   try {
     await collectionsModel.delete({ name, version });

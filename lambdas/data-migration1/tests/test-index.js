@@ -165,11 +165,12 @@ test('handler migrates async operations, collections, providers, rules', async (
     updatedAt: Date.now(),
   };
 
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
   await Promise.all([
     collectionsModel.create(fakeCollection),
     asyncOperationsModel.create(fakeAsyncOperation),
     providersModel.create(fakeProvider),
-    rulesModel.create(fakeRule),
+    rulesModel.create(ruleWithTrigger),
   ]);
 
   t.teardown(() => Promise.all([
