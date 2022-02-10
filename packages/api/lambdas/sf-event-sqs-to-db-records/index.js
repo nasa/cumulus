@@ -20,8 +20,10 @@ const {
 const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
-
-const { getCumulusMessageFromExecutionEvent } = require('../../lib/cwSfExecutionEventUtils');
+const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
+const Execution = require('../../models/executions');
+const Granule = require('../../models/granules');
+const Pdr = require('../../models/pdrs');
 
 const {
   getCollectionCumulusId,
