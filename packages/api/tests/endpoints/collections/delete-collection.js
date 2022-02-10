@@ -342,7 +342,8 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   const response = await request(app)
     .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
@@ -375,7 +376,8 @@ test.serial('Attempting to delete a collection with an associated rule does not 
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   await request(app)
     .delete(`/collections/${originalCollection.name}/${originalCollection.version}`)
