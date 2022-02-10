@@ -305,6 +305,27 @@ test('BasePgModel.search() works with knex transaction', async (t) => {
   });
 });
 
+test.serial('BasePgModel.search() respects provided sort order', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info1 = `a_${cryptoRandomString({ length: 5 })}`;
+  const info2 = `b_${cryptoRandomString({ length: 5 })}`;
+
+  await Promise.all([
+    knex(tableName).insert({ info: info1 }),
+    knex(tableName).insert({ info: info2 }),
+  ]);
+
+  t.teardown(() => Promise.all([
+    knex(tableName).where({ info: info1 }).delete(),
+    knex(tableName).where({ info: info2 }).delete(),
+  ]));
+
+  const searchResponse = await basePgModel.search(knex, {}, 'info');
+
+  t.like(searchResponse[0], { info: info1 });
+  t.like(searchResponse[1], { info: info2 });
+});
+
 test('BasePgModel.update() updates provided fields on a record', async (t) => {
   const {
     knex,

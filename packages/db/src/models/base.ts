@@ -67,14 +67,10 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   async search(
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>,
-    orderBy: (keyof RecordType)[]
+    orderBy: Array<keyof RecordType | { column: keyof RecordType, order?: string }> = []
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
-      .modify((queryBuilder) => {
-        if (orderBy) {
-          queryBuilder.orderBy(orderBy);
-        }
-      })
+      .orderBy(<string []>orderBy)
       .where(params);
     return records;
   }
