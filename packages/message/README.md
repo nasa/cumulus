@@ -23,9 +23,6 @@ from a Cumulus message</p>
 <dt><a href="#module_Queue">Queue</a></dt>
 <dd><p>Utility functions for parsing queue information from a Cumulus message</p>
 </dd>
-<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
-<dd><p>Utility functions for working with AWS Step Function events/messages</p>
-</dd>
 </dl>
 
 ### Functions
@@ -46,6 +43,10 @@ the collectionId used in elasticsearch indexing</p>
 </dd>
 <dt><a href="#exp_module_Collections--getCollectionIdFromMessage">getCollectionIdFromMessage(message)</a> ⇒ <code>string</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get collection ID from execution message.</p>
+</dd>
+<dt><a href="#unwrapDeadLetterCumulusMessage">unwrapDeadLetterCumulusMessage(messageBody)</a> ⇒ <code>Object</code></dt>
+<dd><p>Unwrap dead letter Cumulus message, which may be wrapped in a
+States cloudwatch event, which is wrapped in an SQS message.</p>
 </dd>
 <dt><a href="#exp_module_Granules--getMessageGranules">getMessageGranules(message)</a> ⇒ <code>Array.&lt;Object&gt;</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get granules from payload?.granules of a workflow message.</p>
@@ -94,6 +95,29 @@ the collectionId used in elasticsearch indexing</p>
 </dd>
 <dt><a href="#exp_module_Providers--getMessageProviderId">getMessageProviderId(message)</a> ⇒ <code>undefined</code> | <code>string</code> ⏏</dt>
 <dd><p>Get the provider ID from a workflow message, if any.</p>
+</dd>
+<dt><a href="#exp_module_StepFunctions--pullStepFunctionEvent">pullStepFunctionEvent(event)</a> ⇒ <code>Promise.&lt;Object&gt;</code> ⏏</dt>
+<dd><p>Given a Step Function event, replace specified key in event with contents
+of S3 remote message</p>
+</dd>
+<dt><a href="#exp_module_StepFunctions--parseStepMessage">parseStepMessage(stepMessage, stepName)</a> ⇒ <code>Promise.&lt;Object&gt;</code> ⏏</dt>
+<dd><p>Parse step message with CMA keys and replace specified key in event with contents
+of S3 remote message</p>
+</dd>
+<dt><a href="#getFailedStepName">getFailedStepName(events, failedStepEvent)</a> ⇒ <code>string</code></dt>
+<dd><p>Searches the Execution step History for the TaskStateEntered pertaining to
+the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
+one.</p>
+</dd>
+<dt><a href="#lastFailedEventStep">lastFailedEventStep(events)</a> ⇒ <code>Array.&lt;HistoryEvent&gt;</code></dt>
+<dd><p>Finds all failed execution events and returns the last one in the list.</p>
+</dd>
+<dt><a href="#getFailedExecutionMessage">getFailedExecutionMessage(inputCumulusMessage, getExecutionHistoryFunction)</a> ⇒ <code>Object</code></dt>
+<dd><p>Get message to use for publishing failed execution notifications.</p>
+<p>Try to get the input to the last failed step in the execution so we can
+update the status of any granules/PDRs that don&#39;t exist in the initial execution
+input.</p>
+<p>Falls back to overall execution input.</p>
 </dd>
 <dt><a href="#exp_module_workflows--getMetaStatus">getMetaStatus(message)</a> ⇒ <code>Message.WorkflowStatus</code> | <code>undefined</code> ⏏</dt>
 <dd><p>Get the status of a workflow message, if any.</p>
@@ -354,51 +378,6 @@ Determine if there is a queue and queue execution limit in the message.
 | --- | --- | --- |
 | message | <code>MessageWithQueueInfo</code> | A workflow message object |
 
-<a name="module_StepFunctions"></a>
-
-### StepFunctions
-Utility functions for working with AWS Step Function events/messages
-
-**Example**  
-```js
-const StepFunctions = require('@cumulus/message/StepFunctions');
-```
-
-* [StepFunctions](#module_StepFunctions)
-    * [pullStepFunctionEvent(event)](#exp_module_StepFunctions--pullStepFunctionEvent) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-    * [parseStepMessage(stepMessage, stepName)](#exp_module_StepFunctions--parseStepMessage) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-
-<a name="exp_module_StepFunctions--pullStepFunctionEvent"></a>
-
-#### pullStepFunctionEvent(event) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Given a Step Function event, replace specified key in event with contents
-of S3 remote message
-
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - Updated event with target path replaced by remote message  
-**Throws**:
-
-- <code>Error</code> if target path cannot be found on source event
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| event | <code>Message.CumulusRemoteMessage</code> | Source event |
-
-<a name="exp_module_StepFunctions--parseStepMessage"></a>
-
-#### parseStepMessage(stepMessage, stepName) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
-Parse step message with CMA keys and replace specified key in event with contents
-of S3 remote message
-
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - Parsed and updated event with target path replaced by remote message  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| stepMessage | <code>CMAMessage</code> | Message for the step |
-| stepName | <code>string</code> | Name of the step |
-
 <a name="deconstructCollectionId"></a>
 
 ### deconstructCollectionId(collectionId) ⇒ <code>Object</code>
@@ -411,6 +390,66 @@ the collectionId used in elasticsearch indexing
 | Param | Type | Description |
 | --- | --- | --- |
 | collectionId | <code>string</code> | collectionId used in elasticsearch index |
+
+<a name="unwrapDeadLetterCumulusMessage"></a>
+
+### unwrapDeadLetterCumulusMessage(messageBody) ⇒ <code>Object</code>
+Unwrap dead letter Cumulus message, which may be wrapped in a
+States cloudwatch event, which is wrapped in an SQS message.
+
+**Kind**: global function  
+**Returns**: <code>Object</code> - the cumulus message or nearest available object  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| messageBody | <code>Object</code> | received SQS message |
+
+<a name="getFailedStepName"></a>
+
+### getFailedStepName(events, failedStepEvent) ⇒ <code>string</code>
+Searches the Execution step History for the TaskStateEntered pertaining to
+the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
+one.
+
+**Kind**: global function  
+**Returns**: <code>string</code> - name of the current stepfunction task or 'UnknownFailedStepName'.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| events | <code>Array.&lt;HistoryEvent&gt;</code> | Step Function events array |
+| failedStepEvent | <code>HistoryEvent</code> | Step Function's failed event. |
+
+<a name="lastFailedEventStep"></a>
+
+### lastFailedEventStep(events) ⇒ <code>Array.&lt;HistoryEvent&gt;</code>
+Finds all failed execution events and returns the last one in the list.
+
+**Kind**: global function  
+**Returns**: <code>Array.&lt;HistoryEvent&gt;</code> - - the last lambda or activity that failed in the
+event array, or an empty array.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| events | <code>Array.&lt;HistoryEventList&gt;</code> | array of AWS Stepfunction execution HistoryEvents |
+
+<a name="getFailedExecutionMessage"></a>
+
+### getFailedExecutionMessage(inputCumulusMessage, getExecutionHistoryFunction) ⇒ <code>Object</code>
+Get message to use for publishing failed execution notifications.
+
+Try to get the input to the last failed step in the execution so we can
+update the status of any granules/PDRs that don't exist in the initial execution
+input.
+
+Falls back to overall execution input.
+
+**Kind**: global function  
+**Returns**: <code>Object</code> - - CumulusMessage Execution step message or execution input message  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| inputCumulusMessage | <code>Object</code> | Workflow execution input message |
+| getExecutionHistoryFunction | <code>function</code> | Testing override for mock/etc of                                                 StepFunctions.getExecutionHistory |
 
 
 ## About Cumulus

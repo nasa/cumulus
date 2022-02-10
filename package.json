@@ -71,7 +71,8 @@
     "@cumulus/aws-client": "^1.24.0",
     "archiver": "^4.0.2",
     "crypto-js": "^4.0.0",
-    "fs-extra": "^9.0.0"
+    "fs-extra": "^9.0.0",
+    "jsdoc-to-markdown": "^7.1.1"
   },
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
@@ -120,7 +121,6 @@
     "jasmine-console-reporter": "^2.0.1",
     "jasmine-reporters": "^2.3.2",
     "js-yaml": "^3.13.1",
-    "jsdoc-to-markdown": "^5.0.3",
     "latest-version": "^4.0.0",
     "lerna": "4.0.0",
     "lodash": "^4.17.20",

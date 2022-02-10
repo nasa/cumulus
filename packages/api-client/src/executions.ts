@@ -210,7 +210,7 @@ export const searchExecutionsByGranules = async (params: {
       path: '/executions/search-by-granules',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
 
@@ -243,6 +243,6 @@ export const workflowsByGranules = async (params: {
       path: '/executions/workflows-by-granules',
       body: JSON.stringify(payload),
     },
-    expectedStatusCode: 202,
+    expectedStatusCodes: 202,
   });
 };
