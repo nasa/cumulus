@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2775**
+  - Added a configurable parameter group for the RDS serverless database cluster deployed by `tf-modules/rds-cluster-tf`. The allowed parameters for the parameter group can be found in the AWS documentation of [allowed parameters for an Aurora PostgreSQL cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html). By default, the following parameters are specified:
+    - `shared_preload_libraries`: `pg_stat_statements,auto_explain`
+    - `log_min_duration_statement`: `250`
+    - `auto_explain.log_min_duration`: `250`
+
+### Changed
+
+- **CUMULUS-2775**
+  - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
+
 ## [v9.9.1] 2021-02-10 [BACKPORT]
 
 ### Fixed
