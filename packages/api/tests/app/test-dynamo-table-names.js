@@ -2,8 +2,6 @@ const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
-
 const testBucket = randomString();
 const dynamoKey = randomString();
 const dynamoTableNames = {
