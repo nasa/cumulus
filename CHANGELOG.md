@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
+all Cumulus workflow tasks
 - **CUMULUS-2775**
   - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
   of accepted status codes via `expectedStatusCodes`
