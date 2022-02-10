@@ -1020,7 +1020,8 @@ test('DELETE deletes rule that exists in PostgreSQL and DynamoDB but not Elastic
   const newRule = fakeRuleFactoryV2();
   delete newRule.collection;
   delete newRule.provider;
-  const apiRule = await ruleModel.create(newRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  const apiRule = await ruleModel.create(ruleWithTrigger);
   const translatedRule = await translateApiRuleToPostgresRule(apiRule, testKnex);
   await rulePgModel.create(testKnex, translatedRule);
 
@@ -1056,7 +1057,8 @@ test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', asyn
     testKnex,
   } = t.context;
   const newRule = fakeRuleFactoryV2();
-  await ruleModel.create(newRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  await ruleModel.create(ruleWithTrigger);
   await indexer.indexRule(esClient, newRule, esIndex);
 
   t.true(
