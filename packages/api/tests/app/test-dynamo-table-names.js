@@ -7,6 +7,7 @@ const dynamoKey = randomString();
 const dynamoTableNames = {
   DynamoTableName: 'prefix-dynamoTableName',
 };
+process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
 
 test.before(async () => {
   await S3.createBucket(testBucket);
