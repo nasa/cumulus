@@ -92,7 +92,7 @@ const handler = async (event, context) => {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
-  log.info('Running servelessExpress.proxy');
+  log.info('Running serverlessExpress.proxy');
   // see https://github.com/vendia/serverless-express/issues/297
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(
