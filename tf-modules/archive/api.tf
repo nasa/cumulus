@@ -69,7 +69,6 @@ locals {
       MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
-      orca_api_uri                     = var.orca_api_uri
       protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       public_buckets                   = join(",", local.public_buckets)
