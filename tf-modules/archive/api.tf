@@ -1,7 +1,9 @@
-resource "aws_ssm_parameter" "dynamo_table_names" {
-  name = "${var.prefix}-dynamo-table-names"
-  type = "String"
-  value = jsonencode({
+locals {
+  api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
+  api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
+  api_redirect_uri          = "${local.api_uri}token"
+  dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
@@ -12,13 +14,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
     RulesTable                 = var.dynamo_tables.rules.name
   })
-}
-
-locals {
-  api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
-  api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
-  api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
-  api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
         auth_mode                      = "public"
         api_config_secret_id           = aws_secretsmanager_secret_version.api_config.arn
@@ -43,7 +38,7 @@ locals {
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
-      dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
+      dynamoTableNameString            = local.dynamo_table_namestring
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
