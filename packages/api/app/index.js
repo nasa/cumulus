@@ -11,10 +11,8 @@ const morgan = require('morgan');
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
-const { services } = require('@cumulus/aws-client');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
 
@@ -97,27 +95,19 @@ const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
   await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
-  const dynamoTableNamesParameterName = getRequiredEnvVar('dynamoTableNamesParameterName');
-  if (!dynamoTableNamesParameterName) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
-  }
-
-  const ssmClient = context.ssmClient || services.systemsManager();
-  const dynamoTableNamesParameter = await ssmClient.getParameter({
-    Name: dynamoTableNamesParameterName,
-  }).promise();
-  const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
+  const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
   });
 
   // workaround to support multiValueQueryStringParameters
-  // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
+  // until this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
   const modifiedEvent = {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
+  log.info('Running serverlessExpress.proxy');
   // see https://github.com/vendia/serverless-express/issues/297
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(

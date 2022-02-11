@@ -8,22 +8,7 @@ test('handler throws error if environment variable for secret ID is missing', as
   const dynamoTableNames = {
     DynamoTableName: 'prefix-dynamoTableName',
   };
-  const ssmClient = {
-    getParameter: () => ({
-      promise: () => Promise.resolve({
-        Parameter: {
-          Value: JSON.stringify(dynamoTableNames),
-        },
-      }),
-    }),
-  };
   // eslint-disable-next-line global-require
   const { handler } = require('../../app');
-  await t.throwsAsync(handler(
-    {},
-    {
-      ssmClient,
-      succeed: () => true,
-    }
-  ), { instanceOf: MissingRequiredEnvVarError });
+  await t.throwsAsync(handler({}), { instanceOf: MissingRequiredEnvVarError });
 });

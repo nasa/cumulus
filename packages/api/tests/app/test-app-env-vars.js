@@ -14,6 +14,7 @@ test('handler sets environment variables based on configured secretsManager secr
     Name: secretId,
     SecretString: JSON.stringify({
       randomTestVal: 'randomTestVal',
+      dynamoTableNameString: JSON.stringify({})
     }),
   }).promise();
   process.env.api_config_secret_id = secretId;
@@ -21,22 +22,8 @@ test('handler sets environment variables based on configured secretsManager secr
   const dynamoTableNames = {
     DynamoTableName: 'prefix-dynamoTableName',
   };
-  const ssmClient = {
-    getParameter: () => ({
-      promise: () => Promise.resolve({
-        Parameter: {
-          Value: JSON.stringify(dynamoTableNames),
-        },
-      }),
-    }),
-  };
   // eslint-disable-next-line global-require
   const { handler } = require('../../app');
-  await handler(
-    {},
-    {
-      ssmClient,
-    }
-  );
+  await handler({});
   t.is(process.env.randomTestVal, 'randomTestVal');
 });
