@@ -1,6 +1,6 @@
 const test = require('ava');
 
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
+const { MissingRequiredEnvVarError } = require('@cumulus/errors');
 
 process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
 
@@ -9,6 +9,6 @@ test.serial('index throws error if environment variable for Dynamo tables parame
   const { handler } = require('../../app');
   await t.throwsAsync(
     handler(),
-    { instanceOf: MissingRequiredEnvVar }
+    { instanceOf: MissingRequiredEnvVarError }
   );
 });

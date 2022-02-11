@@ -12,6 +12,7 @@ const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: '@api/index' });
@@ -41,14 +42,13 @@ const setupDynamoTablesConfig = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
     return undefined;
   }
-  const { dynamoTableNamesParameterKey } = process.env;
-  if (!dynamoTableNamesParameterKey) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterKey environment variable is required for API Lambda');
-  }
+
+  const dynamoTableNamesParameterKey = getRequiredEnvVar('dynamoTableNamesParameterKey');
+
   log.info('Getting dynamo table names from S3');
   dynamoTableNames = await getJsonS3Object(
     process.env.system_bucket,
-    process.env.dynamoTableNamesParameterKey
+    dynamoTableNamesParameterKey
   );
   return undefined;
 };
