@@ -20,11 +20,14 @@ locals {
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
+        auth_mode                      = "public"
+        api_config_secret_id           = aws_secretsmanager_secret_version.api_config.arn
+  }
+  api_secret_env_variables = {
       acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
-      auth_mode                        = "public"
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
       cmr_client_id                    = var.cmr_client_id
@@ -81,6 +84,16 @@ locals {
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
       TOKEN_SECRET                     = var.token_secret
     }
+}
+
+resource "aws_secretsmanager_secret" "api_config" {
+  name_prefix = "${var.prefix}-api-config"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_config" {
+  secret_id = aws_secretsmanager_secret.api_config.id
+  secret_string = jsonencode(local.api_secret_env_variables)
 }
 
 resource "aws_cloudwatch_log_group" "private_api" {
