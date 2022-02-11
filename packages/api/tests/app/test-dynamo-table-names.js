@@ -23,22 +23,7 @@ test('index adds Dynamo table names from parameter to environment variables', as
   await S3.putJsonS3Object(testBucket, dynamoKey, dynamoTableNames);
   // eslint-disable-next-line global-require
   const { handler } = require('../../app');
-
-  const ssmClient = {
-    getParameter: () => ({
-      promise: () => Promise.resolve({
-        Parameter: {
-          Value: JSON.stringify(dynamoTableNames),
-        },
-      }),
-    }),
-  };
   t.falsy(process.env.DynamoTableName);
-  await handler(
-    {},
-    {
-      ssmClient,
-    }
-  );
+  await handler({});
   t.is(process.env.DynamoTableName, dynamoTableNames.DynamoTableName);
 });
