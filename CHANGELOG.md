@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `auto_explain.log_min_duration`: `250`
 - **CUMULUS-2781**
   - Add api_config secret to hold API/Private API lambda configuration values
+- **CUMULUS-2840**
+  - Added an index on `granule_cumulus_id` to the RDS files table.
 
 ### Changed
 
