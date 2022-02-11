@@ -61,16 +61,13 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Object} params - An object or any portion of an object of type RecordType
-   * @param {string | Array<string>} orderBy - Column(s) to sort results by
    * @returns {Promise<RecordType[]>} List of returned records
    */
   async search(
     knexOrTransaction: Knex | Knex.Transaction,
-    params: Partial<RecordType>,
-    orderBy: Array<keyof RecordType | { column: keyof RecordType, order?: string }> = []
+    params: Partial<RecordType>
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
-      .orderBy(<string []>orderBy)
       .where(params);
     return records;
   }
