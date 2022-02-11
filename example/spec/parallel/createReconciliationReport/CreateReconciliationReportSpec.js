@@ -890,7 +890,7 @@ describe('When there are granule differences and granule reconciliation is run',
       if (beforeAllFailed) fail(beforeAllFailed);
       const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
       report = JSON.parse(reportContent);
-      console.log(`ORCS Backup report ${reportContent}`);
+      console.log(`ORCA Backup report ${reportContent}`);
       expect(report.reportType).toBe('ORCA Backup');
       expect(report.status).toBe('SUCCESS');
     });

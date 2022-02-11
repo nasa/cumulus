@@ -1983,7 +1983,7 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   t.is(reportRows.length, 10);
 });
 
-test.serial('A valid ORCA reconciliation report is generated when Cumulus and ORCA are in sync', async (t) => {
+test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
   const collection = fakeCollectionFactory({
     name: 'fakeCollection',
     version: 'v2',
@@ -1992,39 +1992,39 @@ test.serial('A valid ORCA reconciliation report is generated when Cumulus and OR
 
   const collectionId = constructCollectionId(collection.name, collection.version);
 
-  const matchedCumulusGranule = {
+  const matchingCumulusGran = {
     ...fakeGranuleFactoryV2(),
-    granuleId: randomId('matchedGranuleId'),
+    granuleId: randomId('matchingGranId'),
     collectionId,
     provider: 'fakeProvider2',
     files: [
       {
-        bucket: 'cumulus-protected-bucket2',
+        bucket: 'cumulus-fake-bucket2',
         fileName: 'fakeFileName2.hdf',
         key: 'fakePath2/fakeFileName2.hdf',
       },
     ],
   };
 
-  const matchedOrcaGranule = {
+  const matchingOrcaGran = {
     ...fakeOrcaGranuleFactory(),
-    providerId: matchedCumulusGranule.provider,
-    collectionId: matchedCumulusGranule.collectionId,
-    id: matchedCumulusGranule.granuleId,
+    providerId: matchingCumulusGran.provider,
+    collectionId: matchingCumulusGran.collectionId,
+    id: matchingCumulusGran.granuleId,
     files: [
       {
         name: 'fakeFileName2.hdf',
-        cumulusArchiveLocation: 'cumulus-protected-bucket2',
+        cumulusArchiveLocation: 'cumulus-fake-bucket2',
         orcaArchiveLocation: 'orca-bucket2',
         keyPath: 'fakePath2/fakeFileName2.hdf',
       },
     ],
   };
 
-  await indexer.indexGranule(esClient, matchedCumulusGranule, esAlias);
+  await indexer.indexGranule(esClient, matchingCumulusGran, esAlias);
 
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
-  searchOrcaStub.resolves({ anotherPage: false, granules: [matchedOrcaGranule] });
+  searchOrcaStub.resolves({ anotherPage: false, granules: [matchingOrcaGran] });
 
   const event = {
     systemBucket: t.context.systemBucket,
@@ -2043,17 +2043,18 @@ test.serial('A valid ORCA reconciliation report is generated when Cumulus and OR
   t.is(reportRecord.type, event.reportType);
 
   const report = await fetchCompletedReport(reportRecord);
+  t.truthy(report.granules);
   t.is(report.status, 'SUCCESS');
   t.is(report.error, undefined);
   t.is(report.reportType, 'ORCA Backup');
-  t.is(report.okCount, 1);
-  t.is(report.cumulusCount, 1);
-  t.is(report.orcaCount, 1);
-  t.is(report.okFilesCount, 1);
-  t.is(report.mismatchedFilesCount, 0);
-  t.is(report.onlyInCumulus.length, 0);
-  t.is(report.onlyInOrca.length, 0);
-  t.is(report.mismatchedGranules.length, 0);
+  t.is(report.granules.okCount, 1);
+  t.is(report.granules.cumulusCount, 1);
+  t.is(report.granules.orcaCount, 1);
+  t.is(report.granules.okFilesCount, 1);
+  t.is(report.granules.conflictFilesCount, 0);
+  t.is(report.granules.onlyInCumulus.length, 0);
+  t.is(report.granules.onlyInOrca.length, 0);
+  t.is(report.granules.withConflicts.length, 0);
 });
 
 test.serial('Internal Reconciliation report JSON is formatted', async (t) => {

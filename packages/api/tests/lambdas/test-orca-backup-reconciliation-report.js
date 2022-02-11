@@ -4,6 +4,7 @@ const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
+
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
@@ -18,10 +19,10 @@ const {
   fileConflictTypes,
   reconciliationReportForGranules,
 } = require('../../lambdas/reports/orca-backup-reconciliation-report');
-const BRP = rewire('../../lambdas/reports/orca-backup-reconciliation-report');
+const OBRP = rewire('../../lambdas/reports/orca-backup-reconciliation-report');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
-const isFileExcludedFromOrca = BRP.__get__('isFileExcludedFromOrca');
-const getReportForOneGranule = BRP.__get__('getReportForOneGranule');
+const isFileExcludedFromOrca = OBRP.__get__('isFileExcludedFromOrca');
+const getReportForOneGranule = OBRP.__get__('getReportForOneGranule');
 
 let esAlias;
 let esIndex;
@@ -39,65 +40,11 @@ function fakeCollectionsAndGranules() {
     name: 'fakeCollection',
     version: 'v2',
   });
-  const mismatchedCumulusGranule = {
+
+  // granule is in both cumulus and orca, and conform to configuration
+  const matchingCumulusGran = {
     ...fakeGranuleFactoryV2(),
-    granuleId: randomId('mismatchedGranuleId'),
-    collectionId: 'fakeCollection___v1',
-    provider: 'fakeProvider',
-    files: [
-      {
-        bucket: 'cumulus-protected-bucket',
-        fileName: 'fakeFileName.hdf',
-        key: 'fakePath/fakeFileName.hdf',
-      },
-      {
-        bucket: 'cumulus-private-bucket',
-        fileName: 'fakeFileName.hdf.met',
-        key: 'fakePath/fakeFileName.hdf.met',
-      },
-      {
-        bucket: 'cumulus-public-bucket',
-        fileName: 'fakeFileName_onlyInCumulus.jpg',
-        key: 'fakePath/fakeFileName_onlyInCumulus.jpg',
-      },
-      {
-        bucket: 'cumulus-protected-2-bucket',
-        fileName: 'fakeFileName.cmr.xml',
-        key: 'fakePath/fakeFileName.cmr.xml',
-      },
-    ],
-  };
-  const mismatchedOrcaGranule = {
-    ...fakeOrcaGranuleFactory(),
-    providerId: mismatchedCumulusGranule.provider,
-    collectionId: mismatchedCumulusGranule.collectionId,
-    id: mismatchedCumulusGranule.granuleId,
-    files: [
-      {
-        name: 'fakeFileName.hdf',
-        cumulusArchiveLocation: 'cumulus-protected-bucket',
-        orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName.hdf',
-      },
-      {
-        name: 'fakeFileName_onlyInOrca.jpg',
-        cumulusArchiveLocation: 'cumulus-public-bucket',
-        orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName_onlyInOrca.jpg',
-      },
-      {
-        name: 'fakeFileName.cmr.xml',
-        cumulusArchiveLocation: 'cumulus-protected-2-bucket',
-        orcaArchiveLocation: 'orca-bucket',
-        keyPath: 'fakePath/fakeFileName.cmr.xml',
-      },
-    ],
-  };
-  const cumulusOnlyGranule = fakeGranuleFactoryV2();
-  const orcaOnlyGranule = fakeOrcaGranuleFactory();
-  const matchedCumulusGranule = {
-    ...fakeGranuleFactoryV2(),
-    granuleId: randomId('matchedGranuleId'),
+    granuleId: randomId('matchingGranId'),
     collectionId: 'fakeCollection___v2',
     provider: 'fakeProvider2',
     files: [
@@ -109,11 +56,11 @@ function fakeCollectionsAndGranules() {
     ],
   };
 
-  const matchedOrcaGranule = {
+  const matchingOrcaGran = {
     ...fakeOrcaGranuleFactory(),
-    providerId: matchedCumulusGranule.provider,
-    collectionId: matchedCumulusGranule.collectionId,
-    id: matchedCumulusGranule.granuleId,
+    providerId: matchingCumulusGran.provider,
+    collectionId: matchingCumulusGran.collectionId,
+    id: matchingCumulusGran.granuleId,
     files: [
       {
         name: 'fakeFileName2.hdf',
@@ -124,9 +71,10 @@ function fakeCollectionsAndGranules() {
     ],
   };
 
-  const matchedCumulusOnlyGranule = {
+  // granule is in cumulus only, should not be in orca, and conform to configuratio
+  const matchingCumulusOnlyGran = {
     ...fakeGranuleFactoryV2(),
-    granuleId: randomId('matchedCumulusOnlyGranuleId'),
+    granuleId: randomId('matchingCumulusOnlyGranId'),
     collectionId: 'fakeCollection___v1',
     files: [
       {
@@ -142,9 +90,72 @@ function fakeCollectionsAndGranules() {
     ],
   };
 
-  const mismatchedCumulusOnlyGranule = {
+  // cumulus granule and its orca granule with file conflicts
+  const conflictCumulusGran = {
     ...fakeGranuleFactoryV2(),
-    granuleId: randomId('mismatchedCumulusOnlyGranuleId'),
+    granuleId: randomId('conflictGranuleId'),
+    collectionId: 'fakeCollection___v1',
+    provider: 'fakeProvider',
+    files: [
+      {
+        bucket: 'cumulus-protected-bucket',
+        fileName: 'fakeFileName.hdf',
+        key: 'fakePath/fakeFileName.hdf',
+      },
+      {
+        bucket: 'cumulus-private-bucket',
+        fileName: 'fakeFileName.hdf.met',
+        key: 'fakePath/fakeFileName.hdf.met',
+      },
+      {
+        bucket: 'cumulus-fake-bucket',
+        fileName: 'fakeFileName_onlyInCumulus.jpg',
+        key: 'fakePath/fakeFileName_onlyInCumulus.jpg',
+      },
+      {
+        bucket: 'cumulus-fake-bucket-2',
+        fileName: 'fakeFileName.cmr.xml',
+        key: 'fakePath/fakeFileName.cmr.xml',
+      },
+    ],
+  };
+  const conflictOrcaGran = {
+    ...fakeOrcaGranuleFactory(),
+    providerId: conflictCumulusGran.provider,
+    collectionId: conflictCumulusGran.collectionId,
+    id: conflictCumulusGran.granuleId,
+    files: [
+      {
+        name: 'fakeFileName.hdf',
+        cumulusArchiveLocation: 'cumulus-protected-bucket',
+        orcaArchiveLocation: 'orca-bucket',
+        keyPath: 'fakePath/fakeFileName.hdf',
+      },
+      {
+        name: 'fakeFileName_onlyInOrca.jpg',
+        cumulusArchiveLocation: 'cumulus-fake-bucket',
+        orcaArchiveLocation: 'orca-bucket',
+        keyPath: 'fakePath/fakeFileName_onlyInOrca.jpg',
+      },
+      {
+        name: 'fakeFileName.cmr.xml',
+        cumulusArchiveLocation: 'cumulus-fake-bucket-2',
+        orcaArchiveLocation: 'orca-bucket',
+        keyPath: 'fakePath/fakeFileName.cmr.xml',
+      },
+    ],
+  };
+
+  // granule is only in cumulus, and has no file, should be reported as ok
+  const cumulusOnlyGranNoFile = fakeGranuleFactoryV2();
+
+  // granule is only in orca
+  const orcaOnlyGranule = fakeOrcaGranuleFactory();
+
+  // granule is only in cumulus and should be in orca as well
+  const conflictCumulusOnlyGran = {
+    ...fakeGranuleFactoryV2(),
+    granuleId: randomId('conflictCumulusOnlyGranId'),
     collectionId: 'fakeCollection___v1',
     files: [
       {
@@ -162,14 +173,14 @@ function fakeCollectionsAndGranules() {
   return {
     fakeCollectionV1,
     fakeCollectionV2,
-    mismatchedCumulusGranule,
-    mismatchedOrcaGranule,
-    cumulusOnlyGranule,
+    matchingCumulusGran,
+    matchingOrcaGran,
+    matchingCumulusOnlyGran,
+    conflictCumulusGran,
+    conflictOrcaGran,
+    cumulusOnlyGranNoFile,
     orcaOnlyGranule,
-    matchedCumulusGranule,
-    matchedOrcaGranule,
-    matchedCumulusOnlyGranule,
-    mismatchedCumulusOnlyGranule,
+    conflictCumulusOnlyGran,
   };
 }
 
@@ -210,13 +221,13 @@ test.serial('isFileExcludedFromOrca returns true for configured file types', (t)
 test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', (t) => {
   const collectionsConfig = {};
   const {
-    matchedCumulusGranule: cumulusGranule,
-    matchedOrcaGranule: orcaGranule,
+    matchingCumulusGran: cumulusGranule,
+    matchingOrcaGran: orcaGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 1);
-  t.is(report.mismatchedFiles.length, 0);
+  t.is(report.conflictFiles.length, 0);
 });
 
 test.serial('getReportForOneGranule reports no ok for one granule in both cumulus and orca with file discrepancy', (t) => {
@@ -228,25 +239,25 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
     },
   };
   const {
-    mismatchedCumulusGranule: cumulusGranule,
-    mismatchedOrcaGranule: orcaGranule,
+    conflictCumulusGran: cumulusGranule,
+    conflictOrcaGran: orcaGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
   t.false(report.ok);
   t.is(report.okFilesCount, 2);
-  t.is(report.mismatchedFiles.length, 3);
+  t.is(report.conflictFiles.length, 3);
   t.is(
-    report.mismatchedFiles.filter((file) =>
+    report.conflictFiles.filter((file) =>
       file.fileName.endsWith('.xml') && file.reason === fileConflictTypes.shouldExcludedFromOrca).length,
     1
   );
   t.is(
-    report.mismatchedFiles.filter((file) =>
+    report.conflictFiles.filter((file) =>
       file.fileName.endsWith('onlyInCumulus.jpg') && file.reason === fileConflictTypes.onlyInCumulus).length,
     1
   );
   t.is(
-    report.mismatchedFiles.filter((file) =>
+    report.conflictFiles.filter((file) =>
       file.fileName.endsWith('onlyInOrca.jpg') && file.reason === fileConflictTypes.onlyInOrca).length,
     1
   );
@@ -261,12 +272,12 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
     },
   };
   const {
-    matchedCumulusOnlyGranule: cumulusGranule,
+    matchingCumulusOnlyGran: cumulusGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 2);
-  t.is(report.mismatchedFiles.length, 0);
+  t.is(report.conflictFiles.length, 0);
 });
 
 test.serial('getReportForOneGranule reports not ok for one granule in cumulus only with files should be in orca', (t) => {
@@ -278,34 +289,45 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
     },
   };
   const {
-    mismatchedCumulusOnlyGranule: cumulusGranule,
+    conflictCumulusOnlyGran: cumulusGranule,
   } = fakeCollectionsAndGranules();
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.false(report.ok);
   t.is(report.okFilesCount, 1);
-  t.is(report.mismatchedFiles.length, 1);
+  t.is(report.conflictFiles.length, 1);
+});
+
+test.serial('getReportForOneGranule reports ok for one granule in cumulus only with no files', (t) => {
+  const collectionsConfig = {};
+  const {
+    cumulusOnlyGranNoFile: cumulusGranule,
+  } = fakeCollectionsAndGranules();
+  const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
+  t.true(report.ok);
+  t.is(report.okFilesCount, 0);
+  t.is(report.conflictFiles.length, 0);
 });
 
 test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
   const {
     fakeCollectionV1,
     fakeCollectionV2,
-    mismatchedCumulusGranule,
-    mismatchedOrcaGranule,
-    cumulusOnlyGranule,
+    conflictCumulusGran,
+    conflictOrcaGran,
+    cumulusOnlyGranNoFile,
     orcaOnlyGranule,
-    matchedCumulusGranule,
-    matchedOrcaGranule,
-    matchedCumulusOnlyGranule,
-    mismatchedCumulusOnlyGranule,
+    matchingCumulusGran,
+    matchingOrcaGran,
+    matchingCumulusOnlyGran,
+    conflictCumulusOnlyGran,
   } = fakeCollectionsAndGranules();
 
   const esGranules = [
-    cumulusOnlyGranule,
-    mismatchedCumulusGranule,
-    matchedCumulusGranule,
-    matchedCumulusOnlyGranule,
-    mismatchedCumulusOnlyGranule,
+    cumulusOnlyGranNoFile,
+    conflictCumulusGran,
+    matchingCumulusGran,
+    matchingCumulusOnlyGran,
+    conflictCumulusOnlyGran,
   ];
   const esCollections = [fakeCollectionV1, fakeCollectionV2];
 
@@ -321,26 +343,26 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
     })
   );
 
-  const orcaGranules = sortBy([mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule], ['id', 'collectionId']);
+  const orcaGranules = sortBy([conflictOrcaGran, orcaOnlyGranule, matchingOrcaGran], ['id', 'collectionId']);
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: orcaGranules });
 
   const granulesReport = await reconciliationReportForGranules({});
   ORCASearchCatalogQueue.prototype.searchOrca.restore();
-  // matchedCumulusGranule and matchedCumulusOnlyGranule
-  t.is(granulesReport.okCount, 2);
+  // matchingCumulusGran, matchingCumulusOnlyGran, cumulusOnlyGranNoFile
+  t.is(granulesReport.okCount, 3);
   t.is(granulesReport.cumulusCount, 5);
-  // mismatchedOrcaGranule, orcaOnlyGranule, matchedOrcaGranule,
+  // conflictOrcaGran, orcaOnlyGranule, matchingOrcaGran,
   t.is(granulesReport.orcaCount, 3);
-  // matchedCumulusGranule has 1, matchedCumulusOnlyGranule 2,
-  // mismatchedCumulusGranule 2, mismatchedCumulusOnlyGranule 1
+  // matchingCumulusGran has 1, matchingCumulusOnlyGran 2,
+  // conflictCumulusGran 2, conflictCumulusOnlyGran 1
   t.is(granulesReport.okFilesCount, 6);
-  // mismatchedCumulusGranule 3 , mismatchedCumulusOnlyGranule 1
-  t.is(granulesReport.mismatchedFilesCount, 4);
-  // mismatchedCumulusGranule
-  t.is(granulesReport.mismatchedGranules.length, 1);
-  // cumulusOnlyGranule, mismatchedCumulusOnlyGranule
-  t.is(granulesReport.onlyInCumulus.length, 2);
+  // conflictCumulusGran 3 , conflictCumulusOnlyGran 1
+  t.is(granulesReport.conflictFilesCount, 4);
+  // conflictCumulusGran
+  t.is(granulesReport.withConflicts.length, 1);
+  // conflictCumulusOnlyGran
+  t.is(granulesReport.onlyInCumulus.length, 1);
   // orcaOnlyGranule
   t.is(granulesReport.onlyInOrca.length, 1);
 });
