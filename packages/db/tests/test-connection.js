@@ -114,7 +114,7 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
 
 test('getKnexClient logs retry errors and throws expected knexTimeoutError', async (t) => {
   const loggerWarnStub = sinon.stub();
-  const knexLogger = { warn: loggerWarnStub };
+  const knexLogger = { warn: loggerWarnStub, info: sinon.stub() };
   const knex = await getKnexClient({
     env: {
       KNEX_ASYNC_STACK_TRACES: 'true',
