@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2847**
+  - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
 - **CUMULUS-2833**
   - Updates provider model schema titles to display on the dashboard.
 - **CUMULUS-2837**
@@ -24,7 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     @cumulus/message/StepFunctions
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-  - 
 
 ### Fixed
 

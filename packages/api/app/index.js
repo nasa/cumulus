@@ -102,7 +102,7 @@ const handler = async (event, context) => {
   });
 
   // workaround to support multiValueQueryStringParameters
-  // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
+  // until this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
   const modifiedEvent = {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
