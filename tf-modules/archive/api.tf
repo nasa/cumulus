@@ -21,7 +21,7 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   api_env_variables = {
       acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      API_BASE_URL                     = local.api_uri 
+      API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       auth_mode                        = "public"
