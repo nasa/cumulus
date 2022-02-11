@@ -46,11 +46,12 @@ const {
 const {
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
-  updateGranuleStatusToQueued,
   writeFilesViaTransaction,
   writeGranuleFromApi,
   writeGranulesFromMessage,
   _writeGranule,
+  updateGranuleStatusToQueued,
+  updateGranuleStatusToFailed,
 } = require('../../../lib/writeRecords/write-granules');
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
@@ -792,6 +793,7 @@ test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/El
     },
     describeGranuleExecution: () => Promise.resolve({}),
     delete: () => Promise.resolve(),
+    exists: () => Promise.resolve(false),
   };
 
   const [error] = await t.throwsAsync(
@@ -836,6 +838,7 @@ test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/El
     upsert: () => {
       throw new Error('Granules PostgreSQL error');
     },
+    exists: () => Promise.resolve(false),
   };
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
@@ -947,6 +950,62 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   const pgGranuleError = JSON.parse(pgGranule.error.errors);
   t.deepEqual(pgGranuleError.map((error) => error.Error), ['Failed writing files to PostgreSQL.']);
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
+});
+
+test.serial('_writeGranules attempts to mark granule as failed if a SchemaValidationException occurs when a granule is in a final state', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    collectionCumulusId,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+    granuleId,
+  } = t.context;
+
+  cumulusMessage.meta.status = 'queued';
+
+  // iniital write
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const originalError = { Error: 'Original Error', Cause: { Error: 'Original Error Cause' } };
+  // second write
+  // Invalid granule schema to prevent granule write to dynamo from succeeding
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.exception = originalError;
+  cumulusMessage.payload.granules[0].files = [
+    {
+      path: 'MYD13Q1.006', size: 170459659, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'data', checksumType: 'CKSUM', checksum: 3129208208,
+    },
+    { path: 'MYD13Q1.006', size: 46399, name: 'MYD13Q1.A2017281.h19v11.006.2017297235119.hdf.met', type: 'metadata' },
+    { path: 'MYD13Q1.006', size: 32795, name: 'BROWSE.MYD13Q1.A2017281.h19v11.006.2017297235119.hdf', type: 'browse' },
+  ];
+
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  }));
+
+  t.true(error.message.includes('The record has validation errors:'));
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  t.is(dynamoGranule.status, 'failed');
+  const dynamoErrors = JSON.parse(dynamoGranule.error.errors);
+  t.true(dynamoErrors[0].Cause.Error.includes(originalError.Cause.Error));
+
+  const pgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(pgGranule.status, 'failed');
 });
 
 test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
@@ -1402,6 +1461,8 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
       throw new Error('Granules dynamo error');
     },
     delete: () => Promise.resolve({}),
+    describeGranuleExecution: () => Promise.resolve({}),
+    exists: () => Promise.resolve(false),
   };
 
   const error = await t.throwsAsync(
@@ -1432,6 +1493,7 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     upsert: () => {
       throw new Error('Granules Postgres error');
     },
+    exists: () => Promise.resolve(false),
   };
 
   const error = await t.throwsAsync(writeGranuleFromApi(
@@ -1440,7 +1502,6 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
     esClient,
     'Create'
   ));
-
   t.true(error.message.includes('Granules Postgres error'));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
@@ -1858,4 +1919,71 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
 
   t.deepEqual(publishedMessage.record, translatedGranule);
   t.is(publishedMessage.event, 'Update');
+});
+
+test.serial('updateGranuleStatusToFailed() updates granule status in the database', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+  const fakeEsClient = {
+    update: () => Promise.resolve(),
+    delete: () => Promise.resolve(),
+  };
+  granule.status = 'running';
+  const snsEventType = 'Update';
+
+  try {
+    await writeGranuleFromApi({ ...granule }, knex, fakeEsClient, snsEventType);
+  } catch (error) {
+    console.log(`initial write: ${JSON.stringify(error)}`);
+  }
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.not(dynamoRecord.status, 'failed');
+  t.not(postgresRecord.status, 'failed');
+
+  const fakeErrorObject = { Error: 'This is a fake error', Cause: { Error: 'caused by some fake issue' } };
+  await updateGranuleStatusToFailed(
+    { granule: dynamoRecord, knex, error: fakeErrorObject, fakeEsClient }
+  );
+  const updatedDynamoRecord = await granuleModel.get({ granuleId });
+  const updatedPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  t.is(updatedDynamoRecord.status, 'failed');
+  t.is(updatedPostgresRecord.status, 'failed');
+});
+
+test.serial('updateGranuleStatusToFailed() throws error if record does not exist in pg', async (t) => {
+  const {
+    knex,
+    granuleId,
+    esClient,
+  } = t.context;
+
+  const name = randomId('name');
+  const version = randomId('version');
+  const badGranule = fakeGranuleFactoryV2({
+    granuleId,
+    collectionId: constructCollectionId(name, version),
+  });
+  const fakeErrorObject = { Error: 'This is a fake error', Cause: { Error: 'caused by some fake issue' } };
+  await t.throwsAsync(
+    updateGranuleStatusToFailed(
+      { granule: badGranule, knex, error: fakeErrorObject, esClient }
+    ),
+    {
+      name: 'RecordDoesNotExist',
+      message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
+    }
+  );
 });

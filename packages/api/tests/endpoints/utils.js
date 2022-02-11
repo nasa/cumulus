@@ -8,8 +8,10 @@ const buildFakeExpressResponse = () => ({
     badRequest: sinon.fake(),
     conflict: sinon.fake(),
   },
-  status: sinon.stub().returnsThis(),
-  send: sinon.stub(),
+  send: sinon.fake(),
+  status: sinon.stub().returns({
+    send: sinon.fake(),
+  }),
 });
 
 module.exports = {

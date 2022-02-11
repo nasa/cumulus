@@ -13,7 +13,7 @@ const { sfn } = require('@cumulus/aws-client/services');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { getCollection } = require('@cumulus/api-client/collections');
 const { bulkOperation, getGranule, listGranules } = require('@cumulus/api-client/granules');
-const { listRequests } = require('@cumulus/api-client/orca');
+const { submitRequestToOrca } = require('@cumulus/api-client/orca');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const {
   addCollections,
@@ -247,9 +247,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const request = await pRetry(
         async () => {
-          const list = await listRequests({
+          const list = await submitRequestToOrca({
             prefix: config.stackName,
-            query: { asyncOperationId },
+            httpMethod: 'POST',
+            path: '/orca/recovery/jobs',
+            body: { asyncOperationId },
           });
           const body = JSON.parse(list.body);
           if (body.httpStatus === 404) {
@@ -266,21 +268,23 @@ describe('The S3 Ingest Granules workflow', () => {
       const status = ['pending', 'staged', 'success'];
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(request.granules.length).toBe(1);
-      expect(request.granules[0].granule_id).toEqual(granuleId);
+      expect(request.granules[0].granuleId).toEqual(granuleId);
       expect(status.includes(request.granules[0].status)).toEqual(true);
     });
 
     it('retrieves recovery request granule status through the Cumulus API', async () => {
       if (!isOrcaIncluded) pending();
 
-      const list = await listRequests({
+      const list = await submitRequestToOrca({
         prefix: config.stackName,
-        query: { asyncOperationId, granuleId },
+        httpMethod: 'POST',
+        path: '/orca/recovery/granules',
+        body: { asyncOperationId, granuleId },
       });
       const request = JSON.parse(list.body);
       if (request.httpStatus) console.log(request);
       const status = ['pending', 'staged', 'success'];
-      expect(request.granule_id).toEqual(granuleId);
+      expect(request.granuleId).toEqual(granuleId);
       expect(request.asyncOperationId).toEqual(asyncOperationId);
       expect(get(request, 'files', []).length).toBe(3);
 

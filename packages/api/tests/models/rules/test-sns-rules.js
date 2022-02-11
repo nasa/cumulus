@@ -107,7 +107,8 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
     state: 'ENABLED',
   });
 
-  const rule = await rulesModel.create(item);
+  const rule = await rulesModel.createRuleTrigger(item);
+  await rulesModel.create(rule);
 
   t.is(rule.rule.value, snsTopicArn);
   t.truthy(rule.rule.arn);
@@ -205,7 +206,8 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
     state: 'ENABLED',
   });
 
-  const rule = await rulesModel.create(item);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.rule.value, snsTopicArn);
 
@@ -249,7 +251,8 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
     state: 'ENABLED',
   });
 
-  const rule = await rulesModel.create(item);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.rule.value, snsTopicArn);
 
@@ -272,22 +275,28 @@ test.serial('multiple rules using same SNS topic can be created and deleted', as
     Name: randomId('topic'),
   }).promise();
 
-  const rule1 = await rulesModel.create(fakeRuleFactoryV2({
+  const firstRule = fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: TopicArn,
     },
     workflow,
     state: 'ENABLED',
-  }));
-  const rule2 = await rulesModel.create(fakeRuleFactoryV2({
+  });
+
+  const secondRule = fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: TopicArn,
     },
     workflow,
     state: 'ENABLED',
-  }));
+  });
+
+  const firstRuleWithTrigger = await rulesModel.createRuleTrigger(firstRule);
+  const secondRuleWithTrigger = await rulesModel.createRuleTrigger(secondRule);
+  const rule1 = await rulesModel.create(firstRuleWithTrigger);
+  const rule2 = await rulesModel.create(secondRuleWithTrigger);
 
   // rules share the same subscription
   t.is(rule1.rule.arn, rule2.rule.arn);
@@ -332,14 +341,16 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
       }),
     });
 
-  const rule = await rulesModel.create(fakeRuleFactoryV2({
+  const item = fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: snsTopicArn,
     },
     workflow,
     state: 'ENABLED',
-  }));
+  });
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   await t.throwsAsync(
     rulesModel.deleteSnsTrigger(rule), {

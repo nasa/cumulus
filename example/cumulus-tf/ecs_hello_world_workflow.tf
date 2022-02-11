@@ -33,15 +33,6 @@ module "hello_world_service" {
     "--lambdaArn",
     module.cumulus.hello_world_task.task_arn
   ]
-  alarms = {
-    TaskCountHigh = {
-      comparison_operator = "GreaterThanThreshold"
-      evaluation_periods  = 1
-      metric_name         = "MemoryUtilization"
-      statistic           = "SampleCount"
-      threshold           = 1
-    }
-  }
 }
 
 module "ecs_hello_world_workflow" {

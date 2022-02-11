@@ -10,7 +10,7 @@ The following data cookbooks are documents containing examples and explanations 
 
 ## Setup
 
-The data cookbooks assume you can configure providers, collections, and rules to run workflows. Visit [Cumulus data management types](../configuration/data-management-types) for information on how to conifgure Cumulus data management types.
+The data cookbooks assume you can configure providers, collections, and rules to run workflows. Visit [Cumulus data management types](../configuration/data-management-types) for information on how to configure Cumulus data management types.
 
 ## Adding a page
 

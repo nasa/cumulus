@@ -3,6 +3,7 @@
 const uuidv4 = require('uuid/v4');
 
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
@@ -49,24 +50,16 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
 
       await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
 
-      const runTaskResponse = await ecs().runTask({
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: 'notARealFunction' },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: 'notARealFunction',
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+        dynamoTableName: asyncOperationsTableName,
+      });
 
       const taskArn = runTaskResponse.tasks[0].taskArn;
 

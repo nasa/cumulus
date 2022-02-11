@@ -20,6 +20,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 const logger = new Logger({ sender: '@cumulus/api' });
 const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
@@ -151,6 +152,7 @@ async function createReport(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
@@ -170,4 +172,7 @@ router.delete('/:name', deleteReport);
 router.get('/', listReports);
 router.post('/', createReport, asyncOperationEndpointErrorHandler);
 
-module.exports = router;
+module.exports = {
+  createReport,
+  router,
+};

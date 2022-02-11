@@ -611,7 +611,7 @@ exports.reconciliationReportForGranules = reconciliationReportForGranules;
  * @param {number} [params.recReportParams.StartTimestamp]
  * @param {number} [params.recReportParams.EndTimestamp]
  * @param {string} [params.recReportparams.collectionIds]
- * @returns {Promise<Object>}                    - a reconcilation report
+ * @returns {Promise<Object>}                    - a reconciliation report
  */
 async function reconciliationReportForCumulusCMR(params) {
   log.info(`reconciliationReportForCumulusCMR with params ${JSON.stringify(params)}`);

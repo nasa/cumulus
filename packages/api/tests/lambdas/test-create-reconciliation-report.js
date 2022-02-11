@@ -946,7 +946,7 @@ test.serial('Generates valid reconciliation report when there are both extra ES 
 });
 
 test.serial(
-  'With input time params, generates a valid filtered reconcilation report, when there are extra cumulus/ES and CMR collections',
+  'With input time params, generates a valid filtered reconciliation report, when there are extra cumulus/ES and CMR collections',
   async (t) => {
     const { startTimestamp, endTimestamp, ...setupVars } = await setupElasticAndCMRForTests({ t });
 
@@ -994,7 +994,7 @@ test.serial(
 );
 
 test.serial(
-  'With location param as S3, generates a valid reconcilation report for only S3 and DynamoDB',
+  'With location param as S3, generates a valid reconciliation report for only S3 and DynamoDB',
   async (t) => {
     const { filePgModel, granulePgModel, knex } = t.context;
 
@@ -1068,7 +1068,7 @@ test.serial(
 );
 
 test.serial(
-  'With location param as CMR, generates a valid reconcilation report for only Cumulus and CMR',
+  'With location param as CMR, generates a valid reconciliation report for only Cumulus and CMR',
   async (t) => {
     const params = {
       numMatchingCollectionsOutOfRange: 0,
