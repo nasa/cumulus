@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2847**
+  - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
+
 ## [v9.9.1] 2021-02-10 [BACKPORT]
 
 ### Fixed
