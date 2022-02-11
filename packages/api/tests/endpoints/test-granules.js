@@ -16,17 +16,18 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   FilePgModel,
+  generateLocalTestDb,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  generateLocalTestDb,
   localStackConnectionEnv,
+  migrationDir,
+  translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
-  translateApiExecutionToPostgresExecution,
+  translatePostgresFileToApiFile,
   translatePostgresGranuleToApiGranule,
   upsertGranuleWithExecutionJoinRecord,
-  migrationDir,
-  getUniqueGranuleByGranuleId,
 } = require('@cumulus/db');
 
 const {
@@ -1100,6 +1101,10 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
 
+  const {
+    esGranulesClient,
+  } = t.context;
+
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
     async () => {
@@ -1199,6 +1204,18 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           bucket: destination.bucket,
         });
       }
+
+      // check the ES index is updated
+      const esRecord = await esGranulesClient.get(newGranule.granuleId);
+      t.is(esRecord.files.length, 3);
+      esRecord.files.forEach((esFileRecord) => {
+        const pgMatchingFileRecord = pgFiles.find(
+          (pgFile) =>
+            pgFile.key.match(esFileRecord.key)
+            && pgFile.bucket.match(esFileRecord.bucket)
+        );
+        t.deepEqual(translatePostgresFileToApiFile(pgMatchingFileRecord), esFileRecord);
+      });
     }
   );
 });
@@ -1275,16 +1292,22 @@ test.serial('When a move granule request fails to move a file correctly, it reco
           bucket: thirdBucket,
           key: `${destinationFilepath}/${granuleFileName}.md`,
           fileName: `${granuleFileName}.md`,
+          size: 9,
+          source: 'fakeSource',
         },
         {
           bucket,
           key: `${destinationFilepath}/${granuleFileName}.txt`,
           fileName: `${granuleFileName}.txt`,
+          size: 9,
+          source: 'fakeSource',
         },
         {
           bucket: fileWithInvalidDestination.bucket,
           key: fileWithInvalidDestination.key,
           fileName: `${granuleFileName}.jpg`,
+          size: 9,
+          source: 'fakeSource',
         },
       ];
 
@@ -1320,9 +1343,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       const granuleFiles = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
 
       t.deepEqual({
-        bucket: fileWithInvalidDestination.bucket,
-        key: fileWithInvalidDestination.key,
-        size: fileWithInvalidDestination.size,
+        ...fileWithInvalidDestination,
         fileName: `${granuleFileName}.jpg`,
       }, updatedFiles[0]);
 
@@ -2027,6 +2048,7 @@ test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to 
       throw new Error('something bad');
     },
     delete: () => Promise.resolve(),
+    create: () => Promise.resolve(),
   };
 
   const updatedGranule = {
@@ -2152,7 +2174,7 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
   t.is(Messages, undefined);
 });
 
-test.serial('put() does not write to DynamoDB/PostgreSQL/SNS if writing to Elasticsearch fails', async (t) => {
+test.serial('put() rolls back DynamoDB/PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2196,18 +2218,28 @@ test.serial('put() does not write to DynamoDB/PostgreSQL/SNS if writing to Elast
   await put(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
-  // DynamoDB granule record should not exist due to rollbacks from
-  // ES failure which deletes the DynamoDB record to maintain consistency with PG
-  await t.throwsAsync(
-    t.context.granuleModel.get({
-      granuleId: newDynamoGranule.granuleId,
-    }),
-    { name: 'RecordDoesNotExist' }
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const expectedDynamoGranule = await translatePostgresGranuleToApiGranule(
+    {
+      granulePgRecord: actualPgGranule,
+      knexOrTransaction: knex,
+    }
+  );
+  const actualDynamoGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  // Remove size from each file object in the files array the file sizes are not being updated
+  // on the postgres side
+  actualDynamoGranule.files = actualDynamoGranule.files.map((file) => omit(file, ['size']));
+  t.deepEqual(
+    actualDynamoGranule,
+    expectedDynamoGranule
   );
   t.deepEqual(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: newPgGranule.cumulus_id,
-    }),
+    actualPgGranule,
     newPgGranule
   );
   t.deepEqual(

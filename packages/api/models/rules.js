@@ -250,27 +250,29 @@ class Rule extends Manager {
     }
 
     // Initialize new rule object
-    let newRuleItem = cloneDeep(item);
-
-    // the default state is 'ENABLED'
-    if (!item.state) {
-      newRuleItem.state = 'ENABLED';
-    }
+    const newRuleItem = cloneDeep(item);
 
     newRuleItem.createdAt = item.createdAt || Date.now();
     newRuleItem.updatedAt = item.updatedAt || Date.now();
 
-    // Validate rule before kicking off workflows or adding event source mappings
+    // Validate rule before kicking off workflows
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
-
-    newRuleItem = await this.createRuleTrigger(newRuleItem);
 
     // save
     return super.create(newRuleItem);
   }
 
   async createRuleTrigger(ruleItem) {
+    // Initialize new rule object
     let newRuleItem = cloneDeep(ruleItem);
+
+    // the default state is 'ENABLED'
+    if (!ruleItem.state) {
+      newRuleItem.state = 'ENABLED';
+    }
+
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
@@ -478,7 +480,7 @@ class Rule extends Manager {
   async deleteSnsTrigger(item) {
     // If event source mapping is shared by other rules, don't delete it
     if (await this.isEventSourceMappingShared(item, 'arn')) {
-      log.info(`Event source mapping ${item} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
+      log.info(`Event source mapping ${JSON.stringify(item)} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
       return Promise.resolve();
     }
     // delete permission statement

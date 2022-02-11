@@ -121,12 +121,12 @@ module "queue_granules_service" {
     module.cumulus.queue_granules_task.task_arn
   ]
   alarms = {
-    TaskCountHigh = {
+    MemoryUtilizationHigh = {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 1
       metric_name         = "MemoryUtilization"
       statistic           = "SampleCount"
-      threshold           = 1
+      threshold           = 75
     }
   }
 }

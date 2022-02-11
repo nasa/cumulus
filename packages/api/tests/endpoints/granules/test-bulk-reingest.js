@@ -16,6 +16,9 @@ const models = require('../../../models');
 
 const { app } = require('../../../app');
 
+const { bulkReingest } = require('../../../endpoints/granules');
+const { buildFakeExpressResponse } = require('../utils');
+
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
@@ -112,6 +115,31 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
+});
+
+test.serial('bulkReingest() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
+
+  const body = {
+    ids: expectedIds,
+  };
+
+  const functionName = randomId('lambda');
+
+  await bulkReingest(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body,
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });
 
 test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and ES query', async (t) => {

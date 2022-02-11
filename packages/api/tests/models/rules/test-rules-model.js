@@ -111,14 +111,14 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('create defaults rule state to ENABLED', async (t) => {
+test('Create rule trigger defaults rule state to ENABLED', async (t) => {
   const { onetimeRule } = t.context;
 
   // remove state from rule to be created
   delete onetimeRule.state;
 
-  // create rule
-  const rule = await rulesModel.create(onetimeRule);
+  // create rule trigger
+  const rule = await rulesModel.createRuleTrigger(onetimeRule);
 
   t.is(rule.state, 'ENABLED');
 
@@ -129,8 +129,9 @@ test('create defaults rule state to ENABLED', async (t) => {
 test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
-  // create rule
-  const rule = await rulesModel.create(onetimeRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.name, onetimeRule.name);
 
@@ -183,17 +184,10 @@ test.serial('Creating an invalid rule does not create workflow triggers', async 
 
   ruleItem.rule.type = 'invalid';
 
-  const createTriggerStub = sinon.stub(models.Rule.prototype, 'createRuleTrigger').resolves(ruleItem);
-
-  try {
-    await t.throwsAsync(
-      () => rulesModel.create(ruleItem),
-      { name: 'SchemaValidationError' }
-    );
-    t.true(createTriggerStub.notCalled);
-  } finally {
-    createTriggerStub.restore();
-  }
+  await t.throwsAsync(
+    () => rulesModel.createRuleTrigger(ruleItem),
+    { name: 'SchemaValidationError' }
+  );
 });
 
 test('Enabling a disabled rule updates the state', async (t) => {
@@ -202,7 +196,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.state = 'DISABLED';
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.state, 'DISABLED');
 
@@ -219,7 +214,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
 test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
   const { onetimeRule } = t.context;
 
-  const rule = await rulesModel.create(onetimeRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   const updates = { name: rule.name, rule: null };
 
@@ -237,11 +233,11 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
   }
 });
 
-test.serial('Creating a kinesis type rule adds event mappings, creates rule', async (t) => {
+test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
-  const createdRule = await rulesModel.create(kinesisRule);
+  const createdRule = await rulesModel.createRuleTrigger(kinesisRule);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -257,7 +253,6 @@ test.serial('Creating a kinesis type rule adds event mappings, creates rule', as
   t.false(createdRule.rule.logEventArn === undefined);
 
   // clean up
-  await rulesModel.delete(createdRule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -265,7 +260,8 @@ test.serial('Deleting a kinesis style rule removes event mappings', async (t) =>
   const { kinesisRule } = t.context;
 
   // create and delete rule
-  const createdRule = await rulesModel.create(kinesisRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  const createdRule = await rulesModel.create(ruleWithTrigger);
   t.true(await rulesModel.exists(createdRule.name));
 
   await rulesModel.delete(createdRule);
@@ -281,8 +277,9 @@ test.serial('Deleting a kinesis style rule removes event mappings', async (t) =>
 test.serial('Updating a kinesis type rule state does not change event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
-  // create rule
-  await rulesModel.create(kinesisRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
 
   // update rule state
@@ -303,8 +300,9 @@ test.serial('Updating a kinesis type rule state does not change event source map
 test.serial('Updaing a kinesis type rule value results in new event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
-  // create rule
-  await rulesModel.create(kinesisRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
 
   // update rule value
@@ -331,8 +329,9 @@ test.serial('Updaing a kinesis type rule value results in new event source mappi
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
-  // create rule
-  await rulesModel.create(kinesisRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
 
   // update rule value
@@ -363,10 +362,14 @@ test.serial('Creating a kinesis type rule using existing event source mappings d
   const newKinesisRule = cloneDeep(kinesisRule);
   newKinesisRule.name = `${kinesisRule.name}_new`;
 
-  await rulesModel.create(kinesisRule);
+  // create rule trigger and rule
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
 
-  await rulesModel.create(newKinesisRule);
+  // create second rule trigger and rule
+  const newRuleWithTriggers = await rulesModel.createRuleTrigger(newKinesisRule);
+  await rulesModel.create(newRuleWithTriggers);
   const newRule = await rulesModel.get({ name: newKinesisRule.name });
 
   t.not(newRule.name, rule.name);
@@ -392,10 +395,13 @@ test.serial('It does not delete event source mappings if they exist for other ru
   const kinesisRuleThree = cloneDeep(kinesisRule);
   kinesisRuleThree.name = `${kinesisRule.name}_three`;
 
-  // create two rules with same value
-  await rulesModel.create(kinesisRule);
+  // create two rules with same value and one shared rule trigger
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
-  await rulesModel.create(kinesisRuleTwo);
+
+  const newRuleWithTriggers = await rulesModel.createRuleTrigger(kinesisRuleTwo);
+  await rulesModel.create(newRuleWithTriggers);
   const ruleTwo = await rulesModel.get({ name: kinesisRuleTwo.name });
 
   // same event source mapping
@@ -406,7 +412,8 @@ test.serial('It does not delete event source mappings if they exist for other ru
   await rulesModel.delete(ruleTwo);
 
   // create third rule, it should use the existing event source mapping
-  await rulesModel.create(kinesisRuleThree);
+  const thirdRuleWithTriggers = await rulesModel.createRuleTrigger(kinesisRuleThree);
+  await rulesModel.create(thirdRuleWithTriggers);
   const ruleThree = await rulesModel.get({ name: kinesisRuleThree.name });
   t.is(ruleThree.rule.arn, rule.rule.arn);
   t.is(ruleThree.rule.logEventArn, rule.rule.logEventArn);
@@ -417,7 +424,7 @@ test.serial('It does not delete event source mappings if they exist for other ru
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('Creating a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
+test.serial('Creating a rule trigger for a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
   process.env.messageConsumer = randomString();
 
   const item = fakeRuleFactoryV2({
@@ -455,7 +462,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     });
 
   try {
-    await rulesModel.create(item);
+    await rulesModel.createRuleTrigger(item);
     t.pass();
   } catch (error) {
     t.fail(error);
@@ -471,7 +478,7 @@ test('Creating an invalid kinesis type rule does not add event mappings', async 
   delete newKinesisRule.name;
 
   // attempt to create rule
-  await t.throwsAsync(rulesModel.create(newKinesisRule), { name: 'SchemaValidationError' });
+  await t.throwsAsync(rulesModel.createRuleTrigger(newKinesisRule), { name: 'SchemaValidationError' });
 
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
@@ -489,7 +496,8 @@ test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   const ruleItem = cloneDeep(onetimeRule);
   ruleItem.queueUrl = 'testQueue';
 
-  const response = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const response = await rulesModel.create(ruleWithTrigger);
 
   const payload = await models.Rule.buildPayload(ruleItem);
 
@@ -507,7 +515,8 @@ test('Updates rule meta object', async (t) => {
     triggerRule,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.meta.triggerRule, triggerRule);
 
@@ -529,7 +538,8 @@ test('Updates a deeply nested key', async (t) => {
     testObject,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.deepEqual(rule.meta.testObject, testObject);
 
@@ -557,7 +567,8 @@ test('Update preserves nested keys', async (t) => {
     testObject,
   };
 
-  const rule = await rulesModel.create(ruleItem);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(ruleItem);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.meta.foo, 'bar');
   t.deepEqual(rule.meta.testObject, testObject);
@@ -588,7 +599,8 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     state: 'ENABLED',
   });
 
-  const createdRule = await rulesModel.create(rule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+  const createdRule = await rulesModel.create(ruleWithTrigger);
 
   t.deepEqual(createdRule.rule, rule.rule);
   t.is(get(createdRule, 'meta.visibilityTimeout', 300), 300);
@@ -631,7 +643,7 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
   );
 });
 
-test('Creating SQS rule fails if queue does not exist', async (t) => {
+test('Creating a rule trigger SQS rule fails if queue does not exist', async (t) => {
   const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
@@ -641,12 +653,12 @@ test('Creating SQS rule fails if queue does not exist', async (t) => {
     state: 'ENABLED',
   });
   await t.throwsAsync(
-    rulesModel.create(rule),
+    rulesModel.createRuleTrigger(rule),
     { message: /SQS queue non-existent-queue does not exist/ }
   );
 });
 
-test('Creating SQS rule fails if there is no redrive policy on the queue', async (t) => {
+test('Creating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
   const queueUrl = await SQS.createQueue(randomId('queue'));
   const rule = fakeRuleFactoryV2({
     workflow,
@@ -657,7 +669,7 @@ test('Creating SQS rule fails if there is no redrive policy on the queue', async
     state: 'ENABLED',
   });
   await t.throwsAsync(
-    rulesModel.create(rule),
+    rulesModel.createRuleTrigger(rule),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
 });
@@ -665,7 +677,8 @@ test('Creating SQS rule fails if there is no redrive policy on the queue', async
 test.serial('Rule.exists() returns true when a record exists', async (t) => {
   const { onetimeRule } = t.context;
 
-  await rulesModel.create(onetimeRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(onetimeRule);
+  await rulesModel.create(ruleWithTrigger);
 
   t.true(await rulesModel.exists(onetimeRule.name));
 });
