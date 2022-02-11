@@ -14,14 +14,10 @@ test('handler sets environment variables based on configured secretsManager secr
     Name: secretId,
     SecretString: JSON.stringify({
       randomTestVal: 'randomTestVal',
-      dynamoTableNameString: JSON.stringify({})
+      dynamoTableNameString: JSON.stringify({}),
     }),
   }).promise();
   process.env.api_config_secret_id = secretId;
-
-  const dynamoTableNames = {
-    DynamoTableName: 'prefix-dynamoTableName',
-  };
   // eslint-disable-next-line global-require
   const { handler } = require('../../app');
   await handler({});

@@ -5,9 +5,6 @@ process.env.dynamoTableNamesParameterName = 'fake-param-name';
 
 test('handler throws error if environment variable for secret ID is missing', async (t) => {
   process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
-  const dynamoTableNames = {
-    DynamoTableName: 'prefix-dynamoTableName',
-  };
   // eslint-disable-next-line global-require
   const { handler } = require('../../app');
   await t.throwsAsync(handler({}), { instanceOf: MissingRequiredEnvVarError });
