@@ -21,7 +21,7 @@ const {
 } = require('../../lambdas/reports/orca-backup-reconciliation-report');
 const OBRP = rewire('../../lambdas/reports/orca-backup-reconciliation-report');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
-const isFileExcludedFromOrca = OBRP.__get__('isFileExcludedFromOrca');
+const shouldFileExcludedFromOrca = OBRP.__get__('shouldFileExcludedFromOrca');
 const getReportForOneGranule = OBRP.__get__('getReportForOneGranule');
 
 let esAlias;
@@ -200,7 +200,7 @@ test.afterEach.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.serial('isFileExcludedFromOrca returns true for configured file types', (t) => {
+test.serial('shouldFileExcludedFromOrca returns true for configured file types', (t) => {
   const collectionsConfig = {
     collectionId1: {
       orca: {
@@ -208,14 +208,14 @@ test.serial('isFileExcludedFromOrca returns true for configured file types', (t)
       },
     },
   };
-  t.true(isFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.xml`));
-  t.true(isFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.met`));
-  t.false(isFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.hdf`));
-  t.false(isFileExcludedFromOrca(collectionsConfig, 'collectionId1', randomId('file')));
+  t.true(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.xml`));
+  t.true(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.met`));
+  t.false(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.hdf`));
+  t.false(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', randomId('file')));
 
-  t.false(isFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.xml`));
-  t.false(isFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.met`));
-  t.false(isFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
+  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.xml`));
+  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.met`));
+  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
 });
 
 test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', (t) => {

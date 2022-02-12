@@ -898,27 +898,29 @@ describe('When there are granule differences and granule reconciliation is run',
     it('generates a report showing number of granules that are in Cumulus and ORCA', () => {
       if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
-      expect(report.okCount).toBe(0);
+      const granules = report.granules;
+      expect(granules).toBeTruthy();
+      expect(granules.okCount).toBe(0);
       // publishedGranule, dbGranule
-      expect(report.cumulusCount).toBe(2);
+      expect(granules.cumulusCount).toBe(2);
       // publishedGranule
-      expect(report.orcaCount).toBe(1);
+      expect(granules.orcaCount).toBe(1);
       // 4 from publishedGranule (all except .jpg, .jpg2), 1 from dbGranule (.met)
-      expect(report.okFilesCount).toBe(5);
-      expect(report.mismatchedFilesCount).toBe(6);
-      expect(report.onlyInCumulus.length).toBe(1);
-      expect(report.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
-      expect(report.onlyInCumulus[0].okFilesCount).toBe(1);
-      expect(report.onlyInCumulus[0].mismatchedFiles.length).toBe(4);
-      expect(report.onlyInCumulus[0].mismatchedFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
-      expect(report.onlyInOrca.length).toBe(0);
-      if (report.mismatchedGranules.length !== 0) {
-        console.log(`XXXX mismatchedGranules ${JSON.stringify(report.mismatchedGranules)}`);
+      expect(granules.okFilesCount).toBe(5);
+      expect(granules.conflictFilesCount).toBe(6);
+      expect(granules.onlyInCumulus.length).toBe(1);
+      expect(granules.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
+      expect(granules.onlyInCumulus[0].okFilesCount).toBe(1);
+      expect(granules.onlyInCumulus[0].conflictFiles.length).toBe(4);
+      expect(granules.onlyInCumulus[0].conflictFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
+      expect(granules.onlyInOrca.length).toBe(0);
+      if (granules.withConflicts.length !== 0) {
+        console.log(`XXXX withConflicts ${JSON.stringify(granules.withConflicts)}`);
       }
-      expect(report.mismatchedGranules.length).toBe(1);
-      expect(report.mismatchedGranules[0].granuleId).toBe(publishedGranuleId);
-      expect(report.mismatchedGranules[0].mismatchedFiles.length).toBe(2);
-      expect(report.mismatchedGranules[0].mismatchedFiles.filter(
+      expect(granules.withConflicts.length).toBe(1);
+      expect(granules.withConflicts[0].granuleId).toBe(publishedGranuleId);
+      expect(granules.withConflicts[0].conflictFiles.length).toBe(2);
+      expect(granules.withConflicts[0].conflictFiles.filter(
         (file) => file.fileName.endsWith('.jpg') || file.fileName.endsWith('.jpg2')
       ).length).toBe(2);
     });
