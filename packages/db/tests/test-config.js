@@ -5,6 +5,7 @@ const {
   getConnectionConfigEnv,
   getSecretConnectionConfig,
   getKnexConfig,
+  isKnexDebugEnabled,
 } = require('../dist/config');
 
 const dbConnectionConfig = {
@@ -229,4 +230,15 @@ test('getConnectionConfig returns the expected configuration when using environm
       port: 5435,
     }
   );
+});
+
+test('isKnexDebugEnabled() returns true if debugging is enabled', (t) => {
+  t.true(isKnexDebugEnabled({ KNEX_DEBUG: 'true' }));
+});
+
+test('isKnexDebugEnabled() returns false if debugging is not enabled', (t) => {
+  t.false(isKnexDebugEnabled({ KNEX_DEBUG: 'false' }));
+  t.false(isKnexDebugEnabled({ KNEX_DEBUG: 'foobar' }));
+  t.false(isKnexDebugEnabled({}));
+  t.false(isKnexDebugEnabled());
 });
