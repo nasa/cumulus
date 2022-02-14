@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2847**
+  - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
 - **CUMULUS-2775**
   - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
 
