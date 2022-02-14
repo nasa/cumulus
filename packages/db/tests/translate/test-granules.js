@@ -1,5 +1,7 @@
+const orderBy = require('lodash/orderBy');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+
 const { ValidationError } = require('@cumulus/errors');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const {
@@ -156,7 +158,7 @@ test.before(async (t) => {
       updated_at: updatedAt,
     }),
   ];
-  files.map(async (file) => await t.context.filePgModel.create(knex, file));
+  await Promise.all(files.map((file) => t.context.filePgModel.create(knex, file)));
 });
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
@@ -229,8 +231,14 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
@@ -314,8 +322,14 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
@@ -398,7 +412,6 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
         key: 'firstKey',
         size: '2098711627776',
         source: 's3://cumulus-test-sandbox-private/sourceDir/granule',
-
       },
       {
         bucket: 'cumulus-test-sandbox-private',
@@ -422,8 +435,14 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
