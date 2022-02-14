@@ -11,8 +11,11 @@ const morgan = require('morgan');
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
-const { services } = require('@cumulus/aws-client');
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
+const Logger = require('@cumulus/logger');
+const log = new Logger({ sender: '@api/index' });
 
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
@@ -32,6 +35,24 @@ morgan.format(
   '[:date[clf]] ":method :url HTTP/:http-version"'
   + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
+
+let dynamoTableNames;
+const setupDynamoTablesConfig = async () => {
+  if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
+    return undefined;
+  }
+
+  const dynamoTableNamesParameterKey = getRequiredEnvVar('dynamoTableNamesParameterKey');
+
+  log.info('Getting dynamo table names from S3');
+  dynamoTableNames = await getJsonS3Object(
+    process.env.system_bucket,
+    dynamoTableNamesParameterKey
+  );
+  return undefined;
+};
+
+const setupDynamoTablesConfigPromise = setupDynamoTablesConfig();
 
 // Config
 app.use(boom());
@@ -62,16 +83,8 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
-  const { dynamoTableNamesParameterName } = process.env;
-  if (!dynamoTableNamesParameterName) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
-  }
-
-  const ssmClient = context.ssmClient || services.systemsManager();
-  const dynamoTableNamesParameter = await ssmClient.getParameter({
-    Name: dynamoTableNamesParameterName,
-  }).promise();
-  const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
+  await setupDynamoTablesConfigPromise;
+  log.info('Starting API handler');
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
@@ -83,6 +96,7 @@ const handler = async (event, context) => {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
+  log.info('Running serverlessExpress.proxy');
   // see https://github.com/vendia/serverless-express/issues/297
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(
