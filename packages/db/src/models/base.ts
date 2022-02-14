@@ -60,7 +60,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    * Fetches multiple items from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @param {Object} params - An object or any portion of an object of type RecordType
    * @returns {Promise<RecordType[]>} List of returned records
    */
   async search(
@@ -69,7 +69,6 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .where(params);
-
     return records;
   }
 
@@ -101,7 +100,7 @@ class BasePgModel<ItemType, RecordType extends { cumulus_id: number }> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction -
    *  DB client or transaction
-   * @param {Array<keyof RecordType>} columnNames - column names for whereIn query
+   * @param {Array<string>} columnNames - column names for whereIn query
    * @param {Array<string>} values - record values for whereIn query
    * @returns {Promise<Array<number>>} An array of cumulus_ids for the returned records
    */
