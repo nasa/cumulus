@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
-const { deconstructCollectionId } = require('../../lib/utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const Pdr = require('../../models/pdrs');
 
 let pdrsModel;

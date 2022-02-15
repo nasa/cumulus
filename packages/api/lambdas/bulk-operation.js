@@ -4,8 +4,8 @@ const pMap = require('p-map');
 const Logger = require('@cumulus/logger');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { CollectionPgModel, GranulePgModel, getKnexClient } = require('@cumulus/db');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
-const { deconstructCollectionId } = require('../lib/utils');
 const { chooseTargetExecution } = require('../lib/executions');
 const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
