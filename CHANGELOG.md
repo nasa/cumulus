@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2492**
+  - Modify collectionId logic to work with collection short names that conatin trailing underscores e.g. `shortName____`
 - **CUMULUS-2847**
   - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
 - **CUMULUS-2833**

@@ -9,6 +9,7 @@ const range = require('lodash/range');
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const indexer = rewire('../indexer');
 const Collection = require('../collections');
@@ -51,12 +52,12 @@ test.before(async () => {
     }, esAlias),
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
-      collectionId: 'coll1___1',
+      collectionId: constructCollectionId('coll1', '1'),
       status: 'completed',
     }, esAlias),
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
-      collectionId: 'coll1___1',
+      collectionId: constructCollectionId('coll1', '1'),
       status: 'completed',
     }, esAlias),
   ]);
@@ -72,15 +73,15 @@ test.before(async () => {
   await Promise.all(range(9).map((i) =>
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
-      collectionId: `coll4___${i}`,
+      collectionId: constructCollectionId('coll4', i),
       status: 'completed',
     }, esAlias)));
 
-  // Add more than 10 granules to `coll4___0`
+  // Add more than 10 granules to "coll4___0"
   await Promise.all(range(10).map(() =>
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
-      collectionId: 'coll4___0',
+      collectionId: constructCollectionId('coll4', '0'),
       status: 'completed',
     }, esAlias)));
 
@@ -97,7 +98,7 @@ test.before(async () => {
       indexer.indexGranule(esClient, {
         granuleId: randomId('granule'),
         updatedAt: new Date(2020, 1, 29),
-        collectionId: 'coll3___1',
+        collectionId: constructCollectionId('coll3', '1'),
         status: 'completed',
       }, esAlias),
     ]);

@@ -115,10 +115,10 @@ export const translateApiExecutionToPostgresExecution = async (
   };
 
   if (dynamoRecord.collectionId !== undefined) {
-    const {name, version} = deconstructCollectionId(dynamoRecord.collectionId);
+    const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
     translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
-      { name, version}
+      { name, version }
     );
   }
 

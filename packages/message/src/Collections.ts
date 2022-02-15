@@ -43,14 +43,16 @@ export const deconstructCollectionId = (collectionId: string) => {
   try {
     const last = collectionId.lastIndexOf(collectionIdSeparator);
     name = collectionId.substring(0, last);
-    version = collectionId.substring(last+collectionIdSeparator.length)
+    version = collectionId.substring(last + collectionIdSeparator.length);
     if (name && version) {
       return {
-	name,
-	version,
+        name,
+        version,
       };
     }
-  } catch (error) { }
+  } catch (error) {
+    // do nothing, error thrown below
+  }
   throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
 };
 

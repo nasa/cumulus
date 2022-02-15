@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { deconstructCollectionId, constructCollectionId } = require('@cumulus/message/Collections');
 const Pdr = require('../../models/pdrs');
 
 let pdrsModel;
@@ -20,7 +20,7 @@ test.after.always(async () => {
 });
 
 const createPdrMessage = ({
-  collectionId = `${randomId('MOD')}___${randomNumber()}`,
+  collectionId = constructCollectionId(randomId('MOD'), randomNumber()),
   numCompletedExecutions = 0,
   numFailedExecutions = 0,
   numRunningExecutions = 0,
@@ -73,7 +73,7 @@ test('generatePdrRecord() throws error if message.payload.pdr.name is not set', 
 });
 
 test('generatePdrRecord() generates a completed PDR record', (t) => {
-  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const collectionId = constructCollectionId(randomId('MOD'), randomNumber());
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
   const status = 'completed';
@@ -107,7 +107,7 @@ test('generatePdrRecord() generates a completed PDR record', (t) => {
 });
 
 test('generatePdrRecord() generates a failed PDR record', (t) => {
-  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const collectionId = constructCollectionId(randomId('MOD'), randomNumber());
   const providerId = randomId('provider');
   const pdrName = randomId('pdr');
   const status = 'failed';
