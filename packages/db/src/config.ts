@@ -11,6 +11,10 @@ export const localStackConnectionEnv = {
   PG_PORT: '5432',
 };
 
+export const isKnexDebugEnabled = (
+  env: NodeJS.ProcessEnv = {}
+) => env.KNEX_DEBUG === 'true';
+
 export const getSecretConnectionConfig = async (
   SecretId: string,
   secretsManager: AWS.SecretsManager
@@ -127,7 +131,7 @@ export const getKnexConfig = async ({
   const knexConfig: Knex.Config = {
     client: 'pg',
     connection: await getConnectionConfig({ env, secretsManager }),
-    debug: env.KNEX_DEBUG === 'true',
+    debug: isKnexDebugEnabled(env),
     asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
     pool: {
       min: 0,
