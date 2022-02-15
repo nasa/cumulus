@@ -770,8 +770,8 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   } = t.context;
 
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex),
-    { message: 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.' }
+    writeGranuleFromApi({ ...granule, collectionId: constructCollectionId('wrong____', 'collection') }, knex),
+    { message: 'Record in collections with identifiers {"name":"wrong____","version":"collection"} does not exist.' }
   );
 });
 
