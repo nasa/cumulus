@@ -23,10 +23,27 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.stackName = randomString();
   t.context.path = `${t.context.stackName}/dead-letter-archive/sqs/`;
+  t.context.sqsPath = `${t.context.stackName}/dead-letter-archive/sqsTest/`;
   const cumulusMessages = [
     fakeCumulusMessageFactory(),
     fakeCumulusMessageFactory(),
   ];
+
+  t.context.SQSCumulusMessage = fakeCumulusMessageFactory();
+  t.context.SQSCumulusMessage.stopDate = 150;
+
+  const SQSMessage = {
+    body: JSON.stringify(
+      {
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify(t.context.SQSCumulusMessage),
+          startDate: t.context.SQSCumulusMessage.cumulus_meta.workflow_start_time,
+          stopDate: t.context.SQSCumulusMessage.stopDate,
+        },
+      }
+    ),
+  };
   t.context.cumulusMessages = cumulusMessages;
   t.context.messageKeys = [
     `${t.context.path}${getMessageExecutionName(cumulusMessages[0])}.json`,
@@ -40,6 +57,11 @@ test.beforeEach(async (t) => {
       cumulusMessage
     );
   }));
+  await S3.putJsonS3Object(
+    t.context.bucket,
+    `${t.context.sqsPath}/${getMessageExecutionName(t.context.SQSCumulusMessage)}`,
+    SQSMessage
+  );
 });
 
 test.after(async (t) => {
@@ -133,6 +155,22 @@ test('processDeadLetterArchive only deletes dead letters that process successful
   const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
   t.is(remainingDeadLetters.length, 1);
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
+});
+
+test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
+  const { bucket, sqsPath, SQSCumulusMessage } = t.context;
+  const writeRecordsFunctionSpy = sinon.spy();
+
+  const expected = { ...SQSCumulusMessage };
+  expected.cumulus_meta.workflow_stop_time = SQSCumulusMessage.stopDate;
+
+  await processDeadLetterArchive({
+    bucket,
+    path: sqsPath,
+    writeRecordsFunction: writeRecordsFunctionSpy,
+  });
+
+  t.deepEqual(writeRecordsFunctionSpy.getCall(0).firstArg.cumulusMessage, SQSCumulusMessage);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {

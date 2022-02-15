@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
+
+### Changed
+
+- **CUMULUS-2833**
+  - Updates provider model schema titles to display on the dashboard.
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
+- **CUMULUS-2781**
+  - Update API lambda to utilize api_config secret for initial environment variables
+  - 
+
+### Fixed
+
+- Added Cloudwatch permissions to `<prefix>-steprole` in `tf-modules/ingest/iam.tf` to address the
+`Error: error creating Step Function State Machine (xxx): AccessDeniedException: 'arn:aws:iam::XXX:role/xxx-steprole' is not authorized to create managed-rule`
+error in non-NGAP accounts:
+  - `events:PutTargets`
+  - `events:PutRule`
+  - `events:DescribeRule`
+
+## [v10.0.1] 2022-02-03
+
+**Please note** changes in 10.0.1 may not yet be released in future versions, as
+this is a backport and patch release on the 10.0.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Fixed
+
+- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
+which prevented it from running a Fargate task for data migration.
+
+## [v10.0.0] 2022-02-01
+
 ### Migration steps
 
 - Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
@@ -14,12 +57,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### BREAKING CHANGES
 
-- **NDCUM-624**:
+- **NDCUM-624**
   - Functions in @cumulus/cmrjs renamed for consistency with `isCMRFilename` and `isCMRFile`
     - `isECHO10File` -> `isECHO10Filename`
     - `isUMMGFile` -> `isUMMGFilename`
     - `isISOFile` -> `isCMRISOFilename`
-- **CUMULUS-2388**:
+- **CUMULUS-2388**
   - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
     - add-missing-file-checksums
     - files-to-granules
@@ -232,6 +275,8 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - Made `vpc_id` variable optional for `example/cumulus-tf` module
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
+- Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
+- Increases wait time for CMR to return online resources in integration tests
 - **CUMULUS-1823**
   - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
@@ -5514,7 +5559,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
+[v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
+[v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
