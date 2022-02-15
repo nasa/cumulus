@@ -1,6 +1,7 @@
 'use strict';
 
 import { Message } from '@cumulus/types';
+const collectionIdSeparator = '___';
 
 /**
  * Utility functions for generating collection information or parsing collection information
@@ -27,7 +28,7 @@ type CollectionInfo = {
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}___${version}`;
+  `${name}${collectionIdSeparator}${version}`;
 
 /**
  * Returns the name and version of a collection based on
@@ -40,7 +41,9 @@ export const deconstructCollectionId = (collectionId: string) => {
   let name;
   let version;
   try {
-    [name, version] = collectionId.split('___');
+    const last = collectionId.lastIndexOf(collectionIdSeparator);
+    name = collectionId.substring(0, last);
+    version = collectionId.substring(last+collectionIdSeparator.length)
   } catch (error) {
     throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
   }
