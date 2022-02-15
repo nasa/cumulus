@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
   - **CUMULUS-2817**
     - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
+  - **CUMULUS-2814**
+    - Remove DynamoDB logic from rules `DELETE` endpoint
+    - Move event resources deletion logic from `rulesModel` to `rulesHelper`
 
 ## Unreleased
 
@@ -277,9 +280,6 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
-- **CUMULUS-2312** - RDS Migration Epic Phase 3
-  - **CUMULUS-2814**
-    - Remove DynamoDB logic from rules `DELETE` endpoint
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS_2641**
     - Update API granule schema to set productVolume as a string value
