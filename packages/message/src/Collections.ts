@@ -44,16 +44,14 @@ export const deconstructCollectionId = (collectionId: string) => {
     const last = collectionId.lastIndexOf(collectionIdSeparator);
     name = collectionId.substring(0, last);
     version = collectionId.substring(last+collectionIdSeparator.length)
-  } catch (error) {
-    throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
-  }
-  if (name && version) {
-    return {
-      name,
-      version,
-    };
-  }
-  throw new Error(`invalid collectionId: ${collectionId}`);
+    if (name && version) {
+      return {
+	name,
+	version,
+      };
+    }
+  } catch (error) { }
+  throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
 };
 
 /**

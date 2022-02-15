@@ -795,7 +795,7 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   const badCollectionId = `collectionId${cryptoRandomString({ length: 5 })}`;
   await t.throwsAsync(
     writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex),
-    { message: `invalid collectionId: ${badCollectionId}` }
+    { message: `invalid collectionId: "${badCollectionId}"` }
   );
 });
 
