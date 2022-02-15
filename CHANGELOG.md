@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
   - **CUMULUS-2817**
     - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
+  - **CUMULUS-2813**
+    - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
 
 ## Unreleased
 

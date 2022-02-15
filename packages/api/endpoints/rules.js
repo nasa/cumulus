@@ -91,16 +91,14 @@ async function post(req, res) {
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
-        await rulePgModel.create(trx, postgresRule);
-        record = await ruleModel.create(ruleWithTrigger);
-        await indexRule(esClient, record, process.env.ES_INDEX);
+        const [pgRecord] = await rulePgModel.create(trx, postgresRule);
+        record = await translatePostgresRuleToApiRule(pgRecord, knex);
+        await indexRule(esClient, ruleWithTrigger, process.env.ES_INDEX);
       });
     } catch (innerError) {
       if (isCollisionError(innerError)) {
         return res.boom.conflict(`A record already exists for ${name}`);
       }
-      // Clean up DynamoDB record in case of any failure
-      await ruleModel.delete(apiRule);
       throw innerError;
     }
     return res.send({ message: 'Record saved', record });

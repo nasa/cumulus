@@ -19,6 +19,8 @@ const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  translatePostgresRuleToApiRule,
+  fakeRuleRecordFactory,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
@@ -61,8 +63,6 @@ const testDbName = randomString(12);
 const { app } = require('../../app');
 
 const workflow = randomId('workflow-');
-
-const dynamoRuleOmitList = ['createdAt', 'updatedAt', 'state', 'provider', 'collection', 'rule', 'queueUrl', 'executionNamePrefix'];
 
 const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
 
@@ -306,19 +306,20 @@ test('GET gets a rule', async (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const { newRule } = t.context;
+  const {
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queueUrl: 'fake-queue-url',
+      collection: undefined,
+      provider: undefined,
+    }
+  );
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
 
-  let response = await request(app)
-    .post('/rules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
-    .expect(200);
-
-  t.is(response.body.message, 'Record saved');
-
-  response = await request(app)
-    .delete(`/rules/${newRule.name}`)
+  const response = await request(app)
+    .delete(`/rules/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -326,17 +327,17 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   const { message, record } = response.body;
   t.is(message, 'Record deleted');
   t.is(record, undefined);
-  t.false(await t.context.rulePgModel.exists(t.context.testKnex, { name: newRule.name }));
+  t.false(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
-  const { newRule } = t.context;
-
+  const newRule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(newRule);
   let response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(translatedRule)
     .expect(200);
 
   const { message, record } = response.body;
@@ -363,7 +364,13 @@ test('403 error when calling the API endpoint to delete an existing rule without
 });
 
 test('POST creates a rule in all data stores', async (t) => {
-  const { newRule } = t.context;
+  const {
+    collectionPgModel,
+    newRule,
+    providerPgModel,
+    rulePgModel,
+    testKnex,
+  } = t.context;
 
   const fakeCollection = fakeCollectionFactory();
   const fakeProvider = fakeProviderFactory({
@@ -385,15 +392,13 @@ test('POST creates a rule in all data stores', async (t) => {
     value: 'my-kinesis-arn',
   };
 
-  const [pgCollection] = await t.context.collectionPgModel.create(
-    t.context.testKnex,
+  await collectionPgModel.create(
+    testKnex,
     translateApiCollectionToPostgresCollection(fakeCollection)
   );
-  t.context.collectionCumulusId = pgCollection.cumulus_id;
-  const collectionCumulusId = t.context.collectionCumulusId;
 
-  const [providerCumulusId] = await t.context.providerPgModel.create(
-    t.context.testKnex,
+  await providerPgModel.create(
+    testKnex,
     await translateApiProviderToPostgresProvider(fakeProvider)
   );
 
@@ -405,44 +410,19 @@ test('POST creates a rule in all data stores', async (t) => {
     .expect(200);
 
   const { message } = response.body;
-  const fetchedDynamoRecord = await ruleModel.get({
-    name: newRule.name,
-  });
-
-  const fetchedPostgresRecord = await t.context.rulePgModel
-    .get(t.context.testKnex, { name: newRule.name });
+  const fetchedPostgresRecord = await rulePgModel
+    .get(testKnex, { name: newRule.name });
 
   t.is(message, 'Record saved');
-
-  t.deepEqual(
-    omit(fetchedPostgresRecord, ['cumulus_id', 'created_at', 'updated_at']),
-    omit(
-      {
-        ...fetchedDynamoRecord,
-        collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
-        arn: fetchedDynamoRecord.rule.arn,
-        value: fetchedDynamoRecord.rule.value,
-        type: fetchedDynamoRecord.rule.type,
-        enabled: false,
-        log_event_arn: fetchedDynamoRecord.rule.logEventArn,
-        execution_name_prefix: null,
-        payload: null,
-        queue_url: null,
-        meta: null,
-        tags: null,
-      },
-      dynamoRuleOmitList
-    )
-  );
+  const translatedPgRecord = await translatePostgresRuleToApiRule(fetchedPostgresRecord, testKnex);
 
   const esRecord = await t.context.esRulesClient.get(
     newRule.name
   );
-  t.like(esRecord, fetchedDynamoRecord);
+  t.like(esRecord, translatedPgRecord);
 });
 
-test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
+test('POST creates a rule in PG with correct timestamps', async (t) => {
   const { newRule } = t.context;
 
   const fakeCollection = fakeCollectionFactory();
@@ -477,17 +457,11 @@ test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) =
     .send(newRule)
     .expect(200);
 
-  const fetchedDynamoRecord = await ruleModel.get({
-    name: newRule.name,
-  });
   const fetchedPostgresRecord = await t.context.rulePgModel
     .get(t.context.testKnex, { name: newRule.name });
 
-  t.true(fetchedDynamoRecord.createdAt > newRule.createdAt);
-  t.true(fetchedDynamoRecord.updatedAt > newRule.updatedAt);
-
-  t.is(fetchedPostgresRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedPostgresRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
+  t.true(fetchedPostgresRecord.created_at.getTime() > newRule.createdAt);
+  t.true(fetchedPostgresRecord.updated_at.getTime() > newRule.updatedAt);
 });
 
 test('POST creates a rule that is enabled by default', async (t) => {
@@ -527,61 +501,65 @@ test('POST returns a 409 response if record already exists', async (t) => {
 });
 
 test('POST returns a 400 response if record is missing a required property', async (t) => {
-  const { newRule } = t.context;
-
+  const newRule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(newRule);
   // Remove required property to trigger create error
-  delete newRule.workflow;
+  delete translatedRule.workflow;
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(translatedRule)
     .expect(400);
   t.is(response.status, 400);
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
-  const { newRule } = t.context;
-  newRule.name = 'bad rule name';
+  const newRule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(newRule);
+  translatedRule.name = 'bad rule name';
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(translatedRule)
     .expect(400);
   t.is(response.status, 400);
 });
 
 test('POST returns a 400 response if rule name does not exist', async (t) => {
-  const { newRule } = t.context;
-  delete newRule.name;
-
+  const newRule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(newRule);
+  translatedRule.name = undefined;
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(translatedRule)
     .expect(400);
   t.is(response.status, 400);
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
-  const { newRule } = t.context;
-  newRule.type = 'invalid';
+  const newRule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(newRule);
+  translatedRule.type = 'invalid';
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
+    .send(translatedRule)
     .expect(400);
   t.is(response.status, 400);
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
-  const { newRule } = t.context;
+  const rule = fakeRuleRecordFactory();
+  const translatedRule = await translatePostgresRuleToApiRule(rule, t.context.knex);
+
   buildPayloadStub.restore();
 
   try {
@@ -589,7 +567,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
       .post('/rules')
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send(newRule)
+      .send(translatedRule)
       .expect(500);
     t.is(response.status, 500);
   } finally {
@@ -600,7 +578,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
 
-  const stub = sinon.stub(Rule.prototype, 'create')
+  const stub = sinon.stub(Rule.prototype, 'createRuleTrigger')
     .callsFake(() => {
       throw new Error('unexpected error');
     });
@@ -618,7 +596,7 @@ test.serial('POST returns a 500 response if record creation throws unexpected er
   }
 });
 
-test.serial('post() does not write to Elasticsearch/DynamoDB if writing to PostgreSQL fails', async (t) => {
+test.serial('post() does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const { newRule, testKnex } = t.context;
 
   const fakeRulePgModel = {
@@ -641,50 +619,13 @@ test.serial('post() does not write to Elasticsearch/DynamoDB if writing to Postg
     .search(t.context.testKnex, { name: newRule.name });
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-  t.false(await ruleModel.exists(newRule.name));
   t.is(dbRecords.length, 0);
   t.false(await t.context.esRulesClient.exists(
     newRule.name
   ));
 });
 
-test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to DynamoDB fails', async (t) => {
-  const { newRule, testKnex } = t.context;
-
-  const failingRulesModel = {
-    createRuleTrigger: () => Promise.resolve(newRule),
-    exists: () => Promise.resolve(false),
-    create: () => {
-      throw new Error('Rule error');
-    },
-    delete: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    body: newRule,
-    testContext: {
-      knex: testKnex,
-      ruleModel: failingRulesModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('Rule error'));
-
-  const dbRecords = await t.context.rulePgModel
-    .search(t.context.testKnex, { name: newRule.name });
-
-  t.is(dbRecords.length, 0);
-  t.false(await ruleModel.exists(newRule.name));
-  t.false(await t.context.esRulesClient.exists(
-    newRule.name
-  ));
-});
-
-test.serial('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const { newRule, testKnex } = t.context;
 
   const fakeEsClient = {
@@ -709,7 +650,6 @@ test.serial('post() does not write to DynamoDB/PostgreSQL if writing to Elastics
     .search(t.context.testKnex, { name: newRule.name });
 
   t.is(dbRecords.length, 0);
-  t.false(await ruleModel.exists(newRule.name));
   t.false(await t.context.esRulesClient.exists(
     newRule.name
   ));
@@ -1085,30 +1025,33 @@ test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', asyn
 });
 
 test('DELETE deletes a rule', async (t) => {
-  const { newRule } = t.context;
-
-  await request(app)
-    .post('/rules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(newRule)
-    .expect(200);
+  const {
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queueUrl: 'fake-queue-url',
+      collection: undefined,
+      provider: undefined,
+    }
+  );
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
 
   const response = await request(app)
-    .delete(`/rules/${newRule.name}`)
+    .delete(`/rules/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { message } = response.body;
   const dbRecords = await t.context.rulePgModel
-    .search(t.context.testKnex, { name: newRule.name });
+    .search(t.context.testKnex, { name: originalPgRecord.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
   t.false(
     await t.context.esRulesClient.exists(
-      newRule.name
+      originalPgRecord.name
     )
   );
 });
