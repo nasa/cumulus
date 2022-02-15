@@ -2,7 +2,10 @@
 
 const test = require('ava');
 const range = require('lodash/range');
+
 const { randomId } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { DbGranuleSearchQueues } = require('../../../lib/reconciliationReport/DbGranuleSearchQueues');
 
 class StubGranuleSearchQueue {
@@ -28,7 +31,7 @@ class StubGranuleSearchQueue {
 process.env.GranulesTable = randomId('granulesTable');
 
 test('constructor creates one queue when searchParams have no granuleIds', (t) => {
-  const collectionId = 'name___version';
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const searchParams = {
     somefield: 'somevalue',
   };
@@ -38,7 +41,7 @@ test('constructor creates one queue when searchParams have no granuleIds', (t) =
 });
 
 test('constructor creates queues for each granuleId when searchParams have multiple granuleIds', (t) => {
-  const collectionId = 'name___version';
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const granuleId = range(5).map(() => randomId('granuleId'));
   const searchParams = {
     somefield: 'somevalue',
@@ -50,7 +53,7 @@ test('constructor creates queues for each granuleId when searchParams have multi
 });
 
 test('peek() and shift() get and remove the next available item when there is only one queue', async (t) => {
-  const collectionId = 'name___version';
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const queueItems = [randomId('queue2'), randomId('queue2'), randomId('queue2')];
   const queues = [new StubGranuleSearchQueue(queueItems)];
 
@@ -69,7 +72,7 @@ test('peek() and shift() get and remove the next available item when there is on
 });
 
 test('peek() and shift() get and remove the next available item from queues', async (t) => {
-  const collectionId = 'name___version';
+  const collectionId = constructCollectionId(randomId('name'), randomId('version'));
   const granuleId = range(5).map(() => randomId('granuleId'));
   const searchParams = {
     somefield: 'somevalue',
