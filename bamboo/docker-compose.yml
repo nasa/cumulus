@@ -15,7 +15,7 @@ services:
       - FTP_PASSWORD=testpass
       - FTP_PASV_ADDRESS=127.0.0.1
   http:
-    image: maven.earthdata.nasa.gov/httpd:alpine
+    image: httpd:alpine
     network_mode: "service:build_env"
     volumes:
       - ../packages/test-data:/usr/local/apache2/htdocs:ro
