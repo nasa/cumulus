@@ -472,7 +472,7 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
   );
 });
 
-test('BasePgModel.searchWithCreatedAtRange() returns an array of records if no date range specified', async (t) => {
+test('BasePgModel.searchWithUpdatedAtRange() returns an array of records if no date range specified', async (t) => {
   const {
     knex,
     basePgModel,
@@ -484,7 +484,7 @@ test('BasePgModel.searchWithCreatedAtRange() returns an array of records if no d
     info,
   }));
   await Promise.all(records.map((r) => basePgModel.create(knex, r)));
-  const searchResponse = await basePgModel.searchWithCreatedAtRange(
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
     knex,
     { info },
     {}
@@ -493,7 +493,7 @@ test('BasePgModel.searchWithCreatedAtRange() returns an array of records if no d
   t.is(searchResponse.length, 3);
 });
 
-test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records if a date range is specified', async (t) => {
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if a date range is specified', async (t) => {
   const {
     knex,
     basePgModel,
@@ -503,26 +503,26 @@ test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records
 
   const records = times(3, () => ({
     info,
-    created_at: new Date(),
+    updated_at: new Date(),
   }));
 
   const dateValue = 5000;
   const searchRecord = ({
     info,
-    created_at: new Date(dateValue),
+    updated_at: new Date(dateValue),
   });
   records.push(searchRecord);
 
   await Promise.all(records.map((r) => basePgModel.create(knex, r)));
 
-  const searchResponse = await basePgModel.searchWithCreatedAtRange(
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
     knex,
     {
       info,
     },
     {
-      createdAtFrom: new Date(dateValue - 1),
-      createdAtTo: new Date(dateValue + 1),
+      updatedAtFrom: new Date(dateValue - 1),
+      updatedAtTo: new Date(dateValue + 1),
     }
   );
 
@@ -533,7 +533,7 @@ test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records
   );
 });
 
-test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records if only createdAtTo is specified', async (t) => {
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtTo is specified', async (t) => {
   const {
     knex,
     basePgModel,
@@ -543,24 +543,24 @@ test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records
   const info = cryptoRandomString({ length: 5 });
   const records = times(3, () => ({
     info,
-    created_at: new Date(),
+    updated_at: new Date(),
   }));
 
   const searchRecord = ({
     info,
-    created_at: new Date(dateValue),
+    updated_at: new Date(dateValue),
   });
   records.push(searchRecord);
 
   await Promise.all(records.map((r) => basePgModel.create(knex, r)));
 
-  const searchResponse = await basePgModel.searchWithCreatedAtRange(
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
     knex,
     {
       info,
     },
     {
-      createdAtTo: new Date(dateValue + 1),
+      updatedAtTo: new Date(dateValue + 1),
     }
   );
 
@@ -571,7 +571,7 @@ test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records
   );
 });
 
-test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records if only createdAtFrom is specified', async (t) => {
+test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records if only updatedAtFrom is specified', async (t) => {
   const {
     knex,
     basePgModel,
@@ -581,24 +581,24 @@ test('BasePgModel.searchWithCreatedAtRange() returns a filtered array of records
   const info = cryptoRandomString({ length: 5 });
   const records = times(3, () => ({
     info,
-    created_at: new Date(nowDateValue - 10000),
+    updated_at: new Date(nowDateValue - 10000),
   }));
 
   const searchRecord = ({
-    created_at: new Date(nowDateValue),
+    updated_at: new Date(nowDateValue),
     info,
   });
   records.push(searchRecord);
 
   await Promise.all(records.map((r) => basePgModel.create(knex, r)));
 
-  const searchResponse = await basePgModel.searchWithCreatedAtRange(
+  const searchResponse = await basePgModel.searchWithUpdatedAtRange(
     knex,
     {
       info,
     },
     {
-      createdAtFrom: new Date(nowDateValue - 1),
+      updatedAtFrom: new Date(nowDateValue - 1),
     }
   );
 

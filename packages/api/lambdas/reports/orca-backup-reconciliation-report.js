@@ -16,7 +16,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { errorify } = require('../../lib/utils');
 const {
   convertToESCollectionSearchParams,
-  convertToESGranuleSearchParams,
+  convertToESGranuleSearchParamsWithCreatedAtRange,
   convertToOrcaGranuleSearchParams,
   initialReportHeader,
 } = require('../../lib/reconciliationReport');
@@ -218,7 +218,7 @@ async function reconciliationReportForGranules(recReportParams) {
   const collectionsConfig = await fetchCollectionsConfig(recReportParams);
   log.debug(`fetchESCollections returned ${JSON.stringify(collectionsConfig)}`);
 
-  const esSearchParams = convertToESGranuleSearchParams(recReportParams);
+  const esSearchParams = convertToESGranuleSearchParamsWithCreatedAtRange(recReportParams);
   log.debug(`Create ES granule iterator with ${JSON.stringify(esSearchParams)}`);
   const esGranulesIterator = new ESSearchQueue(
     {

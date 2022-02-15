@@ -14,7 +14,7 @@ import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
-import { CreatedAtRange, UpdatedAtRange } from '../types/record';
+import { UpdatedAtRange } from '../types/record';
 
 const { TableNames } = require('../tables');
 
@@ -176,7 +176,6 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {string | Array<string>} [searchParams.collectionIds] - Collection ID
  * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
  * @param {string} [searchParams.providerName] - Provider name
- * @param {createdAtRange} [searchParams.createdAtRange] - Date range for created_at column
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
  * @param {string} [searchParams.status] - Granule status to search by
  * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
@@ -188,14 +187,12 @@ export const getGranulesByApiPropertiesQuery = (
     collectionIds,
     granuleIds,
     providerNames,
-    createdAtRange = {},
     updatedAtRange = {},
     status,
   }: {
     collectionIds?: string | string[],
     granuleIds?: string | string[],
     providerNames?: string[],
-    createdAtRange?: CreatedAtRange,
     updatedAtRange?: UpdatedAtRange,
     status?: string,
   },
@@ -235,12 +232,6 @@ export const getGranulesByApiPropertiesQuery = (
       }
       if (providerNames) {
         queryBuilder.whereIn(`${providersTable}.name`, providerNames);
-      }
-      if (createdAtRange.createdAtFrom) {
-        queryBuilder.where(`${granulesTable}.created_at`, '>=', createdAtRange.createdAtFrom);
-      }
-      if (createdAtRange.createdAtTo) {
-        queryBuilder.where(`${granulesTable}.created_at`, '<=', createdAtRange.createdAtTo);
       }
       if (updatedAtRange.updatedAtFrom) {
         queryBuilder.where(`${granulesTable}.updated_at`, '>=', updatedAtRange.updatedAtFrom);

@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2781**
   - Add api_config secret to hold API/Private API lambda configuration values
+- **CUMULUS-2703**
+  - Added `@cumulus/api/lambdas/reports/orca-backup-reconciliation-report` to create
+    `ORCA Backup` reconciliation report
 
 ### Changed
 
@@ -226,10 +229,6 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - **CUMULUS-2684**
   - Added optional collection level parameter `s3MultipartChunksizeMb` to collection's `meta` field
   - Updated `move-granules` task to take in an optional config parameter s3MultipartChunksizeMb
-- **CUMULUS-2703**
-  - Updated reconciliation report lambda to use createdAt for report time range instead of updatedAt
-  - Added `@cumulus/api/lambdas/reports/orca-backup-reconciliation-report` to create
-    `ORCA Backup` reconciliation report
 - **CUMULUS-2747**
   - Updated data management type doc to include additional fields for provider configurations
 - **CUMULUS-2773**

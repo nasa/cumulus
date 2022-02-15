@@ -125,15 +125,15 @@ async function storeFilesToS3(files) {
 
 /**
  * Index a single collection to elasticsearch. If the collection object has an
- * createdAt value, use a sinon stub to set the time of the granule to that
+ * updatedAt value, use a sinon stub to set the time of the granule to that
  * input time.
  * @param {Object} collection  - a collection object
 *  @returns {Promise} - promise of indexed collection with active granule
 */
 async function storeCollection(collection) {
   let stub;
-  if (collection.createdAt) {
-    stub = sinon.stub(Date, 'now').returns(collection.createdAt);
+  if (collection.updatedAt) {
+    stub = sinon.stub(Date, 'now').returns(collection.updatedAt);
   }
   try {
     await indexer.indexCollection(esClient, collection, esAlias);
@@ -141,13 +141,13 @@ async function storeCollection(collection) {
       esClient,
       fakeGranuleFactoryV2({
         collectionId: constructCollectionId(collection.name, collection.version),
-        createdAt: collection.createdAt,
+        updatedAt: collection.updatedAt,
         provider: randomString(),
       }),
       esAlias
     );
   } finally {
-    if (collection.createdAt) stub.restore();
+    if (collection.updatedAt) stub.restore();
   }
 }
 
@@ -276,31 +276,31 @@ const setupElasticAndCMRForTests = async ({ t, params = {} }) => {
   const matchingCollections = range(numMatchingCollections).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
-    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
+    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in sync ES/CMR outside of the timestamps range
   const matchingCollectionsOutsideRange = range(numMatchingCollectionsOutOfRange).map((r) => ({
     name: randomId(`name${r}-`),
     version: randomId('vers'),
-    createdAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
+    updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
   // Create collections in ES only within the timestamp range
   const extraESCollections = range(numExtraESCollections).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
-    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
+    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in ES only outside of the timestamp range
   const extraESCollectionsOutOfRange = range(numExtraESCollectionsOutOfRange).map((r) => ({
     name: randomId(`extraES${r}-`),
     version: randomId('vers'),
-    createdAt: randomTimeBetween(endTimestamp + 1, monthLater),
+    updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
   // create extra cmr collections that fall inside of the range.
   const extraCmrCollections = range(numExtraCmrCollections).map((r) => ({
     name: randomId(`extraCmr${r}-`),
     version: randomId('vers'),
-    createdAt: randomTimeBetween(startTimestamp, endTimestamp),
+    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
 
   const cmrCollections = sortBy(
