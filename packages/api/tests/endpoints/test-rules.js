@@ -545,7 +545,7 @@ test('POST returns a 400 response if rule name does not exist', async (t) => {
 test('POST returns a 400 response if rule type is invalid', async (t) => {
   const newRule = fakeRuleRecordFactory();
   const translatedRule = await translatePostgresRuleToApiRule(newRule);
-  translatedRule.type = 'invalid';
+  translatedRule.rule.type = 'invalid';
 
   const response = await request(app)
     .post('/rules')
@@ -578,7 +578,7 @@ test.serial('POST returns a 500 response if workflow definition file does not ex
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { newRule } = t.context;
 
-  const stub = sinon.stub(Rule.prototype, 'createRuleTrigger')
+  const stub = sinon.stub(RulePgModel.prototype, 'create')
     .callsFake(() => {
       throw new Error('unexpected error');
     });

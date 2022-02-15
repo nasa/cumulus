@@ -17,6 +17,7 @@ const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
 const models = require('../models');
+const { createRuleTrigger } = require('../lib/rulesHelpers');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -72,7 +73,6 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -86,7 +86,7 @@ async function post(req, res) {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
     // Create rule trigger
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
+    const ruleWithTrigger = await createRuleTrigger(apiRule);
     const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
 
     try {

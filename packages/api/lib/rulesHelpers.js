@@ -1,11 +1,21 @@
 'use strict';
 
 const get = require('lodash/get');
+const cloneDeep = require('lodash/cloneDeep');
 
 const { listRules } = require('@cumulus/api-client/rules');
 const { removeNilProperties } = require('@cumulus/common/util');
+const { ValidationError } = require('@cumulus/errors');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const awsServices = require('@cumulus/aws-client/services');
+const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
+
+const Logger = require('@cumulus/logger');
+
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
+const log = new Logger({ sender: '@cumulus/rulesHelpers' });
 
 /**
  * fetch all rules in the Cumulus API
@@ -113,7 +123,273 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   return handleScheduleEvent(payload);
 }
 
+async function addRule(item, payload) {
+  const name = `${process.env.stackName}-custom-${item.name}`;
+  const r = await CloudwatchEvents.putEvent(
+    name,
+    item.rule.value,
+    item.state,
+    'Rule created by cumulus-api'
+  );
+  const targetId = 'lambdaTarget';
+
+  await CloudwatchEvents.putTarget(
+    name,
+    targetId,
+    process.env.invokeArn,
+    JSON.stringify(payload)
+  );
+  return r.RuleArn;
+}
+
+/**
+   * add an event source to a target lambda function
+   *
+   * @param {Object} item - the rule item
+   * @param {string} lambda - the name of the target lambda
+   * @returns {Promise} a promise
+   * @returns {Promise} updated rule item
+   */
+async function addKinesisEventSource(item, lambda) {
+  // use the existing event source mapping if it already exists and is enabled
+  const listParams = {
+    FunctionName: lambda.name,
+    EventSourceArn: item.rule.value,
+  };
+  const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
+  if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
+    const currentMapping = listData.EventSourceMappings[0];
+
+    // This is for backwards compatibility. Mappings should no longer be disabled.
+    if (currentMapping.State === 'Enabled') {
+      return currentMapping;
+    }
+    return awsServices.lambda().updateEventSourceMapping({
+      UUID: currentMapping.UUID,
+      Enabled: true,
+    }).promise();
+  }
+
+  // create event source mapping
+  const params = {
+    EventSourceArn: item.rule.value,
+    FunctionName: lambda.name,
+    StartingPosition: 'TRIM_HORIZON',
+    Enabled: true,
+  };
+  return awsServices.lambda().createEventSourceMapping(params).promise();
+}
+
+/**
+ * Add  event sources for all mappings in the kinesisSourceEvents
+ * @param {Object} rule - the rule item
+ * @returns {Object} return updated rule item containing new arn/logEventArn
+ */
+async function addKinesisEventSources(rule) {
+  const kinesisSourceEvents = [
+    {
+      name: process.env.messageConsumer,
+      eventType: 'arn',
+      type: {
+        arn: rule.arn,
+      },
+    },
+    {
+      name: process.env.KinesisInboundEventLogger,
+      eventType: 'log_event_arn',
+      type: {
+        log_event_arn: rule.log_event_arn,
+      },
+    },
+  ];
+
+  const sourceEventPromises = kinesisSourceEvents.map(
+    (lambda) => addKinesisEventSource(rule, lambda).catch(
+      (error) => {
+        log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
+        if (error.code !== 'ResourceNotFoundException') throw error;
+      }
+    )
+  );
+  const eventAdd = await Promise.all(sourceEventPromises);
+  const arn = eventAdd[0].UUID;
+  const logEventArn = eventAdd[1].UUID;
+  return { arn, logEventArn };
+}
+
+/**
+ * Update the event source mappings for Kinesis type rules.
+ *
+ * Avoids object mutation by cloning the original rule item.
+ *
+ * @param {Object} ruleItem - A rule item
+ * @param {Object} ruleArns
+ * @param {string} ruleArns.arn
+ *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
+ * @param {string} ruleArns.logEventArn
+ *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
+ * @returns {Object} - Updated rule item
+ */
+function updateKinesisRuleArns(ruleItem, ruleArns) {
+  const updatedRuleItem = cloneDeep(ruleItem);
+  updatedRuleItem.rule.arn = ruleArns.arn;
+  updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
+  return updatedRuleItem;
+}
+
+async function addSnsTrigger(item) {
+  // check for existing subscription
+  let token;
+  let subExists = false;
+  let subscriptionArn;
+  /* eslint-disable no-await-in-loop */
+  do {
+    const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+      TopicArn: item.rule.value,
+      NextToken: token,
+    }).promise();
+    token = subsResponse.NextToken;
+    if (subsResponse.Subscriptions) {
+      /* eslint-disable no-loop-func */
+      subsResponse.Subscriptions.forEach((sub) => {
+        if (sub.Endpoint === process.env.messageConsumer) {
+          subExists = true;
+          subscriptionArn = sub.SubscriptionArn;
+        }
+      });
+    }
+    /* eslint-enable no-loop-func */
+    if (subExists) break;
+  }
+  while (token);
+  /* eslint-enable no-await-in-loop */
+  if (!subExists) {
+    // create sns subscription
+    const subscriptionParams = {
+      TopicArn: item.rule.value,
+      Protocol: 'lambda',
+      Endpoint: process.env.messageConsumer,
+      ReturnSubscriptionArn: true,
+    };
+    const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+    subscriptionArn = r.SubscriptionArn;
+  }
+  // create permission to invoke lambda
+  const permissionParams = {
+    Action: 'lambda:InvokeFunction',
+    FunctionName: process.env.messageConsumer,
+    Principal: 'sns.amazonaws.com',
+    SourceArn: item.rule.value,
+    StatementId: `${item.name}Permission`,
+  };
+  await awsServices.lambda().addPermission(permissionParams).promise();
+  return subscriptionArn;
+}
+
+/**
+ * Update the event source mapping for SNS type rules.
+ *
+ * Avoids object mutation by cloning the original rule item.
+ *
+ * @param {Object} ruleItem - A rule item
+ * @param {string} snsSubscriptionArn
+ *   UUID for event source mapping from SNS topic to messageConsumer Lambda
+ * @returns {Object} - Updated rule item
+ */
+function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+  const updatedRuleItem = cloneDeep(ruleItem);
+  if (!snsSubscriptionArn) {
+    delete updatedRuleItem.rule.arn;
+  } else {
+    updatedRuleItem.rule.arn = snsSubscriptionArn;
+  }
+  return updatedRuleItem;
+}
+
+/**
+ * validate and update sqs rule with queue property
+ *
+ * @param {Object} rule the sqs rule
+ * @returns {Object} the updated sqs rule
+ */
+async function validateAndUpdateSqsRule(rule) {
+  const ruleToUpdate = rule;
+  const queueUrl = rule.rule.value;
+  if (!(await sqsQueueExists(queueUrl))) {
+    throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
+  }
+
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All'],
+  };
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  if (!attributes.Attributes.RedrivePolicy) {
+    throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
+  }
+
+  // update rule meta
+  if (!rule.meta.visibilityTimeout) {
+    ruleToUpdate.meta.visibilityTimeout = Number.parseInt(
+      attributes.Attributes.VisibilityTimeout,
+      10
+    );
+  }
+  if (!rule.meta.retries) {
+    ruleToUpdate.meta.retries = 3;
+  }
+  return ruleToUpdate;
+}
+
+async function createRuleTrigger(ruleItem) {
+  let newRuleItem = cloneDeep(ruleItem);
+  // the default state is 'ENABLED'
+  if (!ruleItem.state) {
+    newRuleItem.state = 'ENABLED';
+  }
+
+  // make sure the name only has word characters
+  const re = /\W/;
+  if (re.test(ruleItem.name)) {
+    throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
+  }
+
+  // // Validate rule before kicking off workflows or adding event source mappings
+  // await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
+
+  const payload = await Rule.buildPayload(newRuleItem);
+  switch (newRuleItem.rule.type) {
+  case 'onetime': {
+    await invoke(process.env.invoke, payload);
+    break;
+  }
+  case 'scheduled': {
+    await addRule(newRuleItem, payload);
+    break;
+  }
+  case 'kinesis': {
+    const ruleArns = await addKinesisEventSources(newRuleItem);
+    newRuleItem = updateKinesisRuleArns(newRuleItem, ruleArns);
+    break;
+  }
+  case 'sns': {
+    if (newRuleItem.state === 'ENABLED') {
+      const snsSubscriptionArn = await addSnsTrigger(newRuleItem);
+      newRuleItem = updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
+    }
+    break;
+  }
+  case 'sqs':
+    newRuleItem = await validateAndUpdateSqsRule(newRuleItem);
+    break;
+  default:
+    throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
+  }
+  return newRuleItem;
+}
+
 module.exports = {
+  createRuleTrigger,
   fetchAllRules,
   fetchEnabledRules,
   fetchRules,
