@@ -18,6 +18,7 @@ const {
 } = require('@cumulus/db');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { deleteRuleResources } = require('../../lib/rulesHelpers');
 
 const listRulesStub = sinon.stub();
 
@@ -422,7 +423,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   kinesisRule.log_event_arn = result[1].UUID;
   await rulePgModel.create(testKnex, kinesisRule);
 
-  const kinesisEventMappings = await getKinesisEventMappings(kinesisRule);
+  const kinesisEventMappings = await getKinesisEventMappings();
 
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -430,7 +431,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
   t.is(logEventMappings.length, 1);
 
   await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'arn', { arn: kinesisRule.arn });
-  const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings();
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
@@ -461,7 +462,7 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   kinesisRule.log_event_arn = result[1].UUID;
   await rulePgModel.create(testKnex, kinesisRule);
 
-  const kinesisEventMappings = await getKinesisEventMappings(kinesisRule);
+  const kinesisEventMappings = await getKinesisEventMappings();
 
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -469,7 +470,7 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
   t.is(logEventMappings.length, 1);
 
   await rulesHelpers.deleteKinesisEventSources(testKnex, kinesisRule);
-  const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings();
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
@@ -572,7 +573,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
   const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
   const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
 
-  await rulesHelpers.deleteRuleResources(testKnex, scheduledRule);
+  await deleteRuleResources(testKnex, scheduledRule);
 
   t.true(deleteRuleSpy.called);
   t.true(deleteRuleSpy.calledWith({
@@ -611,15 +612,15 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
   kinesisRule.log_event_arn = result[1].UUID;
   await rulePgModel.create(testKnex, kinesisRule);
 
-  const kinesisEventMappings = await getKinesisEventMappings(kinesisRule);
+  const kinesisEventMappings = await getKinesisEventMappings();
 
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
 
-  await rulesHelpers.deleteRuleResources(testKnex, kinesisRule);
-  const deletedEventMappings = await getKinesisEventMappings(kinesisRule);
+  await deleteRuleResources(testKnex, kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings();
   const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
   const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
 
@@ -662,7 +663,7 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
   };
   const snsRule = fakeRuleRecordFactory(params);
 
-  await rulesHelpers.deleteRuleResources(testKnex, snsRule);
+  await deleteRuleResources(testKnex, snsRule);
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({
     SubscriptionArn: snsRule.arn,
@@ -673,4 +674,59 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
     snsStub.restore();
     unsubscribeSpy.restore();
   });
+});
+
+test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const secondKinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+
+  secondKinesisRule.arn = result[0].UUID;
+  secondKinesisRule.log_event_arn = result[1].UUID;
+
+  await rulePgModel.create(testKnex, kinesisRule);
+  await rulePgModel.create(testKnex, secondKinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  // delete rule resources for the second rule, it should not delete the event source mapping
+  await deleteRuleResources(testKnex, secondKinesisRule);
+  const kinesisEventMappings2 = await getKinesisEventMappings();
+  const consumerEventMappings2 = kinesisEventMappings2[0].EventSourceMappings;
+  const logEventMappings2 = kinesisEventMappings2[1].EventSourceMappings;
+  // Check for same event source mapping
+  t.deepEqual(consumerEventMappings, consumerEventMappings2);
+  t.deepEqual(logEventMappings, logEventMappings2);
+
+  // create third rule, it should use the existing event source mapping
+  const thirdKinesisRule = fakeRuleRecordFactory(params);
+  thirdKinesisRule.arn = kinesisRule.arn;
+  thirdKinesisRule.log_event_arn = kinesisRule.log_event_arn;
+
+  await rulePgModel.create(testKnex, thirdKinesisRule);
+  const kinesisEventMappings3 = await getKinesisEventMappings();
+
+  const consumerEventMappings3 = kinesisEventMappings3[0].EventSourceMappings;
+  const logEventMappings3 = kinesisEventMappings3[1].EventSourceMappings;
+  // Check for same event source mapping
+  t.deepEqual(consumerEventMappings, consumerEventMappings3);
+  t.deepEqual(logEventMappings, logEventMappings3);
 });

@@ -152,14 +152,15 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
  * @returns {Promise} the response from event source delete
  */
 async function deleteKinesisEventSource(knex, rule, eventType, id) {
-  if (await isEventSourceMappingShared(knex, rule, id)) {
-    return undefined;
+  if (!(await isEventSourceMappingShared(knex, rule, id))) {
+    const params = {
+      UUID: id[eventType],
+    };
+    log.info(`Deleting event source with UUID ${id[eventType]}`);
+    return awsServices.lambda().deleteEventSourceMapping(params).promise();
   }
-  const params = {
-    UUID: id[eventType],
-  };
-  log.info(`Deleting event source with UUID ${id[eventType]}`);
-  return awsServices.lambda().deleteEventSourceMapping(params).promise();
+  log.info(`Event source mapping is shared with another rule. Will not delete kinesis event source for ${rule.name}`);
+  return undefined;
 }
 
 /**
@@ -186,15 +187,12 @@ async function deleteKinesisEventSources(knex, rule) {
     },
   ];
   const deleteEventPromises = kinesisSourceEvents.map(
-    async (lambda) => {
-      try {
-        log.info(`Deleting event source for rule ${rule.name} for eventType ${lambda.eventType} and type ${JSON.stringify(lambda.type)}`);
-        await deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type);
-      } catch (error) {
+    (lambda) => deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type).catch(
+      (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
       }
-    }
+    )
   );
   return await Promise.all(deleteEventPromises);
 }
