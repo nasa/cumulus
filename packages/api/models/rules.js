@@ -146,6 +146,7 @@ class Rule extends Manager {
    *    rule
    * @returns {Promise} the response from database updates
    */
+<<<<<<< HEAD
   async update(original, updates, fieldsToDelete = []) {
     // Make a copy of the existing rule to preserve existing values
     let updatedRuleItem = cloneDeep(original);
@@ -162,11 +163,26 @@ class Rule extends Manager {
     updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
 
     return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
+=======
+  update(updatedRuleItem, fieldsToDelete = []) {
+    return super.update({ name: updatedRuleItem.name }, updatedRuleItem, fieldsToDelete);
+>>>>>>> 8b59bf3468 (fix unit test)
   }
 
   async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
     let updatedRuleItem = cloneDeep(ruleItem);
 
+<<<<<<< HEAD
+=======
+    const stateChanged = updates.state && updates.state !== ruleItem.state;
+    const valueUpdated = updates.rule && updates.rule.value !== ruleItem.rule.value;
+
+    merge(updatedRuleItem, updates);
+
+    // Validate rule before kicking off workflows or adding event source mappings
+    await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
+
+>>>>>>> 8b59bf3468 (fix unit test)
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
       const payload = await Rule.buildPayload(updatedRuleItem);
