@@ -21,6 +21,8 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const { sns } = require('@cumulus/aws-client/services');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 const {
@@ -120,6 +122,7 @@ test.before(async (t) => {
     t.context.testKnex,
     testPgCollection
   );
+  t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
 
   t.context.testRule = fakeRuleFactoryV2({
     name: randomId('testRule'),
@@ -782,6 +785,102 @@ test('PUT replaces a rule', async (t) => {
   );
 });
 
+test.serial('put() creates the same SNS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const { TopicArn } = await sns().createTopic({ Name: randomId('topic') }).promise();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queueUrl: 'fake-queue-url',
+      rule: {
+        type: 'onetime',
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  const updateRule = {
+    ...originalDynamoRule,
+    state: 'ENABLED',
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+  };
+
+  const fakeSubscriptionArn = randomId('subscription');
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger').resolves(fakeSubscriptionArn);
+  t.teardown(() => addSnsTriggerStub.restore());
+  const stubbedRulesModel = new Rule();
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await put(expressRequest, response);
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.deepEqual(updatedRule, {
+    ...originalDynamoRule,
+    state: 'ENABLED',
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+      arn: fakeSubscriptionArn,
+    },
+  });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      state: 'ENABLED',
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sns',
+        value: TopicArn,
+        arn: fakeSubscriptionArn,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    enabled: true,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sns',
+    arn: fakeSubscriptionArn,
+    value: TopicArn,
+  });
+});
+
 test('PUT returns 404 for non-existent rule', async (t) => {
   const name = 'new_make_coffee';
   const response = await request(app)
@@ -832,6 +931,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
     },
     create: () => Promise.resolve(originalDynamoRule),
     createRuleTrigger: () => Promise.resolve(originalDynamoRule),
+    updateRuleTrigger: () => Promise.resolve(originalDynamoRule),
   };
 
   const updatedRule = {

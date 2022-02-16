@@ -157,12 +157,14 @@ async function put(req, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
+
+    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
+    const postgresRule = await translateApiRuleToPostgresRule(ruleWithUpdatedTrigger, knex);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await rulePgModel.upsert(trx, postgresRule);
-        newRule = await ruleModel.update(oldRule, apiRule, fieldsToDelete);
+        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
         await indexRule(esClient, newRule, process.env.ES_INDEX);
       });
     } catch (innerError) {
