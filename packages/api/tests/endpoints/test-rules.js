@@ -785,24 +785,47 @@ test('PUT replaces a rule', async (t) => {
   );
 });
 
-test.serial('put() creates the same SNS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
     pgCollection,
   } = t.context;
 
-  const { TopicArn } = await sns().createTopic({ Name: randomId('topic') }).promise();
+  const topic1 = await sns().createTopic({ Name: randomId('topic') }).promise();
+  const topic2 = await sns().createTopic({ Name: randomId('topic') }).promise();
+
+  const fakeSubscriptionArn1 = randomId('subscription');
+  const fakeSubscriptionArn2 = randomId('subscription');
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
+    .onFirstCall()
+    .resolves(fakeSubscriptionArn1)
+    .onSecondCall()
+    .resolves(fakeSubscriptionArn2);
+  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  t.teardown(async () => {
+    addSnsTriggerStub.restore();
+    deleteSnsTriggerStub.restore();
+    await sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
+    await sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
+  });
+
+  const stubbedRulesModel = new Rule();
 
   const {
     originalDynamoRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
-    t.context,
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
     {
       queueUrl: 'fake-queue-url',
+      state: 'ENABLED',
       rule: {
-        type: 'onetime',
+        type: 'sns',
+        value: topic1.TopicArn,
       },
       collection: {
         name: pgCollection.name,
@@ -812,19 +835,15 @@ test.serial('put() creates the same SNS rule in Dynamo/PostgreSQL/Elasticsearch'
     }
   );
 
+  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
+
   const updateRule = {
     ...originalDynamoRule,
-    state: 'ENABLED',
     rule: {
       type: 'sns',
-      value: TopicArn,
+      value: topic2.TopicArn,
     },
   };
-
-  const fakeSubscriptionArn = randomId('subscription');
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger').resolves(fakeSubscriptionArn);
-  t.teardown(() => addSnsTriggerStub.restore());
-  const stubbedRulesModel = new Rule();
 
   const expressRequest = {
     params: {
@@ -849,35 +868,32 @@ test.serial('put() creates the same SNS rule in Dynamo/PostgreSQL/Elasticsearch'
 
   t.deepEqual(updatedRule, {
     ...originalDynamoRule,
-    state: 'ENABLED',
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: TopicArn,
-      arn: fakeSubscriptionArn,
+      value: topic2.TopicArn,
+      arn: fakeSubscriptionArn2,
     },
   });
   t.deepEqual(
     updatedEsRule,
     {
       ...originalEsRecord,
-      state: 'ENABLED',
       updatedAt: updatedEsRule.updatedAt,
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: TopicArn,
-        arn: fakeSubscriptionArn,
+        value: topic2.TopicArn,
+        arn: fakeSubscriptionArn2,
       },
     }
   );
   t.deepEqual(updatedPgRule, {
     ...originalPgRecord,
-    enabled: true,
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
-    arn: fakeSubscriptionArn,
-    value: TopicArn,
+    arn: fakeSubscriptionArn2,
+    value: topic2.TopicArn,
   });
 });
 
