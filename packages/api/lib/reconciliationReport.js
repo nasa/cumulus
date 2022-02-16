@@ -150,7 +150,7 @@ function convertToDBGranuleSearchParams(params) {
 }
 
 /**
- * convert to es search parameters for orca report using createdAt field
+ * convert to es search parameters using createdAt for report time range
  *
  * @param {Object} params - request params to convert to Elasticsearch params
  * @returns {Object} object of desired parameters formated for Elasticsearch.

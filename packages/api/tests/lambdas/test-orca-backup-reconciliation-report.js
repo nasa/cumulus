@@ -17,11 +17,11 @@ const {
 } = require('../../lib/testUtils');
 const {
   fileConflictTypes,
-  reconciliationReportForGranules,
+  orcaReconciliationReportForGranules,
 } = require('../../lambdas/reports/orca-backup-reconciliation-report');
 const OBRP = rewire('../../lambdas/reports/orca-backup-reconciliation-report');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
-const shouldFileExcludedFromOrca = OBRP.__get__('shouldFileExcludedFromOrca');
+const shouldFileBeExcludedFromOrca = OBRP.__get__('shouldFileBeExcludedFromOrca');
 const getReportForOneGranule = OBRP.__get__('getReportForOneGranule');
 
 let esAlias;
@@ -200,7 +200,7 @@ test.afterEach.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.serial('shouldFileExcludedFromOrca returns true for configured file types', (t) => {
+test.serial('shouldFileBeExcludedFromOrca returns true for configured file types', (t) => {
   const collectionsConfig = {
     collectionId1: {
       orca: {
@@ -208,14 +208,14 @@ test.serial('shouldFileExcludedFromOrca returns true for configured file types',
       },
     },
   };
-  t.true(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.xml`));
-  t.true(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.met`));
-  t.false(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.hdf`));
-  t.false(shouldFileExcludedFromOrca(collectionsConfig, 'collectionId1', randomId('file')));
+  t.true(shouldFileBeExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.xml`));
+  t.true(shouldFileBeExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.met`));
+  t.false(shouldFileBeExcludedFromOrca(collectionsConfig, 'collectionId1', `${randomId('file')}.hdf`));
+  t.false(shouldFileBeExcludedFromOrca(collectionsConfig, 'collectionId1', randomId('file')));
 
-  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.xml`));
-  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.met`));
-  t.false(shouldFileExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
+  t.false(shouldFileBeExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.xml`));
+  t.false(shouldFileBeExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, `${randomId('file')}.met`));
+  t.false(shouldFileBeExcludedFromOrca(collectionsConfig, `${randomId('coll')}`, randomId('file')));
 });
 
 test.serial('getReportForOneGranule reports ok for one granule in both cumulus and orca with no file discrepancy', (t) => {
@@ -248,7 +248,7 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
   t.is(report.conflictFiles.length, 3);
   t.is(
     report.conflictFiles.filter((file) =>
-      file.fileName.endsWith('.xml') && file.reason === fileConflictTypes.shouldExcludedFromOrca).length,
+      file.fileName.endsWith('.xml') && file.reason === fileConflictTypes.shouldBeExcludedFromOrca).length,
     1
   );
   t.is(
@@ -308,7 +308,7 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   t.is(report.conflictFiles.length, 0);
 });
 
-test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
+test.serial('orcaReconciliationReportForGranules reports discrepancy of granule holdings in cumulus and orca', async (t) => {
   const {
     fakeCollectionV1,
     fakeCollectionV2,
@@ -347,7 +347,7 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.resolves({ anotherPage: false, granules: orcaGranules });
 
-  const granulesReport = await reconciliationReportForGranules({});
+  const granulesReport = await orcaReconciliationReportForGranules({});
   ORCASearchCatalogQueue.prototype.searchOrca.restore();
   // matchingCumulusGran, matchingCumulusOnlyGran, cumulusOnlyGranNoFile
   t.is(granulesReport.okCount, 3);

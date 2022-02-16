@@ -34,7 +34,7 @@ class ORCASearchCatalogQueue {
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
    *
-   * @returns {Promise<Object>} an item from the CMR search
+   * @returns {Promise<Object>} an item from the ORCA search
    */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
@@ -46,7 +46,7 @@ class ORCASearchCatalogQueue {
    *
    * When there are no more items in the queue, returns `null`.
    *
-   * @returns {Promise<Object>} an item from the CMR search
+   * @returns {Promise<Object>} an item from the ORCA search
    */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
@@ -77,7 +77,7 @@ class ORCASearchCatalogQueue {
   }
 
   /**
-   * Query the CMR API to get the next batch of items
+   * Query the ORCA API to get the next batch of items
    *
    * @returns {Promise<undefined>} resolves when the queue has been updated
    * @private

@@ -5,6 +5,7 @@ const nock = require('nock');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 test.before(() => {
+  nock.disableNetConnect();
   nock.cleanAll();
 });
 

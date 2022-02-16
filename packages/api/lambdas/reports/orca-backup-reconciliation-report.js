@@ -25,7 +25,7 @@ const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 const log = new Logger({ sender: '@api/lambdas/orca-backup-reconciliation-report' });
 
 const fileConflictTypes = {
-  shouldExcludedFromOrca: 'shouldExcludedFromOrca',
+  shouldBeExcludedFromOrca: 'shouldBeExcludedFromOrca',
   onlyInCumulus: 'onlyInCumulus',
   onlyInOrca: 'onlyInOrca',
 };
@@ -64,10 +64,9 @@ async function fetchCollectionsConfig(recReportParams) {
  * @param {string} fileName - file name
  * @returns {boolean} - whether the file should be excluded
  */
-function shouldFileExcludedFromOrca(collectionsConfig, collectionId, fileName) {
+function shouldFileBeExcludedFromOrca(collectionsConfig, collectionId, fileName) {
   const excludeFileTypes = get(collectionsConfig, `${collectionId}.orca.excludeFileTypes`, []);
-  if (excludeFileTypes.find((type) => fileName.endsWith(type))) return true;
-  return false;
+  return !!excludeFileTypes.find((type) => fileName.endsWith(type));
 }
 
 /**
@@ -90,7 +89,8 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   // get allFileNames(all file names) from cumulus and orca granules
   // for each file in allFileNames:
   //   file is in both cumulus and orca,
-  //     file should be excludedFromOrca -> add to conflictFiles with reason shouldExcludedFromOrca
+  //     file should be excludedFromOrca -> add to conflictFiles with reason
+  //                                        shouldBeExcludedFromOrca
   //     file should not be excludedFromOrca -> increase okFilesCount
   //   file is only in cumulus,
   //     file should be excludedFromOrca -> increase okFilesCount
@@ -99,34 +99,39 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   // if no granule file conflicts, set granuleReport.ok to true
 
   // reducer, key: fileName, value: file object with selected fields
-  const fileFields = ['bucket', 'key', 'cumulusArchiveLocation', 'orcaArchiveLocation', 'keyPath'];
-  const fileReducer = (accumulator, currentValue) => {
-    const fileName = currentValue.fileName
-      || path.basename(currentValue.key || currentValue.keyPath);
+  const cumulusFileReducer = (accumulator, currentValue) => {
+    const fileName = path.basename(currentValue.key);
     return ({
       ...accumulator,
-      [fileName]: pick(currentValue, fileFields),
+      [fileName]: pick(currentValue, ['bucket', 'key']),
+    });
+  };
+  const orcaFileReducer = (accumulator, currentValue) => {
+    const fileName = path.basename(currentValue.keyPath);
+    return ({
+      ...accumulator,
+      [fileName]: pick(currentValue, ['cumulusArchiveLocation', 'orcaArchiveLocation', 'keyPath']),
     });
   };
 
-  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(fileReducer, {});
-  const orcaFiles = get(orcaGranule, 'files', []).reduce(fileReducer, {});
+  const cumulusFiles = get(cumulusGranule, 'files', []).reduce(cumulusFileReducer, {});
+  const orcaFiles = get(orcaGranule, 'files', []).reduce(orcaFileReducer, {});
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
     if (cumulusFiles[fileName] && orcaFiles[fileName]) {
-      if (!shouldFileExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (!shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         granuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
           fileName,
           ...cumulusFiles[fileName],
           orcaBucket: orcaFiles[fileName].orcaArchiveLocation,
-          reason: fileConflictTypes.shouldExcludedFromOrca,
+          reason: fileConflictTypes.shouldBeExcludedFromOrca,
         };
         granuleReport.conflictFiles.push(conflictFile);
       }
     } else if (cumulusFiles[fileName] && orcaFiles[fileName] === undefined) {
-      if (shouldFileExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
+      if (shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         granuleReport.okFilesCount += 1;
       } else {
         const conflictFile = {
@@ -195,7 +200,7 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
  * @returns {Promise<Object>} an object with the okCount, onlyInCumulus, onlyInOrca
  * and withConfilcts
  */
-async function reconciliationReportForGranules(recReportParams) {
+async function orcaReconciliationReportForGranules(recReportParams) {
   // compare granule holdings:
   //   Get ORCA granules list sort by granuleId, collectionId
   //   Get CUMULUS granules list sort by granuleId, collectionId
@@ -203,7 +208,7 @@ async function reconciliationReportForGranules(recReportParams) {
   //   Report granules with conflictFiles
   //   Report granules only in cumulus
   //   Report granules only in orca
-  log.info(`reconciliationReportForGranules ${JSON.stringify(recReportParams)}`);
+  log.info(`orcaReconciliationReportForGranules ${JSON.stringify(recReportParams)}`);
   const granulesReport = {
     okCount: 0,
     cumulusCount: 0,
@@ -293,7 +298,7 @@ async function reconciliationReportForGranules(recReportParams) {
       granulesReport.orcaCount += 1;
     }
   } catch (error) {
-    log.error('Error caught in reconciliationReportForGranules');
+    log.error('Error caught in orcaReconciliationReportForGranules');
     log.error(errorify(error));
     throw error;
   }
@@ -301,7 +306,7 @@ async function reconciliationReportForGranules(recReportParams) {
   const reportSummery = Object.entries(granulesReport)
     .map(([key, value]) => `${key} ${Array.isArray(value) ? value.length : value}`);
 
-  log.info(`returning reconciliationReportForGranulesgranulesReport: ${reportSummery.join(', ')}`);
+  log.info(`returning orcaReconciliationReportForGranules report: ${reportSummery.join(', ')}`);
   return granulesReport;
 }
 
@@ -352,7 +357,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Body: JSON.stringify(report, undefined, 2),
   }).promise();
 
-  const granulesReport = await reconciliationReportForGranules(recReportParams);
+  const granulesReport = await orcaReconciliationReportForGranules(recReportParams);
 
   // Create the full report
   report.granules = granulesReport;
@@ -369,6 +374,6 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
 
 module.exports = {
   fileConflictTypes,
-  reconciliationReportForGranules,
+  orcaReconciliationReportForGranules,
   createOrcaBackupReconciliationReport,
 };
