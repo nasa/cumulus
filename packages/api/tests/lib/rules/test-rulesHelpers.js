@@ -8,11 +8,11 @@ const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 const listRulesStub = sinon.stub();
 
-const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
+const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
   '@cumulus/api-client/rules': {
     listRules: listRulesStub,
   },

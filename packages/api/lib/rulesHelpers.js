@@ -127,8 +127,8 @@ async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
   const r = await CloudwatchEvents.putEvent(
     name,
-    item.rule.value,
-    item.state,
+    item.value,
+    item.enabled,
     'Rule created by cumulus-api'
   );
   const targetId = 'lambdaTarget';
@@ -154,7 +154,7 @@ async function addKinesisEventSource(item, lambda) {
   // use the existing event source mapping if it already exists and is enabled
   const listParams = {
     FunctionName: lambda.name,
-    EventSourceArn: item.rule.value,
+    EventSourceArn: item.value,
   };
   const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
@@ -172,7 +172,7 @@ async function addKinesisEventSource(item, lambda) {
 
   // create event source mapping
   const params = {
-    EventSourceArn: item.rule.value,
+    EventSourceArn: item.value,
     FunctionName: lambda.name,
     StartingPosition: 'TRIM_HORIZON',
     Enabled: true,
@@ -232,8 +232,8 @@ async function addKinesisEventSources(rule) {
  */
 function updateKinesisRuleArns(ruleItem, ruleArns) {
   const updatedRuleItem = cloneDeep(ruleItem);
-  updatedRuleItem.rule.arn = ruleArns.arn;
-  updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
+  updatedRuleItem.arn = ruleArns.arn;
+  updatedRuleItem.log_event_arn = ruleArns.log_event_arn;
   return updatedRuleItem;
 }
 
@@ -245,7 +245,7 @@ async function addSnsTrigger(item) {
   /* eslint-disable no-await-in-loop */
   do {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
-      TopicArn: item.rule.value,
+      TopicArn: item.value,
       NextToken: token,
     }).promise();
     token = subsResponse.NextToken;
@@ -266,7 +266,7 @@ async function addSnsTrigger(item) {
   if (!subExists) {
     // create sns subscription
     const subscriptionParams = {
-      TopicArn: item.rule.value,
+      TopicArn: item.value,
       Protocol: 'lambda',
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
@@ -279,7 +279,7 @@ async function addSnsTrigger(item) {
     Action: 'lambda:InvokeFunction',
     FunctionName: process.env.messageConsumer,
     Principal: 'sns.amazonaws.com',
-    SourceArn: item.rule.value,
+    SourceArn: item.value,
     StatementId: `${item.name}Permission`,
   };
   await awsServices.lambda().addPermission(permissionParams).promise();
@@ -299,9 +299,9 @@ async function addSnsTrigger(item) {
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
   if (!snsSubscriptionArn) {
-    delete updatedRuleItem.rule.arn;
+    delete updatedRuleItem.arn;
   } else {
-    updatedRuleItem.rule.arn = snsSubscriptionArn;
+    updatedRuleItem.arn = snsSubscriptionArn;
   }
   return updatedRuleItem;
 }
@@ -314,7 +314,7 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
  */
 async function validateAndUpdateSqsRule(rule) {
   const ruleToUpdate = rule;
-  const queueUrl = rule.rule.value;
+  const queueUrl = rule.value;
   if (!(await sqsQueueExists(queueUrl))) {
     throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
   }
@@ -344,8 +344,8 @@ async function validateAndUpdateSqsRule(rule) {
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default state is 'ENABLED'
-  if (!ruleItem.state) {
-    newRuleItem.state = 'ENABLED';
+  if (ruleItem.enabled === undefined) {
+    newRuleItem.enabled = true;
   }
 
   // make sure the name only has word characters
@@ -358,7 +358,7 @@ async function createRuleTrigger(ruleItem) {
   // await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 
   const payload = await Rule.buildPayload(newRuleItem);
-  switch (newRuleItem.rule.type) {
+  switch (newRuleItem.type) {
   case 'onetime': {
     await invoke(process.env.invoke, payload);
     break;
@@ -373,7 +373,7 @@ async function createRuleTrigger(ruleItem) {
     break;
   }
   case 'sns': {
-    if (newRuleItem.state === 'ENABLED') {
+    if (newRuleItem.enabled) {
       const snsSubscriptionArn = await addSnsTrigger(newRuleItem);
       newRuleItem = updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
     }
@@ -383,7 +383,7 @@ async function createRuleTrigger(ruleItem) {
     newRuleItem = await validateAndUpdateSqsRule(newRuleItem);
     break;
   default:
-    throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
+    throw new ValidationError(`Rule type \'${newRuleItem.type}\' not supported.`);
   }
   return newRuleItem;
 }
