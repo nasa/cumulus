@@ -14,6 +14,7 @@ const executionStatus = require('../endpoints/execution-status');
 const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
+const lzards = require('../endpoints/lzards');
 const logs = require('../endpoints/logs');
 const orca = require('../endpoints/orca');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
@@ -116,5 +117,7 @@ router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);
+
+router.use('/lzards', lzards);
 
 module.exports = router;
