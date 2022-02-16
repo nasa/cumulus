@@ -20,6 +20,7 @@ const {
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+const { createQueue } = require('@cumulus/aws-client/SQS');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
@@ -685,6 +686,78 @@ test('PUT replaces a rule', async (t) => {
     createdAt: putTestRule.createdAt,
     updatedAt: actualRule.updatedAt,
   });
+});
+
+test.serial.only('put() creates the same SQS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue = await createQueue(randomId('queue'));
+
+  const rule = {
+    name: randomId('rule'),
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queue,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  };
+
+  const expressRequest = {
+    params: {
+      name: rule.name,
+    },
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await put(expressRequest, response);
+
+  const updatedRule = await ruleModel.get({ name: rule.name });
+  // const updatedPgRule = await t.context.rulePgModel
+  //   .get(t.context.testKnex, { name: rule.name });
+  // const updatedEsRule = await t.context.esRulesClient.get(
+  //   rule.name
+  // );
+
+  const expectedMeta = {
+    visibilityTimeout: 10,
+    retries: 3,
+  };
+  t.deepEqual(updatedRule, {
+    ...rule,
+    updatedAt: updatedRule.updatedAt,
+    meta: expectedMeta,
+  });
+  // t.deepEqual(
+  //   updatedEsRule,
+  //   {
+  //     ...rule,
+  //     updatedAt: updatedEsRule.updatedAt,
+  //     timestamp: updatedEsRule.timestamp,
+  //     rule: {
+  //       ...fakeKinesisSources2,
+  //       type: 'kinesis',
+  //       value: kinesisArn2,
+  //     },
+  //   }
+  // );
+  // t.deepEqual(updatedPgRule, {
+  //   ...originalPgRecord,
+  //   updated_at: updatedPgRule.updated_at,
+  //   type: 'kinesis',
+  //   value: kinesisArn2,
+  //   arn: fakeKinesisSources2.arn,
+  //   log_event_arn: fakeKinesisSources2.logEventArn,
+  // });
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {
