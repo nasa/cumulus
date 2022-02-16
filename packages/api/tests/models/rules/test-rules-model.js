@@ -202,7 +202,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
   t.is(rule.state, 'DISABLED');
 
   const updates = { name: rule.name, state: 'ENABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.type, rule.type);
@@ -219,18 +220,10 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
 
   const updates = { name: rule.name, rule: null };
 
-  const updateTriggerStub = sinon.stub(models.Rule.prototype, 'updateRuleTrigger').resolves(rule);
-
-  try {
-    await t.throwsAsync(
-      () => rulesModel.update(rule, updates),
-      { name: 'SchemaValidationError' }
-    );
-
-    t.true(updateTriggerStub.notCalled);
-  } finally {
-    updateTriggerStub.restore();
-  }
+  await t.throwsAsync(
+    () => rulesModel.updateRuleTrigger(rule, updates),
+    { name: 'SchemaValidationError' }
+  );
 });
 
 test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
@@ -284,7 +277,8 @@ test.serial('Updating a kinesis type rule state does not change event source map
 
   // update rule state
   const updates = { name: rule.name, state: 'ENABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.state, 'ENABLED');
 
@@ -311,7 +305,8 @@ test.serial('Updaing a kinesis type rule value results in new event source mappi
     rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' },
   };
 
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.not(updatedRule.rule.value, rule.rule.value);
@@ -340,7 +335,8 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
     workflow: 'new-workflow',
   };
 
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.rule.value, rule.rule.value);
@@ -522,7 +518,8 @@ test('Updates rule meta object', async (t) => {
 
   const newTriggerRule = randomId('triggerRule');
   const updates = { name: rule.name, meta: { triggerRule: newTriggerRule } };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.meta.triggerRule, newTriggerRule);
 });
@@ -550,7 +547,8 @@ test('Updates a deeply nested key', async (t) => {
       testObject: newTestObject,
     },
   };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
@@ -580,7 +578,8 @@ test('Update preserves nested keys', async (t) => {
       testObject: newTestObject,
     },
   };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.meta.foo, 'bar');
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
@@ -621,7 +620,8 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     },
   };
 
-  const updatedRule = await rulesModel.update(createdRule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(createdRule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.deepEqual(updatedRule.meta.testObject, testObject);
   t.is(updatedRule.rule.value, newQueues.queueUrl);
