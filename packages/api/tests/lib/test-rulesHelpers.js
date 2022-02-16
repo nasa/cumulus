@@ -14,7 +14,6 @@ const {
   localStackConnectionEnv,
   migrationDir,
   RulePgModel,
-  TableNames,
 } = require('@cumulus/db');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
@@ -94,7 +93,6 @@ test.before(async (t) => {
 
 test.afterEach.always(async (t) => {
   listRulesStub.reset();
-  await t.context.testKnex(TableNames.rules).del();
 });
 
 test.after.always(async (t) => {
@@ -496,7 +494,7 @@ test.serial('isEventSourceMappingShared returns false if a rule does not share a
     rulePgModel,
     testKnex,
   } = t.context;
-  const eventType = { arn: 'fakeArn' };
+  const eventType = { arn: randomString() };
   const newRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
   await rulePgModel.create(testKnex, newRule);
   t.false(await rulesHelpers.isEventSourceMappingShared(testKnex, newRule, eventType));
