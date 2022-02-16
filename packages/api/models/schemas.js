@@ -632,7 +632,7 @@ module.exports.provider = {
       type: 'string',
     },
     allowedRedirects: {
-      title: 'Allowed redirects',
+      title: 'Allowed Redirects',
       description: 'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
       type: 'array',
       items: {
@@ -666,12 +666,12 @@ module.exports.provider = {
       description: 'filename assumed to be in s3://bucketInternal/stackName/crypto',
     },
     cmKeyId: {
-      title: 'AWS KMS Customer Master Key ARN or Alias',
+      title: 'AWS KMS Customer Master Key ARN Or Alias',
       type: 'string',
-      description: 'AWS KMS Customer Master Key arn or alias',
+      description: 'AWS KMS Customer Master Key ARN Or Alias',
     },
     certificateUri: {
-      title: 'S3 URI for custom SSL certificate',
+      title: 'S3 URI For Custom SSL Certificate',
       type: 'string',
       description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate',
     },

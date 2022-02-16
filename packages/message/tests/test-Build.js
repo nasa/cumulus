@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+
 const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 

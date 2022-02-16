@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2775**
+  - Added a configurable parameter group for the RDS serverless database cluster deployed by `tf-modules/rds-cluster-tf`. The allowed parameters for the parameter group can be found in the AWS documentation of [allowed parameters for an Aurora PostgreSQL cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html). By default, the following parameters are specified:
+    - `shared_preload_libraries`: `pg_stat_statements,auto_explain`
+    - `log_min_duration_statement`: `250`
+    - `auto_explain.log_min_duration`: `250`
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
+- **CUMULUS-2840**
+  - Added an index on `granule_cumulus_id` to the RDS files table.
+
+### Changed
+
+- **CUMULUS-2847**
+  - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
+- **CUMULUS-2833**
+  - Updates provider model schema titles to display on the dashboard.
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
+- **CUMULUS-2775**
+  - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
+- **CUMULUS-2781**
+  - Update API lambda to utilize api_config secret for initial environment variables
+
+### Fixed
+
+- Added Cloudwatch permissions to `<prefix>-steprole` in `tf-modules/ingest/iam.tf` to address the
+`Error: error creating Step Function State Machine (xxx): AccessDeniedException: 'arn:aws:iam::XXX:role/xxx-steprole' is not authorized to create managed-rule`
+error in non-NGAP accounts:
+  - `events:PutTargets`
+  - `events:PutRule`
+  - `events:DescribeRule`
+
 ## [v10.0.1] 2022-02-03
 
 **Please note** changes in 10.0.1 may not yet be released in future versions, as
@@ -28,12 +67,12 @@ which prevented it from running a Fargate task for data migration.
 
 ### BREAKING CHANGES
 
-- **NDCUM-624**:
+- **NDCUM-624**
   - Functions in @cumulus/cmrjs renamed for consistency with `isCMRFilename` and `isCMRFile`
     - `isECHO10File` -> `isECHO10Filename`
     - `isUMMGFile` -> `isUMMGFilename`
     - `isISOFile` -> `isCMRISOFilename`
-- **CUMULUS-2388**:
+- **CUMULUS-2388**
   - In order to standardize task messaging formats, please note the updated input, output and config schemas for the following Cumulus workflow tasks:
     - add-missing-file-checksums
     - files-to-granules
