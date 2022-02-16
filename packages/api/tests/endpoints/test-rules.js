@@ -21,7 +21,6 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
-const { sns } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -791,8 +790,8 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     pgCollection,
   } = t.context;
 
-  const topic1 = await sns().createTopic({ Name: randomId('topic') }).promise();
-  const topic2 = await sns().createTopic({ Name: randomId('topic') }).promise();
+  const topic1 = randomId('sns');
+  const topic2 = randomId('sns');
 
   const fakeSubscriptionArn1 = randomId('subscription');
   const fakeSubscriptionArn2 = randomId('subscription');
@@ -802,11 +801,9 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     .onSecondCall()
     .resolves(fakeSubscriptionArn2);
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
-  t.teardown(async () => {
+  t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
-    await sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
-    await sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
   });
 
   const stubbedRulesModel = new Rule();
@@ -825,7 +822,7 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
       state: 'ENABLED',
       rule: {
         type: 'sns',
-        value: topic1.TopicArn,
+        value: topic1,
       },
       collection: {
         name: pgCollection.name,
@@ -836,12 +833,14 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
   );
 
   t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
+  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
+  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
 
   const updateRule = {
     ...originalDynamoRule,
     rule: {
       type: 'sns',
-      value: topic2.TopicArn,
+      value: topic2,
     },
   };
 
@@ -871,7 +870,7 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: topic2.TopicArn,
+      value: topic2,
       arn: fakeSubscriptionArn2,
     },
   });
@@ -883,7 +882,7 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: topic2.TopicArn,
+        value: topic2,
         arn: fakeSubscriptionArn2,
       },
     }
@@ -893,7 +892,126 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
     arn: fakeSubscriptionArn2,
-    value: topic2.TopicArn,
+    value: topic2,
+  });
+});
+
+test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const kinesisArn1 = randomId('kinesis');
+  const kinesisArn2 = randomId('kinesis');
+
+  const fakeKinesisSources1 = {
+    arn: randomId('arn'),
+    logEventArn: randomId('log'),
+  };
+  const fakeKinesisSources2 = {
+    arn: randomId('arn'),
+    logEventArn: randomId('log'),
+  };
+  const addKinesisSourcesStub = sinon.stub(Rule.prototype, 'addKinesisEventSources')
+    .onFirstCall()
+    .resolves(fakeKinesisSources1)
+    .onSecondCall()
+    .resolves(fakeKinesisSources2);
+  const deleteKinesisSourcesStub = sinon.stub(Rule.prototype, 'deleteKinesisEventSources').resolves();
+  t.teardown(() => {
+    addKinesisSourcesStub.restore();
+    deleteKinesisSourcesStub.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      state: 'ENABLED',
+      rule: {
+        type: 'kinesis',
+        value: kinesisArn1,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  t.like(originalDynamoRule.rule, fakeKinesisSources1);
+  t.like(originalEsRecord.rule, fakeKinesisSources1);
+  t.is(originalPgRecord.arn, fakeKinesisSources1.arn);
+  t.is(originalPgRecord.log_event_arn, fakeKinesisSources1.logEventArn);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn2,
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await put(expressRequest, response);
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.deepEqual(updatedRule, {
+    ...originalDynamoRule,
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      ...fakeKinesisSources2,
+      type: 'kinesis',
+      value: kinesisArn2,
+    },
+  });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        ...fakeKinesisSources2,
+        type: 'kinesis',
+        value: kinesisArn2,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'kinesis',
+    value: kinesisArn2,
+    arn: fakeKinesisSources2.arn,
+    log_event_arn: fakeKinesisSources2.logEventArn,
   });
 });
 

@@ -498,7 +498,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
-  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
