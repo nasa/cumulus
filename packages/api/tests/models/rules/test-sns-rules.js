@@ -114,7 +114,8 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   t.is(rule.state, 'ENABLED');
 
   const updates = { name: rule.name, state: 'DISABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.state, 'DISABLED');
@@ -169,7 +170,7 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
 
   // Should fail because a disabled rule should not have an ARN
   // when being updated
-  await t.throwsAsync(rulesModel.update(rule, updates), null,
+  await t.throwsAsync(rulesModel.updateRuleTrigger(rule, updates), null,
     'Including rule.arn is not allowed when enabling a disabled rule');
   t.teardown(async () => {
     await rulesModel.delete(rule);
@@ -210,7 +211,8 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
   t.is(rule.rule.value, snsTopicArn);
 
   const updates = { name: rule.name, rule: { value: newSnsTopicArn } };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.type, rule.type);
