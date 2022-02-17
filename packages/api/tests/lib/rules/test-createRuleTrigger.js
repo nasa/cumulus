@@ -23,6 +23,7 @@ const {
 const {
   createRuleTrigger,
 } = require('../../../lib/rulesHelpers');
+const { createSqsQueues } = require('../../../lib/testUtils');
 
 const workflow = randomString();
 const testDbName = randomString(12);
@@ -99,22 +100,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.testKnexAdmin,
     testDbName,
   });
-});
-
-test('creating a disabled SNS rule creates no event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const item = fakeRuleRecordFactory({
-    workflow,
-    type: 'sns',
-    value: snsTopicArn,
-    enabled: false,
-  });
-
-  const rule = await createRuleTrigger(item);
-
-  t.is(rule.enabled, false);
-  t.is(rule.value, snsTopicArn);
-  t.falsy(rule.arn);
 });
 
 test('Creating a rule trigger defaults rule state to ENABLED', async (t) => {
@@ -222,7 +207,98 @@ test('Creating a rule trigger for an SQS rule fails if there is no redrive polic
   t.teardown(async () => await SQS.deleteQueue(queueUrl));
 });
 
-test.serial('creating an enabled SNS rule creates an event source mapping', async (t) => {
+test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
+  const queues = await createSqsQueues(randomString());
+  const rule = fakeRuleRecordFactory({
+    workflow,
+    type: 'sqs',
+    value: queues.queueUrl,
+    enabled: true,
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+  const sqsRule = await createRuleTrigger(rule);
+  t.deepEqual(sqsRule, rule);
+  t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
+});
+
+test('Creating a rule trigger for an SQS rule succeeds sets default value for meta.retries', async (t) => {
+  const queues = await createSqsQueues(randomString());
+  const rule = fakeRuleRecordFactory({
+    workflow,
+    type: 'sqs',
+    value: queues.queueUrl,
+    enabled: true,
+    meta: {
+      visibilityTimeout: 100,
+    },
+  });
+  const sqsRule = await createRuleTrigger(rule);
+  t.is(sqsRule.meta.retries, 3);
+  t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
+});
+
+test('Creating a rule trigger for a rule without a type fails', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    type: 'onetime',
+    workflow,
+    enabled: true,
+  });
+  delete rule.type;
+
+  await t.throwsAsync(
+    () => createRuleTrigger(rule),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test('Creating a rule trigger for a rule without a workflow fails', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    type: 'onetime',
+    workflow,
+    enabled: true,
+  });
+  delete rule.workflow;
+
+  await t.throwsAsync(
+    () => createRuleTrigger(rule),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test('Creating a rule trigger for a rule without a name fails', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    type: 'onetime',
+    workflow,
+    enabled: true,
+  });
+  delete rule.name;
+
+  await t.throwsAsync(
+    () => createRuleTrigger(rule),
+    { name: 'SchemaValidationError' }
+  );
+});
+
+test('Creating a disabled SNS rule creates no event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+  const item = fakeRuleRecordFactory({
+    workflow,
+    type: 'sns',
+    value: snsTopicArn,
+    enabled: false,
+  });
+
+  const rule = await createRuleTrigger(item);
+
+  t.is(rule.enabled, false);
+  t.is(rule.value, snsTopicArn);
+  t.falsy(rule.arn);
+});
+
+test.serial('Creating an enabled SNS rule creates an event source mapping', async (t) => {
   const { TopicArn } = await awsServices.sns().createTopic({
     Name: randomId('topic'),
   }).promise();
