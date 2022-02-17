@@ -5009,7 +5009,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.3...HEAD
+[v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...9.9.3
 [v9.9.2]: https://github.com/nasa/cumulus/compare/v9.9.1...v9.9.2
 [v9.9.1]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.1
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
