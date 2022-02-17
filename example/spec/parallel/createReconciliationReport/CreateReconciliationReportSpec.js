@@ -318,6 +318,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let testSuffix;
   let updatedGranuleFile;
   const ingestTime = Date.now() - 1000 * 30;
+  const startTimestamp = moment.utc().format();
 
   beforeAll(async () => {
     try {
@@ -453,6 +454,8 @@ describe('When there are granule differences and granule reconciliation is run',
             constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
           ],
           reportType: 'Granule Not Found',
+          startTimestamp,
+          endTimestamp: moment.utc().format(),
         },
       });
 
@@ -630,6 +633,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const request = {
         reportType: 'Internal',
         reportName: randomId('InternalReport'),
+        startTimestamp,
         endTimestamp: moment.utc().format(),
         collectionId,
         granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
@@ -734,6 +738,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const request = {
         reportType: 'Granule Inventory',
         reportName: randomId('granuleInventory'),
+        startTimestamp,
         endTimestamp: moment.utc().format(),
         collectionId,
         status: 'completed',
@@ -849,6 +854,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const request = {
         reportType: 'ORCA Backup',
         reportName: randomId('OrcaBackupReport'),
+        startTimestamp,
         endTimestamp: moment.utc().format(),
         collectionId,
         granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
