@@ -60,7 +60,6 @@ const testDbName = randomString(12);
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
-const { rule } = require('../../models/schemas');
 
 const workflow = randomId('workflow-');
 
@@ -443,6 +442,243 @@ test('POST creates a rule in all data stores', async (t) => {
     newRule.name
   );
   t.like(esRecord, fetchedDynamoRecord);
+});
+
+test.serial('post() creates SNS rule with same trigger information in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = randomId('sns');
+  const fakeSubscriptionArn1 = randomId('subscription');
+
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
+    .resolves(fakeSubscriptionArn1);
+  t.teardown(() => {
+    addSnsTriggerStub.restore();
+  });
+  const stubbedRulesModel = new Rule();
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sns',
+      value: topic1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expressRequest = {
+    body: rule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(dynamoRule, {
+    rule: {
+      type: 'sns',
+      value: topic1,
+      arn: fakeSubscriptionArn1,
+    },
+  });
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sns',
+        value: topic1,
+        arn: fakeSubscriptionArn1,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sns',
+    arn: fakeSubscriptionArn1,
+    value: topic1,
+  });
+});
+
+test.serial('post() creates the same Kinesis rule with trigger information in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const kinesisArn1 = randomId('kinesis');
+  const fakeKinesisSources1 = {
+    arn: randomId('arn'),
+    logEventArn: randomId('log'),
+  };
+
+  const addKinesisSourcesStub = sinon.stub(Rule.prototype, 'addKinesisEventSources')
+    .resolves(fakeKinesisSources1);
+  t.teardown(() => {
+    addKinesisSourcesStub.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expressRequest = {
+    body: rule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(dynamoRule, {
+    rule: {
+      ...fakeKinesisSources1,
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+  });
+  t.like(
+    esRule,
+    {
+      rule: {
+        ...fakeKinesisSources1,
+        type: 'kinesis',
+        value: kinesisArn1,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'kinesis',
+    arn: fakeKinesisSources1.arn,
+    value: kinesisArn1,
+    log_event_arn: fakeKinesisSources1.logEventArn,
+  });
+});
+
+test.serial('post() creates the SQS rule with trigger information in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+
+  const stubbedRulesModel = new Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
+    },
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'policy',
+            VisibilityTimeout: 10,
+          },
+        }),
+      }),
+    },
+  });
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 10,
+    retries: 3,
+  };
+
+  const expressRequest = {
+    body: rule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(dynamoRule, {
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    meta: expectedMeta,
+  });
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queue1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queue1,
+    meta: expectedMeta,
+  });
 });
 
 test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
@@ -1177,7 +1413,7 @@ test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fail
     },
     create: () => Promise.resolve(originalDynamoRule),
     createRuleTrigger: () => Promise.resolve(originalDynamoRule),
-    ruleTrigger: () => Promise.resolve(originalDynamoRule),
+    updateRuleTrigger: () => Promise.resolve(originalDynamoRule),
   };
 
   const updatedRule = {
