@@ -4,15 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased Phase 2
+
+### Added
+
+- **CUMULUS-2703**
+  - Added `@cumulus/api/lambdas/reports/orca-backup-reconciliation-report` to create
+    `ORCA Backup` reconciliation report
+
 ## Unreleased
 
 ### Added
 
 - **CUMULUS-2781**
   - Add api_config secret to hold API/Private API lambda configuration values
-- **CUMULUS-2703**
-  - Added `@cumulus/api/lambdas/reports/orca-backup-reconciliation-report` to create
-    `ORCA Backup` reconciliation report
 
 ### Changed
 

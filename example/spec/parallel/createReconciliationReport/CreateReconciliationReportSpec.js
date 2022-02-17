@@ -454,8 +454,6 @@ describe('When there are granule differences and granule reconciliation is run',
             constructCollectionId(onlyCMRCollection.name, onlyCMRCollection.version),
           ],
           reportType: 'Granule Not Found',
-          startTimestamp,
-          endTimestamp: moment.utc().format(),
         },
       });
 
