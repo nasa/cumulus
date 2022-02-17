@@ -21,7 +21,6 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
-const { createQueue } = require('@cumulus/aws-client/SQS');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -61,6 +60,7 @@ const testDbName = randomString(12);
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
+const { rule } = require('../../models/schemas');
 
 const workflow = randomId('workflow-');
 
@@ -1016,76 +1016,115 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
   });
 });
 
-test.serial.only('put() creates the same SQS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('put() creates the same SQS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
     pgCollection,
   } = t.context;
 
-  const queue = await createQueue(randomId('queue'));
+  const queue1 = randomId('queue');
+  const queue2 = randomId('queue');
 
-  const rule = {
-    name: randomId('rule'),
-    state: 'ENABLED',
-    rule: {
-      type: 'sqs',
-      value: queue,
+  const stubbedRulesModel = new Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
     },
-    collection: {
-      name: pgCollection.name,
-      version: pgCollection.version,
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'policy',
+            VisibilityTimeout: 10,
+          },
+        }),
+      }),
     },
-    provider: pgProvider.name,
-  };
+  });
 
-  const expressRequest = {
-    params: {
-      name: rule.name,
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
     },
-    body: rule,
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await put(expressRequest, response);
-
-  const updatedRule = await ruleModel.get({ name: rule.name });
-  // const updatedPgRule = await t.context.rulePgModel
-  //   .get(t.context.testKnex, { name: rule.name });
-  // const updatedEsRule = await t.context.esRulesClient.get(
-  //   rule.name
-  // );
+    {
+      name: randomId('rule'),
+      state: 'ENABLED',
+      rule: {
+        type: 'sqs',
+        value: queue1,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
 
   const expectedMeta = {
     visibilityTimeout: 10,
     retries: 3,
   };
+  t.deepEqual(originalDynamoRule.meta, expectedMeta);
+  t.deepEqual(originalPgRecord.meta, expectedMeta);
+  t.deepEqual(originalEsRecord.meta, expectedMeta);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'sqs',
+      value: queue2,
+    },
+  };
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await put(expressRequest, response);
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    updateRule.name
+  );
+
   t.deepEqual(updatedRule, {
-    ...rule,
+    ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
-    meta: expectedMeta,
+    rule: {
+      type: 'sqs',
+      value: queue2,
+    },
   });
-  // t.deepEqual(
-  //   updatedEsRule,
-  //   {
-  //     ...rule,
-  //     updatedAt: updatedEsRule.updatedAt,
-  //     timestamp: updatedEsRule.timestamp,
-  //     rule: {
-  //       ...fakeKinesisSources2,
-  //       type: 'kinesis',
-  //       value: kinesisArn2,
-  //     },
-  //   }
-  // );
-  // t.deepEqual(updatedPgRule, {
-  //   ...originalPgRecord,
-  //   updated_at: updatedPgRule.updated_at,
-  //   type: 'kinesis',
-  //   value: kinesisArn2,
-  //   arn: fakeKinesisSources2.arn,
-  //   log_event_arn: fakeKinesisSources2.logEventArn,
-  // });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sqs',
+        value: queue2,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sqs',
+    value: queue2,
+  });
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {

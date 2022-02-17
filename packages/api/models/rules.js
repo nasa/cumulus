@@ -11,7 +11,7 @@ const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
 const { invoke } = require('@cumulus/aws-client/Lambda');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const SQS = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
@@ -19,7 +19,10 @@ const { rule: ruleSchema } = require('./schemas');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
 
 class Rule extends Manager {
-  constructor() {
+  constructor({
+    SqsUtils = SQS,
+    SqsClient = awsServices.sqs(),
+  } = {}) {
     super({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
@@ -36,6 +39,9 @@ class Rule extends Manager {
     this.kinesisSourceEvents = [{ name: process.env.messageConsumer, eventType: 'arn' },
       { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
+
+    this.SqsUtils = SqsUtils;
+    this.SqsClient = SqsClient;
   }
 
   async addRule(item, payload) {
@@ -503,7 +509,7 @@ class Rule extends Manager {
    */
   async validateAndUpdateSqsRule(rule) {
     const queueUrl = rule.rule.value;
-    if (!(await sqsQueueExists(queueUrl))) {
+    if (!(await this.SqsUtils.sqsQueueExists(queueUrl))) {
       throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
     }
 
@@ -511,7 +517,7 @@ class Rule extends Manager {
       QueueUrl: queueUrl,
       AttributeNames: ['All'],
     };
-    const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+    const attributes = await this.SqsClient.getQueueAttributes(qAttrParams).promise();
     if (!attributes.Attributes.RedrivePolicy) {
       throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
     }
