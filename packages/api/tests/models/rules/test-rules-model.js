@@ -111,21 +111,6 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('Create rule trigger defaults rule state to ENABLED', async (t) => {
-  const { onetimeRule } = t.context;
-
-  // remove state from rule to be created
-  delete onetimeRule.state;
-
-  // create rule trigger
-  const rule = await rulesModel.createRuleTrigger(onetimeRule);
-
-  t.is(rule.state, 'ENABLED');
-
-  // delete rule
-  await rulesModel.delete(rule);
-});
-
 test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -178,18 +163,6 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
   );
 });
 
-test.serial('Creating an invalid rule does not create workflow triggers', async (t) => {
-  const { onetimeRule } = t.context;
-  const ruleItem = cloneDeep(onetimeRule);
-
-  ruleItem.rule.type = 'invalid';
-
-  await t.throwsAsync(
-    () => rulesModel.createRuleTrigger(ruleItem),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test('Enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -231,29 +204,6 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
   } finally {
     updateTriggerStub.restore();
   }
-});
-
-test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
-  const { kinesisRule } = t.context;
-
-  // create rule
-  const createdRule = await rulesModel.createRuleTrigger(kinesisRule);
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  t.is(consumerEventMappings.length, 1);
-  t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
-
-  t.is(createdRule.name, kinesisRule.name);
-  t.is(createdRule.rule.value, kinesisRule.rule.value);
-  t.false(createdRule.rule.arn === undefined);
-  t.false(createdRule.rule.logEventArn === undefined);
-
-  // clean up
-  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('Deleting a kinesis style rule removes event mappings', async (t) => {

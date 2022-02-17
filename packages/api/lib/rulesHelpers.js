@@ -189,17 +189,9 @@ async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
-      eventType: 'arn',
-      type: {
-        arn: rule.arn,
-      },
     },
     {
       name: process.env.KinesisInboundEventLogger,
-      eventType: 'log_event_arn',
-      type: {
-        log_event_arn: rule.log_event_arn,
-      },
     },
   ];
 
@@ -233,7 +225,7 @@ async function addKinesisEventSources(rule) {
 function updateKinesisRuleArns(ruleItem, ruleArns) {
   const updatedRuleItem = cloneDeep(ruleItem);
   updatedRuleItem.arn = ruleArns.arn;
-  updatedRuleItem.log_event_arn = ruleArns.log_event_arn;
+  updatedRuleItem.log_event_arn = ruleArns.logEventArn;
   return updatedRuleItem;
 }
 
