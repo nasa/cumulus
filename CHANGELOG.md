@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v9.9.3] 2021-02-17 [BACKPORT]
+
+- **CUMULUS-2853**
+  - Move OAUTH_PROVIDER to lambda env variables to address regression in 9.9.2/CUMULUS-2275
+  - Add logging output to api app router
+
 ## [v9.9.2] 2021-02-10 [BACKPORT]
 
 ### Added
