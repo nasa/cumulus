@@ -91,7 +91,7 @@ test.before(async (t) => {
   t.context.rulePgModel = new RulePgModel();
 });
 
-test.afterEach.always(async (t) => {
+test.afterEach.always(() => {
   listRulesStub.reset();
 });
 
