@@ -161,16 +161,18 @@ async function put(req, res) {
     const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
     const postgresRule = await translateApiRuleToPostgresRule(ruleWithUpdatedTrigger, knex);
 
+    let newEsRule;
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await rulePgModel.upsert(trx, postgresRule);
+        newEsRule = await indexRule(esClient, ruleWithUpdatedTrigger, process.env.ES_INDEX);
         newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
-        await indexRule(esClient, newRule, process.env.ES_INDEX);
       });
     } catch (innerError) {
-      // Revert Dynamo record update if any write fails
-      await ruleModel.createRuleTrigger(oldRule);
-      await ruleModel.create(oldRule);
+      // Revert ES record update if any write fails
+      if (newEsRule) {
+        await indexRule(esClient, oldRule, process.env.ES_INDEX);
+      }
       throw innerError;
     }
 

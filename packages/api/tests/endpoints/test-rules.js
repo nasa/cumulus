@@ -1363,6 +1363,360 @@ test.serial('put() creates the same SQS rule in Dynamo/PostgreSQL/Elasticsearch'
   });
 });
 
+test.serial('put() keeps initial trigger information if writing to Dynamo fails', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = randomId('sns');
+  const topic2 = randomId('sns');
+
+  const fakeSubscriptionArn1 = randomId('subscription');
+  const fakeSubscriptionArn2 = randomId('subscription');
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
+    .onFirstCall()
+    .resolves(fakeSubscriptionArn1)
+    .onSecondCall()
+    .resolves(fakeSubscriptionArn2);
+  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  const updateStub = sinon.stub(Rule.prototype, 'update').throws(new Error('Dynamo fail'));
+  t.teardown(() => {
+    addSnsTriggerStub.restore();
+    deleteSnsTriggerStub.restore();
+    updateStub.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      state: 'ENABLED',
+      rule: {
+        type: 'sns',
+        value: topic1,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
+  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
+  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'sns',
+      value: topic2,
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'Dynamo fail' }
+  );
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.deepEqual(updatedRule, {
+    ...originalDynamoRule,
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      type: 'sns',
+      value: topic1,
+      arn: fakeSubscriptionArn1,
+    },
+  });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sns',
+        value: topic1,
+        arn: fakeSubscriptionArn1,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sns',
+    arn: fakeSubscriptionArn1,
+    value: topic1,
+  });
+});
+
+test.serial('put() keeps initial trigger information if writing to Elasticsearch fails', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = randomId('sns');
+  const topic2 = randomId('sns');
+
+  const fakeSubscriptionArn1 = randomId('subscription');
+  const fakeSubscriptionArn2 = randomId('subscription');
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
+    .onFirstCall()
+    .resolves(fakeSubscriptionArn1)
+    .onSecondCall()
+    .resolves(fakeSubscriptionArn2);
+  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  t.teardown(() => {
+    addSnsTriggerStub.restore();
+    deleteSnsTriggerStub.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      state: 'ENABLED',
+      rule: {
+        type: 'sns',
+        value: topic1,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
+  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
+  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'sns',
+      value: topic2,
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+      esClient: {
+        index: () => {
+          throw new Error('ES fail');
+        },
+      },
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'ES fail' }
+  );
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.deepEqual(updatedRule, {
+    ...originalDynamoRule,
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      type: 'sns',
+      value: topic1,
+      arn: fakeSubscriptionArn1,
+    },
+  });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sns',
+        value: topic1,
+        arn: fakeSubscriptionArn1,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sns',
+    arn: fakeSubscriptionArn1,
+    value: topic1,
+  });
+});
+
+test.serial('put() keeps initial trigger information if writing to PostgreSQL fails', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = randomId('sns');
+  const topic2 = randomId('sns');
+
+  const fakeSubscriptionArn1 = randomId('subscription');
+  const fakeSubscriptionArn2 = randomId('subscription');
+  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
+    .onFirstCall()
+    .resolves(fakeSubscriptionArn1)
+    .onSecondCall()
+    .resolves(fakeSubscriptionArn2);
+  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  t.teardown(() => {
+    addSnsTriggerStub.restore();
+    deleteSnsTriggerStub.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      state: 'ENABLED',
+      rule: {
+        type: 'sns',
+        value: topic1,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
+  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
+  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'sns',
+      value: topic2,
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+      rulePgModel: {
+        upsert: () => {
+          throw new Error('PG fail');
+        },
+      },
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'PG fail' }
+  );
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.deepEqual(updatedRule, {
+    ...originalDynamoRule,
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      type: 'sns',
+      value: topic1,
+      arn: fakeSubscriptionArn1,
+    },
+  });
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sns',
+        value: topic1,
+        arn: fakeSubscriptionArn1,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sns',
+    arn: fakeSubscriptionArn1,
+    value: topic1,
+  });
+});
+
 test('PUT returns 404 for non-existent rule', async (t) => {
   const name = 'new_make_coffee';
   const response = await request(app)
