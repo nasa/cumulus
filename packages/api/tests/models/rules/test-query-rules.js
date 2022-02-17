@@ -111,7 +111,21 @@ test.before(async () => {
   process.env.system_bucket = randomId('bucket');
 
   // create Rules table
-  rulesModel = new models.Rule();
+  rulesModel = new models.Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
+    },
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'fake-policy',
+            VisibilityTimeout: '10',
+          },
+        }),
+      }),
+    },
+  });
   await rulesModel.createTable();
 
   await S3.createBucket(process.env.system_bucket);
@@ -125,20 +139,6 @@ test.before(async () => {
   ]);
 
   sandbox = sinon.createSandbox();
-
-  sandbox.stub(awsServices, 'sqs').returns({
-    getQueueUrl: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-    getQueueAttributes: () => ({
-      promise: () => Promise.resolve({
-        Attributes: {
-          RedrivePolicy: 'fake-policy',
-          VisibilityTimeout: '10',
-        },
-      }),
-    }),
-  });
 
   const stubWorkflowFileKey = randomId('key');
   sandbox.stub(workflows, 'getWorkflowFileKey').returns(stubWorkflowFileKey);
@@ -197,10 +197,12 @@ test.serial('queryRules returns correct rules for given state and type', async (
       state: 'DISABLED',
     }),
   ];
-  const rulesWithTriggers = await Promise.all(
-    onetimeRules.map((rule) => rulesModel.createRuleTrigger(rule))
+  await Promise.all(
+    onetimeRules.map(async (rule) => {
+      await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(rule);
+    })
   );
-  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
