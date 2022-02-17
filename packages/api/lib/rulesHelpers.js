@@ -333,6 +333,33 @@ async function validateAndUpdateSqsRule(rule) {
   return ruleToUpdate;
 }
 
+/*
+ * Checks if record is valid
+ * @param {Object} rule
+ * @returns {void} returns if record is valid, throws error otherwise
+ */
+function recordIsValid(rule) {
+  const error = new Error('The record has validation errors');
+  error.name = 'SchemaValidationError';
+  if (!rule.name) {
+    error.detail = 'Rule name is undefined.';
+    throw error;
+  }
+  if (!rule.workflow) {
+    error.detail = 'Rule workflow is undefined.';
+    throw error;
+  }
+  if (!rule.type) {
+    error.detail = 'Rule type is undefined.';
+    throw error;
+  }
+}
+
+/*
+ * Creates rule trigger for rule
+ * @param {Object} rule
+ * @returns {Object} returns new rule object
+ */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default state is 'ENABLED'
@@ -346,8 +373,8 @@ async function createRuleTrigger(ruleItem) {
     throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
   }
 
-  // // Validate rule before kicking off workflows or adding event source mappings
-  // await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
+  // Validate rule before kicking off workflows or adding event source mappings
+  recordIsValid(newRuleItem);
 
   const payload = await Rule.buildPayload(newRuleItem);
   switch (newRuleItem.type) {

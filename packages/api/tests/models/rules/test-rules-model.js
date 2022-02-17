@@ -11,7 +11,6 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
@@ -421,25 +420,6 @@ test.serial('Creating a rule trigger for a kinesis rule where an event source ma
   }
 });
 
-test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
-  const { kinesisRule } = t.context;
-
-  const newKinesisRule = cloneDeep(kinesisRule);
-  delete newKinesisRule.name;
-
-  // attempt to create rule
-  await t.throwsAsync(rulesModel.createRuleTrigger(newKinesisRule), { name: 'SchemaValidationError' });
-
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  console.log(JSON.stringify(kinesisEventMappings));
-
-  t.is(consumerEventMappings.length, 0);
-  t.is(logEventMappings.length, 0);
-});
-
 test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -590,37 +570,6 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     queuesToDelete.map(
       (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
     )
-  );
-});
-
-test('Creating a rule trigger SQS rule fails if queue does not exist', async (t) => {
-  const rule = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: 'non-existent-queue',
-    },
-    state: 'ENABLED',
-  });
-  await t.throwsAsync(
-    rulesModel.createRuleTrigger(rule),
-    { message: /SQS queue non-existent-queue does not exist/ }
-  );
-});
-
-test('Creating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
-  const queueUrl = await SQS.createQueue(randomId('queue'));
-  const rule = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: queueUrl,
-    },
-    state: 'ENABLED',
-  });
-  await t.throwsAsync(
-    rulesModel.createRuleTrigger(rule),
-    { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
 });
 

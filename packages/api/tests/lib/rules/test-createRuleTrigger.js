@@ -2,6 +2,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
+const SQS = require('@cumulus/aws-client/SQS');
 const {
   createBucket,
   putJsonS3Object,
@@ -100,7 +101,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('creating a disabled SNS rule creates no event source mapping', async (t) => {
+test('creating a disabled SNS rule creates no event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const item = fakeRuleRecordFactory({
     workflow,
@@ -114,6 +115,111 @@ test.serial('creating a disabled SNS rule creates no event source mapping', asyn
   t.is(rule.enabled, false);
   t.is(rule.value, snsTopicArn);
   t.falsy(rule.arn);
+});
+
+test('Creating a rule trigger defaults rule state to ENABLED', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    type: 'onetime',
+    workflow,
+    enabled: true,
+  });
+  // remove enabled from rule to be created
+  delete rule.enabled;
+
+  // create rule trigger
+  const ruleWithTrigger = await createRuleTrigger(rule);
+
+  t.true(ruleWithTrigger.enabled);
+});
+
+test('Creating an invalid rule does not create workflow triggers', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    type: 'onetime',
+    workflow,
+    enabled: true,
+  });
+  rule.type = 'invalid';
+
+  await t.throwsAsync(
+    () => createRuleTrigger(rule),
+    { name: 'ValidationError' }
+  );
+});
+
+test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
+  const kinesisRule = fakeRuleRecordFactory({
+    type: 'kinesis',
+    workflow,
+    enabled: true,
+    value: randomString(),
+  });
+  // create rule
+  const createdRule = await createRuleTrigger(kinesisRule);
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+  t.is(consumerEventMappings[0].UUID, createdRule.arn);
+  t.is(logEventMappings[0].UUID, createdRule.log_event_arn);
+
+  t.is(createdRule.name, kinesisRule.name);
+  t.is(createdRule.value, kinesisRule.value);
+  t.false(createdRule.arn === undefined);
+  t.false(createdRule.log_event_arn === undefined);
+
+  // Clean Up
+  // await deleteRuleResources(t.context.testKnex, kinesisRule);
+  await deleteKinesisEventSourceMappings();
+});
+
+test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
+  const kinesisRule = fakeRuleRecordFactory({
+    type: 'kinesis',
+    workflow,
+    enabled: true,
+    value: randomString(),
+  });
+  delete kinesisRule.name;
+  await t.throwsAsync(createRuleTrigger(kinesisRule), { name: 'SchemaValidationError' });
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  console.log(JSON.stringify(kinesisEventMappings));
+
+  t.is(consumerEventMappings.length, 0);
+  t.is(logEventMappings.length, 0);
+});
+
+test('Creating a rule trigger SQS rule fails if queue does not exist', async (t) => {
+  const rule = fakeRuleRecordFactory({
+    workflow,
+    type: 'sqs',
+    value: 'non-existent-queue',
+    enabled: true,
+  });
+  await t.throwsAsync(
+    createRuleTrigger(rule),
+    { message: /SQS queue non-existent-queue does not exist/ }
+  );
+});
+
+test('Creating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
+  const queueUrl = await SQS.createQueue(randomId('queue'));
+  const rule = fakeRuleRecordFactory({
+    workflow,
+    type: 'sqs',
+    value: queueUrl,
+    enabled: true,
+  });
+  await t.throwsAsync(
+    createRuleTrigger(rule),
+    { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
+  );
+  t.teardown(async () => await SQS.deleteQueue(queueUrl));
 });
 
 test.serial('creating an enabled SNS rule creates an event source mapping', async (t) => {
@@ -165,67 +271,11 @@ test.serial('creating an enabled SNS rule creates an event source mapping', asyn
     ReturnSubscriptionArn: true,
   }));
   t.true(addPermissionSpy.called);
-  t.teardown(() => {
+  t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
     subscribeSpy.restore();
     addPermissionSpy.restore();
+    await awsServices.sns().deleteTopic({ TopicArn }).promise();
   });
-});
-
-test.serial('Creating a rule trigger defaults rule state to ENABLED', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
-    workflow,
-    enabled: true,
-  });
-  // remove enabled from rule to be created
-  delete rule.enabled;
-
-  // create rule trigger
-  const ruleWithTrigger = await createRuleTrigger(rule);
-
-  t.true(ruleWithTrigger.enabled);
-});
-
-test.serial('Creating an invalid rule does not create workflow triggers', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
-    workflow,
-    enabled: true,
-  });
-  rule.type = 'invalid';
-
-  await t.throwsAsync(
-    () => createRuleTrigger(rule),
-    { name: 'ValidationError' }
-  );
-});
-
-test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
-    workflow,
-    enabled: true,
-    value: randomString(),
-  });
-  // create rule
-  const createdRule = await createRuleTrigger(kinesisRule);
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  t.is(consumerEventMappings.length, 1);
-  t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.log_event_arn);
-
-  t.is(createdRule.name, kinesisRule.name);
-  t.is(createdRule.value, kinesisRule.value);
-  t.false(createdRule.arn === undefined);
-  t.false(createdRule.log_event_arn === undefined);
-
-  // Clean Up
-  // await deleteRuleResources(t.context.testKnex, kinesisRule);
-  await deleteKinesisEventSourceMappings();
 });
