@@ -118,6 +118,6 @@ router.use('/elasticsearch', ensureAuthorized, elasticsearch.router);
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);
 
-router.use('/lzards', lzards);
+router.use('/lzards', ensureAuthorized, lzards);
 
 module.exports = router;
