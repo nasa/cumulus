@@ -1747,7 +1747,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test.only('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalDynamoRule,
