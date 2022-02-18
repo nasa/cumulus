@@ -1,14 +1,16 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const omit = require('lodash/omit');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const {
   createRejectableTransaction,
   getKnexClient,
   RulePgModel,
   translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
   isCollisionError,
 } = require('@cumulus/db');
@@ -144,34 +146,36 @@ async function put(req, res) {
   }
 
   try {
-    const oldRule = await ruleModel.get({ name });
-
-    apiRule.updatedAt = Date.now();
-    apiRule.createdAt = oldRule.createdAt;
+    const oldRule = await rulePgModel.get(knex, { name });
+    const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
-      return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
+      return models.Rule.invoke(oldApiRule).then(() => res.send(oldApiRule));
     }
 
-    const fieldsToDelete = Object.keys(oldRule).filter(
+    apiRule.updatedAt = Date.now();
+    apiRule.createdAt = oldApiRule.createdAt;
+
+    const fieldsToDelete = Object.keys(oldApiRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
 
-    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
-    const postgresRule = await translateApiRuleToPostgresRule(ruleWithUpdatedTrigger, knex);
+    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldApiRule, apiRule);
+    const ruleWithDeletedFields = omit(ruleWithUpdatedTrigger, fieldsToDelete);
+    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithDeletedFields, knex);
 
     let newEsRule;
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await rulePgModel.upsert(trx, postgresRule);
-        newEsRule = await indexRule(esClient, ruleWithUpdatedTrigger, process.env.ES_INDEX);
-        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
+        newEsRule = await indexRule(esClient, ruleWithDeletedFields, process.env.ES_INDEX);
+        newRule = await ruleModel.update(ruleWithDeletedFields, fieldsToDelete);
       });
     } catch (innerError) {
       // Revert ES record update if any write fails
       if (newEsRule) {
-        await indexRule(esClient, oldRule, process.env.ES_INDEX);
+        await indexRule(esClient, oldApiRule, process.env.ES_INDEX);
       }
       throw innerError;
     }

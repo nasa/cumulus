@@ -997,8 +997,9 @@ test('PUT replaces a rule', async (t) => {
   t.is(actualPostgresRule.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPostgresRule.updated_at.getTime(), updatedEsRecord.updatedAt);
 
-  t.like(actualPostgresRule, {
-    ...omit(originalPgRecord, ['queue_url']),
+  t.deepEqual(actualPostgresRule, {
+    ...originalPgRecord,
+    queue_url: null,
     enabled: true,
     created_at: new Date(originalDynamoRule.createdAt),
     updated_at: actualPostgresRule.updated_at,
