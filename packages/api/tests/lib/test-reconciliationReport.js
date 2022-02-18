@@ -10,6 +10,8 @@ const {
   convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
+  convertToESGranuleSearchParamsWithCreatedAtRange,
+  convertToOrcaGranuleSearchParams,
   filterDBCollections,
   searchParamsForCollectionIdArray,
   compareEsGranuleAndApiGranule,
@@ -70,6 +72,50 @@ test('convertToESGranuleSearchParams returns correct search object.', (t) => {
   };
 
   const actual = convertToESGranuleSearchParams(testObj);
+  t.deepEqual(actual, expected);
+});
+
+test('convertToESGranuleSearchParamsWithCreatedAtRange returns correct search object.', (t) => {
+  const startTimestamp = '2010-01-01T00:00:00.000Z';
+  const endTimestamp = '2011-10-01T12:00:00.000Z';
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+  };
+
+  const expected = {
+    createdAt__from: 1262304000000,
+    createdAt__to: 1317470400000,
+  };
+
+  const actual = convertToESGranuleSearchParamsWithCreatedAtRange(testObj);
+  t.deepEqual(actual, expected);
+});
+
+test('convertToOrcaGranuleSearchParams returns correct search object.', (t) => {
+  const startTimestamp = '2010-01-01T00:00:00.000Z';
+  const endTimestamp = '2011-10-01T12:00:00.000Z';
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+    collectionIds: 'testcollectionId',
+    granuleIds: ['testgranuleId'],
+    providers: ['provider1', 'provider2'],
+  };
+
+  const expected = {
+    startTimestamp: 1262304000000,
+    endTimestamp: 1317470400000,
+    collectionId: testObj.collectionIds,
+    granuleId: testObj.granuleIds,
+    providerId: testObj.providers,
+  };
+
+  const actual = convertToOrcaGranuleSearchParams(testObj);
   t.deepEqual(actual, expected);
 });
 
