@@ -60,6 +60,7 @@ locals {
       LAUNCHPAD_METADATA_URL           = var.saml_launchpad_metadata_url
       launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
       log_destination_arn              = var.log_destination_arn
+      lzards_api                       = var.lzards_api
       ManualConsumerLambda             = var.manual_consumer_function_arn
       messageConsumer                  = var.message_consumer_function_arn
       METRICS_ES_HOST                  = var.metrics_es_host
@@ -175,7 +176,7 @@ resource "aws_lambda_function" "api" {
   }
   memory_size = 960
   tags        = var.tags
-
+  
   reserved_concurrent_executions = var.api_reserved_concurrency
 
   dynamic "vpc_config" {
