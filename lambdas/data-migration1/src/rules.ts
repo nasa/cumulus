@@ -20,12 +20,15 @@ const logger = new Logger({ sender: '@cumulus/data-migration/rules' });
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
  *   Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
+ * @param {boolean} forceRulesMigration
+ *   If true, force migrating rules from DynamoDB to RDS regardless of timestamps.
  * @returns {Promise<number>} - Cumulus ID for record
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateRuleRecord = async (
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knex: Knex
+  knex: Knex,
+  forceRulesMigration?: boolean
 ): Promise<void> => {
   const rulePgModel = new RulePgModel();
 
@@ -42,7 +45,9 @@ export const migrateRuleRecord = async (
   }
 
   // Throw error if it was already migrated.
-  if (existingRecord && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
+  if (!forceRulesMigration
+      && existingRecord
+      && existingRecord.updated_at >= new Date(dynamoRecord.updatedAt)) {
     throw new RecordAlreadyMigrated(`Rule name ${dynamoRecord.name} was already migrated, skipping`);
   }
 
@@ -54,7 +59,8 @@ export const migrateRuleRecord = async (
 
 export const migrateRules = async (
   env: NodeJS.ProcessEnv,
-  knex: Knex
+  knex: Knex,
+  forceRulesMigration?: boolean
 ): Promise<MigrationSummary> => {
   const rulesTable = envUtils.getRequiredEnvVar('RulesTable', env);
 
@@ -75,7 +81,7 @@ export const migrateRules = async (
     migrationSummary.dynamoRecords += 1;
 
     try {
-      await migrateRuleRecord(record, knex);
+      await migrateRuleRecord(record, knex, forceRulesMigration);
       migrationSummary.success += 1;
     } catch (error) {
       if (error instanceof RecordAlreadyMigrated) {
