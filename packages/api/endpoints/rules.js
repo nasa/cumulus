@@ -2,14 +2,15 @@
 
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const {
   getKnexClient,
   RulePgModel,
   TableNames,
   translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { addToLocalES, indexRule } = require('@cumulus/es-client/indexer');
@@ -136,15 +137,18 @@ async function put({ params: { name }, body }, res) {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
 
+    apiRule.updatedAt = Date.now();
+    apiRule.createdAt = oldRule.createdAt;
+
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
     const ruleWithUpdatedTrigger = await model.updateRuleTrigger(oldRule, apiRule);
-    const postgresRule = await translateApiRuleToPostgresRule(ruleWithUpdatedTrigger, dbClient);
 
     await dbClient.transaction(async (trx) => {
+      newRule = await model.update(ruleWithUpdatedTrigger, fieldsToDelete);
+      const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, dbClient);
       await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(apiRule, fieldsToDelete);
     });
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
