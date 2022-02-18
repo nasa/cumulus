@@ -71,3 +71,39 @@ test('RulePgModel.upsert() overwrites a rule record', async (t) => {
     updatedRule
   );
 });
+
+test('RulePgModel.upsert() overwrites a rule record and deletes fields', async (t) => {
+  const {
+    knex,
+    rulePgModel,
+    ruleRecord,
+  } = t.context;
+
+  ruleRecord.queue_url = 'queue-url';
+
+  await rulePgModel.create(knex, ruleRecord);
+  const initialRule = await rulePgModel.get(knex, {
+    name: ruleRecord.name,
+  });
+  t.is(initialRule.queue_url, 'queue-url');
+
+  const ruleUpdates = {
+    ...ruleRecord,
+    value: cryptoRandomString({ length: 5 }),
+    queue_url: undefined, // this field should be unset
+  };
+
+  await rulePgModel.upsert(knex, ruleUpdates);
+
+  const actualRule = await rulePgModel.get(knex, {
+    name: ruleRecord.name,
+  });
+
+  t.like(
+    actualRule,
+    {
+      ...ruleUpdates,
+      queue_url: null,
+    }
+  );
+});
