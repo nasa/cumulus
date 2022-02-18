@@ -1666,6 +1666,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     testContext: {
       ruleModel: stubbedRulesModel,
       rulePgModel: {
+        get: () => Promise.resolve(originalPgRecord),
         upsert: () => {
           throw new Error('PG fail');
         },
@@ -1746,7 +1747,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
+test.only('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalDynamoRule,
@@ -1830,7 +1831,10 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
   );
 
   const fakerulePgModel = {
-    upsert: () => Promise.reject(new Error('something bad')),
+    get: () => Promise.resolve(originalPgRecord),
+    upsert: () => {
+      throw new Error('something bad');
+    },
   };
 
   const updatedRule = {
