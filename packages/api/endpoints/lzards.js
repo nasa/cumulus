@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
+const url = require('url');
 const logger = new Logger({ sender: '@cumulus/api/lzards' });
 const {
   getRequestToLzards,
@@ -15,10 +16,10 @@ const {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  const { ...queryStringParameters } = req.query;
+  const queryString = url.parse(req.originalUrl).search;
 
   const { statusCode, body } = await getRequestToLzards({
-    queryParams: queryStringParameters,
+    queryParams: queryString,
   });
 
   if (statusCode === 200) return res.send(body);
