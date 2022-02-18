@@ -29,6 +29,7 @@ const {
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 const { s3 } = require('@cumulus/aws-client/services');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   migrateGranuleRecord,
@@ -37,8 +38,6 @@ const {
   queryAndMigrateGranuleDynamoRecords,
   migrateGranulesAndFiles,
 } = require('../dist/lambda/granulesAndFiles');
-
-const buildCollectionId = (name, version) => `${name}___${version}`;
 
 const dateString = new Date().toString();
 const bucket = cryptoRandomString({ length: 10 });
@@ -152,7 +151,7 @@ test.beforeEach(async (t) => {
   t.context.pdrPgModel = pdrPgModel;
 
   t.context.testGranule = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: t.context.executionUrl,
     pdrName: testPdr.name,
   });
@@ -448,7 +447,7 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
 
   // Create a granule in the "running" status.
   const testGranule = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
     updatedAt: Date.now() - 1000,
     status: 'running',
@@ -487,7 +486,7 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
   } = t.context;
 
   const testGranule = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
     status: 'completed',
     updatedAt: Date.now() - 1000,
@@ -634,16 +633,16 @@ test.serial('queryAndMigrateGranuleDynamoRecords only processes records for spec
     testGranule,
   } = t.context;
 
-  const collectionIdFilter = buildCollectionId(testCollection.name, testCollection.version);
+  const collectionIdFilter = constructCollectionId(testCollection.name, testCollection.version);
 
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
   });
 
   // this record should not be migrated
   const testGranule3 = generateTestGranule({
-    collectionId: buildCollectionId(cryptoRandomString({ length: 3 }), testCollection.version),
+    collectionId: constructCollectionId(cryptoRandomString({ length: 3 }), testCollection.version),
     execution: testExecution.url,
   });
 
@@ -704,13 +703,13 @@ test.serial('queryAndMigrateGranuleDynamoRecords only processes records for spec
   } = t.context;
 
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
   });
 
   // this record should not be migrated
   const testGranule3 = generateTestGranule({
-    collectionId: buildCollectionId(cryptoRandomString({ length: 3 }), testCollection.version),
+    collectionId: constructCollectionId(cryptoRandomString({ length: 3 }), testCollection.version),
     execution: testExecution.url,
   });
 
@@ -771,7 +770,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules and files', asy
 
   const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
   });
 
@@ -821,7 +820,7 @@ test.serial('migrateGranulesAndFiles processes multiple granules when a filter i
     testGranule,
   } = t.context;
 
-  const collectionId = buildCollectionId(testCollection.name, testCollection.version);
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
 
   const testGranule1 = testGranule;
   const testGranule2 = generateTestGranule({
@@ -885,7 +884,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
   } = t.context;
 
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: testExecution.url,
   });
 
@@ -940,7 +939,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records w
     testGranule,
   } = t.context;
 
-  const collectionId = buildCollectionId(testCollection.name, testCollection.version);
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const testGranule2 = generateTestGranule({
     collectionId,
     execution: testExecution.url,
@@ -1008,7 +1007,7 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
 
   const testCollection2 = fakeCollectionRecordFactory();
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
+    collectionId: constructCollectionId(testCollection2.name, testCollection2.version),
     execution: testExecution.url,
   });
   // remove PDR record that references collection before removing collection record
@@ -1061,7 +1060,7 @@ test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 obj
 
   const testCollection2 = fakeCollectionRecordFactory();
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection2.name, testCollection2.version),
+    collectionId: constructCollectionId(testCollection2.name, testCollection2.version),
     execution: testExecution.url,
   });
 
@@ -1104,7 +1103,7 @@ test.serial('migrateGranulesAndFiles logs summary of migration for a specified l
   } = t.context;
 
   const testGranule2 = generateTestGranule({
-    collectionId: buildCollectionId(testCollection.name, testCollection.version),
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
     execution: t.context.executionUrl,
   });
 
@@ -1137,7 +1136,7 @@ test.serial('migrateGranulesAndFiles logs summary of migration for a specified l
     testCollection,
   } = t.context;
 
-  const collectionId = buildCollectionId(testCollection.name, testCollection.version);
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const testGranule2 = generateTestGranule({
     collectionId,
     execution: t.context.executionUrl,

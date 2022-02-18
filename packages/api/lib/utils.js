@@ -37,21 +37,6 @@ function parseException(exception) {
 }
 
 /**
- * Returns the name and version of a collection based on
- * the collectionId used in elasticsearch indexing
- *
- * @param {string} collectionId - collectionId used in elasticsearch index
- * @returns {Object} name and version as object
- */
-function deconstructCollectionId(collectionId) {
-  const [name, version] = collectionId.split('___');
-  return {
-    name,
-    version,
-  };
-}
-
-/**
  * Extract a date from the payload and return it in string format
  *
  * @param {Object} payload - payload object
@@ -95,7 +80,6 @@ function findCaseInsensitiveValue(obj, keyArg) {
 }
 
 module.exports = {
-  deconstructCollectionId,
   errorify,
   extractDate,
   filenamify,

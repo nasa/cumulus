@@ -11,8 +11,9 @@ const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { CMR } = require('@cumulus/cmr-client');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
@@ -716,7 +717,7 @@ test.serial(
     const queueUrl = 'testqueueUrl';
     const granule = {
       execution: 'some/execution',
-      collectionId: 'MyCollection___006',
+      collectionId: constructCollectionId('MyCollection', '006'),
       provider: 'someProvider',
       queueUrl,
     };
