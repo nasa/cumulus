@@ -483,14 +483,6 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 
 ### Added
 
-- Added `@cumulus/db/createRejectableTransaction()` to handle creating a Knex
-  transaction that **will throw an error** if the transaction rolls back. [As
-  of Knex 0.95+, promise rejection on transaction rollback is no longer the
-  default
-  behavior](https://github.com/knex/knex/blob/master/UPGRADING.md#upgrading-to-version-0950).
-- **CUMULUS-2670**
-  - Updated `lambda_timeouts` string map variable for `cumulus` module to accept a
-  `update_granules_cmr_metadata_file_links_task_timeout` property
 - Upgraded version of dependencies on `knex` package from `0.95.11` to `0.95.15`
 - Added Terraform data sources to `example/cumulus-tf` module to retrieve default VPC and subnets in NGAP accounts
   - Added `vpc_tag_name` variable which defines the tags used to look up a VPC. Defaults to VPC tag name used in NGAP accounts
