@@ -255,7 +255,7 @@ async function runTask() {
 
   try {
     // Fetch the event that will be passed to the lambda function from S3
-    logger.debug(`fetching payload from ${process.env.payloadUrl}`);
+    logger.debug(`Fetching payload from ${process.env.payloadUrl}.`);
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   } catch (error) {
     logger.error('Failed to fetch payload:', error);
