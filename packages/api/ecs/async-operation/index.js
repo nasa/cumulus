@@ -95,7 +95,7 @@ async function fetchAndDeletePayload(payloadUrl) {
  *   moduleFunctionName
  */
 async function getLambdaInfo(FunctionName) {
-  logger.debug(`Retreiving lambda info for ${FunctionName}.`);
+  logger.debug(`Retrieving lambda info for ${FunctionName}.`);
   const lambda = new AWS.Lambda();
 
   const getFunctionResponse = await lambda.getFunction({
