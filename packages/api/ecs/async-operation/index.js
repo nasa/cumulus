@@ -95,7 +95,7 @@ async function fetchAndDeletePayload(payloadUrl) {
  *   moduleFunctionName
  */
 async function getLambdaInfo(FunctionName) {
-  logger.debug(`retreiving lambda info for ${FunctionName} `);
+  logger.debug(`Retreiving lambda info for ${FunctionName}.`);
   const lambda = new AWS.Lambda();
 
   const getFunctionResponse = await lambda.getFunction({
@@ -123,7 +123,7 @@ async function fetchLambdaFunction(codeUrl) {
   // Fetching the lambda zip file from S3 was failing intermittently because
   // of connection timeouts.  If the download fails, this will retry it up to
   // 10 times with an exponential backoff.
-  logger.debug(`Fetching lambda code from ${codeUrl}`);
+  logger.debug(`Fetching lambda code from ${codeUrl}.`);
   await pRetry(
     () => promisify(pipeline)(
       got.stream(codeUrl),
@@ -139,7 +139,7 @@ async function fetchLambdaFunction(codeUrl) {
       },
     }
   );
-  logger.debug('lambda downloaded, unzipping');
+  logger.debug('Lambda downloaded, unzipping.');
   return exec('unzip -o /home/task/fn.zip -d /home/task/lambda-function');
 }
 
