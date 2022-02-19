@@ -6,6 +6,7 @@ const proxyquire = require('proxyquire');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   destroyLocalTestDb,
@@ -16,7 +17,7 @@ const {
   RulePgModel,
 } = require('@cumulus/db');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { deleteRuleResources } = require('../../lib/rulesHelpers');
 
 const listRulesStub = sinon.stub();
@@ -672,6 +673,28 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
     snsStub.restore();
     unsubscribeSpy.restore();
   });
+});
+
+test.serial('deleteRuleResources does nothing when the rule is an SQS rule', async (t) => {
+  const { testKnex } = t.context;
+  const queues = await createSqsQueues(randomString());
+  const params = {
+    type: 'sqs',
+    enabled: true,
+    value: queues.queueUrl,
+  };
+  const sqsRule = fakeRuleRecordFactory(params);
+  await deleteRuleResources(testKnex, sqsRule);
+  t.true(await sqsQueueExists(queues.queueUrl));
+  const queuesToDelete = [
+    queues.queueUrl,
+    queues.deadLetterQueueUrl,
+  ];
+  await Promise.all(
+    queuesToDelete.map(
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+    )
+  );
 });
 
 test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
