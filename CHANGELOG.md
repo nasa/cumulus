@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async tasks on ECS.
 - **CUMULUS-2492**
   - Modify collectionId logic to accomodate trailing underscores in collection short names. e.g. `shortName____`
 - **CUMULUS-2847**
