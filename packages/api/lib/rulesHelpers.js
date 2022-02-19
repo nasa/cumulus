@@ -250,7 +250,7 @@ async function deleteRuleResources(knex, rule) {
     break;
   }
   case 'sns': {
-    if (rule.enabled === true) {
+    if (rule.enabled) {
       await deleteSnsTrigger(knex, rule);
     }
     break;
