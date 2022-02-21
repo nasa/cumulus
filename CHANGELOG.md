@@ -98,6 +98,18 @@ which prevented it from running a Fargate task for data migration.
   - Checksum values calculated by `@cumulus/checksum` are now converted to string to standardize
   checksum formatting across the Cumulus library.
 
+### Migration steps
+
+- Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
+out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
+[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+`{"forceRulesMigration": true}`:
+
+```shell
+aws lambda invoke --function-name $PREFIX-data-migration1 \
+  --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
+```
+
 ### Notable changes
 
 - **CUMULUS-2703**
@@ -505,6 +517,9 @@ which prevented it from running a Fargate task for data migration.
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
+  - **CUMULUS-2846**
+    - Fixed bug with PUT `/rules/<name>` endpoint which caused records in PostgreSQL
+    to be out of sync with DynamoDB
 
 ## Unreleased
 
