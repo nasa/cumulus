@@ -197,7 +197,7 @@ class Rule extends Manager {
     }
     case 'kinesis':
       if (valueUpdated) {
-        await this.deleteKinesisEventSources(updatedRuleItem);
+        // await this.deleteKinesisEventSources(updatedRuleItem);
         const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
         updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
           updatedRuleItemArns);
@@ -209,9 +209,9 @@ class Rule extends Manager {
           throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
         }
         let snsSubscriptionArn;
-        if (updatedRuleItem.rule.arn) {
-          await this.deleteSnsTrigger(updatedRuleItem);
-        }
+        // if (updatedRuleItem.rule.arn) {
+        //   await this.deleteSnsTrigger(updatedRuleItem);
+        // }
         if (updatedRuleItem.state === 'ENABLED') {
           snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
         }
@@ -521,6 +521,22 @@ class Rule extends Manager {
       SubscriptionArn: item.rule.arn,
     };
     return awsServices.sns().unsubscribe(subscriptionParams).promise();
+  }
+
+  async deleteEventSourceMappings(item) {
+    switch (item.rule.type) {
+    case 'kinesis':
+      await this.deleteKinesisEventSources(item);
+      break;
+    case 'sns': {
+      if (item.rule.arn) {
+        await this.deleteSnsTrigger(item);
+      }
+      break;
+    }
+    default:
+      break;
+    }
   }
 
   /**
