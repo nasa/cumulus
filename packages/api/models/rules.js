@@ -177,7 +177,6 @@ class Rule extends Manager {
     }
     case 'kinesis':
       if (valueUpdated) {
-        // await this.deleteKinesisEventSources(updatedRuleItem);
         const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
         updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
           updatedRuleItemArns);
@@ -189,9 +188,6 @@ class Rule extends Manager {
           throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
         }
         let snsSubscriptionArn;
-        // if (updatedRuleItem.rule.arn) {
-        //   await this.deleteSnsTrigger(updatedRuleItem);
-        // }
         if (updatedRuleItem.state === 'ENABLED') {
           snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
         }
