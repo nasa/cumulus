@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2813**
     - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
 
+### Added
+
+- **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2813**
+    - Added function `create` in the `db` model for Rules
+      to return an array of objects containing all columns of the created record.
+
 ## Unreleased
 
 ### Migration steps
