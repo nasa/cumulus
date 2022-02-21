@@ -1,3 +1,5 @@
+'use strict';
+
 const test = require('ava');
 const sinon = require('sinon');
 
@@ -102,7 +104,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('Creating a rule trigger defaults rule state to ENABLED', async (t) => {
+test('Creating a rule trigger defaults enabled to true', async (t) => {
   const rule = fakeRuleRecordFactory({
     type: 'onetime',
     workflow,

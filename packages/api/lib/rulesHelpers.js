@@ -363,7 +363,7 @@ function recordIsValid(rule) {
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
-  // the default state is 'ENABLED'
+  // the default value for enabled is true
   if (ruleItem.enabled === undefined) {
     newRuleItem.enabled = true;
   }

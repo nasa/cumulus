@@ -93,7 +93,7 @@ async function post(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgRecord] = await rulePgModel.create(trx, postgresRule);
         record = await translatePostgresRuleToApiRule(pgRecord, knex);
-        await indexRule(esClient, ruleWithTrigger, process.env.ES_INDEX);
+        await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
       if (isCollisionError(innerError)) {
