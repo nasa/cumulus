@@ -291,7 +291,7 @@ test.serial('Updating a kinesis type rule state does not change event source map
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('Updaing a kinesis type rule value results in new event source mappings', async (t) => {
+test.serial('Updating a kinesis type rule value results in new event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule trigger and rule
@@ -319,6 +319,46 @@ test.serial('Updaing a kinesis type rule value results in new event source mappi
 
   await rulesModel.delete(rule);
   await deleteKinesisEventSourceMappings();
+});
+
+test.serial('updateRuleTrigger() a kinesis type rule value does not delete existing source mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  // create rule trigger and rule
+  const kinesisArn1 = randomId('kinesis1_');
+  kinesisRule.rule.value = kinesisArn1;
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: kinesisRule.name });
+  t.teardown(() => rulesModel.delete(rule));
+
+  // update rule value
+  const updates = {
+    name: rule.name,
+    rule: { ...rule.rule, value: randomId('kinesis2_') },
+  };
+
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+
+  t.is(updatedRule.name, rule.name);
+  t.not(updatedRule.rule.value, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  t.is(consumerEventMappings.length, 2);
+  t.is(consumerEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
+  t.is(logEventMappings.length, 2);
+  t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
 });
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
