@@ -161,21 +161,24 @@ async function put(req, res) {
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
 
+    // deletes existing event sources and updates rule properties
     const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldApiRule, apiRule);
-    const ruleWithDeletedFields = omit(ruleWithUpdatedTrigger, fieldsToDelete);
-    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithDeletedFields, knex);
 
-    let newEsRule;
     try {
       await createRejectableTransaction(knex, async (trx) => {
+        // stores updated record in dynamo
+        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
+        // make sure we include undefined values so fields will be correctly unset in PG
+        const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, knex);
         await rulePgModel.upsert(trx, postgresRule);
-        newEsRule = await indexRule(esClient, ruleWithDeletedFields, process.env.ES_INDEX);
-        newRule = await ruleModel.update(ruleWithDeletedFields, fieldsToDelete);
+        await indexRule(esClient, newRule, process.env.ES_INDEX);
       });
+      // wait to delete original event sources until all update operations were successful
+      await ruleModel.deleteEventSourceMappings(oldApiRule);
     } catch (innerError) {
-      // Revert ES record update if any write fails
-      if (newEsRule) {
-        await indexRule(esClient, oldApiRule, process.env.ES_INDEX);
+      if (newRule) {
+        const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldApiRule);
+        await ruleModel.update(ruleWithRevertedTrigger);
       }
       throw innerError;
     }

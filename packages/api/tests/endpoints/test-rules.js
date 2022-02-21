@@ -21,6 +21,7 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const { sns } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -1370,22 +1371,25 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('sns');
-  const topic2 = randomId('sns');
+  const topic1 = randomId('topic1_');
+  const topic2 = randomId('topic2_');
 
-  const fakeSubscriptionArn1 = randomId('subscription');
-  const fakeSubscriptionArn2 = randomId('subscription');
+  const fakeSubscriptionArn1 = randomId('subscription1_');
+  const fakeSubscriptionArn2 = randomId('subscription2_');
   const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .onFirstCall()
-    .resolves(fakeSubscriptionArn1)
-    .onSecondCall()
-    .resolves(fakeSubscriptionArn2);
+    .callsFake((item) => {
+      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
+      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
+      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
+    });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
   const updateStub = sinon.stub(Rule.prototype, 'update').throws(new Error('Dynamo fail'));
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
     updateStub.restore();
+    deleteEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1442,6 +1446,8 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     { message: 'Dynamo fail' }
   );
 
+  t.false(deleteEventSourceMappingsSpy.called);
+
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
@@ -1486,20 +1492,23 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('sns');
-  const topic2 = randomId('sns');
+  const topic1 = randomId('topic1_');
+  const topic2 = randomId('topic2_');
 
-  const fakeSubscriptionArn1 = randomId('subscription');
-  const fakeSubscriptionArn2 = randomId('subscription');
+  const fakeSubscriptionArn1 = randomId('subscription1_');
+  const fakeSubscriptionArn2 = randomId('subscription2_');
   const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .onFirstCall()
-    .resolves(fakeSubscriptionArn1)
-    .onSecondCall()
-    .resolves(fakeSubscriptionArn2);
+    .callsFake((item) => {
+      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
+      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
+      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
+    });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
+    deleteEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1561,6 +1570,8 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     { message: 'ES fail' }
   );
 
+  t.false(deleteEventSourceMappingsSpy.called);
+
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
@@ -1605,20 +1616,23 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('sns');
-  const topic2 = randomId('sns');
+  const topic1 = randomId('topic1_');
+  const topic2 = randomId('topic2_');
 
   const fakeSubscriptionArn1 = randomId('subscription');
   const fakeSubscriptionArn2 = randomId('subscription');
   const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .onFirstCall()
-    .resolves(fakeSubscriptionArn1)
-    .onSecondCall()
-    .resolves(fakeSubscriptionArn2);
+    .callsFake((item) => {
+      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
+      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
+      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
+    });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
+  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
+    deleteEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1680,6 +1694,8 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     put(expressRequest, response),
     { message: 'PG fail' }
   );
+
+  t.false(deleteEventSourceMappingsSpy.called);
 
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
