@@ -133,7 +133,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
   const state = item.enabled ? 'ENABLED' : 'DISABLED';
-  const r = await CloudwatchEvents.putEvent(
+  await CloudwatchEvents.putEvent(
     name,
     item.value,
     state,
