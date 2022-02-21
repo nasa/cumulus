@@ -13,18 +13,10 @@ class RulePgModel extends BasePgModel<PostgresRule, PostgresRuleRecord> {
 
   upsert(
     knexOrTransaction: Knex | Knex.Transaction,
-    rule: PostgresRule,
-    fieldsToDelete: (keyof PostgresRule)[] = []
+    rule: PostgresRule
   ) {
-    const deleteFieldKeys = Object.fromEntries(fieldsToDelete.map(
-      (fieldKey) => [fieldKey, undefined]
-    ));
-    const upsertRule = {
-      ...rule,
-      ...deleteFieldKeys,
-    };
     return knexOrTransaction(this.tableName)
-      .insert(upsertRule)
+      .insert(rule)
       .onConflict('name')
       .merge()
       .returning('cumulus_id');
