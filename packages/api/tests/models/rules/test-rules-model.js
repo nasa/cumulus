@@ -361,6 +361,120 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
   t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
 });
 
+test.serial('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
+  const topic1 = randomId('topic1_');
+  const topic2 = randomId('topic2_');
+  const subscription1 = randomId('sub1_');
+  const subscription2 = randomId('sub2_');
+  const deleteSnsTriggerSpy = sinon.spy(models.Rule.prototype, 'deleteSnsTrigger');
+  t.teardown(() => deleteSnsTriggerSpy.restore());
+  const stubbedRulesModel = new models.Rule({
+    SnsClient: {
+      listSubscriptionsByTopic: (params) => ({
+        promise: sinon.stub().callsFake(() => {
+          if (params.TopicArn === topic1 || params.TopicArn === topic2) {
+            return Promise.resolve({ Subscriptions: [] });
+          }
+          throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
+        }),
+      }),
+      subscribe: (params) => ({
+        promise: sinon.stub().callsFake(() => {
+          if (params.TopicArn === topic1) {
+            return Promise.resolve({
+              SubscriptionArn: subscription1,
+            });
+          }
+          if (params.TopicArn === topic2) {
+            return Promise.resolve({
+              SubscriptionArn: subscription2,
+            });
+          }
+          throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
+        }),
+      }),
+      unsubscribe: (params) => ({
+        promise: sinon.stub().callsFake(() => {
+          if (params.SubscriptionArn === subscription1
+             || params.SubscriptionArn === subscription2) {
+            return Promise.resolve();
+          }
+          throw new Error(`unexpected params.SubscriptionArn: ${params.SubscriptionArn}`);
+        }),
+      }),
+    },
+    LambdaClient: {
+      addPermission: (params) => ({
+        promise: sinon.stub().callsFake(() => {
+          if (params.SourceArn === topic1 || params.SourceArn === topic2) {
+            return Promise.resolve();
+          }
+          throw new Error(`unexpected params.SourceArn: ${params.SourceArn}`);
+        }),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    },
+  });
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1,
+    },
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await stubbedRulesModel.createRuleTrigger(snsRule);
+  await stubbedRulesModel.create(ruleWithTrigger);
+
+  const rule = await stubbedRulesModel.get({ name: snsRule.name });
+  t.teardown(() => stubbedRulesModel.delete(rule));
+
+  // update rule value
+  const updates = {
+    name: rule.name,
+    rule: { ...rule.rule, value: topic2 },
+  };
+
+  const ruleWithUpdatedTrigger = await stubbedRulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await stubbedRulesModel.update(ruleWithUpdatedTrigger);
+
+  t.false(deleteSnsTriggerSpy.called);
+
+  t.is(updatedRule.name, rule.name);
+  t.not(updatedRule.rule.value, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
+});
+
+test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  // create rule trigger and rule
+  const kinesisArn1 = randomId('kinesis1_');
+  kinesisRule.rule.value = kinesisArn1;
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: kinesisRule.name });
+  t.teardown(() => rulesModel.delete(rule));
+
+  await rulesModel.deleteOldEventSourceMappings(rule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  t.is(consumerEventMappings.length, 0);
+  t.is(logEventMappings.length, 0);
+});
+
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 

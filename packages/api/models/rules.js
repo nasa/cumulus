@@ -22,6 +22,8 @@ class Rule extends Manager {
   constructor({
     SqsUtils = SQS,
     SqsClient = awsServices.sqs(),
+    SnsClient = awsServices.sns(),
+    LambdaClient = awsServices.lambda(),
   } = {}) {
     super({
       tableName: process.env.RulesTable,
@@ -42,6 +44,8 @@ class Rule extends Manager {
 
     this.SqsUtils = SqsUtils;
     this.SqsClient = SqsClient;
+    this.SnsClient = SnsClient;
+    this.LambdaClient = LambdaClient;
   }
 
   async addRule(item, payload) {
@@ -433,7 +437,7 @@ class Rule extends Manager {
     let subscriptionArn;
     /* eslint-disable no-await-in-loop */
     do {
-      const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+      const subsResponse = await this.SnsClient.listSubscriptionsByTopic({
         TopicArn: item.rule.value,
         NextToken: token,
       }).promise();
@@ -460,7 +464,7 @@ class Rule extends Manager {
         Endpoint: process.env.messageConsumer,
         ReturnSubscriptionArn: true,
       };
-      const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+      const r = await this.SnsClient.subscribe(subscriptionParams).promise();
       subscriptionArn = r.SubscriptionArn;
     }
     // create permission to invoke lambda
@@ -471,7 +475,7 @@ class Rule extends Manager {
       SourceArn: item.rule.value,
       StatementId: `${item.name}Permission`,
     };
-    await awsServices.lambda().addPermission(permissionParams).promise();
+    await this.LambdaClient.addPermission(permissionParams).promise();
     return subscriptionArn;
   }
 
@@ -487,7 +491,7 @@ class Rule extends Manager {
       StatementId: `${item.name}Permission`,
     };
     try {
-      await awsServices.lambda().removePermission(permissionParams).promise();
+      await this.LambdaClient.removePermission(permissionParams).promise();
     } catch (error) {
       if (isResourceNotFoundException(error)) {
         throw new ResourceNotFoundError(error);
@@ -498,7 +502,7 @@ class Rule extends Manager {
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn,
     };
-    return awsServices.sns().unsubscribe(subscriptionParams).promise();
+    return this.SnsClient.unsubscribe(subscriptionParams).promise();
   }
 
   async deleteOldEventSourceMappings(item) {
