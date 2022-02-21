@@ -45,7 +45,7 @@ class Rule extends Manager {
   }
 
   async addRule(item, payload) {
-    const name = `${process.env.stackName}-custom-${item.name}`;
+    const name = this.buildCloudWatchRuleName(item);
     const r = await CloudwatchEvents.putEvent(
       name,
       item.rule.value,
@@ -68,10 +68,14 @@ class Rule extends Manager {
     return await Promise.all(deletePromises);
   }
 
+  buildCloudWatchRuleName(item) {
+    return `${process.env.stackName}-custom-${item.name}`;
+  }
+
   async delete(item) {
     switch (item.rule.type) {
     case 'scheduled': {
-      const name = `${process.env.stackName}-custom-${item.name}`;
+      const name = this.buildCloudWatchRuleName(item);
       await CloudwatchEvents.deleteTarget(this.targetId, name);
       await CloudwatchEvents.deleteEvent(name);
       break;
@@ -523,7 +527,7 @@ class Rule extends Manager {
     return awsServices.sns().unsubscribe(subscriptionParams).promise();
   }
 
-  async deleteEventSourceMappings(item) {
+  async deleteOldEventSourceMappings(item) {
     switch (item.rule.type) {
     case 'kinesis':
       await this.deleteKinesisEventSources(item);
