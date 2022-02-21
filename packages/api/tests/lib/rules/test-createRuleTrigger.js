@@ -226,19 +226,18 @@ test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
 
-test('Creating a rule trigger for an SQS rule succeeds sets default value for meta.retries', async (t) => {
+test('Creating a rule trigger for an SQS rule succeeds sets default value for meta.retries and visibilityTimeout', async (t) => {
   const queues = await createSqsQueues(randomString());
   const rule = fakeRuleRecordFactory({
     workflow,
     type: 'sqs',
     value: queues.queueUrl,
     enabled: true,
-    meta: {
-      visibilityTimeout: 100,
-    },
+    meta: {},
   });
   const sqsRule = await createRuleTrigger(rule);
   t.is(sqsRule.meta.retries, 3);
+  t.is(sqsRule.meta.visibilityTimeout, 300);
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
 

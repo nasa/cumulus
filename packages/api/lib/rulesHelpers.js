@@ -123,6 +123,13 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
   return handleScheduleEvent(payload);
 }
 
+/**
+   * Add cloudwatch event rule and target
+   *
+   * @param {Object} item    - the rule item
+   * @param {Object} payload - the payload input of the cloudwatch event
+   * @returns {void}
+   */
 async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
   const state = item.enabled ? 'ENABLED' : 'DISABLED';
@@ -140,16 +147,14 @@ async function addRule(item, payload) {
     process.env.invokeArn,
     JSON.stringify(payload)
   );
-  return r.RuleArn;
 }
 
 /**
-   * add an event source to a target lambda function
+   * Add an event source to a target lambda function
    *
-   * @param {Object} item - the rule item
-   * @param {string} lambda - the name of the target lambda
-   * @returns {Promise} a promise
-   * @returns {Promise} updated rule item
+   * @param {Object} item    - the rule item
+   * @param {string} lambda  - the name of the target lambda
+   * @returns {Promise}      - updated rule item
    */
 async function addKinesisEventSource(item, lambda) {
   // use the existing event source mapping if it already exists and is enabled
@@ -230,7 +235,13 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
   return updatedRuleItem;
 }
 
-async function addSnsTrigger(item) {
+/**
+ * Update the event source mappings for SNS type rules.
+ *
+ * @param {Object} rule - A rule item
+ * @returns {Object} - Updated rule item
+ */
+async function addSnsTrigger(rule) {
   // check for existing subscription
   let token;
   let subExists = false;
@@ -238,7 +249,7 @@ async function addSnsTrigger(item) {
   /* eslint-disable no-await-in-loop */
   do {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
-      TopicArn: item.value,
+      TopicArn: rule.value,
       NextToken: token,
     }).promise();
     token = subsResponse.NextToken;
@@ -259,7 +270,7 @@ async function addSnsTrigger(item) {
   if (!subExists) {
     // create sns subscription
     const subscriptionParams = {
-      TopicArn: item.value,
+      TopicArn: rule.value,
       Protocol: 'lambda',
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
@@ -272,8 +283,8 @@ async function addSnsTrigger(item) {
     Action: 'lambda:InvokeFunction',
     FunctionName: process.env.messageConsumer,
     Principal: 'sns.amazonaws.com',
-    SourceArn: item.value,
-    StatementId: `${item.name}Permission`,
+    SourceArn: rule.value,
+    StatementId: `${rule.name}Permission`,
   };
   await awsServices.lambda().addPermission(permissionParams).promise();
   return subscriptionArn;
@@ -300,7 +311,7 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
 }
 
 /**
- * validate and update sqs rule with queue property
+ * Validate and update sqs rule with queue property
  *
  * @param {Object} rule the sqs rule
  * @returns {Object} the updated sqs rule
