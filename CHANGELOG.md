@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased RDS Phase 2
 
+### Migration steps
+
+- Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
+out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
+[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+`{"forceRulesMigration": true}`:
+
+```shell
+aws lambda invoke --function-name $PREFIX-data-migration1 \
+  --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
+```
+
 ### Notable changes
 
 - **CUMULUS-2703**
@@ -378,6 +390,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
+  - **CUMULUS-2846**
+    - Fixed bug with PUT `/rules/<name>` endpoint which caused records in PostgreSQL
+    to be out of sync with DynamoDB
 
 ## Unreleased
 
@@ -399,7 +414,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     @cumulus/message/StepFunctions
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-  - 
+  -
 
 ### Fixed
 
