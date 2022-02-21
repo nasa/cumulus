@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const omit = require('lodash/omit');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
