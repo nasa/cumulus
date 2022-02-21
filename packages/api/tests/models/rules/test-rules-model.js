@@ -362,77 +362,87 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
 });
 
 test.serial('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
-  const topic1 = randomId('topic1_');
-  const topic2 = randomId('topic2_');
-  const subscription1 = randomId('sub1_');
-  const subscription2 = randomId('sub2_');
-  const deleteSnsTriggerSpy = sinon.spy(models.Rule.prototype, 'deleteSnsTrigger');
-  t.teardown(() => deleteSnsTriggerSpy.restore());
-  const stubbedRulesModel = new models.Rule({
-    SnsClient: {
-      listSubscriptionsByTopic: (params) => ({
-        promise: sinon.stub().callsFake(() => {
-          if (params.TopicArn === topic1 || params.TopicArn === topic2) {
-            return Promise.resolve({ Subscriptions: [] });
-          }
-          throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
-        }),
-      }),
-      subscribe: (params) => ({
-        promise: sinon.stub().callsFake(() => {
-          if (params.TopicArn === topic1) {
-            return Promise.resolve({
-              SubscriptionArn: subscription1,
-            });
-          }
-          if (params.TopicArn === topic2) {
-            return Promise.resolve({
-              SubscriptionArn: subscription2,
-            });
-          }
-          throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
-        }),
-      }),
-      unsubscribe: (params) => ({
-        promise: sinon.stub().callsFake(() => {
-          if (params.SubscriptionArn === subscription1
-             || params.SubscriptionArn === subscription2) {
-            return Promise.resolve();
-          }
-          throw new Error(`unexpected params.SubscriptionArn: ${params.SubscriptionArn}`);
-        }),
-      }),
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: Buffer.from(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
     },
-    LambdaClient: {
-      addPermission: (params) => ({
-        promise: sinon.stub().callsFake(() => {
-          if (params.SourceArn === topic1 || params.SourceArn === topic2) {
-            return Promise.resolve();
-          }
-          throw new Error(`unexpected params.SourceArn: ${params.SourceArn}`);
-        }),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    },
-  });
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'exports.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionArn;
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
+  // const subscription1 = randomId('sub1_');
+  // const subscription2 = randomId('sub2_');
+  // const deleteSnsTriggerSpy = sinon.spy(models.Rule.prototype, 'deleteSnsTrigger');
+  // t.teardown(() => deleteSnsTriggerSpy.restore());
+  // const stubbedRulesModel = new models.Rule({
+  //   SnsClient: {
+  //     listSubscriptionsByTopic: (params) => ({
+  //       promise: sinon.stub().callsFake(() => {
+  //         if (params.TopicArn === topic1 || params.TopicArn === topic2) {
+  //           return Promise.resolve({ Subscriptions: [] });
+  //         }
+  //         throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
+  //       }),
+  //     }),
+  //     subscribe: (params) => ({
+  //       promise: sinon.stub().callsFake(() => {
+  //         if (params.TopicArn === topic1) {
+  //           return Promise.resolve({
+  //             SubscriptionArn: subscription1,
+  //           });
+  //         }
+  //         if (params.TopicArn === topic2) {
+  //           return Promise.resolve({
+  //             SubscriptionArn: subscription2,
+  //           });
+  //         }
+  //         throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
+  //       }),
+  //     }),
+  //     unsubscribe: (params) => ({
+  //       promise: sinon.stub().callsFake(() => {
+  //         if (params.SubscriptionArn === subscription1
+  //            || params.SubscriptionArn === subscription2) {
+  //           return Promise.resolve();
+  //         }
+  //         throw new Error(`unexpected params.SubscriptionArn: ${params.SubscriptionArn}`);
+  //       }),
+  //     }),
+  //   },
+  //   LambdaClient: {
+  //     addPermission: (params) => ({
+  //       promise: sinon.stub().callsFake(() => {
+  //         if (params.SourceArn === topic1 || params.SourceArn === topic2) {
+  //           return Promise.resolve();
+  //         }
+  //         throw new Error(`unexpected params.SourceArn: ${params.SourceArn}`);
+  //       }),
+  //     }),
+  //     removePermission: () => ({
+  //       promise: () => Promise.resolve(),
+  //     }),
+  //   },
+  // });
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'sns',
-      value: topic1,
+      value: topic1.TopicArn,
     },
     state: 'ENABLED',
   });
 
-  const ruleWithTrigger = await stubbedRulesModel.createRuleTrigger(snsRule);
-  await stubbedRulesModel.create(ruleWithTrigger);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(ruleWithTrigger);
 
-  const rule = await stubbedRulesModel.get({ name: snsRule.name });
-  t.teardown(() => stubbedRulesModel.delete(rule));
+  const rule = await rulesModel.get({ name: snsRule.name });
+  t.teardown(() => rulesModel.delete(rule));
 
   // update rule value
   const updates = {
@@ -440,10 +450,8 @@ test.serial('updateRuleTrigger() a SNS type rule value does not delete existing 
     rule: { ...rule.rule, value: topic2 },
   };
 
-  const ruleWithUpdatedTrigger = await stubbedRulesModel.updateRuleTrigger(rule, updates);
-  const updatedRule = await stubbedRulesModel.update(ruleWithUpdatedTrigger);
-
-  t.false(deleteSnsTriggerSpy.called);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.not(updatedRule.rule.value, rule.rule.value);
