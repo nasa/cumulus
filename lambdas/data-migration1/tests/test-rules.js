@@ -318,6 +318,46 @@ test.serial('migrateRules skips already migrated record', async (t) => {
   t.is(records.length, 1);
 });
 
+test.serial('migrateRules re-migrates already migrated record if forceRulesMigration is specified', async (t) => {
+  const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
+  const queueUrls = randomString();
+  fakeRule.queueUrl = queueUrls.queueUrl;
+
+  // This always sets updatedAt to Date.now()
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  // We need to make the updateAt of the record we're about to migrate later
+  // than the record in the dynamo table.
+  fakeRule.updatedAt = Date.now();
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateRuleRecord(fakeRule, knex);
+
+  t.teardown(() => rulesModel.delete(fakeRule));
+  const migrationSummary = await migrateRules(process.env, knex, true);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+
+    skipped: 0,
+    failed: 0,
+    success: 1,
+  });
+  const records = await rulePgModel.search(
+    knex,
+    {}
+  );
+  t.is(records.length, 1);
+});
+
 test.serial('migrateRules processes multiple rules', async (t) => {
   const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
