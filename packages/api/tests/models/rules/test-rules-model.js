@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash/cloneDeep');
@@ -368,72 +369,19 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
   t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
 });
 
-test.serial('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
+test.serial.only('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
   const lambda = await awsServices.lambda().createFunction({
     Code: {
-      ZipFile: Buffer.from(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
     },
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
-    Handler: 'exports.handler',
+    Handler: 'index.handler',
     Runtime: 'nodejs12.x',
   }).promise();
   process.env.messageConsumer = lambda.FunctionArn;
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
-  // const subscription1 = randomId('sub1_');
-  // const subscription2 = randomId('sub2_');
-  // const deleteSnsTriggerSpy = sinon.spy(models.Rule.prototype, 'deleteSnsTrigger');
-  // t.teardown(() => deleteSnsTriggerSpy.restore());
-  // const stubbedRulesModel = new models.Rule({
-  //   SnsClient: {
-  //     listSubscriptionsByTopic: (params) => ({
-  //       promise: sinon.stub().callsFake(() => {
-  //         if (params.TopicArn === topic1 || params.TopicArn === topic2) {
-  //           return Promise.resolve({ Subscriptions: [] });
-  //         }
-  //         throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
-  //       }),
-  //     }),
-  //     subscribe: (params) => ({
-  //       promise: sinon.stub().callsFake(() => {
-  //         if (params.TopicArn === topic1) {
-  //           return Promise.resolve({
-  //             SubscriptionArn: subscription1,
-  //           });
-  //         }
-  //         if (params.TopicArn === topic2) {
-  //           return Promise.resolve({
-  //             SubscriptionArn: subscription2,
-  //           });
-  //         }
-  //         throw new Error(`unexpected params.TopicArn: ${params.TopicArn}`);
-  //       }),
-  //     }),
-  //     unsubscribe: (params) => ({
-  //       promise: sinon.stub().callsFake(() => {
-  //         if (params.SubscriptionArn === subscription1
-  //            || params.SubscriptionArn === subscription2) {
-  //           return Promise.resolve();
-  //         }
-  //         throw new Error(`unexpected params.SubscriptionArn: ${params.SubscriptionArn}`);
-  //       }),
-  //     }),
-  //   },
-  //   LambdaClient: {
-  //     addPermission: (params) => ({
-  //       promise: sinon.stub().callsFake(() => {
-  //         if (params.SourceArn === topic1 || params.SourceArn === topic2) {
-  //           return Promise.resolve();
-  //         }
-  //         throw new Error(`unexpected params.SourceArn: ${params.SourceArn}`);
-  //       }),
-  //     }),
-  //     removePermission: () => ({
-  //       promise: () => Promise.resolve(),
-  //     }),
-  //   },
-  // });
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -454,7 +402,7 @@ test.serial('updateRuleTrigger() a SNS type rule value does not delete existing 
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { ...rule.rule, value: topic2 },
+    rule: { ...rule.rule, value: topic2.TopicArn },
   };
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
