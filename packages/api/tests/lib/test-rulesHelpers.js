@@ -6,9 +6,19 @@ const proxyquire = require('proxyquire');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const {
+  destroyLocalTestDb,
+  fakeRuleRecordFactory,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  migrationDir,
+  RulePgModel,
+} = require('@cumulus/db');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { deleteRuleResources } = require('../../lib/rulesHelpers');
 
 const listRulesStub = sinon.stub();
 
@@ -22,8 +32,35 @@ const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
 });
 
 let workflow;
+const testDbName = randomString(12);
 
-test.before(async () => {
+process.env.messageConsumer = randomString();
+process.env.KinesisInboundEventLogger = randomString();
+const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
+
+const createEventSourceMapping = async (rule) => {
+  // create event source mapping
+  const eventSourceMapping = eventLambdas.map((lambda) => {
+    const params = {
+      EventSourceArn: rule.value,
+      FunctionName: lambda,
+      StartingPosition: 'TRIM_HORIZON',
+      Enabled: true,
+    };
+    return awsServices.lambda().createEventSourceMapping(params).promise();
+  });
+  return await Promise.all(eventSourceMapping);
+};
+
+const getKinesisEventMappings = async () => {
+  const mappingPromises = eventLambdas.map((lambda) => {
+    const mappingParms = { FunctionName: lambda };
+    return awsServices.lambda().listEventSourceMappings(mappingParms).promise();
+  });
+  return await Promise.all(mappingPromises);
+};
+
+test.before(async (t) => {
   workflow = randomString();
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
@@ -42,16 +79,32 @@ test.before(async () => {
       Body: '{}',
     }).promise(),
   ]);
+
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+  t.context.rulePgModel = new RulePgModel();
 });
 
-test.afterEach(() => {
+test.afterEach.always(() => {
   listRulesStub.reset();
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('fetchRules invokes API to fetch rules', async (t) => {
@@ -347,4 +400,354 @@ test('rulesHelpers.lookupCollectionInEvent returns collection for CNM case', (t)
 
 test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case', (t) => {
   t.deepEqual(rulesHelpers.lookupCollectionInEvent({}), {});
+});
+
+test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+  await rulePgModel.create(testKnex, kinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+
+  await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'arn', { arn: kinesisRule.arn });
+  const deletedEventMappings = await getKinesisEventMappings();
+  const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
+  const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
+
+  t.is(deletedConsumerEventMappings.length, 0);
+  t.is(deletedLogEventMappings.length, 1);
+  t.teardown(async () => {
+    await rulesHelpers.deleteKinesisEventSource(testKnex, kinesisRule, 'log_event_arn', { log_event_arn: kinesisRule.log_event_arn });
+  });
+});
+
+test.serial('deleteKinesisEventSources deletes all kinesis event sources', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+  await rulePgModel.create(testKnex, kinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+
+  await rulesHelpers.deleteKinesisEventSources(testKnex, kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings();
+  const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
+  const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
+
+  t.is(deletedConsumerEventMappings.length, 0);
+  t.is(deletedLogEventMappings.length, 0);
+});
+
+test.serial('isEventSourceMappingShared returns true if a rule shares an event source with another rule', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const eventType = { arn: 'fakeArn' };
+  const firstRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
+  const secondRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
+  await rulePgModel.create(testKnex, firstRule);
+  await rulePgModel.create(testKnex, secondRule);
+  t.true(await rulesHelpers.isEventSourceMappingShared(testKnex, firstRule, eventType));
+});
+
+test.serial('isEventSourceMappingShared returns false if a rule does not share an event source with another rule', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const eventType = { arn: randomString() };
+  const newRule = fakeRuleRecordFactory({ ...eventType, type: 'kinesis' });
+  await rulePgModel.create(testKnex, newRule);
+  t.false(await rulesHelpers.isEventSourceMappingShared(testKnex, newRule, eventType));
+});
+
+test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
+  const { testKnex } = t.context;
+  const sandbox = sinon.createSandbox();
+  sandbox.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const snsTopicArn = randomString();
+  const params = {
+    arn: randomString(),
+    type: 'sns',
+    enabled: true,
+    value: snsTopicArn,
+  };
+  const snsRule = fakeRuleRecordFactory(params);
+
+  await rulesHelpers.deleteSnsTrigger(testKnex, snsRule);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: snsRule.arn,
+  }));
+
+  t.teardown(() => {
+    sandbox.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+  });
+});
+
+test.serial('deleteRuleResources correctly deletes resources for scheduled rule', async (t) => {
+  const { testKnex } = t.context;
+  const params = {
+    type: 'scheduled',
+    enabled: true,
+    value: 'rate(1 minute)',
+  };
+  const sandbox = sinon.createSandbox();
+  sandbox.stub(awsServices, 'cloudwatchevents')
+    .returns({
+      removeTargets: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      deleteRule: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const scheduledRule = fakeRuleRecordFactory(params);
+  const name = `${process.env.stackName}-custom-${scheduledRule.name}`;
+  const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
+  const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
+
+  await deleteRuleResources(testKnex, scheduledRule);
+
+  t.true(deleteRuleSpy.called);
+  t.true(deleteRuleSpy.calledWith({
+    Name: name,
+  }));
+
+  t.true(removeTargetsSpy.called);
+  t.true(removeTargetsSpy.calledWith({
+    Ids: ['lambdaTarget'],
+    Rule: name,
+  }));
+  t.teardown(() => {
+    deleteRuleSpy.restore();
+    removeTargetsSpy.restore();
+    sandbox.restore();
+  });
+});
+
+test.serial('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+  await rulePgModel.create(testKnex, kinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+
+  await deleteRuleResources(testKnex, kinesisRule);
+  const deletedEventMappings = await getKinesisEventMappings();
+  const deletedConsumerEventMappings = deletedEventMappings[0].EventSourceMappings;
+  const deletedLogEventMappings = deletedEventMappings[1].EventSourceMappings;
+
+  t.is(deletedConsumerEventMappings.length, 0);
+  t.is(deletedLogEventMappings.length, 0);
+});
+
+test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
+  const { testKnex } = t.context;
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const snsTopicArn = randomString();
+  const params = {
+    arn: randomString(),
+    type: 'sns',
+    enabled: true,
+    value: snsTopicArn,
+  };
+  const snsRule = fakeRuleRecordFactory(params);
+
+  await deleteRuleResources(testKnex, snsRule);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: snsRule.arn,
+  }));
+
+  t.teardown(() => {
+    lambdaStub.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+  });
+});
+
+test.serial('deleteRuleResources does nothing when the rule is an SQS rule', async (t) => {
+  const { testKnex } = t.context;
+  const queues = await createSqsQueues(randomString());
+  const params = {
+    type: 'sqs',
+    enabled: true,
+    value: queues.queueUrl,
+  };
+  const sqsRule = fakeRuleRecordFactory(params);
+  await deleteRuleResources(testKnex, sqsRule);
+  t.true(await sqsQueueExists(queues.queueUrl));
+  const queuesToDelete = [
+    queues.queueUrl,
+    queues.deadLetterQueueUrl,
+  ];
+  await Promise.all(
+    queuesToDelete.map(
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+    )
+  );
+});
+
+test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const params = {
+    arn: randomString(),
+    type: 'kinesis',
+    enabled: true,
+    value: randomString(),
+  };
+  const kinesisRule = fakeRuleRecordFactory(params);
+  const secondKinesisRule = fakeRuleRecordFactory(params);
+  const result = await createEventSourceMapping(kinesisRule);
+
+  // Update Kinesis Rule ARNs
+  kinesisRule.arn = result[0].UUID;
+  kinesisRule.log_event_arn = result[1].UUID;
+
+  secondKinesisRule.arn = result[0].UUID;
+  secondKinesisRule.log_event_arn = result[1].UUID;
+
+  await rulePgModel.create(testKnex, kinesisRule);
+  await rulePgModel.create(testKnex, secondKinesisRule);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  // delete rule resources for the second rule, it should not delete the event source mapping
+  await deleteRuleResources(testKnex, secondKinesisRule);
+  const kinesisEventMappings2 = await getKinesisEventMappings();
+  const consumerEventMappings2 = kinesisEventMappings2[0].EventSourceMappings;
+  const logEventMappings2 = kinesisEventMappings2[1].EventSourceMappings;
+  // Check for same event source mapping
+  t.deepEqual(consumerEventMappings, consumerEventMappings2);
+  t.deepEqual(logEventMappings, logEventMappings2);
+
+  // create third rule, it should use the existing event source mapping
+  const thirdKinesisRule = fakeRuleRecordFactory(params);
+  thirdKinesisRule.arn = kinesisRule.arn;
+  thirdKinesisRule.log_event_arn = kinesisRule.log_event_arn;
+
+  await rulePgModel.create(testKnex, thirdKinesisRule);
+  const kinesisEventMappings3 = await getKinesisEventMappings();
+
+  const consumerEventMappings3 = kinesisEventMappings3[0].EventSourceMappings;
+  const logEventMappings3 = kinesisEventMappings3[1].EventSourceMappings;
+  // Check for same event source mapping
+  t.deepEqual(consumerEventMappings, consumerEventMappings3);
+  t.deepEqual(logEventMappings, logEventMappings3);
 });

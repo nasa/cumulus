@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
   - **CUMULUS-2817**
     - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
+  - **CUMULUS-2814**
+    - Remove DynamoDB logic from rules `DELETE` endpoint
+    - Move event resources deletion logic from `rulesModel` to `rulesHelper`
 
 ## Unreleased
 
