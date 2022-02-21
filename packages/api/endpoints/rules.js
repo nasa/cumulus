@@ -173,7 +173,7 @@ async function put(req, res) {
         await indexRule(esClient, newRule, process.env.ES_INDEX);
       });
       // wait to delete original event sources until all update operations were successful
-      await ruleModel.deleteEventSourceMappings(oldApiRule);
+      await ruleModel.deleteOldEventSourceMappings(oldApiRule);
     } catch (innerError) {
       if (newRule) {
         const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldApiRule);

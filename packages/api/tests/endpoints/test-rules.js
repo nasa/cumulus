@@ -1382,13 +1382,13 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
       throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
     });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
-  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
+  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   const updateStub = sinon.stub(Rule.prototype, 'update').throws(new Error('Dynamo fail'));
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
     updateStub.restore();
-    deleteEventSourceMappingsSpy.restore();
+    deleteOldEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1445,7 +1445,7 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     { message: 'Dynamo fail' }
   );
 
-  t.false(deleteEventSourceMappingsSpy.called);
+  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
@@ -1503,11 +1503,11 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
       throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
     });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
-  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
+  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
-    deleteEventSourceMappingsSpy.restore();
+    deleteOldEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1569,7 +1569,7 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     { message: 'ES fail' }
   );
 
-  t.false(deleteEventSourceMappingsSpy.called);
+  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
@@ -1627,11 +1627,11 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
       throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
     });
   const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
-  const deleteEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteEventSourceMappings');
+  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   t.teardown(() => {
     addSnsTriggerStub.restore();
     deleteSnsTriggerStub.restore();
-    deleteEventSourceMappingsSpy.restore();
+    deleteOldEventSourceMappingsSpy.restore();
   });
 
   const stubbedRulesModel = new Rule();
@@ -1694,7 +1694,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     { message: 'PG fail' }
   );
 
-  t.false(deleteEventSourceMappingsSpy.called);
+  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedRule = await ruleModel.get({ name: updateRule.name });
   const updatedPgRule = await t.context.rulePgModel
