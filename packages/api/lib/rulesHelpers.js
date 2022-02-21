@@ -124,10 +124,10 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 }
 
 /**
-   * Add cloudwatch event rule and target
+   * Add CloudWatch event rule and target
    *
-   * @param {Object} item    - the rule item
-   * @param {Object} payload - the payload input of the cloudwatch event
+   * @param {Object} item    - The rule item
+   * @param {Object} payload - The payload input of the CloudWatch event
    * @returns {void}
    */
 async function addRule(item, payload) {
@@ -152,9 +152,9 @@ async function addRule(item, payload) {
 /**
    * Add an event source to a target lambda function
    *
-   * @param {Object} item    - the rule item
-   * @param {string} lambda  - the name of the target lambda
-   * @returns {Promise}      - updated rule item
+   * @param {Object} item    - The rule item
+   * @param {string} lambda  - The name of the target lambda
+   * @returns {Promise}      - Updated rule item
    */
 async function addKinesisEventSource(item, lambda) {
   // use the existing event source mapping if it already exists and is enabled
@@ -188,8 +188,8 @@ async function addKinesisEventSource(item, lambda) {
 
 /**
  * Add  event sources for all mappings in the kinesisSourceEvents
- * @param {Object} rule - the rule item
- * @returns {Object} return updated rule item containing new arn/logEventArn
+ * @param {Object} rule - The rule item
+ * @returns {Object}    - Returns updated rule item containing new arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -220,13 +220,15 @@ async function addKinesisEventSources(rule) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {Object} ruleItem - A rule item
+ * @param {Object} ruleItem
+ *   A rule item
  * @param {Object} ruleArns
  * @param {string} ruleArns.arn
  *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
  * @param {string} ruleArns.logEventArn
  *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
- * @returns {Object} - Updated rule item
+ * @returns {Object}
+ *   Updated rule item
  */
 function updateKinesisRuleArns(ruleItem, ruleArns) {
   const updatedRuleItem = cloneDeep(ruleItem);
@@ -239,7 +241,7 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
  * Update the event source mappings for SNS type rules.
  *
  * @param {Object} rule - A rule item
- * @returns {Object} - Updated rule item
+ * @returns {Object}    - Updated rule item
  */
 async function addSnsTrigger(rule) {
   // check for existing subscription
@@ -295,10 +297,12 @@ async function addSnsTrigger(rule) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {Object} ruleItem - A rule item
+ * @param {Object} ruleItem
+ *   A rule item
  * @param {string} snsSubscriptionArn
  *   UUID for event source mapping from SNS topic to messageConsumer Lambda
- * @returns {Object} - Updated rule item
+ * @returns {Object}
+ *   Updated rule item
  */
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
@@ -311,10 +315,10 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
 }
 
 /**
- * Validate and update sqs rule with queue property
+ * Validate and update SQS rule with queue property
  *
- * @param {Object} rule the sqs rule
- * @returns {Object} the updated sqs rule
+ * @param {Object} rule - The SQS rule
+ * @returns {Object}    - Returns the updated SQS rule
  */
 async function validateAndUpdateSqsRule(rule) {
   const ruleToUpdate = rule;
@@ -347,8 +351,8 @@ async function validateAndUpdateSqsRule(rule) {
 
 /*
  * Checks if record is valid
- * @param {Object} rule
- * @returns {void} returns if record is valid, throws error otherwise
+ * @param {Object} rule - Rule to check validation
+ * @returns {void}      - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
   const error = new Error('The record has validation errors');
@@ -369,8 +373,8 @@ function recordIsValid(rule) {
 
 /*
  * Creates rule trigger for rule
- * @param {Object} rule
- * @returns {Object} returns new rule object
+ * @param {Object} rule - Rule to create trigger for
+ * @returns {Object}    - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
