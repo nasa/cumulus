@@ -23,7 +23,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { buildFtpProvider } = require('../helpers/Providers'); //todo createProvider?
+const { buildFtpProvider } = require('../helpers/Providers');
 
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
