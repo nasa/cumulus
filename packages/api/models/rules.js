@@ -430,8 +430,7 @@ class Rule extends Manager {
     return (rules.Count && rules.Count > 0);
   }
 
-  async addSnsTrigger(item) {
-    // check for existing subscription
+  async checkForSnsSubscriptions(item) {
     let token;
     let subExists = false;
     let subscriptionArn;
@@ -455,6 +454,19 @@ class Rule extends Manager {
       if (subExists) break;
     }
     while (token);
+    return {
+      subExists,
+      existingSubscriptionArn: subscriptionArn,
+    };
+  }
+
+  async addSnsTrigger(item) {
+    // check for existing subscription
+    const {
+      subExists,
+      existingSubscriptionArn,
+    } = await this.checkForSnsSubscriptions(item);
+    let subscriptionArn = existingSubscriptionArn;
     /* eslint-enable no-await-in-loop */
     if (!subExists) {
       // create sns subscription
