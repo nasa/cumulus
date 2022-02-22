@@ -273,7 +273,7 @@ async function deleteRuleResources(knex, rule) {
    * @param {Object} payload - The payload input of the CloudWatch event
    * @returns {void}
    */
- async function addRule(item, payload) {
+async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
   const state = item.enabled ? 'ENABLED' : 'DISABLED';
   await CloudwatchEvents.putEvent(
