@@ -20,7 +20,7 @@ test.beforeEach(async (t) => {
   await new models.Granule().createTable();
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
-  t.context.systemBucket = randomId('systembucket');
+  t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
   await s3()
     .createBucket({ Bucket: t.context.systemBucket })
