@@ -430,14 +430,48 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   const rule = await rulesModel.get({ name: kinesisRule.name });
   t.teardown(() => rulesModel.delete(rule));
 
+  const [
+    consumerEventMappingsBefore,
+    logEventMappingsBefore,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsBefore.EventSourceMappings.length, 1);
+  t.is(logEventMappingsBefore.EventSourceMappings.length, 1);
+
   await rulesModel.deleteOldEventSourceMappings(rule);
 
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+  const [
+    consumerEventMappingsAfter,
+    logEventMappingsAfter,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsAfter.EventSourceMappings.length, 0);
+  t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
+});
 
-  t.is(consumerEventMappings.length, 0);
-  t.is(logEventMappings.length, 0);
+test.serial('deleteOldEventSourceMappings() removes SNS source mappings', async (t) => {
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: snsRule.name });
+
+  const { subExists } = await rulesModel.checkForSnsSubscriptions(rule);
+  t.true(subExists);
+
+  await rulesModel.deleteOldEventSourceMappings(rule);
+
+  const { subExists: subExists2 } = await rulesModel.checkForSnsSubscriptions(rule);
+  t.false(subExists2);
 });
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
