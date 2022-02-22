@@ -1044,17 +1044,12 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const stubbedRulesModel = new Rule();
-
   const {
     originalDynamoRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
-    {
-      ...t.context,
-      ruleModel: stubbedRulesModel,
-    },
+    t.context,
     {
       queueUrl: 'fake-queue-url',
       state: 'ENABLED',
@@ -1087,9 +1082,6 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
       name: originalDynamoRule.name,
     },
     body: updateRule,
-    testContext: {
-      ruleModel: stubbedRulesModel,
-    },
   };
 
   const response = buildFakeExpressResponse();
@@ -1156,9 +1148,7 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
-    {
-      ...t.context,
-    },
+    t.context,
     {
       state: 'ENABLED',
       rule: {
@@ -1371,23 +1361,12 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('topic1_');
-  const topic2 = randomId('topic2_');
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const fakeSubscriptionArn1 = randomId('subscription1_');
-  const fakeSubscriptionArn2 = randomId('subscription2_');
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .callsFake((item) => {
-      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
-      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
-      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
-    });
-  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
   const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   const updateStub = sinon.stub(Rule.prototype, 'update').throws(new Error('Dynamo fail'));
   t.teardown(() => {
-    addSnsTriggerStub.restore();
-    deleteSnsTriggerStub.restore();
     updateStub.restore();
     deleteOldEventSourceMappingsSpy.restore();
   });
@@ -1407,7 +1386,7 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
       state: 'ENABLED',
       rule: {
         type: 'sns',
-        value: topic1,
+        value: topic1.TopicArn,
       },
       collection: {
         name: pgCollection.name,
@@ -1417,15 +1396,15 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     }
   );
 
-  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
-  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
-  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalPgRecord.arn);
 
   const updateRule = {
     ...originalDynamoRule,
     rule: {
       type: 'sns',
-      value: topic2,
+      value: topic2.TopicArn,
     },
   };
 
@@ -1455,16 +1434,19 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
     originalDynamoRule.name
   );
 
-  t.deepEqual(updatedRule, {
+  t.is(updatedRule.rule.arn, originalDynamoRule.rule.arn);
+  t.is(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
+  t.is(updatedPgRule.arn, originalPgRecord.arn);
+
+  t.like(updatedRule, {
     ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: topic1,
-      arn: fakeSubscriptionArn1,
+      value: topic1.TopicArn,
     },
   });
-  t.deepEqual(
+  t.like(
     updatedEsRule,
     {
       ...originalEsRecord,
@@ -1472,17 +1454,15 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: topic1,
-        arn: fakeSubscriptionArn1,
+        value: topic1.TopicArn,
       },
     }
   );
-  t.deepEqual(updatedPgRule, {
+  t.like(updatedPgRule, {
     ...originalPgRecord,
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
-    arn: fakeSubscriptionArn1,
-    value: topic1,
+    value: topic1.TopicArn,
   });
 });
 
@@ -1492,22 +1472,11 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('topic1_');
-  const topic2 = randomId('topic2_');
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const fakeSubscriptionArn1 = randomId('subscription1_');
-  const fakeSubscriptionArn2 = randomId('subscription2_');
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .callsFake((item) => {
-      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
-      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
-      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
-    });
-  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
   const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   t.teardown(() => {
-    addSnsTriggerStub.restore();
-    deleteSnsTriggerStub.restore();
     deleteOldEventSourceMappingsSpy.restore();
   });
 
@@ -1526,7 +1495,7 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
       state: 'ENABLED',
       rule: {
         type: 'sns',
-        value: topic1,
+        value: topic1.TopicArn,
       },
       collection: {
         name: pgCollection.name,
@@ -1536,15 +1505,15 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     }
   );
 
-  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
-  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
-  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalPgRecord.arn);
 
   const updateRule = {
     ...originalDynamoRule,
     rule: {
       type: 'sns',
-      value: topic2,
+      value: topic2.TopicArn,
     },
   };
 
@@ -1579,16 +1548,19 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     originalDynamoRule.name
   );
 
-  t.deepEqual(updatedRule, {
+  t.is(updatedRule.rule.arn, originalDynamoRule.rule.arn);
+  t.is(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
+  t.is(updatedPgRule.arn, originalPgRecord.arn);
+
+  t.like(updatedRule, {
     ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: topic1,
-      arn: fakeSubscriptionArn1,
+      value: topic1.TopicArn,
     },
   });
-  t.deepEqual(
+  t.like(
     updatedEsRule,
     {
       ...originalEsRecord,
@@ -1596,17 +1568,15 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: topic1,
-        arn: fakeSubscriptionArn1,
+        value: topic1.TopicArn,
       },
     }
   );
-  t.deepEqual(updatedPgRule, {
+  t.like(updatedPgRule, {
     ...originalPgRecord,
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
-    arn: fakeSubscriptionArn1,
-    value: topic1,
+    value: topic1.TopicArn,
   });
 });
 
@@ -1616,22 +1586,11 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('topic1_');
-  const topic2 = randomId('topic2_');
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const fakeSubscriptionArn1 = randomId('subscription');
-  const fakeSubscriptionArn2 = randomId('subscription');
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .callsFake((item) => {
-      if (item.rule.value === topic1) return Promise.resolve(fakeSubscriptionArn1);
-      if (item.rule.value === topic2) return Promise.resolve(fakeSubscriptionArn2);
-      throw new Error(`unexpected item.rule.value: ${item.rule.value}`);
-    });
-  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
   const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
   t.teardown(() => {
-    addSnsTriggerStub.restore();
-    deleteSnsTriggerStub.restore();
     deleteOldEventSourceMappingsSpy.restore();
   });
 
@@ -1650,7 +1609,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
       state: 'ENABLED',
       rule: {
         type: 'sns',
-        value: topic1,
+        value: topic1.TopicArn,
       },
       collection: {
         name: pgCollection.name,
@@ -1660,15 +1619,15 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     }
   );
 
-  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
-  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
-  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalPgRecord.arn);
 
   const updateRule = {
     ...originalDynamoRule,
     rule: {
       type: 'sns',
-      value: topic2,
+      value: topic2.TopicArn,
     },
   };
 
@@ -1704,16 +1663,19 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     originalDynamoRule.name
   );
 
-  t.deepEqual(updatedRule, {
+  t.is(updatedRule.rule.arn, originalDynamoRule.rule.arn);
+  t.is(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
+  t.is(updatedPgRule.arn, originalPgRecord.arn);
+
+  t.like(updatedRule, {
     ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: topic1,
-      arn: fakeSubscriptionArn1,
+      value: topic1.TopicArn,
     },
   });
-  t.deepEqual(
+  t.like(
     updatedEsRule,
     {
       ...originalEsRecord,
@@ -1721,17 +1683,15 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: topic1,
-        arn: fakeSubscriptionArn1,
+        value: topic1.TopicArn,
       },
     }
   );
-  t.deepEqual(updatedPgRule, {
+  t.like(updatedPgRule, {
     ...originalPgRecord,
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
-    arn: fakeSubscriptionArn1,
-    value: topic1,
+    value: topic1.TopicArn,
   });
 });
 
