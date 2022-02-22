@@ -16,8 +16,6 @@ const { ValidationError } = require('@cumulus/errors');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 
-const Logger = require('@cumulus/logger');
-
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const Rule = require('../models/rules');
