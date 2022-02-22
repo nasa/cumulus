@@ -15,15 +15,12 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { ValidationError } = require('@cumulus/errors');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const awsServices = require('@cumulus/aws-client/services');
-const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 
 const Logger = require('@cumulus/logger');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const Rule = require('../models/rules');
-const log = new Logger({ sender: '@cumulus/rulesHelpers' });
 
 const log = new Logger({ sender: '@cumulus/rulesHelpers' });
 /**
