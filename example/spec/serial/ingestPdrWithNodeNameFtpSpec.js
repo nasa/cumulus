@@ -23,9 +23,9 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { buildFtpProvider } = require('../../helpers/Providers'); //todo createProvider?
+const { buildFtpProvider } = require('../helpers/Providers'); //todo createProvider?
 
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -34,14 +34,14 @@ const {
   getExecutionUrl,
   loadConfig,
   updateAndUploadTestDataToBucket,
-} = require('../../helpers/testUtils');
+} = require('../helpers/testUtils');
 
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
-} = require('../../helpers/granuleUtils');
+} = require('../helpers/granuleUtils');
 
-const { waitForApiStatus, waitForModelStatus } = require('../../helpers/apiUtils');
-const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
+const { waitForApiStatus, waitForModelStatus } = require('../helpers/apiUtils');
+const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
