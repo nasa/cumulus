@@ -278,7 +278,7 @@ describe('Ingesting from PDR', () => {
       const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
       const collectionId = 'MOD09GQ___006';
 
-      beforeAll(() => {
+      beforeAll(async () => {
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
 
         try {
@@ -292,6 +292,7 @@ describe('Ingesting from PDR', () => {
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
           expectedParsePdrOutput.granules[0].provider = nodeNameProviderId;
+          await waitForCompletedExecution(parsePdrExecutionArn);
         } catch (error) {
           beforeAllFailed = true;
           throw error;

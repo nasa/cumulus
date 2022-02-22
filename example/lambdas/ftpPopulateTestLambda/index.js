@@ -3,6 +3,8 @@
 const {
   randomStringFromRegex,
 } = require('@cumulus/common/test-utils');
+const Logger = require('@cumulus/logger');
+
 const { fetchFakeProviderIp } = require('@cumulus/common/fake-provider');
 // eslint-disable-next-line no-unused-vars
 const { granules } = require('@cumulus/test-data');
@@ -10,6 +12,8 @@ const replace = require('lodash/replace');
 const JSFtp = require('jsftp');
 const path = require('path');
 const fs = require('fs');
+
+const log = new Logger({ sender: '@cumulus/example/lambdas/ftpPopulateTestLambda' });
 
 const updateAndUploadTestFileToFtpHost = (params) => {
   const {
@@ -34,11 +38,11 @@ const updateAndUploadTestFileToFtpHost = (params) => {
     key = key.replace(targetReplacementRegex, targetReplacementString);
   }
 
-  console.log(`Hostconfig ${JSON.stringify(hostConfig)}`);
+  log.info(`Hostconfig ${JSON.stringify(hostConfig)}`);
 
   const ftp = new JSFtp(hostConfig);
 
-  console.log(`Getting ready for ftp put ${prefix}/${key}`);
+  log.info(`Getting ready for ftp put ${prefix}/${key}`);
 
   try {
     // Upload buffer to FTP site
@@ -47,7 +51,6 @@ const updateAndUploadTestFileToFtpHost = (params) => {
       ftp.raw('mkd', prefix, () => {
         ftp.put(data, `${prefix}/${key}`, (suberr) => {
           if (suberr) {
-            console.log('ERROR!', suberr);
             reject(suberr);
           }
           ftp.destroy();
@@ -56,7 +59,7 @@ const updateAndUploadTestFileToFtpHost = (params) => {
       });
     });
   } catch (error) {
-    console.log('Error on function', error);
+    log.info('Error on updateAndUploadTestFileToFtpHost', error);
     throw error;
   }
 };
@@ -64,7 +67,7 @@ const updateAndUploadTestFileToFtpHost = (params) => {
 const uploadFtpGranuleDataForDiscovery = async ({
   prefix,
 }) => {
-  console.log('Starting lambda');
+  log.info('Starting lambda');
   const ftpData = [
     './granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
     './granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
@@ -79,7 +82,7 @@ const uploadFtpGranuleDataForDiscovery = async ({
     pass: 'testpass',
   };
 
-  console.log(`Hostconfig is ${JSON.stringify(hostConfig)}`);
+  log.info(`Hostconfig is ${JSON.stringify(hostConfig)}`);
 
   const filePaths = await Promise.all(
     ftpData.map(
@@ -94,14 +97,14 @@ const uploadFtpGranuleDataForDiscovery = async ({
             targetReplacementString: newGranuleId,
           });
         } catch (error) {
-          console.log('Error!', error);
+          log.info('Error!', error);
           throw error;
         }
         return objectKey;
       }
     )
   );
-  console.log(JSON.stringify(filePaths));
+  log.info(JSON.stringify(filePaths));
   return { filePaths, newGranuleId };
 };
 
@@ -119,7 +122,7 @@ const deleteFtpGranule = async (filePath) => {
     ftp.raw('dele', filePath, (err) => {
       ftp.destroy(filePath);
       if (err) {
-        console.log(`Failed to delete file ${filePath}`, err);
+        log.info(`Failed to delete file ${filePath}`, err);
         reject(err);
       }
       resolve(filePath);
@@ -133,11 +136,12 @@ const deleteFtpGranules = async ({
   const deletions = await Promise.allSettled(
     filePaths.map((ftpFilePath) => deleteFtpGranule(ftpFilePath))
   );
-  console.log(deletions);
+  log.info(deletions);
+  return deletions;
 };
 
 const handler = async (event, _context) => {
-  console.log(event);
+  log.info(event);
   if (event.command === 'delete') {
     return await deleteFtpGranules(event);
   }
