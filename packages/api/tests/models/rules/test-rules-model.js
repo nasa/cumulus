@@ -21,7 +21,6 @@ const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils')
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
-process.env.messageConsumer = randomString();
 process.env.KinesisInboundEventLogger = randomString();
 process.env.system_bucket = randomString();
 
@@ -57,6 +56,17 @@ async function deleteKinesisEventSourceMappings() {
 let rulesModel;
 
 test.before(async () => {
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionName;
+
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
@@ -369,17 +379,7 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
   t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
 });
 
-test.serial.only('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
-  const lambda = await awsServices.lambda().createFunction({
-    Code: {
-      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
-    },
-    FunctionName: randomId('messageConsumer'),
-    Role: randomId('role'),
-    Handler: 'index.handler',
-    Runtime: 'nodejs12.x',
-  }).promise();
-  process.env.messageConsumer = lambda.FunctionArn;
+test.serial('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 

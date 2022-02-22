@@ -495,7 +495,7 @@ class Rule extends Manager {
       FunctionName: process.env.messageConsumer,
       Principal: 'sns.amazonaws.com',
       SourceArn: item.rule.value,
-      StatementId: `${item.name}Permission`,
+      StatementId: subscriptionArn.substring(0, 64),
     };
     await this.LambdaClient.addPermission(permissionParams).promise();
     return subscriptionArn;
