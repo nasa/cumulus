@@ -16,6 +16,7 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
+const { deleteRuleResources } = require('../lib/rulesHelpers');
 const models = require('../models');
 const { createRuleTrigger } = require('../lib/rulesHelpers');
 
@@ -190,7 +191,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -202,11 +202,10 @@ async function del(req, res) {
     'rule',
     process.env.ES_INDEX
   );
-
-  let apiRule;
+  let rule;
 
   try {
-    await rulePgModel.get(knex, { name });
+    rule = await rulePgModel.get(knex, { name });
   } catch (error) {
     // If rule doesn't exist in PG or ES, return not found
     if (error instanceof RecordDoesNotExist) {
@@ -220,34 +219,16 @@ async function del(req, res) {
     }
   }
 
-  try {
-    // Save DynamoDB rule to recreate record in case of deletion failure
-    apiRule = await ruleModel.get({ name });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await rulePgModel.delete(trx, { name });
-      await ruleModel.delete(apiRule);
-      await deleteRule({
-        esClient,
-        name,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+  await createRejectableTransaction(knex, async (trx) => {
+    await rulePgModel.delete(trx, { name });
+    await deleteRule({
+      esClient,
+      name,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (apiRule) {
-      await ruleModel.create(apiRule);
-    }
-    throw error;
-  }
+    if (rule) await deleteRuleResources(knex, rule);
+  });
 
   return res.send({ message: 'Record deleted' });
 }

@@ -56,12 +56,6 @@ class Rule extends Manager {
     return r.RuleArn;
   }
 
-  async deleteRules() {
-    const rules = await this.scan();
-    const deletePromises = rules.Items.map((r) => this.delete(r));
-    return await Promise.all(deletePromises);
-  }
-
   async delete(item) {
     switch (item.rule.type) {
     case 'scheduled': {

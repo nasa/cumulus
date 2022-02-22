@@ -942,7 +942,7 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
 });
 
 test('DELETE returns a 404 if PostgreSQL and Elasticsearch rule cannot be found', async (t) => {
-  const nonExistentRule = fakeRuleFactoryV2();
+  const nonExistentRule = fakeRuleRecordFactory();
   const response = await request(app)
     .delete(`/rules/${nonExistentRule.name}`)
     .set('Accept', 'application/json')
@@ -951,38 +951,35 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch rule cannot be found'
   t.is(response.body.message, 'No record found');
 });
 
-test('DELETE deletes rule that exists in PostgreSQL and DynamoDB but not Elasticsearch', async (t) => {
+test('DELETE deletes rule that exists in PostgreSQL but not Elasticsearch', async (t) => {
   const {
     esRulesClient,
     rulePgModel,
     testKnex,
   } = t.context;
-  const newRule = fakeRuleFactoryV2();
+  const newRule = fakeRuleRecordFactory();
   delete newRule.collection;
   delete newRule.provider;
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
-  const apiRule = await ruleModel.create(ruleWithTrigger);
-  const translatedRule = await translateApiRuleToPostgresRule(apiRule, testKnex);
-  await rulePgModel.create(testKnex, translatedRule);
+  await rulePgModel.create(testKnex, newRule);
 
   t.false(
     await esRulesClient.exists(
-      translatedRule.name
+      newRule.name
     )
   );
   t.true(
     await rulePgModel.exists(testKnex, {
-      name: translatedRule.name,
+      name: newRule.name,
     })
   );
   const response = await request(app)
-    .delete(`/rules/${translatedRule.name}`)
+    .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
   const { message } = response.body;
   const dbRecords = await rulePgModel
-    .search(testKnex, { name: translatedRule.name });
+    .search(testKnex, { name: newRule.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
@@ -996,9 +993,7 @@ test('DELETE deletes rule that exists in Elasticsearch but not PostgreSQL', asyn
     rulePgModel,
     testKnex,
   } = t.context;
-  const newRule = fakeRuleFactoryV2();
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
-  await ruleModel.create(ruleWithTrigger);
+  const newRule = fakeRuleRecordFactory();
   await indexer.indexRule(esClient, newRule, esIndex);
 
   t.true(
@@ -1030,7 +1025,6 @@ test('DELETE deletes a rule', async (t) => {
   } = await createRuleTestRecords(
     t.context,
     {
-      queueUrl: 'fake-queue-url',
       collection: undefined,
       provider: undefined,
     }
@@ -1056,63 +1050,8 @@ test('DELETE deletes a rule', async (t) => {
   );
 });
 
-test('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
-    originalDynamoRule,
-  } = await createRuleTestRecords(
-    t.context,
-    {
-      collection: undefined,
-      provider: undefined,
-    }
-  );
-
-  const fakeRulesModel = {
-    get: () => Promise.resolve(originalDynamoRule),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      name: originalDynamoRule.name,
-    },
-    testContext: {
-      knex: t.context.testKnex,
-      ruleModel: fakeRulesModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.ruleModel.get({
-      name: originalDynamoRule.name,
-    }),
-    omit(originalDynamoRule, ['collection', 'provider'])
-  );
-  t.true(
-    await t.context.rulePgModel.exists(t.context.testKnex, {
-      name: originalDynamoRule.name,
-    })
-  );
-  t.true(
-    await t.context.esRulesClient.exists(
-      originalDynamoRule.name
-    )
-  );
-});
-
-test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalDynamoRule,
     originalPgRecord,
   } = await createRuleTestRecords(
     t.context,
@@ -1131,7 +1070,7 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
 
   const expressRequest = {
     params: {
-      name: originalDynamoRule.name,
+      name: originalPgRecord.name,
     },
     testContext: {
       knex: t.context.testKnex,
@@ -1146,27 +1085,21 @@ test('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQ
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.ruleModel.get({
-      name: originalDynamoRule.name,
-    }),
-    omit(originalDynamoRule, ['collection', 'provider'])
-  );
   t.true(
     await t.context.rulePgModel.exists(t.context.testKnex, {
-      name: originalDynamoRule.name,
+      name: originalPgRecord.name,
     })
   );
   t.true(
     await t.context.esRulesClient.exists(
-      originalDynamoRule.name
+      originalPgRecord.name
     )
   );
 });
 
-test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
-    originalDynamoRule,
+    originalPgRecord,
   } = await createRuleTestRecords(
     t.context,
     {
@@ -1183,7 +1116,7 @@ test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearc
 
   const expressRequest = {
     params: {
-      name: originalDynamoRule.name,
+      name: originalPgRecord.name,
     },
     testContext: {
       knex: t.context.testKnex,
@@ -1198,20 +1131,14 @@ test('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearc
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.ruleModel.get({
-      name: originalDynamoRule.name,
-    }),
-    omit(originalDynamoRule, ['collection', 'provider'])
-  );
   t.true(
     await t.context.rulePgModel.exists(t.context.testKnex, {
-      name: originalDynamoRule.name,
+      name: originalPgRecord.name,
     })
   );
   t.true(
     await t.context.esRulesClient.exists(
-      originalDynamoRule.name
+      originalPgRecord.name
     )
   );
 });
