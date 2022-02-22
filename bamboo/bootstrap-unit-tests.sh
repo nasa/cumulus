@@ -89,7 +89,7 @@ echo 'Elasticsearch status is green'
 $docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNIT_TEST_BUILD_DIR/bamboo/elasticsearch.config"
 
 # Lambda seems to be the last service that's started up by Localstack
-while ! $docker_command 'nc -z 127.0.0.1 4574'; do
+while ! $docker_command 'nc -z 127.0.0.1 4566'; do
   echo 'Waiting for Localstack Lambda service to start'
   docker ps -a
   sleep 2
