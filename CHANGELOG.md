@@ -264,6 +264,9 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
     - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
     - Added `ES_HOST` environment variable to async operation ECS task definition to ensure that async operation tasks
     write to the correct Elasticsearch domain
+  - **CUMULUS-2846**
+    - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
+    **keep undefined fields**
 - **CUMULUS-2642**
   - Reduces the reconcilation report's default maxResponseSize that returns
      the full report rather than an s3 signed url. Reports very close to the
