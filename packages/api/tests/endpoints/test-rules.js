@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 const omit = require('lodash/omit');
 const test = require('ava');
 const sinon = require('sinon');
@@ -21,6 +22,7 @@ const {
   translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const S3 = require('@cumulus/aws-client/S3');
+const awsServices = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -78,6 +80,17 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
+
+  const messageConsumer = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = messageConsumer.FunctionName;
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
@@ -1028,21 +1041,8 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('sns');
-  const topic2 = randomId('sns');
-
-  const fakeSubscriptionArn1 = randomId('subscription');
-  const fakeSubscriptionArn2 = randomId('subscription');
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .onFirstCall()
-    .resolves(fakeSubscriptionArn1)
-    .onSecondCall()
-    .resolves(fakeSubscriptionArn2);
-  const deleteSnsTriggerStub = sinon.stub(Rule.prototype, 'deleteSnsTrigger').resolves();
-  t.teardown(() => {
-    addSnsTriggerStub.restore();
-    deleteSnsTriggerStub.restore();
-  });
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
   const stubbedRulesModel = new Rule();
 
@@ -1060,7 +1060,7 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
       state: 'ENABLED',
       rule: {
         type: 'sns',
-        value: topic1,
+        value: topic1.TopicArn,
       },
       collection: {
         name: pgCollection.name,
@@ -1070,15 +1070,15 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     }
   );
 
-  t.is(originalDynamoRule.rule.arn, fakeSubscriptionArn1);
-  t.is(originalEsRecord.rule.arn, fakeSubscriptionArn1);
-  t.is(originalPgRecord.arn, fakeSubscriptionArn1);
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalPgRecord.arn);
 
   const updateRule = {
     ...originalDynamoRule,
     rule: {
       type: 'sns',
-      value: topic2,
+      value: topic2.TopicArn,
     },
   };
 
@@ -1103,13 +1103,21 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     originalDynamoRule.name
   );
 
+  t.truthy(updatedRule.rule.arn);
+  t.truthy(updatedEsRule.rule.arn);
+  t.truthy(updatedPgRule.arn);
+
+  t.not(updatedRule.rule.arn, originalDynamoRule.rule.arn);
+  t.not(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
+  t.not(updatedPgRule.arn, originalPgRecord.arn);
+
   t.deepEqual(updatedRule, {
     ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
     rule: {
       type: 'sns',
-      value: topic2,
-      arn: fakeSubscriptionArn2,
+      value: topic2.TopicArn,
+      arn: updatedRule.rule.arn,
     },
   });
   t.deepEqual(
@@ -1120,8 +1128,8 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
       timestamp: updatedEsRule.timestamp,
       rule: {
         type: 'sns',
-        value: topic2,
-        arn: fakeSubscriptionArn2,
+        value: topic2.TopicArn,
+        arn: updatedEsRule.rule.arn,
       },
     }
   );
@@ -1129,8 +1137,8 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
     ...originalPgRecord,
     updated_at: updatedPgRule.updated_at,
     type: 'sns',
-    arn: fakeSubscriptionArn2,
-    value: topic2,
+    arn: updatedPgRule.arn,
+    value: topic2.TopicArn,
   });
 });
 
@@ -1140,29 +1148,8 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     pgCollection,
   } = t.context;
 
-  const kinesisArn1 = randomId('kinesis');
-  const kinesisArn2 = randomId('kinesis');
-
-  const fakeKinesisSources1 = {
-    arn: randomId('arn'),
-    logEventArn: randomId('log'),
-  };
-  const fakeKinesisSources2 = {
-    arn: randomId('arn'),
-    logEventArn: randomId('log'),
-  };
-  const addKinesisSourcesStub = sinon.stub(Rule.prototype, 'addKinesisEventSources')
-    .onFirstCall()
-    .resolves(fakeKinesisSources1)
-    .onSecondCall()
-    .resolves(fakeKinesisSources2);
-  const deleteKinesisSourcesStub = sinon.stub(Rule.prototype, 'deleteKinesisEventSources').resolves();
-  t.teardown(() => {
-    addKinesisSourcesStub.restore();
-    deleteKinesisSourcesStub.restore();
-  });
-
-  const stubbedRulesModel = new Rule();
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1_')}`;
+  const kinesisArn2 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2_')}`;
 
   const {
     originalDynamoRule,
@@ -1171,7 +1158,6 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
   } = await createRuleTestRecords(
     {
       ...t.context,
-      ruleModel: stubbedRulesModel,
     },
     {
       state: 'ENABLED',
@@ -1187,10 +1173,12 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     }
   );
 
-  t.like(originalDynamoRule.rule, fakeKinesisSources1);
-  t.like(originalEsRecord.rule, fakeKinesisSources1);
-  t.is(originalPgRecord.arn, fakeKinesisSources1.arn);
-  t.is(originalPgRecord.log_event_arn, fakeKinesisSources1.logEventArn);
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalDynamoRule.rule.logEventArn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalEsRecord.rule.logEventArn);
+  t.truthy(originalPgRecord.arn);
+  t.truthy(originalPgRecord.log_event_arn);
 
   const updateRule = {
     ...originalDynamoRule,
@@ -1205,9 +1193,6 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
       name: originalDynamoRule.name,
     },
     body: updateRule,
-    testContext: {
-      ruleModel: stubbedRulesModel,
-    },
   };
 
   const response = buildFakeExpressResponse();
@@ -1221,11 +1206,26 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     originalDynamoRule.name
   );
 
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalDynamoRule.rule.logEventArn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalEsRecord.rule.logEventArn);
+  t.truthy(originalPgRecord.arn);
+  t.truthy(originalPgRecord.log_event_arn);
+
+  t.not(originalDynamoRule.rule.arn, updatedRule.rule.arn);
+  t.not(originalDynamoRule.rule.logEventArn, updatedRule.rule.logEventArn);
+  t.not(originalEsRecord.rule.arn, updatedEsRule.rule.arn);
+  t.not(originalEsRecord.rule.logEventArn, updatedEsRule.rule.logEventArn);
+  t.not(originalPgRecord.arn, updatedPgRule.arn);
+  t.not(originalPgRecord.log_event_arn, updatedPgRule.log_event_arn);
+
   t.deepEqual(updatedRule, {
     ...originalDynamoRule,
     updatedAt: updatedRule.updatedAt,
     rule: {
-      ...fakeKinesisSources2,
+      arn: updatedRule.rule.arn,
+      logEventArn: updatedRule.rule.logEventArn,
       type: 'kinesis',
       value: kinesisArn2,
     },
@@ -1237,7 +1237,8 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
       updatedAt: updatedEsRule.updatedAt,
       timestamp: updatedEsRule.timestamp,
       rule: {
-        ...fakeKinesisSources2,
+        arn: updatedEsRule.rule.arn,
+        logEventArn: updatedEsRule.rule.logEventArn,
         type: 'kinesis',
         value: kinesisArn2,
       },
@@ -1248,8 +1249,8 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     updated_at: updatedPgRule.updated_at,
     type: 'kinesis',
     value: kinesisArn2,
-    arn: fakeKinesisSources2.arn,
-    log_event_arn: fakeKinesisSources2.logEventArn,
+    arn: updatedPgRule.arn,
+    log_event_arn: updatedPgRule.log_event_arn,
   });
 });
 
