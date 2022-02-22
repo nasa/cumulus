@@ -397,7 +397,7 @@ test('POST creates a rule in all data stores', async (t) => {
   };
   newRule.rule = {
     type: 'kinesis',
-    value: 'my-kinesis-arn',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
   };
 
   const [pgCollection] = await t.context.collectionPgModel.create(
