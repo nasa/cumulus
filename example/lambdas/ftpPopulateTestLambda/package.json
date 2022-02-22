@@ -18,13 +18,21 @@
     "access": "private"
   },
   "dependencies": {
-    "aws-sdk": "^2.585.0",
-    "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
+    "@cumulus/api-client": "9.4.1",
+    "@cumulus/api": "9.4.1",
+    "@cumulus/aws-client": "9.4.1",
     "@cumulus/common": "9.4.1",
-    "@cumulus/test-data": "9.4.1",
+    "@cumulus/integration-tests": "9.4.1",
     "@cumulus/logger": "9.4.1",
+    "@cumulus/test-data": "9.4.1",
+    "aws-sdk": "^2.585.0",
+    "fs-extra": "^9.0.0",
+    "js-yaml": "^3.13.1",
+    "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.20",
-    "p-wait-for": "^3.1.0"
+    "p-retry": "^4.2.0",
+    "p-wait-for": "^3.1.0",
+    "uuid": "^3.2.1"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
