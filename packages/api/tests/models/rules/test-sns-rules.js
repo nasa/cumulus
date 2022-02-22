@@ -1,3 +1,4 @@
+const fs = require('fs-extra');
 const test = require('ava');
 const sinon = require('sinon');
 
@@ -15,14 +16,23 @@ const { ResourceNotFoundError, resourceNotFoundInfo } = require('../../../lib/er
 
 const workflow = randomString();
 let rulesModel;
-let sandbox;
 
 test.before(async () => {
   process.env.RulesTable = `RulesTable_${randomString()}`;
   process.env.stackName = randomString();
-  process.env.messageConsumer = randomString();
   process.env.KinesisInboundEventLogger = randomString();
   process.env.system_bucket = randomString();
+
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionName;
 
   rulesModel = new Rule();
   await rulesModel.createTable();
@@ -43,28 +53,21 @@ test.before(async () => {
       {}
     ),
   ]);
+});
 
-  sandbox = sinon.createSandbox();
-  sandbox.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+test.beforeEach(async (t) => {
+  const topic = await awsServices.sns().createTopic({ Name: randomId('sns') }).promise();
+  t.context.snsTopicArn = topic.TopicArn;
 });
 
 test.after.always(async () => {
   // cleanup table
-  sandbox.restore();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('creating a disabled SNS rule creates no event source mapping', async (t) => {
-  const snsTopicArn = randomString();
+  const { snsTopicArn } = t.context;
   const item = fakeRuleFactoryV2({
     workflow,
     rule: {
@@ -82,21 +85,7 @@ test('creating a disabled SNS rule creates no event source mapping', async (t) =
 });
 
 test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn,
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const { snsTopicArn } = t.context;
 
   const item = fakeRuleFactoryV2({
     workflow,
@@ -124,26 +113,11 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   t.is(updatedRule.rule.value, rule.rule.value);
   t.falsy(updatedRule.rule.arn);
 
-  await rulesModel.delete(rule);
-  t.teardown(() => snsStub.restore());
+  t.teardown(() => rulesModel.delete(rule));
 });
 
 test.serial('enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
-  const snsTopicArn = randomString();
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn,
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const { snsTopicArn } = t.context;
 
   const item = fakeRuleFactoryV2({
     workflow,
@@ -173,30 +147,12 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
   // when being updated
   await t.throwsAsync(rulesModel.updateRuleTrigger(rule, updates), null,
     'Including rule.arn is not allowed when enabling a disabled rule');
-  t.teardown(async () => {
-    await rulesModel.delete(rule);
-    snsStub.restore();
-  });
+  t.teardown(() => rulesModel.delete(rule));
 });
 
 test.serial('updating an SNS rule updates the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
-  const newSnsTopicArn = randomString();
-
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const { snsTopicArn } = t.context;
+  const { TopicArn: newSnsTopicArn } = await awsServices.sns().createTopic({ Name: randomId('sns') }).promise();
 
   const item = fakeRuleFactoryV2({
     workflow,
@@ -221,27 +177,12 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
   t.is(updatedRule.rule.value, newSnsTopicArn);
   t.not(updatedRule.rule.arn, rule.rule.arn);
 
-  await rulesModel.delete(rule);
-  t.teardown(() => snsStub.restore());
+  t.teardown(() => rulesModel.delete(rule));
 });
 
 test.serial('deleting an SNS rule updates the event source mapping', async (t) => {
-  const snsTopicArn = randomString();
+  const { snsTopicArn } = t.context;
 
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
 
   const item = fakeRuleFactoryV2({
@@ -266,7 +207,6 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
   }));
 
   t.teardown(() => {
-    snsStub.restore();
     unsubscribeSpy.restore();
   });
 });
@@ -326,22 +266,8 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   const errorMessage = 'Resource is not found in resource policy.';
   const error = new Error(errorMessage);
   error.code = 'ResourceNotFoundException';
-  const snsTopicArn = randomString();
+  const { snsTopicArn } = t.context;
   const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
 
   const item = fakeRuleFactoryV2({
     rule: {
@@ -363,7 +289,6 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
 
   t.teardown(async () => {
     lambdaStub.restore();
-    snsStub.restore();
     await rulesModel.delete(rule);
   });
 });
