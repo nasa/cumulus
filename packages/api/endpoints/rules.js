@@ -85,13 +85,14 @@ async function post(req, res) {
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
+
+    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
     // Create rule trigger
-    const ruleWithTrigger = await createRuleTrigger(apiRule);
-    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
+    const ruleWithTrigger = await createRuleTrigger(postgresRule);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
-        const [pgRecord] = await rulePgModel.create(trx, postgresRule);
+        const [pgRecord] = await rulePgModel.create(trx, ruleWithTrigger);
         record = await translatePostgresRuleToApiRule(pgRecord, knex);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
