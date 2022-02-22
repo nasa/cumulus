@@ -107,7 +107,7 @@ process.env.ExecutionsTable = randomId('executions');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 

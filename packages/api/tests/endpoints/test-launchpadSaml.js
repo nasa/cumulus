@@ -30,7 +30,7 @@ process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.LAUNCHPAD_METADATA_URL = 'http://example.com/launchpad.idp.xml';
 
 const { app } = require('../../app');
