@@ -110,7 +110,7 @@ test.beforeEach((t) => {
     },
     rule: {
       type: 'kinesis',
-      value: 'my-kinesis-arn',
+      value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
     },
     state: 'ENABLED',
   });
@@ -321,7 +321,7 @@ test.serial('Updating a kinesis type rule value results in new event source mapp
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' },
+    rule: { type: rule.rule.type, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}` },
   };
 
   const updatedRule = await rulesModel.update(rule, updates);
@@ -343,18 +343,21 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
   const { kinesisRule } = t.context;
 
   // create rule trigger and rule
-  const kinesisArn1 = randomId('kinesis1_');
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
   kinesisRule.rule.value = kinesisArn1;
   const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
   await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: kinesisRule.name });
-  t.teardown(() => rulesModel.delete(rule));
+  t.teardown(async () => {
+    await rulesModel.delete(rule);
+    await deleteKinesisEventSourceMappings();
+  });
 
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { ...rule.rule, value: randomId('kinesis2_') },
+    rule: { ...rule.rule, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}` },
   };
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
@@ -420,8 +423,7 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   const { kinesisRule } = t.context;
 
   // create rule trigger and rule
-  const kinesisArn1 = randomId('kinesis1_');
-  kinesisRule.rule.value = kinesisArn1;
+  kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
   const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
   await rulesModel.create(ruleWithTrigger);
 
