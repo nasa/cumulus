@@ -164,6 +164,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "ftp_host_configuration_bucket" {
+  type = string
+  default = cumulus-test-sandbox-internal
+  description = "Bucket containing ftp test host configuration"
+}
+
 variable "api_reserved_concurrency" {
   type = number
   default = 8

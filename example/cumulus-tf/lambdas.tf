@@ -150,7 +150,7 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
 
   environment {
     variables = {
-      FAKE_PROVIDER_CONFIG_BUCKET = var.system_bucket
+      FAKE_PROVIDER_CONFIG_BUCKET = var.ftp_host_configuration_bucket
       stackName     = var.prefix
     }
   }
