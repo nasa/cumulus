@@ -17,6 +17,7 @@ const { ValidationError } = require('@cumulus/errors');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
+const { getSnsTriggerPermissionId } = require('../lib/rulesHelpers');
 
 class Rule extends Manager {
   constructor({
@@ -484,7 +485,7 @@ class Rule extends Manager {
         FunctionName: process.env.messageConsumer,
         Principal: 'sns.amazonaws.com',
         SourceArn: item.rule.value,
-        StatementId: subscriptionArn.substring(0, 64),
+        StatementId: getSnsTriggerPermissionId(item),
       };
       await this.LambdaClient.addPermission(permissionParams).promise();
     }
@@ -500,7 +501,7 @@ class Rule extends Manager {
     // delete permission statement
     const permissionParams = {
       FunctionName: process.env.messageConsumer,
-      StatementId: `${item.name}Permission`,
+      StatementId: getSnsTriggerPermissionId(item),
     };
     try {
       await this.LambdaClient.removePermission(permissionParams).promise();
