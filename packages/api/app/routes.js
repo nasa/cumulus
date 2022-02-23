@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const Logger = require('@cumulus/logger');
 
 const { defaultErrorHandler } = require('./middleware');
 
@@ -29,9 +30,12 @@ const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
+const log = new Logger('@cumulus/api/routes');
+
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
 if (process.env.FAKE_AUTH === 'true') {
+  log.warn('Disabling auth for test');
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
@@ -97,6 +101,7 @@ router.use('/workflows', ensureAuthorized, workflows);
 
 // OAuth Token endpoints
 if (launchpadProtectedAuth()) {
+  log.info('Using SAML auth');
   // SAML SSO
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
@@ -104,6 +109,7 @@ if (launchpadProtectedAuth()) {
   // disabled for now
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
+  log.info('Using token authentication');
   router.get('/token', token.tokenEndpoint);
   router.post('/refresh', token.refreshEndpoint);
 }

@@ -17,6 +17,7 @@ locals {
   api_env_variables = {
         auth_mode                      = "public"
         api_config_secret_id           = aws_secretsmanager_secret_version.api_config.arn
+        OAUTH_PROVIDER                   = var.oauth_provider
   }
   api_secret_env_variables = {
       acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
@@ -67,7 +68,6 @@ locals {
       METRICS_ES_USER                  = var.metrics_es_username
       MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
       MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
-      OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       orca_api_uri                     = var.orca_api_uri
       protected_buckets                = join(",", local.protected_buckets)
