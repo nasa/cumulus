@@ -516,7 +516,7 @@ function recordIsValid(rule) {
 
 /*
  * Creates rule trigger for rule
- * @param {Object} rule - Rule to create trigger for
+ * @param {PostgresRule} rule - Rule to create trigger for
  * @returns {Object}    - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
