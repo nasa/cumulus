@@ -16,8 +16,8 @@ const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
+const { getSnsTriggerPermissionId } = require('../lib/snsRuleHelpers');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
-const { getSnsTriggerPermissionId } = require('../lib/rulesHelpers');
 
 class Rule extends Manager {
   constructor({
