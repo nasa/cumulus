@@ -45,7 +45,7 @@
     "@cumulus/distribution-utils": "10.0.0",
     "@cumulus/errors": "10.0.0",
     "@cumulus/ingest": "10.0.0",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@cumulus/schemas": "10.0.0"

@@ -48,7 +48,7 @@
     "@cumulus/logger": "10.0.0",
     "aws-sdk": "^2.814.0",
     "jsonpath-plus": "^1.1.0",
-    "lodash": "~4.17.20",
+    "lodash": "~4.17.21",
     "p-map": "^1.2.0",
     "p-retry": "^4.2.0",
     "p-timeout": "^4.1.0",
