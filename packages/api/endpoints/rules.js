@@ -154,6 +154,7 @@ async function put({ params: { name }, body }, res) {
     if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
+    log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }
