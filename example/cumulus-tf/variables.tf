@@ -166,7 +166,7 @@ variable "api_gateway_stage" {
 
 variable "ftp_host_configuration_bucket" {
   type = string
-  default = cumulus-test-sandbox-internal
+  default = "cumulus-test-sandbox-internal"
   description = "Bucket containing ftp test host configuration"
 }
 
