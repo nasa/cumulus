@@ -479,16 +479,16 @@ class Rule extends Manager {
       };
       const r = await this.SnsClient.subscribe(subscriptionParams).promise();
       subscriptionArn = r.SubscriptionArn;
-      // create permission to invoke lambda
-      const permissionParams = {
-        Action: 'lambda:InvokeFunction',
-        FunctionName: process.env.messageConsumer,
-        Principal: 'sns.amazonaws.com',
-        SourceArn: item.rule.value,
-        StatementId: getSnsTriggerPermissionId(item),
-      };
-      await this.LambdaClient.addPermission(permissionParams).promise();
     }
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.messageConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.rule.value,
+      StatementId: getSnsTriggerPermissionId(item),
+    };
+    await this.LambdaClient.addPermission(permissionParams).promise();
     return subscriptionArn;
   }
 
