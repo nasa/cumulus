@@ -8,6 +8,7 @@ const merge = require('lodash/merge');
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const { translateApiRuleToPostgresRule } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createJwtToken } = require('./token');
@@ -395,6 +396,27 @@ async function getSqsQueueMessageCounts(queueUrl) {
   };
 }
 
+const createRuleTestRecords = async (context, ruleParams) => {
+  const {
+    testKnex,
+    ruleModel,
+    rulePgModel,
+  } = context;
+  const originalRule = fakeRuleFactoryV2(ruleParams);
+
+  const originalDynamoRule = await ruleModel.create(originalRule);
+  const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
+
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await rulePgModel.get(
+    testKnex, { cumulus_id: ruleCumulusId }
+  );
+  return {
+    originalDynamoRule,
+    originalPgRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -418,4 +440,5 @@ module.exports = {
   isLocalApi,
   testEndpoint,
   setAuthorizedOAuthUsers,
+  createRuleTestRecords,
 };

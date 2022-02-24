@@ -114,8 +114,14 @@ async function post(req, res) {
  *    name request parameter, or a Not Found (404) if there is no existing rule
  *    with the specified name
  */
-async function put({ params: { name }, body }, res) {
-  const model = new models.Rule();
+async function put(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    dbClient = await getKnexClient(),
+    rulePgModel = new RulePgModel(),
+  } = req.testContext || {};
+  const { params: { name }, body } = req;
+
   const apiRule = { ...body };
   let newRule;
 
@@ -125,9 +131,7 @@ async function put({ params: { name }, body }, res) {
   }
 
   try {
-    const oldRule = await model.get({ name });
-    const dbClient = await getKnexClient();
-    const rulePgModel = new RulePgModel();
+    const oldRule = await ruleModel.get({ name });
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
@@ -143,13 +147,25 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const ruleWithUpdatedTrigger = await model.updateRuleTrigger(oldRule, apiRule);
+    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
 
-    await dbClient.transaction(async (trx) => {
-      newRule = await model.update(ruleWithUpdatedTrigger, fieldsToDelete);
-      const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, dbClient);
-      await rulePgModel.upsert(trx, postgresRule);
-    });
+    try {
+      await dbClient.transaction(async (trx) => {
+        // stores updated record in dynamo
+        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
+        // make sure we include undefined values so fields will be correctly unset in PG
+        const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, dbClient);
+        await rulePgModel.upsert(trx, postgresRule);
+      });
+      // wait to delete original event sources until all update operations were successful
+      await ruleModel.deleteOldEventSourceMappings(oldRule);
+    } catch (innerError) {
+      if (newRule) {
+        const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldRule);
+        await ruleModel.update(ruleWithRevertedTrigger);
+      }
+      throw innerError;
+    }
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
@@ -210,4 +226,5 @@ router.delete('/:name', del);
 module.exports = {
   router,
   post,
+  put,
 };
