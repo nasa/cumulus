@@ -105,7 +105,8 @@ test.before(async (t) => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  const ruleRecord = await ruleModel.create(testRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(testRule);
+  const ruleRecord = await ruleModel.create(ruleWithTrigger);
   await indexer.indexRule(esClient, ruleRecord, esAlias);
 
   const username = randomString();
@@ -457,7 +458,8 @@ test('POST creates a rule that is enabled by default', async (t) => {
 test('POST returns a 409 response if record already exists', async (t) => {
   const { newRule } = t.context;
 
-  await ruleModel.create(newRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  await ruleModel.create(ruleWithTrigger);
 
   const response = await request(app)
     .post('/rules')
@@ -636,7 +638,8 @@ test('PUT replaces a rule', async (t) => {
 
   await t.context.testKnex.transaction(async (trx) => {
     await t.context.rulePgModel.create(trx, postgresRule);
-    await ruleModel.create(putTestRule, putTestRule.createdAt);
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(putTestRule);
+    await ruleModel.create(ruleWithTrigger, putTestRule.createdAt);
   });
 
   const updateRule = {
