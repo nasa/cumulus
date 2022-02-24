@@ -154,41 +154,18 @@ class Rule extends Manager {
   /**
    * Updates a rule item.
    *
-   * @param {Object} original - the original rule
-   * @param {Object} updates - key/value fields for update; might not be a
-   *    complete rule item
+   * @param {Object} updatedRuleItem - the updated rule item
    * @param {Array<string>} [fieldsToDelete] - names of fields to delete from
    *    rule
    * @returns {Promise} the response from database updates
    */
-<<<<<<< HEAD
-  async update(original, updates, fieldsToDelete = []) {
-    // Make a copy of the existing rule to preserve existing values
-    let updatedRuleItem = cloneDeep(original);
-
-    // Apply updates to updated rule item to be saved
-    merge(updatedRuleItem, updates);
-
-    // Validate rule before kicking off workflows or adding event source mappings
-    await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
-
-    const stateChanged = updates.state && updates.state !== original.state;
-    const valueUpdated = updates.rule && updates.rule.value !== original.rule.value;
-
-    updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
-
-    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
-=======
   update(updatedRuleItem, fieldsToDelete = []) {
     return super.update({ name: updatedRuleItem.name }, updatedRuleItem, fieldsToDelete);
->>>>>>> 8b59bf3468 (fix unit test)
   }
 
-  async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
+  async updateRuleTrigger(ruleItem, updates) {
     let updatedRuleItem = cloneDeep(ruleItem);
 
-<<<<<<< HEAD
-=======
     const stateChanged = updates.state && updates.state !== ruleItem.state;
     const valueUpdated = updates.rule && updates.rule.value !== ruleItem.rule.value;
 
@@ -197,7 +174,6 @@ class Rule extends Manager {
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
 
->>>>>>> 8b59bf3468 (fix unit test)
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
       const payload = await Rule.buildPayload(updatedRuleItem);
