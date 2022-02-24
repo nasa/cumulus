@@ -205,9 +205,9 @@ test.serial(
   'launchpadPublicCertificate throws error with missing bucket.',
   async (t) => {
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
-    await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
+    await t.throwsAsync(launchpadPublicCertificate('s3://bad-bucket/location'), {
       instanceOf: Error,
-      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location',
+      message: 'Cumulus could not find Launchpad public xml metadata at s3://bad-bucket/location',
     });
     stub.restore();
   }
