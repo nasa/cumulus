@@ -151,7 +151,7 @@ export const getFailedStepName = (
  * Finds all failed execution events and returns the last one in the list.
  *
  * @param {Array<HistoryEventList>} events - array of AWS Stepfunction execution HistoryEvents
- * @returns {HistoryEvent|[]} - the last lambda or activity that failed in the
+ * @returns {HistoryEvent[]} - the last lambda or activity that failed in the
  * event array, or an empty array.
  */
 export const lastFailedEventStep = (

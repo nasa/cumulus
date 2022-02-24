@@ -48,6 +48,13 @@ function groupAndBatchGranules(granules, batchSize) {
   ), []);
 }
 
+function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
+  return granuleBatch.map((granule) => ({
+    ...granule,
+    createdAt: granule.createdAt ? granule.createdAt : createdAt,
+  }));
+}
+
 /**
  * See schemas/input.json and schemas/config.json for detailed event description
  *
@@ -85,8 +92,9 @@ async function queueGranules(event, testMocks = {}) {
         granuleBatch[0].dataType,
         granuleBatch[0].version
       );
-      // include createdAt to ensure write logic passes
+
       const createdAt = Date.now();
+      // include createdAt to ensure write logic passes
       await pMap(
         granuleBatch,
         (queuedGranule) => updateGranule({
@@ -104,7 +112,7 @@ async function queueGranules(event, testMocks = {}) {
         { concurrency: pMapConcurrency }
       );
       return await enqueueGranuleIngestMessageFn({
-        granules: granuleBatch,
+        granules: updateGranuleBatchCreatedAt(granuleBatch, createdAt),
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
         provider: granuleBatch[0].provider
@@ -147,4 +155,5 @@ module.exports = {
   groupAndBatchGranules,
   handler,
   queueGranules,
+  updateGranuleBatchCreatedAt,
 };
