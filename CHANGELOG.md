@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
+which prevented it from running a Fargate task for data migration.
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
