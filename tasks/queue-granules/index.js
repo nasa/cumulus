@@ -106,7 +106,7 @@ async function queueGranules(event, testMocks = {}) {
             ),
             granuleId: queuedGranule.granuleId,
             status: 'queued',
-            createdAt,
+            createdAt: queuedGranule.createdAt ? queuedGranule.createdAt : createdAt,
           },
         }),
         { concurrency: pMapConcurrency }

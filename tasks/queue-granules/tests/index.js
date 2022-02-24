@@ -781,7 +781,7 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
   );
 });
 
-test('createdAt for queued granule is older than enqueueGranuleIngestMessage date', async (t) => {
+test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => { // Todo this can and should be equal
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
@@ -797,7 +797,7 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   ];
 
   const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
+  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
 
   const testMocks = {
     updateGranuleMock,
@@ -805,7 +805,8 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   };
 
   await queueGranules(event, testMocks);
-  t.assert(updateGranuleMock.returnValues[0] < enqueueGranuleIngestMessageMock.returnValues[0]);
+  const expectedCreatedAt = enqueueGranuleIngestMessageMock.returnValues[0].granules[0].createdAt;
+  t.assert(updateGranuleMock.returnValues[0] === expectedCreatedAt);
 });
 
 test('updatedGranuleBatchCreatedAt updates batch granule object as expected', (t) => {
