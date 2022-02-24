@@ -37,10 +37,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
+- **CUMULUS-2845**
+  - Updated rules model to decouple `createRuleTrigger` from `create`.
+  - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
+  - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
 
 ### Fixed
 
 - Upgraded lodash to version 4.17.21 to fix vulnerability
+- **CUMULUS-2845**
+  - Fixed bug in POST `/rules` endpoint causing rule records to be created
+  inconsistently in DynamoDB and PostgreSQL
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
