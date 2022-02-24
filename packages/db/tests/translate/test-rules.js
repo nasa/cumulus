@@ -71,7 +71,7 @@ test('translateApiRuleToPostgresRule converts API rule to Postgres', async (t) =
     rule: { type: 'onetime', value: 'value', arn: 'arn', logEventArn: 'event_arn' },
     executionNamePrefix: 'prefix',
     meta: { key: 'value' },
-    queueName: 'queue_url',
+    queueUrl: 'queue_url',
     payload: { result: { key: 'value' } },
     tags: ['tag1', 'tag2'],
     createdAt: Date.now(),
