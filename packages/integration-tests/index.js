@@ -25,11 +25,12 @@ const { readJsonFile } = require('@cumulus/common/FileUtils');
 const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
+const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
-const rulesApi = require('./api/rules');
+// const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const api = require('./api/api');
@@ -432,7 +433,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   // race condition
   return await pMap(
     rules,
-    (rule) => {
+    async (rule) => {
       if (postfix) {
         rule.name += replace(postfix, /-/g, '_');
         rule.collection.name += postfix;
@@ -447,9 +448,14 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
         ...config,
       }));
 
-      const rulesmodel = new RulesModel();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
-      return rulesmodel.create(templatedRule);
+
+      const response = await rulesApi.postRule({
+        prefix: stackName,
+        rule: templatedRule,
+      });
+      const { record } = JSON.parse(response.body);
+      return record;
     },
     { concurrency: 1 }
   );
