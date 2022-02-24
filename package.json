@@ -123,7 +123,7 @@
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^4.0.0",
     "lerna": "4.0.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "markdownlint-cli": "^0.19.0",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",

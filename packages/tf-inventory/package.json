@@ -32,7 +32,7 @@
   "dependencies": {
     "@cumulus/aws-client": "10.1.0",
     "commander": "^4.1.0",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@cumulus/common": "10.1.0"
