@@ -195,7 +195,6 @@ test.serial('queryRules returns correct rules for given state and type', async (
   ];
   await Promise.all(
     onetimeRules.map(async (rule) => {
-      await rulesModel.createRuleTrigger(rule);
       await rulesModel.create(rule);
     })
   );
@@ -301,11 +300,8 @@ test.serial('queryRules should look up sns-type rules which are associated with 
     }),
   ];
 
-  const ruleWithTrigger1 = await rulesModel.createRuleTrigger(rules[0]);
-  const rule1 = await rulesModel.create(ruleWithTrigger1);
-
-  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(rules[1]);
-  const rule2 = await rulesModel.create(ruleWithTrigger2);
+  const rule1 = await rulesModel.create(rules[0]);
+  const rule2 = await rulesModel.create(rules[1]);
 
   const result = await rulesModel.queryRules({
     type: 'sns',
