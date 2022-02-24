@@ -19,7 +19,6 @@ function validateReportType(reportType) {
     'Granule Not Found',
     'Internal',
     'Inventory',
-    'ORCA Backup',
   ];
   if (!validReportTypes.includes(reportType)) {
     throw new InvalidArgument(
@@ -114,7 +113,7 @@ function normalizeEvent(event) {
   const tooManyInputs = (collectionId && provider)
     || (granuleId && provider)
     || (granuleId && collectionId);
-  const noInputLimitType = ['Internal', 'Granule Inventory', 'ORCA Backup'].includes(reportType);
+  const noInputLimitType = reportType === 'Internal' || reportType === 'Granule Inventory';
 
   if (tooManyInputs && !noInputLimitType) {
     throw new InvalidArgument(`${reportType} reports cannot be launched with more than one input (granuleId, collectionId, or provider).`);
