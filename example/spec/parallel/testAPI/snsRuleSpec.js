@@ -12,7 +12,7 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 
-const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/rulesHelpers');
+const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
