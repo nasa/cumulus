@@ -39,7 +39,7 @@
     "@cumulus/ingest": "10.1.0",
     "@cumulus/pvl": "10.1.0",
     "lodash": "^4.17.21"
-  }
+  },
   "devDependencies": {
     "@cumulus/test-data": "10.1.0"
   }
