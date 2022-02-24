@@ -151,7 +151,13 @@ test.before(async () => {
     kinesisRule5,
     disabledKinesisRule,
   ];
-  await Promise.all(kinesisRules.map((rule) => rulesModel.create(rule)));
+
+  await Promise.all(
+    kinesisRules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
+  );
 });
 
 test.after.always(async () => {
@@ -182,10 +188,12 @@ test.serial('queryRules returns correct rules for given state and type', async (
       state: 'DISABLED',
     }),
   ];
-  const rulesWithTriggers = await Promise.all(
-    onetimeRules.map((rule) => rulesModel.createRuleTrigger(rule))
+  await Promise.all(
+    onetimeRules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
   );
-  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
@@ -217,10 +225,12 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
     }),
   ];
 
-  const rulesWithTriggers = await Promise.all(
-    rules.map((rule) => rulesModel.createRuleTrigger(rule))
+  await Promise.all(
+    rules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
   );
-  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const results = await rulesModel.queryRules({
     type: 'onetime',
@@ -264,7 +274,12 @@ test.serial('queryRules should look up sns-type rules which are associated with 
       state: 'DISABLED',
     }),
   ];
-  const createdRules = await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+  const createdRules = await Promise.all(
+    rules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
+  );
 
   const result = await rulesModel.queryRules({
     type: 'sns',
@@ -313,7 +328,12 @@ test.serial('queryRules should look up sns-type rules which are associated with 
       state: 'ENABLED',
     }),
   ];
-  const createdRules = await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+  const createdRules = await Promise.all(
+    rules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
+  );
 
   const result = await rulesModel.queryRules({
     type: 'sns',
