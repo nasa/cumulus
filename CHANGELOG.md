@@ -244,6 +244,69 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - **CUMULUS-2835**
   - Updated `hyrax-metadata-updates` task to support reading the DatasetId from ECHO10 XML, and the EntryTitle from UMM-G JSON; these are both valid alternatives to the shortname and version ID.
 
+## [v9.9.3] 2021-02-17 [BACKPORT]
+
+**Please note** changes in 9.9.3 may not yet be released in future versions, as
+this is a backport and patch release on the 9.9.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+
+- **CUMULUS-2853**
+  - Move OAUTH_PROVIDER to lambda env variables to address regression in 9.9.2/CUMULUS-2275
+  - Add logging output to api app router
+
+## [v9.9.2] 2021-02-10 [BACKPORT]
+
+**Please note** changes in 9.9.2 may not yet be released in future versions, as
+this is a backport and patch release on the 9.9.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.### Added
+
+- **CUMULUS-2775**
+  - Added a configurable parameter group for the RDS serverless database cluster deployed by `tf-modules/rds-cluster-tf`. The allowed parameters for the parameter group can be found in the AWS documentation of [allowed parameters for an Aurora PostgreSQL cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html). By default, the following parameters are specified:
+    - `shared_preload_libraries`: `pg_stat_statements,auto_explain`
+    - `log_min_duration_statement`: `250`
+    - `auto_explain.log_min_duration`: `250`
+- **CUMULUS-2840**
+  - Added an index on `granule_cumulus_id` to the RDS files table.
+
+### Changed
+
+- **CUMULUS-2847**
+  - Move DyanmoDb table name into API keystore and initialize only on lambda cold start
+- **CUMULUS-2781**
+  - Add api_config secret to hold API/Private API lambda configuration values
+- **CUMULUS-2775**
+  - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
+
+## [v9.9.1] 2021-02-10 [BACKPORT]
+
+**Please note** changes in 9.9.1 may not yet be released in future versions, as
+this is a backport and patch release on the 9.9.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Fixed
+
+- **CUMULUS-2775**
+  - Updated `@cumulus/api-client` to not log an error for 201 response from `updateGranule`
+
+### Changed
+
+- Updated version of `@cumulus/cumulus-message-adapter-js` from `2.0.3` to `2.0.4` for
+all Cumulus workflow tasks
+- **CUMULUS-2775**
+  - Changed `@cumulus/api-client/invokeApi()` to accept a single accepted status code or an array
+  of accepted status codes via `expectedStatusCodes`
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
+
 ## [v9.9.0] 2021-11-03
 
 ### Added
@@ -318,6 +381,15 @@ upgrades to `knex` package and to address security vulnerabilities.
   - relocates system file `buckets.json` out of the
     `s3://internal-bucket/workflows` directory into
     `s3://internal-bucket/buckets`.
+
+
+## [v9.7.1] 2021-12-08 [Backport]
+
+Please note changes in 9.7.0 may not yet be released in future versions, as this is a backport and patch release on the 9.7.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+Fixed
+
+- **CUMULUS-2751**
+  - Update all tasks to update to use cumulus-message-adapter-js version 2.0.4
 
 ## [v9.7.0] 2021-10-01
 
@@ -467,6 +539,27 @@ when output of the operation is `undefined`
     undefined rather than `TypeError: Cannot read property 'split' of
     undefined`. This function has also been updated to throw descriptive errors
     if an incorrectly formatted collectionId is input.
+
+## [v9.4.1] 2022-02-14 [BACKPORT]
+
+**Please note** changes in 9.4.1 may not yet be released in future versions, as
+this is a backport and patch release on the 9.4.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+- **CUMULUS-2847**
+  - Update dynamo configuration to read from S3 instead of System Manager
+    Parameter Store
+  - Move api configuration initialization outside the lambda handler to
+    eliminate unneded S3 calls/require config on cold-start only
+  - Moved `ssh2` package from `@cumulus/common` to `@cumulus/sftp-client` and
+    upgraded package from `^0.8.7` to `^1.0.0` to address security vulnerability
+    issue in previous version.
+  - Fixed hyrax task package.json dev dependency
+  - Update CNM lambda dependencies for Core tasks
+    - cumulus-cnm-response-task: 1.4.4
+    - cumulus-cnm-to-granule: 1.5.4
+  - Whitelist ssh2 re: https://github.com/advisories/GHSA-652h-xwhf-q4h6
 
 ## [v9.4.0] 2021-08-16
 
@@ -5221,11 +5314,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
+[v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...v9.9.3
+[v9.9.2]: https://github.com/nasa/cumulus/compare/v9.9.1...v9.9.2
+[v9.9.1]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.1
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
 [v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
+[v9.7.1]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.7.1
 [v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
 [v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
+[v9.4.1]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.1
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
