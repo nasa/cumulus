@@ -84,11 +84,14 @@ async function post(req, res) {
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+
+    // Create rule trigger
+    const ruleWithTrigger = await model.createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await rulePgModel.create(trx, postgresRule);
-      record = await model.create(apiRule);
+      record = await model.create(ruleWithTrigger);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
