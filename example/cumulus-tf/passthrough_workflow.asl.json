@@ -1,5 +1,5 @@
 {
-  "Comment": "Runs hello world, does not modify payload",
+  "Comment": "Statemachine that just creates a step function success event",
   "StartAt": "SuccessState",
   "States": {
     "SuccessState": {

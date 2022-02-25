@@ -1,4 +1,4 @@
-module "hello_world_passthrough_workflow" {
+module "passthrough_workflow" {
   source = "../../tf-modules/workflow"
 
   prefix          = var.prefix
