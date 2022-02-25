@@ -46,7 +46,7 @@
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/common": "10.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/distribution-utils": "10.0.0",
+    "@cumulus/distribution-utils": "10.0.1",
     "@cumulus/launchpad-auth": "10.0.0",
     "@cumulus/logger": "10.0.0",
     "@cumulus/message": "10.0.0",
