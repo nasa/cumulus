@@ -155,7 +155,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
           recordIdentifier,
           workflowArn,
           maxWaitForSFExistSecs,
-          2
+          1
         );
       });
     });
