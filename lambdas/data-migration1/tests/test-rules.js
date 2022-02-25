@@ -477,3 +477,33 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
   );
   t.is(records.length, 1);
 });
+
+test('migrateRuleRecord with forceRulesMigration: true overwrites existing migrated record and unsets values correctly', async (t) => {
+  const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+    updatedAt: Date.now(),
+    queueUrl: 'queue-url',
+  });
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateRuleRecord(fakeRule, knex);
+
+  const migratedRule = await rulePgModel.get(knex, { name: fakeRule.name });
+  t.is(migratedRule.queue_url, 'queue-url');
+
+  const updatedFakeRule = {
+    ...fakeRule,
+    queueUrl: undefined,
+  };
+
+  await migrateRuleRecord(updatedFakeRule, knex, true);
+
+  const updatedRule = await rulePgModel.get(knex, { name: fakeRule.name });
+  t.is(updatedRule.queue_url, null);
+});
