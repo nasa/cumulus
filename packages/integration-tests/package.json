@@ -32,7 +32,7 @@
     "@cumulus/api-client": "10.0.0",
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/cmr-client": "10.0.0",
-    "@cumulus/cmrjs": "10.0.0",
+    "@cumulus/cmrjs": "10.0.1",
     "@cumulus/common": "10.0.0",
     "@cumulus/launchpad-auth": "10.0.0",
     "@cumulus/logger": "10.0.0",
