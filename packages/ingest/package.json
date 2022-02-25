@@ -42,7 +42,7 @@
     "@cumulus/common": "10.0.0",
     "@cumulus/db": "10.0.0",
     "@cumulus/errors": "10.0.0",
-    "@cumulus/logger": "10.0.0",
+    "@cumulus/logger": "10.0.1",
     "@cumulus/message": "10.0.0",
     "@cumulus/sftp-client": "10.0.0",
     "aws-sdk": "^2.585.0",
