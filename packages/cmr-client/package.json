@@ -36,7 +36,7 @@
   "dependencies": {
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/errors": "10.0.0",
-    "@cumulus/logger": "10.0.0",
+    "@cumulus/logger": "10.0.1",
     "got": "^11.7.0",
     "lodash": "^4.17.21",
     "public-ip": "^3.0.0",
