@@ -1,9 +1,9 @@
 'use strict';
 
-const isIp = require('is-ip');
 const pWaitFor = require('p-wait-for');
 const providersApi = require('@cumulus/api-client/providers');
 const { getTextObject, s3CopyObject } = require('@cumulus/aws-client/S3');
+const { fetchFakeProviderIp } = require('@cumulus/common/fake-provider');
 
 const fetchFakeS3ProviderBuckets = async () => {
   if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
@@ -18,24 +18,6 @@ const fetchFakeS3ProviderBuckets = async () => {
     process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-s3-provider-bucket-alternate'
   )).trim();
   return { fakeS3ProviderBucket, altFakeS3ProviderBucket };
-};
-
-const fetchFakeProviderIp = async () => {
-  if (!process.env.FAKE_PROVIDER_CONFIG_BUCKET) {
-    throw new Error('The FAKE_PROVIDER_CONFIG_BUCKET environment variable must be set');
-  }
-
-  const ip = (await getTextObject(
-    process.env.FAKE_PROVIDER_CONFIG_BUCKET, 'fake-provider-ip'
-  )).trim();
-
-  if (!isIp(ip)) {
-    throw new Error(
-      `Invalid fake provider IP "${ip}" fetched from s3://${process.env.FAKE_PROVIDER_CONFIG_BUCKET}/fake-provider-ip`
-    );
-  }
-
-  return ip;
 };
 
 const getProviderHost = async () => process.env.PROVIDER_HOST || await fetchFakeProviderIp();
@@ -145,6 +127,7 @@ module.exports = {
   buildHttpOrHttpsProvider,
   createProvider,
   deleteProvidersByHost,
+  fetchFakeProviderIp,
   fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,
 };
