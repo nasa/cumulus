@@ -135,14 +135,11 @@ async function put(req, res) {
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
-    // If rule type is onetime no change is allowed unless it is a rerun
 
+    // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
-
-    apiRule.updatedAt = Date.now();
-    apiRule.createdAt = oldRule.createdAt;
 
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
