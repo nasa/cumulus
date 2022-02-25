@@ -34,6 +34,6 @@
   "dependencies": {
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/common": "10.0.0",
-    "@cumulus/message": "10.0.0"
+    "@cumulus/message": "10.0.1"
   }
 }
