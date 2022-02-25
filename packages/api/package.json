@@ -53,7 +53,7 @@
   "dependencies": {
     "@cumulus/api-client": "10.0.0",
     "@cumulus/async-operations": "10.0.0",
-    "@cumulus/aws-client": "10.0.0",
+    "@cumulus/aws-client": "10.0.1",
     "@cumulus/cmr-client": "10.0.0",
     "@cumulus/cmrjs": "10.0.0",
     "@cumulus/collection-config-store": "10.0.0",
