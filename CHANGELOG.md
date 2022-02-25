@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
+- Upgraded lodash to version 4.17.21 to fix vulnerability
+
+## [v10.1.0] 2022-02-23
+
 ### Added
 
 - **CUMULUS-2775**
@@ -40,7 +46,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Upgraded lodash to version 4.17.21 to fix vulnerability
+- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
+which prevented it from running a Fargate task for data migration.
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
@@ -5294,7 +5301,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.0...HEAD
+[v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...v9.9.3
