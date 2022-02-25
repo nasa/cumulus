@@ -20,6 +20,23 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Added
 
+- **CUMULUS-2846**
+  - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
+  **keep undefined fields**
+
+### Changed
+
+- **CUMULUS-2846**
+  - Updated version of `localstack/localstack` used in local unit testing to `0.14.0`
+
+### Fixed
+
+- Upgraded lodash to version 4.17.21 to fix vulnerability
+
+## [v10.1.0] 2022-02-23
+
+### Added
+
 - **CUMULUS-2775**
   - Added a configurable parameter group for the RDS serverless database cluster deployed by `tf-modules/rds-cluster-tf`. The allowed parameters for the parameter group can be found in the AWS documentation of [allowed parameters for an Aurora PostgreSQL cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html). By default, the following parameters are specified:
     - `shared_preload_libraries`: `pg_stat_statements,auto_explain`
@@ -29,9 +46,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
   - Add api_config secret to hold API/Private API lambda configuration values
 - **CUMULUS-2840**
   - Added an index on `granule_cumulus_id` to the RDS files table.
-- **CUMULUS-2846**
-  - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
-  **keep undefined fields**
 
 ### Changed
 
@@ -52,12 +66,11 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
   - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-- **CUMULUS-2846**
-  - Updated version of `localstack/localstack` used in local unit testing to `0.14.0`
 
 ### Fixed
 
-- Upgraded lodash to version 4.17.21 to fix vulnerability
+- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
+which prevented it from running a Fargate task for data migration.
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
@@ -5311,7 +5324,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.0...HEAD
+[v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...v9.9.3
