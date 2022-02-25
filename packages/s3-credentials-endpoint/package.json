@@ -19,7 +19,7 @@
   "dependencies": {
     "@cumulus/api": "10.0.0",
     "@cumulus/aws-client": "10.0.0",
-    "@cumulus/cmrjs": "10.0.0",
+    "@cumulus/cmrjs": "10.0.1",
     "@cumulus/errors": "10.0.0",
     "@cumulus/logger": "10.0.0",
     "@cumulus/oauth-client": "10.0.0",
