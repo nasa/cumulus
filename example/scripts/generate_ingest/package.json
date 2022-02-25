@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "10.0.0",
-    "@cumulus/common": "10.0.0"
+    "@cumulus/common": "10.0.1"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
