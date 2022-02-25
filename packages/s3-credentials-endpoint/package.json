@@ -22,7 +22,7 @@
     "@cumulus/cmrjs": "10.0.0",
     "@cumulus/errors": "10.0.0",
     "@cumulus/logger": "10.0.0",
-    "@cumulus/oauth-client": "10.0.0",
+    "@cumulus/oauth-client": "10.0.1",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
