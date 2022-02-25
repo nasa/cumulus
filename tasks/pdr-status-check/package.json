@@ -35,6 +35,6 @@
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/common": "10.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/errors": "10.0.0"
+    "@cumulus/errors": "10.0.1"
   }
 }
