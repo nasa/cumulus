@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "10.0.0",
-    "@cumulus/cmr-client": "10.0.0",
+    "@cumulus/cmr-client": "10.0.1",
     "@cumulus/common": "10.0.0",
     "@cumulus/distribution-utils": "10.0.0",
     "@cumulus/errors": "10.0.0",
