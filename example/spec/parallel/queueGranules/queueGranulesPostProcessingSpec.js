@@ -1,0 +1,215 @@
+const fs = require('fs');
+const flow = require('lodash/flow');
+const replace = require('lodash/fp/replace');
+
+const {
+  addCollections,
+  addProviders,
+  cleanupCollections,
+  cleanupProviders,
+} = require('@cumulus/integration-tests');
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
+const { updateCollection } = require('@cumulus/integration-tests/api/api');
+const { Execution, Granule } = require('@cumulus/api/models');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix,
+  deleteFolder,
+} = require('../../helpers/testUtils');
+const {
+  waitForGranuleAndDelete,
+} = require('../../helpers/granuleUtils');
+const { waitForModelStatus } = require('../../helpers/apiUtils');
+
+const workflowName = 'QueueGranulesPassthrough';
+const providersDir = './data/providers/s3/';
+const collectionsDir = './data/collections/s3_MOD09GQ_006';
+
+describe('The Queue Granules workflow triggered with a post-SyncGranules granule with a defined granule createdAt value', () => {
+  let beforeAllFailed;
+  let collection;
+  let config;
+  let executionModel;
+  let granuleModel;
+  let inputPayload;
+  let lambdaStep;
+  let provider;
+  let queuedLambdaOutput;
+  let queueGranulesExecutionArn;
+  let testDataFolder;
+  let testSuffix;
+  let workflowExecution;
+
+  beforeAll(async () => {
+    try {
+      config = await loadConfig();
+      lambdaStep = new LambdaStep();
+
+      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+      granuleModel = new Granule();
+
+      const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+
+      const testId = createTimestampedTestId(config.stackName, 'QueueGranules');
+      testSuffix = createTestSuffix(testId);
+      testDataFolder = createTestDataPath(testId);
+
+      const inputPayloadFilename =
+        './spec/parallel/queueGranules/QueueGranulesSpecPostProcessing.input.payload.json';
+
+      collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+      provider = { id: `s3_provider${testSuffix}` };
+
+      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+      executionModel = new Execution();
+      process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+
+      // populate collections, providers and test data
+      await Promise.all([
+        addCollections(
+          config.stackName,
+          config.bucket,
+          collectionsDir,
+          testSuffix
+        ),
+        addProviders(
+          config.stackName,
+          config.bucket,
+          providersDir,
+          config.bucket,
+          testSuffix
+        ),
+      ]);
+      await updateCollection({
+        prefix: config.stackName,
+        collection,
+        updateParams: { duplicateHandling: 'replace' },
+      });
+      const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+      const oldGranuleId = inputPayloadJson.granules[0].granuleId;
+
+      // update test data filepaths
+      const newGranuleId = randomStringFromRegex(granuleRegex);
+      inputPayload = flow([
+        JSON.stringify,
+        replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
+        replace(new RegExp('"MOD09GQ"', 'g'), `"MOD09GQ${testSuffix}"`),
+        JSON.parse,
+      ])(inputPayloadJson);
+      // Add Date.now to test queueGranules behavior
+      inputPayload.granules[0].createdAt = Date.now();
+
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        inputPayload
+      );
+
+      queueGranulesExecutionArn = workflowExecution.executionArn;
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
+  });
+
+  afterAll(async () => {
+    // Wait to prevent out-of-order writes fouling up cleanup due to
+    // no-task step function.   AWS doesn't promise event timing
+    // so we're really just defending against the majority of observed
+    // cases
+    await new Promise((resolve) => setTimeout(resolve, 7500));
+    // clean up stack state added by test
+    await Promise.all(
+      inputPayload.granules.map(async (granule) => {
+        await waitForGranuleAndDelete(
+          config.stackName,
+          granule.granuleId,
+          'completed'
+        );
+      })
+    );
+
+    await deleteExecution({
+      prefix: config.stackName,
+      executionArn: queuedLambdaOutput.payload.running[0],
+    });
+
+    await deleteExecution({
+      prefix: config.stackName,
+      executionArn: queueGranulesExecutionArn,
+    });
+
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(
+        config.stackName,
+        config.bucket,
+        collectionsDir,
+        testSuffix
+      ),
+      cleanupProviders(
+        config.stackName,
+        config.bucket,
+        providersDir,
+        testSuffix
+      ),
+    ]);
+  });
+
+  it('completes execution with success status', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+    expect(workflowExecution.status).toEqual('completed');
+  });
+
+  describe('the QueueGranules Lambda function', () => {
+    it('has expected arns output', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      queuedLambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
+      expect(queuedLambdaOutput.payload.running.length).toEqual(1);
+    });
+  });
+
+  describe('the reporting lambda has received the CloudWatch step function event and', () => {
+    it('the execution records are added to the database', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      const queuedRecord = await waitForModelStatus(
+        executionModel,
+        { arn: workflowExecution.executionArn },
+        'completed'
+      );
+      const childWorkflowRecord = await waitForModelStatus(
+        executionModel,
+        { arn: queuedLambdaOutput.payload.running[0] },
+        'completed'
+      );
+      expect(queuedRecord.status).toEqual('completed');
+      expect(childWorkflowRecord.status).toEqual('completed');
+    });
+  });
+
+  it('the granule is added to the database by the child workflow', async () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+    await Promise.all(
+      inputPayload.granules.map(async (granule) => {
+        const record = await waitForModelStatus(
+          granuleModel,
+          { granuleId: granule.granuleId },
+          'completed'
+        );
+        expect(record.status).toEqual('completed');
+      })
+    );
+  });
+});

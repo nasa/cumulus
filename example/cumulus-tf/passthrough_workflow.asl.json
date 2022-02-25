@@ -1,0 +1,9 @@
+{
+  "Comment": "Runs hello world, does not modify payload",
+  "StartAt": "SuccessState",
+  "States": {
+    "SuccessState": {
+      "Type": "Succeed"
+    }
+  }
+}
