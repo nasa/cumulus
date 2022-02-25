@@ -29,7 +29,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api": "10.0.0",
-    "@cumulus/api-client": "10.0.0",
+    "@cumulus/api-client": "10.0.1",
     "@cumulus/aws-client": "10.0.0",
     "@cumulus/cmr-client": "10.0.0",
     "@cumulus/cmrjs": "10.0.0",
