@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/api",
-  "version": "10.0.0",
-  "description": "Lambda functions for handling all daac's API operations",
+  "version": "10.1.1-alpha.0",
+  "description": "Lambda functions for handling all daac's API operations, feature/rds-phase-2",
   "main": "index.js",
   "engines": {
     "node": ">=12.18.0"
