@@ -45,7 +45,7 @@
   "dependencies": {
     "@cumulus/checksum": "10.0.0",
     "@cumulus/errors": "10.0.0",
-    "@cumulus/logger": "10.0.0",
+    "@cumulus/logger": "10.0.1",
     "aws-sdk": "^2.814.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
