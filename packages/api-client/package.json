@@ -39,7 +39,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "10.0.0",
-    "@cumulus/logger": "10.0.0",
+    "@cumulus/logger": "10.0.1",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {
