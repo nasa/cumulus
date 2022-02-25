@@ -809,7 +809,7 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
   t.assert(updateGranuleMock.returnValues[0] === expectedCreatedAt);
 });
 
-test('updatedGranuleBatchCreatedAt updates batch granule object as expected', (t) => {
+test('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
   const testGranuleBatch = [
     {
       granuleId: 1,
