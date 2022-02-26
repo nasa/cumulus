@@ -95,7 +95,7 @@
     "jsonwebtoken": "^8.4.0",
     "knex": "0.95.15",
     "lodash": "^4.17.21",
-    "moment": "2.24.0",
+    "moment": "2.29.1",
     "morgan": "^1.9.1",
     "nodeify": "^1.0.1",
     "nunjucks": "^3.2.3",
