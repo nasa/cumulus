@@ -10,7 +10,7 @@ module "queue_granules_passthrough_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/queue_granules_passthrough_workflow.asl.json",
     {
-      ingest_granule_workflow_name: module.hello_world_passthrough_workflow.name,
+      ingest_granule_workflow_name: module.passthrough_workflow.name,
       queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn,
       start_sf_queue_url: module.cumulus.start_sf_queue_url
     }
