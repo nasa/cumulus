@@ -61,7 +61,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await awsServices.sns().delete({ TopicArn: t.context.snsTopicArn }).promise();
+  await awsServices.sns().deleteTopic({ TopicArn: t.context.snsTopicArn }).promise();
 });
 
 test.after.always(async () => {
