@@ -4,6 +4,7 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { ValidationError } = require('@cumulus/errors');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
@@ -178,7 +179,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId: constructCollectionId('collectionName', 'collectionVersion'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -259,7 +260,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName2___collectionVersion2',
+    collectionId: constructCollectionId('collectionName2', 'collectionVersion2'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -384,7 +385,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId: constructCollectionId('collectionName', 'collectionVersion'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -454,7 +455,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
 
   const apiGranule = {
     granuleId: cryptoRandomString({ length: 5 }),
-    collectionId: 'name___version',
+    collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
     provider: 'provider',
     status: 'running',

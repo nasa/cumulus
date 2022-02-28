@@ -1,5 +1,6 @@
 const test = require('ava');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { translateApiPdrToPostgresPdr } = require('../../dist/translate/pdrs');
 
@@ -21,7 +22,7 @@ test('translateApiPdrToPostgresPdr translates an API PDR to Postgres', async (t)
 
   const apiPdr = {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     execution: 'fakeExecution',
     status: 'completed',

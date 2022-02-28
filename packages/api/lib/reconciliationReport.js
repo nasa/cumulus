@@ -1,8 +1,7 @@
 'use strict';
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { constructCollectionId } = require('@cumulus/message/Collections');
-const { deconstructCollectionId } = require('./utils');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 /**
  * Extra search params to add to the cmrGranules searchConceptQueue

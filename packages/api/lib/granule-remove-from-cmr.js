@@ -1,5 +1,6 @@
 const { GranuleNotPublished, RecordDoesNotExist } = require('@cumulus/errors');
 const { CMR } = require('@cumulus/cmr-client');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const log = require('@cumulus/common/log');
 const {
   CollectionPgModel,
@@ -7,7 +8,6 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const { deconstructCollectionId } = require('./utils');
 
 const models = require('../models');
 

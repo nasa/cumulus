@@ -34,6 +34,7 @@ const {
   getWorkflowDuration,
   getMetaStatus,
 } = require('@cumulus/message/workflows');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
@@ -56,10 +57,7 @@ const {
 } = require('../lib/granules');
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
-const {
-  parseException,
-  deconstructCollectionId,
-} = require('../lib/utils');
+const { parseException } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 

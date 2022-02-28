@@ -6,6 +6,7 @@ const isBoolean = require('lodash/isBoolean');
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
   addToLocalES,
   indexGranule,
@@ -29,7 +30,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const { updateGranuleStatusToQueued, writeGranuleFromApi } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const models = require('../models');
-const { deconstructCollectionId, errorify } = require('../lib/utils');
+const { errorify } = require('../lib/utils');
 const { moveGranule } = require('../lib/granules');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
