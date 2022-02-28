@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2841**
+  - Add integration test to validate PDR node provider that requires password
+    credentials succeeds on ingest
+
 ### Fixed
 
 - Upgraded lodash to version 4.17.21 to fix vulnerability
