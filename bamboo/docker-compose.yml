@@ -45,7 +45,6 @@ services:
     network_mode: "service:build_env"
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
-      EAGER_SERVICE_LOADING: "1"
   build_env:
     image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:

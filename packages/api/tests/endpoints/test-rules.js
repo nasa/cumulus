@@ -892,10 +892,10 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL', 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
 
-  t.truthy(originalDynamoRule.rule.arn);
-  t.truthy(originalDynamoRule.rule.logEventArn);
-  t.truthy(originalPgRecord.arn);
-  t.truthy(originalPgRecord.log_event_arn);
+  t.truthy(updatedRule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.truthy(updatedPgRule.arn);
+  t.truthy(updatedPgRule.log_event_arn);
 
   t.not(originalDynamoRule.rule.arn, updatedRule.rule.arn);
   t.not(originalDynamoRule.rule.logEventArn, updatedRule.rule.logEventArn);
