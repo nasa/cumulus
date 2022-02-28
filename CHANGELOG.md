@@ -32,6 +32,9 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Fixed
 
 - Upgraded lodash to version 4.17.21 to fix vulnerability
+- **CUMULUS-2846**
+  - Fixed logic for `PUT /rules/<name>` endpoint causing rules to be saved
+  inconsistently between DynamoDB and PostgreSQL
 
 ## [v10.1.0] 2022-02-23
 
