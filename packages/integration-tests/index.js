@@ -22,7 +22,6 @@ const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
 const rulesApi = require('@cumulus/api-client/rules');
@@ -473,17 +472,6 @@ function addRules(config, dataDirectory, overrides) {
 }
 
 /**
- * deletes a rule by name
- *
- * @param {string} name - name of the rule to delete.
- * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
- */
-async function _deleteOneRule(name) {
-  const rulesModel = new RulesModel();
-  return await rulesModel.get({ name }).then((item) => rulesModel.delete(item));
-}
-
-/**
  * Remove params added to the rule when it is saved into dynamo
  * and comes back from the db
  *
@@ -528,7 +516,10 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 
   await pMap(
     rules,
-    (rule) => _deleteOneRule(postfix ? `${rule.name}${postfix}` : rule.name),
+    (rule) => rulesApi.deleteRule({
+      prefix: stackName,
+      ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
+    }),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
 
