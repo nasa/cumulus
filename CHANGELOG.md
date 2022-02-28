@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v9.4.2] 2022-02-28 [BACKPORT]
 
 - **CUMULUS-2725**
   - Updated providers endpoint to return encrypted password
@@ -4777,7 +4777,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.4.2...HEAD
+[v9.4.1]: https://github.com/nasa/cumulus/compare/v9.4.1...v9.4.2
 [v9.4.1]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.4.1
 [v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
 [v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
