@@ -334,7 +334,7 @@ test.serial('Updating a kinesis type rule value results in new event source mapp
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('updateRuleTrigger() a kinesis type rule value does not delete existing source mappings', async (t) => {
+test.serial('Calling updateRuleTrigger() with a kinesis type rule value does not delete existing source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule trigger and rule
@@ -376,7 +376,7 @@ test.serial('updateRuleTrigger() a kinesis type rule value does not delete exist
   t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
 });
 
-test.serial('updateRuleTrigger() a SNS type rule value does not delete existing source mappings', async (t) => {
+test.serial('Calling updateRuleTrigger() with an SNS type rule value does not delete existing source mappings', async (t) => {
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
