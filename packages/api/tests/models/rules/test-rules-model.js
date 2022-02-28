@@ -393,7 +393,11 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
   await rulesModel.create(snsRule);
 
   const rule = await rulesModel.get({ name: snsRule.name });
-  t.teardown(() => rulesModel.delete(rule));
+  t.teardown(async () => {
+    await rulesModel.delete(rule);
+    await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
+    await awsServices.sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
+  });
 
   // update rule value
   const updates = {
