@@ -384,7 +384,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   );
 });
 
-test.serial('The correct message is enqueued with timestamps are added to granules that are missing them', async (t) => {
+test.serial('The correct message is enqueued with and timestamps are added to granules that are missing them', async (t) => {
   const {
     collectionConfigStore,
     event,
