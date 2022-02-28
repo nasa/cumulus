@@ -27,7 +27,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Changed
 
 - **CUMULUS-2846**
-  - Updated version of `localstack/localstack` used in local unit testing to `0.14.0`
+  - Updated version of `localstack/localstack` used in local unit testing to `0.11.5`
 
 ### Fixed
 
