@@ -3,6 +3,7 @@
 const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
+const sinon = require('sinon');
 const SQS = require('@cumulus/aws-client/SQS');
 const {
   createBucket,
@@ -358,5 +359,68 @@ test.serial('Updating a rule trigger for an SQS rule succeeds', async (t) => {
   t.teardown(async () => {
     await SQS.deleteQueue(queues.queueUrl);
     await SQS.deleteQueue(newQueues.queueUrl);
+  });
+});
+
+test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: snsTopicArn,
+  }).promise();
+  const { TopicArn: TopicArn2 } = await awsServices.sns().createTopic({
+    Name: snsTopicArn,
+  }).promise();
+
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+
+  const rule = fakeRuleRecordFactory({
+    type: 'sns',
+    value: TopicArn,
+    workflow,
+    enabled: true,
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(rule);
+
+  t.is(rule.value, TopicArn);
+
+  const updates = {
+    name: rule.name,
+    value: TopicArn2,
+    type: 'sns',
+  };
+  const updatedSqsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
+
+  t.is(updatedSqsRule.name, rule.name);
+  t.is(updatedSqsRule.type, rule.type);
+  t.is(updatedSqsRule.value, TopicArn2);
+  t.not(updatedSqsRule.arn, rule.arn);
+
+  t.teardown(async () => {
+    lambdaStub.restore();
+    snsStub.restore();
+    await awsServices.sns().deleteTopic({ TopicArn: TopicArn2 }).promise();
   });
 });

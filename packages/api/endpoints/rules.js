@@ -10,7 +10,6 @@ const {
   RulePgModel,
   translateApiRuleToPostgresRule,
   translatePostgresRuleToApiRule,
-  translateApiRuleToPostgresRuleRaw,
   isCollisionError,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
@@ -147,6 +146,7 @@ async function put(req, res) {
   try {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
+    const translatedApiRule = await translateApiRuleToPostgresRule(apiRule, knex);
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
@@ -156,11 +156,10 @@ async function put(req, res) {
       return models.Rule.invoke(oldApiRule).then(() => res.send(oldApiRule));
     }
 
-    const ruleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
-    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
+    const ruleWithTrigger = await updateRuleTrigger(oldRule, translatedApiRule, knex);
 
     await createRejectableTransaction(knex, async (trx) => {
-      const [pgRule] = await rulePgModel.upsert(trx, postgresRule);
+      const [pgRule] = await rulePgModel.upsert(trx, ruleWithTrigger);
       translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
       await indexRule(esClient, translatedRule, process.env.ES_INDEX);
     });

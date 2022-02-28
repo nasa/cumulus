@@ -280,9 +280,9 @@ async function deleteRuleResources(knex, rule) {
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
   if (!snsSubscriptionArn) {
-    delete updatedRuleItem.rule.arn;
+    delete updatedRuleItem.arn;
   } else {
-    updatedRuleItem.rule.arn = snsSubscriptionArn;
+    updatedRuleItem.arn = snsSubscriptionArn;
   }
   return updatedRuleItem;
 }
@@ -383,6 +383,11 @@ async function addKinesisEventSources(rule) {
   return { arn, logEventArn };
 }
 
+/**
+ * Add  SNS event sources
+ * @param {PostgresRule} item - The rule item
+ * @returns {string}          - Returns snsSubscriptionArn
+ */
 async function addSnsTrigger(item) {
   // check for existing subscription
   let token;
@@ -391,7 +396,7 @@ async function addSnsTrigger(item) {
   /* eslint-disable no-await-in-loop */
   do {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
-      TopicArn: item.rule.value,
+      TopicArn: item.value,
       NextToken: token,
     }).promise();
     token = subsResponse.NextToken;
@@ -412,7 +417,7 @@ async function addSnsTrigger(item) {
   if (!subExists) {
     // create sns subscription
     const subscriptionParams = {
-      TopicArn: item.rule.value,
+      TopicArn: item.value,
       Protocol: 'lambda',
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
@@ -425,7 +430,7 @@ async function addSnsTrigger(item) {
     Action: 'lambda:InvokeFunction',
     FunctionName: process.env.messageConsumer,
     Principal: 'sns.amazonaws.com',
-    SourceArn: item.rule.value,
+    SourceArn: item.value,
     StatementId: `${item.name}Permission`,
   };
   await awsServices.lambda().addPermission(permissionParams).promise();
@@ -482,8 +487,9 @@ async function addRule(item, payload) {
 
 /*
  * Checks if record is valid
- * @param {Object} rule - Rule to check validation
- * @returns {void}      - Returns if record is valid, throws error otherwise
+ *
+ * @param {PostgresRule} rule - Rule to check validation
+ * @returns {void}            - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
   const error = new Error('The record has validation errors');
@@ -502,6 +508,13 @@ function recordIsValid(rule) {
   }
 }
 
+/*
+ * Updates rule trigger for rule
+ * @param {PostgresRule}   rule    - Rule to update trigger for
+ * @param {PostgresRule}   updates - Updates for rule trigger
+ * @param {Knex}           knex    - Knex DB Client
+ * @returns {PostgresRule}         - Returns new rule object
+ */
 async function updateRuleTrigger(ruleItem, updates, knex) {
   let clonedRuleItem = cloneDeep(ruleItem);
   let mergedRule = merge(clonedRuleItem, updates);
@@ -553,8 +566,9 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
 
 /*
  * Creates rule trigger for rule
+ *
  * @param {PostgresRule} rule - Rule to create trigger for
- * @returns {Object}    - Returns new rule object
+ * @returns {PostgresRule}    - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);

@@ -755,13 +755,13 @@ test('PUT replaces a rule', async (t) => {
   const actualPostgresRule = await rulePgModel.get(testKnex, { name: updateRule.name });
   const updatedEsRecord = await esRulesClient.get(translatedPgRecord.name);
 
-  // PG and Dynamo records have the same timestamps
+  // PG and ES records have the same timestamps
   t.is(actualPostgresRule.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPostgresRule.updated_at.getTime(), updatedEsRecord.updatedAt);
   t.deepEqual(
     updatedEsRecord,
     {
-      ...omit(originalEsRecord, ['queueUrl']),
+      ...originalEsRecord,
       state: 'ENABLED',
       createdAt: actualPostgresRule.created_at.getTime(),
       updatedAt: actualPostgresRule.updated_at.getTime(),
@@ -798,7 +798,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fails', async (t) => {
+test('put() does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalDynamoRule,
@@ -842,12 +842,6 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
   );
 
   t.deepEqual(
-    await t.context.ruleModel.get({
-      name: originalDynamoRule.name,
-    }),
-    omit(originalDynamoRule, ['provider', 'collection'])
-  );
-  t.deepEqual(
     await t.context.rulePgModel.get(t.context.testKnex, {
       name: originalDynamoRule.name,
     }),
@@ -861,7 +855,7 @@ test('put() does not write to Dynamo/Elasticsearch if writing to PostgreSQL fail
   );
 });
 
-test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test('put() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalDynamoRule,
@@ -903,12 +897,6 @@ test('put() does not write to Dynamo/PostgreSQL if writing to Elasticsearch fail
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.ruleModel.get({
-      name: originalDynamoRule.name,
-    }),
-    omit(originalDynamoRule, ['provider', 'collection'])
-  );
   t.deepEqual(
     await t.context.rulePgModel.get(t.context.testKnex, {
       name: originalDynamoRule.name,
