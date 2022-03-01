@@ -781,7 +781,7 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
   );
 });
 
-test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => { // Todo this can and should be equal
+test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => {
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
