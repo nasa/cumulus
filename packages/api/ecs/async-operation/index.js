@@ -2,7 +2,8 @@
 
 'use strict';
 
-const AWS = require('aws-sdk');
+const { Lambda } = require("@aws-sdk/client-lambda");
+const { S3 } = require("@aws-sdk/client-s3");
 const got = require('got');
 const pRetry = require('p-retry');
 const util = require('util');
@@ -46,7 +47,7 @@ function missingEnvironmentVariables() {
  * @returns {Object|Array} the parsed payload
  */
 async function fetchPayload(Bucket, Key) {
-  const s3 = new AWS.S3();
+  const s3 = new S3();
 
   let payloadResponse;
   try {
@@ -81,7 +82,7 @@ async function fetchAndDeletePayload(payloadUrl) {
 
   const payload = await fetchPayload(Bucket, Key);
 
-  await (new AWS.S3()).deleteObject({ Bucket, Key }).promise();
+  await (new S3()).deleteObject({ Bucket, Key }).promise();
 
   return payload;
 }
@@ -96,7 +97,7 @@ async function fetchAndDeletePayload(payloadUrl) {
  */
 async function getLambdaInfo(FunctionName) {
   logger.debug(`Retrieving lambda info for ${FunctionName}.`);
-  const lambda = new AWS.Lambda();
+  const lambda = new Lambda();
 
   const getFunctionResponse = await lambda.getFunction({
     FunctionName,
