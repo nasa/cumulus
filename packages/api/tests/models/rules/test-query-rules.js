@@ -27,6 +27,8 @@ const commonRuleParams = {
   collection,
   provider: provider.id,
   workflow: randomId('workflow'),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRuleParams = {
