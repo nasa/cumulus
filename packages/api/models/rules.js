@@ -255,9 +255,6 @@ class Rule extends Manager {
     // Initialize new rule object
     const newRuleItem = cloneDeep(item);
 
-    newRuleItem.createdAt = item.createdAt || Date.now();
-    newRuleItem.updatedAt = item.updatedAt || Date.now();
-
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 
@@ -272,6 +269,9 @@ class Rule extends Manager {
     if (!ruleItem.state) {
       newRuleItem.state = 'ENABLED';
     }
+
+    newRuleItem.createdAt = ruleItem.createdAt || Date.now();
+    newRuleItem.updatedAt = ruleItem.updatedAt || Date.now();
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);

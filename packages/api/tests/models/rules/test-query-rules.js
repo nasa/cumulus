@@ -278,7 +278,7 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   const createdRules = await Promise.all(
     rules.map(async (rule) => {
       const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-      await rulesModel.create(ruleWithTrigger);
+      return rulesModel.create(ruleWithTrigger);
     })
   );
 
