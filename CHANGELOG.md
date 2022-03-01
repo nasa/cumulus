@@ -52,6 +52,9 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async
+    tasks on ECS. Sets default `async_operation_image_version` to 39.
 - **CUMULUS-2492**
   - Modify collectionId logic to accomodate trailing underscores in collection short names. e.g. `shortName____`
 - **CUMULUS-2847**
