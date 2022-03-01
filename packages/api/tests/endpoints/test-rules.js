@@ -642,6 +642,7 @@ test.serial('POST does not write to DynamoDB or RDS if writing to DynamoDB fails
 
   const failingRulesModel = {
     exists: () => false,
+    createRuleTrigger: () => Promise.resolve(newRule),
     create: () => {
       throw new Error('Rule error');
     },
