@@ -26,6 +26,10 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-2845**
+  - Updated rules model to decouple `createRuleTrigger` from `create`.
+  - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
+  - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
 - **CUMULUS-2846**
   - Updated version of `localstack/localstack` used in local unit testing to `0.11.5`
 
@@ -75,10 +79,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
   - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-- **CUMULUS-2845**
-  - Updated rules model to decouple `createRuleTrigger` from `create`.
-  - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
-  - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
 
 ### Fixed
 
