@@ -94,14 +94,14 @@ async function queueGranules(event, testMocks = {}) {
   const pMapConcurrency = get(event, 'config.concurrency', 3);
   const executionArns = await pMap(
     groupedAndBatchedGranules,
-    async (granuleBatch) => {
+    async (granuleBatchIn) => {
       const collectionConfig = await collectionConfigStore.get(
-        granuleBatch[0].dataType,
-        granuleBatch[0].version
+        granuleBatchIn[0].dataType,
+        granuleBatchIn[0].version
       );
 
-      // include createdAt to ensure write logic passes
       const createdAt = Date.now();
+      const granuleBatch = updateGranuleBatchCreatedAt(granuleBatchIn, createdAt);
       await pMap(
         granuleBatch,
         (queuedGranule) => updateGranule({
@@ -113,13 +113,13 @@ async function queueGranules(event, testMocks = {}) {
             ),
             granuleId: queuedGranule.granuleId,
             status: 'queued',
-            createdAt: queuedGranule.createdAt ? queuedGranule.createdAt : createdAt,
+            createdAt,
           },
         }),
         { concurrency: pMapConcurrency }
       );
       return await enqueueGranuleIngestMessageFn({
-        granules: updateGranuleBatchCreatedAt(granuleBatch, createdAt),
+        granules: granuleBatch,
         queueUrl: event.config.queueUrl,
         granuleIngestWorkflow: event.config.granuleIngestWorkflow,
         provider: granuleBatch[0].provider
