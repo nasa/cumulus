@@ -206,7 +206,7 @@ async function deleteKinesisEventSources(knex, rule) {
 /**
  * Delete a rule's SNS trigger
  * @param {Knex} knex - DB client
- * @param {Object} rule - the rule item
+ * @param {PostgresRule} rule - the rule item
  * @returns {Promise} the response from SNS unsubscribe
  */
 async function deleteSnsTrigger(knex, rule) {
@@ -239,7 +239,7 @@ async function deleteSnsTrigger(knex, rule) {
 /**
  * Delete rule resources by rule type
  * @param {Knex} knex - DB client
- * @param {Object} rule - Rule
+ * @param {PostgresRule} rule - Rule
  */
 async function deleteRuleResources(knex, rule) {
   const type = rule.type;
@@ -273,10 +273,10 @@ async function deleteRuleResources(knex, rule) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {Object} ruleItem - A rule item
+ * @param {PostgresRule} ruleItem - A rule item
  * @param {string} snsSubscriptionArn
  *   UUID for event source mapping from SNS topic to messageConsumer Lambda
- * @returns {Object} - Updated rule item
+ * @returns {PostgresRule} - Updated rule item
  */
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
@@ -289,10 +289,10 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
 }
 
 /**
-   * validate and update sqs rule with queue property
+   * Validate and update sqs rule with queue property
    *
-   * @param {Object} rule the sqs rule
-   * @returns {Object} the updated sqs rule
+   * @param {PostgresRule} rule the sqs rule
+   * @returns {PostgresRule} the updated sqs rule
    */
 async function validateAndUpdateSqsRule(rule) {
   const queueUrl = rule.value;
@@ -321,9 +321,9 @@ async function validateAndUpdateSqsRule(rule) {
 /**
    * Add an event source to a target lambda function
    *
-   * @param {Object} item    - The rule item
-   * @param {string} lambda  - The name of the target lambda
-   * @returns {Promise}      - Updated rule item
+   * @param {PostgresRule} item - The rule item
+   * @param {string} lambda     - The name of the target lambda
+   * @returns {Promise}
    */
 async function addKinesisEventSource(item, lambda) {
   // use the existing event source mapping if it already exists and is enabled
@@ -356,9 +356,9 @@ async function addKinesisEventSource(item, lambda) {
 }
 
 /**
- * Add  event sources for all mappings in the kinesisSourceEvents
- * @param {Object} rule - The rule item
- * @returns {Object}    - Returns updated rule item containing new arn and logEventArn
+ * Add event sources for all mappings in the kinesisSourceEvents
+ * @param {PostgresRule} rule - The rule item
+ * @returns {Object}          - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -385,7 +385,8 @@ async function addKinesisEventSources(rule) {
 }
 
 /**
- * Add  SNS event sources
+ * Add SNS event sources
+ *
  * @param {PostgresRule} item - The rule item
  * @returns {string}          - Returns snsSubscriptionArn
  */
@@ -443,14 +444,15 @@ async function addSnsTrigger(item) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {Object} ruleItem
+ * @param {PostgresRule} ruleItem
  *   A rule item
  * @param {Object} ruleArns
+ *   An object containing arn and logEventArn values
  * @param {string} ruleArns.arn
  *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
  * @param {string} ruleArns.logEventArn
  *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
- * @returns {Object}
+ * @returns {PostgresRule}
  *   Updated rule item
  */
 function updateKinesisRuleArns(ruleItem, ruleArns) {
@@ -461,10 +463,10 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
 }
 
 /**
-   * Add CloudWatch event rule and target
+   * Adds CloudWatch event rule and target
    *
-   * @param {Object} item    - The rule item
-   * @param {Object} payload - The payload input of the CloudWatch event
+   * @param {PostgresRule} item - The rule item
+   * @param {Object} payload    - The payload input of the CloudWatch event
    * @returns {void}
    */
 async function addRule(item, payload) {
@@ -557,6 +559,7 @@ async function invokeRerun(item) {
 
 /*
  * Updates rule trigger for rule
+ *
  * @param {PostgresRule}   rule    - Rule to update trigger for
  * @param {PostgresRule}   updates - Updates for rule trigger
  * @param {Knex}           knex    - Knex DB Client
