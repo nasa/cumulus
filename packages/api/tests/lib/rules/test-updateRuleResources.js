@@ -364,11 +364,12 @@ test.serial('Updating a rule trigger for an SQS rule succeeds', async (t) => {
 
 test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
+  const newSnsTopicArn = randomString();
   const { TopicArn } = await awsServices.sns().createTopic({
     Name: snsTopicArn,
   }).promise();
   const { TopicArn: TopicArn2 } = await awsServices.sns().createTopic({
-    Name: snsTopicArn,
+    Name: newSnsTopicArn,
   }).promise();
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
@@ -395,6 +396,7 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
       }),
     });
 
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
   const rule = fakeRuleRecordFactory({
     type: 'sns',
     value: TopicArn,
@@ -407,20 +409,67 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
   t.is(rule.value, TopicArn);
 
   const updates = {
-    name: rule.name,
+    ...rule,
+    arn: ruleWithTrigger.arn,
     value: TopicArn2,
-    type: 'sns',
   };
-  const updatedSqsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
-
-  t.is(updatedSqsRule.name, rule.name);
-  t.is(updatedSqsRule.type, rule.type);
-  t.is(updatedSqsRule.value, TopicArn2);
-  t.not(updatedSqsRule.arn, rule.arn);
+  const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
+  // Check that previous SNS topic was deleted
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+  t.is(updatedSnsRule.name, rule.name);
+  t.is(updatedSnsRule.type, rule.type);
+  t.is(updatedSnsRule.value, TopicArn2);
+  t.not(updatedSnsRule.arn, rule.arn);
 
   t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
+    unsubscribeSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn: TopicArn2 }).promise();
+  });
+});
+
+test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
+  const snsTopicArn = randomString();
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: snsTopicArn,
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+
+  const rule = fakeRuleRecordFactory({
+    type: 'sns',
+    value: snsTopicArn,
+    workflow,
+    enabled: false,
+  });
+
+  t.is(rule.value, snsTopicArn);
+  t.falsy(rule.arn);
+  t.is(rule.enabled, false);
+
+  const updates = {
+    name: rule.name,
+    enabled: true,
+    arn: 'test-value',
+  };
+
+  // Should fail because a disabled rule should not have an ARN
+  // when being updated
+  await t.throwsAsync(updateRuleTrigger(rule, updates, t.context.testKnex),
+    null,
+    'Including rule.arn is not allowed when enabling a disabled rule');
+  t.teardown(() => {
+    snsStub.restore();
   });
 });

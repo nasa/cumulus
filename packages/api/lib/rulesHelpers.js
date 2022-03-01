@@ -226,6 +226,7 @@ async function deleteSnsTrigger(knex, rule) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
     }
+    log.info(`Error attempting to delete permission statement ${JSON.stringify(error)}`);
     throw error;
   }
   // delete sns subscription
@@ -424,16 +425,16 @@ async function addSnsTrigger(item) {
     };
     const r = await awsServices.sns().subscribe(subscriptionParams).promise();
     subscriptionArn = r.SubscriptionArn;
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.messageConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.value,
+      StatementId: `${item.name}Permission`,
+    };
+    await awsServices.lambda().addPermission(permissionParams).promise();
   }
-  // create permission to invoke lambda
-  const permissionParams = {
-    Action: 'lambda:InvokeFunction',
-    FunctionName: process.env.messageConsumer,
-    Principal: 'sns.amazonaws.com',
-    SourceArn: item.value,
-    StatementId: `${item.name}Permission`,
-  };
-  await awsServices.lambda().addPermission(permissionParams).promise();
   return subscriptionArn;
 }
 
@@ -520,7 +521,7 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
   let mergedRule = merge(clonedRuleItem, updates);
   recordIsValid(clonedRuleItem);
 
-  const stateChanged = updates.enabled && updates.enabled !== ruleItem.enabled;
+  const stateChanged = updates.enabled !== ruleItem.enabled;
   const valueUpdated = updates.value !== ruleItem.value;
 
   switch (mergedRule.type) {
@@ -544,7 +545,7 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
       }
       let snsSubscriptionArn;
       if (mergedRule.arn) {
-        await deleteSnsTrigger(mergedRule);
+        await deleteSnsTrigger(knex, mergedRule);
       }
       if (mergedRule.enabled) {
         snsSubscriptionArn = await addSnsTrigger(mergedRule);

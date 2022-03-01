@@ -10,6 +10,7 @@ const {
   RulePgModel,
   translateApiRuleToPostgresRule,
   translatePostgresRuleToApiRule,
+  translateApiRuleToPostgresRuleRaw,
   isCollisionError,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
@@ -146,7 +147,7 @@ async function put(req, res) {
   try {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
-    const translatedApiRule = await translateApiRuleToPostgresRule(apiRule, knex);
+    const translatedApiRule = await translateApiRuleToPostgresRuleRaw(apiRule, knex);
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
