@@ -169,26 +169,36 @@ test('PUT updates existing provider', async (t) => {
 });
 
 test('PUT updates existing provider and correctly removes fields', async (t) => {
-  const { testProvider, testProvider: { id } } = t.context;
-  const expectedProvider = omit(testProvider,
-    ['globalConnectionLimit', 'protocol', 'cmKeyId']);
-  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
-  const postgresOmitList = ['cumulus_id'];
-  // Make sure testProvider contains values for the properties we omitted from
-  // expectedProvider to confirm that after we replace (PUT) the provider those
-  // properties are dropped from the stored provider.
-  t.truthy(testProvider.globalConnectionLimit);
-  t.truthy(testProvider.protocol);
-  t.truthy(testProvider.cmKeyId);
+  const globalConnectionLimit = 10;
+  const testProvider = fakeProviderFactory({
+    protocol: 'http',
+    globalConnectionLimit,
+  });
+  const { id } = testProvider;
+  await request(app)
+    .post('/providers')
+    .send(testProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const originalDynamoProvider = await providerModel.get({ id });
+  const originalPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
+
+  t.is(originalDynamoProvider.globalConnectionLimit, globalConnectionLimit);
+  t.is(originalPostgresProvider.global_connection_limit, globalConnectionLimit);
 
   const updatedProvider = {
-    ...expectedProvider,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    ...testProvider,
   };
+  // remove field
+  delete updatedProvider.globalConnectionLimit;
 
   await request(app)
-    .put(`/providers/${id}`)
+    .put(`/providers/${updatedProvider.id}`)
     .send(updatedProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -200,28 +210,8 @@ test('PUT updates existing provider and correctly removes fields', async (t) => 
     { name: id }
   );
 
-  t.deepEqual(actualProvider, {
-    ...expectedProvider,
-    protocol: 'http', // Default value added by schema rule
-    createdAt: expectedProvider.createdAt,
-    updatedAt: actualProvider.updatedAt,
-  });
-
-  t.deepEqual(
-    omit(
-      actualPostgresProvider,
-      postgresOmitList
-    ),
-    omit(
-      nullifyUndefinedProviderValues({
-        ...postgresExpectedProvider,
-        protocol: 'http', // Default value, added by RDS rule,
-        created_at: postgresExpectedProvider.created_at,
-        updated_at: actualPostgresProvider.updated_at,
-      }),
-      postgresOmitList
-    )
-  );
+  t.is(actualProvider.globalConnectionLimit, undefined);
+  t.is(actualPostgresProvider.global_connection_limit, null);
 });
 
 test('PUT updates existing provider in Dynamo and PG with correct timestamps', async (t) => {
