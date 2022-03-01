@@ -100,8 +100,8 @@ async function queueGranules(event, testMocks = {}) {
         granuleBatch[0].version
       );
 
-      const createdAt = Date.now();
       // include createdAt to ensure write logic passes
+      const createdAt = Date.now();
       await pMap(
         granuleBatch,
         (queuedGranule) => updateGranule({
