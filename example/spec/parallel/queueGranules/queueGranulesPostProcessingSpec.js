@@ -31,7 +31,7 @@ const workflowName = 'QueueGranulesPassthrough';
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
-describe('The Queue Granules workflow triggered with a post-SyncGranules granule with a defined granule createdAt value', () => {
+describe('The Queue Granules workflow triggered with a database-schema-compliant (post-sync-granules) granule in the payload that has the createdAt key-value defined', () => {
   let beforeAllFailed;
   let collection;
   let config;
