@@ -152,7 +152,7 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
   });
 });
 
-test('Updating a kinesis type rule value updates event mappings', async (t) => {
+test.serial('Updating a kinesis type rule value updates event mappings', async (t) => {
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleRecordFactory({
     type: 'kinesis',
@@ -273,7 +273,7 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
   });
 });
 
-test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
+test.serial('Updating a valid SQS rule to have an invalid schema throws an error and does not update triggers', async (t) => {
   const queues = await createSqsQueues(randomString());
   const sqsRule = fakeRuleRecordFactory({
     workflow,
@@ -414,9 +414,9 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     value: TopicArn2,
   };
   const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
-  // Check that previous SNS topic was deleted
   t.true(unsubscribeSpy.called);
   t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+
   t.is(updatedSnsRule.name, rule.name);
   t.is(updatedSnsRule.type, rule.type);
   t.is(updatedSnsRule.value, TopicArn2);
