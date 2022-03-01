@@ -212,6 +212,7 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
           'completed'
         );
         expect(record.status).toEqual('completed');
+        expect(record.execution.replace(/https.*details\//, '')).toEqual(queuedLambdaOutput.payload.running[0]);
       })
     );
   });
