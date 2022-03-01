@@ -92,6 +92,9 @@ describe('The Queue Granules workflow triggered with a post-SyncGranules granule
         updateParams: { duplicateHandling: 'replace' },
       });
       const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+      inputPayloadJson.granules[0].files = inputPayloadJson.granules[0].files.map(
+        (file) => ({ ...file, bucket: config.bucket })
+      );
       const oldGranuleId = inputPayloadJson.granules[0].granuleId;
 
       // update test data filepaths
