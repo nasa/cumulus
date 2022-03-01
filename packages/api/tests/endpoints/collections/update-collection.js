@@ -165,6 +165,65 @@ test('PUT replaces an existing collection', async (t) => {
   });
 });
 
+test('PUT replaces an existing collection and correctly removes fields', async (t) => {
+  const knex = t.context.testKnex;
+  const originalCollection = fakeCollectionFactory({
+    duplicateHandling: 'replace',
+    process: randomString(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const pgId = await t.context.collectionPgModel.create(t.context.testKnex, insertPgRecord);
+  const originalPgRecord = await t.context.collectionPgModel.get(
+    knex, { cumulus_id: pgId[0] }
+  );
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+  // remove the "process" field
+  delete updatedCollection.process;
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualCollection = await collectionModel.get({
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  t.like(actualCollection, {
+    ...originalCollection,
+    duplicateHandling: 'error',
+    process: undefined,
+    createdAt: originalCollection.createdAt,
+    updatedAt: actualCollection.updatedAt,
+  });
+
+  t.deepEqual(actualPgCollection, {
+    ...originalPgRecord,
+    duplicate_handling: 'error',
+    process: null,
+    created_at: originalPgRecord.created_at,
+    updated_at: actualPgCollection.updated_at,
+  });
+});
+
 test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
   const knex = t.context.testKnex;
   const originalCollection = fakeCollectionFactory({
