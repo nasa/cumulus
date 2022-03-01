@@ -64,7 +64,7 @@ process.env.CollectionsTable = randomId('collection');
 process.env.ExecutionsTable = randomId('executions');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
 const testDbName = randomId('execution_test');
