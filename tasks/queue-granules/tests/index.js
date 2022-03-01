@@ -393,7 +393,6 @@ test.serial('granules are enqueued with createdAt values added to granules that 
   const createdAt = Date.now();
 
   const granule1 = {
-    createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
@@ -439,8 +438,8 @@ test.serial('granules are enqueued with createdAt values added to granules that 
   const message2 = messages.find((message) =>
     message.payload.granules[0].granuleId === granule2.granuleId);
 
-  t.truthy(message1.payload.granules[0].createdAt);
-  t.truthy(message2.payload.granules[0].createdAt);
+  t.true(createdAt < message1.payload.granules[0].createdAt);
+  t.is(createdAt, message2.payload.granules[0].createdAt);
 });
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
