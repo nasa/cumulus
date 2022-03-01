@@ -48,6 +48,13 @@ function groupAndBatchGranules(granules, batchSize) {
   ), []);
 }
 
+/**
+* Updates each granule in the 'batch' to the passed in createdAt value if one does not already exist
+* @param {Array<Object>} granuleBatch - Array of Cumulus Granule objects
+* @param {number} createdAt           - 'Date.now()' to apply to the granules if there is no
+*                                     existing createdAt value
+* @returns {Array<Object>} updated array of Cumulus Granule objects
+*/
 function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
   return granuleBatch.map((granule) => ({
     ...granule,
