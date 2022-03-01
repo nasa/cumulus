@@ -39,7 +39,7 @@ const buildS3Client = () => {
 
   if (inTestMode()) {
     options.accessKeyId = 'my-access-key-id';
-    options.endpoint = `http://${getLocalStackHost()}:4572`;
+    options.endpoint = `http://${getLocalStackHost()}:4566`;
     options.region = 'us-east-1';
     options.s3ForcePathStyle = true;
     options.secretAccessKey = 'my-secret-access-key';

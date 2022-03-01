@@ -14,7 +14,7 @@ const { Search } = require('../search');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const Stats = require('../stats');
 
-process.env.system_bucket = randomId('systemBucket');
+process.env.system_bucket = randomId('system-bucket');
 process.env.stackName = randomId('stackName');
 
 let esClient;

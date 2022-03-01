@@ -19,17 +19,17 @@ const {
   destroyLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
+  RulePgModel,
 } = require('@cumulus/db');
 
 const { handler } = require('../dist/lambda');
-const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
+
 const workflow = cryptoRandomString({ length: 10 });
 
 test.before(async (t) => {
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
-    PG_DATABASE: testDbName,
     stackName: cryptoRandomString({ length: 10 }),
     system_bucket: cryptoRandomString({ length: 10 }),
     AsyncOperationsTable: cryptoRandomString({ length: 10 }),
@@ -55,13 +55,6 @@ test.before(async (t) => {
   t.context.rulesModel = new Rule();
 
   await Promise.all([
-    t.context.asyncOperationsModel.createTable(),
-    t.context.collectionsModel.createTable(),
-    t.context.providersModel.createTable(),
-    t.context.rulesModel.createTable(),
-  ]);
-
-  await Promise.all([
     putJsonS3Object(
       process.env.system_bucket,
       messageTemplateKey,
@@ -73,27 +66,41 @@ test.before(async (t) => {
       { testworkflow: 'workflow-config' }
     ),
   ]);
-  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
-  t.context.knex = knex;
-  t.context.knexAdmin = knexAdmin;
 });
 
-test.after.always(async (t) => {
+test.beforeEach(async (t) => {
+  await Promise.all([
+    t.context.asyncOperationsModel.createTable(),
+    t.context.collectionsModel.createTable(),
+    t.context.providersModel.createTable(),
+    t.context.rulesModel.createTable(),
+  ]);
+
+  t.context.testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  t.context.rulePgModel = new RulePgModel();
+
+  process.env = {
+    ...process.env,
+    PG_DATABASE: t.context.testDbName,
+  };
+});
+
+test.afterEach.always(async (t) => {
   await t.context.rulesModel.deleteTable();
   await t.context.providersModel.deleteTable();
   await t.context.collectionsModel.deleteTable();
   await t.context.asyncOperationsModel.deleteTable();
-
-  await recursivelyDeleteS3Bucket(process.env.system_bucket);
-
-  await destroyLocalTestDb({
-    knex: t.context.knex,
-    knexAdmin: t.context.knexAdmin,
-    testDbName,
-  });
+  await destroyLocalTestDb(t.context);
 });
 
-test('handler migrates async operations, collections, providers, rules', async (t) => {
+test.after.always(async () => {
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
+});
+
+test.serial('handler migrates async operations, collections, providers, rules', async (t) => {
   const {
     asyncOperationsModel,
     collectionsModel,
@@ -155,12 +162,7 @@ test('handler migrates async operations, collections, providers, rules', async (
       name: fakeCollection.name,
       version: fakeCollection.version,
     },
-    rule: { type: 'onetime', value: cryptoRandomString({ length: 10 }), arn: cryptoRandomString({ length: 10 }), logEventArn: cryptoRandomString({ length: 10 }) },
-    executionNamePrefix: cryptoRandomString({ length: 10 }),
-    meta: { key: 'value' },
-    queueUrl: cryptoRandomString({ length: 10 }),
-    payload: { result: { key: 'value' } },
-    tags: ['tag1', 'tag2'],
+    rule: { type: 'onetime' },
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -208,4 +210,104 @@ test('handler migrates async operations, collections, providers, rules', async (
     },
   };
   t.deepEqual(call, expected);
+});
+
+test.serial('handler passes along forceRulesMigration parameter correctly', async (t) => {
+  const {
+    collectionsModel,
+    providersModel,
+    rulesModel,
+    knex,
+    rulePgModel,
+  } = t.context;
+
+  const fakeCollection = {
+    name: `${cryptoRandomString({ length: 10 })}collection`,
+    version: '0.0.0',
+    duplicateHandling: 'replace',
+    granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
+    granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
+    sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+    files: [{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }],
+  };
+
+  const fakeProvider = {
+    id: cryptoRandomString({ length: 10 }),
+    protocol: 's3',
+    host: `${cryptoRandomString({ length: 10 })}host`,
+  };
+
+  const fakeRule = {
+    name: cryptoRandomString({ length: 10 }),
+    workflow: workflow,
+    provider: fakeProvider.name,
+    state: 'DISABLED',
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    rule: { type: 'onetime' },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await Promise.all([
+    collectionsModel.create(fakeCollection),
+    providersModel.create(fakeProvider),
+    rulesModel.createRuleTrigger(fakeRule)
+      .then((ruleWithTrigger) => rulesModel.create(ruleWithTrigger)),
+  ]);
+
+  t.teardown(() => Promise.all([
+    rulesModel.delete(fakeRule),
+    providersModel.delete(fakeProvider),
+  ]).then(() => collectionsModel.delete(fakeCollection)));
+
+  // migrate records for the first time
+  await handler({});
+
+  const records = await rulePgModel.search(
+    knex,
+    {}
+  );
+  t.is(records.length, 1);
+
+  // re-migrate and force rules migration
+  const call = await handler({
+    forceRulesMigration: true,
+  });
+  const expected = {
+    MigrationSummary: {
+      async_operations: {
+        failed: 0,
+        migrated: 0,
+        skipped: 0,
+        total_dynamo_db_records: 0,
+      },
+      collections: {
+        failed: 0,
+        migrated: 0,
+        skipped: 1,
+        total_dynamo_db_records: 1,
+      },
+      providers: {
+        failed: 0,
+        migrated: 0,
+        skipped: 1,
+        total_dynamo_db_records: 1,
+      },
+      rules: {
+        failed: 0,
+        migrated: 1,
+        skipped: 0,
+        total_dynamo_db_records: 1,
+      },
+    },
+  };
+  t.deepEqual(call, expected);
+  const migratedRecords = await rulePgModel.search(
+    knex,
+    {}
+  );
+  t.is(migratedRecords.length, 1);
 });
