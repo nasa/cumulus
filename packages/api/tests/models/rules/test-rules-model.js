@@ -342,7 +342,8 @@ test.serial('Calling updateRuleTrigger() with a kinesis type rule value does not
   // create rule trigger and rule
   const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
   kinesisRule.rule.value = kinesisArn1;
-  await rulesModel.create(kinesisRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: kinesisRule.name });
   t.teardown(async () => {
@@ -392,7 +393,8 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
     state: 'ENABLED',
   });
 
-  await rulesModel.create(snsRule);
+  const snsRuleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(snsRuleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
   t.teardown(async () => {
@@ -423,7 +425,8 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
 
   // create rule trigger and rule
   kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
-  await rulesModel.create(kinesisRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: kinesisRule.name });
   t.teardown(() => rulesModel.delete(rule));
@@ -458,7 +461,8 @@ test.serial('deleteOldEventSourceMappings() removes SNS source mappings', async 
     state: 'ENABLED',
   });
 
-  await rulesModel.create(snsRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
 
