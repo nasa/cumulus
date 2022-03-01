@@ -69,16 +69,16 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    model = new models.Rule(),
+    ruleModel = new models.Rule(),
     dbClient = await getKnexClient(),
+    rulePgModel = new RulePgModel(),
   } = req.testContext || {};
 
   let record;
   const apiRule = req.body || {};
   const name = apiRule.name;
-  const rulePgModel = new RulePgModel();
 
-  if (await model.exists(name)) {
+  if (await ruleModel.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
@@ -87,12 +87,12 @@ async function post(req, res) {
     apiRule.updatedAt = Date.now();
 
     // Create rule trigger
-    const ruleWithTrigger = await model.createRuleTrigger(apiRule);
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
     const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await rulePgModel.create(trx, postgresRule);
-      record = await model.create(ruleWithTrigger);
+      record = await ruleModel.create(ruleWithTrigger);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
