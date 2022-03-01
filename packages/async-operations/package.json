@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@cumulus/common": "10.1.0",
-    "@types/aws-sdk": "2.7.0",
     "@types/uuid": "^8.0.0"
   }
 }

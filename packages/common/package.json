@@ -44,7 +44,7 @@
     "@cumulus/errors": "10.1.0",
     "@cumulus/logger": "10.1.0",
     "ajv": "^6.12.3",
-    "aws-sdk": "^2.585.0",
+    "aws-sdk": "^3.53.1",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
     "jsonpath-plus": "^3.0.0",

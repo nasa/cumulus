@@ -38,7 +38,7 @@
     "@cumulus/logger": "10.1.0",
     "@cumulus/message": "10.1.0",
     "@cumulus/oauth-client": "10.1.0",
-    "aws-sdk": "^2.585.0",
+    "aws-sdk": "^3.53.1",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "delay": "^4.3.0",

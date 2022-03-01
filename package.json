@@ -90,7 +90,6 @@
     "@typescript-eslint/parser": "^4.33.0",
     "audit-ci": "3.2.0",
     "ava": "^3.12.1",
-    "aws-sdk": "^2.585.0",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^8.2.2",
     "babel-plugin-source-map-support": "^2.1.1",
