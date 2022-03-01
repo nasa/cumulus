@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "10.1.1-alpha.0",
+  "version": "10.1.1-alpha.1",
   "description": "Lambda functions for handling all daac's API operations, feature/rds-phase-2",
   "main": "index.js",
   "engines": {
@@ -66,7 +66,7 @@
     "@cumulus/ingest": "10.0.0",
     "@cumulus/launchpad-auth": "10.0.0",
     "@cumulus/logger": "10.0.0",
-    "@cumulus/message": "10.0.0",
+    "@cumulus/message": "10.1.1-alpha.0",
     "@cumulus/oauth-client": "10.0.0",
     "@cumulus/object-store": "10.0.0",
     "@cumulus/pvl": "10.0.0",
