@@ -17,7 +17,11 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
-const { deleteRuleResources, updateRuleTrigger } = require('../lib/rulesHelpers');
+const {
+  deleteRuleResources,
+  invokeRerun,
+  updateRuleTrigger,
+} = require('../lib/rulesHelpers');
 const models = require('../models');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
@@ -154,7 +158,7 @@ async function put(req, res) {
 
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
-      return models.Rule.invoke(oldApiRule).then(() => res.send(oldApiRule));
+      return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
 
     const ruleWithTrigger = await updateRuleTrigger(oldRule, translatedApiRule, knex);

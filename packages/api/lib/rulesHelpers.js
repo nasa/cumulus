@@ -7,12 +7,12 @@ const merge = require('lodash/merge');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const Logger = require('@cumulus/logger');
+const s3Utils = require('@cumulus/aws-client/S3');
+const workflows = require('@cumulus/common/workflows');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
-const {
-  RulePgModel,
-} = require('@cumulus/db');
+const { RulePgModel } = require('@cumulus/db');
 const { ValidationError } = require('@cumulus/errors');
 
 const { listRules } = require('@cumulus/api-client/rules');
@@ -510,6 +510,52 @@ function recordIsValid(rule) {
 }
 
 /*
+ * Build payload for lambda invocation
+ *
+ * @param {ApiRule} item
+ * @returns {Object} lambda invocation payload
+ */
+async function buildPayload(item) {
+  // makes sure the workflow exists
+  const bucket = process.env.system_bucket;
+  const stack = process.env.stackName;
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, item.workflow);
+
+  const exists = await s3Utils.fileExists(bucket, workflowFileKey);
+  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${item.name}`);
+
+  const definition = await s3Utils.getJsonS3Object(
+    bucket,
+    workflowFileKey
+  );
+  const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
+
+  return {
+    template,
+    definition,
+    provider: item.provider,
+    collection: item.collection,
+    meta: get(item, 'meta', {}),
+    cumulus_meta: get(item, 'cumulus_meta', {}),
+    payload: get(item, 'payload', {}),
+    queueUrl: item.queueUrl,
+    asyncOperationId: item.asyncOperationId,
+    executionNamePrefix: item.executionNamePrefix,
+  };
+}
+
+/*
+ * Invokes lambda for rule rerun
+ *
+ * @param {ApiRule} item
+ * @returns {Promise} lambda invocation response
+ */
+async function invokeRerun(item) {
+  const payload = await buildPayload(item);
+  await invoke(process.env.invoke, payload);
+}
+
+/*
  * Updates rule trigger for rule
  * @param {PostgresRule}   rule    - Rule to update trigger for
  * @param {PostgresRule}   updates - Updates for rule trigger
@@ -526,7 +572,7 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
 
   switch (mergedRule.type) {
   case 'scheduled': {
-    const payload = await Rule.buildPayload(mergedRule);
+    const payload = await buildPayload(mergedRule);
     await addRule(mergedRule, payload);
     break;
   }
@@ -587,7 +633,7 @@ async function createRuleTrigger(ruleItem) {
   // Validate rule before kicking off workflows or adding event source mappings
   recordIsValid(newRuleItem);
 
-  const payload = await Rule.buildPayload(newRuleItem);
+  const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.type) {
   case 'onetime': {
     await invoke(process.env.invoke, payload);
@@ -630,6 +676,7 @@ module.exports = {
   filterRulesbyCollection,
   filterRulesByRuleParams,
   getMaxTimeoutForRules,
+  invokeRerun,
   isEventSourceMappingShared,
   lookupCollectionInEvent,
   queueMessageForRule,
