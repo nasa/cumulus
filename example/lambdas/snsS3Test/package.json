@@ -18,6 +18,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "aws-sdk": "^3.53.1"
+    "@aws-sdk": "^3.53.1"
   }
 }
