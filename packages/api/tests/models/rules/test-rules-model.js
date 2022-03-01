@@ -585,6 +585,7 @@ test.serial('Creating triggers for a kinesis rule where an event source mapping 
     Enabled: false,
   };
   await awsServices.lambda().createEventSourceMapping(params).promise();
+  t.teardown(() => deleteKinesisEventSourceMappings());
 
   const mappings = await getKinesisEventMappings();
   const messageConsumerSource = mappings.find(
