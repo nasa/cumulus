@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db",
-  "version": "10.0.0",
+  "version": "10.1.1-alpha.0",
   "description": "Utilities for working with the Cumulus DB",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
