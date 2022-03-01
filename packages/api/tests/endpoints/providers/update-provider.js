@@ -168,6 +168,62 @@ test('PUT updates existing provider', async (t) => {
   );
 });
 
+test('PUT updates existing provider and correctly removes fields', async (t) => {
+  const { testProvider, testProvider: { id } } = t.context;
+  const expectedProvider = omit(testProvider,
+    ['globalConnectionLimit', 'protocol', 'cmKeyId']);
+  const postgresExpectedProvider = await translateApiProviderToPostgresProvider(expectedProvider);
+  const postgresOmitList = ['cumulus_id'];
+  // Make sure testProvider contains values for the properties we omitted from
+  // expectedProvider to confirm that after we replace (PUT) the provider those
+  // properties are dropped from the stored provider.
+  t.truthy(testProvider.globalConnectionLimit);
+  t.truthy(testProvider.protocol);
+  t.truthy(testProvider.cmKeyId);
+
+  const updatedProvider = {
+    ...expectedProvider,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await request(app)
+    .put(`/providers/${id}`)
+    .send(updatedProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const actualProvider = await providerModel.get({ id });
+  const actualPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
+
+  t.deepEqual(actualProvider, {
+    ...expectedProvider,
+    protocol: 'http', // Default value added by schema rule
+    createdAt: expectedProvider.createdAt,
+    updatedAt: actualProvider.updatedAt,
+  });
+
+  t.deepEqual(
+    omit(
+      actualPostgresProvider,
+      postgresOmitList
+    ),
+    omit(
+      nullifyUndefinedProviderValues({
+        ...postgresExpectedProvider,
+        protocol: 'http', // Default value, added by RDS rule,
+        created_at: postgresExpectedProvider.created_at,
+        updated_at: actualPostgresProvider.updated_at,
+      }),
+      postgresOmitList
+    )
+  );
+});
+
 test('PUT updates existing provider in Dynamo and PG with correct timestamps', async (t) => {
   const { testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,
