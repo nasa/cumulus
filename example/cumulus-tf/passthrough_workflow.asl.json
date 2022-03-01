@@ -1,5 +1,5 @@
 {
-  "Comment": "Statemachine that just creates a step function success event",
+  "Comment": "State machine that creates a step function success event",
   "StartAt": "SuccessState",
   "States": {
     "SuccessState": {
