@@ -246,7 +246,8 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   const response = await request(app)
     .delete(`/providers/${testProvider.id}`)
@@ -275,7 +276,8 @@ test('Attempting to delete a provider with an associated rule does not delete th
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   await request(app)
     .delete(`/providers/${testProvider.id}`)
