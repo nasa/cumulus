@@ -27,6 +27,8 @@ const commonRuleParams = {
   collection,
   provider: provider.id,
   workflow: randomId('workflow'),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRuleParams = {
@@ -162,7 +164,13 @@ test.before(async () => {
     kinesisRule5,
     disabledKinesisRule,
   ];
-  await Promise.all(kinesisRules.map((rule) => rulesModel.create(rule)));
+
+  await Promise.all(
+    kinesisRules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
+  );
 });
 
 test.after.always(async () => {
@@ -195,7 +203,8 @@ test.serial('queryRules returns correct rules for given state and type', async (
   ];
   await Promise.all(
     onetimeRules.map(async (rule) => {
-      await rulesModel.create(rule);
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
     })
   );
 
@@ -228,7 +237,14 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
       state: 'DISABLED',
     }),
   ];
-  await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+
+  await Promise.all(
+    rules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(ruleWithTrigger);
+    })
+  );
+
   const results = await rulesModel.queryRules({
     type: 'onetime',
   });
@@ -261,7 +277,12 @@ test.serial('queryRules should look up sns-type rules which are associated with 
       state: 'DISABLED',
     }),
   ];
-  const createdRules = await Promise.all(rules.map((rule) => rulesModel.create(rule)));
+  const createdRules = await Promise.all(
+    rules.map(async (rule) => {
+      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+      return rulesModel.create(ruleWithTrigger);
+    })
+  );
 
   const result = await rulesModel.queryRules({
     type: 'sns',
@@ -300,8 +321,10 @@ test.serial('queryRules should look up sns-type rules which are associated with 
     }),
   ];
 
-  const rule1 = await rulesModel.create(rules[0]);
-  const rule2 = await rulesModel.create(rules[1]);
+  const ruleWithTrigger1 = await rulesModel.createRuleTrigger(rules[0]);
+  const rule1 = await rulesModel.create(ruleWithTrigger1);
+  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(rules[1]);
+  const rule2 = await rulesModel.create(ruleWithTrigger2);
 
   const result = await rulesModel.queryRules({
     type: 'sns',
