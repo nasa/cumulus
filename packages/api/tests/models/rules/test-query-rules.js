@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 const test = require('ava');
 const sinon = require('sinon');
 
@@ -31,7 +32,7 @@ const commonRuleParams = {
 const kinesisRuleParams = {
   rule: {
     type: 'kinesis',
-    value: 'test-kinesisarn',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
   },
 };
 
@@ -72,7 +73,7 @@ const kinesisRule4 = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'kinesisarn-4',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis4_')}`,
   },
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -88,7 +89,7 @@ const kinesisRule5 = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'kinesisarn-5',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis5_')}`,
   },
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -106,12 +107,36 @@ const disabledKinesisRule = {
 test.before(async () => {
   process.env.RulesTable = randomId('rules');
   process.env.stackName = randomId('stack');
-  process.env.messageConsumer = randomId('message');
   process.env.KinesisInboundEventLogger = randomId('kinesis');
   process.env.system_bucket = randomId('bucket');
 
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionName;
+
   // create Rules table
-  rulesModel = new models.Rule();
+  rulesModel = new models.Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
+    },
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'fake-policy',
+            VisibilityTimeout: '10',
+          },
+        }),
+      }),
+    },
+  });
   await rulesModel.createTable();
 
   await S3.createBucket(process.env.system_bucket);
@@ -125,20 +150,6 @@ test.before(async () => {
   ]);
 
   sandbox = sinon.createSandbox();
-
-  sandbox.stub(awsServices, 'sqs').returns({
-    getQueueUrl: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-    getQueueAttributes: () => ({
-      promise: () => Promise.resolve({
-        Attributes: {
-          RedrivePolicy: 'fake-policy',
-          VisibilityTimeout: '10',
-        },
-      }),
-    }),
-  });
 
   const stubWorkflowFileKey = randomId('key');
   sandbox.stub(workflows, 'getWorkflowFileKey').returns(stubWorkflowFileKey);
@@ -249,16 +260,6 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
 });
 
 test.serial('queryRules should look up sns-type rules which are associated with the topic, but not those that are disabled', async (t) => {
-  // See https://github.com/localstack/localstack/issues/2016
-  const stub = sinon.stub(awsServices, 'lambda').returns({
-    addPermission: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-    removePermission: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-  });
-
   const { TopicArn } = await awsServices.sns().createTopic({
     Name: randomId('topic'),
   }).promise();
@@ -295,21 +296,10 @@ test.serial('queryRules should look up sns-type rules which are associated with 
     await awsServices.sns().deleteTopic({
       TopicArn,
     });
-    stub.restore();
   });
 });
 
 test.serial('queryRules should look up sns-type rules which are associated with the collection', async (t) => {
-  // See https://github.com/localstack/localstack/issues/2016
-  const stub = sinon.stub(awsServices, 'lambda').returns({
-    addPermission: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-    removePermission: () => ({
-      promise: () => Promise.resolve(true),
-    }),
-  });
-
   const { TopicArn } = await awsServices.sns().createTopic({
     Name: randomId('topic'),
   }).promise();
@@ -331,24 +321,25 @@ test.serial('queryRules should look up sns-type rules which are associated with 
       state: 'ENABLED',
     }),
   ];
-  const createdRules = await Promise.all(rules.map(async (rule) => {
-    const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-    return rulesModel.create(ruleWithTrigger);
-  }));
 
+  const ruleWithTrigger1 = await rulesModel.createRuleTrigger(rules[0]);
+  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(rules[1]);
+  await rulesModel.create(ruleWithTrigger1);
+  await rulesModel.create(ruleWithTrigger2);
+  console.log('\nhere');
   const result = await rulesModel.queryRules({
     type: 'sns',
     name: collection.name,
     version: collection.version,
   });
   t.is(result.length, 1);
-  t.deepEqual(result[0], createdRules[0]);
+  t.deepEqual(result[0], ruleWithTrigger1);
   t.teardown(async () => {
-    await Promise.all(createdRules.map((rule) => rulesModel.delete(rule)));
+    await rulesModel.delete(ruleWithTrigger1);
+    await rulesModel.delete(ruleWithTrigger2);
     await awsServices.sns().deleteTopic({
       TopicArn,
     });
-    stub.restore();
   });
 });
 
@@ -371,7 +362,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
 
 test('queryRules should look up kinesis-type rules which are associated with the source ARN', async (t) => {
   const result = await rulesModel.queryRules({
-    sourceArn: 'kinesisarn-4',
+    sourceArn: kinesisRule4.rule.value,
     type: 'kinesis',
   });
   t.is(result.length, 1);
@@ -381,7 +372,7 @@ test('queryRules should look up kinesis-type rules which are associated with the
   const result = await rulesModel.queryRules({
     name: testCollectionName,
     version: '2.0.0',
-    sourceArn: 'kinesisarn-5',
+    sourceArn: kinesisRule5.rule.value,
     type: 'kinesis',
   });
   t.is(result.length, 1);

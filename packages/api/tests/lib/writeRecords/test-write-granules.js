@@ -1263,8 +1263,8 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   } = t.context;
 
   await t.throwsAsync(
-    writeGranuleFromApi({ ...granule, collectionId: 'wrong___collection' }, knex, esClient, 'Create'),
-    { message: 'Record in collections with identifiers {"name":"wrong","version":"collection"} does not exist.' }
+    writeGranuleFromApi({ ...granule, collectionId: constructCollectionId('wrong____', 'collection') }, knex, esClient, 'Create'),
+    { message: 'Record in collections with identifiers {"name":"wrong____","version":"collection"} does not exist.' }
   );
 });
 
@@ -1290,7 +1290,7 @@ test.serial('writeGranuleFromApi() throws for a granule with an invalid collecti
   const badCollectionId = `collectionId${cryptoRandomString({ length: 5 })}`;
   await t.throwsAsync(
     writeGranuleFromApi({ ...granule, collectionId: badCollectionId }, knex, esClient, 'Create'),
-    { message: `invalid collectionId: ${badCollectionId}` }
+    { message: `invalid collectionId: "${badCollectionId}"` }
   );
 });
 

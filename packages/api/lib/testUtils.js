@@ -86,7 +86,7 @@ function fakeGranuleFactory(status = 'completed') {
     granuleId: randomId('granule'),
     dataType: randomId('datatype'),
     version: randomId('vers'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     status,
     execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
@@ -156,7 +156,7 @@ function fakeRuleFactory(state = 'DISABLED') {
 function fakePdrFactory(status = 'completed') {
   return {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status,
     createdAt: Date.now(),
@@ -172,7 +172,7 @@ function fakePdrFactory(status = 'completed') {
 function fakePdrFactoryV2(params = {}) {
   const pdr = {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status: 'completed',
     createdAt: Date.now(),
@@ -510,13 +510,14 @@ const createRuleTestRecords = async (context, ruleParams) => {
   } = context;
   const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
-  const originalDynamoRule = await ruleModel.create(originalRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
+  const insertPgRecord = await translateApiRuleToPostgresRule(ruleWithTrigger, testKnex);
+  const originalDynamoRule = await ruleModel.create(ruleWithTrigger);
   const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
-  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  await indexRule(esClient, ruleWithTrigger, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );

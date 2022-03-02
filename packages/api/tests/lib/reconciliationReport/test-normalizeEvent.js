@@ -1,6 +1,7 @@
 const test = require('ava');
 const omit = require('lodash/omit');
 const { InvalidArgument } = require('@cumulus/errors');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomId } = require('@cumulus/common/test-utils');
 const { normalizeEvent } = require('../../../lib/reconciliationReport/normalizeEvent');
 const { reconciliationReport } = require('../../../models/schemas');
@@ -12,7 +13,7 @@ test('normalizeEvent converts input key collectionId string to length 1 array on
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Inventory',
-    collectionId: 'someCollection___version',
+    collectionId: constructCollectionId('someCollection', 'version'),
   };
   const expect = { ...inputEvent, collectionIds: ['someCollection___version'] };
   delete expect.collectionId;
@@ -28,7 +29,10 @@ test('normalizeEvent moves input key collectionId array to array on collectionId
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Inventory',
-    collectionId: ['someCollection___version', 'secondcollection___version'],
+    collectionId: [
+      constructCollectionId('someCollection', 'version'),
+      constructCollectionId('secondcollection', 'version'),
+    ],
   };
   const expect = {
     ...inputEvent,
@@ -47,7 +51,7 @@ test('normalizeEvent throws error if original input event contains collectionIds
     startTimestamp: new Date().toISOString(),
     endTimestamp: new Date().toISOString(),
     reportType: 'Inventory',
-    collectionIds: ['someCollection___version'],
+    collectionIds: [constructCollectionId('someCollection', 'version')],
   };
   t.throws(() => normalizeEvent(inputEvent), {
     message: '`collectionIds` is not a valid input key for a reconciliation report, use `collectionId` instead.',

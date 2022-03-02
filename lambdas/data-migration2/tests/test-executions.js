@@ -22,6 +22,8 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 // PG mock data factories
 const {
   fakeCollectionRecordFactory,
@@ -161,7 +163,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
     asyncOperationId: fakeAsyncOperation.id,
   });
 

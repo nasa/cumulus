@@ -973,7 +973,7 @@ async function granuleFilesOverwrittenTest(t) {
 
     const currentFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
     t.is(currentFileInfo.size, randomString().length);
-    t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
+    t.true(currentFileInfo.LastModified >= existingFileInfo.LastModified);
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }

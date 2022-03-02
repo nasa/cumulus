@@ -1,5 +1,7 @@
+const orderBy = require('lodash/orderBy');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+
 const { ValidationError } = require('@cumulus/errors');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -175,7 +177,7 @@ test.beforeEach(async (t) => {
       updated_at: updatedAt,
     }),
   ];
-  await t.context.filePgModel.insert(t.context.knex, files);
+  await Promise.all(files.map((file) => t.context.filePgModel.create(t.context.knex, file)));
 });
 
 test('translatePostgresGranuleToApiGranule converts Postgres granule to API granule', async (t) => {
@@ -193,7 +195,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName___collectionVersion',
+    collectionId: constructCollectionId('collectionName', 'collectionVersion'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -246,8 +248,14 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
@@ -266,7 +274,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId: 'collectionName2___collectionVersion2',
+    collectionId: constructCollectionId('collectionName2', 'collectionVersion2'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -329,8 +337,14 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
@@ -493,7 +507,6 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     executions,
     postgresGranule,
     fileKeys,
-    collectionId,
   } = t.context;
 
   delete postgresGranule.pdr_cumulus_id;
@@ -502,7 +515,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   const expectedApiGranule = {
     beginningDateTime: postgresGranule.beginning_date_time.toISOString(),
     cmrLink: postgresGranule.cmr_link,
-    collectionId,
+    collectionId: constructCollectionId('collectionName', 'collectionVersion'),
     createdAt: postgresGranule.created_at.getTime(),
     duration: postgresGranule.duration,
     endingDateTime: postgresGranule.ending_date_time.toISOString(),
@@ -553,8 +566,14 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
   });
 
   t.deepEqual(
-    result,
-    expectedApiGranule
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
+    {
+      ...expectedApiGranule,
+      files: orderBy(expectedApiGranule.files, ['bucket', 'key']),
+    }
   );
 });
 
@@ -600,9 +619,9 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
 
   const apiGranule = {
     cmrLink: cryptoRandomString({ length: 10 }),
-    collectionId: 'name___version',
     duration: 10,
     granuleId: cryptoRandomString({ length: 5 }),
+    collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
     provider: 'provider',
     published: false,

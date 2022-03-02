@@ -1,16 +1,17 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const {
   createRejectableTransaction,
   getKnexClient,
+  isCollisionError,
   RulePgModel,
   translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
-  isCollisionError,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
@@ -157,23 +158,30 @@ async function put(req, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
+    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
+        // stores updated record in dynamo
+        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
+        // make sure we include undefined values so fields will be correctly unset in PG
+        const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, knex);
         await rulePgModel.upsert(trx, postgresRule);
-        newRule = await ruleModel.update(oldRule, apiRule, fieldsToDelete);
         await indexRule(esClient, newRule, process.env.ES_INDEX);
       });
+      // wait to delete original event sources until all update operations were successful
+      await ruleModel.deleteOldEventSourceMappings(oldRule);
     } catch (innerError) {
-      // Revert Dynamo record update if any write fails
-      await ruleModel.createRuleTrigger(oldRule);
-      await ruleModel.create(oldRule);
+      if (newRule) {
+        const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldRule);
+        await ruleModel.update(ruleWithRevertedTrigger);
+      }
       throw innerError;
     }
 
     return res.send(newRule);
   } catch (error) {
+    log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }
